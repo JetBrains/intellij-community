@@ -5,7 +5,9 @@ package org.jetbrains.intellij.build.devServer
 import com.intellij.util.PathUtilRt
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
@@ -206,9 +208,9 @@ private fun createRunDirForProduct(homePath: Path, platformPrefix: String): Path
   return runDir
 }
 
-private fun getCommunityHomePath(homePath: Path): Path {
+private fun getCommunityHomePath(homePath: Path): BuildDependenciesCommunityRoot {
   val communityDotIdea = homePath.resolve("community/.idea")
-  return if (Files.isDirectory(communityDotIdea)) communityDotIdea.parent else homePath
+  return BuildDependenciesCommunityRoot(if (Files.isDirectory(communityDotIdea)) communityDotIdea.parent else homePath)
 }
 
 private fun createBuildOptions(runDir: Path): BuildOptions {

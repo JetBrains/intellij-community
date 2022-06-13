@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.ConsoleSpanExporter.Companion.setPathRoot
 import org.jetbrains.intellij.build.TracerProviderManager.flush
 import org.jetbrains.intellij.build.TracerProviderManager.setOutput
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
@@ -40,7 +41,7 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 
 @JvmOverloads
-fun createCompilationContext(communityHome: Path,
+fun createCompilationContext(communityHome: BuildDependenciesCommunityRoot,
                              projectHome: Path,
                              defaultOutputRoot: Path,
                              options: BuildOptions = BuildOptions()): CompilationContextImpl {
@@ -51,7 +52,7 @@ fun createCompilationContext(communityHome: Path,
 }
 
 class CompilationContextImpl private constructor(model: JpsModel,
-                                                 communityHome: Path,
+                                                 communityHome: BuildDependenciesCommunityRoot,
                                                  projectHome: Path,
                                                  override val messages: BuildMessages,
                                                  private val oldToNewModuleName: Map<String, String>,
@@ -254,7 +255,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
       }
     }
 
-    internal fun create(communityHome: Path,
+    internal fun create(communityHome: BuildDependenciesCommunityRoot,
                         projectHome: Path,
                         buildOutputRootEvaluator: (JpsProject) -> Path,
                         options: BuildOptions = BuildOptions()): CompilationContextImpl {
@@ -262,14 +263,14 @@ class CompilationContextImpl private constructor(model: JpsModel,
       // but this is the only place which is called in most build scripts
       BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
       val messages = BuildMessagesImpl.create()
-      if (listOf("platform/build-scripts", "bin/idea.properties", "build.txt").any { !Files.exists(communityHome.resolve(it)) }) {
+      if (listOf("platform/build-scripts", "bin/idea.properties", "build.txt").any { !Files.exists(communityHome.communityRoot.resolve(it)) }) {
         messages.error("communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources")
       }
       printEnvironmentDebugInfo()
       logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
       val kotlinBinaries = KotlinBinaries(communityHome, options)
       val model = loadProject(projectHome, kotlinBinaries)
-      val oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
+      val oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome.communityRoot, messages)
       val context = CompilationContextImpl(model = model,
                                            communityHome = communityHome,
                                            projectHome = projectHome,
@@ -303,7 +304,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
     paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
     dependenciesProperties = DependenciesProperties(this)
     bundledRuntime = BundledRuntimeImpl(this)
-    stableJdkHome = Jdk11Downloader.getJdkHome(paths.buildDependenciesCommunityRoot)
+    stableJdkHome = Jdk11Downloader.getJdkHome(paths.communityHomeDir)
     stableJavaExecutable = Jdk11Downloader.getJavaExecutable(stableJdkHome)
   }
 }
@@ -350,7 +351,7 @@ private fun setProjectOutputDirectory0(propOwner: CompilationContextImpl, output
   return outputDirectory
 }
 
-private class BuildPathsImpl(communityHome: Path, projectHome: Path, buildOut: Path, logDir: Path)
+private class BuildPathsImpl(communityHome: BuildDependenciesCommunityRoot, projectHome: Path, buildOut: Path, logDir: Path)
   : BuildPaths(communityHomeDir = communityHome,
                buildOutputDir = buildOut,
                logDir = logDir,
@@ -362,7 +363,7 @@ private class BuildPathsImpl(communityHome: Path, projectHome: Path, buildOut: P
 }
 
 private fun defineJavaSdk(context: CompilationContext) {
-  val homePath = Jdk11Downloader.getJdkHome(context.paths.buildDependenciesCommunityRoot)
+  val homePath = Jdk11Downloader.getJdkHome(context.paths.communityHomeDir)
   val jbrHome = toCanonicalPath(homePath.toString())
   val jbrVersionName = "11"
   defineJdk(context.projectModel.global, jbrVersionName, jbrHome, context.messages)

@@ -111,7 +111,7 @@ class DistributionJARsBuilder {
         val sources = ArrayList<ZipSource>()
         val result = ArrayList<DistributionFileEntry>()
         val libraryData = ProjectLibraryData("Ant", LibraryPackMode.MERGED)
-        copyDir(sourceDir = context.paths.communityHomeDir.resolve("lib/ant"),
+        copyDir(sourceDir = context.paths.communityHomeDir.communityRoot.resolve("lib/ant"),
                 targetDir = antDir,
                 dirFilter = { !it.endsWith("src") },
                 fileFilter = Predicate { file ->
@@ -207,7 +207,7 @@ class DistributionJARsBuilder {
      * @return predicate to test if a given plugin should be auto-published
      */
     private fun loadPluginAutoPublishList(buildContext: BuildContext): Predicate<PluginLayout> {
-      val file = getPluginAutoUploadFile(buildContext.paths.buildDependenciesCommunityRoot)
+      val file = getPluginAutoUploadFile(buildContext.paths.communityHomeDir)
       val config = readPluginAutoUploadFile(file)
 
       val productCode = buildContext.applicationInfo.productCode
@@ -223,7 +223,7 @@ class DistributionJARsBuilder {
     }
 
     private fun buildKeymapPlugins(targetDir: Path, context: BuildContext): ForkJoinTask<List<Pair<Path, ByteArray>>> {
-      val keymapDir = context.paths.communityHomeDir.resolve("platform/platform-resources/src/keymaps")
+      val keymapDir = context.paths.communityHomeDir.communityRoot.resolve("platform/platform-resources/src/keymaps")
       return buildKeymapPlugins(context.buildNumber, targetDir, keymapDir)
     }
 

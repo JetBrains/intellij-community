@@ -15,7 +15,7 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     productLayout.bundledPluginModules.add("intellij.laf.win10")
     includeIntoSourcesArchiveFilter = BiPredicate { module, context ->
       module.contentRootsList.urls.all { url ->
-        Path.of(JpsPathUtil.urlToPath(url)).startsWith(context.paths.communityHomeDir)
+        Path.of(JpsPathUtil.urlToPath(url)).startsWith(context.paths.communityHomeDir.communityRoot)
       }
     }
   }

@@ -146,7 +146,7 @@ final class MacDmgBuilder {
     if (jreArchivePath != null) {
       Files.copy(jreArchivePath, tempDir.resolve(jreArchivePath.fileName))
     }
-    Path scripts = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
+    Path scripts = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/tools/mac/scripts")
     Files.walk(scripts).withCloseable { stream ->
       stream.filter { Files.isRegularFile(it) }.forEach {
         Path script = tempDir.resolve(it.fileName)
@@ -174,7 +174,7 @@ final class MacDmgBuilder {
   private static void buildDmgLocally(Path tempDir, String targetFileName, MacDistributionCustomizer customizer, BuildContext context) {
     Path dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
     Files.copy(Path.of((context.applicationInfo.isEAP() ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath), dmgImageCopy)
-    Path scriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
+    Path scriptDir = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/tools/mac/scripts")
     ["sh", "py"].each {
       Files.copy(scriptDir.resolve("makedmg.$it"), tempDir.resolve("makedmg.$it"),
                  StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)

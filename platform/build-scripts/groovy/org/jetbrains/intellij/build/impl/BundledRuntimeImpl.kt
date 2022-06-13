@@ -64,13 +64,13 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
 
   // contract: returns a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
   override fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    val targetDir = Path.of(context.paths.communityHome, "build", "download", "${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
+    val targetDir = context.paths.communityHomeDir.communityRoot.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
     val jbrDir = targetDir.resolve("jbr")
 
     val archive = findArchiveImpl(prefix, os, arch)
     BuildDependenciesDownloader.extractFile(
       archive, jbrDir,
-      BuildDependenciesCommunityRoot(context.paths.communityHomeDir),
+      context.paths.communityHomeDir,
       BuildDependenciesExtractOptions.STRIP_ROOT,
     )
     fixPermissions(jbrDir, os == OsFamily.WINDOWS)
@@ -95,7 +95,7 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
   private fun findArchiveImpl(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
     val archiveName = archiveName(prefix, arch, os)
     val url = URI("https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName")
-    return BuildDependenciesDownloader.downloadFileToCacheLocation(BuildDependenciesCommunityRoot(context.paths.communityHomeDir), url)
+    return BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDir, url)
   }
 
   /**

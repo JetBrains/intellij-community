@@ -160,8 +160,8 @@ class MacDistributionBuilder(private val context: BuildContext,
                            macDistDir: Path,
                            context: BuildContext) {
     val macCustomizer = customizer
-    copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"), macDistDir.resolve("bin"), customizer.binFilesFilter)
-    copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
+    copyDirWithFileFilter(context.paths.communityHomeDir.communityRoot.resolve("bin/mac"), macDistDir.resolve("bin"), customizer.binFilesFilter)
+    copyDir(context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
     val executable = context.productProperties.baseFileName
     Files.move(macDistDir.resolve("MacOS/executable"), macDistDir.resolve("MacOS/$executable"))
@@ -261,7 +261,7 @@ class MacDistributionBuilder(private val context: BuildContext,
     val distBinDir = macDistDir.resolve("bin")
     Files.createDirectories(distBinDir)
 
-    val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/scripts")
+    val sourceScriptDir = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/resources/mac/scripts")
     Files.newDirectoryStream(sourceScriptDir).use { stream ->
       val inspectCommandName = context.productProperties.inspectCommandName
       for (file in stream) {

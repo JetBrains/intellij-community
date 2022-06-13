@@ -66,5 +66,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
   </component>
 </module>

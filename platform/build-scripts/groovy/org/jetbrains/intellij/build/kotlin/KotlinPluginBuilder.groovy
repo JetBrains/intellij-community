@@ -6,6 +6,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.tasks.ArchiveKt
@@ -33,7 +34,7 @@ final class KotlinPluginBuilder {
    */
   private static String KOTLIN_COOP_DEV_VERSION = "1.7.255"
 
-  private final Path communityHome
+  private final BuildDependenciesCommunityRoot communityHome
   private final Path home
   private final ProductProperties properties
 
@@ -183,7 +184,7 @@ final class KotlinPluginBuilder {
     "kotlinc.lombok-compiler-plugin",
   )
 
-  KotlinPluginBuilder(Path communityHome, Path home, ProductProperties properties) {
+  KotlinPluginBuilder(BuildDependenciesCommunityRoot communityHome, Path home, ProductProperties properties) {
     this.communityHome = communityHome
     this.home = home
     this.properties = properties

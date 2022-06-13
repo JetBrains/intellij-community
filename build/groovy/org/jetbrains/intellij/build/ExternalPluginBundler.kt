@@ -17,7 +17,7 @@ object ExternalPluginBundler {
     val dependenciesProjectDir = Path.of(dependenciesPath)
     GradleRunner(gradleProjectDir = dependenciesProjectDir,
                  options = context.options,
-                 communityRoot = context.paths.buildDependenciesCommunityRoot,
+                 communityRoot = context.paths.communityHomeDir,
                  additionalParams = emptyList())
       .run("Downloading $pluginName plugin...", "setup${buildTaskName}Plugin")
     val properties = Properties()

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build;
 
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 
 import java.net.URL;
 import java.nio.file.Files;
@@ -27,17 +28,17 @@ public final class IdeaProjectLoaderUtil {
                                        ", marker file '" + ULTIMATE_REPO_MARKER_FILE + "'");
   }
 
-  public static Path guessCommunityHome(Class<?> klass) {
+  public static BuildDependenciesCommunityRoot guessCommunityHome(Class<?> klass) {
     final Path start = getSomeRoot(klass);
     Path home = start;
 
     while (home != null) {
       if (Files.exists(home.resolve(COMMUNITY_REPO_MARKER_FILE))) {
-        return home;
+        return new BuildDependenciesCommunityRoot(home);
       }
 
       if (Files.exists(home.resolve("community").resolve(COMMUNITY_REPO_MARKER_FILE))) {
-        return home.resolve("community");
+        return new BuildDependenciesCommunityRoot(home.resolve("community"));
       }
 
       home = home.getParent();

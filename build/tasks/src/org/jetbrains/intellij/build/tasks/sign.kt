@@ -26,6 +26,7 @@ import net.schmizz.sshj.userauth.password.Resource
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipFile
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.tracer
 import java.io.InputStream
@@ -87,7 +88,7 @@ fun signMacApp(
   bundleIdentifier: String,
   appArchiveFile: Path,
   jreArchiveFile: Path?,
-  communityHome: Path,
+  communityHome: BuildDependenciesCommunityRoot,
   artifactDir: Path,
   dmgImage: Path?,
   artifactBuilt: Consumer<Path>,
@@ -113,7 +114,7 @@ fun signMacApp(
         }
     }
 
-    val scriptDir = communityHome.resolve("platform/build-scripts/tools/mac/scripts")
+    val scriptDir = communityHome.communityRoot.resolve("platform/build-scripts/tools/mac/scripts")
     tracer.spanBuilder("upload scripts")
       .setAttribute("scriptDir", scriptDir.toString())
       .setAttribute("remoteDir", remoteDir)

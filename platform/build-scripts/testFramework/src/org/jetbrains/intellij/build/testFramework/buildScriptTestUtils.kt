@@ -9,6 +9,7 @@ import com.intellij.util.ExceptionUtil
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
@@ -51,8 +52,8 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
 fun createBuildContext(
   homePath: Path, productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+  communityHomePath: BuildDependenciesCommunityRoot,
   skipDependencySetup: Boolean = false,
-  communityHomePath: Path = homePath.resolve("community"),
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
   val options = BuildOptions()
@@ -69,7 +70,7 @@ fun runTestBuild(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-  communityHomePath: Path = homePath.resolve("community"),
+  communityHomePath: BuildDependenciesCommunityRoot = BuildDependenciesCommunityRoot(homePath.resolve("community")),
   traceSpanName: String? = null,
   onFinish: (context: BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
@@ -99,7 +100,7 @@ private fun testBuild(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools,
-  communityHomePath: Path,
+  communityHomePath: BuildDependenciesCommunityRoot,
   traceSpanName: String?,
   onFinish: (context: BuildContext) -> Unit,
   buildOptionsCustomizer: (BuildOptions) -> Unit,

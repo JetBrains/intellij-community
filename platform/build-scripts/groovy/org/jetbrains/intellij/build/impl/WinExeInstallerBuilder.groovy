@@ -11,6 +11,7 @@ import kotlin.Unit
 import kotlin.jvm.functions.Function0
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.io.ProcessKt
 
@@ -44,7 +45,7 @@ final class WinExeInstallerBuilder {
       silentConfigTemplate = customConfigPath
     }
     else {
-      silentConfigTemplate = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/nsis/silent.config")
+      silentConfigTemplate = buildContext.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/resources/win/nsis/silent.config")
     }
 
     Files.createDirectories(targetFilePath.parent)
@@ -73,7 +74,7 @@ final class WinExeInstallerBuilder {
       return null
     }
 
-    String communityHome = context.paths.communityHome
+    BuildDependenciesCommunityRoot communityHome = context.paths.communityHomeDir
     String outFileName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
     context.messages.progress("Building Windows installer $outFileName")
 
@@ -87,7 +88,7 @@ final class WinExeInstallerBuilder {
       context.messages.info("JRE won't be bundled with Windows installer because JRE archive is missing")
     }
 
-    FileKt.copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
+    FileKt.copyDir(context.paths.communityHomeDir.communityRoot.resolve("build/conf/nsis"), nsiConfDir)
 
     generateInstallationConfigFileForSilentMode()
 
@@ -126,7 +127,7 @@ final class WinExeInstallerBuilder {
     NioFiles.deleteRecursively(nsiLogDir.toPath())
     FileUtil.copyDir(nsiConfDir.toFile(), nsiLogDir)
 
-    new Decompressor.Zip(Path.of(communityHome, "build/tools/NSIS.zip")).withZipExtensions().extract(box)
+    new Decompressor.Zip(communityHome.communityRoot.resolve("build/tools/NSIS.zip")).withZipExtensions().extract(box)
     context.messages.block("Running NSIS tool to build .exe installer for Windows") {
       long timeoutMs = TimeUnit.HOURS.toMillis(2)
       if (SystemInfoRt.isWindows) {
@@ -134,7 +135,7 @@ final class WinExeInstallerBuilder {
           [
             "${box}/NSIS/makensis.exe".toString(),
             "/V2",
-            "/DCOMMUNITY_DIR=${communityHome}".toString(),
+            "/DCOMMUNITY_DIR=${communityHome.communityRoot}".toString(),
             "/DIPR=${customizer.associateIpr}".toString(),
             "/DOUT_DIR=${context.paths.artifacts}".toString(),
             "/DOUT_FILE=${outFileName}".toString(),
@@ -152,7 +153,7 @@ final class WinExeInstallerBuilder {
           [
             makeNsis,
             "-V2",
-            "-DCOMMUNITY_DIR=${communityHome}".toString(),
+            "-DCOMMUNITY_DIR=${communityHome.communityRoot}".toString(),
             "-DIPR=${customizer.associateIpr}".toString(),
             "-DOUT_DIR=${context.paths.artifacts}".toString(),
             "-DOUT_FILE=${outFileName}".toString(),

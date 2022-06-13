@@ -72,7 +72,7 @@ final class HelpersGenerator implements BiConsumer<Path, BuildContext> {
   void accept(Path targetDir, BuildContext context) {
     Path output = targetDir.resolve("helpers")
     Files.createDirectories(output)
-    FileKt.copyDir(context.paths.communityHomeDir.resolve("python/helpers"), output, new Predicate<Path>() {
+    FileKt.copyDir(context.paths.communityHomeDir.communityRoot.resolve("python/helpers"), output, new Predicate<Path>() {
       @Override
       boolean test(Path path) {
         if (path.endsWith("tests") || path.endsWith(".idea")) {

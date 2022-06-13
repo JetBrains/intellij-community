@@ -8,6 +8,6 @@ object KotlinPluginBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-    KotlinPluginBuilder(communityHome, communityHome, IdeaCommunityProperties(communityHome)).build()
+    KotlinPluginBuilder(communityHome, communityHome.communityRoot, IdeaCommunityProperties(communityHome)).build()
   }
 }

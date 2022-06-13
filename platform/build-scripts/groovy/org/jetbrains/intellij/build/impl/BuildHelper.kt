@@ -237,7 +237,7 @@ private fun disableCompatibleIgnoredPlugins(context: BuildContext,
  * @return a list of JVM args for opened packages (JBR17+) in a format `--add-opens=PACKAGE=ALL-UNNAMED` for a specified or current OS
  */
 fun getCommandLineArgumentsForOpenPackages(context: CompilationContext, target: OsFamily? = null): List<String> {
-  val file = context.paths.communityHomeDir.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
+  val file = context.paths.communityHomeDir.communityRoot.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
   val os = when (target) {
     OsFamily.WINDOWS -> OS.Windows
     OsFamily.MACOS -> OS.macOS

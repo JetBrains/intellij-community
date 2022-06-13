@@ -13,7 +13,7 @@ object PyCharmCommunityInstallersBuildTarget {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     val context = BuildContextImpl.createContext(
       communityHome = communityHome,
-      projectHome = communityHome,
+      projectHome = communityHome.communityRoot,
       productProperties = PyCharmCommunityProperties(communityHome),
     )
     BuildTasks.create(context).buildDistributions()

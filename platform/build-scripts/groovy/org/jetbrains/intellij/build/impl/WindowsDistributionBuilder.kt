@@ -47,7 +47,7 @@ internal class WindowsDistributionBuilder(
     val distBinDir = targetPath.resolve("bin")
     Files.createDirectories(distBinDir)
 
-    val binWin = FileSet(context.paths.communityHomeDir.resolve("bin/win")).includeAll()
+    val binWin = FileSet(context.paths.communityHomeDir.communityRoot.resolve("bin/win")).includeAll()
     if (!context.includeBreakGenLibraries()) {
       @Suppress("SpellCheckingInspection")
       binWin.exclude("breakgen*")
@@ -178,7 +178,7 @@ internal class WindowsDistributionBuilder(
       additionalJvmArguments.add("\"-Xbootclasspath/a:$bootCp\"")
     }
 
-    val winScripts = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/scripts")
+    val winScripts = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/resources/win/scripts")
     val actualScriptNames = Files.newDirectoryStream(winScripts).use { dirStream -> dirStream.map { it.fileName.toString() }.sorted() }
     @Suppress("SpellCheckingInspection")
     val expectedScriptNames = listOf("executable-template.bat", "format.bat", "inspect.bat", "ltedit.bat")

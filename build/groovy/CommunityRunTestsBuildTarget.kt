@@ -16,9 +16,11 @@ object CommunityRunTestsBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-    val context = createCompilationContext(communityHome = communityHome,
-                                           projectHome = communityHome,
-                                           defaultOutputRoot = communityHome.resolve("out/tests"))
+    val context = createCompilationContext(
+      communityHome = communityHome,
+      projectHome = communityHome.communityRoot,
+      defaultOutputRoot = communityHome.communityRoot.resolve("out/tests")
+    )
     TestingTasks.create(context).runTests(defaultMainModule = "intellij.idea.community.main")
   }
 }

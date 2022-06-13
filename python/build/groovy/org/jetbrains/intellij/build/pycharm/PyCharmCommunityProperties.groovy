@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.pycharm
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -12,11 +13,11 @@ import static org.jetbrains.intellij.build.impl.PluginLayoutGroovy.plugin
 
 @CompileStatic
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {
-  PyCharmCommunityProperties(Path communityHome) {
+  PyCharmCommunityProperties(BuildDependenciesCommunityRoot communityHome) {
     platformPrefix = "PyCharmCore"
     customProductCode = "PC"
     applicationInfoModule = "intellij.pycharm.community"
-    brandingResourcePaths = List.of(communityHome.resolve("python/resources"))
+    brandingResourcePaths = List.of(communityHome.communityRoot.resolve("python/resources"))
     scrambleMainJar = false
     buildSourcesArchive = true
 
@@ -30,7 +31,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     ]
     productLayout.bundledPluginModules.add("intellij.python.community.plugin")
     productLayout.bundledPluginModules.add("intellij.pycharm.community.customization")
-    productLayout.bundledPluginModules.addAll(Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt")))
+    productLayout.bundledPluginModules.addAll(Files.readAllLines(communityHome.communityRoot.resolve("python/build/plugin-list.txt")))
 
     productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.add(
       plugin("intellij.pycharm.community.customization") {
@@ -47,7 +48,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     super.copyAdditionalFiles(context, targetDirectory)
 
-    new FileSet(context.paths.communityHomeDir)
+    new FileSet(context.paths.communityHomeDir.communityRoot)
       .include("LICENSE.txt")
       .include("NOTICE.txt")
       .copyToDir(Path.of(targetDirectory, "license"))

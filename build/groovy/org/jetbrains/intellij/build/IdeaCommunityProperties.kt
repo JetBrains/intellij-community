@@ -2,24 +2,29 @@
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 
 import java.nio.file.Path
 
-internal fun createCommunityBuildContext(home: Path, options: BuildOptions = BuildOptions(), projectHome: Path = home): BuildContextImpl {
-  return BuildContextImpl.createContext(communityHome = home,
+internal fun createCommunityBuildContext(
+  communityHome: BuildDependenciesCommunityRoot,
+  options: BuildOptions = BuildOptions(),
+  projectHome: Path = communityHome.communityRoot,
+): BuildContextImpl {
+  return BuildContextImpl.createContext(communityHome = communityHome,
                                         projectHome = projectHome,
-                                        productProperties = IdeaCommunityProperties(home),
+                                        productProperties = IdeaCommunityProperties(communityHome),
                                         options = options)
 }
 
-open class IdeaCommunityProperties(private val communityHome: Path) : BaseIdeaProperties() {
+open class IdeaCommunityProperties(private val communityHome: BuildDependenciesCommunityRoot) : BaseIdeaProperties() {
   init {
     baseFileName = "idea"
     platformPrefix = "Idea"
     applicationInfoModule = "intellij.idea.community.resources"
-    additionalIDEPropertiesFilePaths = listOf(communityHome.resolve("build/conf/ideaCE.properties"))
+    additionalIDEPropertiesFilePaths = listOf(communityHome.communityRoot.resolve("build/conf/ideaCE.properties"))
     toolsJarRequired = true
     scrambleMainJar = false
     useSplash = true
@@ -59,11 +64,11 @@ open class IdeaCommunityProperties(private val communityHome: Path) : BaseIdeaPr
 
   override fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
     super.copyAdditionalFiles(context, targetDirectory)
-    FileSet(context.paths.communityHomeDir)
+    FileSet(context.paths.communityHomeDir.communityRoot)
       .include("LICENSE.txt")
       .include("NOTICE.txt")
       .copyToDir(Path.of(targetDirectory))
-     FileSet(context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"))
+     FileSet(context.paths.communityHomeDir.communityRoot.resolve("build/conf/ideaCE/common/bin"))
       .includeAll()
       .copyToDir(Path.of(targetDirectory, "bin"))
     bundleExternalPlugins(context, targetDirectory)
@@ -79,9 +84,9 @@ open class IdeaCommunityProperties(private val communityHome: Path) : BaseIdeaPr
   override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer {
     return object : WindowsDistributionCustomizer() {
       init {
-        icoPath = "$communityHome/platform/icons/src/idea_CE.ico"
-        icoPathForEAP = "$communityHome/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
-        installerImagesPath = "$communityHome/build/conf/ideaCE/win/images"
+        icoPath = "${communityHome.communityRoot}/platform/icons/src/idea_CE.ico"
+        icoPathForEAP = "${communityHome.communityRoot}/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
+        installerImagesPath = "${communityHome.communityRoot}/build/conf/ideaCE/win/images"
         fileAssociations = listOf("java", "groovy", "kt", "kts")
       }
 
@@ -98,8 +103,8 @@ open class IdeaCommunityProperties(private val communityHome: Path) : BaseIdeaPr
   override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer {
     return object : LinuxDistributionCustomizer() {
       init {
-        iconPngPath = "$communityHome/build/conf/ideaCE/linux/images/icon_CE_128.png"
-        iconPngPathForEAP = "$communityHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
+        iconPngPath = "${communityHome.communityRoot}/build/conf/ideaCE/linux/images/icon_CE_128.png"
+        iconPngPathForEAP = "${communityHome.communityRoot}/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
         snapName = "intellij-idea-community"
         snapDescription =
           "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
@@ -120,13 +125,13 @@ open class IdeaCommunityProperties(private val communityHome: Path) : BaseIdeaPr
   override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer {
     return object : MacDistributionCustomizer() {
       init {
-        icnsPath = "$communityHome/build/conf/ideaCE/mac/images/idea.icns"
+        icnsPath = "${communityHome.communityRoot}/build/conf/ideaCE/mac/images/idea.icns"
         urlSchemes = listOf("idea")
         associateIpr = true
         fileAssociations = FileAssociation.from("java", "groovy", "kt", "kts")
         bundleIdentifier = "com.jetbrains.intellij.ce"
-        dmgImagePath = "$communityHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
-        icnsPathForEAP = "$communityHome/build/conf/ideaCE/mac/images/communityEAP.icns"
+        dmgImagePath = "${communityHome.communityRoot}/build/conf/ideaCE/mac/images/dmg_background.tiff"
+        icnsPathForEAP = "${communityHome.communityRoot}/build/conf/ideaCE/mac/images/communityEAP.icns"
       }
 
       override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {

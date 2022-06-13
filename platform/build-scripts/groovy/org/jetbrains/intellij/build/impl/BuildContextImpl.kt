@@ -11,6 +11,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -68,7 +69,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
   companion object {
     @JvmStatic
     @JvmOverloads
-    fun createContext(communityHome: Path,
+    fun createContext(communityHome: BuildDependenciesCommunityRoot,
                       projectHome: Path,
                       productProperties: ProductProperties,
                       proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
@@ -329,6 +330,6 @@ private fun configureProjectorPlugin(properties: ProductProperties) {
   }
 }
 
-private fun readSnapshotBuildNumber(communityHome: Path): String {
-  return Files.readString(communityHome.resolve("build.txt")).trim { it <= ' ' }
+private fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {
+  return Files.readString(communityHome.communityRoot.resolve("build.txt")).trim { it <= ' ' }
 }

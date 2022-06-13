@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.NioFiles
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.testFramework.createBuildContext
 import org.jetbrains.intellij.build.testFramework.runTestBuild
 import org.junit.jupiter.api.Test
@@ -31,6 +32,7 @@ class IdeaCommunityBuildTest {
       homePath = homePath,
       productProperties = IdeaCommunityProperties(communityHome),
       skipDependencySetup = true,
+      communityHomePath = communityHome,
     )
     val outDir = context.paths.buildOutputDir
     try {

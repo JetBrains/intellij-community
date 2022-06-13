@@ -4,12 +4,13 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.io.FileUtilRt
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
 /**
  * All paths are absolute and use '/' as a separator
  */
 abstract class BuildPaths(
-  val communityHomeDir: Path,
+  val communityHomeDir: BuildDependenciesCommunityRoot,
   val buildOutputDir: Path,
   /**
    * All log and debug files should be written to this directory. It will be automatically published to TeamCity artifacts
@@ -23,8 +24,7 @@ abstract class BuildPaths(
   /**
    * Path to a directory where idea/community Git repository is checked out
    */
-  val communityHome: String = FileUtilRt.toSystemIndependentName(communityHomeDir.toString())
-  val buildDependenciesCommunityRoot: BuildDependenciesCommunityRoot = BuildDependenciesCommunityRoot(communityHomeDir)
+  val communityHome: String = FileUtilRt.toSystemIndependentName(communityHomeDir.communityRoot.pathString)
 
   /**
    * Path to a directory where build script will store temporary and resulting files

@@ -113,10 +113,10 @@ final class CommunityRepositoryModules {
       withGeneratedResources({ Path targetDir, BuildContext context ->
         Path targetLib = targetDir.resolve("lib")
 
-        Path mavenLibs = BundledMavenDownloader.INSTANCE.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
+        Path mavenLibs = BundledMavenDownloader.INSTANCE.downloadMavenCommonLibs(context.paths.communityHomeDir)
         FileUtil.copyDir(mavenLibs.toFile(), targetLib.resolve("maven3-server-lib").toFile())
 
-        Path mavenDist = BundledMavenDownloader.INSTANCE.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
+        Path mavenDist = BundledMavenDownloader.INSTANCE.downloadMavenDistribution(context.paths.communityHomeDir)
         FileUtil.copyDir(mavenDist.toFile(), targetLib.resolve("maven3").toFile())
       })
     },
