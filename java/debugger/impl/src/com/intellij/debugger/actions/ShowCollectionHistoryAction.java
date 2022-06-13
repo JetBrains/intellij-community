@@ -26,6 +26,9 @@ import java.util.List;
 
 @ApiStatus.Experimental
 public class ShowCollectionHistoryAction extends XFetchValueActionBase {
+  public ShowCollectionHistoryAction() {
+    getTemplatePresentation().setText(ActionsBundle.messagePointer("action.Debugger.ShowCollectionHistory.text"));
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -35,9 +38,6 @@ public class ShowCollectionHistoryAction extends XFetchValueActionBase {
       return;
     }
     super.update(e);
-    if (getNode(e) != null) {
-      e.getPresentation().setText(ActionsBundle.messagePointer("action.Debugger.ShowCollectionHistory.text"));
-    }
   }
 
   @NotNull
