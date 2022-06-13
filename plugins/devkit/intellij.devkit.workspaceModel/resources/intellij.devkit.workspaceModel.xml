@@ -1,11 +1,11 @@
-<idea-plugin package="com.intellij.workspaceModel.codegen">
+<idea-plugin package="com.intellij.devkit.workspaceModel">
   <dependencies>
     <plugin id="com.intellij.java"/>
     <plugin id="org.jetbrains.kotlin"/>
   </dependencies>
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
   <actions>
-      <action id="WorkspaceModelGeneration" class="com.intellij.workspaceModel.codegen.WorkspaceModelGenerationAction">
+      <action id="WorkspaceModelGeneration" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerationAction">
         <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
       </action>
   </actions>
@@ -17,14 +17,14 @@
                      groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
                      runForWholeFile="true"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.workspaceModel.codegen.WorkspaceImplObsoleteInspection"
+                     implementationClass="com.intellij.devkit.workspaceModel.WorkspaceImplObsoleteInspection"
                      key="inspection.workspace.obsolete.model.display.name"/>
     <localInspection language="kotlin"
                      groupBundle="messages.DevKitWorkspaceModelBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
                      runForWholeFile="true"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.workspaceModel.codegen.WorkspaceImplAbsentInspection"
+                     implementationClass="com.intellij.devkit.workspaceModel.WorkspaceImplAbsentInspection"
                      key="inspection.workspace.absent.model.display.name"/>
   </extensions>
 </idea-plugin>
