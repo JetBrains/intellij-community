@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -99,5 +100,10 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     Project project = e.getProject();
     boolean enable = project != null && !RecentProjectListActionProvider.getInstance().getActions(false).isEmpty();
     e.getPresentation().setEnabledAndVisible(enable);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

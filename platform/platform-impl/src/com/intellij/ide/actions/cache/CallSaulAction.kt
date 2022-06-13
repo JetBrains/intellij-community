@@ -22,6 +22,10 @@ internal class CallSaulAction : DumbAwareAction() {
       }
     }
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
 internal class CacheRecoveryActionGroup: ComputableActionGroup() {
@@ -42,6 +46,10 @@ internal class CacheRecoveryActionGroup: ComputableActionGroup() {
       else emptyArray()
       CachedValueProvider.Result.create(actions, service<Saul>().modificationRecoveryActionTracker)
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   private fun RecoveryAction.toAnAction(): AnAction {
