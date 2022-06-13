@@ -155,7 +155,7 @@ class MavenImportFlow {
     val guessedDir = context.project.guessProjectDir();
     if (guessedDir != null) return guessedDir
     when (context.paths) {
-      is FilesList -> return context.paths.poms[0].parent
+      is FilesList -> return context.paths.poms[0]?.parent
       is RootPath -> return context.paths.path
     }
   }
