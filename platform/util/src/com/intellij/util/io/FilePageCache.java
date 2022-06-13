@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import com.intellij.util.containers.hash.LongLinkedHashMap;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.system.CpuArch;
@@ -154,7 +153,7 @@ final class FilePageCache {
 
   private final Int2ObjectMap<PagedFileStorage> myIndex2Storage = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
 
-  private final LongLinkedHashMap<DirectBufferWrapper> mySegments;
+  private final LinkedHashMap<Long, DirectBufferWrapper> mySegments;
 
   private final ReentrantLock mySegmentsAccessLock = new ReentrantLock(); // protects map operations of mySegments, needed for LRU order, mySize and myMappingChangeCount
   // todo avoid locking for access
@@ -178,17 +177,15 @@ final class FilePageCache {
 
   FilePageCache() {
     mySizeLimit = UPPER_LIMIT;
-
-    // super hot-spot, it's very essential to use specialized collection here
-    mySegments = new LongLinkedHashMap<DirectBufferWrapper>(10, 0.75f, true) {
+    mySegments = new LinkedHashMap<Long, DirectBufferWrapper>(10, 0.75f, true) {
       @Override
-      protected boolean removeEldestEntry(LongLinkedHashMap.Entry<DirectBufferWrapper> eldest) {
+      protected boolean removeEldestEntry(Map.Entry<Long, DirectBufferWrapper> eldest) {
         assert mySegmentsAccessLock.isHeldByCurrentThread();
         return mySize > mySizeLimit;
       }
 
       @Override
-      public DirectBufferWrapper put(long key, @NotNull DirectBufferWrapper wrapper) {
+      public DirectBufferWrapper put(Long key, @NotNull DirectBufferWrapper wrapper) {
         mySize += wrapper.getLength();
         DirectBufferWrapper oldShouldBeNull = super.put(key, wrapper);
         myMaxLoadedSize = Math.max(myMaxLoadedSize, mySize);
@@ -197,7 +194,7 @@ final class FilePageCache {
 
       @Nullable
       @Override
-      public DirectBufferWrapper remove(long key) {
+      public DirectBufferWrapper remove(Object key) {
         assert mySegmentsAccessLock.isHeldByCurrentThread();
         // this method can be called after removeEldestEntry
         DirectBufferWrapper wrapper = super.remove(key);
@@ -210,6 +207,10 @@ final class FilePageCache {
         return wrapper;
       }
     };
+  }
+
+  int getMappingChangeCount() {
+    return myMappingChangeCount;
   }
 
   long registerPagedFileStorage(@NotNull PagedFileStorage storage) {
@@ -370,7 +371,7 @@ final class FilePageCache {
     try {
       storageLockContext.checkReadAccess();
       Map<Long, DirectBufferWrapper> mineBuffers = new TreeMap<>();
-      for (LongLinkedHashMap.Entry<DirectBufferWrapper> entry : mySegments.entrySet()) {
+      for (Map.Entry<Long, DirectBufferWrapper> entry : mySegments.entrySet()) {
         if (entry.getValue().getFile() == storage) {
           mineBuffers.put(entry.getKey(), entry.getValue());
         }
