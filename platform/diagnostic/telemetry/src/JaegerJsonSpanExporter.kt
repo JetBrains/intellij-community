@@ -36,7 +36,7 @@ class JaegerJsonSpanExporter : SpanExporter {
         finishWriter(it)
       }
 
-      val w = JsonFactory().createGenerator(Files.newBufferedWriter(file)).useDefaultPrettyPrinter()
+      val w = JsonFactory().createGenerator(Files.newBufferedWriter(file))
       writer.set(w)
       Companion.file = file
       synchronized(w) {

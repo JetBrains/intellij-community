@@ -184,6 +184,10 @@ data class IDETestContext(
     addSystemProperty("idea.collect.project.import.performance", true)
   }
 
+  fun collectOpenTelemetry() = addVMOptionsPatch {
+    addSystemProperty("idea.diagnostic.opentelemetry.file", paths.logsDir.resolve("opentelemetry.json"))
+  }
+
   fun enableWorkspaceModelVerboseLogs() = addVMOptionsPatch {
     configureLoggers(traceLoggers = listOf("com.intellij.workspaceModel"))
   }
