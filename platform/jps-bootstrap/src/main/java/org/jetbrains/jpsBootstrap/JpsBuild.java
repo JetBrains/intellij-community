@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -71,7 +72,7 @@ public final class JpsBuild {
   }
 
   public void buildModules(Set<JpsModule> modules) throws Exception {
-    runBuild(modules.stream().map(JpsNamedElement::getName).collect(Collectors.toSet()));
+    runBuild(modules.stream().map(JpsNamedElement::getName).collect(Collectors.toSet()), false);
   }
 
   public void resolveProjectDependencies() throws Exception {
@@ -104,7 +105,7 @@ public final class JpsBuild {
     messageHandler.assertNoErrors();
   }
 
-  private void runBuild(Set<String> modules) throws Exception {
+  private void runBuild(Set<String> modules, boolean rebuild) throws Exception {
     final long buildStart = System.currentTimeMillis();
 
     JpsMessageHandler messageHandler = new JpsMessageHandler();
@@ -118,7 +119,7 @@ public final class JpsBuild {
     Standalone.runBuild(
       () -> myModel,
       myDataStorageRoot,
-      false,
+      rebuild,
       modules,
       false,
       Collections.emptyList(),
@@ -128,13 +129,20 @@ public final class JpsBuild {
 
     System.out.println("Finished building '" + String.join(" ", modules) + "' in " + (System.currentTimeMillis() - buildStart) + " ms");
 
-    messageHandler.assertNoErrors();
+    List<String> errors = new ArrayList<>(messageHandler.myErrors);
+    if (!errors.isEmpty() && !rebuild) {
+      warn("Incremental build finished with errors. Forcing rebuild. Compilation errors:\n" + String.join("\n", errors));
+      runBuild(modules, true);
+    }
+    else {
+      messageHandler.assertNoErrors();
+    }
   }
 
   private class JpsMessageHandler implements MessageHandler {
     private boolean myExplicitlyVerbose;
 
-    private final AtomicReference<String> myFirstError = new AtomicReference<>();
+    private final List<String> myErrors = new CopyOnWriteArrayList<>();
     private final AtomicReference<String> myLastMessage = new AtomicReference<>();
 
     public void setExplicitlyVerbose() {
@@ -168,8 +176,8 @@ public final class JpsBuild {
           break;
         case ERROR:
         case INTERNAL_BUILDER_ERROR:
-          error(text);
-          myFirstError.compareAndSet(null, text);
+          // Do not log since we may call rebuild later and teamcity will fail on the first error
+          myErrors.add(text);
           break;
         default:
           if (!msg.getMessageText().isBlank()) {
@@ -185,10 +193,15 @@ public final class JpsBuild {
     }
 
     public void assertNoErrors() {
-      String firstErrorText = myFirstError.get();
-      if (firstErrorText != null) {
+      List<String> errors = new ArrayList<>(myErrors);
+      if (!errors.isEmpty()) {
         System.out.println(new PublishArtifacts(myJpsLogDir + "=>jps-bootstrap-jps-logs.zip").asString());
-        throw new IllegalStateException("Build finished with errors. See TC artifacts for build log. First error:\n" + firstErrorText);
+
+        for (String error : errors) {
+          error(error);
+        }
+
+        throw new IllegalStateException("Build finished with errors. See TC artifacts for build log. First error:\n" + errors.get(0));
       }
     }
   }

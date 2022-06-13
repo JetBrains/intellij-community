@@ -73,7 +73,7 @@ public class JpsBootstrapMain {
       if (!underTeamCity) {
         System.err.println("\n###### ERROR EXIT due to FATAL error: " + t.getMessage() + "\n");
         String work = jpsBootstrapWorkDir == null ? "PROJECT_HOME/build/jps-bootstrap-work" : jpsBootstrapWorkDir.toString();
-        System.err.println("###### If it looks like a Kotlin incremental compilation bug, please delete " + work + " folder and retry");
+        System.err.println("###### You may try to delete caches at " + work + " and retry");
       }
 
       System.exit(1);
