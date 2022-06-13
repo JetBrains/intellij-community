@@ -138,7 +138,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
       Set<PsiModifierListOwner> visitedVars = new HashSet<>();
       class MyAnnoVisitor implements AnnotationUtilEx.AnnotatedElementVisitor {
         @Override
-        public boolean visitMethodParameter(PsiExpression expression, PsiCall psiCallExpression) {
+        public boolean visitMethodParameter(@NotNull PsiExpression expression, @NotNull PsiCall psiCallExpression) {
           PsiExpressionList list = psiCallExpression.getArgumentList();
           assert list != null;
           int index = ArrayUtil.indexOf(list.getExpressions(), expression);
@@ -181,7 +181,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         }
 
         @Override
-        public boolean visitMethodReturnStatement(PsiElement source, PsiMethod method) {
+        public boolean visitMethodReturnStatement(@NotNull PsiElement source, @NotNull PsiMethod method) {
           if (areThereInjectionsWithName(method.getName(), false)) {
             process(method, method, -1);
           }
@@ -206,7 +206,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         }
 
         @Override
-        public boolean visitVariable(PsiVariable variable) {
+        public boolean visitVariable(@NotNull PsiVariable variable) {
           if (!visitedVars.add(variable)) return false;
           visitVariableUsages(variable);
           PsiElement anchor = !(variable.getFirstChild() instanceof PsiComment) ? variable :
@@ -223,7 +223,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         }
 
         @Override
-        public boolean visitAnnotationParameter(PsiNameValuePair nameValuePair, PsiAnnotation psiAnnotation) {
+        public boolean visitAnnotationParameter(@NotNull PsiNameValuePair nameValuePair, @NotNull PsiAnnotation psiAnnotation) {
           String paramName = nameValuePair.getName();
           String methodName = paramName != null ? paramName : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
           if (areThereInjectionsWithName(methodName, false)) {
@@ -237,7 +237,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         }
 
         @Override
-        public boolean visitReference(PsiReferenceExpression expression) {
+        public boolean visitReference(@NotNull PsiReferenceExpression expression) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() == Configuration.DfaOption.OFF) return true;
           PsiElement e = expression.resolve();
           if (e instanceof PsiVariable) {
