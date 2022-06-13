@@ -17,7 +17,7 @@ abstract class AbstractJavaUClass(
   @Suppress("OverridingDeprecatedMember")
   override val psi get() = javaPsi
 
-  override val uastDeclarations: MutableList<UDeclaration> by lz {
+  override val uastDeclarations: List<UDeclaration> by lz {
     mutableListOf<UDeclaration>().apply {
       addAll(fields)
       addAll(initializers)
@@ -53,7 +53,6 @@ class JavaUClass(
 ) : AbstractJavaUClass(givenParent), UAnchorOwner, PsiClass by sourcePsi {
 
   override val javaPsi: PsiClass = unwrap<UClass, PsiClass>(sourcePsi)
-
   override fun getSuperClass(): UClass? = super.getSuperClass()
   override fun getFields(): Array<UField> = super.getFields()
   override fun getInitializers(): Array<UClassInitializer> = super.getInitializers()
