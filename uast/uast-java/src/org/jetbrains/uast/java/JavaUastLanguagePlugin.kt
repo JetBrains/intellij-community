@@ -283,46 +283,92 @@ internal object JavaConverter {
     return result
   }
 
-  internal fun convertPsiElement(el: PsiElement,
-                                 givenParent: UElement?,
-                                 requiredType: Class<out UElement>): UElement? {
-    return when (el) {
-      is PsiCodeBlock -> requiredType.el<UBlockExpression, PsiCodeBlock>(el, givenParent, ::JavaUCodeBlockExpression)
-      is PsiResourceExpression -> convertExpression(el.expression, givenParent, requiredType)
-      is PsiExpression -> convertExpression(el, givenParent, requiredType)
-      is PsiStatement -> convertStatement(el, givenParent, requiredType)
-      is PsiImportStatementBase -> requiredType.el<UImportStatement,PsiImportStatementBase>(el, givenParent, ::JavaUImportStatement)
-      is PsiIdentifier -> requiredType.el<UIdentifier, PsiElement>(el, givenParent, ::JavaLazyParentUIdentifier)
-      is PsiKeyword -> if (el.text == PsiKeyword.SUPER || el.text == PsiKeyword.THIS)
-                         requiredType.el<UIdentifier, PsiElement>(el, givenParent, ::JavaLazyParentUIdentifier)
-                       else null
-      is PsiNameValuePair -> requiredType.el<UNamedExpression,PsiNameValuePair>(el, givenParent, ::JavaUNamedExpression)
-      is PsiArrayInitializerMemberValue -> requiredType.el<UCallExpression,PsiArrayInitializerMemberValue>(el, givenParent,
-                                                                                              ::JavaAnnotationArrayInitializerUCallExpression)
-      is PsiTypeElement -> requiredType.el<UTypeReferenceExpression,PsiTypeElement>(el, givenParent, ::JavaUTypeReferenceExpression)
-      is PsiJavaCodeReferenceElement -> convertReference(el, givenParent, requiredType)
-      is PsiJavaModuleReferenceElement -> requiredType.el<UReferenceExpression,PsiJavaModuleReferenceElement>(el, givenParent,
-                                                                                                 ::JavaUModuleReferenceExpression)
-      is PsiAnnotation -> el.takeIf { PsiTreeUtil.getParentOfType(it, PsiAnnotationMemberValue::class.java, true) != null }?.let {
-        requiredType.el<UExpression,PsiAnnotation>(it, givenParent, ::JavaUAnnotationCallExpression)
+  internal fun convertPsiElement(el: PsiElement, givenParent: UElement?, requiredType: Class<out UElement>): UElement? {
+    var result:UElement? = null
+    el.accept(object: JavaElementVisitor(){
+      override fun visitAnnotation(annotation: PsiAnnotation) {
+        result = annotation.takeIf { PsiTreeUtil.getParentOfType(it, PsiAnnotationMemberValue::class.java, true) != null }?.let { requiredType.el<UExpression,PsiAnnotation>(it, givenParent, ::JavaUAnnotationCallExpression) }
       }
-      is PsiComment -> requiredType.el<UComment,PsiComment>(el, givenParent, ::UComment)
-      is PsiDocToken ->
-        if (el.tokenType == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
-          val reference = when (val elParent = el.parent) {
+
+      override fun visitAnnotationArrayInitializer(initializer: PsiArrayInitializerMemberValue) {
+        result = requiredType.el<UCallExpression,PsiArrayInitializerMemberValue>(initializer, givenParent, ::JavaAnnotationArrayInitializerUCallExpression)
+      }
+
+      override fun visitCatchSection(section: PsiCatchSection) {
+        result = requiredType.el<UCatchClause,PsiCatchSection>(section, givenParent, ::JavaUCatchClause)
+      }
+
+      override fun visitCodeBlock(block: PsiCodeBlock) {
+        result = requiredType.el<UBlockExpression, PsiCodeBlock>(block, givenParent, ::JavaUCodeBlockExpression)
+      }
+
+      override fun visitDocToken(token: PsiDocToken) {
+        result = if (token.tokenType == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
+          val reference = when (val elParent = token.parent) {
             is PsiDocMethodOrFieldRef -> elParent.reference
             is PsiDocParamRef -> elParent.reference
             else -> null
           }
-          if (reference == null) null else requiredType.el<USimpleNameReferenceExpression, PsiElement>(el, givenParent) { e, gp ->
+          if (reference == null) null else requiredType.el<USimpleNameReferenceExpression, PsiElement>(token, givenParent) { e, gp ->
             JavaUSimpleNameReferenceExpression(e, e.text, gp, reference)
           }
         }
         else null
+      }
 
-      is PsiCatchSection -> requiredType.el<UCatchClause,PsiCatchSection>(el, givenParent, ::JavaUCatchClause)
-      else -> null
-    }
+      override fun visitExpression(expression: PsiExpression) {
+        result = convertExpression(expression, givenParent, requiredType)
+      }
+
+      override fun visitReferenceExpression(expression: PsiReferenceExpression) {
+        visitExpression(expression)
+      }
+
+      override fun visitIdentifier(identifier: PsiIdentifier) {
+        result = requiredType.el<UIdentifier, PsiElement>(identifier, givenParent, ::JavaLazyParentUIdentifier)
+      }
+
+      override fun visitImportStatement(statement: PsiImportStatement) {
+        result = requiredType.el<UImportStatement,PsiImportStatementBase>(statement, givenParent, ::JavaUImportStatement)
+      }
+
+      override fun visitImportStaticStatement(statement: PsiImportStaticStatement) {
+        result = requiredType.el<UImportStatement,PsiImportStatementBase>(statement, givenParent, ::JavaUImportStatement)
+      }
+
+      override fun visitKeyword(keyword: PsiKeyword) {
+        result = if (keyword.text == PsiKeyword.SUPER || keyword.text == PsiKeyword.THIS) requiredType.el<UIdentifier, PsiElement>(keyword, givenParent, ::JavaLazyParentUIdentifier) else null
+      }
+
+      override fun visitModuleReferenceElement(refElement: PsiJavaModuleReferenceElement) {
+        result = requiredType.el<UReferenceExpression,PsiJavaModuleReferenceElement>(refElement, givenParent, ::JavaUModuleReferenceExpression)
+      }
+
+      override fun visitNameValuePair(pair: PsiNameValuePair) {
+        result = requiredType.el<UNamedExpression,PsiNameValuePair>(pair, givenParent, ::JavaUNamedExpression)
+      }
+
+      override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement) {
+        result = convertReference(reference, givenParent, requiredType)
+      }
+
+      override fun visitResourceExpression(expression: PsiResourceExpression) {
+        result = convertExpression(expression.expression, givenParent, requiredType)
+      }
+
+      override fun visitStatement(statement: PsiStatement) {
+        result = convertStatement(statement, givenParent, requiredType)
+      }
+
+      override fun visitTypeElement(type: PsiTypeElement) {
+        result = requiredType.el<UTypeReferenceExpression,PsiTypeElement>(type, givenParent, ::JavaUTypeReferenceExpression)
+      }
+
+      override fun visitComment(comment: PsiComment) {
+        result = requiredType.el<UComment,PsiComment>(comment, givenParent, ::UComment)
+      }
+    })
+    return result
   }
 
   internal fun convertBlock(block: PsiCodeBlock, parent: UElement?): UBlockExpression = JavaUCodeBlockExpression(block, parent)
@@ -423,10 +469,10 @@ internal object JavaConverter {
                                 requiredType: Class<out UElement>): UExpression? {
     return when (el) {
       is PsiDeclarationStatement -> requiredType.expr<UDeclarationsExpression,PsiDeclarationStatement>(el, givenParent) { e, gp ->
-        convertDeclarations(e.declaredElements, gp ?: unwrapElements(e.parent).toUElement())
+        convertDeclarations(e.declaredElements, gp ?: e.parent ?.run { unwrapElements(this).toUElement() })
       }
       is PsiExpressionListStatement -> requiredType.expr<UDeclarationsExpression,PsiExpressionListStatement>(el, givenParent) { e, gp ->
-        convertDeclarations(e.expressionList.expressions, gp ?: unwrapElements(e.parent).toUElement())
+        convertDeclarations(e.expressionList.expressions, gp ?: e.parent ?.run { unwrapElements(this).toUElement() })
       }
       is PsiBlockStatement -> requiredType.expr<UBlockExpression,PsiBlockStatement>(el, givenParent, ::JavaUBlockExpression)
       is PsiLabeledStatement -> requiredType.expr<ULabeledExpression,PsiLabeledStatement>(el, givenParent, ::JavaULabeledExpression)
