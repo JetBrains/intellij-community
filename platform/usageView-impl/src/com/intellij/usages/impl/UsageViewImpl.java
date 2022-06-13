@@ -2231,9 +2231,9 @@ public class UsageViewImpl implements UsageViewEx {
     return USAGE_INFO_LIST_KEY.getData(DataManager.getInstance().getDataContext(myRootPanel));
   }
 
-  public boolean isGroupNodeSelected() {
-    return TreeUtil.treeNodeTraverser(null).withRoots(selectedNodes()).traverse()
-             .filterMap(node -> node instanceof GroupNode ? ((GroupNode)node) : null).first() != null;
+  public @NotNull Set<@NotNull GroupNode> selectedGroupNodes() {
+    return selectedNodes().stream().filter(node -> node instanceof GroupNode).map(node -> (GroupNode)node)
+      .collect(Collectors.toCollection(HashSet::new));
   }
 
   @NotNull
