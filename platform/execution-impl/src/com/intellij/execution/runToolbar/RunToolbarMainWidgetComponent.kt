@@ -6,6 +6,7 @@ import com.intellij.execution.runToolbar.data.RWStateListener
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
@@ -51,6 +52,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
   private val managerStateListener = object : RWStateListener {
     override fun stateChanged(state: RWSlotManagerState) {
       updateState()
+      this@RunToolbarMainWidgetComponent.updateActionsImmediately(true)
     }
   }
 
@@ -82,7 +84,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
   }
 
   override fun traceState(lastIds: List<String>, filteredIds: List<String>, ides: List<String>) {
-    if(logNeeded() && filteredIds != lastIds) LOG.info("MAIN SLOT state: ${state} new filtered: ${filteredIds}} visible: $ides RunToolbar")
+    if(logNeeded()) LOG.info("MAIN SLOT state: ${state} new filtered: ${filteredIds}} visible: $ides RunToolbar")
   }
 
   internal var isOpened = false
@@ -103,7 +105,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
       if(action is RTBarAction) {
         action.checkMainSlotVisibility(it)
       } else true
-    } ?: true
+    } ?: false
   }
 
   override fun addNotify() {
