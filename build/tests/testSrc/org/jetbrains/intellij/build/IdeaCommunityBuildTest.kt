@@ -12,7 +12,7 @@ class IdeaCommunityBuildTest {
   @Test
   fun testBuild() {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
-    val communityHomePath = homePath.resolve("community")
+    val communityHomePath = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     runTestBuild(
       homePath = communityHomePath,
       communityHomePath = communityHomePath,
