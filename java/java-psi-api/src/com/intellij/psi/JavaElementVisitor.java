@@ -186,7 +186,7 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   }
 
   public void visitImportStaticReferenceElement(@NotNull PsiImportStaticReferenceElement reference) {
-    visitElement(reference);
+    visitReferenceElement(reference);
   }
 
   public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
