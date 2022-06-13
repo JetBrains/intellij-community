@@ -237,6 +237,16 @@ public final class ClassInnerStuffCache {
       myModifierList = createModifierList();
     }
 
+    @Override
+    public void accept(@NotNull PsiElementVisitor visitor) {
+      if (visitor instanceof JavaElementVisitor) {
+        ((JavaElementVisitor)visitor).visitMethod(this);
+      }
+      else {
+        visitor.visitElement(this);
+      }
+    }
+    
     private @NotNull PsiType createReturnType() {
       PsiClassType type = JavaPsiFacade.getElementFactory(getProject()).createType(myClass);
       if (myKind == EnumMethodKind.Values) {
