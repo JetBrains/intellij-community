@@ -1772,15 +1772,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   internal fun toolWindowAvailable(toolWindow: ToolWindowImpl) {
-    if (!isNewUi && !toolWindow.isShowStripeButton) {
-      // force showing stripe button on adding initial mapping even if stripe button was manually removed by the user
-      val info = layoutState.getInfo(toolWindow.id)
-      if (info != null) {
-        info.isShowStripeButton = true
-        toolWindow.setWindowInfoSilently(info.copy())
-      }
-    }
-
     if (!toolWindow.isShowStripeButton) {
       return
     }
