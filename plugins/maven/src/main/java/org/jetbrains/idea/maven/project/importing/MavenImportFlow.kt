@@ -120,7 +120,6 @@ class MavenImportFlow {
         }
 
 
-
         // resolve updated, theirs dependents, and dependents of deleted
         toResolve.addAll(projectsTree.getDependentProjects(ContainerUtil.concat(allUpdated, deleted)))
 
@@ -140,8 +139,8 @@ class MavenImportFlow {
 
     projectsTree.updateAll(true, context.generalSettings, indicator)
     Disposer.dispose(d)
-    val baseDir = context.project.guessProjectDir()
-    val wrapperData = MavenWrapperSupport.getWrapperDistributionUrl(baseDir)?.let { WrapperData(it, baseDir!!) }
+    val workingDir = getWorkingBaseDir(context)
+    val wrapperData = MavenWrapperSupport.getWrapperDistributionUrl(workingDir)?.let { WrapperData(it, workingDir!!) }
     return MavenReadContext(context.project, projectsTree, toResolve, errorsSet, context, wrapperData, indicator)
   }
 
@@ -149,6 +148,16 @@ class MavenImportFlow {
     if (readContext.wrapperData == null) return readContext
     MavenWrapperDownloader.checkOrInstallForSync(readContext.project, readContext.wrapperData.baseDir.path)
     return readContext
+  }
+
+
+  private fun getWorkingBaseDir(context: MavenInitialImportContext): VirtualFile? {
+    val guessedDir = context.project.guessProjectDir();
+    if (guessedDir != null) return guessedDir
+    when (context.paths) {
+      is FilesList -> return context.paths.poms[0].parent
+      is RootPath -> return context.paths.path
+    }
   }
 
   private fun searchForMavenFiles(path: VirtualFile, indicator: MavenProgressIndicator): MutableList<VirtualFile> {
