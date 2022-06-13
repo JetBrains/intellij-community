@@ -51,8 +51,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class UsagePreviewPanel extends UsageContextPanelBase implements DataProvider {
@@ -67,6 +69,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private Pattern myCachedReplacePattern;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private @Nullable MostCommonUsagePatternsComponent myCommonUsagePatternsComponent;
+  private @NotNull Set<GroupNode> myPreviousSelectedGroupNodes = new HashSet<>();
 
   public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
     this(project, presentation, false);
@@ -391,22 +394,32 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   @RequiresEdt
   public void updateLayoutLater(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     UsageViewImpl usageViewImpl = ObjectUtils.tryCast(usageView, UsageViewImpl.class);
-    if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() &&
-        usageViewImpl != null &&
-        isOnlyGroupNodesSelected(infos, usageViewImpl)) {
+    if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() && usageViewImpl != null) {
+      final Set<@NotNull GroupNode> selectedGroupNodes = usageViewImpl.selectedGroupNodes();
+      if (isOnlyGroupNodesSelected(infos, selectedGroupNodes)) {
+        showMostCommonUsagePatterns(usageViewImpl, selectedGroupNodes);
+      }
+      else {
+        updateLayoutLater(infos);
+      }
+      myPreviousSelectedGroupNodes = selectedGroupNodes;
+    } else {
+      updateLayoutLater(infos);
+    }
+  }
+
+  private void showMostCommonUsagePatterns(@NotNull UsageViewImpl usageViewImpl, @NotNull Set<@NotNull GroupNode> selectedGroupNodes) {
+    if (!myPreviousSelectedGroupNodes.equals(selectedGroupNodes)) {
       releaseEditor();
       disposeMostCommonUsageComponent();
       removeAll();
       myCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl);
       add(myCommonUsagePatternsComponent);
     }
-    else {
-      updateLayoutLater(infos);
-    }
   }
 
-  private static boolean isOnlyGroupNodesSelected(@NotNull List<? extends UsageInfo> infos, @NotNull UsageViewImpl usageView) {
-    return infos.isEmpty() && usageView.isGroupNodeSelected();
+  private static boolean isOnlyGroupNodesSelected(@NotNull List<? extends UsageInfo> infos, @NotNull Set<@NotNull GroupNode> groupNodes) {
+    return infos.isEmpty() && !groupNodes.isEmpty();
   }
 
   @Override
