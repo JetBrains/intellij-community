@@ -3397,7 +3397,10 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             Assert.assertEquals("1.8", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
 
             Assert.assertEquals(
-                "Title: 'Unsupported JVM target 1.6'\n" +
+                "Title: ''\n" +
+                        "Content: 'Kotlin version 1.7.0 is available'\n" +
+                        "-----\n" +
+                        "Title: 'Unsupported JVM target 1.6'\n" +
                         "Content: 'Maven project uses JVM target 1.6 for Kotlin compilation, which is no longer supported. " +
                         "It has been imported as JVM target 1.8. Consider migrating the project to JVM 1.8.'\n" +
                         "-----\n" +
