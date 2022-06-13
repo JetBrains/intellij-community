@@ -47,7 +47,7 @@ internal class VariableLookupElementFactory {
         substitutor: KtSubstitutor,
         insertionStrategy: CallableInsertionStrategy = options.insertionStrategy
     ): LookupElementBuilder {
-        val symbolType = substitutor.substituteOrSelf(symbol.returnType)
+        val symbolType = substitutor.substitute(symbol.returnType)
         return when (insertionStrategy) {
             CallableInsertionStrategy.AsCall -> {
                 val functionalType = symbolType as KtFunctionalType
@@ -60,11 +60,11 @@ internal class VariableLookupElementFactory {
                 )
 
                 val tailText = functionalType.parameterTypes.joinToString(prefix = "(", postfix = ")") {
-                    substitutor.substituteOrSelf(it).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
+                    substitutor.substitute(it).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
                 }
 
                 val typeText =
-                    substitutor.substituteOrSelf(functionalType.returnType).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
+                    substitutor.substitute(functionalType.returnType).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
 
                 LookupElementBuilder.create(lookupObject, symbol.name.asString())
                     .withTailText(tailText, true)
