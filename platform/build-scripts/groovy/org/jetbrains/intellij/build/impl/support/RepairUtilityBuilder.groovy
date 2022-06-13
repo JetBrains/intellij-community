@@ -104,6 +104,7 @@ final class RepairUtilityBuilder {
         if (BINARIES_CACHE.isEmpty()) {
           return Unit.INSTANCE
         }
+        
         Binary binary = findBinary(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
         def binaryPath = repairUtilityProjectHome(context).resolve(binary.relativeSourcePath)
         def tmpDir = context.paths.tempDir.resolve(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
