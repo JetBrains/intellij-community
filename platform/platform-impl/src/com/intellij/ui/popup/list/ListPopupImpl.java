@@ -397,7 +397,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         nextStep = ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices);
       }
       else if (e != null && listStep instanceof ListPopupStepEx<?>) {
-        nextStep = ((ListPopupStepEx<Object>)listStep).onChosen(selectedValue, handleFinalChoices, e.getModifiers());
+        nextStep = ((ListPopupStepEx<Object>)listStep).onChosen(selectedValue, handleFinalChoices, e);
       }
       else {
         nextStep = listStep.onChosen(selectedValue, handleFinalChoices);

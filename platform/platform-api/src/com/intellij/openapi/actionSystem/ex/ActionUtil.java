@@ -445,7 +445,8 @@ public final class ActionUtil {
     Presentation presentation = action.getTemplatePresentation().clone();
     AnActionEvent event = new AnActionEvent(
       inputEvent, dataContext, place, presentation, ActionManager.getInstance(), 0);
-    if (lastUpdateAndCheckDumb(action, event, true)) {
+    event.setInjectedContext(action.isInInjectedContext());
+    if (lastUpdateAndCheckDumb(action, event, false)) {
       try {
         performActionDumbAwareWithCallbacks(action, event);
       }

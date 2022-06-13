@@ -150,11 +150,6 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
   public void setEmptyText(@NotNull StatusText emptyText) {
   }
 
-  @Override
-  public PopupStep onChosen(JsonSchemaInfo selectedValue, boolean finalChoice, int eventModifiers) {
-    return onChosen(selectedValue, finalChoice);
-  }
-
   protected void setMapping(@Nullable JsonSchemaInfo selectedValue, @Nullable VirtualFile virtualFile, @NotNull Project project) {
     assert virtualFile != null: "override this method to do without a virtual file!";
     JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
