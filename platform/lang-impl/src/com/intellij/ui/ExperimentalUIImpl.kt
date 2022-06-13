@@ -20,12 +20,14 @@ class ExperimentalUIImpl : ExperimentalUI() {
   override fun getIconMappings() = loadIconMappingsImpl()
 
   override fun onExpUIEnabled() {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) return
+
     setRegistryKeyIfNecessary("ide.experimental.ui", true)
     setRegistryKeyIfNecessary("debugger.new.tool.window.layout", true)
     UISettings.getInstance().openInPreviewTabIfPossible = true
     val name = if (JBColor.isBright()) "Light" else "Dark"
-    val lafManager = LafManagerImpl.getInstance()
-    val laf = lafManager.installedLookAndFeels.first { x: LookAndFeelInfo -> x.name == name }
+    val lafManager = LafManager.getInstance()
+    val laf = lafManager.installedLookAndFeels.firstOrNull { x: LookAndFeelInfo -> x.name == name }
     if (laf != null) {
       lafManager.currentLookAndFeel = laf
       if (lafManager.autodetect) {
@@ -41,6 +43,8 @@ class ExperimentalUIImpl : ExperimentalUI() {
   }
 
   override fun onExpUIDisabled() {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) return
+
     setRegistryKeyIfNecessary("ide.experimental.ui", false)
     setRegistryKeyIfNecessary("debugger.new.tool.window.layout", false)
     val mgr = LafManager.getInstance() as LafManagerImpl
