@@ -934,12 +934,12 @@ private fun checkPluginModules(pluginModules: List<String>?,
   if (!unspecifiedLayoutPluginModules.isEmpty()) {
     if (context.productProperties.productLayout.failOnUnspecifiedPluginLayout) {
       context.messages.error("No plugin layout specified in productProperties.productLayout.pluginLayouts for " +
-                             "following plugin main modules: ${unspecifiedLayoutPluginModules.joinToString()}")
+                             "following plugin main modules (referenced from $fieldName): ${unspecifiedLayoutPluginModules.joinToString()}")
 
     }
     else {
       context.messages.info("No plugin layout specified in productProperties.productLayout.pluginLayouts for " +
-                            "following plugin main modules. Assuming simple layout. " +
+                            "following plugin main modules (referenced from $fieldName). Assuming simple layout. " +
                             "Modules list: ${unspecifiedLayoutPluginModules.joinToString()}")
     }
   }
