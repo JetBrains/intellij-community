@@ -38,7 +38,7 @@ public class PsiPatternGuardImpl extends CompositePsiElement implements PsiPatte
 
   @Override
   public String toString() {
-    return "PsiGuardedPattern";
+    return "PsiPatternGuard";
   }
 
 }
