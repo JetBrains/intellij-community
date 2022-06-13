@@ -1,4 +1,4 @@
-package org.jetbrains.deft.codegen.utils
+package com.intellij.workspaceModel.codegen.utils
 
 class LinesBuilder(
   val result: StringBuilder,

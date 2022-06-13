@@ -1,4 +1,4 @@
-package org.jetbrains.deft.impl.fields
+package com.intellij.workspaceModel.codegen.deft
 
 
 data class ExtFieldId(val localId: Int) {

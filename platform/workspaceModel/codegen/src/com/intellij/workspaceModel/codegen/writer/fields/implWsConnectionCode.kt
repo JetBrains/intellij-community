@@ -1,17 +1,17 @@
-package org.jetbrains.deft.codegen.ijws.fields
+package com.intellij.workspaceModel.codegen.fields
 
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
-import deft.storage.codegen.field.javaType
-import org.jetbrains.deft.codegen.ijws.getRefType
-import org.jetbrains.deft.codegen.ijws.refsFields
-import org.jetbrains.deft.codegen.utils.*
-import org.jetbrains.deft.impl.TList
-import org.jetbrains.deft.impl.TOptional
-import org.jetbrains.deft.impl.TRef
-import org.jetbrains.deft.impl.ValueType
-import org.jetbrains.deft.impl.fields.Field
-import org.jetbrains.deft.impl.fields.MemberOrExtField
+import com.intellij.workspaceModel.codegen.fields.javaType
+import com.intellij.workspaceModel.codegen.getRefType
+import com.intellij.workspaceModel.codegen.refsFields
+import com.intellij.workspaceModel.codegen.utils.*
+import com.intellij.workspaceModel.codegen.deft.TList
+import com.intellij.workspaceModel.codegen.deft.TOptional
+import com.intellij.workspaceModel.codegen.deft.TRef
+import com.intellij.workspaceModel.codegen.deft.ValueType
+import com.intellij.workspaceModel.codegen.deft.Field
+import com.intellij.workspaceModel.codegen.deft.MemberOrExtField
 
 val MemberOrExtField<*, *>.refsConnectionId: String
   get() = if (name == "parent") {

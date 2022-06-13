@@ -1,10 +1,10 @@
-package org.jetbrains.deft.codegen.ijws.fields
+package com.intellij.workspaceModel.codegen.fields
 
-import deft.storage.codegen.*
-import deft.storage.codegen.field.javaType
-import org.jetbrains.deft.codegen.ijws.isRefType
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.codegen.*
+import com.intellij.workspaceModel.codegen.fields.javaType
+import com.intellij.workspaceModel.codegen.isRefType
+import com.intellij.workspaceModel.codegen.deft.*
+import com.intellij.workspaceModel.codegen.deft.Field
 
 val Field<*, *>.implWsDataFieldCode: String
   get() = buildString {

@@ -1,12 +1,12 @@
-package org.jetbrains.deft.codegen.model
+package com.intellij.workspaceModel.codegen.deft.model
 
 import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
 import com.intellij.workspaceModel.storage.EntitySource
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.impl.ObjModule
-import org.jetbrains.deft.impl.ObjType
-import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.codegen.deft.ObjModule
+import com.intellij.workspaceModel.codegen.deft.ObjType
+import com.intellij.workspaceModel.codegen.deft.Field
 
 class DefType(
   module: ObjModule,

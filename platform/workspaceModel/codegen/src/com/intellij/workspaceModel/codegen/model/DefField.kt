@@ -1,8 +1,8 @@
-package org.jetbrains.deft.codegen.model
+package com.intellij.workspaceModel.codegen.deft.model
 
-import org.jetbrains.deft.impl.TBlob
-import org.jetbrains.deft.impl.TRef
-import org.jetbrains.deft.impl.fields.*
+import com.intellij.workspaceModel.codegen.deft.TBlob
+import com.intellij.workspaceModel.codegen.deft.TRef
+import com.intellij.workspaceModel.codegen.deft.*
 
 class DefField(
   val nameRange: SrcRange,

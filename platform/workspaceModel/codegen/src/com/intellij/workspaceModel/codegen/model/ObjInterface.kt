@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.deft.codegen.model
+package com.intellij.workspaceModel.codegen.deft.model
 
 import org.jetbrains.deft.Obj
-import org.jetbrains.deft.impl.TRef
-import org.jetbrains.deft.impl.ValueType
+import com.intellij.workspaceModel.codegen.deft.TRef
+import com.intellij.workspaceModel.codegen.deft.ValueType
 
 object ObjInterface : KtInterfaceKind() {
   override fun buildField(

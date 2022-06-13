@@ -13,12 +13,12 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
-import deft.storage.codegen.javaImplName
-import org.jetbrains.deft.codegen.ijws.implWsCode
-import org.jetbrains.deft.codegen.model.DefType
-import org.jetbrains.deft.codegen.model.KtObjModule
-import org.jetbrains.deft.codegen.patcher.rewrite
-import org.jetbrains.deft.codegen.utils.fileContents
+import com.intellij.workspaceModel.codegen.javaImplName
+import com.intellij.workspaceModel.codegen.implWsCode
+import com.intellij.workspaceModel.codegen.deft.model.DefType
+import com.intellij.workspaceModel.codegen.deft.model.KtObjModule
+import com.intellij.workspaceModel.codegen.patcher.rewrite
+import com.intellij.workspaceModel.codegen.utils.fileContents
 import java.io.File
 
 val SKIPPED_TYPES = setOf(WorkspaceEntity::class.simpleName,

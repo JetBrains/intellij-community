@@ -1,18 +1,18 @@
-package org.jetbrains.deft.codegen.ijws.fields
+package com.intellij.workspaceModel.codegen.fields
 
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
-import deft.storage.codegen.*
-import deft.storage.codegen.field.javaType
-import org.jetbrains.deft.codegen.ijws.getRefType
-import org.jetbrains.deft.codegen.ijws.isRefType
-import org.jetbrains.deft.codegen.ijws.refsFields
-import org.jetbrains.deft.codegen.model.KtObjModule
-import org.jetbrains.deft.codegen.utils.fqn1
-import org.jetbrains.deft.codegen.utils.fqn2
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
-import org.jetbrains.deft.impl.fields.MemberOrExtField
+import com.intellij.workspaceModel.codegen.*
+import com.intellij.workspaceModel.codegen.fields.javaType
+import com.intellij.workspaceModel.codegen.getRefType
+import com.intellij.workspaceModel.codegen.isRefType
+import com.intellij.workspaceModel.codegen.refsFields
+import com.intellij.workspaceModel.codegen.deft.model.KtObjModule
+import com.intellij.workspaceModel.codegen.utils.fqn1
+import com.intellij.workspaceModel.codegen.utils.fqn2
+import com.intellij.workspaceModel.codegen.deft.*
+import com.intellij.workspaceModel.codegen.deft.Field
+import com.intellij.workspaceModel.codegen.deft.MemberOrExtField
 
 val Field<*, *>.implWsEntityFieldCode: String
   get() = buildString {

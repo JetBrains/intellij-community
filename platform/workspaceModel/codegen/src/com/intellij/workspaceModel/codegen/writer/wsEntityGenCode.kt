@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.deft.codegen.ijws
+package com.intellij.workspaceModel.codegen
 
-import org.jetbrains.deft.codegen.ijws.classes.implWsDataClassCode
-import org.jetbrains.deft.codegen.ijws.classes.implWsEntityCode
-import org.jetbrains.deft.codegen.model.DefType
-import org.jetbrains.deft.impl.ObjType
+import com.intellij.workspaceModel.codegen.classes.implWsDataClassCode
+import com.intellij.workspaceModel.codegen.classes.implWsEntityCode
+import com.intellij.workspaceModel.codegen.deft.model.DefType
+import com.intellij.workspaceModel.codegen.deft.ObjType
 
 /**
  * TODO:
