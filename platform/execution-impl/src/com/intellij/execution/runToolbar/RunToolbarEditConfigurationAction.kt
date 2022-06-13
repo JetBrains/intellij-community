@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowManager
@@ -8,6 +9,10 @@ import com.intellij.openapi.wm.ToolWindowManager
 class RunToolbarEditConfigurationAction : DumbAwareAction() {
   companion object {
     const val ACTION_ID = "RunToolbarEditConfigurationAction"
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -61,6 +66,10 @@ class RunToolbarRemoveSlotAction : DumbAwareAction() {
       e.runToolbarData() != slotManager.mainSlotData || (slotManager.slotsCount() != 0 && e.mainState() != RunToolbarMainSlotState.INFO)
     } ?: false
   }
+  
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
 class RunToolbarMoveToTopAction : DumbAwareAction() {
@@ -86,5 +95,9 @@ class RunToolbarMoveToTopAction : DumbAwareAction() {
       e.runToolbarData() != manager.mainSlotData
       || manager.getState().isSinglePlain()
     } ?: false
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
