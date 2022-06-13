@@ -187,6 +187,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
         output = moduleDir.resolve("search/" + module + '.' + SearchableOptionsRegistrar.getSearchableOptionsXmlName());
       }
       JDOMUtil.write(entry.getValue(), output);
+      System.out.println("Output written to " + output);
     }
 
     for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
