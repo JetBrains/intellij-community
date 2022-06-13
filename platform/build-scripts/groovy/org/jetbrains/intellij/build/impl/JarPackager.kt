@@ -384,12 +384,6 @@ class JarPackager private constructor(private val context: BuildContext) {
     }
 
     val files = getLibraryFiles(library = library, copiedFiles = copiedFiles, isModuleLevel = true)
-    if (library.name == "async-profiler-windows") {
-      // custom name, removeVersionFromJar doesn't support strings like `2.1-ea-4`
-      addLibrary(library, outputDir.resolve("async-profiler-windows.jar"), files)
-      return
-    }
-
     for (i in (files.size - 1) downTo 0) {
       val file = files.get(i)
       val fileName = file.fileName.toString()
