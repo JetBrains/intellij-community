@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.compiler.impl.FileSetCompileScope;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.compiler.CompileContext;
@@ -50,8 +51,14 @@ public final class ShowSerializedXmlAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(getEventProject(e) != null && e.getData(CommonDataKeys.PSI_FILE) != null
-                                   && e.getData(CommonDataKeys.EDITOR) != null);
+    e.getPresentation().setEnabled(getEventProject(e) != null &&
+                                   e.getData(CommonDataKeys.PSI_FILE) != null &&
+                                   e.getData(CommonDataKeys.EDITOR) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

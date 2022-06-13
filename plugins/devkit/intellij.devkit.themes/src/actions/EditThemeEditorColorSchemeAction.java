@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.themes.actions;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -28,4 +29,10 @@ public class EditThemeEditorColorSchemeAction extends DumbAwareAction {
       }
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.themes.actions;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
@@ -12,4 +13,10 @@ public class OpenThemeReferenceDocsAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     BrowserUtil.browse("https://plugins.jetbrains.com/docs/intellij/themes-intro.html?from=DevkitOpenThemeReference");
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
 }
