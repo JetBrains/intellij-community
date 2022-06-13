@@ -110,7 +110,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   private void toggleNavPanel(UISettings settings) {
     boolean show = ExperimentalUI.isNewUI() ?
                    settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP :
-                   settings.getShowNavigationBar();
+                   settings.getShowNavigationBar() && !settings.getPresentationMode();
     if (show) {
       ApplicationManager.getApplication().invokeLater(() -> {
         myWrapperPanel.add(getNavBarPanel(), BorderLayout.CENTER);
