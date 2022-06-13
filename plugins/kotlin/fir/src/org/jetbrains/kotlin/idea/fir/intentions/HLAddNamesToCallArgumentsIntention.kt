@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators.MultipleArgumentsInput as Input
-
+import org.jetbrains.kotlin.idea.fir.intentions.HLAddNameToArgumentIntention.Companion.getArgumentNameIfCanBeUsedForCalls
 class HLAddNamesToCallArgumentsIntention :
     AbstractHLIntention<KtCallElement, Input>(KtCallElement::class, AddArgumentNamesApplicators.multipleArgumentsApplicator) {
     override val applicabilityRange: HLApplicabilityRange<KtCallElement> = applicabilityRanges { element ->
@@ -40,7 +40,7 @@ class HLAddNamesToCallArgumentsIntention :
 
         val arguments = element.valueArgumentList?.arguments ?: return@inputProvider null
         Input(arguments.associateWith {
-            HLAddNameToArgumentIntention.getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return@inputProvider null
+            getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return@inputProvider null
         })
     }
 }

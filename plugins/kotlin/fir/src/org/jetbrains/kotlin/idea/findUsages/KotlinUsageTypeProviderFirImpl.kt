@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.psi.PsiPackage
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.findUsages.UsageTypeEnum.*
@@ -21,7 +22,7 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
         val reference = refExpr.mainReference
         check(reference is KtSimpleReference<*>) { "Reference should be KtSimpleReference but not ${reference::class}" }
 
-        fun getFunctionUsageType(functionSymbol: KtFunctionLikeSymbol): UsageTypeEnum? {
+        fun KtAnalysisSession.getFunctionUsageType(functionSymbol: KtFunctionLikeSymbol): UsageTypeEnum? {
             when (reference) {
                 is KtArrayAccessReference ->
                     return when ((functionSymbol as KtFunctionSymbol).name) {

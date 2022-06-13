@@ -133,7 +133,7 @@ internal class FirSuperMemberCompletionContributor(
             }
     }
 
-    private fun getInsertionStrategy(symbol: KtCallableSymbol): CallableInsertionStrategy = when (symbol) {
+    private fun KtAnalysisSession.getInsertionStrategy(symbol: KtCallableSymbol): CallableInsertionStrategy = when (symbol) {
         is KtFunctionLikeSymbol -> CallableInsertionStrategy.AsCall
         else -> CallableInsertionStrategy.AsIdentifier
     }
@@ -205,7 +205,7 @@ internal class FirSuperMemberCompletionContributor(
         }
     }
 
-    private fun wrapWithDisambiguationIfNeeded(
+    private fun KtAnalysisSession.wrapWithDisambiguationIfNeeded(
         insertionStrategy: CallableInsertionStrategy,
         superType: KtType,
         callableSymbol: KtCallableSymbol,

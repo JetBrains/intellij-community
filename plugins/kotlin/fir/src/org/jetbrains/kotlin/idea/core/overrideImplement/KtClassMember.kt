@@ -11,6 +11,8 @@ import com.intellij.psi.PsiDocCommentOwner
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
 import org.jetbrains.kotlin.analysis.api.components.RendererModifier
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
@@ -35,8 +37,8 @@ internal data class KtClassMemberInfo(
     @NlsSafe val memberText: String,
     val memberIcon: Icon?,
     val containingSymbolText: String?,
-    val containingSymbolIcon: Icon?,
-) {
+    val containingSymbolIcon: Icon?
+    ) {
     val isProperty: Boolean get() = symbol is KtPropertySymbol
 }
 

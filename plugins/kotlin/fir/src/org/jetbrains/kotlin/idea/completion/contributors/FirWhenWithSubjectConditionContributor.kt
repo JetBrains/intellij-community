@@ -296,6 +296,7 @@ private fun getIsPrefix(prefixNeeded: Boolean): String {
     return if (prefixNeeded) "is " else ""
 }
 
+@Suppress("AnalysisApiMissingLifetimeControlOnCallable")
 private object KtNamedClassOrObjectSymbolTObjectHashingStrategy : TObjectHashingStrategy<KtNamedClassOrObjectSymbol> {
     override fun equals(p0: KtNamedClassOrObjectSymbol, p1: KtNamedClassOrObjectSymbol): Boolean =
         p0.classIdIfNonLocal == p1.classIdIfNonLocal

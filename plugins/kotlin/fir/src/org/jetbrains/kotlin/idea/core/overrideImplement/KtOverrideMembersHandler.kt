@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.core.overrideImplement
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
@@ -35,10 +37,10 @@ internal open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
                     symbol.render(renderOption),
                     getIcon(symbol),
                     containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString(),
-                    containingSymbol?.let { getIcon(it) }
+                    containingSymbol?.let { getIcon(it) },
                 ),
                 bodyType,
-                preferConstructorParameter = false
+                preferConstructorParameter = false,
             )
         }
     }
@@ -89,13 +91,18 @@ internal open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
                     // that doesn't work because this callback function is holding a read lock and `symbol.render(renderOption)` requires
                     // the write lock.
                     // Hence, we store the data in an intermediate `OverrideMember` data class and do the rendering later in the `map` call.
-                    add(OverrideMember(symbolToProcess, bodyType, containingSymbol))
+                    add(OverrideMember(symbolToProcess, bodyType, containingSymbol, token))
                 }
             }
         }
     }
 
-    private data class OverrideMember(val symbol: KtCallableSymbol, val bodyType: BodyType, val containingSymbol: KtClassOrObjectSymbol?)
+    private data class OverrideMember(
+        val symbol: KtCallableSymbol,
+        val bodyType: BodyType,
+        val containingSymbol: KtClassOrObjectSymbol?,
+        override val token: KtLifetimeToken
+    ) : KtLifetimeOwner
 
     override fun getChooserTitle() = KotlinIdeaCoreBundle.message("override.members.handler.title")
 
