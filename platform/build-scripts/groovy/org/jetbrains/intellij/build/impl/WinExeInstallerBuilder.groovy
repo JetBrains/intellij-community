@@ -35,20 +35,20 @@ final class WinExeInstallerBuilder {
       return
     }
 
-    String silentConfigTemplate
+    Path silentConfigTemplate
     def customConfigPath = customizer.silentInstallationConfig
     if (customConfigPath != null) {
-      if (!new File(customConfigPath).exists()) {
+      if (!Files.exists(customConfigPath)) {
         buildContext.messages.error("WindowsDistributionCustomizer.silentInstallationConfig points to a file which doesn't exist: $customConfigPath")
       }
       silentConfigTemplate = customConfigPath
     }
     else {
-      silentConfigTemplate = "$buildContext.paths.communityHome/platform/build-scripts/resources/win/nsis/silent.config"
+      silentConfigTemplate = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/nsis/silent.config")
     }
 
     Files.createDirectories(targetFilePath.parent)
-    Files.copy(Paths.get(silentConfigTemplate), targetFilePath)
+    Files.copy(silentConfigTemplate, targetFilePath)
     List<String> extensionsList = getFileAssociations()
     String associations = "\n\n; List of associations. To create an association change value to 1.\n"
     if (extensionsList.isEmpty()) {

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+import java.nio.file.Path
 import java.nio.file.Paths
 
 abstract class WindowsDistributionCustomizer {
@@ -54,7 +55,7 @@ abstract class WindowsDistributionCustomizer {
    * Path to a file which contains set of properties to manage UI options when installing the product in silent mode. If {@code null}
    * the default platform/build-scripts/resources/win/nsis/silent.config will be used.
    */
-  var silentInstallationConfig: String? = null
+  var silentInstallationConfig: Path? = null
 
   /**
    * Name of the root directory in Windows .zip archive
