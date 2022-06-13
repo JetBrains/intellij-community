@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 
 import java.nio.file.Path
@@ -26,9 +27,9 @@ import java.nio.file.Path
 class AndroidStudioBuilder {
   private final BuildContext buildContext
 
-  AndroidStudioBuilder(Path home, BuildOptions options = new BuildOptions(), Path projectHome = home) {
-    def properties = new AndroidStudioProperties(home, options)
-    buildContext = BuildContextImpl.createContext(home, projectHome, properties, ProprietaryBuildTools.DUMMY, options)
+  AndroidStudioBuilder(BuildDependenciesCommunityRoot home, BuildOptions options = new BuildOptions()) {
+    def properties = new AndroidStudioProperties(home.communityRoot, options)
+    buildContext = BuildContextImpl.createContext(home, home.communityRoot, properties, ProprietaryBuildTools.DUMMY, options)
   }
 
   void compileModules() {
