@@ -19,13 +19,13 @@ class JUnit3SuperTearDownInspection : AbstractBaseUastLocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
     UastHintedVisitorAdapter.create(
       holder.file.language,
-      SuperTearDownInFinallyVisitorUast(holder),
+      SuperTearDownInFinallyVisitor(holder),
       arrayOf(UCallExpression::class.java),
       directOnly = true
     )
 }
 
-private class SuperTearDownInFinallyVisitorUast(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
+private class SuperTearDownInFinallyVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
   override fun visitCallExpression(node: UCallExpression): Boolean {
     if (node.receiver !is USuperExpression || node.methodName != "tearDown") return true
     val parentMethod = node.getParentOfType(
