@@ -271,7 +271,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       ActionItem item = ObjectUtils.tryCast(getList().getSelectedValue(), ActionItem.class);
       ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
       if (step != null && item != null && step.isSelectable(item) && item.isKeepPopupOpen()) {
-        step.performAction(item.getAction(), e != null ? e.getModifiers() : 0, e);
+        step.performAction(item.getAction(), e);
         step.updateStepItems(getList());
       }
       else {
@@ -287,7 +287,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       for (Object value : selectedValues) {
         ActionItem item = ObjectUtils.tryCast(value, ActionItem.class);
         if (item != null && step.isSelectable(item) && item.getAction() instanceof Toggleable) {
-          step.performAction(item.getAction(), 0);
+          step.performAction(item.getAction(), null);
           updateStep = true;
         }
       }
