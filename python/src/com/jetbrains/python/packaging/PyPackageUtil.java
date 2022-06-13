@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Sets;
@@ -392,7 +392,7 @@ public final class PyPackageUtil {
     }
     try {
       if (manager instanceof PyPackageManagerImpl) {
-        LOG.info("Refreshing installed packages for SDK " + ((PyPackageManagerImpl)manager).getSdk().getHomePath());
+        LOG.info("Refreshing installed packages for SDK " + manager.getSdk().getHomePath());
       }
       manager.refreshAndGetPackages(true);
     }

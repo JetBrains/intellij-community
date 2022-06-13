@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
@@ -128,7 +128,7 @@ abstract class ServiceView extends JPanel implements Disposable {
         return serviceView.isGroupByServiceGroups();
       }
     };
-    DataManager.registerDataProvider(serviceView, (DataProvider)dataId -> {
+    DataManager.registerDataProvider(serviceView, dataId -> {
       if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return ServiceViewManagerImpl.getToolWindowContextHelpId();
       }
