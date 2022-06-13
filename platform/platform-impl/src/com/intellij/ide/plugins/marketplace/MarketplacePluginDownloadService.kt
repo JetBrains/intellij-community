@@ -146,10 +146,28 @@ open class MarketplacePluginDownloadService {
         guessPluginFile(guessFileParameters.contentDisposition, guessFileParameters.url, file, pluginUrl)
       }
     }
-    catch (e: Exception) {
-      LOG.info(IdeBundle.message("error.download.plugin.via.blockmap"), e)
-      return downloadPlugin(pluginUrl, indicator)
+    catch (e: HttpRequests.HttpStatusException) {
+      return processBlockmapDownloadProblem(e, pluginUrl, indicator)
     }
+    catch (e: Exception) {
+      return processBlockmapDownloadProblem(e, pluginUrl, indicator, true)
+    }
+  }
+
+  private fun processBlockmapDownloadProblem(
+    exception: Exception,
+    pluginUrl: String,
+    indicator: ProgressIndicator,
+    printStackTrace: Boolean = false
+  ): File {
+    val message = IdeBundle.message("error.download.plugin.via.blockmap", pluginUrl)
+    if (printStackTrace) {
+      LOG.info(message, exception)
+    }
+    else {
+      LOG.info("$message: ${exception.message}")
+    }
+    return downloadPlugin(pluginUrl, indicator)
   }
 
   @Throws(IOException::class)
@@ -234,7 +252,7 @@ private fun getPluginFileUrlAndGuessFileParameters(pluginUrl: String): Pair<Stri
     .connect { request ->
       val connection = request.connection
       Pair(getPluginFileUrl(connection),
-        GuessFileParameters(connection.getHeaderField("Content-Disposition"), connection.url.toString()))
+           GuessFileParameters(connection.getHeaderField("Content-Disposition"), connection.url.toString()))
     }
 }
 
