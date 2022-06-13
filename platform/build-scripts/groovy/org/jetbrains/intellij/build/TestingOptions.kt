@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
+import com.intellij.util.text.nullize
 
 private val OLD_TEST_GROUP = System.getProperty("idea.test.group", TestingOptions.ALL_EXCLUDE_DEFINED_GROUP)
 private val OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
@@ -25,19 +26,19 @@ open class TestingOptions {
    *  Test groups are defined in testGroups.properties files and there is an implicit 'ALL_EXCLUDE_DEFINED' group for tests which aren't
    * included into any group and 'ALL' group for all tests. By default 'ALL_EXCLUDE_DEFINED' group is used.
    */
-  var testGroups = System.getProperty("intellij.build.test.groups", OLD_TEST_GROUP)
+  var testGroups = System.getProperty("intellij.build.test.groups").nullize(nullizeSpaces = true) ?: OLD_TEST_GROUP
 
   /**
    * Semicolon-separated patterns for test class names which need to be executed. Wildcard '*' is supported. If this option is specified,
    * [.testGroups] will be ignored.
    */
-  var testPatterns = System.getProperty("intellij.build.test.patterns", OLD_TEST_PATTERNS)
+  var testPatterns = System.getProperty("intellij.build.test.patterns").nullize(nullizeSpaces = true) ?: OLD_TEST_PATTERNS
 
   /**
    * Semicolon-separated names of JUnit run configurations in the project which need to be executed. If this option is specified,
    * [.testGroups], [.testPatterns] and [.mainModule] will be ignored.
    */
-  var testConfigurations = System.getProperty("intellij.build.test.configurations")
+  var testConfigurations = System.getProperty("intellij.build.test.configurations").nullize(nullizeSpaces = true)
 
   /**
    * Specifies components from which product will be used to run tests, by default IDEA Ultimate will be used.
@@ -72,7 +73,7 @@ open class TestingOptions {
   /**
    * Specifies a module which classpath will be used to search the test classes.
    */
-  var mainModule = System.getProperty("intellij.build.test.main.module", OLD_MAIN_MODULE)
+  var mainModule = System.getProperty("intellij.build.test.main.module").nullize(nullizeSpaces = true) ?: OLD_MAIN_MODULE
 
   /**
    * Specifies a custom test suite, com.intellij.tests.BootstrapTests is using by default.
