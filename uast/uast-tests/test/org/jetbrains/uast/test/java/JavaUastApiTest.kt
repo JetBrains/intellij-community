@@ -81,23 +81,17 @@ class JavaUastApiTest : AbstractJavaUastTest() {
 
     val javaUastLanguagePlugin = UastLanguagePlugin.byLanguage(callExpression.language)!!
 
-    javaUastLanguagePlugin.convertToAlternatives(callExpression, arrayOf(UCallExpression::class.java)).let {
-      assertEquals("format(\"q\")", it.joinToString(transform = UExpression::asRenderString))
-    }
+    val uCallExpAlt = javaUastLanguagePlugin.convertToAlternatives(callExpression, arrayOf(UCallExpression::class.java))
+    assertEquals("format(\"q\")", uCallExpAlt.joinToString(transform = UExpression::asRenderString))
 
-    javaUastLanguagePlugin.convertToAlternatives<UExpression>(callExpression, arrayOf(UQualifiedReferenceExpression::class.java,
-                                                                                      UCallExpression::class.java)).let {
-      assertEquals("String.format(\"q\"), format(\"q\")", it.joinToString(transform = UExpression::asRenderString))
-    }
+    val uCallExpAlt2 = javaUastLanguagePlugin.convertToAlternatives<UExpression>(callExpression, arrayOf(UQualifiedReferenceExpression::class.java, UCallExpression::class.java))
+    assertEquals("String.format(\"q\"), format(\"q\")", uCallExpAlt2.joinToString(transform = UExpression::asRenderString))
 
-    javaUastLanguagePlugin.convertToAlternatives<UExpression>(callExpression, arrayOf(UCallExpression::class.java,
-                                                                                      UQualifiedReferenceExpression::class.java)).let {
-      assertEquals("format(\"q\"), String.format(\"q\")", it.joinToString(transform = UExpression::asRenderString))
-    }
+    val uCallExpAlt3 = javaUastLanguagePlugin.convertToAlternatives<UExpression>(callExpression, arrayOf(UCallExpression::class.java, UQualifiedReferenceExpression::class.java))
+    assertEquals("format(\"q\"), String.format(\"q\")", uCallExpAlt3.joinToString(transform = UExpression::asRenderString))
 
-    javaUastLanguagePlugin.convertToAlternatives(callExpression, arrayOf(UExpression::class.java)).let {
-      assertEquals("String.format(\"q\"), format(\"q\")", it.joinToString(transform = UExpression::asRenderString))
-    }
+    val uCallExpAlt4 = javaUastLanguagePlugin.convertToAlternatives(callExpression, arrayOf(UExpression::class.java))
+    assertEquals("String.format(\"q\"), format(\"q\")", uCallExpAlt4.joinToString(transform = UExpression::asRenderString))
   }
 
   @Test
