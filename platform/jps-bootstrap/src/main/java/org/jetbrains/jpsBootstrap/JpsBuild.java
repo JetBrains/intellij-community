@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import jetbrains.buildServer.messages.serviceMessages.PublishArtifacts;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.build.Standalone;
@@ -17,7 +18,6 @@ import org.jetbrains.jps.model.JpsNamedElement;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,13 +34,13 @@ public final class JpsBuild {
 
   private final JpsModel myModel;
   private final Set<String> myModuleNames;
-  private final File myDataStorageRoot;
+  private final Path myDataStorageRoot;
   private final Path myJpsLogDir;
 
   public JpsBuild(BuildDependenciesCommunityRoot communityRoot, JpsModel model, Path jpsBootstrapWorkDir, Path kotlincHome) throws Exception {
     myModel = model;
     myModuleNames = myModel.getProject().getModules().stream().map(JpsNamedElement::getName).collect(Collectors.toUnmodifiableSet());
-    myDataStorageRoot = jpsBootstrapWorkDir.resolve("jps-build-data").toFile();
+    myDataStorageRoot = jpsBootstrapWorkDir.resolve("jps-build-data");
 
     System.setProperty("aether.connector.resumeDownloads", "false");
     System.setProperty("jps.kotlin.home", kotlincHome.toString());
@@ -94,7 +94,7 @@ public final class JpsBuild {
 
     Standalone.runBuild(
       () -> myModel,
-      myDataStorageRoot,
+      myDataStorageRoot.toFile(),
       messageHandler,
       scopes,
       false
@@ -118,7 +118,7 @@ public final class JpsBuild {
 
     Standalone.runBuild(
       () -> myModel,
-      myDataStorageRoot,
+      myDataStorageRoot.toFile(),
       rebuild,
       modules,
       false,
@@ -132,6 +132,7 @@ public final class JpsBuild {
     List<String> errors = new ArrayList<>(messageHandler.myErrors);
     if (!errors.isEmpty() && !rebuild) {
       warn("Incremental build finished with errors. Forcing rebuild. Compilation errors:\n" + String.join("\n", errors));
+      BuildDependenciesUtil.cleanDirectory(myDataStorageRoot);
       runBuild(modules, true);
     }
     else {
