@@ -44,6 +44,11 @@ public enum UpdateMethod {
    */
   FETCH_DEFAULT("settings.git.update.method.fetch.default",
          "settings.git.update.method.fetch.default.description"),
+  /**
+   * Don't update, just fetch from all remotes.
+   */
+  FETCH_ALL("settings.git.update.method.fetch.all",
+         "settings.git.update.method.fetch.all.description"),
   ;
 
   @NotNull private final String myName;

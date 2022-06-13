@@ -99,7 +99,8 @@ public abstract class GitUpdater {
       case MERGE:
         return new GitMergeUpdater(project, git, repository, trackedBranches, progressIndicator, updatedFiles);
       case FETCH_DEFAULT:
-        return new GitFetchUpdater(project, git, repository, progressIndicator, updatedFiles);
+      case FETCH_ALL:
+        return GitFetchUpdater.newInstance(updateMethod, project, git, repository, progressIndicator, updatedFiles);
       default:
         throw new UnsupportedOperationException("Update method " + updateMethod + " is not implemented");
     }

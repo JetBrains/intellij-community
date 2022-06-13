@@ -46,4 +46,5 @@ internal fun getUpdateMethods(): List<UpdateMethod> = listOf(
   UpdateMethod.MERGE,
   UpdateMethod.REBASE,
   UpdateMethod.FETCH_DEFAULT,
+  UpdateMethod.FETCH_ALL,
 )
