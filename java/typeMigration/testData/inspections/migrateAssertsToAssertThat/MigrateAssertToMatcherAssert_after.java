@@ -12,17 +12,17 @@ public class MigrateAssertToMatcherAssert {
   void m() {
     assertThat(2, not(is(3)));
     assertThat(2, is(3));
-    assertThat(2, OrderingComparison.greaterThan(3));
-    assertThat(2, OrderingComparison.lessThan(3));
-    assertThat(2, OrderingComparison.greaterThanOrEqualTo(3));
-    assertThat(2, OrderingComparison.lessThanOrEqualTo(3));
+    assertThat(2, greaterThan(3));
+    assertThat(2, lessThan(3));
+    assertThat(2, greaterThanOrEqualTo(3));
+    assertThat(2, lessThanOrEqualTo(3));
 
     assertThat(2 != 3, is(false));
     assertThat(2 == 3, is(false));
-    assertThat(2, OrderingComparison.lessThanOrEqualTo(3));
-    assertThat(2, OrderingComparison.greaterThanOrEqualTo(3));
-    assertThat(2, OrderingComparison.lessThan(3));
-    assertThat(2, OrderingComparison.greaterThan(3));
+    assertThat(2, lessThanOrEqualTo(3));
+    assertThat(2, greaterThanOrEqualTo(3));
+    assertThat(2, lessThan(3));
+    assertThat(2, greaterThan(3));
   }
 
   void m2() {
