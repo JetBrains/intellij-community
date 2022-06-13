@@ -14,7 +14,7 @@ class IdeaCommunityBuildTest {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     val communityHomePath = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     runTestBuild(
-      homePath = communityHomePath,
+      homePath = homePath,
       communityHomePath = communityHomePath,
       productProperties = IdeaCommunityProperties(communityHomePath),
     ) {
@@ -26,9 +26,10 @@ class IdeaCommunityBuildTest {
   @Test
   fun jpsStandalone(testInfo: TestInfo) {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
+    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     val context = createBuildContext(
       homePath = homePath,
-      productProperties = IdeaCommunityProperties(homePath),
+      productProperties = IdeaCommunityProperties(communityHome),
       skipDependencySetup = true,
     )
     val outDir = context.paths.buildOutputDir
