@@ -45,7 +45,7 @@ class WindowDeactivationManager {
         ApplicationManager.getApplication().invokeLater(
           {
             val focusOwner = IdeFocusManager.getInstance(project).focusOwner ?: return@invokeLater
-            if (SwingUtilities.isDescendingFrom(focusOwner, window)) {
+            if (!SwingUtilities.isDescendingFrom(focusOwner, window)) {
               onWindowDeactivated.run()
             }
           },
