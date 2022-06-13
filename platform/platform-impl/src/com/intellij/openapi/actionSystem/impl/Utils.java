@@ -708,7 +708,8 @@ public final class Utils {
     return result;
   }
 
-  private static void rearrangeByPromoters(@NotNull List<AnAction> actions, @NotNull DataContext dataContext) {
+  @ApiStatus.Internal
+  public static void rearrangeByPromoters(@NotNull List<AnAction> actions, @NotNull DataContext dataContext) {
     DataContext frozenContext = freezeDataContext(dataContext, null);
     List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
     List<ActionPromoter> promoters = ContainerUtil.concat(
