@@ -14,6 +14,15 @@ public class ClsAnonymousClass extends ClsClassImpl implements PsiAnonymousClass
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitAnonymousClass(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+  @Override
   public @NotNull PsiJavaCodeReferenceElement getBaseClassReference() {
     return CachedValuesManager.getCachedValue(this, () -> {
       PsiJavaCodeReferenceElement[] refs = getExtendsList().getReferenceElements();
