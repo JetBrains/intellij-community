@@ -1,14 +1,19 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.UsefulTestCase.assertDoesntExist
 import com.intellij.testFramework.UsefulTestCase.assertExists
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.systemIndependentPath
 import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.nullValue
@@ -26,10 +31,28 @@ import java.nio.file.Paths
 private const val LOG_SEPARATOR_START = "-------------"
 
 class SvnRenameTest : SvnTestCase() {
+  private var testRootDisposable: Disposable? = null
+
   override fun before() {
     super.before()
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
+
+    testRootDisposable = Disposer.newDisposable("SvnRenameTest")
+    TestLoggerFactory.enableDebugLogging(testRootDisposable!!,
+                                         "#com.intellij.openapi.command.impl",
+                                         "#com.intellij.history.integration.revertion.UndoChangeRevertingVisitor",
+                                         "#com.intellij.openapi.command.impl.ChangeRange")
+  }
+
+  override fun after() {
+    RunAll.runAll(
+      ThrowableRunnable<Throwable> {
+        testRootDisposable?.let { Disposer.dispose(it) }
+        testRootDisposable = null
+      },
+      ThrowableRunnable<Throwable> { super.after() }
+    )
   }
 
   @Test
@@ -393,11 +416,13 @@ class SvnRenameTest : SvnTestCase() {
   }
 
   private fun moveToNewPackage(file: VirtualFile, packageName: String) =
-    writeCommandAction(myProject).compute<VirtualFile, IOException> {
-      val packageDirectory = myWorkingCopyDir.createChildDirectory(this, packageName)
-      file.move(this, packageDirectory)
-      packageDirectory
-    }
+    writeCommandAction(myProject)
+      .withName("SvnRenameTest MoveToNewPackage") //NON-NLS
+      .compute<VirtualFile, IOException> {
+        val packageDirectory = myWorkingCopyDir.createChildDirectory(this, packageName)
+        file.move(this, packageDirectory)
+        packageDirectory
+      }
 
   private fun assertChanges(vararg expected: Pair<String?, String?>) {
     val changes = changeListManager.defaultChangeList.changes.toMutableList()
