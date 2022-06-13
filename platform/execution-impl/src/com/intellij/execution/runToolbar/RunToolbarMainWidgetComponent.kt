@@ -55,7 +55,12 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
   private val managerStateListener = object : RWStateListener {
     override fun stateChanged(state: RWSlotManagerState) {
+
+      //val wasNull = this@RunToolbarMainWidgetComponent.state == null
       updateState()
+
+      //if(this@RunToolbarMainWidgetComponent.state != null && wasNull)
+      this@RunToolbarMainWidgetComponent.updateActionsImmediately(true)
     }
   }
 
@@ -87,7 +92,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
   }
 
   override fun traceState(lastIds: List<String>, filteredIds: List<String>, ides: List<String>) {
-    if (logNeeded() && filteredIds != lastIds) LOG.info("MAIN SLOT state: ${state} new filtered: ${filteredIds}} visible: $ides RunToolbar")
+    if (logNeeded()) LOG.info("MAIN SLOT state: ${state} new filtered: ${filteredIds}} visible: $ides RunToolbar")
   }
 
   internal var isOpened = false
@@ -109,7 +114,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
         action.checkMainSlotVisibility(it)
       }
       else true
-    } ?: true
+    } ?: false
   }
 
   override fun addNotify() {
