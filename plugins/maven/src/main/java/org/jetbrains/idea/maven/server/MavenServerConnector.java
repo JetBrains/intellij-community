@@ -23,6 +23,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   protected @NotNull final MavenDistribution myDistribution;
   protected final Sdk myJdk;
   protected final Set<String> myMultimoduleDirectories;
+  private final Object embedderLock = new Object();
 
   protected final String myVmOptions;
 
@@ -55,11 +56,15 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   protected abstract MavenServer getServer();
 
   MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
-    return getServer().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken);
+    synchronized (embedderLock) {
+      return getServer().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken);
+    }
   }
 
   MavenServerIndexer createIndexer() throws RemoteException {
-    return getServer().createIndexer(MavenRemoteObjectWrapper.ourToken);
+    synchronized (embedderLock) {
+      return getServer().createIndexer(MavenRemoteObjectWrapper.ourToken);
+    }
   }
 
   @NotNull
