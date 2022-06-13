@@ -122,27 +122,70 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
   }
 
   private fun convertDeclaration(element: PsiElement, givenParent: UElement?, requiredType: Class<out UElement>): UElement? {
-    return when (element) {
-      is PsiJavaFile -> requiredType.el<UFile,PsiJavaFile>(element, null) { el, _ -> JavaUFile(el, this@JavaUastLanguagePlugin) }
-      is UDeclaration -> requiredType.el<UDeclaration,PsiElement>(element, null) { _, _ -> element }
-      is PsiClass -> requiredType.el<UClass, PsiClass>(element, givenParent, JavaUClass::create)
-
-      is PsiRecordHeader -> requiredType.el<UMethod, PsiRecordHeader>(element, givenParent, JavaUMethod::create)
-      is PsiMethod -> requiredType.el<UMethod, PsiMethod>(element, givenParent) { el, gp ->
-        JavaUMethod.create(el, this@JavaUastLanguagePlugin, gp)
+    if (element is UDeclaration) {
+      return requiredType.el<UDeclaration,PsiElement>(element, null) { _, _ -> element }
+    }
+    var result: UElement? = null
+    element.accept(object : JavaElementVisitor() {
+      override fun visitAnnotation(annotation: PsiAnnotation) {
+        result = requiredType.el<UAnnotation, PsiAnnotation>(annotation, givenParent, ::JavaUAnnotation)
       }
 
-      is PsiClassInitializer -> requiredType.el<UClassInitializer,PsiClassInitializer>(element, givenParent, ::JavaUClassInitializer)
-      is PsiEnumConstant -> requiredType.el<UEnumConstant,PsiEnumConstant>(element, givenParent, ::JavaUEnumConstant)
-      is PsiLocalVariable -> requiredType.el<ULocalVariable,PsiLocalVariable>(element, givenParent, ::JavaULocalVariable)
-      is PsiRecordComponent, is LightRecordConstructorParameter, is LightRecordField ->
-        convertRecordConstructorParameterAlternatives(element, givenParent, requiredType)
-      is PsiParameter -> requiredType.el<UParameter, PsiParameter>(element, givenParent, ::JavaUParameter)
-      is PsiField -> requiredType.el<UField, PsiField>(element, givenParent, ::JavaUField)
-      is PsiVariable -> requiredType.el<UVariable, PsiVariable>(element, givenParent, ::JavaUVariable)
-      is PsiAnnotation -> requiredType.el<UAnnotation,PsiAnnotation>(element, givenParent, ::JavaUAnnotation)
-      else -> null
-    }
+      override fun visitClass(aClass: PsiClass) {
+        result = requiredType.el<UClass, PsiClass>(aClass, givenParent, JavaUClass::create)
+      }
+
+      override fun visitClassInitializer(initializer: PsiClassInitializer) {
+        result = requiredType.el<UClassInitializer, PsiClassInitializer>(initializer, givenParent, ::JavaUClassInitializer)
+      }
+
+      override fun visitEnumConstant(enumConstant: PsiEnumConstant) {
+        result = requiredType.el<UEnumConstant, PsiEnumConstant>(enumConstant, givenParent, ::JavaUEnumConstant)
+      }
+
+      override fun visitField(field: PsiField) {
+        if (field is LightRecordField) {
+          result = convertRecordConstructorParameterAlternatives(field, givenParent, requiredType)
+        }
+        else {
+          result = requiredType.el<UField, PsiField>(field, givenParent, ::JavaUField)
+        }
+      }
+
+      override fun visitJavaFile(file: PsiJavaFile) {
+        result = requiredType.el<UFile, PsiJavaFile>(file, null) { el, _ -> JavaUFile(el, this@JavaUastLanguagePlugin) }
+      }
+
+      override fun visitLocalVariable(variable: PsiLocalVariable) {
+        result = requiredType.el<ULocalVariable, PsiLocalVariable>(variable, givenParent, ::JavaULocalVariable)
+      }
+
+      override fun visitMethod(method: PsiMethod) {
+        result = requiredType.el<UMethod, PsiMethod>(method, givenParent) { el, gp -> JavaUMethod.create(el, this@JavaUastLanguagePlugin, gp) }
+      }
+
+      override fun visitParameter(parameter: PsiParameter) {
+        if (parameter is LightRecordConstructorParameter) {
+          result = convertRecordConstructorParameterAlternatives(element, givenParent, requiredType)
+        }
+        else {
+          result = requiredType.el<UParameter, PsiParameter>(parameter, givenParent, ::JavaUParameter)
+        }
+      }
+
+      override fun visitRecordComponent(recordComponent: PsiRecordComponent) {
+        result = convertRecordConstructorParameterAlternatives(recordComponent, givenParent, requiredType)
+      }
+
+      override fun visitRecordHeader(recordHeader: PsiRecordHeader) {
+        result = requiredType.el<UMethod, PsiRecordHeader>(recordHeader, givenParent, JavaUMethod::create)
+      }
+
+      override fun visitVariable(variable: PsiVariable) {
+        result = requiredType.el<UVariable, PsiVariable>(variable, givenParent, ::JavaUVariable)
+      }
+    })
+    return result
   }
 
   override val analysisPlugin: UastAnalysisPlugin?
