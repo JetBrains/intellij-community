@@ -5,10 +5,11 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" />
+    <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" />
     <orderEntry type="module" module-name="kotlin.resources-fir" />
     <orderEntry type="module" module-name="kotlin.fir" />
     <orderEntry type="module" module-name="kotlin.fir.fir-fe10-binding" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" />
-    <orderEntry type="module" module-name="kotlin.fir.analysis-api-providers-ide-impl" />
   </component>
 </module>

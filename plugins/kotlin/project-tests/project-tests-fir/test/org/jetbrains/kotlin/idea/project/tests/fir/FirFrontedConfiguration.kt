@@ -2,12 +2,8 @@
 package org.jetbrains.kotlin.idea.project.tests.fir
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider
-import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
-import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinIDEModificationTrackerService

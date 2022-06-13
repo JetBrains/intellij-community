@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.firstOrNull
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
+import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
@@ -314,7 +314,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         }
 
         return cacheForCurrentModuleInfo.getOrPut(packageFqName) {
-            val packageExists = PackageIndexUtil.packageExists(packageFqName, moduleInfo.contentScope)
+            val packageExists = KotlinPackageIndexUtils.packageExists(packageFqName, moduleInfo.contentScope)
             LOG.debugIfEnabled(project) { "Computed cache value for $packageFqName in $moduleInfo is $packageExists" }
             packageExists
         }

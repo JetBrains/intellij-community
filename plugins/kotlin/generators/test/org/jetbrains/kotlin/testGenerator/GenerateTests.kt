@@ -68,7 +68,7 @@ import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandle
 import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
-import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractKotlinIdeAnnotationsResolverTest
+import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractIdeKotlinAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 import org.jetbrains.kotlin.idea.fir.codeInsight.handlers.AbstractHLGotoSuperActionHandlerTest
@@ -1004,7 +1004,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("analysis-api-providers-ide-impl") {
+    testGroup("base/fir/analysis-api-providers") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
             model("outOfBlockProjectWide", pattern = KT_WITHOUT_DOTS or JAVA)
         }
@@ -1017,7 +1017,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("sessionInvalidation", pattern = DIRECTORY, isRecursive = false)
         }
 
-        testClass<AbstractKotlinIdeAnnotationsResolverTest> {
+        testClass<AbstractIdeKotlinAnnotationsResolverTest> {
             model("annotationsResolver", pattern = KT_WITHOUT_DOTS)
         }
     }

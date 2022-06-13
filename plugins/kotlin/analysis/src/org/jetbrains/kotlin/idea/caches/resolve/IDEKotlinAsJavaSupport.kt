@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.asJava.classes.*
 import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -73,7 +74,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
 
     override fun findFilesForPackage(fqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> {
         return project.runReadActionInSmartMode {
-            PackageIndexUtil.findFilesWithExactPackage(
+            KotlinPackageIndexUtils.findFilesWithExactPackage(
                 fqName,
                 KotlinSourceFilterScope.projectSourcesAndLibraryClasses(
                     searchScope,
@@ -95,7 +96,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
     }
 
     override fun packageExists(fqName: FqName, scope: GlobalSearchScope): Boolean {
-        return PackageIndexUtil.packageExists(
+        return KotlinPackageIndexUtils.packageExists(
             fqName,
             KotlinSourceFilterScope.projectSourcesAndLibraryClasses(
                 scope,
@@ -105,7 +106,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
     }
 
     override fun getSubPackages(fqn: FqName, scope: GlobalSearchScope): Collection<FqName> {
-        return PackageIndexUtil.getSubPackageFqNames(
+        return KotlinPackageIndexUtils.getSubPackageFqNames(
             fqn,
             KotlinSourceFilterScope.projectSourcesAndLibraryClasses(
                 scope,

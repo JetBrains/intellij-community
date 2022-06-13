@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
+import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -271,7 +271,7 @@ class BasicCompletionSession(
                 callTypeAndReceiver.callType.descriptorKindFilter.kindMask.and(DescriptorKindFilter.PACKAGES_MASK) != 0
             ) {
                 //TODO: move this code somewhere else?
-                val packageNames = PackageIndexUtil.getSubPackageFqNames(FqName.ROOT, searchScope, prefixMatcher.asNameFilter())
+                val packageNames = KotlinPackageIndexUtils.getSubPackageFqNames(FqName.ROOT, searchScope, prefixMatcher.asNameFilter())
                     .toHashSet()
 
                 if ((parameters.originalFile as KtFile).platform.isJvm()) {

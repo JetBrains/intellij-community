@@ -39,11 +39,11 @@ final class KotlinPluginBuilder {
 
   @SuppressWarnings('SpellCheckingInspection')
   public static final List<String> FIR_IDE_MODULES = List.of(
+    "kotlin.base.fir.analysis-api-providers",
     "kotlin.fir",
     "kotlin.fir.fir-fe10-binding",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",
-    "kotlin.fir.analysis-api-providers-ide-impl",
     "kotlin.fir.fir-low-level-api-ide-impl",
   )
 
@@ -66,6 +66,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.facet",
     "kotlin.base.project-structure",
     "kotlin.base.scripting",
+    "kotlin.base.analysis-api-providers",
     "kotlin.base.analysis",
     "kotlin.base.highlighting",
     "kotlin.base.line-markers",

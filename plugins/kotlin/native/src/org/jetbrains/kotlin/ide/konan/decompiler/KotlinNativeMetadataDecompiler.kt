@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.idea.klib.FileWithMetadata
 import org.jetbrains.kotlin.idea.klib.KlibLoadingMetadataCache
-import org.jetbrains.kotlin.idea.base.projectStructure.fileTypes.KlibMetaFileType
+import org.jetbrains.kotlin.idea.base.psi.fileTypes.KlibMetaFileType
 import org.jetbrains.kotlin.idea.klib.KlibMetadataDecompiler
 import org.jetbrains.kotlin.library.metadata.KlibMetadataSerializerProtocol
 import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer

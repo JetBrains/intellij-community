@@ -225,6 +225,7 @@ The plugin supports Kotlin 1.7 and lower.
   <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
 
   <content>
+    <module name="kotlin.base.analysis-api-providers"/>
     <module name="kotlin.groovy"/>
     <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.gradle.gradle-idea"/>

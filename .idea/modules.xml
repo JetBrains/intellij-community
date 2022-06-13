@@ -1027,6 +1027,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" filepath="$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.all-tests/kotlin.all-tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.all-tests/kotlin.all-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/analysis/kotlin.base.analysis.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/analysis/kotlin.base.analysis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/analysis-api-providers/kotlin.base.analysis-api-providers.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/analysis-api-providers/kotlin.base.analysis-api-providers.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/code-insight/kotlin.base.code-insight.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/code-insight/kotlin.base.code-insight.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/compiler-configuration/kotlin.base.compiler-configuration.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/compiler-configuration/kotlin.base.compiler-configuration.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/compiler-configuration-ui/kotlin.base.compiler-configuration-ui.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/compiler-configuration-ui/kotlin.base.compiler-configuration-ui.iml" />
@@ -1036,6 +1037,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/highlighting/kotlin.base.fe10.highlighting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/highlighting/kotlin.base.fe10.highlighting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/kdoc/kotlin.base.fe10.kdoc.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/kdoc/kotlin.base.fe10.kdoc.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/obsolete-compat/kotlin.base.fe10.obsolete-compat.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/obsolete-compat/kotlin.base.fe10.obsolete-compat.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fir/analysis-api-providers/kotlin.base.fir.analysis-api-providers.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fir/analysis-api-providers/kotlin.base.fir.analysis-api-providers.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/highlighting/kotlin.base.highlighting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/highlighting/kotlin.base.highlighting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/indices/kotlin.base.indices.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/indices/kotlin.base.indices.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/jps/kotlin.base.jps.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/jps/kotlin.base.jps.iml" />
@@ -1086,7 +1088,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/features-trainer/tests/kotlin.features-trainer.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/features-trainer/tests/kotlin.features-trainer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fir/kotlin.fir.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fir/kotlin.fir.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.fir-all-tests/kotlin.fir-all-tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.fir-all-tests/kotlin.fir-all-tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/analysis-api-providers-ide-impl/kotlin.fir.analysis-api-providers-ide-impl.iml" filepath="$PROJECT_DIR$/plugins/kotlin/analysis-api-providers-ide-impl/kotlin.fir.analysis-api-providers-ide-impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fir-fe10-binding/kotlin.fir.fir-fe10-binding.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fir-fe10-binding/kotlin.fir.fir-fe10-binding.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fir-low-level-api-ide-impl/kotlin.fir.fir-low-level-api-ide-impl.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fir-low-level-api-ide-impl/kotlin.fir.fir-low-level-api-ide-impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-independent/kotlin.fir.frontend-independent.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-independent/kotlin.fir.frontend-independent.iml" />

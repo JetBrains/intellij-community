@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinPackageSourcesMemberNamesIndex
@@ -91,11 +92,11 @@ class StubBasedPackageMemberDeclarationProvider(
     }
 
     override fun getAllDeclaredSubPackages(nameFilter: (Name) -> Boolean): Collection<FqName> {
-        return PackageIndexUtil.getSubPackageFqNames(fqName, searchScope, nameFilter)
+        return KotlinPackageIndexUtils.getSubPackageFqNames(fqName, searchScope, nameFilter)
     }
 
     override fun getPackageFiles(): Collection<KtFile> {
-        return PackageIndexUtil.findFilesWithExactPackage(fqName, searchScope, project)
+        return KotlinPackageIndexUtils.findFilesWithExactPackage(fqName, searchScope, project)
     }
 
     override fun containsFile(file: KtFile): Boolean {

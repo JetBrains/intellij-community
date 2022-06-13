@@ -8,6 +8,7 @@ import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -67,7 +68,7 @@ class IdeKDocLinkResolutionService(val project: Project) : KDocLinkResolutionSer
             return javaFunctions
         }
 
-        if (!targetFqName.isRoot && PackageIndexUtil.packageExists(targetFqName, scope))
+        if (!targetFqName.isRoot && KotlinPackageIndexUtils.packageExists(targetFqName, scope))
             return listOf(GlobalSyntheticPackageViewDescriptor(targetFqName, project, scope))
         return emptyList()
     }
@@ -123,7 +124,7 @@ private class GlobalSyntheticPackageViewDescriptor(
             .flatMap { KotlinTopLevelFunctionFqnNameIndex.get(it.asString(), project, scope).asSequence() }
             .map { it.resolveToDescriptorIfAny() as? DeclarationDescriptor }
 
-        fun getSubpackages(nameFilter: (Name) -> Boolean) = PackageIndexUtil.getSubPackageFqNames(fqName, scope, nameFilter)
+        fun getSubpackages(nameFilter: (Name) -> Boolean) = KotlinPackageIndexUtils.getSubPackageFqNames(fqName, scope, nameFilter)
             .map { GlobalSyntheticPackageViewDescriptor(it, project, scope) }
 
         override fun getContributedDescriptors(

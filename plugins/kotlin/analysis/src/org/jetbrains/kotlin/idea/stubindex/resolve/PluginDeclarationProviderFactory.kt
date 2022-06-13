@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.projectSourceModules
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
-import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
+import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.data.KtClassLikeInfo
@@ -73,8 +73,8 @@ class PluginDeclarationProviderFactory(
 
     override fun diagnoseMissingPackageFragment(fqName: FqName, file: KtFile?) {
         val moduleSourceInfo = moduleInfo as? ModuleSourceInfo
-        val packageExists = PackageIndexUtil.packageExists(fqName, indexedFilesScope)
-        val spiPackageExists = PackageIndexUtil.packageExists(fqName, project)
+        val packageExists = KotlinPackageIndexUtils.packageExists(fqName, indexedFilesScope)
+        val spiPackageExists = KotlinPackageIndexUtils.packageExists(fqName, project)
         val oldPackageExists = oldPackageExists(fqName)
         val cachedPackageExists =
             moduleSourceInfo?.let { project.service<PerModulePackageCacheService>().packageExists(fqName, it) }
@@ -131,7 +131,7 @@ class PluginDeclarationProviderFactory(
     }
 
     private fun oldPackageExists(packageFqName: FqName): Boolean =
-        PackageIndexUtil.packageExists(packageFqName, indexedFilesScope)
+        KotlinPackageIndexUtils.packageExists(packageFqName, indexedFilesScope)
 
     private fun debugInfo(): String {
         if (nonIndexedFiles.isEmpty()) return "-no synthetic files-\n"

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.decompiler.js
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinMetadataDecompiler
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder
-import org.jetbrains.kotlin.idea.base.projectStructure.fileTypes.KotlinJavaScriptMetaFileType
+import org.jetbrains.kotlin.idea.base.psi.fileTypes.KotlinJavaScriptMetaFileType
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.js.JsProtoBuf
 import org.jetbrains.kotlin.psi.stubs.KotlinStubVersions
@@ -15,12 +15,12 @@ import org.jetbrains.kotlin.utils.JsMetadataVersion
 import java.io.ByteArrayInputStream
 
 class KotlinJavaScriptMetaFileDecompiler : KotlinMetadataDecompiler<JsMetadataVersion>(
-  fileType = KotlinJavaScriptMetaFileType,
-  serializerProtocol = { JsSerializerProtocol },
-  flexibleTypeDeserializer = DynamicTypeDeserializer,
-  expectedBinaryVersion = { JsMetadataVersion.INSTANCE },
-  invalidBinaryVersion = { JsMetadataVersion.INVALID_VERSION },
-  stubVersion = KotlinStubVersions.JS_STUB_VERSION
+    fileType = KotlinJavaScriptMetaFileType,
+    serializerProtocol = { JsSerializerProtocol },
+    flexibleTypeDeserializer = DynamicTypeDeserializer,
+    expectedBinaryVersion = { JsMetadataVersion.INSTANCE },
+    invalidBinaryVersion = { JsMetadataVersion.INVALID_VERSION },
+    stubVersion = KotlinStubVersions.JS_STUB_VERSION
 ) {
     override fun readFile(bytes: ByteArray, file: VirtualFile): KotlinMetadataStubBuilder.FileWithMetadata {
         val stream = ByteArrayInputStream(bytes)

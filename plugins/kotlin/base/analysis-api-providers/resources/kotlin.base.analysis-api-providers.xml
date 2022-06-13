@@ -1,0 +1,13 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.base.analysisApiProviders">
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinDeclarationProviderFactory"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinAnnotationsResolverFactory"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinAnnotationsResolverFactory"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderFactory"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinPackageProviderFactory"/>
+  </extensions>
+</idea-plugin>

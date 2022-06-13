@@ -6,8 +6,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinModuleFileType
-import org.jetbrains.kotlin.idea.base.projectStructure.fileTypes.KotlinJavaScriptMetaFileType
-import org.jetbrains.kotlin.idea.base.projectStructure.fileTypes.KlibMetaFileType
+import org.jetbrains.kotlin.idea.base.psi.fileTypes.KotlinJavaScriptMetaFileType
+import org.jetbrains.kotlin.idea.base.psi.fileTypes.KlibMetaFileType
 
 abstract class KotlinBinaryExtension(val fileType: FileType) {
     companion object {
