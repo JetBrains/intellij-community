@@ -6,14 +6,25 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * <a href="https://openjdk.java.net/jeps/405">JEP</a>
+ * <p>
+ * Represents record pattern, for example: {@code Point(int x, int y) p }
  */
 public interface PsiRecordPattern extends PsiPrimaryPattern {
+  /**
+   * @return element representing code inside '(...)' inclusive parenthesis
+   */
   @NotNull
   PsiRecordStructurePattern getStructurePattern();
 
+  /**
+   * @return type of the pattern, for example in {@code Point(int x, int y) p } it is {@code Point }
+   */
   @NotNull
   PsiTypeElement getTypeElement();
 
+  /**
+   * @return pattern variable if the pattern has a name, {@code null} otherwise
+   */
   @Nullable
   PsiRecordPatternVariable getPatternVariable();
 }
