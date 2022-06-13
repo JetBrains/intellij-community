@@ -146,6 +146,7 @@ class MavenImportFlow {
 
   fun setupMavenWrapper(readContext: MavenReadContext, indicator: MavenProgressIndicator): MavenReadContext {
     if (readContext.wrapperData == null) return readContext
+    if (!MavenUtil.isWrapper(readContext.initialContext.generalSettings)) return readContext
     MavenWrapperDownloader.checkOrInstallForSync(readContext.project, readContext.wrapperData.baseDir.path)
     return readContext
   }
