@@ -8,9 +8,8 @@ if [ -z "${VER:-}" ]; then
 fi
 
 rm -f fsnotifier
-${CC:-clang} -O2 -Wall -Wextra -Wpedantic -D "VERSION=\"$VER\"" -std=c11 main.c inotify.c util.c -o fsnotifier && \
-  chmod 755 fsnotifier || \
-  exit 1
+${CC:-clang} -O2 -Wall -Wextra -Wpedantic -D "VERSION=\"$VER\"" -std=c11 main.c inotify.c util.c -o fsnotifier
+chmod 755 fsnotifier
 
 # ensuring supported builds are compatible with RHEL/CentOS 7
 MAX_GLIBC_VERSION="2.17"
