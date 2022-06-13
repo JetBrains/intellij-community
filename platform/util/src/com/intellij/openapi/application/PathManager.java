@@ -38,7 +38,7 @@ public final class PathManager {
   public static final String OPTIONS_DIRECTORY = "options";
   public static final String DEFAULT_EXT = ".xml";
 
-  private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
+  private static final String PROPERTY_HOME = "idea.home";  // a reduced variant of PROPERTY_HOME_PATH, now deprecated
   private static final String PROPERTY_VENDOR_NAME = "idea.vendor.name";
 
   private static final String JRE_DIRECTORY = "jbr";
@@ -106,7 +106,8 @@ public final class PathManager {
         catch (IOException ignored) { }
       }
 
-      // set before ourHomePath because getBinDirectories() rely on fact that if getHomePath(true) returns something, then ourBinDirectories is already computed
+      // set before ourHomePath because getBinDirectories() rely on the fact that if `getHomePath(true)`
+      // returns something, then `ourBinDirectories` is already computed
       ourBinDirectories = result == null ?  Collections.emptyList() : getBinDirectories(Paths.get(result));
       ourHomePath = result;
     }
@@ -272,6 +273,7 @@ public final class PathManager {
     return ourCommonDataPath;
   }
 
+  @SuppressWarnings("IdentifierGrammar")
   public static @Nullable String getPathsSelector() {
     return PATHS_SELECTOR;
   }
@@ -315,10 +317,12 @@ public final class PathManager {
     return platformPath(selector, "Application Support", "", "APPDATA", "", "XDG_CONFIG_HOME", ".config", "");
   }
 
+  @SuppressWarnings("IdentifierGrammar")
   public static @NotNull String getOptionsPath() {
     return getConfigPath() + '/' + OPTIONS_DIRECTORY;
   }
 
+  @SuppressWarnings("IdentifierGrammar")
   public static @NotNull File getOptionsFile(@NotNull String fileName) {
     return Paths.get(getOptionsPath(), fileName + DEFAULT_EXT).toFile();
   }
@@ -372,8 +376,8 @@ public final class PathManager {
     return platformPath(selector, "Caches", "", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", "");
   }
 
-  public static @NotNull String getDefaultUnixSystemPath(@NotNull String userHome, @NotNull String pathsSelector) {
-    return getUnixPlatformPath(userHome, pathsSelector, null, ".cache", "");
+  public static @NotNull String getDefaultUnixSystemPath(@NotNull String userHome, @NotNull String selector) {
+    return getUnixPlatformPath(userHome, selector, null, ".cache", "");
   }
 
   public static @NotNull String getTempPath() {
@@ -572,7 +576,7 @@ public final class PathManager {
     }
 
     // Check and fix conflicting properties.
-    sysProperties.setProperty("disableJbScreenMenuBar", "true"); // temporary key (only for bundled runtime), will be removed soon
+    sysProperties.setProperty("disableJbScreenMenuBar", "true"); // a temporary key for bundled runtime (will be removed soon)
     if ("true".equals(sysProperties.getProperty("jbScreenMenuBar.enabled"))) {
       sysProperties.setProperty("apple.laf.useScreenMenuBar", "false");
     }
@@ -635,7 +639,7 @@ public final class PathManager {
   }
 
   /**
-   * @return path to 'community' project home irrespective of current project
+   * @return path to 'community' project home irrespective of the current project
    */
   public static @NotNull String getCommunityHomePath() {
     return getCommunityHomePath(getHomePath());
