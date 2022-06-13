@@ -179,7 +179,10 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     private fun PsiElement.fixWhiteSpace(match: PsiElement) {
         val indentationLength = IndentHelper.getInstance().getIndent(match.containingFile, match.node, true)
         collectDescendantsOfType<PsiWhiteSpace> { it.text.contains("\n") }.forEach {
-            it.replace(KtPsiFactory(this).createWhiteSpace("\n${" ".repeat(indentationLength + it.text.length - 1)}"))
+            val newLineCount = it.text.count { char -> char == '\n' }
+            it.replace(KtPsiFactory(this).createWhiteSpace(
+                "\n".repeat(newLineCount) + " ".repeat(indentationLength + it.text.length - 1))
+            )
         }
     }
 
