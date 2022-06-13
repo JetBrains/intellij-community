@@ -40,7 +40,6 @@
       <action id="OverrideMethods" class="com.intellij.codeInsight.generation.actions.OverrideMethodsAction"/>
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
       <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.DelegateMethodsAction"/>
-      <action id="GeneratePattern" class="com.intellij.codeInsight.generation.GenerateByPatternAction"/>
       <group id="GenerateFromTestCreatorsGroup" class="com.intellij.testIntegration.GenerateFromTestCreatorsGroup"/>
     </group>
 
