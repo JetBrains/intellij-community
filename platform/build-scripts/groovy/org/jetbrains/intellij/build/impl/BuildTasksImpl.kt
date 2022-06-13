@@ -1131,21 +1131,21 @@ private fun crossPlatformZip(macX64DistDir: Path,
 
       Files.newDirectoryStream(linuxX64DistDir.resolve("bin")).use {
         for (file in it) {
-          val path = file.toString()
-          if (path.endsWith(".vmoptions")) {
+          val name = file.fileName.toString()
+          if (name.endsWith(".vmoptions")) {
             out.entryToDir(file, "bin/linux")
           }
-          else if (path.endsWith(".sh") || path.endsWith(".py")) {
+          else if (name.endsWith(".sh") || name.endsWith(".py")) {
             out.entry("bin/${file.fileName}", file, unixMode = executableFileUnixMode)
           }
-          else {
-            val fileName = file.fileName.toString()
-            if (fileName.startsWith("fsnotifier")) {
-              out.entry("bin/linux/$fileName", file, unixMode = executableFileUnixMode)
-            }
+          else if (name == "fsnotifier" || name == "libdbm.so") {
+            out.entry("bin/linux/${name}", file, unixMode = executableFileUnixMode)
           }
         }
       }
+
+      // At the moment, there is no ARM64 hardware suitable for painless IDEA plugin development,
+      // so corresponding artifacts are not packed in.
 
       Files.newDirectoryStream(macX64DistDir.resolve("bin")).use {
         for (file in it) {
