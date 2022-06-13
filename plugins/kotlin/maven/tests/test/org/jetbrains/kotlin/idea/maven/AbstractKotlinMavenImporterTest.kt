@@ -3407,7 +3407,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                         "Title: 'Kotlin JPS plugin artifacts were not found'\n" +
                         "Content: 'The bundled version (${KotlinJpsPluginSettings.rawBundledVersion}) of the Kotlin JPS plugin will be used<br>The reason: " +
                         "Failed to download Maven artifact (org.jetbrains.kotlin:kotlin-jps-plugin:1.5.135). " +
-                        "Searched the artifact in the following repos:\n" +
+                        "The search was performed in the following repos:\n" +
                         "https://repo.maven.apache.org/maven2\n" +
                         "https://repo1.maven.org/maven2\n" +
                         "https://repository.jboss.org/nexus/content/repositories/public/'",
