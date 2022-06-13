@@ -1342,10 +1342,6 @@
                      key="assertequals.may.be.assertsame.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.AssertEqualsMayBeAssertSameInspection" cleanupTool="true"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="AssertEqualsCalledOnArray" bundle="messages.InspectionGadgetsBundle"
-                     key="assertequals.called.on.arrays.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.AssertEqualsCalledOnArrayInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AssertWithoutMessage"
                      bundle="messages.InspectionGadgetsBundle" key="asserts.without.messages.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.test.frameworks.issues" enabledByDefault="false" level="WARNING"

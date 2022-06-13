@@ -6,19 +6,19 @@ Array contents should be checked with the <code>assertArrayEquals()</code> metho
 <p><b>Example:</b></p>
 <pre><code>
   @Test
-  <b>public void</b> testSort() {
-    <b>int</b>[] actual = {248, 496, 0, 56};
+  public void testSort() {
+    int[] actual = {248, 496, 0, 56};
     Arrays.sort(actual);
-    Assert.assertEquals(<b>new int</b>[] {0, 56, 248, 496}, actual);
+    Assert.assertEquals(new int[] {0, 56, 248, 496}, actual);
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
   @Test
-  <b>public void</b> testSort() {
-    <b>int</b>[] actual = {248, 496, 0, 56};
+  public void testSort() {
+    int[] actual = {248, 496, 0, 56};
     Arrays.sort(actual);
-    Assert.assertArrayEquals(<b>new int</b>[] {0, 56, 248, 496}, actual);
+    Assert.assertArrayEquals(new int[] {0, 56, 248, 496}, actual);
   }
 </code></pre>
 <!-- tooltip end -->
