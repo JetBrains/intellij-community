@@ -75,10 +75,12 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
-
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.RootKindMatcherImpl"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.lifetime.KtDefaultLifetimeTokenProvider"
+            serviceImplementation="org.jetbrains.kotlin.analysis.api.lifetime.KtReadActionConfinementDefaultLifetimeTokenProvider"/>
 
     <applicationConfigurable
             groupId="language"

@@ -24,6 +24,12 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10QuickFixProviderImpl"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider"
+            serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.KtFe10AnalysisSessionProvider"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade"
+            serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.IdeFe10AnalysisFacade"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 

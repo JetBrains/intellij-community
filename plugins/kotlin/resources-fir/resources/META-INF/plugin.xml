@@ -93,8 +93,6 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
 
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider"
                         serviceImplementation="org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSessionProvider"/>
-    <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.lifetime.KtDefaultLifetimeTokenProvider"
-                    serviceImplementation="org.jetbrains.kotlin.analysis.api.lifetime.KtReadActionConfinementDefaultLifetimeTokenProvider"/>
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
                         serviceImplementation="org.jetbrains.kotlin.idea.references.KotlinFirReferenceContributor"/>
     <statusBarWidgetFactory implementation="org.jetbrains.kotlin.idea.fir.FirStatusBarWidgetFactory"/>
