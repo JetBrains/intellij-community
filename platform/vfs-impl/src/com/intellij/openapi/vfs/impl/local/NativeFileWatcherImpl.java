@@ -149,11 +149,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     else if (SystemInfo.isMac) {
       name = "fsnotifier";
     }
-    else if (SystemInfo.isLinux && CpuArch.isIntel64()) {
+    else if (SystemInfo.isLinux && (CpuArch.isIntel64() || CpuArch.isArm64())) {
       name = "fsnotifier";
-    }
-    else if (SystemInfo.isLinux && CpuArch.isArm64()) {
-      name = "fsnotifier-aarch64";
     }
     if (name != null) {
       Path file = PathManager.findBinFile(name);

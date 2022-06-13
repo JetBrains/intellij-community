@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -792,6 +792,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   private static GlobalMenuLib _loadLibrary() {
     Application app;
     if (!SystemInfo.isLinux ||
+        !(CpuArch.isIntel64() || CpuArch.isArm64()) ||
         (app = ApplicationManager.getApplication()) == null || app.isUnitTestMode() || app.isHeadlessEnvironment() ||
         Registry.is("linux.native.menu.force.disable") ||
         (LoadingState.COMPONENTS_REGISTERED.isOccurred() && !Experiments.getInstance().isFeatureEnabled("linux.native.menu")) ||
@@ -801,20 +802,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
 
     try {
-      String libName;
-      if (CpuArch.isIntel64()) {
-        libName = "libdbm-x86_64.so";
-      }
-      else if (CpuArch.isArm64()) {
-        libName = "libdbm-aarch64.so";
-      }
-      else {
-        String msg = "No DBM library for current arch (" + CpuArch.CURRENT + ") found";
-        assert false : msg;
-        LOG.warn(msg);
-        return null;
-      }
-      Path lib = PathManager.findBinFile(libName);
+      @SuppressWarnings("SpellCheckingInspection") Path lib = PathManager.findBinFile("libdbm.so");
       assert lib != null : "DBM lib missing; bin=" + Arrays.toString(new File(PathManager.getBinPath()).list());
       return Native.load(lib.toString(), GlobalMenuLib.class, Collections.singletonMap("jna.encoding", "UTF8"));
     }
