@@ -331,13 +331,13 @@ public class GitUntrackedFilesHolder implements Disposable {
       it.remove();
       removedFiles++;
       if (removedFiles < maxFilesToReport) {
-        LOG.warn(String.format("Ignoring %s file under another root: %s; root: %s; mapped root: %s",
-                               type, filePath.getPresentableUrl(), myRoot.getPresentableUrl(),
-                               root != null ? root.getPresentableUrl() : "null"));
+        LOG.debug(String.format("Ignoring %s file under another root: %s; root: %s; mapped root: %s",
+                                type, filePath.getPresentableUrl(), myRoot.getPresentableUrl(),
+                                root != null ? root.getPresentableUrl() : "null"));
       }
     }
     if (removedFiles >= maxFilesToReport) {
-      LOG.warn(String.format("Ignoring %s files under another root: %s files total", type, removedFiles));
+      LOG.debug(String.format("Ignoring %s files under another root: %s files total", type, removedFiles));
     }
   }
 
