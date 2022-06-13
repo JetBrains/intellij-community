@@ -1543,6 +1543,16 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 runTest("testData/editor/enterHandler/AutoIndentInWhenClause.after.kt");
             }
 
+            @TestMetadata("BeforePropertyGetter.after.kt")
+            public void testBeforePropertyGetter() throws Exception {
+                runTest("testData/editor/enterHandler/BeforePropertyGetter.after.kt");
+            }
+
+            @TestMetadata("BeforePropertySetter.after.kt")
+            public void testBeforePropertySetter() throws Exception {
+                runTest("testData/editor/enterHandler/BeforePropertySetter.after.kt");
+            }
+
             @TestMetadata("BlockCommentAfterCatch.after.kt")
             public void testBlockCommentAfterCatch() throws Exception {
                 runTest("testData/editor/enterHandler/BlockCommentAfterCatch.after.kt");

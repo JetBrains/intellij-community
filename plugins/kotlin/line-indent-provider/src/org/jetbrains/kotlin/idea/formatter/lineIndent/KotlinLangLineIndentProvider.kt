@@ -114,7 +114,8 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
         }
 
         findFunctionOrPropertyOrMultiDeclarationBefore(before)?.let {
-            return factory.createIndentCalculator(Indent.getNoneIndent(), it.startOffset)
+            val indent = if (after.similarToPropertyAccessorKeyword()) Indent.getNormalIndent() else Indent.getNoneIndent()
+            return factory.createIndentCalculator(indent, it.startOffset)
         }
 
         return before.controlFlowStatementBefore()?.let { controlFlowKeywordPosition ->
@@ -569,6 +570,10 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             currElement in CONTROL_FLOW_KEYWORDS || isCatchKeyword() || isFinallyKeyword()
 
         private fun SemanticEditorPosition.similarToCatchKeyword(): Boolean = textOfCurrentPosition() == KtTokens.CATCH_KEYWORD.value
+
+        private fun SemanticEditorPosition.similarToPropertyAccessorKeyword(): Boolean = isAt(Identifier) && textOfCurrentPosition().let { text ->
+            text == KtTokens.GET_KEYWORD.value || text == KtTokens.SET_KEYWORD.value
+        }
 
         private fun SemanticEditorPosition.isCatchKeyword(): Boolean = with(copy()) {
             // try-catch-*-catch

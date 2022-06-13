@@ -1543,6 +1543,16 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/AutoIndentInWhenClause.after.kt");
             }
 
+            @TestMetadata("BeforePropertyGetter.after.kt")
+            public void testBeforePropertyGetter() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/BeforePropertyGetter.after.kt");
+            }
+
+            @TestMetadata("BeforePropertySetter.after.kt")
+            public void testBeforePropertySetter() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/BeforePropertySetter.after.kt");
+            }
+
             @TestMetadata("BlockCommentAfterCatch.after.kt")
             public void testBlockCommentAfterCatch() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/BlockCommentAfterCatch.after.kt");
