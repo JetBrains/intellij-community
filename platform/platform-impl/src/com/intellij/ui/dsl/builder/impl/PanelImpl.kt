@@ -287,7 +287,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun buttonsGroup(title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
-    val result = ButtonsGroupImpl()
+    val result = ButtonsGroupImpl(this, _rows.size)
     dialogPanelConfig.context.addButtonsGroup(result)
     try {
       if (title != null) {
@@ -309,6 +309,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     finally {
       dialogPanelConfig.context.removeLastButtonsGroup()
     }
+    result.endIndex = _rows.size - 1
     return result
   }
 

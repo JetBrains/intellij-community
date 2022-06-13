@@ -18,6 +18,7 @@ interface CollapsibleTitledSeparator {
   fun setTitleFont(font: Font)
 }
 
+// todo make internal
 class CollapsibleTitledSeparatorImpl(@NlsContexts.Separator title: String) : TitledSeparator(title), CollapsibleTitledSeparator {
   val expandedProperty = AtomicBooleanProperty(true)
   var expanded by expandedProperty

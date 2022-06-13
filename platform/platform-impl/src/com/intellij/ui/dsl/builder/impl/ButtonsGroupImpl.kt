@@ -5,16 +5,37 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.ButtonsGroup
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.AbstractButton
 import javax.swing.ButtonGroup
 
 @ApiStatus.Internal
-internal class ButtonsGroupImpl : ButtonsGroup {
+internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeImpl(panel, startIndex), ButtonsGroup {
 
   private val unboundRadioButtons = mutableSetOf<Cell<AbstractButton>>()
   private val boundRadioButtons = mutableMapOf<Cell<AbstractButton>, Any>()
   private var groupBinding: GroupBinding<*>? = null
+
+  override fun visible(isVisible: Boolean): ButtonsGroup {
+    super.visible(isVisible)
+    return this
+  }
+
+  override fun visibleIf(predicate: ComponentPredicate): ButtonsGroup {
+    super.visibleIf(predicate)
+    return this
+  }
+
+  override fun enabled(isEnabled: Boolean): ButtonsGroup {
+    super.enabled(isEnabled)
+    return this
+  }
+
+  override fun enabledIf(predicate: ComponentPredicate): ButtonsGroup {
+    super.enabledIf(predicate)
+    return this
+  }
 
   override fun <T> bind(prop: MutableProperty<T>, type: Class<T>): ButtonsGroup {
     if (groupBinding != null) {

@@ -23,16 +23,15 @@ class ExternalSystemGroupConfigurable(private val project: Project) : BoundConfi
         .bindSelected({ isEnabled }, { isEnabled = it })
     }
     buttonsGroup(indent = true) {
-      rowsRange {
-        row {
-          radioButton(message("settings.build.tools.auto.reload.radio.button.all.label"), ALL)
-        }
-        row {
-          radioButton(message("settings.build.tools.auto.reload.radio.button.selective.label"), SELECTIVE)
-            .comment(message("settings.build.tools.auto.reload.radio.button.selective.comment"))
-        }
-      }.enabledIf(cbReload.selected)
+      row {
+        radioButton(message("settings.build.tools.auto.reload.radio.button.all.label"), ALL)
+      }
+      row {
+        radioButton(message("settings.build.tools.auto.reload.radio.button.selective.label"), SELECTIVE)
+          .comment(message("settings.build.tools.auto.reload.radio.button.selective.comment"))
+      }
     }.bind({ value }, { value = it })
+      .enabledIf(cbReload.selected)
     onApply {
       settings.autoReloadType = if (isEnabled) value else NONE
       propertiesComponent.setValue(PREVIOUS_KEY, value.toString())
