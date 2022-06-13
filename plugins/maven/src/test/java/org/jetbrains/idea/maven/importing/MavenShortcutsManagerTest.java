@@ -185,6 +185,8 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
 
     importProjects(p1, p2);
 
+    assertModules("p1", "p2");
+
     assertEmptyKeymap();
     String goal = "clean";
     assignShortcut(p1, goal, "alt shift X");
@@ -197,6 +199,8 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
 
     configConfirmationForYesAnswer();
     importProjects(p1, p2);
+
+    assertModules( "p2");
 
     assertKeymapDoesNotContain(p1, goal);
     assertKeymapContains(p2, goal);

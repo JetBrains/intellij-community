@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project.importing
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -36,6 +37,7 @@ class MavenInitialImportContext internal constructor(project: Project,
                                                      val importingSettings: MavenImportingSettings,
                                                      val ignorePaths: List<String>,
                                                      val ignorePatterns: List<String>,
+                                                     val importDisposable: Disposable,
                                                      val dummyModule: Module?,
                                                      val startImportStackTrace: Exception
 ) : MavenImportContext(project) {

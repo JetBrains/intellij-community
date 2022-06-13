@@ -70,6 +70,12 @@ public class MavenWorkspaceMap implements Serializable {
     return result;
   }
 
+  public MavenWorkspaceMap copyInto(MavenWorkspaceMap recipient) {
+    recipient.myMapping.clear();
+    recipient.myMapping.putAll(myMapping);
+    return recipient;
+  }
+
   public static final class Data implements Serializable {
     public final MavenId originalId;
     private final File file;

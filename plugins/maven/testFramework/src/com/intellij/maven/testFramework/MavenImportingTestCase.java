@@ -45,6 +45,7 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.actions.UpdateFoldersAction;
 import org.jetbrains.idea.maven.project.importing.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -580,7 +581,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     });
 
     try {
-      PlatformTestUtil.waitForPromise(promise);
+      PlatformTestUtil.waitForPromise(promise, Long.MAX_VALUE);
     }
     catch (AssertionError e) {
       if (promise.getState() == Promise.State.PENDING) {
@@ -728,14 +729,15 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void resolveFoldersAndImport() {
-    if (isNewImportingProcess) {
-      importProject();
-      return;
-    }
 
     myProjectsManager.scheduleFoldersResolveForAllProjects();
     myProjectsManager.waitForFoldersResolvingCompletion();
-    ApplicationManager.getApplication().invokeAndWait(() -> myProjectsManager.performScheduledImportInTests());
+    if (isNewImportingProcess) {
+      importProject();
+    } else {
+      ApplicationManager.getApplication().invokeAndWait(() -> myProjectsManager.performScheduledImportInTests());
+    }
+
   }
 
   protected void resolvePlugins() {

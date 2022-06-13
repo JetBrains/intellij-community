@@ -42,7 +42,8 @@ import java.io.File;
 import java.net.URL;
 import java.util.*;
 
-public class MavenFoldersImporter {
+public class
+MavenFoldersImporter {
   private final MavenProject myMavenProject;
   private final MavenImportingSettings myImportingSettings;
   private final MavenRootModelAdapter myModel;

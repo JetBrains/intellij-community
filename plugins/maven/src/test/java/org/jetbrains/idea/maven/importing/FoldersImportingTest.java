@@ -1550,7 +1550,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     createProjectSubDirs("target/src");
     createProjectSubDirs("target/test/subFolder");
 
-    importProject("<groupId>test</groupId>" +
+   importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
@@ -1564,7 +1564,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                      "  <sourceDirectory>target/src</sourceDirectory>" +
                      "  <testSourceDirectory>target/test/subFolder</testSourceDirectory>" +
                      "</build>");
-    resolveFoldersAndImport();
+    importProject();
+    //resolveFoldersAndImport();
 
     assertSources("project", "target/src");
     assertTestSources("project", "target/test/subFolder");

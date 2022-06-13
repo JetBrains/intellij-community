@@ -76,6 +76,7 @@ public final class MavenProjectsTree {
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
   private final Project myProject;
 
+
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
     @Override
     public VirtualFile findProjectFile(MavenId coordinates) {
@@ -1277,6 +1278,11 @@ public final class MavenProjectsTree {
     myListeners.add(l, disposable);
   }
 
+  @ApiStatus.Internal
+  void addListenersFrom(MavenProjectsTree other){
+    myListeners.addAll(other.myListeners);
+  }
+
   void fireProfilesChanged() {
     for (Listener each : myListeners) {
       each.profilesChanged();
@@ -1533,5 +1539,23 @@ public final class MavenProjectsTree {
              && Objects.equals(o1.getVersion(), o2.getVersion())
              && Objects.equals(o1.getGroupId(), o2.getGroupId());
     }
+  }
+
+  public MavenProjectsTree getCopyForReimport(){
+    MavenProjectsTree result = new MavenProjectsTree(myProject);
+
+    result.myExplicitProfiles = myExplicitProfiles;
+    result.myRootProjects.addAll(myRootProjects);
+    result.myIgnoredFilesPaths.addAll(myIgnoredFilesPaths);
+    result.myIgnoredFilesPatterns.addAll(myIgnoredFilesPatterns);
+    result.myAggregatorToModuleMapping.putAll(myAggregatorToModuleMapping);
+    result.myIgnoredFilesPatternsCache = myIgnoredFilesPatternsCache;
+    result.myManagedFilesPaths.addAll(myManagedFilesPaths);
+    result.myMavenIdToProjectMapping.putAll(myMavenIdToProjectMapping);
+    result.myModuleToAggregatorMapping.putAll(myModuleToAggregatorMapping);
+    result.myVirtualFileToProjectMapping.putAll(myVirtualFileToProjectMapping);
+    result.myTimestamps.putAll(myTimestamps);
+    myWorkspaceMap.copyInto(result.myWorkspaceMap);
+    return result;
   }
 }
