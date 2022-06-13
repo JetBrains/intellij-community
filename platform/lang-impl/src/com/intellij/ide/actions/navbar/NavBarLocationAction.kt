@@ -3,6 +3,7 @@ package com.intellij.ide.actions.navbar
 
 import com.intellij.ide.ui.NavBarLocation
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
@@ -41,5 +42,9 @@ class HideNavBarAction : ToggleAction(), DumbAware {
       it.showNavigationBar = false
       it.fireUISettingsChanged()
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

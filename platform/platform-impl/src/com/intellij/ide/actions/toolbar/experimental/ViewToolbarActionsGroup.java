@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.toolbar.experimental;
 
 import com.intellij.ide.ui.ToolbarSettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
@@ -13,5 +14,10 @@ public class ViewToolbarActionsGroup extends DefaultActionGroup implements DumbA
   public void update(@NotNull AnActionEvent e) {
     boolean isEnabled = !ToolbarSettings.getInstance().isEnabled();
     e.getPresentation().setEnabledAndVisible(isEnabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }
