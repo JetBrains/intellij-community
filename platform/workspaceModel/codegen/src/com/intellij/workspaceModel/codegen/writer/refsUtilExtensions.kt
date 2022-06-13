@@ -1,10 +1,10 @@
-package org.jetbrains.deft.codegen.ijws
+package com.intellij.workspaceModel.codegen
 
 import org.jetbrains.deft.Obj
-import org.jetbrains.deft.codegen.model.KtObjModule
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
-import org.jetbrains.deft.impl.fields.MemberOrExtField
+import com.intellij.workspaceModel.codegen.deft.model.KtObjModule
+import com.intellij.workspaceModel.codegen.deft.*
+import com.intellij.workspaceModel.codegen.deft.Field
+import com.intellij.workspaceModel.codegen.deft.MemberOrExtField
 
 val TStructure<*, *>.refsFields: List<Field<out Obj, Any?>>
   get() = newFields.filter { it.name != "parent" && it.type.isRefType() }

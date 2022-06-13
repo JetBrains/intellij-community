@@ -1,4 +1,4 @@
-package org.jetbrains.deft.impl
+package com.intellij.workspaceModel.codegen.deft
 
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder

@@ -1,22 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package deft.storage.codegen
+package com.intellij.workspaceModel.codegen
 
 import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
 import com.intellij.workspaceModel.storage.*
-import deft.storage.codegen.field.javaType
+import com.intellij.workspaceModel.codegen.fields.javaType
 import org.jetbrains.deft.Type
-import org.jetbrains.deft.codegen.ijws.classes.noDefaultValue
-import org.jetbrains.deft.codegen.ijws.classes.noOptional
-import org.jetbrains.deft.codegen.ijws.classes.noRefs
-import org.jetbrains.deft.codegen.ijws.classes.noPersistentId
-import org.jetbrains.deft.codegen.ijws.fields.referencedField
-import org.jetbrains.deft.codegen.ijws.fields.wsCode
-import org.jetbrains.deft.codegen.model.DefType
-import org.jetbrains.deft.codegen.model.WsEntityInterface
-import org.jetbrains.deft.codegen.utils.fqn
-import org.jetbrains.deft.codegen.utils.lines
-import org.jetbrains.deft.impl.fields.Field
-import storage.codegen.field.builderApi
+import com.intellij.workspaceModel.codegen.classes.noDefaultValue
+import com.intellij.workspaceModel.codegen.classes.noOptional
+import com.intellij.workspaceModel.codegen.classes.noRefs
+import com.intellij.workspaceModel.codegen.classes.noPersistentId
+import com.intellij.workspaceModel.codegen.fields.referencedField
+import com.intellij.workspaceModel.codegen.fields.wsCode
+import com.intellij.workspaceModel.codegen.deft.model.DefType
+import com.intellij.workspaceModel.codegen.deft.model.WsEntityInterface
+import com.intellij.workspaceModel.codegen.utils.fqn
+import com.intellij.workspaceModel.codegen.utils.lines
+import com.intellij.workspaceModel.codegen.deft.Field
+import com.intellij.workspaceModel.codegen.fields.builderApi
 
 fun DefType.generatedApiCode(indent: String = "    ", isEmptyGenBlock: Boolean): String = lines(indent) {
   if (isEmptyGenBlock) line("//region generated code") else result.append("//region generated code\n")

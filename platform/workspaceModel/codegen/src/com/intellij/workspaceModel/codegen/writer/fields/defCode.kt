@@ -1,7 +1,7 @@
-package deft.storage.codegen.field
+package com.intellij.workspaceModel.codegen.fields
 
-import deft.storage.codegen.javaFullName
-import org.jetbrains.deft.impl.*
+import com.intellij.workspaceModel.codegen.javaFullName
+import com.intellij.workspaceModel.codegen.deft.*
 
 val ValueType<*>.kotlinType: String
   get() = javaType

@@ -1,17 +1,17 @@
-package org.jetbrains.deft.codegen.ijws.fields
+package com.intellij.workspaceModel.codegen.fields
 
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
-import org.jetbrains.deft.codegen.ijws.isRefType
-import org.jetbrains.deft.codegen.utils.fqn1
-import org.jetbrains.deft.codegen.utils.fqn2
-import org.jetbrains.deft.codegen.utils.fqn3
-import org.jetbrains.deft.codegen.utils.fqn4
-import org.jetbrains.deft.impl.TList
-import org.jetbrains.deft.impl.TOptional
-import org.jetbrains.deft.impl.TRef
-import org.jetbrains.deft.impl.ValueType
-import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.codegen.isRefType
+import com.intellij.workspaceModel.codegen.utils.fqn1
+import com.intellij.workspaceModel.codegen.utils.fqn2
+import com.intellij.workspaceModel.codegen.utils.fqn3
+import com.intellij.workspaceModel.codegen.utils.fqn4
+import com.intellij.workspaceModel.codegen.deft.TList
+import com.intellij.workspaceModel.codegen.deft.TOptional
+import com.intellij.workspaceModel.codegen.deft.TRef
+import com.intellij.workspaceModel.codegen.deft.ValueType
+import com.intellij.workspaceModel.codegen.deft.Field
 
 data class RefMethods(val getter: String, val setter: String)
 

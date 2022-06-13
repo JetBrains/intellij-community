@@ -1,10 +1,10 @@
-package deft.storage.codegen
+package com.intellij.workspaceModel.codegen
 
-import org.jetbrains.deft.impl.TBoolean
-import org.jetbrains.deft.impl.TInt
-import org.jetbrains.deft.impl.TOptional
-import org.jetbrains.deft.impl.fields.Field
-import org.jetbrains.deft.impl.fields.MemberOrExtField
+import com.intellij.workspaceModel.codegen.deft.TBoolean
+import com.intellij.workspaceModel.codegen.deft.TInt
+import com.intellij.workspaceModel.codegen.deft.TOptional
+import com.intellij.workspaceModel.codegen.deft.Field
+import com.intellij.workspaceModel.codegen.deft.MemberOrExtField
 import java.util.*
 
 val MemberOrExtField<*, *>.javaName: String

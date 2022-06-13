@@ -1,18 +1,18 @@
-package org.jetbrains.deft.codegen.ijws.classes
+package com.intellij.workspaceModel.codegen.classes
 
 import com.intellij.workspaceModel.storage.CodeGeneratorVersions
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import deft.storage.codegen.indentRestOnly
-import deft.storage.codegen.javaFullName
-import deft.storage.codegen.javaImplName
-import deft.storage.codegen.lines
-import org.jetbrains.deft.codegen.ijws.allRefsFields
-import org.jetbrains.deft.codegen.ijws.fields.implWsEntityFieldCode
-import org.jetbrains.deft.codegen.ijws.fields.refsConnectionIdCode
-import org.jetbrains.deft.codegen.utils.fqn
-import org.jetbrains.deft.impl.ObjType
+import com.intellij.workspaceModel.codegen.indentRestOnly
+import com.intellij.workspaceModel.codegen.javaFullName
+import com.intellij.workspaceModel.codegen.javaImplName
+import com.intellij.workspaceModel.codegen.lines
+import com.intellij.workspaceModel.codegen.allRefsFields
+import com.intellij.workspaceModel.codegen.fields.implWsEntityFieldCode
+import com.intellij.workspaceModel.codegen.fields.refsConnectionIdCode
+import com.intellij.workspaceModel.codegen.utils.fqn
+import com.intellij.workspaceModel.codegen.deft.ObjType
 
 fun ObjType<*, *>.implWsEntityCode(): String {
   return """

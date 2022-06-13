@@ -1,8 +1,8 @@
-package org.jetbrains.deft.impl
+package com.intellij.workspaceModel.codegen.deft
 
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.codegen.deft.Field
 
 sealed class ValueType<V> {
   open fun link(linker: ObjModule) = Unit

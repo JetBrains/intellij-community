@@ -1,10 +1,10 @@
-package deft.storage.codegen
+package com.intellij.workspaceModel.codegen
 
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.Type
-import org.jetbrains.deft.codegen.utils.fqn
-import org.jetbrains.deft.impl.TStructure
-import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.codegen.utils.fqn
+import com.intellij.workspaceModel.codegen.deft.TStructure
+import com.intellij.workspaceModel.codegen.deft.Field
 
 val Type<*, *>.javaFullName
   get() = fqn(packageName, name)

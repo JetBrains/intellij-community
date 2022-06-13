@@ -1,20 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.deft.codegen.ijws.classes
+package com.intellij.workspaceModel.codegen.classes
 
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
-import deft.storage.codegen.field.javaType
-import deft.storage.codegen.javaFullName
-import deft.storage.codegen.javaSimpleName
-import deft.storage.codegen.javaSuperType
-import org.jetbrains.deft.codegen.model.DefType
-import org.jetbrains.deft.codegen.model.WsData
-import org.jetbrains.deft.codegen.model.WsSealed
-import org.jetbrains.deft.codegen.utils.LinesBuilder
-import org.jetbrains.deft.codegen.utils.fqn
-import org.jetbrains.deft.codegen.utils.lines
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.codegen.fields.javaType
+import com.intellij.workspaceModel.codegen.javaFullName
+import com.intellij.workspaceModel.codegen.javaSimpleName
+import com.intellij.workspaceModel.codegen.javaSuperType
+import com.intellij.workspaceModel.codegen.deft.model.DefType
+import com.intellij.workspaceModel.codegen.deft.model.WsData
+import com.intellij.workspaceModel.codegen.deft.model.WsSealed
+import com.intellij.workspaceModel.codegen.utils.LinesBuilder
+import com.intellij.workspaceModel.codegen.utils.fqn
+import com.intellij.workspaceModel.codegen.utils.lines
+import com.intellij.workspaceModel.codegen.deft.*
+import com.intellij.workspaceModel.codegen.deft.Field
 import java.lang.StringBuilder
 
 internal fun ObjType<*, *>.softLinksCode(context: LinesBuilder, hasSoftLinks: Boolean, simpleTypes: List<DefType>) {

@@ -1,4 +1,4 @@
-package org.jetbrains.deft.codegen.model
+package com.intellij.workspaceModel.codegen.deft.model
 
 class Src(val name: String, val contents: () -> CharSequence) {
   fun pos(pos: Int) = SrcPos(this, pos)

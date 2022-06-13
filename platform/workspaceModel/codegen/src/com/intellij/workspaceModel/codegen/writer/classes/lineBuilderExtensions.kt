@@ -1,6 +1,6 @@
-package org.jetbrains.deft.codegen.ijws.classes
+package com.intellij.workspaceModel.codegen.classes
 
-import org.jetbrains.deft.codegen.utils.LinesBuilder
+import com.intellij.workspaceModel.codegen.utils.LinesBuilder
 
 internal fun LinesBuilder.lineWrapped(str: String) {
   line()

@@ -1,4 +1,4 @@
-package org.jetbrains.deft.codegen.model
+package com.intellij.workspaceModel.codegen.deft.model
 
 import com.intellij.openapi.diagnostic.logger
 

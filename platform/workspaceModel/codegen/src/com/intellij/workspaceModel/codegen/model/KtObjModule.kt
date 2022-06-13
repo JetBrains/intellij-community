@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.deft.codegen.model
+package com.intellij.workspaceModel.codegen.deft.model
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.deft.impl.ObjModule
-import org.jetbrains.deft.impl.fields.ExtField
-import storage.codegen.patcher.KotlinReader
-import storage.codegen.patcher.PsiKotlinReader
+import com.intellij.workspaceModel.codegen.deft.ObjModule
+import com.intellij.workspaceModel.codegen.deft.ExtField
+import com.intellij.workspaceModel.codegen.patcher.KotlinReader
+import com.intellij.workspaceModel.codegen.patcher.PsiKotlinReader
 
 class KtObjModule(
   val project: Project?,

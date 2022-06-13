@@ -1,9 +1,9 @@
-package storage.codegen.field
+package com.intellij.workspaceModel.codegen.fields
 
-import deft.storage.codegen.*
-import deft.storage.codegen.field.javaBuilderType
-import deft.storage.codegen.field.javaType
-import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.codegen.*
+import com.intellij.workspaceModel.codegen.fields.javaBuilderType
+import com.intellij.workspaceModel.codegen.fields.javaType
+import com.intellij.workspaceModel.codegen.deft.Field
 
 val Field<*, *>.api: String
   get() = "${override(isOverride)}val $javaName: ${type.javaType}"

@@ -1,10 +1,10 @@
-package org.jetbrains.deft.impl
+package com.intellij.workspaceModel.codegen.deft
 
 import com.intellij.openapi.diagnostic.logger
-import org.jetbrains.deft.codegen.ijws.getRefType
-import org.jetbrains.deft.codegen.ijws.refsFields
-import org.jetbrains.deft.codegen.model.KtObjModule
-import org.jetbrains.deft.impl.fields.ExtField
+import com.intellij.workspaceModel.codegen.getRefType
+import com.intellij.workspaceModel.codegen.refsFields
+import com.intellij.workspaceModel.codegen.deft.model.KtObjModule
+import com.intellij.workspaceModel.codegen.deft.ExtField
 
 private val LOG = logger<ObjModule>()
 
