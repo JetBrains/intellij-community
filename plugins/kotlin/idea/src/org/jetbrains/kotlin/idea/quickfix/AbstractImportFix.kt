@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -49,7 +50,6 @@ import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.*
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -107,7 +107,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         if (isOutdated()) return false
 
-        if (isUnitTestMode() && HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) return false
+        if (ApplicationManager.getApplication().isHeadlessEnvironment() || HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) return false
 
         if (!suggestions.isInitialized() || suggestions().isEmpty()) return false
 

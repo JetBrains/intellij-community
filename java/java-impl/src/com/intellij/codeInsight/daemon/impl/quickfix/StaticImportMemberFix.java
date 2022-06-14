@@ -147,7 +147,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
 
     final QuestionAction action = createQuestionAction(candidates, element.getProject(), editor);
     String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberPresentableText(candidates.get(0)));
-    if (!ApplicationManager.getApplication().isUnitTestMode()
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()
         && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
       final TextRange textRange = element.getTextRange();
       HintManager.getInstance().showQuestionHint(editor, hintText,
