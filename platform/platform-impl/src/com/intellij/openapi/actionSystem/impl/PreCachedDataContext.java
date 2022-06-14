@@ -158,7 +158,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean noRulesSection = isEDT && ActionUpdater.isNoRulesInEDTSection();
     boolean rulesSuppressed = isEDT && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
-    boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed;
+    boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed && !noRulesSection;
     Object answer = getDataInner(dataId, rulesAllowed, !noRulesSection);
 
     int keyIndex; // for use with `nullsByContextRules` only, always != -1
