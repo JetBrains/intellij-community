@@ -100,13 +100,13 @@ internal open class GradleProjectModuleOperationProvider : AbstractProjectModule
         }
     }
 
-    override suspend fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>): List<UnifiedDependency> {
-        if (scopes.isEmpty()) return emptyList()
-        val fullGradlePath = CachedModuleDataFinder.getGradleModuleData(module.nativeModule)?.fullGradlePath ?: return emptyList()
-        return getGradleConfigurations(module, fullGradlePath, scopes).flatMap { configuration ->
-            configuration.dependencies.map { UnifiedDependency(it.groupId, it.artifactId, it.version, configuration.configurationName) }
-        }
-    }
+//    override suspend fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>): List<UnifiedDependency> {
+//        if (scopes.isEmpty()) return emptyList()
+//        val fullGradlePath = CachedModuleDataFinder.getGradleModuleData(module.nativeModule)?.fullGradlePath ?: return emptyList()
+//        return getGradleConfigurations(module, fullGradlePath, scopes).flatMap { configuration ->
+//            configuration.dependencies.map { UnifiedDependency(it.groupId, it.artifactId, it.version, configuration.configurationName) }
+//        }
+//    }
 
     private fun getDependencyTaskScript(taskName: String, outputFile: File, scopes: Set<String>, gradlePath: String) = """
         allprojects {
