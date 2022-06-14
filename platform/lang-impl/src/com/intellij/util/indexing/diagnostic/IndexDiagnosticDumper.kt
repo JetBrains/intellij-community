@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.Disposable
@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
+import kotlin.math.min
 import kotlin.streams.asSequence
 
 class IndexDiagnosticDumper : Disposable {
@@ -48,6 +49,11 @@ class IndexDiagnosticDumper : Disposable {
     private val indexingDiagnosticsLimitOfFiles: Int
       get() =
         SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 300)
+
+    @JvmStatic
+    private val indexingDiagnosticsSizeLimitOfFilesInMBPerProject: Int
+      get() =
+        SystemProperties.getIntProperty("intellij.indexes.diagnostics.size.limit.of.files.MB.per.project", 10)
 
     @JvmStatic
     val shouldDumpPathsOfIndexedFiles: Boolean
@@ -212,8 +218,26 @@ class IndexDiagnosticDumper : Disposable {
   private fun deleteOutdatedDiagnostics(existingDiagnostics: List<ExistingDiagnostic>): List<ExistingDiagnostic> {
     val sortedDiagnostics = existingDiagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }
 
-    val survivedDiagnostics = sortedDiagnostics.take(indexingDiagnosticsLimitOfFiles)
-    val outdatedDiagnostics = sortedDiagnostics.drop(indexingDiagnosticsLimitOfFiles)
+    var sizeLimit = indexingDiagnosticsSizeLimitOfFilesInMBPerProject * 1000000.toLong()
+    val numberLimit: Int
+    if (sizeLimit > 0) {
+      var number = 0
+      for (diagnostic in existingDiagnostics) {
+        sizeLimit -= diagnostic.jsonFile.toFile().length()
+        sizeLimit -= diagnostic.htmlFile.toFile().length()
+        if (sizeLimit <= 0) {
+          break
+        }
+        number++
+      }
+      numberLimit = min(indexingDiagnosticsLimitOfFiles, number)
+    }
+    else {
+      numberLimit = indexingDiagnosticsLimitOfFiles
+    }
+
+    val survivedDiagnostics = sortedDiagnostics.take(numberLimit)
+    val outdatedDiagnostics = sortedDiagnostics.drop(numberLimit)
 
     for (diagnostic in outdatedDiagnostics) {
       diagnostic.jsonFile.delete()
