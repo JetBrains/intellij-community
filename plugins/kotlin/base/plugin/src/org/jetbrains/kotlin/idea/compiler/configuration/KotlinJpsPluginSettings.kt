@@ -195,7 +195,6 @@ private fun showNotificationUnsupportedJpsPluginVersion(
     NotificationGroupManager.getInstance()
         .getNotificationGroup("Kotlin JPS plugin")
         .createNotification(title, content, NotificationType.WARNING)
-        .setSuggestionType(true)
         .setImportant(true)
         .notify(project)
 }
