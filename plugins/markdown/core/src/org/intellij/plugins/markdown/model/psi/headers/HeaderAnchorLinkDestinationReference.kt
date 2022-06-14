@@ -17,8 +17,10 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.lang.references.paths.FileWithoutExtensionReference
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiSymbolReferenceBase
+import org.jetbrains.annotations.ApiStatus
 
-internal class HeaderAnchorLinkDestinationReference(
+@ApiStatus.Internal
+class HeaderAnchorLinkDestinationReference(
   element: PsiElement,
   anchorRangeInElement: TextRange,
   private val anchorText: String,

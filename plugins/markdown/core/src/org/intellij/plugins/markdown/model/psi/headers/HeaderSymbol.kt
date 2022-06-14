@@ -19,8 +19,10 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderContent
 import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbol
+import org.jetbrains.annotations.ApiStatus
 
-internal data class HeaderSymbol(
+@ApiStatus.Internal
+data class HeaderSymbol(
   val file: PsiFile,
   val range: TextRange,
   val text: String,

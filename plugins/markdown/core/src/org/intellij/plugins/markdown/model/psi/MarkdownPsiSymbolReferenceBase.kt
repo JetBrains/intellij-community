@@ -2,8 +2,10 @@ package org.intellij.plugins.markdown.model.psi
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
-internal abstract class MarkdownPsiSymbolReferenceBase(
+@ApiStatus.Internal
+abstract class MarkdownPsiSymbolReferenceBase(
   private val element: PsiElement,
   private val rangeInElement: TextRange? = null
 ): MarkdownPsiSymbolReference {
