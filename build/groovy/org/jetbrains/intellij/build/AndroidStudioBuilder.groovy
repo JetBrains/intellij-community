@@ -15,14 +15,11 @@
  */
 package org.jetbrains.intellij.build
 
-import org.codehaus.gant.GantBinding
-
 /**
  * Based on IdeaCommunityBuilder, but simplified a bit since we build fewer things
  * (for example, no intellij-core distribution)
  */
 class AndroidStudioBuilder {
-  private final GantBinding binding
   private final BuildContext buildContext
 
   AndroidStudioBuilder(String home, BuildOptions options = new BuildOptions(), String projectHome = home) {
