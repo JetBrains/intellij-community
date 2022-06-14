@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
 
 internal fun PsiElement.hasType(type: IElementType): Boolean {
@@ -25,4 +26,12 @@ internal inline fun <reified T: PsiElement> PsiElement.childrenOfType(): Sequenc
 
 internal fun PsiElement.childrenOrNull(): Sequence<PsiElement>? {
   return firstChild?.siblings(forward = true, withSelf = true)
+}
+
+internal fun PsiElement.childrenOfType(type: IElementType): Sequence<PsiElement> {
+  return children().filter { it.hasType(type) }
+}
+
+internal fun PsiElement.childrenOfType(tokenSet: TokenSet): Sequence<PsiElement> {
+  return children().filter { it.elementType in tokenSet }
 }
