@@ -184,8 +184,13 @@ final class UpdateCheckerService {
   private static void showWhatsNew(Project project, BuildNumber current) {
     String url = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
     if (url != null && WhatsNewAction.isAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
-      ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url));
-      IdeUpdateUsageTriggerCollector.UPDATE_WHATS_NEW.log(project);
+      if (UpdateSettings.getInstance().isShowWhatsNewEditor()) {
+        ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url));
+        IdeUpdateUsageTriggerCollector.majorUpdateHappened(true);
+      }
+      else {
+        IdeUpdateUsageTriggerCollector.majorUpdateHappened(false);
+      }
     }
   }
 
@@ -211,7 +216,7 @@ final class UpdateCheckerService {
       return false;
     }
 
-    if (!majorEap && lastShownFor < current.getBaselineVersion() && settings.isShowWhatsNewEditor()) {
+    if (!majorEap && lastShownFor < current.getBaselineVersion()) {
       Product product = loadProductData();
       if (product != null) {
         // checking whether the actual "what's new" page is relevant to the current release
