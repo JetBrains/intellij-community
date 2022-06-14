@@ -92,6 +92,8 @@ public final class ScopeToolState {
   }
 
   public @Nullable TextAttributesKey getEditorAttributesKey() {
+    final TextAttributesKey forcedKey = getForcedEditorAttributesKey();
+    if (forcedKey != null) return forcedKey;
     if (myEditorAttributesKey == null) {
       return null;
     }
@@ -99,7 +101,8 @@ public final class ScopeToolState {
   }
 
   public @Nullable String getEditorAttributesKeyString() {
-    return myEditorAttributesKey;
+    final String forcedKey = getForcedEditorAttributesKeyString();
+    return forcedKey != null ? forcedKey : myEditorAttributesKey;
   }
 
   public @Nullable TextAttributesKey getForcedEditorAttributesKey() {
@@ -115,6 +118,7 @@ public final class ScopeToolState {
   }
 
   public void setEditorAttributesKey(@Nullable String textAttributesKey) {
+    if (getForcedEditorAttributesKeyString() != null) return;
     myEditorAttributesKey = textAttributesKey;
   }
 
