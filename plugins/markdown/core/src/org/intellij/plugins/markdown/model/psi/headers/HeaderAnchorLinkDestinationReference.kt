@@ -10,6 +10,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceUtil
+import com.intellij.psi.search.GlobalSearchScope
+import org.intellij.plugins.markdown.MarkdownIcons
+import org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.lang.references.paths.FileWithoutExtensionReference
@@ -34,9 +37,10 @@ internal class HeaderAnchorLinkDestinationReference(
 
   override fun resolveReference(): Collection<Symbol> {
     val file = resolveFile()
-    val headers = file.firstChild?.childrenOfType<MarkdownHeader>().orEmpty()
-    val targetHeaders = headers.filter { it.anchorText == anchorText }
-    val symbols = targetHeaders.mapNotNull { HeaderSymbol.createPointer(it)?.dereference() }
+    //val headers = file.firstChild?.childrenOfType<MarkdownHeader>().orEmpty()
+    //val targetHeaders = headers.filter { it.anchorText == anchorText }
+    val headers = HeaderAnchorIndex.collectHeaders(element.project, GlobalSearchScope.fileScope(file), anchorText)
+    val symbols = headers.mapNotNull { HeaderSymbol.createPointer(it)?.dereference() }
     return symbols.toList()
   }
 
@@ -44,8 +48,13 @@ internal class HeaderAnchorLinkDestinationReference(
     // Find target file and get all it's headers
     val file = resolveFile()
     val headers = file.firstChild?.childrenOfType<MarkdownHeader>().orEmpty()
-    val anchors = headers.mapNotNull { it.anchorText }
-    return anchors.map { LookupElementBuilder.create(it) }.toList()
+    val anchors = headers.mapNotNull { header -> header.anchorText?.let { it to header.level } }
+    return anchors.map { (anchorText, level) ->
+      LookupElementBuilder.create(anchorText)
+        // TODO: Replace with actual header icon
+        .withIcon(MarkdownIcons.EditorActions.Link)
+        .withTypeText("H$level", true)
+    }.toList()
   }
 
   companion object {
