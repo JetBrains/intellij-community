@@ -188,12 +188,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public boolean isSuspendedDumbMode() {
-    boolean suspended = myHeavyActivities.isSuspended();
-    return isDumb() && suspended;
-  }
-
-  @Override
   public void setAlternativeResolveEnabled(boolean enabled) {
     myAlternativeResolveTracker.setAlternativeResolveEnabled(enabled);
   }

@@ -95,11 +95,6 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public boolean isSuspendedDumbMode() {
-    return false;
-  }
-
-  @Override
   public void unsafeRunWhenSmart(@NotNull Runnable runnable) {
     runnable.run();
   }
