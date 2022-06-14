@@ -77,7 +77,7 @@ object UpdateChecker {
   private var machineIdInitialized = false
 
   /**
-   * Adding a plugin ID to this collection allows to exclude a plugin from a regular update check.
+   * Adding a plugin ID to this collection allows excluding a plugin from a regular update check.
    * Has no effect on non-bundled plugins.
    */
   val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
@@ -261,7 +261,7 @@ object UpdateChecker {
     catch (e: Exception) {
       LOG.infoWithDebug(e)
       when (e) {
-        is JDOMException -> PlatformUpdates.Empty  // corrupted content, don't bother telling user
+        is JDOMException -> PlatformUpdates.Empty  // corrupted content, don't bother telling users
         else -> PlatformUpdates.ConnectionError(e)
       }
     }
@@ -296,7 +296,7 @@ object UpdateChecker {
     }
 
   private fun clearProductDataCache() {
-    if (productDataLock.tryLock(1, TimeUnit.MILLISECONDS)) {  // longer means loading now, no much sense in clearing
+    if (productDataLock.tryLock(1, TimeUnit.MILLISECONDS)) {  // a longer time means loading now, no much sense in clearing
       productDataCache = null
       productDataLock.unlock()
     }
@@ -410,7 +410,7 @@ object UpdateChecker {
       onceInstalled.toFile().deleteOnExit()
     }
 
-    // excluding plugins that take care about their own updates
+    // excluding plugins that take care of their own updates
     if (excludedFromUpdateCheckPlugins.isNotEmpty() && !ApplicationManager.getApplication().isInternal) {
       excludedFromUpdateCheckPlugins.forEach {
         val id = PluginId.getId(it)
@@ -781,14 +781,14 @@ object UpdateChecker {
   //<editor-fold desc="Deprecated stuff.">
   @ApiStatus.ScheduledForRemoval
   @Deprecated(level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("getNotificationGroup()"), message = "Use getNotificationGroup()")
-  @Suppress("DEPRECATION")
+  @Suppress("DEPRECATION", "unused")
   @JvmField
-  val NOTIFICATIONS =
-    NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
+  val NOTIFICATIONS = NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
 
   @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))
   @Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))
+  @Suppress("unused")
   @JvmStatic
   val disabledToUpdatePlugins: Set<String>
     get() = disabledToUpdate.mapTo(TreeSet()) { it.idString }
