@@ -91,6 +91,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
           myMainPanel.revalidate();
           myIsShowingSimilarUsages = false;
           addMostCommonUsagesForSelectedGroups(myUsageView.getSelectedUsages());
+          setContent(myScrollPane);
         }
 
         @Override
@@ -128,15 +129,15 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       myIsShowingSimilarUsages = true;
       ActivityTracker.getInstance().inc();
       final SimilarUsagesComponent mySimilarComponent = new SimilarUsagesComponent(info, this);
-      JScrollPane scroll = ScrollPaneFactory.createScrollPane(mySimilarComponent, true);
-      final JScrollBar scrollBar = scroll.getVerticalScrollBar();
+      JScrollPane similarUsagesScrollPane = ScrollPaneFactory.createScrollPane(mySimilarComponent, true);
+      final JScrollBar scrollBar = similarUsagesScrollPane.getVerticalScrollBar();
       mySimilarComponent.renderOriginalUsage();
       mySimilarComponent.renderSimilarUsages(usagesToRender);
       BoundedRangeModelThresholdListener.install(scrollBar, () -> {
         mySimilarComponent.renderSimilarUsages(usagesToRender);
         return Unit.INSTANCE;
       });
-      setContent(scroll);
+      setContent(similarUsagesScrollPane);
       revalidate();
     });
     actionLink.setLinkIcon();
