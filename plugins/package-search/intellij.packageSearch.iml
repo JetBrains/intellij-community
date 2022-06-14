@@ -12,7 +12,7 @@
           <option name="apiVersion" value="1.5" />
           <option name="pluginClasspaths">
             <array>
-              <option value="$USER_HOME$/AppData/Local/JetBrains/IntelliJIdea2022.1/kotlin-dist-for-ide/1.6.10-release-971/lib/kotlinx-serialization-compiler-plugin.jar" />
+              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
             </array>
           </option>
         </compilerArguments>
