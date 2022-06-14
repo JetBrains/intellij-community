@@ -198,14 +198,17 @@ Includes the following features:</p>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
     <lang.psiStructureViewFactory language="Markdown"
                                   implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
-    <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.MarkdownReferenceProvider"/>
     <stripTrailingSpacesFilterFactory implementation="org.intellij.plugins.markdown.editor.MarkdownStripTrailingSpacesFilterFactory"/>
     <httpRequestHandler implementation="org.intellij.plugins.markdown.ui.preview.PreviewStaticServer"/>
 
-    <localInspection language="Markdown" shortName="MarkdownUnresolvedFileReference" bundle="messages.MarkdownBundle"
-                     key="markdown.unresolved.file.inspection.name" groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.intellij.plugins.markdown.lang.references.MarkdownUnresolvedFileReferenceInspection"/>
+    <localInspection language="Markdown"
+                     shortName="MarkdownUnresolvedFileReference"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.unresolved.file.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.intellij.plugins.markdown.lang.references.paths.MarkdownUnresolvedFileReferenceInspection"/>
 
     <lang.foldingBuilder language="Markdown" implementationClass="org.intellij.plugins.markdown.folding.MarkdownFoldingBuilder"/>
 
@@ -216,6 +219,11 @@ Includes the following features:</p>
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex"/>
 
     <typedHandler implementation="org.intellij.plugins.markdown.model.HeaderAnchorCompletionPopupTypedHandler"/>
+
+    <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
+    <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.CommonLinkDestinationReferenceContributor"/>
+    <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
+
 
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer"/>
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder"/>

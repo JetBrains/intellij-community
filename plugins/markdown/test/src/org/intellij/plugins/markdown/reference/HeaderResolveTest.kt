@@ -1,12 +1,12 @@
 package org.intellij.plugins.markdown.reference
 
 import com.intellij.openapi.paths.PsiDynaReference
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.containers.ContainerUtil
 import junit.framework.TestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
-import org.intellij.plugins.markdown.lang.references.MarkdownAnchorReference
+import org.intellij.plugins.markdown.lang.references.headers.HeaderAnchorReference
 
 class HeaderResolveTest : BasePlatformTestCase() {
   override fun getTestDataPath(): String = MarkdownTestingUtil.TEST_DATA_PATH + "/reference/linkDestination/headers/"
@@ -63,13 +63,10 @@ class HeaderResolveTest : BasePlatformTestCase() {
   private fun checkMultiResolve(resolveCount: Int) {
     val fileName = getTestName(true) + ".md"
     myFixture.configureByFile(fileName)
-    val ref = myFixture.getReferenceAtCaretPosition()
-    val mdRef = ContainerUtil.findInstance((ref as PsiDynaReference<*>).references,
-                                           MarkdownAnchorReference::class.java)
-
-    TestCase.assertNotNull(mdRef)
-    val result = mdRef.multiResolve(false)
-
-    assertTrue(result.size == resolveCount)
+    val reference = myFixture.getReferenceAtCaretPosition()
+    val anchorReference = (reference as PsiDynaReference<*>).references.filterIsInstance<HeaderAnchorReference>().firstOrNull()
+    TestCase.assertNotNull(anchorReference)
+    val result = anchorReference!!.multiResolve(false)
+    UsefulTestCase.assertSize(resolveCount, result)
   }
 }

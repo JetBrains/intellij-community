@@ -2,7 +2,7 @@ package org.intellij.plugins.markdown.reference
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.intellij.plugins.markdown.lang.references.MarkdownUnresolvedFileReferenceInspection
+import org.intellij.plugins.markdown.lang.references.paths.MarkdownUnresolvedFileReferenceInspection
 
 class UnresolvedLinkDestinationReferenceTest : BasePlatformTestCase() {
   override fun getTestDataPath(): String = MarkdownTestingUtil.TEST_DATA_PATH + "/reference/linkDestination/"
