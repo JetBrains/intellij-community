@@ -12,6 +12,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.LangBundle;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -435,15 +436,20 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return false;
   }
 
-  public @NotNull @NlsContexts.Tooltip String getFileTooltipText(@NotNull VirtualFile file) {
+  public @NotNull @NlsContexts.Tooltip String getFileTooltipText(@NotNull VirtualFile file, @NotNull EditorWindow window) {
+    String prefix = "";
+    EditorComposite composite = window.getComposite(file);
+    if (composite != null && composite.isPreview()) {
+      prefix = LangBundle.message("preview.editor.tab.tooltip.text") + " ";
+    }
     List<EditorTabTitleProvider> availableProviders = DumbService.getDumbAwareExtensions(myProject, EditorTabTitleProvider.EP_NAME);
     for (EditorTabTitleProvider provider : availableProviders) {
       String text = provider.getEditorTabTooltipText(myProject, file);
       if (text != null) {
-        return text;
+        return prefix + text;
       }
     }
-    return FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
+    return prefix + FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
   }
 
   @Override

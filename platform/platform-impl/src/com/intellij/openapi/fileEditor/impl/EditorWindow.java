@@ -32,7 +32,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.TabsUtil;
@@ -1102,7 +1101,7 @@ public final class EditorWindow {
     myTabbedPane.setIconAt(index, decorateFileIcon(composite, icon));
   }
 
-  void updateFileName(@NotNull VirtualFile file) {
+  void updateFileName(@NotNull VirtualFile file, @NotNull EditorWindow window) {
     int index = findFileEditorIndex(file);
     if (index == -1) return;
     ReadAction.nonBlocking(() -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file))
@@ -1112,7 +1111,7 @@ public final class EditorWindow {
         if (index1 != -1) setTitleAt(index1, title);
       })
       .submit(NonUrgentExecutor.getInstance());
-    setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips() ? getManager().getFileTooltipText(file) : null);
+    setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips() ? getManager().getFileTooltipText(file, window) : null);
   }
 
   @Nullable

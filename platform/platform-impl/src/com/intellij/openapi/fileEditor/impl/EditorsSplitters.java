@@ -477,7 +477,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     for (EditorWindow window : getWindows()) {
       for (VirtualFile file : window.getFiles()) {
         if (updatedFile == null || file.getName().equals(updatedFile.getName())) {
-          window.updateFileName(file);
+          window.updateFileName(file, window);
         }
       }
     }

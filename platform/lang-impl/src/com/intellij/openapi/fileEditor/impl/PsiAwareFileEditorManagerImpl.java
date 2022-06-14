@@ -55,7 +55,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   }
 
   @Override
-  public @NotNull String getFileTooltipText(@NotNull VirtualFile file) {
+  public @NotNull String getFileTooltipText(@NotNull VirtualFile file, @NotNull EditorWindow window) {
     @NlsSafe StringBuilder tooltipText = new StringBuilder();
     if (Registry.is("ide.tab.tooltip.module")) {
       Module module = ModuleUtilCore.findModuleForFile(file, getProject());
@@ -65,7 +65,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
         tooltipText.append("] ");
       }
     }
-    tooltipText.append(super.getFileTooltipText(file));
+    tooltipText.append(super.getFileTooltipText(file, window));
     return tooltipText.toString();
   }
 
