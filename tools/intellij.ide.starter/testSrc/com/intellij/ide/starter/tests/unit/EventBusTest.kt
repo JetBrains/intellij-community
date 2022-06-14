@@ -2,9 +2,9 @@ package com.intellij.ide.starter.tests.unit
 
 import com.intellij.ide.starter.bus.*
 import io.kotest.assertions.withClue
-import io.kotest.common.runBlocking
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
