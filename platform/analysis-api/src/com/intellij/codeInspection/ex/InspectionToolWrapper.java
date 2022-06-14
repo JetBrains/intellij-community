@@ -141,16 +141,6 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP != null ? myEP.getShortName() : getTool().getShortName();
   }
 
-  @Deprecated
-  public String getEditorAttributesKeyExternalName() {
-    if (myEP != null) {
-      return myEP.editorAttributes;
-    }
-    else {
-      return getTool().getEditorAttributesKey();
-    }
-  }
-
   public String getEditorAttributesKey() {
     return getTool().getEditorAttributesKey();
   }
