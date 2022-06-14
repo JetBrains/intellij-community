@@ -7,9 +7,11 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
@@ -39,7 +41,7 @@ class MarkdownHeader: MarkdownHeaderImpl {
    * Exception: multiple headers with same text won't be adjusted with it's occurence number.
    */
   val anchorText: String?
-    get() = buildAnchorText()
+    get() = obtainAnchorText(this)
 
   override fun accept(visitor: PsiElementVisitor) {
     when (visitor) {
@@ -121,11 +123,13 @@ class MarkdownHeader: MarkdownHeaderImpl {
     }
   }
 
-  private fun buildAnchorText(): String? {
+  private fun buildAnchorText(includeStartingHash: Boolean = false): String? {
     val contentHolder = findContentHolder() ?: return null
     val children = contentHolder.children().filter { !it.hasType(MarkdownTokenTypeSets.WHITE_SPACES) }
     val text = buildString {
-      append("#")
+      if (includeStartingHash) {
+        append("#")
+      }
       var count = 0
       for (child in children) {
         if (count >= 1) {
@@ -139,7 +143,8 @@ class MarkdownHeader: MarkdownHeaderImpl {
         count += 1
       }
     }
-    return text.lowercase().replace(garbageRegex, "").replace(" ", "-")
+    val replaced = text.lowercase().replace(garbageRegex, "").replace(additionalSymbolsRegex, "")
+    return replaced.replace(" ", "-")
   }
 
   private fun StringBuilder.processInlineLink(element: MarkdownInlineLink) {
@@ -154,6 +159,13 @@ class MarkdownHeader: MarkdownHeaderImpl {
   }
 
   companion object {
-    private val garbageRegex = Regex("[^#\\w\\- ]")
+    private val garbageRegex = Regex("[^\\w\\- ]")
+    private val additionalSymbolsRegex = Regex("[^-_a-z0-9\\s]")
+
+    fun obtainAnchorText(header: MarkdownHeader): String? {
+      return CachedValuesManager.getCachedValue(header) {
+        CachedValueProvider.Result.create(header.buildAnchorText(false), PsiModificationTracker.MODIFICATION_COUNT)
+      }
+    }
   }
 }

@@ -109,7 +109,7 @@ internal class GenerateTableOfContentsAction: AnAction() {
       }
       append("* [")
       append(text)
-      append("](")
+      append("](#")
       append(reference)
       append(")")
     }

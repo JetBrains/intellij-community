@@ -13,7 +13,7 @@ class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     val content = """
     # Some header text
     """.trimIndent()
-    doTest(content, "#some-header-text")
+    doTest(content, "some-header-text")
   }
 
   fun `test horizontal line header`() {
@@ -22,7 +22,7 @@ class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     Some header text
     ---
     """.trimIndent()
-    doTest(content, "#some-header-text")
+    doTest(content, "some-header-text")
   }
 
   fun `test horizontal line header with link`() {
@@ -31,7 +31,7 @@ class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     Some header [Some link text](https://jetbrains.com) suffix
     ---
     """.trimIndent()
-    doTest(content, "#some-header-some-link-text-suffix")
+    doTest(content, "some-header-some-link-text-suffix")
   }
 
   fun `test inline link`() {
@@ -39,7 +39,7 @@ class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     val content = """
     # Some header [Some link text](https://jetbrains.com) suffix
     """.trimIndent()
-    doTest(content, "#some-header-some-link-text-suffix")
+    doTest(content, "some-header-some-link-text-suffix")
   }
 
   fun `test image`() {
@@ -47,7 +47,7 @@ class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     val content = """
     # Some header ![Some image text](https://jetbrains.com) suffix
     """.trimIndent()
-    doTest(content, "#some-header--suffix")
+    doTest(content, "some-header--suffix")
   }
 
   fun `test image at the end`() {
@@ -55,7 +55,7 @@ class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     val content = """
     # Some header ![Some image text](https://jetbrains.com)
     """.trimIndent()
-    doTest(content, "#some-header-")
+    doTest(content, "some-header-")
   }
 
   fun `test image at the start`() {
@@ -63,7 +63,7 @@ class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     val content = """
     # ![Some image text](https://jetbrains.com) Some header
     """.trimIndent()
-    doTest(content, "#-some-header")
+    doTest(content, "-some-header")
   }
 
   fun `test image inside inline link`() {
@@ -71,7 +71,7 @@ class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     val content = """
     # Some header [![Some image text](https://jetbrains.com)](https://example.com) suffix
     """.trimIndent()
-    doTest(content, "#some-header--suffix")
+    doTest(content, "some-header--suffix")
   }
 
   fun `test image inside inline link with text`() {
@@ -79,7 +79,14 @@ class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     val content = """
     # Some header [Some link ![Some image text](https://jetbrains.com) text](https://example.com) suffix
     """.trimIndent()
-    doTest(content, "#some-header-some-link--text-suffix")
+    doTest(content, "some-header-some-link--text-suffix")
+  }
+
+  fun `test special symbols are removed`() {
+    val content = """
+    # -  ^Foo* ?baR <baz
+    """.trimIndent()
+    doTest(content, "--foo--bar--baz")
   }
 
   private fun doTest(content: String, expected: String) {
