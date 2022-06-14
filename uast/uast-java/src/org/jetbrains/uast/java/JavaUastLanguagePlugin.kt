@@ -90,8 +90,6 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
   }
 
   override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
-    if (element is PsiJavaFile) return requiredType.el<UFile> { JavaUFile(element, this) }
-
     return convertElement(element, null, requiredType)
   }
 
@@ -538,47 +536,118 @@ internal object JavaConverter {
   internal fun convertStatement(el: PsiStatement,
                                 givenParent: UElement?,
                                 requiredType: Class<out UElement>): UExpression? {
-    return when (el) {
-      is PsiDeclarationStatement -> requiredType.expr<UDeclarationsExpression,PsiDeclarationStatement>(el, givenParent) { e, gp ->
-        convertDeclarations(e.declaredElements, gp ?: e.parent ?.run { unwrapElements(this).toUElement() })
+    var result:UExpression? = null
+    el.accept(object: JavaElementVisitor() {
+      override fun visitAssertStatement(statement: PsiAssertStatement) {
+        result = requiredType.expr<UCallExpression,PsiAssertStatement>(statement, givenParent, ::JavaUAssertExpression)
       }
-      is PsiExpressionListStatement -> requiredType.expr<UDeclarationsExpression,PsiExpressionListStatement>(el, givenParent) { e, gp ->
-        convertDeclarations(e.expressionList.expressions, gp ?: e.parent ?.run { unwrapElements(this).toUElement() })
+
+      override fun visitBlockStatement(statement: PsiBlockStatement) {
+        result = requiredType.expr<UBlockExpression,PsiBlockStatement>(statement, givenParent, ::JavaUBlockExpression)
       }
-      is PsiBlockStatement -> requiredType.expr<UBlockExpression,PsiBlockStatement>(el, givenParent, ::JavaUBlockExpression)
-      is PsiLabeledStatement -> requiredType.expr<ULabeledExpression,PsiLabeledStatement>(el, givenParent, ::JavaULabeledExpression)
-      is PsiExpressionStatement -> convertExpression(el.expression, givenParent, requiredType)
-      is PsiIfStatement -> requiredType.expr<UIfExpression,PsiIfStatement>(el, givenParent, ::JavaUIfExpression)
-      is PsiSwitchStatement -> requiredType.expr<USwitchExpression,PsiSwitchStatement>(el, givenParent, ::JavaUSwitchExpression)
-      is PsiWhileStatement -> requiredType.expr<UWhileExpression,PsiWhileStatement>(el, givenParent, ::JavaUWhileExpression)
-      is PsiDoWhileStatement -> requiredType.expr<UDoWhileExpression,PsiDoWhileStatement>(el, givenParent, ::JavaUDoWhileExpression)
-      is PsiForStatement -> requiredType.expr<UForExpression,PsiForStatement>(el, givenParent, ::JavaUForExpression)
-      is PsiForeachStatement -> requiredType.expr<UForEachExpression,PsiForeachStatement>(el, givenParent, ::JavaUForEachExpression)
-      is PsiBreakStatement -> requiredType.expr<UBreakExpression,PsiBreakStatement>(el, givenParent, ::JavaUBreakExpression)
-      is PsiYieldStatement -> requiredType.expr<UYieldExpression,PsiYieldStatement>(el, givenParent, ::JavaUYieldExpression)
-      is PsiContinueStatement -> requiredType.expr<UContinueExpression,PsiContinueStatement>(el, givenParent, ::JavaUContinueExpression)
-      is PsiReturnStatement -> requiredType.expr<UReturnExpression,PsiReturnStatement>(el, givenParent, ::JavaUReturnExpression)
-      is PsiAssertStatement -> requiredType.expr<UCallExpression,PsiAssertStatement>(el, givenParent, ::JavaUAssertExpression)
-      is PsiThrowStatement -> requiredType.expr<UThrowExpression,PsiThrowStatement>(el, givenParent, ::JavaUThrowExpression)
-      is PsiSynchronizedStatement -> requiredType.expr<UBlockExpression,PsiSynchronizedStatement>(el, givenParent, ::JavaUSynchronizedExpression)
-      is PsiTryStatement -> requiredType.expr<UTryExpression,PsiTryStatement>(el, givenParent, ::JavaUTryExpression)
-      is PsiEmptyStatement -> requiredType.expr<UExpression,PsiEmptyStatement>(el,givenParent) { e,_->UastEmptyExpression(e.parent?.toUElement()) }
-      is PsiSwitchLabelStatementBase -> requiredType.expr<UExpression,PsiSwitchLabelStatementBase>(el, givenParent) { e, gp ->
-        when (gp) {
-          is JavaUSwitchEntryList -> gp.findUSwitchEntryForLabel(e)
-          null -> PsiTreeUtil.getParentOfType(e, PsiSwitchBlock::class.java)?.let {
-            JavaUSwitchExpression(it, null).body.findUSwitchEntryForLabel(e)
+
+      override fun visitBreakStatement(statement: PsiBreakStatement) {
+        result = requiredType.expr<UBreakExpression,PsiBreakStatement>(statement, givenParent, ::JavaUBreakExpression)
+      }
+
+      override fun visitContinueStatement(statement: PsiContinueStatement) {
+        result = requiredType.expr<UContinueExpression,PsiContinueStatement>(statement, givenParent, ::JavaUContinueExpression)
+      }
+
+      override fun visitDeclarationStatement(statement: PsiDeclarationStatement) {
+        result = requiredType.expr<UDeclarationsExpression,PsiDeclarationStatement>(statement, givenParent) { e, gp -> convertDeclarations(e.declaredElements, gp ?: e.parent ?.run { unwrapElements(this).toUElement() }) }
+      }
+
+      override fun visitDoWhileStatement(statement: PsiDoWhileStatement) {
+        result = requiredType.expr<UDoWhileExpression,PsiDoWhileStatement>(statement, givenParent, ::JavaUDoWhileExpression)
+      }
+
+      override fun visitEmptyStatement(statement: PsiEmptyStatement) {
+        result = requiredType.expr<UExpression,PsiEmptyStatement>(statement,givenParent) { e,_->UastEmptyExpression(e.parent?.toUElement()) }
+      }
+
+      override fun visitExpressionListStatement(statement: PsiExpressionListStatement) {
+        result = requiredType.expr<UDeclarationsExpression,PsiExpressionListStatement>(statement, givenParent) { e, gp -> convertDeclarations(e.expressionList.expressions, gp ?: e.parent ?.run { unwrapElements(this).toUElement() }) }
+      }
+
+      override fun visitExpressionStatement(statement: PsiExpressionStatement) {
+        result = convertExpression(statement.expression, givenParent, requiredType)
+      }
+
+      override fun visitForeachStatement(statement: PsiForeachStatement) {
+        result = requiredType.expr<UForEachExpression,PsiForeachStatement>(statement, givenParent, ::JavaUForEachExpression)
+      }
+
+      override fun visitForStatement(statement: PsiForStatement) {
+        result = requiredType.expr<UForExpression,PsiForStatement>(statement, givenParent, ::JavaUForExpression)
+      }
+
+      override fun visitIfStatement(statement: PsiIfStatement) {
+        result = requiredType.expr<UIfExpression,PsiIfStatement>(statement, givenParent, ::JavaUIfExpression)
+      }
+
+      override fun visitLabeledStatement(statement: PsiLabeledStatement) {
+        result = requiredType.expr<ULabeledExpression,PsiLabeledStatement>(statement, givenParent, ::JavaULabeledExpression)
+      }
+
+      override fun visitReturnStatement(statement: PsiReturnStatement) {
+        result = requiredType.expr<UReturnExpression,PsiReturnStatement>(statement, givenParent, ::JavaUReturnExpression)
+      }
+
+      override fun visitSwitchLabelStatement(statement: PsiSwitchLabelStatement) {
+        visitSwitchLabelStatementBase(statement)
+      }
+
+      private fun visitSwitchLabelStatementBase(statement: PsiSwitchLabelStatementBase) {
+        result = requiredType.expr<UExpression, PsiSwitchLabelStatementBase>(statement, givenParent) { e, gp ->
+          when (gp) {
+            is JavaUSwitchEntryList -> gp.findUSwitchEntryForLabel(e)
+            null -> PsiTreeUtil.getParentOfType(e, PsiSwitchBlock::class.java)?.let {
+              JavaUSwitchExpression(it, null).body.findUSwitchEntryForLabel(e)
+            }
+            else -> null
           }
-          else -> null
         }
       }
-      else -> requiredType.expr<UExpression, PsiElement>(el, givenParent, ::UnknownJavaExpression)
-    }
+
+      override fun visitSwitchLabeledRuleStatement(statement: PsiSwitchLabeledRuleStatement) {
+        visitSwitchLabelStatementBase(statement)
+      }
+
+      override fun visitSwitchStatement(statement: PsiSwitchStatement) {
+        result = requiredType.expr<USwitchExpression,PsiSwitchStatement>(statement, givenParent, ::JavaUSwitchExpression)
+      }
+
+      override fun visitSynchronizedStatement(statement: PsiSynchronizedStatement) {
+        result = requiredType.expr<UBlockExpression,PsiSynchronizedStatement>(statement, givenParent, ::JavaUSynchronizedExpression)
+      }
+
+      override fun visitThrowStatement(statement: PsiThrowStatement) {
+        result = requiredType.expr<UThrowExpression,PsiThrowStatement>(statement, givenParent, ::JavaUThrowExpression)
+      }
+
+      override fun visitTryStatement(statement: PsiTryStatement) {
+        result = requiredType.expr<UTryExpression,PsiTryStatement>(statement, givenParent, ::JavaUTryExpression)
+      }
+
+      override fun visitWhileStatement(statement: PsiWhileStatement) {
+        result = requiredType.expr<UWhileExpression,PsiWhileStatement>(statement, givenParent, ::JavaUWhileExpression)
+      }
+
+      override fun visitYieldStatement(statement: PsiYieldStatement) {
+        result = requiredType.expr<UYieldExpression,PsiYieldStatement>(statement, givenParent, ::JavaUYieldExpression)
+      }
+
+      override fun visitElement(element: PsiElement) {
+        result = requiredType.expr<UExpression, PsiElement>(element, givenParent, ::UnknownJavaExpression)
+      }
+    })
+    return result
   }
 
   private fun convertDeclarations(elements: Array<out PsiElement>, parent: UElement?): UDeclarationsExpression {
     return JavaUDeclarationsExpression(parent).apply {
-      val declarations = mutableListOf<UDeclaration>()
+      val declarations = ArrayList<UDeclaration>(elements.size)
       for (element in elements) {
         if (element is PsiVariable) {
           declarations += JavaUVariable.create(element, this)
@@ -592,15 +661,19 @@ internal object JavaConverter {
   }
 
   internal fun convertOrEmpty(statement: PsiStatement?, parent: UElement?): UExpression =
-    if (statement == null) UastEmptyExpression(parent) else {
-      val converted = convertStatement(statement, parent, UExpression::class.java)
-      if (converted == null) UastEmptyExpression(parent) else converted
+    if (statement == null) {
+      UastEmptyExpression(parent)
+    }
+    else {
+      convertStatement(statement, parent, UExpression::class.java) ?: UastEmptyExpression(parent)
     }
 
   internal fun convertOrEmpty(expression: PsiExpression?, parent: UElement?): UExpression =
-    if (expression == null) UastEmptyExpression(parent) else {
-      val converted = convertExpression(expression, parent, UExpression::class.java)
-      if (converted == null) UastEmptyExpression(parent) else converted
+    if (expression == null) {
+      UastEmptyExpression(parent)
+    }
+    else {
+      convertExpression(expression, parent, UExpression::class.java) ?: UastEmptyExpression(parent)
     }
 
   internal fun convertOrNull(expression: PsiExpression?, parent: UElement?): UExpression? =
