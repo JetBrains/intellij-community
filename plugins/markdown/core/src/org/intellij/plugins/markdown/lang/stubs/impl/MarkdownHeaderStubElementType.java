@@ -8,7 +8,8 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import org.intellij.plugins.markdown.lang.index.MarkdownHeadersIndex;
+import org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex;
+import org.intellij.plugins.markdown.lang.index.HeaderTextIndex;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader;
 import org.intellij.plugins.markdown.lang.stubs.MarkdownStubElementType;
 import org.jetbrains.annotations.NotNull;
@@ -36,12 +37,13 @@ public class MarkdownHeaderStubElementType extends MarkdownStubElementType<Markd
   @NotNull
   @Override
   public MarkdownHeaderStubElement createStub(@NotNull MarkdownHeader psi, StubElement parentStub) {
-    return new MarkdownHeaderStubElement(parentStub, this, psi.getName());
+    return new MarkdownHeaderStubElement(parentStub, this, psi.getName(), psi.getAnchorText());
   }
 
   @Override
   public void serialize(@NotNull MarkdownHeaderStubElement stub, @NotNull StubOutputStream dataStream) throws IOException {
     writeUTFFast(dataStream, stub.getIndexedName());
+    writeUTFFast(dataStream, stub.getIndexedAnchorReference());
   }
 
   private static void writeUTFFast(@NotNull StubOutputStream dataStream, String text) throws IOException {
@@ -53,24 +55,34 @@ public class MarkdownHeaderStubElementType extends MarkdownStubElementType<Markd
   @Override
   public MarkdownHeaderStubElement deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) {
     String indexedName = null;
+    String indexedAnchorReference = null;
     try {
       indexedName = dataStream.readUTFFast();
+      indexedAnchorReference = dataStream.readUTFFast();
     }
     catch (IOException e) {
       LOG.error("Cannot read data stream; ", e.getMessage());
     }
 
-    String finalIndexedString = StringUtil.isEmpty(indexedName) ? null : indexedName;
+    final var actualName = StringUtil.isEmpty(indexedName) ? null : indexedName;
+    final var actualAnchorReference = StringUtil.isEmpty(indexedAnchorReference) ? null : indexedAnchorReference;
     return new MarkdownHeaderStubElement(
       parentStub,
       this,
-      finalIndexedString
+      actualName,
+      actualAnchorReference
     );
   }
 
   @Override
   public void indexStub(@NotNull MarkdownHeaderStubElement stub, @NotNull IndexSink sink) {
-    String indexedName = stub.getIndexedName();
-    if (indexedName != null) sink.occurrence(MarkdownHeadersIndex.Companion.getKEY(), indexedName);
+    final var indexedName = stub.getIndexedName();
+    if (indexedName != null) {
+      sink.occurrence(HeaderTextIndex.Companion.getKEY(), indexedName);
+    }
+    final var indexedAnchorReference = stub.getIndexedAnchorReference();
+    if (indexedAnchorReference != null) {
+      sink.occurrence(HeaderAnchorIndex.KEY, indexedAnchorReference);
+    }
   }
 }

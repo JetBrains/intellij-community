@@ -11,16 +11,23 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.CommonProcessors
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 
-class MarkdownHeadersIndex : StringStubIndexExtension<MarkdownHeader>() {
+/**
+ * Index of headers actual full text.
+ */
+class HeaderTextIndex: StringStubIndexExtension<MarkdownHeader>() {
   override fun getKey(): StubIndexKey<String, MarkdownHeader> = KEY
 
   companion object {
     val KEY: StubIndexKey<String, MarkdownHeader> = StubIndexKey.createIndexKey("markdown.header")
 
-    fun collectFileHeaders(suggestHeaderRef: String, project: Project, psiFile: PsiFile?): Collection<PsiElement> {
+    fun collectFileHeaders(text: String, project: Project, psiFile: PsiFile?): Collection<PsiElement> {
       val list = ArrayList<PsiElement>()
       StubIndex.getInstance().processElements(
-        KEY, suggestHeaderRef, project, psiFile?.let { GlobalSearchScope.fileScope(it) }, MarkdownHeader::class.java,
+        KEY,
+        text,
+        project,
+        psiFile?.let { GlobalSearchScope.fileScope(it) },
+        MarkdownHeader::class.java,
         CommonProcessors.CollectProcessor(list)
       )
       return list
