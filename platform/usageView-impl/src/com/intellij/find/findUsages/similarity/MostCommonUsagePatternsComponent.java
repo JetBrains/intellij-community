@@ -67,7 +67,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     myMainPanel = new JBPanelWithEmptyText();
     myMainPanel.setLayout(new VerticalLayout(0));
     addMostCommonUsagesForSelectedGroups(myUsageView.getSelectedUsages());
-    myScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel);
+    myScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     revalidate();
     setContent(myScrollPane);
@@ -128,7 +128,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       myIsShowingSimilarUsages = true;
       ActivityTracker.getInstance().inc();
       final SimilarUsagesComponent mySimilarComponent = new SimilarUsagesComponent(info, this);
-      JScrollPane scroll = ScrollPaneFactory.createScrollPane(mySimilarComponent);
+      JScrollPane scroll = ScrollPaneFactory.createScrollPane(mySimilarComponent, true);
       final JScrollBar scrollBar = scroll.getVerticalScrollBar();
       mySimilarComponent.renderOriginalUsage();
       mySimilarComponent.renderSimilarUsages(usagesToRender);
