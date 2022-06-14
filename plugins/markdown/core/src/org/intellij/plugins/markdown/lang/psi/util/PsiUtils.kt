@@ -19,6 +19,10 @@ internal fun PsiElement.children(): Sequence<PsiElement> {
   return childrenOrNull().orEmpty()
 }
 
+internal inline fun <reified T: PsiElement> PsiElement.childrenOfType(): Sequence<T> {
+  return children().filterIsInstance<T>()
+}
+
 internal fun PsiElement.childrenOrNull(): Sequence<PsiElement>? {
   return firstChild?.siblings(forward = true, withSelf = true)
 }
