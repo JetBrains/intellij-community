@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
@@ -55,11 +56,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
   private val managerStateListener = object : RWStateListener {
     override fun stateChanged(state: RWSlotManagerState) {
-
-      //val wasNull = this@RunToolbarMainWidgetComponent.state == null
       updateState()
-
-      //if(this@RunToolbarMainWidgetComponent.state != null && wasNull)
       this@RunToolbarMainWidgetComponent.updateActionsImmediately(true)
     }
   }
