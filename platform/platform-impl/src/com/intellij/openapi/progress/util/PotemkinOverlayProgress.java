@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,6 +109,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     String text = "Use " + KeymapUtil.getMouseShortcutText(SHORTCUT) + " to cancel (" +
                   NlsMessages.formatDurationApproximateNarrow(roundedDuration) + ")";
     Graphics graphics = rootPane.getGraphics();
+    GraphicsUtil.setupAAPainting(graphics);
     Rectangle viewR = rootPane.getBounds(), iconR = new Rectangle(), textR = new Rectangle();
     FontMetrics fm = graphics.getFontMetrics();
     SwingUtilities.layoutCompoundLabel(fm, text, null, 0, 0, 0, 0, viewR, iconR, textR, 0);
