@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.configurationStore.SchemeDataHolder;
@@ -695,7 +696,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   public void setEditorAttributesKey(@NotNull String shortName, @Nullable String keyName, String scopeName, @Nullable Project project) {
     final ToolsImpl tools = getTools(shortName, project);
     if (tools.isForcedEditorAttributesKey(keyName, scopeName)) return;
-    tools.setEditorAttributesKey(keyName, scopeName);
+    final var level = tools.getLevel(scopeName, project);
+    final var severityKey = SeverityRegistrar.getSeverityRegistrar(project).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
+    tools.setEditorAttributesKey(severityKey.toString().equals(keyName) ? null : keyName, scopeName);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
   

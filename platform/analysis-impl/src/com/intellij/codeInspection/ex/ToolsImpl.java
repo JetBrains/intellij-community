@@ -498,6 +498,19 @@ public final class ToolsImpl implements Tools {
     return myDefaultState.getLevel();
   }
 
+  @NotNull
+  public HighlightDisplayLevel getLevel(String scope, Project project) {
+    if (myTools != null && scope != null){
+      for (ScopeToolState state : myTools) {
+        final NamedScope stateScope = state.getScope(project);
+        if (stateScope != null && scope.equals(stateScope.getScopeId())) {
+          return state.getLevel();
+        }
+      }
+    }
+    return myDefaultState.getLevel();
+  }
+
   @Nullable
   public TextAttributesKey getEditorAttributesKey(NamedScope scope, Project project) {
     if (myTools != null && scope != null) {
