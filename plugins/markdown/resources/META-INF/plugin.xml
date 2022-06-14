@@ -224,6 +224,15 @@ Includes the following features:</p>
     <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.CommonLinkDestinationReferenceContributor"/>
     <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
 
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="org.intellij.plugins.markdown.model.psi.headers.HeaderUsageSearcher"/>
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="org.intellij.plugins.markdown.model.psi.headers.HeaderRenameUsageSearcher"/>
+    <psi.declarationProvider implementation="org.intellij.plugins.markdown.model.psi.headers.HeaderSymbolDeclarationProvider"/>
+    <psi.symbolReferenceProvider hostElementClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination"
+                                 hostLanguage="Markdown"
+                                 implementationClass="org.intellij.plugins.markdown.model.psi.headers.HeaderAnchorSymbolReferenceProvider"
+                                 targetClass="org.intellij.plugins.markdown.model.psi.headers.HeaderSymbol"/>
 
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer"/>
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder"/>
