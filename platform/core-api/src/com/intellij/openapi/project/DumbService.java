@@ -422,21 +422,6 @@ public abstract class DumbService {
   }
 
   /**
-   * Invokes the given runnable with alternative resolve set to true.
-   *
-   * @see #setAlternativeResolveEnabled(boolean)
-   */
-  public <E extends Throwable> void runWithAlternativeResolveEnabledForcibly(@NotNull ThrowableRunnable<E> runnable) throws E {
-    setAlternativeResolveEnabled(true);
-    try {
-      runnable.run();
-    }
-    finally {
-      setAlternativeResolveEnabled(false);
-    }
-  }
-
-  /**
    * @return whether alternative resolution is enabled for the current thread.
    * @see #setAlternativeResolveEnabled(boolean)
    */
