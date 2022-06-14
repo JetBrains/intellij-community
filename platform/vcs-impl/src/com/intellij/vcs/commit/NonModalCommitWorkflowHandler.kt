@@ -39,9 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.containers.nullize
-import com.intellij.util.progress.DelegatingProgressIndicatorEx
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import kotlinx.coroutines.*
 import java.lang.Runnable
@@ -217,11 +215,12 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
         if (isSkipCommitChecks() && !isOnlyRunCommitChecks) return@executeDefault ReturnResult.COMMIT
 
-        val indicator = IndeterminateIndicator(ui.commitProgressUi.startProgress())
+        val indicator = ui.commitProgressUi.startProgress(isOnlyRunCommitChecks)
         indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-          override fun cancel() = this@launch.cancel()
+          override fun cancel() = this@launch.cancel() // cancel coroutine
         })
         try {
+          indicator.start()
           runAllHandlers(executor, indicator, isOnlyRunCommitChecks)
         }
         finally {
@@ -314,9 +313,4 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       updateDefaultCommitActionName()
     }
   }
-}
-
-private class IndeterminateIndicator(indicator: ProgressIndicatorEx) : DelegatingProgressIndicatorEx(indicator) {
-  override fun setIndeterminate(indeterminate: Boolean) = Unit
-  override fun setFraction(fraction: Double) = Unit
 }
