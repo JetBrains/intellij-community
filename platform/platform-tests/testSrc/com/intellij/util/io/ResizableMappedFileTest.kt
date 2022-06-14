@@ -5,11 +5,21 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.indexing.impl.IndexDebugProperties
 import org.junit.Assert
+import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
 
 class ResizableMappedFileTest {
+  companion object {
+    @JvmStatic
+    @BeforeClass
+    fun `initialize index debug for local run`() {
+      IndexDebugProperties.DEBUG = true
+    }
+  }
+
   @get: Rule
   val tempDir = TempDirectory()
 
@@ -29,8 +39,8 @@ class ResizableMappedFileTest {
       null,
       PagedFileStorage.MB,
       true
-    ).use { file ->
-      file.write {
+    ).write {
+      use { file ->
         file.putLong(address, value)
         Assert.assertEquals(value, file.getLong(address))
 
@@ -51,8 +61,8 @@ class ResizableMappedFileTest {
       null,
       PagedFileStorage.MB,
       true
-    ).use { file ->
-      file.write {
+    ).write {
+      use { file ->
         Assert.assertEquals(value, file.getLong(address))
 
         Assert.assertEquals(address + 8, file.length())
