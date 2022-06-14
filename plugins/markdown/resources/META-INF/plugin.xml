@@ -117,7 +117,7 @@ Includes the following features:</p>
 
     <httpRequestHandler implementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthCallbackHandler"/>
 
-    <renameHandler implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownRenameHandler"/>
+    <renameHandler implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownFileRenameHandler"/>
     <automaticRenamerFactory implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownRenamerFactory"/>
 
     <fileType name="Markdown" extensions="markdown;md" language="Markdown"

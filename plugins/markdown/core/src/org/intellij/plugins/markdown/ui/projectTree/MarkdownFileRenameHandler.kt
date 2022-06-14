@@ -12,7 +12,7 @@ import com.intellij.refactoring.rename.RenameHandler
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 
-class MarkdownRenameHandler : RenameHandler {
+internal class MarkdownFileRenameHandler: RenameHandler {
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext?) {
     RefactoringActionHandlerFactory.getInstance().createRenameHandler().invoke(project, editor, file, dataContext)
   }
@@ -23,7 +23,20 @@ class MarkdownRenameHandler : RenameHandler {
   }
 
   override fun isAvailableOnDataContext(dataContext: DataContext): Boolean {
-    val mdFiles = CommonDataKeys.PSI_FILE.getData(dataContext)
-    return mdFiles is MarkdownFile
+    val element = obtainElement(dataContext)
+    return element is MarkdownFile
+  }
+
+  companion object {
+    private fun obtainElement(context: DataContext): PsiElement? {
+      val editor = context.getData(CommonDataKeys.EDITOR)
+      if (editor != null) {
+        val psiFile = context.getData(CommonDataKeys.PSI_FILE)
+        if (psiFile != null) {
+          return psiFile.findElementAt(editor.caretModel.offset)
+        }
+      }
+      return context.getData(CommonDataKeys.PSI_ELEMENT)
+    }
   }
 }
