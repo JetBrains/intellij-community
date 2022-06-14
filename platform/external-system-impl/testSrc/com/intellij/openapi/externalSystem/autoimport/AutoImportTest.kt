@@ -22,46 +22,44 @@ import java.util.concurrent.TimeUnit
 class AutoImportTest : AutoImportTestCase() {
   @Test
   fun `test simple modification tracking`() {
-    simpleTest("settings.groovy") { settingsFile ->
-      assertState(refresh = 1, notified = false, event = "register project without cache")
-
+    test { settingsFile ->
       settingsFile.appendString("println 'hello'")
+      assertState(refresh = 0, notified = true, event = "modification")
+      scheduleProjectReload()
+      assertState(refresh = 1, notified = false, event = "project refresh")
+
+      settingsFile.replaceString("hello", "hi")
       assertState(refresh = 1, notified = true, event = "modification")
+      settingsFile.replaceString("hi", "hello")
+      assertState(refresh = 1, notified = false, event = "revert changes")
+
+      settingsFile.appendString("\n ")
+      assertState(refresh = 1, notified = false, event = "empty modification")
+      settingsFile.replaceString("println", "print ln")
+      assertState(refresh = 1, notified = true, event = "split token by space")
+      settingsFile.replaceString("print ln", "println")
+      assertState(refresh = 1, notified = false, event = "revert modification")
+
+      settingsFile.appendString(" ")
+      assertState(refresh = 1, notified = false, event = "empty modification")
+      settingsFile.appendString("//It is comment")
+      assertState(refresh = 1, notified = false, event = "append comment")
+      settingsFile.insertStringAfter("println", "/*It is comment*/")
+      assertState(refresh = 1, notified = false, event = "append comment")
+      settingsFile.insertString(0, "//")
+      assertState(refresh = 1, notified = true, event = "comment code")
       scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "project refresh")
 
-      settingsFile.replaceString("hello", "hi")
-      assertState(refresh = 2, notified = true, event = "modification")
-      settingsFile.replaceString("hi", "hello")
-      assertState(refresh = 2, notified = false, event = "revert changes")
-
-      settingsFile.appendString("\n ")
-      assertState(refresh = 2, notified = false, event = "empty modification")
-      settingsFile.replaceString("println", "print ln")
-      assertState(refresh = 2, notified = true, event = "split token by space")
-      settingsFile.replaceString("print ln", "println")
-      assertState(refresh = 2, notified = false, event = "revert modification")
-
-      settingsFile.appendString(" ")
-      assertState(refresh = 2, notified = false, event = "empty modification")
-      settingsFile.appendString("//It is comment")
-      assertState(refresh = 2, notified = false, event = "append comment")
-      settingsFile.insertStringAfter("println", "/*It is comment*/")
-      assertState(refresh = 2, notified = false, event = "append comment")
-      settingsFile.insertString(0, "//")
-      assertState(refresh = 2, notified = true, event = "comment code")
       scheduleProjectReload()
-      assertState(refresh = 3, notified = false, event = "project refresh")
-
-      scheduleProjectReload()
-      assertState(refresh = 3, notified = false, event = "empty project refresh")
+      assertState(refresh = 2, notified = false, event = "empty project refresh")
     }
   }
 
   @Test
   fun `test modification tracking disabled by ES plugin`() {
     val autoImportAwareCondition = Ref.create(true)
-    testWithDummyExternalSystem("settings.groovy", autoImportAwareCondition = autoImportAwareCondition) { settingsFile ->
+    testWithDummyExternalSystem(autoImportAwareCondition) { settingsFile ->
       assertState(refresh = 1, beforeRefresh = 1, afterRefresh = 1, event = "register project without cache")
       settingsFile.appendString("println 'hello'")
       assertState(refresh = 1, beforeRefresh = 1, afterRefresh = 1, event = "modification")
@@ -80,9 +78,11 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test simple modification tracking in xml`() {
-    simpleTest("settings.xml") { settingsFile ->
-      assertState(refresh = 1, notified = false, event = "register project without cache")
-
+    test {
+      val settingsFile = createSettingsVirtualFile("settings.xml")
+      assertState(refresh = 0, notified = true, event = "settings file is created")
+      scheduleProjectReload()
+      assertState(refresh = 1, notified = false, event = "project is reloaded")
       settingsFile.replaceContent("""
         <element>
           <name description="This is a my super name">my-name</name>
@@ -127,8 +127,11 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test unrecognized settings file`() {
-    simpleTest("settings.elvish") { settingsFile ->
-      assertState(refresh = 1, notified = false, event = "register project without cache")
+    test {
+      val settingsFile = createSettingsVirtualFile("settings.elvish")
+      assertState(refresh = 0, notified = true, event = "settings file is created")
+      scheduleProjectReload()
+      assertState(refresh = 1, notified = false, event = "project is reloaded")
 
       settingsFile.appendString("q71Gpj5 .9jR°`N.")
       assertState(refresh = 1, notified = true, event = "modification")
@@ -153,33 +156,34 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test deletion tracking`() {
-    simpleTest("settings.groovy", "println 'hello'") { settingsFile ->
-      assertState(refresh = 1, notified = false, event = "register project without cache")
+    test { settingsFile ->
+      settingsFile.modify(EXTERNAL)
+      assertState(refresh = 1, notified = false, event = "settings is externally modified")
 
       settingsFile.delete()
       assertState(refresh = 1, notified = true, event = "delete registered settings")
       scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "project refresh")
 
-      var newSettingsFile = createVirtualFile("settings.groovy")
+      var newSettingsFile = createVirtualFile(SETTINGS_FILE)
       assertState(refresh = 2, notified = true, event = "create registered settings")
-      newSettingsFile.replaceContent("println 'hello'")
+      newSettingsFile.modify(EXTERNAL)
       assertState(refresh = 2, notified = true, event = "modify registered settings")
       scheduleProjectReload()
       assertState(refresh = 3, notified = false, event = "project refresh")
 
       newSettingsFile.delete()
       assertState(refresh = 3, notified = true, event = "delete registered settings")
-      newSettingsFile = createVirtualFile("settings.groovy")
+      newSettingsFile = createVirtualFile(SETTINGS_FILE)
       assertState(refresh = 3, notified = true, event = "create registered settings immediately after deleting")
-      newSettingsFile.replaceContent("println 'hello'")
+      newSettingsFile.modify(EXTERNAL)
       assertState(refresh = 3, notified = false, event = "modify registered settings immediately after deleting")
     }
   }
 
   @Test
   fun `test directory deletion tracking`() {
-    simpleModificationTest {
+    test {
       val directory = findOrCreateDirectory("directory")
       createSettingsVirtualFile("directory/settings.txt")
       assertState(refresh = 0, notified = true, event = "settings created")
@@ -197,8 +201,11 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test modification tracking with several settings files`() {
-    simpleTest("settings.groovy", "println 'hello'") { settingsFile ->
-      assertState(refresh = 1, notified = false, event = "register project without cache")
+    test { settingsFile ->
+      settingsFile.replaceContent("println 'hello'")
+      assertState(refresh = 0, notified = true, event = "settings file is modified")
+      scheduleProjectReload()
+      assertState(refresh = 1, notified = false, event = "project is reloaded")
 
       val configFile = createVirtualFile("config.groovy")
       assertState(refresh = 1, notified = false, event = "create unregistered settings")
@@ -285,101 +292,102 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test project link-unlink`() {
-    simpleTest("settings.groovy") { settingsFile ->
-      assertState(refresh = 1, subscribe = 2, unsubscribe = 0, notified = false, event = "register project without cache")
-
-      settingsFile.appendString("println 'hello'")
-      assertState(refresh = 1, subscribe = 2, unsubscribe = 0, notified = true, event = "modification")
+    test { settingsFile ->
+      settingsFile.modify(INTERNAL)
+      assertState(refresh = 0, subscribe = 0, unsubscribe = 0, notified = true, event = "modification")
 
       removeProjectAware()
-      assertState(refresh = 1, subscribe = 2, unsubscribe = 2, notified = false, event = "remove project")
+      assertState(refresh = 0, subscribe = 0, unsubscribe = 2, notified = false, event = "remove project")
 
       registerProjectAware()
-      assertState(refresh = 2, subscribe = 4, unsubscribe = 2, notified = false, event = "register project without cache")
+      assertState(refresh = 1, subscribe = 2, unsubscribe = 2, notified = false, event = "register project without cache")
     }
   }
 
   @Test
   fun `test external modification tracking`() {
-    simpleTest("settings.groovy") {
+    test {
       var settingsFile = it
-      assertState(refresh = 1, notified = false, event = "register project without cache")
 
       settingsFile.replaceContentInIoFile("println 'hello'")
-      assertState(refresh = 2, notified = false, event = "untracked external modification")
+      assertState(refresh = 1, notified = false, event = "untracked external modification")
 
       settingsFile.replaceString("hello", "hi")
-      assertState(refresh = 2, notified = true, event = "internal modification")
+      assertState(refresh = 1, notified = true, event = "internal modification")
 
       settingsFile.replaceStringInIoFile("hi", "settings")
-      assertState(refresh = 2, notified = true, event = "untracked external modification during internal modification")
+      assertState(refresh = 1, notified = true, event = "untracked external modification during internal modification")
 
       scheduleProjectReload()
-      assertState(refresh = 3, notified = false, event = "refresh project")
+      assertState(refresh = 2, notified = false, event = "refresh project")
+
+      modification {
+        assertState(refresh = 2, notified = false, event = "start external modification")
+        settingsFile.replaceStringInIoFile("settings", "modified settings")
+        assertState(refresh = 2, notified = false, event = "external modification")
+      }
+      assertState(refresh = 3, notified = false, event = "complete external modification")
 
       modification {
         assertState(refresh = 3, notified = false, event = "start external modification")
-        settingsFile.replaceStringInIoFile("settings", "modified settings")
-        assertState(refresh = 3, notified = false, event = "external modification")
-      }
-      assertState(refresh = 4, notified = false, event = "complete external modification")
-
-      modification {
-        assertState(refresh = 4, notified = false, event = "start external modification")
         settingsFile.replaceStringInIoFile("modified settings", "simple settings")
-        assertState(refresh = 4, notified = false, event = "external modification")
+        assertState(refresh = 3, notified = false, event = "external modification")
         settingsFile.replaceStringInIoFile("simple settings", "modified settings")
-        assertState(refresh = 4, notified = false, event = "revert external modification")
+        assertState(refresh = 3, notified = false, event = "revert external modification")
+      }
+      assertState(refresh = 3, notified = false, event = "complete external modification")
+
+      modification {
+        assertState(refresh = 3, notified = false, event = "start external modification")
+        settingsFile.deleteIoFile()
+        assertState(refresh = 3, notified = false, event = "external deletion")
       }
       assertState(refresh = 4, notified = false, event = "complete external modification")
 
       modification {
         assertState(refresh = 4, notified = false, event = "start external modification")
-        settingsFile.deleteIoFile()
-        assertState(refresh = 4, notified = false, event = "external deletion")
+        settingsFile = createIoFile(SETTINGS_FILE)
+        assertState(refresh = 4, notified = false, event = "external creation")
+        settingsFile.replaceContentInIoFile("println 'settings'")
+        assertState(refresh = 4, notified = false, event = "external modification")
       }
       assertState(refresh = 5, notified = false, event = "complete external modification")
 
       modification {
-        assertState(refresh = 5, notified = false, event = "start external modification")
-        settingsFile = createIoFile("settings.groovy")
-        assertState(refresh = 5, notified = false, event = "external creation")
-        settingsFile.replaceContentInIoFile("println 'settings'")
-        assertState(refresh = 5, notified = false, event = "external modification")
-      }
-      assertState(refresh = 6, notified = false, event = "complete external modification")
-
-      modification {
-        assertState(refresh = 6, notified = false, event = "start first external modification")
+        assertState(refresh = 5, notified = false, event = "start first external modification")
         settingsFile.replaceStringInIoFile("settings", "hello")
-        assertState(refresh = 6, notified = false, event = "first external modification")
+        assertState(refresh = 5, notified = false, event = "first external modification")
         modification {
-          assertState(refresh = 6, notified = false, event = "start second external modification")
+          assertState(refresh = 5, notified = false, event = "start second external modification")
           settingsFile.replaceStringInIoFile("hello", "hi")
-          assertState(refresh = 6, notified = false, event = "second external modification")
+          assertState(refresh = 5, notified = false, event = "second external modification")
         }
-        assertState(refresh = 6, notified = false, event = "complete second external modification")
+        assertState(refresh = 5, notified = false, event = "complete second external modification")
       }
-      assertState(refresh = 7, notified = false, event = "complete first external modification")
+      assertState(refresh = 6, notified = false, event = "complete first external modification")
 
       modification {
-        assertState(refresh = 7, notified = false, event = "start exte]rnal modification")
+        assertState(refresh = 6, notified = false, event = "start external modification")
         settingsFile.replaceStringInIoFile("println", "print")
-        assertState(refresh = 7, notified = false, event = "external modification")
+        assertState(refresh = 6, notified = false, event = "external modification")
         settingsFile.replaceString("hi", "hello")
-        assertState(refresh = 7, notified = false, event = "internal modification during external modification")
+        assertState(refresh = 6, notified = false, event = "internal modification during external modification")
         settingsFile.replaceStringInIoFile("hello", "settings")
-        assertState(refresh = 7, notified = false, event = "external modification")
+        assertState(refresh = 6, notified = false, event = "external modification")
       }
-      assertState(refresh = 7, notified = true, event = "complete external modification")
+      assertState(refresh = 6, notified = true, event = "complete external modification")
       scheduleProjectReload()
-      assertState(refresh = 8, notified = false, event = "refresh project")
+      assertState(refresh = 7, notified = false, event = "refresh project")
     }
   }
 
   @Test
   fun `test tracker store and restore`() {
-    var state = simpleTest("settings.groovy") { settingsFile ->
+    val projectAware = mockProjectAware()
+    val settingsFile = findOrCreateVirtualFile(SETTINGS_FILE)
+    projectAware.registerSettingsFile(settingsFile.path)
+
+    var state = testProjectTrackerState(projectAware) {
       assertState(refresh = 1, notified = false, event = "register project without cache")
 
       settingsFile.replaceContent("println 'hello'")
@@ -388,7 +396,7 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 2, notified = false, event = "project refresh")
     }
 
-    state = simpleTest("settings.groovy", state = state) { settingsFile ->
+    state = testProjectTrackerState(projectAware, state) {
       assertState(refresh = 0, notified = false, event = "register project with correct cache")
 
       settingsFile.replaceString("hello", "hi")
@@ -397,10 +405,9 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 1, notified = false, event = "project refresh")
     }
 
-    findFile("settings.groovy")
-      .replaceStringInIoFile("hi", "hello")
+    settingsFile.replaceStringInIoFile("hi", "hello")
 
-    state = simpleTest("settings.groovy", state = state) { settingsFile ->
+    state = testProjectTrackerState(projectAware, state) {
       assertState(refresh = 1, notified = false, event = "register project with external modifications")
 
       settingsFile.replaceString("hello", "hi")
@@ -409,172 +416,166 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 2, notified = false, event = "project refresh")
     }
 
-    state = simpleTest("settings.groovy", state = state) { settingsFile ->
+    state = testProjectTrackerState(projectAware, state) {
       assertState(refresh = 0, notified = false, event = "register project with correct cache")
 
       settingsFile.replaceString("hi", "hello")
       assertState(refresh = 0, notified = true, event = "modification")
     }
 
-    simpleTest("settings.groovy", state = state) {
+    testProjectTrackerState(projectAware, state) {
       assertState(refresh = 1, notified = false, event = "register project with previous modifications")
     }
   }
 
   fun `test move and rename settings files`() {
-    simpleTest("settings.groovy") { settingsFile ->
-      assertState(refresh = 1, notified = false, event = "register project without cache")
-
+    test("settings.groovy") { settingsFile ->
       registerSettingsFile("script.groovy")
       registerSettingsFile("dir/script.groovy")
       registerSettingsFile("dir1/script.groovy")
       registerSettingsFile("dir/dir1/script.groovy")
 
       var scriptFile = settingsFile.copy("script.groovy")
-      assertState(refresh = 1, notified = true, event = "copy to registered settings")
+      assertState(refresh = 0, notified = true, event = "copy to registered settings")
 
       scheduleProjectReload()
-      assertState(refresh = 2, notified = false, event = "project refresh")
+      assertState(refresh = 1, notified = false, event = "project refresh")
 
       scriptFile.delete()
-      assertState(refresh = 2, notified = true, event = "delete file")
+      assertState(refresh = 1, notified = true, event = "delete file")
       scriptFile = settingsFile.copy("script.groovy")
-      assertState(refresh = 2, notified = false, event = "revert delete by copy")
+      assertState(refresh = 1, notified = false, event = "revert delete by copy")
       val configurationFile = settingsFile.copy("configuration.groovy")
-      assertState(refresh = 2, notified = false, event = "copy to registered settings")
+      assertState(refresh = 1, notified = false, event = "copy to registered settings")
       configurationFile.delete()
-      assertState(refresh = 2, notified = false, event = "delete file")
+      assertState(refresh = 1, notified = false, event = "delete file")
 
       val dir = findOrCreateDirectory("dir")
       val dir1 = findOrCreateDirectory("dir1")
-      assertState(refresh = 2, notified = false, event = "create directory")
+      assertState(refresh = 1, notified = false, event = "create directory")
       scriptFile.move(dir)
-      assertState(refresh = 2, notified = true, event = "move settings to directory")
+      assertState(refresh = 1, notified = true, event = "move settings to directory")
       scriptFile.move(projectRoot)
-      assertState(refresh = 2, notified = false, event = "revert move settings")
+      assertState(refresh = 1, notified = false, event = "revert move settings")
       scriptFile.move(dir1)
-      assertState(refresh = 2, notified = true, event = "move settings to directory")
+      assertState(refresh = 1, notified = true, event = "move settings to directory")
       dir1.move(dir)
-      assertState(refresh = 2, notified = true, event = "move directory with settings to other directory")
+      assertState(refresh = 1, notified = true, event = "move directory with settings to other directory")
       scriptFile.move(projectRoot)
-      assertState(refresh = 2, notified = false, event = "revert move settings")
+      assertState(refresh = 1, notified = false, event = "revert move settings")
       scriptFile.move(dir)
-      assertState(refresh = 2, notified = true, event = "move settings to directory")
+      assertState(refresh = 1, notified = true, event = "move settings to directory")
       dir.rename("dir1")
-      assertState(refresh = 2, notified = true, event = "rename directory with settings")
+      assertState(refresh = 1, notified = true, event = "rename directory with settings")
       scriptFile.move(projectRoot)
-      assertState(refresh = 2, notified = false, event = "revert move settings")
+      assertState(refresh = 1, notified = false, event = "revert move settings")
 
       settingsFile.rename("configuration.groovy")
-      assertState(refresh = 2, notified = true, event = "rename")
+      assertState(refresh = 1, notified = true, event = "rename")
       settingsFile.rename("settings.groovy")
-      assertState(refresh = 2, notified = false, event = "revert rename")
+      assertState(refresh = 1, notified = false, event = "revert rename")
     }
   }
 
   fun `test document changes between save`() {
-    simpleTest("settings.groovy") { settingsFile ->
-      assertState(refresh = 1, notified = false, event = "register project without cache")
-
+    test { settingsFile ->
       val settingsDocument = settingsFile.asDocument()
 
       settingsDocument.replaceContent("println 'hello'")
-      assertState(refresh = 1, notified = true, event = "change")
+      assertState(refresh = 0, notified = true, event = "change")
       scheduleProjectReload()
-      assertState(refresh = 2, notified = false, event = "refresh project")
+      assertState(refresh = 1, notified = false, event = "refresh project")
 
       settingsDocument.replaceString("hello", "hi")
-      assertState(refresh = 2, notified = true, event = "change")
+      assertState(refresh = 1, notified = true, event = "change")
       settingsDocument.replaceString("hi", "hello")
-      assertState(refresh = 2, notified = false, event = "revert change")
+      assertState(refresh = 1, notified = false, event = "revert change")
       settingsDocument.replaceString("hello", "hi")
-      assertState(refresh = 2, notified = true, event = "change")
+      assertState(refresh = 1, notified = true, event = "change")
       settingsDocument.save()
-      assertState(refresh = 2, notified = true, event = "save")
+      assertState(refresh = 1, notified = true, event = "save")
       settingsDocument.replaceString("hi", "hello")
-      assertState(refresh = 2, notified = false, event = "revert change after save")
+      assertState(refresh = 1, notified = false, event = "revert change after save")
       settingsDocument.save()
-      assertState(refresh = 2, notified = false, event = "save reverted changes")
+      assertState(refresh = 1, notified = false, event = "save reverted changes")
     }
   }
 
   fun `test processing of failure refresh`() {
-    simpleTest("settings.groovy") { settingsFile ->
-      assertState(refresh = 1, notified = false, event = "register project without cache")
-
+    test { settingsFile ->
       settingsFile.replaceContentInIoFile("println 'hello'")
-      assertState(refresh = 2, notified = false, event = "external change")
+      assertState(refresh = 1, notified = false, event = "external change")
       setRefreshStatus(FAILURE)
       settingsFile.replaceStringInIoFile("hello", "hi")
-      assertState(refresh = 3, notified = true, event = "external change with failure refresh")
+      assertState(refresh = 2, notified = true, event = "external change with failure refresh")
       scheduleProjectReload()
-      assertState(refresh = 4, notified = true, event = "failure project refresh")
+      assertState(refresh = 3, notified = true, event = "failure project refresh")
       setRefreshStatus(SUCCESS)
       scheduleProjectReload()
-      assertState(refresh = 5, notified = false, event = "project refresh")
+      assertState(refresh = 4, notified = false, event = "project refresh")
 
       settingsFile.replaceString("hi", "hello")
-      assertState(refresh = 5, notified = true, event = "modify")
+      assertState(refresh = 4, notified = true, event = "modify")
       setRefreshStatus(FAILURE)
       scheduleProjectReload()
-      assertState(refresh = 6, notified = true, event = "failure project refresh")
+      assertState(refresh = 5, notified = true, event = "failure project refresh")
       settingsFile.replaceString("hello", "hi")
-      assertState(refresh = 6, notified = true, event = "try to revert changes after failure refresh")
+      assertState(refresh = 5, notified = true, event = "try to revert changes after failure refresh")
       setRefreshStatus(SUCCESS)
       scheduleProjectReload()
-      assertState(refresh = 7, notified = false, event = "project refresh")
+      assertState(refresh = 6, notified = false, event = "project refresh")
     }
   }
 
   fun `test files generation during refresh`() {
-    simpleTest {
-      resetAssertionCounters()
-
-      val settingsFile = createVirtualFile("project.groovy")
-      assertState(refresh = 0, notified = false, event = "some file was created")
+    test {
+      val settingsFile = createVirtualFile(SETTINGS_FILE)
+      assertState(refresh = 0, notified = false, event = "some file is created")
       onceDuringRefresh {
         registerSettingsFile(settingsFile)
       }
       forceRefreshProject()
-      assertState(refresh = 1, notified = false, event = "settings file was registered during reload")
+      assertState(refresh = 1, notified = false, event = "settings file is registered during reload")
 
       settingsFile.delete()
-      assertState(refresh = 1, notified = true, event = "settings file was deleted")
+      assertState(refresh = 1, notified = true, event = "settings file is deleted")
       scheduleProjectReload()
-      assertState(refresh = 2, notified = false, event = "reload project")
+      assertState(refresh = 2, notified = false, event = "project is reloaded")
 
       onceDuringRefresh {
-        val file = createIoFileUnsafe("project.groovy")
-        file.writeText("println 'generated project'")
+        createIoFileUnsafe(SETTINGS_FILE).writeText(SAMPLE_TEXT)
       }
       forceRefreshProject()
-      assertState(refresh = 3, notified = false, event = "settings file was externally created during reload")
+      assertState(refresh = 3, notified = false, event = "settings file is externally created during reload")
 
       onceDuringRefresh {
-        findFile("project.groovy")
-          .appendString("println 'hello'")
+        findFile(SETTINGS_FILE).modify(INTERNAL)
       }
       forceRefreshProject()
-      assertState(refresh = 4, notified = true, event = "settings file was internally modified during reload")
+      assertState(refresh = 4, notified = true, event = "settings file is internally modified during reload")
     }
   }
 
   fun `test disabling of auto-import`() {
-    var state = simpleTest("settings.groovy") { settingsFile ->
+    val projectAware = mockProjectAware()
+    val settingsFile = findOrCreateVirtualFile(SETTINGS_FILE)
+    projectAware.registerSettingsFile(settingsFile.path)
+
+    var state = testProjectTrackerState(projectAware) {
       assertState(refresh = 1, autoReloadType = SELECTIVE, notified = false, event = "register project without cache")
       setAutoReloadType(NONE)
       assertState(refresh = 1, autoReloadType = NONE, notified = false, event = "disable project auto-import")
       settingsFile.replaceContentInIoFile("println 'hello'")
       assertState(refresh = 1, autoReloadType = NONE, notified = true, event = "modification with disabled auto-import")
     }
-    state = simpleTest("settings.groovy", state = state) { settingsFile ->
+    state = testProjectTrackerState(projectAware, state) {
       // Open modified project with disabled auto-import for external changes
       assertState(refresh = 0, autoReloadType = NONE, notified = true, event = "register modified project")
       scheduleProjectReload()
       assertState(refresh = 1, autoReloadType = NONE, notified = false, event = "refresh project")
 
       // Checkout git branch, that has additional linked project
-      withLinkedProject("module/settings.groovy") { moduleSettingsFile ->
+      withLinkedProject("module", SETTINGS_FILE) { moduleSettingsFile ->
         assertState(refresh = 0, autoReloadType = NONE, notified = true, event = "register project without cache with disabled auto-import")
         moduleSettingsFile.replaceContentInIoFile("println 'hello'")
         assertState(refresh = 0, autoReloadType = NONE, notified = true, event = "modification with disabled auto-import")
@@ -591,7 +592,7 @@ class AutoImportTest : AutoImportTestCase() {
       setAutoReloadType(SELECTIVE)
       assertState(refresh = 2, autoReloadType = SELECTIVE, notified = false, event = "enable auto-import for modified project")
     }
-    simpleTest("settings.groovy", state = state) {
+    testProjectTrackerState(projectAware, state) {
       assertState(refresh = 0, autoReloadType = SELECTIVE, notified = false, event = "register project with correct cache")
     }
   }
@@ -652,15 +653,13 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test merging of refreshes with different nature`() {
-    simpleTest("settings.groovy") { settingsFile ->
-      assertState(1, notified = false, event = "register project without cache")
-
+    test { settingsFile ->
       enableAsyncExecution()
 
       waitForProjectRefresh {
         parallel {
           thread {
-            settingsFile.replaceContentInIoFile("println 'hello'")
+            settingsFile.modify(EXTERNAL)
           }
           thread {
             forceRefreshProject()
@@ -668,36 +667,36 @@ class AutoImportTest : AutoImportTestCase() {
         }
       }
 
-      assertState(refresh = 2, notified = false, event = "modification")
+      assertState(refresh = 1, notified = false, event = "settings files is modified and project is reloaded at same moment")
     }
   }
 
   @Test
   fun `test enabling-disabling internal-external changes importing`() {
-    simpleModificationTest {
-      modifySettingsFile(INTERNAL)
+    test { settingsFile ->
+      settingsFile.modify(INTERNAL)
       assertState(refresh = 0, notified = true, autoReloadType = SELECTIVE, event = "internal modification")
 
       scheduleProjectReload()
       assertState(refresh = 1, notified = false, autoReloadType = SELECTIVE, event = "refresh project")
 
-      modifySettingsFile(EXTERNAL)
+      settingsFile.modify(EXTERNAL)
       assertState(refresh = 2, notified = false, autoReloadType = SELECTIVE, event = "external modification")
 
       setAutoReloadType(ALL)
 
-      modifySettingsFile(INTERNAL)
+      settingsFile.modify(INTERNAL)
       assertState(refresh = 3, notified = false, autoReloadType = ALL, event = "internal modification with enabled auto-reload")
 
-      modifySettingsFile(EXTERNAL)
+      settingsFile.modify(EXTERNAL)
       assertState(refresh = 4, notified = false, autoReloadType = ALL, event = "external modification with enabled auto-reload")
 
       setAutoReloadType(NONE)
 
-      modifySettingsFile(INTERNAL)
+      settingsFile.modify(INTERNAL)
       assertState(refresh = 4, notified = true, autoReloadType = NONE, event = "internal modification with disabled auto-reload")
 
-      modifySettingsFile(EXTERNAL)
+      settingsFile.modify(EXTERNAL)
       assertState(refresh = 4, notified = true, autoReloadType = NONE, event = "external modification with disabled auto-reload")
 
       setAutoReloadType(SELECTIVE)
@@ -709,10 +708,10 @@ class AutoImportTest : AutoImportTestCase() {
 
       setAutoReloadType(NONE)
 
-      modifySettingsFile(INTERNAL)
+      settingsFile.modify(INTERNAL)
       assertState(refresh = 5, notified = true, autoReloadType = NONE, event = "internal modification with disabled auto-reload")
 
-      modifySettingsFile(EXTERNAL)
+      settingsFile.modify(EXTERNAL)
       assertState(refresh = 5, notified = true, autoReloadType = NONE, event = "external modification with disabled auto-reload")
 
       setAutoReloadType(ALL)
@@ -722,13 +721,13 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test failure auto-reload with enabled auto-reload of any changes`() {
-    simpleModificationTest {
+    test { settingsFile ->
       setAutoReloadType(ALL)
       setRefreshStatus(FAILURE)
-      modifySettingsFile(INTERNAL)
+      settingsFile.modify(INTERNAL)
       assertState(refresh = 1, notified = true, autoReloadType = ALL, event = "failure modification with enabled auto-reload")
 
-      modifySettingsFile(INTERNAL)
+      settingsFile.modify(INTERNAL)
       assertState(refresh = 2, notified = true, autoReloadType = ALL, event = "failure modification with enabled auto-reload")
 
       setRefreshStatus(SUCCESS)
@@ -738,16 +737,16 @@ class AutoImportTest : AutoImportTestCase() {
       setRefreshStatus(FAILURE)
       onceDuringRefresh {
         setRefreshStatus(SUCCESS)
-        modifySettingsFile(INTERNAL)
+        settingsFile.modify(INTERNAL)
       }
-      modifySettingsFile(INTERNAL)
+      settingsFile.modify(INTERNAL)
       assertState(refresh = 5, notified = false, autoReloadType = ALL, event = "success modification after failure")
     }
   }
 
   @Test
   fun `test up-to-date promise after modifications with enabled auto-import`() {
-    simpleModificationTest {
+    test { settingsFile ->
       for (collisionPassType in RefreshCollisionPassType.values()) {
         resetAssertionCounters()
 
@@ -755,16 +754,16 @@ class AutoImportTest : AutoImportTestCase() {
 
         setAutoReloadType(SELECTIVE)
         onceDuringRefresh {
-          modifySettingsFile(EXTERNAL)
+          settingsFile.modify(EXTERNAL)
         }
-        modifySettingsFile(EXTERNAL)
+        settingsFile.modify(EXTERNAL)
         assertState(refresh = 2, notified = false, autoReloadType = SELECTIVE, event = "auto-reload inside reload ($collisionPassType)")
 
         setAutoReloadType(ALL)
         onceDuringRefresh {
-          modifySettingsFile(INTERNAL)
+          settingsFile.modify(INTERNAL)
         }
-        modifySettingsFile(INTERNAL)
+        settingsFile.modify(INTERNAL)
         assertState(refresh = 4, notified = false, autoReloadType = ALL, event = "auto-reload inside reload ($collisionPassType)")
       }
     }
@@ -772,14 +771,14 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test providing explicit reload`() {
-    simpleModificationTest {
+    test { settingsFile ->
       onceDuringRefresh {
         assertFalse("implicit reload after external modification", it.isExplicitReload)
       }
-      modifySettingsFile(EXTERNAL)
+      settingsFile.modify(EXTERNAL)
       assertState(refresh = 1, notified = false, event = "external modification")
 
-      modifySettingsFile(INTERNAL)
+      settingsFile.modify(INTERNAL)
       assertState(refresh = 1, notified = true, event = "internal modification")
       onceDuringRefresh {
         assertTrue("explicit reload after explicit scheduling of project reload", it.isExplicitReload)
@@ -791,13 +790,11 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test settings files modification partition`() {
-    simpleTest {
-      assertState(refresh = 1, notified = false, event = "register project without cache")
-
+    test {
       val settingsFile1 = createSettingsVirtualFile("settings1.groovy")
       val settingsFile2 = createSettingsVirtualFile("settings2.groovy")
       val settingsFile3 = createSettingsVirtualFile("settings3.groovy")
-      assertState(refresh = 1, notified = true, event = "settings files creation")
+      assertState(refresh = 0, notified = true, event = "settings files creation")
 
       onceDuringRefresh {
         assertFalse(it.hasUndefinedModifications)
@@ -806,12 +803,12 @@ class AutoImportTest : AutoImportTestCase() {
         assertEquals(pathsOf(), it.settingsFilesContext.deleted)
       }
       scheduleProjectReload()
-      assertState(refresh = 2, notified = false, event = "project reload")
+      assertState(refresh = 1, notified = false, event = "project reload")
 
       settingsFile1.delete()
       settingsFile2.appendLine("println 'hello'")
       settingsFile3.appendLine("")
-      assertState(refresh = 2, notified = true, event = "settings files modification")
+      assertState(refresh = 1, notified = true, event = "settings files modification")
 
       onceDuringRefresh {
         assertFalse(it.hasUndefinedModifications)
@@ -820,12 +817,12 @@ class AutoImportTest : AutoImportTestCase() {
         assertEquals(pathsOf(settingsFile1), it.settingsFilesContext.deleted)
       }
       scheduleProjectReload()
-      assertState(refresh = 3, notified = false, event = "project reload")
+      assertState(refresh = 2, notified = false, event = "project reload")
 
       settingsFile2.delete()
       settingsFile3.delete()
       markDirty()
-      assertState(refresh = 3, notified = true, event = "settings files deletion")
+      assertState(refresh = 2, notified = true, event = "settings files deletion")
 
       onceDuringRefresh {
         assertTrue(it.hasUndefinedModifications)
@@ -834,16 +831,13 @@ class AutoImportTest : AutoImportTestCase() {
         assertEquals(pathsOf(settingsFile2, settingsFile3), it.settingsFilesContext.deleted)
       }
       scheduleProjectReload()
-      assertState(refresh = 4, notified = false, event = "project reload")
+      assertState(refresh = 3, notified = false, event = "project reload")
     }
   }
 
   @Test
   fun `test settings files cache`() {
-    simpleTest {
-      assertState(refresh = 1, settingsAccess = 1, notified = false, event = "register project without cache")
-      resetAssertionCounters()
-
+    test {
       val settings1File = createSettingsVirtualFile("settings1.groovy")
       val settings2File = createSettingsVirtualFile("settings2.groovy")
       assertState(refresh = 0, settingsAccess = 2, notified = true, event = "settings files creation")
@@ -916,27 +910,24 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test configuration for unknown file type`() {
-    simpleTest("unknown") { file ->
-      assertState(refresh = 1, notified = false, event = "register project without cache")
-      resetAssertionCounters()
-
-      file.replaceContent(byteArrayOf(1, 2, 3))
+    test("unknown") { settingsFile ->
+      settingsFile.replaceContent(byteArrayOf(1, 2, 3))
       assertState(refresh = 0, notified = true, event = "modification")
       scheduleProjectReload()
       assertState(refresh = 1, notified = false, event = "reload")
 
-      file.replaceContent(byteArrayOf(1, 2, 3))
+      settingsFile.replaceContent(byteArrayOf(1, 2, 3))
       assertState(refresh = 1, notified = false, event = "empty modification")
-      file.replaceContent(byteArrayOf(3, 2, 1))
+      settingsFile.replaceContent(byteArrayOf(3, 2, 1))
       assertState(refresh = 1, notified = true, event = "modification")
-      file.replaceContent(byteArrayOf(1, 2, 3))
+      settingsFile.replaceContent(byteArrayOf(1, 2, 3))
       assertState(refresh = 1, notified = false, event = "revert modification")
     }
   }
 
   @Test
   fun `test reload during reload`() {
-    simpleModificationTest {
+    test { settingsFile ->
       enableAsyncExecution()
 
       val expectedRefreshes = 10
@@ -954,7 +945,7 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = expectedRefreshes, notified = false, event = "reloads")
 
       waitForProjectRefresh {
-        modifySettingsFile(EXTERNAL)
+        settingsFile.modify(EXTERNAL)
       }
       assertState(refresh = expectedRefreshes + 1, notified = false, event = "external modification")
     }
@@ -962,16 +953,16 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test modification during reload`() {
-    simpleModificationTest {
+    test { settingsFile ->
       enableAsyncExecution()
       setDispatcherMergingSpan(10)
 
       val expectedRefreshes = 10
       duringRefresh(expectedRefreshes - 1) {
-        modifySettingsFile(EXTERNAL)
+        settingsFile.modify(EXTERNAL)
       }
       waitForProjectRefresh(expectedRefreshes) {
-        modifySettingsFile(EXTERNAL)
+        settingsFile.modify(EXTERNAL)
       }
       assertState(refresh = expectedRefreshes, notified = false, event = "reloads")
     }
@@ -979,10 +970,7 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test generation during reload`() {
-    simpleTest {
-      assertState(refresh = 1, notified = false, event = "register project without cache")
-      resetAssertionCounters()
-
+    test {
       onceDuringRefresh {
         createSettingsVirtualFile("settings1.cfg")
       }
@@ -1004,7 +992,7 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test merge project reloads`() {
-    simpleModificationTest {
+    test { settingsFile ->
       enableAsyncExecution()
       setDispatcherMergingSpan(100)
       val alarmFactory = AlarmFactory.getInstance()
@@ -1012,14 +1000,14 @@ class AutoImportTest : AutoImportTestCase() {
       repeat(10) { iteration ->
         val promise = AsyncPromise<Unit>()
         alarm.addRequest({
-          waitForProjectRefresh {
-            markDirty()
-            scheduleProjectReload()
-          }
-          promise.setResult(Unit)
-        }, 500)
+                           waitForProjectRefresh {
+                             markDirty()
+                             scheduleProjectReload()
+                           }
+                           promise.setResult(Unit)
+                         }, 500)
         waitForProjectRefresh {
-          modifySettingsFile(EXTERNAL)
+          settingsFile.modify(EXTERNAL)
         }
         PlatformTestUtil.waitForPromise(promise, TimeUnit.SECONDS.toMillis(10))
         assertState(refresh = iteration + 1, notified = false, event = "project reload")
@@ -1035,7 +1023,7 @@ class AutoImportTest : AutoImportTestCase() {
     val settingsFile1 = createVirtualFile("script1.groovy").path
     val settingsFile2 = createVirtualFile("script2.groovy").path
 
-    val projectAware = mockProjectAware(ExternalSystemProjectId(ProjectSystemId("External System 1"), projectPath))
+    val projectAware = mockProjectAware()
     projectAware.registerSettingsFile(settingsFile1)
     register(projectAware)
     assertProjectAware(projectAware, refresh = 1, event = "register project")
@@ -1050,42 +1038,40 @@ class AutoImportTest : AutoImportTestCase() {
 
   @Test
   fun `test partial ignoring settings files modification events`() {
-    simpleTest {
-      assertState(refresh = 1, settingsAccess = 1, notified = false, event = "register project without cache")
-
+    test {
       ignoreSettingsFileWhen("ignored.groovy") { it.event == UPDATE }
       val ignoredSettingsFile = createSettingsVirtualFile("ignored.groovy")
-      assertState(refresh = 1, notified = true, event = "settings file creation")
+      assertState(refresh = 0, notified = true, event = "settings file creation")
       scheduleProjectReload()
-      assertState(refresh = 2, notified = false, event = "reload")
+      assertState(refresh = 1, notified = false, event = "reload")
       ignoredSettingsFile.modify()
-      assertState(refresh = 2, notified = false, event = "settings file ignored modification")
+      assertState(refresh = 1, notified = false, event = "settings file ignored modification")
       markDirty()
       ignoredSettingsFile.modify()
-      assertState(refresh = 2, notified = true, event = "settings file ignored modification with dirty AI state")
+      assertState(refresh = 1, notified = true, event = "settings file ignored modification with dirty AI state")
+      scheduleProjectReload()
+      assertState(refresh = 2, notified = false, event = "reload")
+      ignoredSettingsFile.delete()
+      assertState(refresh = 2, notified = true, event = "settings files deletion")
       scheduleProjectReload()
       assertState(refresh = 3, notified = false, event = "reload")
-      ignoredSettingsFile.delete()
-      assertState(refresh = 3, notified = true, event = "settings files deletion")
-      scheduleProjectReload()
-      assertState(refresh = 4, notified = false, event = "reload")
 
       ignoreSettingsFileWhen("build.lock") { it.reloadStatus == IN_PROGRESS && it.modificationType == EXTERNAL }
       val propertiesFile = createSettingsVirtualFile("build.lock")
-      assertState(refresh = 4, notified = true, event = "settings file creation")
+      assertState(refresh = 3, notified = true, event = "settings file creation")
       onceDuringRefresh {
         propertiesFile.modify(EXTERNAL)
       }
       scheduleProjectReload()
-      assertState(refresh = 5, notified = false, event = "ignored settings file creation during reload")
+      assertState(refresh = 4, notified = false, event = "ignored settings file creation during reload")
       propertiesFile.modify(EXTERNAL)
-      assertState(refresh = 6, notified = false, event = "settings file modification")
+      assertState(refresh = 5, notified = false, event = "settings file modification")
       onceDuringRefresh {
         propertiesFile.modify(INTERNAL)
       }
       markDirty()
       scheduleProjectReload()
-      assertState(refresh = 7, notified = true, event = "settings file modification during reload")
+      assertState(refresh = 6, notified = true, event = "settings file modification during reload")
     }
   }
 }
