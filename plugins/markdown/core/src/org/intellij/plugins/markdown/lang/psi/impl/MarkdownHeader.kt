@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -48,6 +49,10 @@ class MarkdownHeader: MarkdownHeaderImpl {
       is MarkdownElementVisitor -> visitor.visitHeader(this)
       else -> super.accept(visitor)
     }
+  }
+
+  override fun getReferences(): Array<PsiReference?> {
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this)
   }
 
   override fun getPresentation(): ItemPresentation {
