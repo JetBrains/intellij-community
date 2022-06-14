@@ -646,7 +646,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
 
         FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.shutdown());
-        SnapshotHashEnumeratorService.getInstance().close();
+        SnapshotHashEnumeratorService.closeIfCreated();
         if (!keepConnection) {
           myConnection.disconnect();
         }

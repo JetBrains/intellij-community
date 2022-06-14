@@ -3,6 +3,7 @@ package com.intellij.util.indexing.snapshot
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.hash.ContentHashEnumerator
 import com.intellij.util.indexing.ID
@@ -21,6 +22,11 @@ internal class SnapshotHashEnumeratorService : Closeable {
 
     @JvmStatic
     fun getInstance(): SnapshotHashEnumeratorService = service()
+
+    @JvmStatic
+    fun closeIfCreated() {
+      serviceIfCreated<SnapshotHashEnumeratorService>()?.close()
+    }
   }
 
   private enum class State { OPEN, OPEN_AND_CLEAN, CLOSED }
