@@ -167,7 +167,7 @@ public class PyStackFrame extends XStackFrame {
           else if (pyValue.isIPythonHidden()) {
             groupIndex = IPYTHON_VALUES_IND;
           }
-          else if (HIDE_TYPES.contains(pyValue.getType()) || HIDE_MODULES.contains(pyValue.getTypeQualifier())) {
+          else if (isSpecialType(pyValue)) {
             groupIndex = SPECIAL_TYPES_IND;
           }
           if (groupIndex > -1) {
@@ -243,5 +243,12 @@ public class PyStackFrame extends XStackFrame {
       }
       value.setDescriptor(descriptor);
     }
+  }
+
+  private static boolean isSpecialType(PyDebugValue pyValue) {
+    final String type = pyValue.getType();
+    if (type != null && HIDE_TYPES.contains(type)) return true;
+    final String typeQualifier = pyValue.getTypeQualifier();
+    return typeQualifier != null && HIDE_MODULES.contains(typeQualifier);
   }
 }
