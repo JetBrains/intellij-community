@@ -233,7 +233,7 @@ final class FilePageCache {
     return myIndex2Storage.get(storageIndex);
   }
 
-  DirectBufferWrapper get(Long key, boolean read) throws IOException {
+  DirectBufferWrapper get(Long key, boolean read, boolean checkAccess) throws IOException {
     DirectBufferWrapper wrapper;
     try {         // fast path
       mySegmentsAccessLock.lock();
@@ -281,7 +281,7 @@ final class FilePageCache {
 
       long disposed = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
 
-      wrapper = createValue(key, read, fileStorage);
+      wrapper = createValue(key, read, fileStorage, checkAccess);
 
       if (IOStatistics.DEBUG) {
         long finished = System.currentTimeMillis();
@@ -351,13 +351,15 @@ final class FilePageCache {
   }
 
   @NotNull
-  private static DirectBufferWrapper createValue(Long key, boolean read, PagedFileStorage owner) throws IOException {
-    StorageLockContext context = owner.getStorageLockContext();
-    if (read) {
-      context.checkReadAccess();
-    }
-    else {
-      context.checkWriteAccess();
+  private static DirectBufferWrapper createValue(Long key, boolean read, PagedFileStorage owner, boolean checkAccess) throws IOException {
+    if (checkAccess) {
+      StorageLockContext context = owner.getStorageLockContext();
+      if (read) {
+        context.checkReadAccess();
+      }
+      else {
+        context.checkWriteAccess();
+      }
     }
     long off = (key & MAX_PAGES_COUNT) * owner.myPageSize;
 

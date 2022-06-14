@@ -56,7 +56,7 @@ final class DataTable implements Closeable, Forceable {
   }
 
   public void readBytes(long address, byte[] bytes) throws IOException {
-    myFile.get(address, bytes, 0, bytes.length);
+    myFile.get(address, bytes, 0, bytes.length, true);
   }
 
   public void writeBytes(long address, byte[] bytes) throws IOException {

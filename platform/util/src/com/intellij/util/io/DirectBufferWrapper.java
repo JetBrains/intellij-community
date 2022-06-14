@@ -63,9 +63,11 @@ public final class DirectBufferWrapper {
     });
   }
 
-  public byte get(int index) {
-    StorageLockContext context = myFile.getStorageLockContext();
-    context.checkReadAccess();
+  public byte get(int index, boolean checkAccess) {
+    if (checkAccess) {
+      StorageLockContext context = myFile.getStorageLockContext();
+      context.checkReadAccess();
+    }
 
     return myBuffer.get(index);
   }
@@ -134,9 +136,11 @@ public final class DirectBufferWrapper {
     fileSizeMayChanged(index + 1);
   }
 
-  public void readToArray(byte[] dst, int o, int page_offset, int page_len) throws IllegalArgumentException {
-    StorageLockContext context = myFile.getStorageLockContext();
-    context.checkReadAccess();
+  public void readToArray(byte[] dst, int o, int page_offset, int page_len, boolean checkAccess) throws IllegalArgumentException {
+    if (checkAccess) {
+      StorageLockContext context = myFile.getStorageLockContext();
+      context.checkReadAccess();
+    }
 
     ByteBufferUtil.copyMemory(myBuffer, page_offset, dst, o, page_len);
   }

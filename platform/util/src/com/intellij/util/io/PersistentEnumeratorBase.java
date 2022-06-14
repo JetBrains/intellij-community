@@ -442,19 +442,13 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     if (shouldLock) {
       lockStorageRead();
     }
-    else {
-      myStorage.getStorageLockContext().unsafeAccessStarted();
-    }
     try {
       int addr = indexToAddr(idx);
-      return myKeyStorage.read(addr);
+      return myKeyStorage.read(addr, shouldLock);
     }
     finally {
       if (shouldLock) {
         unlockStorageRead();
-      }
-      else {
-        myStorage.getStorageLockContext().unsafeAccessFinished();
       }
     }
   }

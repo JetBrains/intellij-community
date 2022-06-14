@@ -71,7 +71,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   }
 
   @Override
-  public Data read(final int addr) throws IOException {
+  public Data read(int addr, boolean checkAccess) throws IOException {
     if (myFileLength <= addr) {
       // addr points to un-existed data
       if (myAppendBuffer == null) {
@@ -89,7 +89,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
     // we do not need to flushKeyBuffer since we store complete records
     MyDataIS rs = ourReadStream.get();
 
-    rs.setup(this, addr, myFileLength);
+    rs.setup(this, addr, myFileLength, checkAccess);
     return myDataDescriptor.read(rs);
   }
 
@@ -201,7 +201,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
               buffer = storage.getByteBuffer(base, false);
               address = 0;
             }
-            same = address < myFileLength && buffer.get(address++) == (byte)b;
+            same = address < myFileLength && buffer.get(address++, true) == (byte)b;
           }
         }
 
@@ -220,8 +220,8 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
       super(new MyBufferedIS());
     }
 
-    void setup(ResizeableMappedFile is, long pos, long limit) {
-      ((MyBufferedIS)in).setup(is, pos, limit);
+    void setup(ResizeableMappedFile is, long pos, long limit, boolean checkAccess) {
+      ((MyBufferedIS)in).setup(is, pos, limit, checkAccess);
     }
   }
 
@@ -230,10 +230,10 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
       super(TOMBSTONE, 512);
     }
 
-    void setup(ResizeableMappedFile in, long pos, long limit) {
+    void setup(ResizeableMappedFile in, long pos, long limit, boolean checkAccess) {
       this.pos = 0;
       this.count = 0;
-      this.in = new MappedFileInputStream(in, pos, limit);
+      this.in = new MappedFileInputStream(in, pos, limit, checkAccess);
     }
   }
 

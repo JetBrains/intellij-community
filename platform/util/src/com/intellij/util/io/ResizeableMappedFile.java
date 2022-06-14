@@ -226,11 +226,15 @@ public class ResizeableMappedFile implements Forceable, Closeable {
   }
 
   public byte get(long index) throws IOException {
-    return myStorage.get(index);
+    return get(index, true);
   }
 
-  public void get(long index, byte[] dst, int offset, int length) throws IOException {
-    myStorage.get(index, dst, offset, length);
+  public byte get(long index, boolean checkAccess) throws IOException {
+    return myStorage.get(index, checkAccess);
+  }
+
+  public void get(long index, byte[] dst, int offset, int length, boolean checkAccess) throws IOException {
+    myStorage.get(index, dst, offset, length, checkAccess);
   }
 
   public void put(long index, byte[] src, int offset, int length) throws IOException {
