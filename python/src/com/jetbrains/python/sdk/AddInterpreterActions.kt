@@ -22,7 +22,7 @@ import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkDialog
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 import java.util.function.Consumer
 
-internal fun collectAddInterpreterActions(project: Project, module: Module?, onSdkCreated: Consumer<Sdk>): List<AnAction> =
+fun collectAddInterpreterActions(project: Project, module: Module?, onSdkCreated: Consumer<Sdk>): List<AnAction> =
   listOf(AddLocalInterpreterAction(project, module, onSdkCreated::accept)) +
   collectNewInterpreterOnTargetActions(project, onSdkCreated::accept)
 
