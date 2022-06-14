@@ -1,0 +1,4 @@
+10|* |[Some header](#|header-name|)
+19|[Other link to header](#|header-name|)
+3|[Link to header](#|header-name|)
+7|* |Item with link [link to header](#|header-name|)
