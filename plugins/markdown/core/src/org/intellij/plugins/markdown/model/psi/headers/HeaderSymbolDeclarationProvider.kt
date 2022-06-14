@@ -6,8 +6,10 @@ import com.intellij.model.psi.PsiSymbolDeclarationProvider
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
+import org.jetbrains.annotations.ApiStatus
 
-internal class HeaderSymbolDeclarationProvider: PsiSymbolDeclarationProvider {
+@ApiStatus.Internal
+class HeaderSymbolDeclarationProvider: PsiSymbolDeclarationProvider {
   override fun getDeclarations(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
     if (element is MarkdownHeader) {
       val symbol = HeaderSymbol.createPointer(element)?.dereference() ?: return emptyList()
