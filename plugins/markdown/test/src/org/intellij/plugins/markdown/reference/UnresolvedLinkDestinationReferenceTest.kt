@@ -11,19 +11,6 @@ class UnresolvedLinkDestinationReferenceTest : BasePlatformTestCase() {
     doTest("sample_unresolved.md")
   }
 
-  fun testUnresolvedFileAnchorReference() {
-    doTest("sample_file_anchor_unresolved.md")
-  }
-
-  fun testUnresolvedFileAnchor1Reference() {
-    myFixture.configureByFile("sample.md")
-    doTest("sample_file_anchor_unresolved1.md")
-  }
-
-  fun testUnresolvedAnchorReference() {
-    doTest("sample_anchor_unresolved.md")
-  }
-
   fun testGithubWikiResolvedReference() {
     doTest("sample_github_wiki_resolved.md")
   }
