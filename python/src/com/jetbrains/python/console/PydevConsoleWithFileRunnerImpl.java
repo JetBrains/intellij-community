@@ -2,10 +2,13 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsContexts;
 import com.jetbrains.python.run.PythonRunConfiguration;
+import com.jetbrains.python.run.PythonScripts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +50,18 @@ public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
                                                           @NotNull Sdk sdk,
                                                           @NotNull Map<String, String> environmentVariables) {
     return new PythonConsoleWithFileRunParams(myConsoleSettings, workingDir, sdk, environmentVariables);
+  }
+
+  @Override
+  protected void configureVolumes(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+    super.configureVolumes(targetEnvironmentRequest);
+    var module = myConfig.getModule();
+    var modules = Module.EMPTY_ARRAY;
+    if (module != null) {
+      modules = new Module[1];
+      modules[0] = module;
+    }
+    PythonScripts.ensureProjectAndModuleDirsAreOnTarget(targetEnvironmentRequest, myConfig.getProject(), modules);
   }
 
   public class PythonConsoleWithFileRunParams extends PythonConsoleRunParams {
