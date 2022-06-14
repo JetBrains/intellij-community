@@ -395,6 +395,8 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Java Server Pages (JSP) for Visual Studio Code", attachedTo = "intellij.textmate", version = "0.0.3",
                    url = "https://github.com/pthorsson/vscode-jsp",
                    licenseUrl = "https://github.com/pthorsson/vscode-jsp/blob/master/LICENSE").mit(),
+    LibraryLicense(name = "Java Simple Serial Connector", libraryName = "io.github.java.native.jssc",
+                   url = "https://github.com/java-native/jssc", license = "LGPL 3.0", licenseUrl = "https://github.com/java-native/jssc/blob/master/LICENSE.txt"),
     LibraryLicense(name = "Java String Similarity", libraryName = "java-string-similarity",
                    licenseUrl = "https://github.com/tdebatty/java-string-similarity/blob/master/LICENSE.md",
                    url = "https://github.com/tdebatty/java-string-similarity").mit(),

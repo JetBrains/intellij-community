@@ -162,6 +162,10 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     return true;
   }
 
+  protected boolean canCopy(T item) {
+    return true;
+  }
+
   protected abstract UnnamedConfigurable createConfigurable(T item);
 
   @Override
@@ -320,7 +324,8 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     @Override
     public void update(@NotNull AnActionEvent event) {
       super.update(event);
-      event.getPresentation().setEnabled(getSelectedObject() != null);
+      T object = (T)getSelectedObject();
+      event.getPresentation().setEnabled(object != null && canCopy(object));
     }
   }
 
