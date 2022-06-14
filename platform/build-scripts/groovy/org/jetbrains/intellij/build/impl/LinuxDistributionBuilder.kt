@@ -77,11 +77,11 @@ class LinuxDistributionBuilder(private val context: BuildContext,
       }
 
       val jreDirectoryPath = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
-      val tarGzPath = buildTarGz(jreDirectoryPath.toString(), osAndArchSpecificDistPath, suffix)
+      val tarGzPath = buildTarGz(jreDirectoryPath, osAndArchSpecificDistPath, suffix)
       context.bundledRuntime.checkExecutablePermissions(tarGzPath, rootDirectoryName, OsFamily.LINUX)
 
       if (arch == JvmArchitecture.x64) {
-        buildSnapPackage(jreDirectoryPath.toString(), osAndArchSpecificDistPath)
+        buildSnapPackage(jreDirectoryPath, osAndArchSpecificDistPath)
       }
       else {
         // TODO: Add snap for aarch64
@@ -145,17 +145,16 @@ class LinuxDistributionBuilder(private val context: BuildContext,
   private val rootDirectoryName: String
     get() = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
 
-  private fun buildTarGz(jreDirectoryPath: String?, unixDistPath: Path, suffix: String): Path {
+  private fun buildTarGz(jreDirectoryPath: Path?, unixDistPath: Path, suffix: String): Path {
     val tarRoot = rootDirectoryName
     val tarName = artifactName(context, suffix)
     val tarPath = context.paths.artifactDir.resolve(tarName)
     val paths = mutableListOf(context.paths.distAllDir, unixDistPath)
     var javaExecutablePath: String? = null
     if (jreDirectoryPath != null) {
-      val jreDir = Path.of(jreDirectoryPath)
-      paths.add(jreDir)
+      paths.add(jreDirectoryPath)
       javaExecutablePath = "jbr/bin/java"
-      check(Files.exists(jreDir.resolve(javaExecutablePath))) { "$javaExecutablePath was not found under $jreDirectoryPath" }
+      require(Files.exists(jreDirectoryPath.resolve(javaExecutablePath))) { "$javaExecutablePath was not found under $jreDirectoryPath" }
     }
 
     val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json$suffix")
@@ -164,7 +163,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
 
     val executableFilesPatterns = generateExecutableFilesPatterns(jreDirectoryPath != null)
     spanBuilder("build Linux tar.gz")
-      .setAttribute("jreDirectoryPath", jreDirectoryPath ?: "")
+      .setAttribute("jreDirectoryPath", jreDirectoryPath?.toString() ?: "")
       .useWithScope {
         synchronized(context.paths.distAllDir) {
           // Sync to prevent concurrent context.paths.distAllDir modification and reading from two Linux builders,
@@ -180,7 +179,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
     return tarPath
   }
 
-  private fun buildSnapPackage(jreDirectoryPath: String, unixDistPath: Path) {
+  private fun buildSnapPackage(jreDirectoryPath: Path, unixDistPath: Path) {
     val snapName = customizer.snapName ?: return
     if (!context.options.buildUnixSnaps) {
       return
@@ -236,7 +235,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
           .include("bin/fsnotifier*")
           .enumerate().forEach(::makeFileExecutable)
 
-        FileSet(Path.of(jreDirectoryPath))
+        FileSet(jreDirectoryPath)
           .include("jbr/bin/*")
           .enumerate().forEach(::makeFileExecutable)
 
@@ -249,7 +248,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
         }
         validateProductJson(jsonText = generateProductJson(unixSnapDistPath, "jbr/bin/java", context),
                             relativePathToProductJson = "",
-                            installationDirectories = listOf(context.paths.distAllDir, unixSnapDistPath, Path.of(jreDirectoryPath)),
+                            installationDirectories = listOf(context.paths.distAllDir, unixSnapDistPath, jreDirectoryPath),
                             installationArchives = listOf(),
                             context = context)
         val resultDir = snapDir.resolve("result")
