@@ -10,7 +10,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.WrappedProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -22,6 +24,7 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
@@ -62,6 +65,12 @@ public final class IndexUpdateRunner {
 
   private final AtomicInteger myIndexingAttemptCount = new AtomicInteger();
   private final AtomicInteger myIndexingSuccessfulCount = new AtomicInteger();
+
+  private final boolean WRITE_INDEXES_ON_SEPARATE_THREAD = Boolean.getBoolean("idea.write.indexes.on.separate.thread");
+  private final ExecutorService myIndexWriteExecutor =
+    WRITE_INDEXES_ON_SEPARATE_THREAD
+    ? SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Write Thread")
+    : null;
 
   /**
    * Memory optimization to prevent OutOfMemory on loading file contents.
@@ -125,6 +134,9 @@ public final class IndexUpdateRunner {
       long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getIndexingTimeInAllThreads()).sum();
       projectIndexingHistory.setVisibleTimeToAllThreadsTimeRatio(totalProcessingTimeInAllThreads == 0
                                                                  ? 0 : ((double)visibleIndexingTime) / totalProcessingTimeInAllThreads);
+      if (myIndexWriteExecutor != null) {
+        ProgressIndicatorUtils.awaitWithCheckCanceled(myIndexWriteExecutor.submit(EmptyRunnable.getInstance()));
+      }
     }
   }
 
@@ -267,56 +279,92 @@ public final class IndexUpdateRunner {
 
     CachedFileContent fileContent = loadingResult.cachedFileContent;
     VirtualFile file = fileContent.getVirtualFile();
+    long length = loadingResult.fileLength;
+
+    if (file.isDirectory()) {
+      LOG.info("Directory was passed for indexing unexpectedly: " + file.getPath());
+    }
+    
     try {
       indexingJob.setLocationBeingIndexed(file);
-      if (!file.isDirectory()) {
-        @NotNull Supplier<@NotNull Boolean> fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker();
-        FileType type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.getBytes());
-        FileIndexesValuesApplier applier = ReadAction
-          .nonBlocking(() -> {
-            myIndexingAttemptCount.incrementAndGet();
-            FileType fileType = fileTypeChangeChecker.get() ? type : null;
-            return myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent, fileType);
-          })
-          .expireWith(indexingJob.myProject)
-          .wrapProgress(indexingJob.myIndicator)
-          .executeSynchronously();
-        myIndexingSuccessfulCount.incrementAndGet();
-        if (LOG.isTraceEnabled() && myIndexingSuccessfulCount.longValue() % 10_000 == 0) {
-          LOG.trace("File indexing attempts = " + myIndexingAttemptCount.longValue() + ", indexed file count = " + myIndexingSuccessfulCount.longValue());
-        }
-        applier.apply(file);
-        long processingTime = System.nanoTime() - startTime;
-        IndexingFileSetStatistics statistics = indexingJob.getStatistics(file);
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (statistics) {
-          statistics.addFileStatistics(file,
-                                       applier.stats,
-                                       processingTime,
-                                       contentLoadingTime,
-                                       loadingResult.fileLength,
-                                       applier.isWriteValuesSeparately,
-                                       applier.getSeparateApplicationTimeNanos()
-          );
-        }
+      @NotNull Supplier<@NotNull Boolean> fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker();
+      FileType type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.getBytes());
+      FileIndexesValuesApplier applier = ReadAction
+        .nonBlocking(() -> {
+          myIndexingAttemptCount.incrementAndGet();
+          FileType fileType = fileTypeChangeChecker.get() ? type : null;
+          return myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent, fileType);
+        })
+        .expireWith(indexingJob.myProject)
+        .wrapProgress(indexingJob.myIndicator)
+        .executeSynchronously();
+      myIndexingSuccessfulCount.incrementAndGet();
+      if (LOG.isTraceEnabled() && myIndexingSuccessfulCount.longValue() % 10_000 == 0) {
+        LOG.trace("File indexing attempts = " + myIndexingAttemptCount.longValue() + ", indexed file count = " + myIndexingSuccessfulCount.longValue());
       }
-      indexingJob.oneMoreFileProcessed();
+
+      writeIndexesForFile(indexingJob, file, applier, startTime, length, contentLoadingTime);
     }
     catch (ProcessCanceledException e) {
       // Push back the file.
       indexingJob.myQueueOfFiles.add(file);
+      releaseFile(file, length);
       throw e;
     }
     catch (Throwable e) {
       indexingJob.oneMoreFileProcessed();
+      releaseFile(file, length);
       FileBasedIndexImpl.LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" +
                                    "To reindex this file IDEA has to be restarted", e);
     }
-    finally {
-      signalThatFileIsUnloaded(loadingResult.fileLength);
-      IndexingStamp.flushCache(FileBasedIndex.getFileId(file));
-      IndexingFlag.unlockFile(file);
+  }
+
+  private void writeIndexesForFile(@NotNull IndexingJob indexingJob,
+                                   @NotNull VirtualFile file,
+                                   @NotNull FileIndexesValuesApplier applier,
+                                   long startTime,
+                                   long length,
+                                   long contentLoadingTime) {
+    if (myIndexWriteExecutor != null) {
+      myIndexWriteExecutor.execute(() -> doWriteIndexesForFile(indexingJob, file, applier, startTime, length, contentLoadingTime));
     }
+    else {
+      doWriteIndexesForFile(indexingJob, file, applier, startTime, length, contentLoadingTime);
+    }
+  }
+
+  private static void doWriteIndexesForFile(@NotNull IndexingJob indexingJob,
+                                            @NotNull VirtualFile file,
+                                            @NotNull FileIndexesValuesApplier applier,
+                                            long startTime,
+                                            long length,
+                                            long contentLoadingTime) {
+    try {
+      applier.apply(file);
+      long processingTime = System.nanoTime() - startTime;
+      IndexingFileSetStatistics statistics = indexingJob.getStatistics(file);
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (statistics) {
+        statistics.addFileStatistics(file,
+                                     applier.stats,
+                                     processingTime,
+                                     contentLoadingTime,
+                                     length,
+                                     applier.isWriteValuesSeparately,
+                                     applier.getSeparateApplicationTimeNanos()
+        );
+      }
+      indexingJob.oneMoreFileProcessed();
+    }
+    finally {
+      releaseFile(file, length);
+    }
+  }
+
+  private static void releaseFile(VirtualFile file, long length) {
+    signalThatFileIsUnloaded(length);
+    IndexingStamp.flushCache(FileBasedIndex.getFileId(file));
+    IndexingFlag.unlockFile(file);
   }
 
   @Nullable
