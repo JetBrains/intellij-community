@@ -48,7 +48,6 @@ public final class ScopeToolState {
     myToolWrapper = toolWrapper;
     myEnabled = enabled;
     myLevel = level;
-    myEditorAttributesKey = toolWrapper.getEditorAttributesKey();
   }
 
   @NotNull
