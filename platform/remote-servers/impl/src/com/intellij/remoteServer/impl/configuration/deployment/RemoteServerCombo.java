@@ -206,7 +206,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
   }
 
   @NotNull
-  private List<RemoteServer<S>> getSortedServers() {
+  protected List<RemoteServer<S>> getSortedServers() {
     List<RemoteServer<S>> result = new ArrayList<>(RemoteServersManager.getInstance().getServers(myServerType));
     result.sort(SERVERS_COMPARATOR);
     return result;
