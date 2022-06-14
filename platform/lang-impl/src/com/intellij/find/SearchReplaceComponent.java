@@ -234,7 +234,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     rightPanel.add(myReplaceToolbarWrapper);
     float initialProportion = maximizeLeftPanelOnResize? MAX_LEFT_PANEL_PROP : DEFAULT_PROP;
 
-    if (isNewUI) {
+    if (isNewUI && myReplaceRunnable != null) {
       ActionToolbar modeToolbar = createToolbar(new DefaultActionGroup(modeAction));
       modeToolbar.setReservePlaceAutoPopupIcon(false);
       JComponent modeToolbarComponent = modeToolbar.getComponent();
