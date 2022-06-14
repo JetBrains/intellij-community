@@ -18,7 +18,6 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
   override fun getConfigurableDisplayName() = MarkdownBundle.message("markdown.settings.name")
 
   override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
-    @Suppress("NON_EXHAUSTIVE_WHEN")
     when (settingsType) {
       SettingsType.WRAPPING_AND_BRACES_SETTINGS -> {
         consumer.showStandardOptions("RIGHT_MARGIN", "WRAP_ON_TYPING")
@@ -123,6 +122,7 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
           MarkdownBundle.message("markdown.style.settings.spacing.force.one.space")
         )
       }
+      else -> {}
     }
   }
 

@@ -259,6 +259,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       if (allowOwnEPs && (ep.module == ideaPlugin.module || ep.module == extension.module)) continue  // a plugin can have extensions for its own non-dynamic EPs
 
       when (ep.dynamic.value) {
+        true -> {}
         false -> nonDynamicEPs.add(ep.effectiveQualifiedName)
         null -> unspecifiedDynamicEPs.add(ep.effectiveQualifiedName)
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -86,6 +86,7 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
         when (cell) {
           is CellImpl<*> -> UiSwitcher.append(cell.viewComponent, uiSwitcher)
           is PanelImpl -> applyUiSwitcher(cell, uiSwitcher)
+          else -> {}
         }
       }
     }

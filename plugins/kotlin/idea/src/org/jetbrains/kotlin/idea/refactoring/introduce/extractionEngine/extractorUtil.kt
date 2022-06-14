@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
@@ -595,7 +595,6 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
         val returnExpression =
             descriptor.controlFlow.outputValueBoxer.getReturnExpression(getReturnArguments(defaultExpression), psiFactory) ?: return
 
-        @Suppress("NON_EXHAUSTIVE_WHEN")
         when (generatorOptions.target) {
             ExtractionTarget.LAZY_PROPERTY, ExtractionTarget.FAKE_LAMBDALIKE_FUNCTION -> {
                 // In the case of lazy property absence of default value means that output values are of OutputValue.Initializer type
@@ -605,6 +604,7 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
                 }
                 return
             }
+            else -> {}
         }
 
         when {

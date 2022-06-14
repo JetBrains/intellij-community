@@ -80,6 +80,7 @@ class InterfaceTraverser(
           */
         }
       }
+      else -> {}
     }
     return true
   }

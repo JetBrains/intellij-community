@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
@@ -180,6 +180,7 @@ internal object GHPRBranchesPanel {
             when (state) {
               State.CHECKOUT_ACTION -> dropDownLink.invokeAction("Github.PullRequest.Branch.Create")
               State.UPDATE_ACTION -> dropDownLink.invokeAction("Github.PullRequest.Branch.Update")
+              State.MULTIPLE_ACTIONS -> {}
             }
           })
             .apply { border = JBUI.Borders.emptyLeft(8) }

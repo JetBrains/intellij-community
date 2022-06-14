@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
 import com.intellij.workspaceModel.storage.*
@@ -306,6 +307,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
             is LibraryTableId.ModuleLibraryTableId ->  {
                 result.add(_tableId.moduleId)
             }
+          else -> {}
         }
         for (item in roots) {
         }
@@ -320,6 +322,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
             is LibraryTableId.ModuleLibraryTableId ->  {
                 index.index(this, _tableId.moduleId)
             }
+          else -> {}
         }
         for (item in roots) {
         }
@@ -338,6 +341,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
                     index.index(this, _tableId.moduleId)
                 }
             }
+          else -> {}
         }
         for (item in roots) {
         }

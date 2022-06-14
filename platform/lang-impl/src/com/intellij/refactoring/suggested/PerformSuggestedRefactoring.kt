@@ -189,6 +189,7 @@ internal fun performSuggestedRefactoring(
 
       SuggestedRefactoringFeatureUsage.logEvent(SuggestedRefactoringFeatureUsage.POPUP_SHOWN, refactoringData, state, actionPlace)
     }
+    else -> {}
   }
 }
 

@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
 import com.intellij.workspaceModel.storage.*
@@ -417,6 +418,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
                         }
                     }
                 }
+              else -> {}
             }
         }
         return result
@@ -435,6 +437,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
                         }
                     }
                 }
+              else -> {}
             }
         }
     }
@@ -456,6 +459,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
                         index.index(this, item.library)
                     }
                 }
+              else -> {}
             }
         }
         for (removed in mutablePreviousSet) {

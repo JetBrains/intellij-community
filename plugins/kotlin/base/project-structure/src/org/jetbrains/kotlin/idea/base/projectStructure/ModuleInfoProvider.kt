@@ -201,6 +201,7 @@ class ModuleInfoProvider(private val project: Project) {
 
             val moduleFileIndex = ModuleRootManager.getInstance(module).fileIndex
             when (moduleFileIndex.getKotlinSourceRootType(virtualFile)) {
+                null -> {}
                 SourceKotlinRootType -> {
                     val moduleInfo = module.productionSourceInfo
                     if (moduleInfo != null) {

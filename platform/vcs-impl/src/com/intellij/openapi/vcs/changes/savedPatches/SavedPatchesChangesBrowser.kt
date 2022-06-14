@@ -69,6 +69,7 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
         is SavedPatchesProvider.LoadingResult.Error -> {
           setEmpty { statusText -> statusText.setText(data.error.localizedMessage, SimpleTextAttributes.ERROR_ATTRIBUTES) }
         }
+        else -> {}
       }
       currentChangesFuture = null
     }, EdtExecutorService.getInstance())

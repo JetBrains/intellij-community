@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
@@ -403,6 +404,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                     result.add(item.id)
                 }
             }
+          is SealedContainer.EmptyContainer -> {}
         }
         for (item in listSealedContainer) {
             when (item) {
@@ -417,6 +419,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                         result.add(item.id)
                     }
                 }
+              is SealedContainer.EmptyContainer -> {}
             }
         }
         for (item in justListProperty) {
@@ -477,6 +480,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                     index.index(this, item.id)
                 }
             }
+          is SealedContainer.EmptyContainer -> {}
         }
         for (item in listSealedContainer) {
             when (item) {
@@ -491,6 +495,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                         index.index(this, item.id)
                     }
                 }
+                is SealedContainer.EmptyContainer -> {}
             }
         }
         for (item in justListProperty) {
@@ -582,6 +587,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                     }
                 }
             }
+            is SealedContainer.EmptyContainer -> {}
         }
         for (item in listSealedContainer) {
             when (item) {
@@ -605,6 +611,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                         }
                     }
                 }
+                is SealedContainer.EmptyContainer -> {}
             }
         }
         for (item in justListProperty) {

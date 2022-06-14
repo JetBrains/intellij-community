@@ -105,6 +105,7 @@ internal class TimeQuotaManager(
       QuotaStopwatch.Expired -> {
         timeoutScope.cancel("expired")
       }
+      else -> {}
     }
     mutableStateFlow.value = stopwatch.toState()
   }

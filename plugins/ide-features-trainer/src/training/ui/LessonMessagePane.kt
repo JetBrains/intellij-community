@@ -542,7 +542,6 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     for (lessonMessage in allLessonMessages()) {
       val myMessages = lessonMessage.messageParts
       for (myMessage in myMessages) {
-        @Suppress("NON_EXHAUSTIVE_WHEN")
         when (myMessage.type) {
           MessagePart.MessageType.SHORTCUT -> {
             val bg = UISettings.getInstance().shortcutBackgroundColor
@@ -582,6 +581,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
             }
             icon.paintIcon(this, g2d, x, y - spaceAboveIllustrationParagraph(icon))
           }
+          else -> {}
         }
       }
     }

@@ -90,6 +90,7 @@ object GrazieSpellchecker : GrazieStateLifecycle {
       when (speller.check(word)) {
         true -> return true
         false -> isAlien = false
+        else -> {}
       }
     }
 

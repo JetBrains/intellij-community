@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -74,7 +74,6 @@ class GroovyAnnotatorPre40(private val holder: AnnotationHolder) : GroovyElement
   }
 
   override fun visitRangeExpression(range: GrRangeExpression) {
-    @Suppress("NON_EXHAUSTIVE_WHEN")
     when (range.boundaryType) {
       GrRangeExpression.BoundaryType.LEFT_OPEN -> holder
         .newAnnotation(HighlightSeverity.ERROR,
@@ -86,6 +85,7 @@ class GroovyAnnotatorPre40(private val holder: AnnotationHolder) : GroovyElement
           GroovyBundle.message("inspection.message.both.open.ranges.are.available.in.groovy.4.or.later"))
         .range(range)
         .create()
+      else -> {}
     }
   }
 

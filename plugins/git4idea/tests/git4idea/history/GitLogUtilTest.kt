@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.vcs.Executor.*
@@ -126,6 +126,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
         TestCase.assertEquals(setOf(file2, conflictedFile),
                               ChangesUtil.getPaths(lastCommit.getChanges(1)).mapTo(mutableSetOf()) { it.name })
       }
+      else -> {}
     }
   }
 }
