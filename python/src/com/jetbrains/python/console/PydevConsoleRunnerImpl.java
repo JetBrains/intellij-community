@@ -547,16 +547,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       return resolvedPortBinding.getTargetEndpoint();
     };
 
-    VirtualFile projectDir = ProjectUtil.guessProjectDir(myProject);
-    if (projectDir != null) {
-      // TODO [Targets API] The path where project files go should be included in Python Console Target's setup
-      TargetEnvironment.TargetPath.Temporary targetPath = new TargetEnvironment.TargetPath.Temporary();
-      targetEnvironmentRequest.getUploadVolumes().add(new TargetEnvironment.UploadRoot(projectDir.toNioPath(), targetPath));
-    }
-    else {
-      LOG.warn(MessageFormat.format("Unable to guess project directory for project '{0}'." +
-                                    " Project files might be unavailable in Python Console.", myProject));
-    }
+    configureVolumes(targetEnvironmentRequest);
 
     PythonConsoleRunParams runParams = createConsoleRunParams(myWorkingDir, sdk, myEnvironmentVariables);
     PythonExecution pythonConsoleExecution = createPythonConsoleExecution(ideServerHostPortOnTarget, runParams, helpersAwareRequest);
@@ -615,6 +606,22 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myPydevConsoleCommunication = remoteConsoleProcessData.getPydevConsoleCommunication();
 
     return new CommandLineProcess(process, commandLineString, targetEnvironment);
+  }
+
+  /**
+   * Adds upload volumes to request, so console will have access to required files
+   */
+  protected void configureVolumes(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+    VirtualFile projectDir = ProjectUtil.guessProjectDir(myProject);
+    if (projectDir != null) {
+      // TODO [Targets API] The path where project files go should be included in Python Console Target's setup
+      TargetEnvironment.TargetPath.Temporary targetPath = new TargetEnvironment.TargetPath.Temporary();
+      targetEnvironmentRequest.getUploadVolumes().add(new TargetEnvironment.UploadRoot(projectDir.toNioPath(), targetPath));
+    }
+    else {
+      LOG.warn(MessageFormat.format("Unable to guess project directory for project '{0}'." +
+                                    " Project files might be unavailable in Python Console.", myProject));
+    }
   }
 
   private static class PyRemoteSocketToLocalHostProviderStub implements PyRemoteSocketToLocalHostProvider {
