@@ -33,9 +33,39 @@ interface ProjectIndexingHistory {
   val visibleTimeToAllThreadsTimeRatio: Double
 }
 
+/**
+ * isFull - if the whole project was rescanned (instead of a part of it)
+ */
 enum class ScanningType(val isFull: Boolean) {
-  FULL_FORCED(true), FULL_ON_PROJECT_OPEN(true), FULL(true),
-  PARTIAL_FORCED(false), PARTIAL(false),
+  /**
+   * Full project rescan forced by user via Repair IDE action
+   */
+  FULL_FORCED(true),
+
+  /**
+   * It's mandatory full project rescan on project open
+   */
+  FULL_ON_PROJECT_OPEN(true),
+
+  /**
+   * Full project rescan requested by some code
+   */
+  FULL(true),
+
+
+  /**
+   * Partial rescan forced by user via Repair IDE action on a limited scope (not full project)
+   */
+  PARTIAL_FORCED(false),
+
+  /**
+   * Partial project rescan requested by some code
+   */
+  PARTIAL(false),
+
+  /**
+   * Some files were considered changed and therefore rescanned
+   */
   REFRESH(false);
 
   companion object {
