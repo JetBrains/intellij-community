@@ -648,10 +648,12 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       return null;
     }
     catch (IOException io) {
+      LOG.error(io);
       markCorrupted();
       throw io;
     }
     catch (Throwable e) {
+      LOG.error(e);
       markCorrupted();
       throw new RuntimeException(e);
     }
