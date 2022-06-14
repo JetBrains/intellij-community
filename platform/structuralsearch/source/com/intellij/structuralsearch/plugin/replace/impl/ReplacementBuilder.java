@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -19,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import groovy.lang.Script;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,8 +163,9 @@ public final class ReplacementBuilder {
     if (scriptSupport == null) {
       final String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
       final List<String> variableNames = ContainerUtil.map(options.getVariableDefinitions(), o -> o.getName());
-      scriptSupport =
-        new ScriptSupport(myProject, StringUtil.unquoteString(constraint), info.getName(), variableNames, options.getMatchOptions());
+      final String name = info.getName();
+      final Script script = ScriptSupport.buildScript(name, StringUtil.unquoteString(constraint), options.getMatchOptions(), null);
+      scriptSupport = new ScriptSupport(myProject, script, name, variableNames);
       replacementVarsMap.put(info.getName(), scriptSupport);
     }
     return scriptSupport.evaluate(match, null);
