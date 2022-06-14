@@ -50,11 +50,11 @@ object JunitKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
 
 
 private val JUNIT_AVAILABLE_KEY = Key<ParameterizedCachedValue<Boolean, Module>>("JUNIT_AVAILABLE")
-private val JUNIT_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE: ParameterizedCachedValueProvider<Boolean, Module> = JUnitAvailabilityProvider(test = false)
+private val JUNIT_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE: ParameterizedCachedValueProvider<Boolean, Module> = JUnitAvailabilityProvider(includeTests = false)
 private val JUNIT_AVAILABLE_PROVIDER_WITH_TEST_SCOPE = JUnitAvailabilityProvider(true)
 
-private class JUnitAvailabilityProvider(test: Boolean) : AvailabilityProvider(
-    test,
+private class JUnitAvailabilityProvider(includeTests: Boolean) : AvailabilityProvider(
+    includeTests,
     fqNames = setOf(TEST_CASE_CLASS, TEST_ANNOTATION, CUSTOM_TESTABLE_ANNOTATION),
     javaClassLookup = true,
     aliasLookup = false,

@@ -34,11 +34,11 @@ import javax.swing.Icon
 private val TEST_FQ_NAME = FqName("kotlin.test.Test")
 private val IGNORE_FQ_NAME = FqName("kotlin.test.Ignore")
 private val GENERIC_KOTLIN_TEST_AVAILABLE_KEY = Key<ParameterizedCachedValue<Boolean, Module>>("GENERIC_KOTLIN_TEST_AVAILABLE")
-private val GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE: ParameterizedCachedValueProvider<Boolean, Module> = GenericKotlinTestAvailabilityProvider(test = false)
+private val GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE: ParameterizedCachedValueProvider<Boolean, Module> = GenericKotlinTestAvailabilityProvider(includeTests = false)
 private val GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITH_TEST_SCOPE = GenericKotlinTestAvailabilityProvider(true)
 
-private class GenericKotlinTestAvailabilityProvider(test: Boolean) : AvailabilityProvider(
-    test,
+private class GenericKotlinTestAvailabilityProvider(includeTests: Boolean) : AvailabilityProvider(
+    includeTests,
     fqNames = setOf(TEST_FQ_NAME.asString()),
     javaClassLookup = true,
     // `kotlin.test.Test` could be a typealias

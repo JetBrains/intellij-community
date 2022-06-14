@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 
 open class AvailabilityProvider(
-    private val test: Boolean,
+    private val includeTests: Boolean,
     private val fqNames: Set<String>,
     private val javaClassLookup: Boolean = true,
     private val aliasLookup: Boolean = true,
@@ -23,7 +23,7 @@ open class AvailabilityProvider(
 ) : ParameterizedCachedValueProvider<Boolean, Module> {
     override fun compute(module: Module): CachedValueProvider.Result<Boolean> {
         val project = module.project
-        val moduleScope = module.getModuleWithDependenciesAndLibrariesScope(test)
+        val moduleScope = module.getModuleWithDependenciesAndLibrariesScope(includeTests)
         val javaPsiFacade = JavaPsiFacade.getInstance(project)
         val available =
             fqNames.any {
@@ -43,13 +43,11 @@ fun PsiElement.isClassAvailableInModule(
 ): Boolean? {
     val index = ProjectFileIndex.getInstance(project)
     val virtualFile = this.containingFile.virtualFile
-    return index.getModuleForFile(virtualFile)?.let { module ->
-        val availabilityProvider =
-            if (index.isInTestSourceContent(virtualFile)) testValueProvider else
-                nonTestValueProvider
+    val module = index.getModuleForFile(virtualFile) ?: return null
+    val availabilityProvider =
+        if (index.isInTestSourceContent(virtualFile)) testValueProvider else
+            nonTestValueProvider
 
-        val available = CachedValuesManager.getManager(project)
-            .getParameterizedCachedValue(module, key, availabilityProvider, false, module)
-        available
-    }
+    return CachedValuesManager.getManager(project)
+        .getParameterizedCachedValue(module, key, availabilityProvider, false, module)
 }

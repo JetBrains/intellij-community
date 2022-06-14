@@ -45,11 +45,11 @@ object TestNgKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
 }
 
 private val TESTNG_AVAILABLE_KEY = Key<ParameterizedCachedValue<Boolean, Module>>("TESTNG_AVAILABLE")
-private val TESTNG_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE: ParameterizedCachedValueProvider<Boolean, Module> = TestNGAvailabilityProvider(test = false)
+private val TESTNG_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE: ParameterizedCachedValueProvider<Boolean, Module> = TestNGAvailabilityProvider(includeTests = false)
 private val TESTNG_AVAILABLE_PROVIDER_WITH_TEST_SCOPE = TestNGAvailabilityProvider(true)
 
-private class TestNGAvailabilityProvider(test: Boolean) : AvailabilityProvider(
-    test,
+private class TestNGAvailabilityProvider(includeTests: Boolean) : AvailabilityProvider(
+    includeTests,
     fqNames = setOf(TestNGUtil.TEST_ANNOTATION_FQN),
     javaClassLookup = true,
     aliasLookup = false,
