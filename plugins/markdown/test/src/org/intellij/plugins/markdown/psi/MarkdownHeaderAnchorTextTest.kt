@@ -25,6 +25,15 @@ class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     doTest(content, "some-header-text")
   }
 
+  fun `test horizontal line header with equality signs`() {
+    // language=Markdown
+    val content = """
+    Some header text
+    ===
+    """.trimIndent()
+    doTest(content, "some-header-text")
+  }
+
   fun `test horizontal line header with link`() {
     // language=Markdown
     val content = """
