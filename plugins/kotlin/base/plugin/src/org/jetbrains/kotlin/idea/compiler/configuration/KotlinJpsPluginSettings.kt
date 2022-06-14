@@ -69,9 +69,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             project.takeIf { isUnbundledJpsExperimentalFeatureEnabled(it) }?.service()
 
         @JvmStatic
-        fun isUnbundledJpsExperimentalFeatureEnabled(project: Project): Boolean =
-            isUnitTestMode() || !project.isDefault &&
-                    project.stateStore.directoryStorePath?.resolve("kotlin-unbundled-jps-experimental-feature-flag")?.exists() == true
+        fun isUnbundledJpsExperimentalFeatureEnabled(project: Project): Boolean = isUnitTestMode() || !project.isDefault
 
         /**
          * @param jpsVersion version to parse
