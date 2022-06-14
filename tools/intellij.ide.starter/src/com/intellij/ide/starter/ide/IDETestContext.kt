@@ -185,7 +185,7 @@ data class IDETestContext(
   }
 
   fun enableWorkspaceModelVerboseLogs() = addVMOptionsPatch {
-    addSystemProperty("idea.log.trace.categories", "#com.intellij.workspaceModel")
+    configureLoggers(traceLoggers = listOf("com.intellij.workspaceModel"))
   }
 
   fun wipeSystemDir() = apply {
