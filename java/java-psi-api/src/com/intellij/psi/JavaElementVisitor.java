@@ -297,6 +297,8 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(pattern);
   }
 
+  public void visitPatternGuard(PsiPatternGuard guard) { visitElement(guard); }
+
   public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
     visitParameter(variable);
   }
@@ -328,6 +330,12 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   public void visitRecordHeader(@NotNull PsiRecordHeader recordHeader) {
     visitElement(recordHeader);
   }
+
+  public void visitRecordPattern(PsiRecordPattern recordPattern) { visitElement(recordPattern); }
+
+  public void visitRecordPatternVariable(PsiRecordPatternVariable variable) { visitPatternVariable(variable); }
+
+  public void visitRecordStructurePattern(PsiRecordStructurePattern recordStructurePattern) { visitElement(recordStructurePattern); }
 
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
     visitElement(reference);
@@ -471,12 +479,4 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
     visitStatement(statement);
   }
-
-  public void visitRecordPattern(PsiRecordPattern recordPattern) { visitElement(recordPattern); }
-
-  public void visitRecordStructurePattern(PsiRecordStructurePattern recordStructurePattern) { visitElement(recordStructurePattern); }
-
-  public void visitRecordPatternVariable(PsiRecordPatternVariable variable) { visitPatternVariable(variable); }
-
-  public void visitPatternGuard(PsiPatternGuard guard) { visitElement(guard); }
 }
