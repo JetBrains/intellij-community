@@ -1,0 +1,7 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.base.fe10.analysisApiProviders">
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiProviders.Fe10KotlinModificationTrackerFactory"/>
+  </extensions>
+</idea-plugin>

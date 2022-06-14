@@ -56,8 +56,11 @@ class KotlinModuleOutOfCodeBlockModificationTracker(private val module: Module) 
     }
 
     companion object {
-        internal fun getUpdaterInstance(project: Project): Updater =
-            project.service()
+        internal fun getUpdaterInstance(project: Project): Updater = project.service()
+
+        fun incrementModificationCountForAllModules(project: Project) {
+            getUpdaterInstance(project).incrementModificationCountForAllModules()
+        }
 
         @TestOnly
         fun getModificationCount(module: Module): Long = getUpdaterInstance(module.project).getModificationCount(module)
@@ -81,6 +84,10 @@ class KotlinModuleOutOfCodeBlockModificationTracker(private val module: Module) 
 
         internal fun getModificationCount(module: Module): Long {
             return perModuleModCount[module] ?: perModuleChangesHighWatermark ?: kotlinOfOfCodeBlockTracker.modificationCount
+        }
+
+        internal fun incrementModificationCountForAllModules() {
+            perModuleModCount.replaceAll { _, count -> count + 1 }
         }
 
         internal fun hasPerModuleModificationCounts() = perModuleChangesHighWatermark != null

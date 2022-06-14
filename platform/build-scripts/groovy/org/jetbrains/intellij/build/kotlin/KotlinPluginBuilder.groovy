@@ -77,6 +77,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.resources",
     "kotlin.base.statistics",
     "kotlin.base.fe10.analysis",
+    "kotlin.base.fe10.analysis-api-providers",
     "kotlin.base.fe10.kdoc",
     "kotlin.base.fe10.highlighting",
     "kotlin.base.fe10.code-insight",
