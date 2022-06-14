@@ -1744,6 +1744,9 @@
                      groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection" alternativeId="javadoc"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.javaDoc.JavadocDeclarationMerger" />
+    <localInspection groupPath="Java" language="JAVA" shortName="MismatchedJavadocCode" bundle="messages.InspectionsBundle" key="inspection.mismatched.javadoc.and.code"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.javadoc.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.javaDoc.MismatchedJavadocCodeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="JavadocBlankLines" bundle="messages.JavaBundle" key="inspection.javadoc.blank.lines.display.name"
                      groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.javaDoc.JavadocBlankLinesInspection"/>
