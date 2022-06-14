@@ -263,6 +263,13 @@ public final class InjectorUtils {
   }
 
   @Nullable
+  public static CommentInjectionData findCommentInjectionData(@NotNull PsiComment comment) {
+    PsiFile file = comment.getContainingFile();
+    TreeMap<TextRange, CommentInjectionData> map = file != null ? getInjectionMap(file) : null;
+    return map != null ? map.get(comment.getTextRange()) : null;
+  }
+
+  @Nullable
   public static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, boolean treeElementsIncludeComment, @Nullable Ref<? super PsiElement> causeRef) {
     PsiElement target = CompletionUtil.getOriginalOrSelf(context);
     PsiFile file = target.getContainingFile();
