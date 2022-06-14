@@ -529,7 +529,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         if (replacement instanceof PsiTryStatement) {
           final PsiTryStatement tryStatement = (PsiTryStatement)replacement;
           final List<? extends PsiElement> unmatchedElements = elementToReplace.getUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY);
-          if (unmatchedElements != null) {
+          if (unmatchedElements != null && !unmatchedElements.isEmpty()) {
             final PsiElement firstElement = unmatchedElements.get(0);
             if (firstElement instanceof PsiResourceList) addElementAfterAnchor(tryStatement, firstElement, tryStatement.getFirstChild());
             outer:

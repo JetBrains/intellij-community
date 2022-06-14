@@ -279,7 +279,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final MatchContext context = myMatchingVisitor.getMatchContext();
     context.pushMatchedElementsListener(elements -> unmatchedElements.removeAll(elements));
     try {
-      if (myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(attributes, otherAttributes)) && !unmatchedElements.isEmpty()) {
+      if (myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(attributes, otherAttributes))) {
         other.putUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY, unmatchedElements);
       }
     } finally {
@@ -1546,7 +1546,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         unmatchedElements.add(finally2);
       }
 
-      if (myMatchingVisitor.getResult() && !unmatchedElements.isEmpty()) {
+      if (myMatchingVisitor.getResult()) {
         other.putUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY, unmatchedElements);
       }
     }
