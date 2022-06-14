@@ -101,6 +101,11 @@ public final class MarkdownPsiElementFactory {
   }
 
   @NotNull
+  public static MarkdownHeader createHeader(@NotNull Project project, @NotNull String text) {
+    return (MarkdownHeader)createFile(project, text).getFirstChild().getFirstChild();
+  }
+
+  @NotNull
   public static PsiElement createNewLine(@NotNull Project project) {
     return createFile(project, "\n").getFirstChild().getFirstChild();
   }
