@@ -213,8 +213,10 @@ Includes the following features:</p>
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderTextIndex"/>
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex"/>
     <stubElementTypeHolder class="org.intellij.plugins.markdown.lang.MarkdownElementTypes"/>
-    <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MissingExtensionPathReferenceProvider"/>
-    <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MarkdownAnchorPathReferenceProvider"/>
+    <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex"/>
+
+    <typedHandler implementation="org.intellij.plugins.markdown.model.HeaderAnchorCompletionPopupTypedHandler"/>
+
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer"/>
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder"/>
     <enterHandlerDelegate id="MarkdownEnterHandler"
