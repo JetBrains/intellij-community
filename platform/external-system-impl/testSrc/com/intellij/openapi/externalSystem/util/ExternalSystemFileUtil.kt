@@ -110,8 +110,12 @@ fun VirtualFileSystem.deleteChildren(path: Path, predicate: (VirtualFile) -> Boo
 }
 
 fun File.refreshInLfs(async: Boolean = false, recursive: Boolean = true, callback: () -> Unit = {}) {
+  toPath().refreshInLfs(async, recursive, callback)
+}
+
+fun Path.refreshInLfs(async: Boolean = false, recursive: Boolean = true, callback: () -> Unit = {}) {
   val fileSystem = LocalFileSystem.getInstance()
-  fileSystem.refreshIoFiles(listOf(this), async, recursive, callback)
+  fileSystem.refreshNioFiles(listOf(this), async, recursive, callback)
 }
 
 var VirtualFile.text: String

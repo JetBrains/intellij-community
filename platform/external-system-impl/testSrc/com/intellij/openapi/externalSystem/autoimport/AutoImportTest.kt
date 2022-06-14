@@ -527,31 +527,36 @@ class AutoImportTest : AutoImportTestCase() {
   }
 
   fun `test files generation during refresh`() {
-    val systemId = ProjectSystemId("External System")
-    val projectId = ExternalSystemProjectId(systemId, projectPath)
-    val projectAware = mockProjectAware(projectId)
+    simpleTest {
+      resetAssertionCounters()
 
-    initialize()
-    register(projectAware)
-    assertProjectAware(projectAware, refresh = 1, event = "register project")
-    assertNotificationAware(event = "register project")
+      val settingsFile = createVirtualFile("project.groovy")
+      assertState(refresh = 0, notified = false, event = "some file was created")
+      onceDuringRefresh {
+        registerSettingsFile(settingsFile)
+      }
+      forceRefreshProject()
+      assertState(refresh = 1, notified = false, event = "settings file was registered during reload")
 
-    val settingsFile = createIoFile("project.groovy")
-    projectAware.onceDuringRefresh {
-      projectAware.registerSettingsFile(settingsFile.path)
-      settingsFile.replaceContentInIoFile("println 'generated project'")
+      settingsFile.delete()
+      assertState(refresh = 1, notified = true, event = "settings file was deleted")
+      scheduleProjectReload()
+      assertState(refresh = 2, notified = false, event = "reload project")
+
+      onceDuringRefresh {
+        val file = createIoFileUnsafe("project.groovy")
+        file.writeText("println 'generated project'")
+      }
+      forceRefreshProject()
+      assertState(refresh = 3, notified = false, event = "settings file was externally created during reload")
+
+      onceDuringRefresh {
+        findFile("project.groovy")
+          .appendString("println 'hello'")
+      }
+      forceRefreshProject()
+      assertState(refresh = 4, notified = true, event = "settings file was internally modified during reload")
     }
-    projectAware.forceReloadProject()
-    assertProjectAware(projectAware, refresh = 2, event = "registration of settings file during project refresh")
-    assertNotificationAware(event = "registration of settings file during project refresh")
-
-    // modification during refresh
-    projectAware.onceDuringRefresh {
-      settingsFile.appendString("println 'hello'")
-    }
-    projectAware.forceReloadProject()
-    assertProjectAware(projectAware, refresh = 3, event = "modification during project refresh")
-    assertNotificationAware(projectId, event = "modification during project refresh")
   }
 
   fun `test disabling of auto-import`() {

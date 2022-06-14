@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
-import com.intellij.core.CoreBundle
 import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -36,6 +35,7 @@ import com.intellij.testFramework.replaceService
 import org.jetbrains.concurrency.AsyncPromise
 import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -71,14 +71,24 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     }
   }
 
-  protected fun createIoFile(relativePath: String): VirtualFile {
-    val file = File(getAbsolutePath(relativePath))
-    file.refreshInLfs() // ensure that file is removed from VFS
+  protected fun createIoFileUnsafe(relativePath: String): File {
+    return createIoFileUnsafe(getAbsoluteNioPath(relativePath))
+  }
+
+  private fun createIoFileUnsafe(path: Path): File {
+    val file = path.toFile()
     FileUtil.ensureExists(file.parentFile)
     FileUtil.ensureCanCreateFile(file)
     if (!file.createNewFile()) {
-      throw IOException(CoreBundle.message("file.create.already.exists.error", parentPath, relativePath))
+      throw IOException("Cannot create file $path. File already exists.")
     }
+    return file
+  }
+
+  protected fun createIoFile(relativePath: String): VirtualFile {
+    val path = getAbsoluteNioPath(relativePath)
+    path.refreshInLfs() // ensure that file is removed from VFS
+    createIoFileUnsafe(path)
     return findFile(relativePath)
   }
 
@@ -87,6 +97,8 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   }
 
   private fun getAbsolutePath(relativePath: String) = "$projectPath/$relativePath"
+
+  private fun getAbsoluteNioPath(relativePath: String) = projectRoot.getAbsoluteNioPath(relativePath)
 
   private fun <R> runWriteAction(update: () -> R): R =
     WriteCommandAction.runWriteCommandAction(myProject, Computable { update() })
