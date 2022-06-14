@@ -1138,7 +1138,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
           else if (name.endsWith(".sh") || name.endsWith(".py")) {
             out.entry("bin/${file.fileName}", file, unixMode = executableFileUnixMode)
           }
-          else if (name == "fsnotifier" || name == "libdbm.so") {
+          else if (name == "fsnotifier") {
             out.entry("bin/linux/${name}", file, unixMode = executableFileUnixMode)
           }
         }
