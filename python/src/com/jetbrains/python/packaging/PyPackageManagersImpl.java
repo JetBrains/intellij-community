@@ -79,14 +79,13 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       if (sdk instanceof Disposable) {
         Disposer.register((Disposable)sdk, () -> clearCache(sdk));
       }
-    }
-    var parentDisposable = (sdk instanceof Disposable ? (Disposable)sdk : this);
-    Disposer.register(parentDisposable, manager);
+      var parentDisposable = (sdk instanceof Disposable ? (Disposable)sdk : this);
+      Disposer.register(parentDisposable, manager);
 
-    if (manager.shouldSubscribeToLocalChanges()) {
-      PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, manager, () -> PythonSdkType.getInstance().setupSdkPaths(sdk));
+      if (manager.shouldSubscribeToLocalChanges()) {
+        PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, manager, () -> PythonSdkType.getInstance().setupSdkPaths(sdk));
+      }
     }
-
     return manager;
   }
 
