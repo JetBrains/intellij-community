@@ -9,5 +9,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinc.high-level-api-impl-base" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinc.high-level-api-impl-base-tests" level="project" />
   </component>
 </module>

@@ -239,9 +239,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
         }
 
-        testClass<AbstractSelectExpressionForDebuggerTest> {
-            model("selectExpression", isRecursive = false)
-            model("selectExpression/disallowMethodCalls", testMethodName = "doTestWoMethodCalls")
+        testClass<AbstractSelectExpressionForDebuggerTestWithAnalysisApi> {
+            model("selectExpression")
+        }
+
+        testClass<AbstractSelectExpressionForDebuggerTestWithLegacyImplementation> {
+            model("selectExpression")
         }
 
         testClass<AbstractPositionManagerTest> {
