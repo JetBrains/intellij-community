@@ -49,6 +49,7 @@ fun DefType.generatedApiCode(indent: String = "    ", isEmptyGenBlock: Boolean):
   val builderGeneric = if (abstract) "<$javaFullName>" else ""
   val companionObjectHeader = buildString {
     append("companion object: ${Type::class.fqn}<$javaFullName, Builder$builderGeneric>(")
+    val base = base
     if (base != null && base.name !in SKIPPED_TYPES)
       append(base.javaFullName)
     append(")")

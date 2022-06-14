@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
@@ -62,11 +62,12 @@ class KotlinMethodNode(
     override fun createNode(caller: PsiElement, called: HashSet<PsiElement>) = KotlinMethodNode(caller, called, myProject, myCancelCallback)
 
     override fun customizeRendererText(renderer: ColoredTreeCellRenderer) {
-        val descriptor = when (myMethod) {
-            is KtFunction -> myMethod.unsafeResolveToDescriptor() as FunctionDescriptor
-            is KtClass -> (myMethod.unsafeResolveToDescriptor() as ClassDescriptor).unsubstitutedPrimaryConstructor ?: return
-            is PsiMethod -> myMethod.getJavaMethodDescriptor() ?: return
-            else -> throw AssertionError("Invalid declaration: ${myMethod.getElementTextWithContext()}")
+        val method = myMethod
+        val descriptor = when (method) {
+            is KtFunction -> method.unsafeResolveToDescriptor() as FunctionDescriptor
+            is KtClass -> (method.unsafeResolveToDescriptor() as ClassDescriptor).unsubstitutedPrimaryConstructor ?: return
+            is PsiMethod -> method.getJavaMethodDescriptor() ?: return
+            else -> throw AssertionError("Invalid declaration: ${method.getElementTextWithContext()}")
         }
         val containerName = generateSequence<DeclarationDescriptor>(descriptor) { it.containingDeclaration }
             .firstOrNull { it is ClassDescriptor }
@@ -85,7 +86,7 @@ class KotlinMethodNode(
             SimpleTextAttributes.EXCLUDED_ATTRIBUTES
         renderer.append(renderedFunctionWithContainer, attributes)
 
-        val packageName = (myMethod.containingFile as? PsiClassOwner)?.packageName ?: ""
+        val packageName = (method.containingFile as? PsiClassOwner)?.packageName ?: ""
         renderer.append("  ($packageName)", SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, JBColor.GRAY))
     }
 
