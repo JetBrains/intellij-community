@@ -233,6 +233,15 @@ Includes the following features:</p>
                                  hostLanguage="Markdown"
                                  implementationClass="org.intellij.plugins.markdown.model.psi.headers.HeaderAnchorSymbolReferenceProvider"
                                  targetClass="org.intellij.plugins.markdown.model.psi.headers.HeaderSymbol"/>
+    <localInspection language="Markdown"
+                     shortName="MarkdownUnresolvedHeaderReference"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.unresolved.header.reference.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.intellij.plugins.markdown.model.psi.headers.UnresolvedHeaderReferenceInspection"/>
+
 
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer"/>
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder"/>
