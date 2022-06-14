@@ -456,6 +456,7 @@ class DistributionJARsBuilder {
       if (task != null) {
         tasks.add(task)
       }
+/* Android Studio: do not patch ApplicationNamesInfo yet
       ForkJoinTask.invokeAll(listOfNotNull(
         StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context),
         createTask(spanBuilder("write patched app info")) {
@@ -466,6 +467,7 @@ class DistributionJARsBuilder {
         null
         }
       ))
+Android Studio: do not patch ApplicationNamesInfo yet */
       val result = buildLib(moduleOutputPatcher, state.platform, context)
       if (!isUpdateFromSources && context.productProperties.scrambleMainJar) {
         scramble(context)
