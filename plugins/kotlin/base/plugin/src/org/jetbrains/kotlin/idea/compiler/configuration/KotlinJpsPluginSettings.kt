@@ -146,6 +146,12 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             }
 
             val error = checkJpsVersion(rawVersion)
+            val version = when (error) {
+                is OutdatedCompilerVersion -> fallbackVersionForOutdatedCompiler
+                is NewCompilerVersion, is ParsingError -> rawBundledVersion
+                null -> rawVersion
+            }
+
             if (error != null) {
                 if (showNotification) {
                     showNotificationUnsupportedJpsPluginVersion(
@@ -153,7 +159,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                         KotlinBasePluginBundle.message("notification.title.unsupported.kotlin.jps.plugin.version"),
                         KotlinBasePluginBundle.message(
                             "notification.content.bundled.version.0.will.be.used.reason.1",
-                            if (error is OutdatedCompilerVersion) fallbackVersionForOutdatedCompiler else rawBundledVersion,
+                            version,
                             error.message
                         ),
                     )
@@ -165,11 +171,9 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 }
             }
 
-            val specifiedOrFallbackVersion = if (error is OutdatedCompilerVersion) fallbackVersionForOutdatedCompiler else rawVersion
-
             val ok = KotlinArtifactsDownloader.lazyDownloadMissingJpsPluginDependencies(
                 project = project,
-                jpsVersion = specifiedOrFallbackVersion,
+                jpsVersion = version,
                 indicator = progressIndicator,
                 onError = {
                     if (showNotification) {
@@ -187,7 +191,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             )
 
             if (ok) {
-                instance.setVersion(specifiedOrFallbackVersion)
+                instance.setVersion(version)
             } else {
                 instance.dropExplicitVersion()
             }
