@@ -179,10 +179,12 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
         label(ApplicationBundle.message("editbox.ms"))
       }
 
-      row {
-        checkBox(ApplicationBundle.message("completion.option.insert.parentheses"))
-          .bindSelected(EditorSettingsExternalizable.getInstance()::isInsertParenthesesAutomatically,
-                        EditorSettingsExternalizable.getInstance()::setInsertParenthesesAutomatically)
+      if (OptionsApplicabilityFilter.isApplicable(OptionId.INSERT_PARENTHESES_AUTOMATICALLY)) {
+        row {
+          checkBox(ApplicationBundle.message("completion.option.insert.parentheses"))
+            .bindSelected(EditorSettingsExternalizable.getInstance()::isInsertParenthesesAutomatically,
+                          EditorSettingsExternalizable.getInstance()::setInsertParenthesesAutomatically)
+        }
       }
 
       addOptions()
