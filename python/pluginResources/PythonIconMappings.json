@@ -1,0 +1,13 @@
+{
+  "icons": {
+    "com": {
+      "jetbrains": {
+        "python": {
+          "expui": {
+            "pythonConsoleToolWindow.svg": "icons/com/jetbrains/python/pythonConsoleToolWindow.svg"
+          }
+        }
+      }
+    }
+  }
+}
