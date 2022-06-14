@@ -21,6 +21,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusConnection
@@ -122,7 +123,7 @@ class MavenImportingManager(val project: Project) {
                            spec: MavenImportSpec): MavenImportingResult {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isImportingInProgress()) {
-      return MavenImportingResult(waitingPromise, null)
+      return MavenImportingResult(waitingPromise, null, null)
     }
     if (executor.isShutdown) {
       throw RuntimeException("Project is closing")
@@ -160,7 +161,11 @@ class MavenImportingManager(val project: Project) {
       }
     }
 
-    return MavenImportingResult(getImportFinishPromise(), initialImportContext.dummyModule)
+    val vfsRefreshPromise = AsyncPromise<Any?>();
+    VirtualFileManager.getInstance().asyncRefresh {
+      vfsRefreshPromise.setResult(null)
+    }
+    return MavenImportingResult(getImportFinishPromise(), vfsRefreshPromise, initialImportContext.dummyModule)
   }
 
   private fun setProjectSettings(initialImportContext: MavenInitialImportContext) {
@@ -269,12 +274,12 @@ class MavenImportingManager(val project: Project) {
 
   fun scheduleImportAll(spec: MavenImportSpec): MavenImportingResult {
     if (isRecursiveImportCalledFromMavenProjectsManagerWatcher()) {
-      return MavenImportingResult(getWaitingPromise(), null)
+      return MavenImportingResult(getWaitingPromise(), null, null)
     }
     ApplicationManager.getApplication().assertIsDispatchThread()
     val manager = MavenProjectsManager.getInstance(project)
     if (isImportingInProgress()) {
-      return MavenImportingResult(getWaitingPromise(), null)
+      return MavenImportingResult(getWaitingPromise(), null, null)
     }
     val settings = MavenWorkspaceSettingsComponent.getInstance(project)
     return openProjectAndImport(
@@ -286,7 +291,7 @@ class MavenImportingManager(val project: Project) {
 
   fun scheduleUpdate(filesToUpdate: List<VirtualFile>, filesToDelete: List<VirtualFile>, spec: MavenImportSpec): MavenImportingResult {
     if (isRecursiveImportCalledFromMavenProjectsManagerWatcher()) {
-      return MavenImportingResult(getWaitingPromise(), null)
+      return MavenImportingResult(getWaitingPromise(), null, null)
     }
 
     ApplicationManager.getApplication().assertIsDispatchThread()

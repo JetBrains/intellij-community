@@ -18,6 +18,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 
 data class MavenImportingResult(
   val finishPromise: Promise<MavenImportFinishedContext>,
+  val vfsRefreshPromise: Promise<Any?>?,
   val dummyModulesCreated: Module?
 )
 

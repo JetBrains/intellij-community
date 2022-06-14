@@ -72,6 +72,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenReadContext myReadContext;
   protected MavenResolvedContext myResolvedContext;
   protected MavenImportedContext myImportedContext;
+  protected MavenImportingResult myImportingResult;
   protected MavenSourcesGeneratedContext mySourcesGeneratedContext;
   protected MavenPluginResolvedContext myPluginResolvedContext;
 
@@ -560,12 +561,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myProjectsManager.initForTests();
     myProjectsManager.getProjectsTree().setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList(profiles), disabledProfiles));
     MavenImportingManager importingManager = MavenImportingManager.getInstance(myProject);
-    Promise<MavenImportFinishedContext> promise = importingManager.openProjectAndImport(
+    myImportingResult = importingManager.openProjectAndImport(
       new FilesList(files),
       getMavenImporterSettings(),
       getMavenGeneralSettings(),
       MavenImportSpec.EXPLICIT_IMPORT
-    ).getFinishPromise().onSuccess(p -> {
+    );
+    Promise<MavenImportFinishedContext> promise = myImportingResult.getFinishPromise().onSuccess(p -> {
       Throwable t = p.getError();
       if (t != null) {
         if (t instanceof RuntimeException) throw (RuntimeException)t;
@@ -581,7 +583,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     });
 
     try {
-      PlatformTestUtil.waitForPromise(promise, Long.MAX_VALUE);
+      PlatformTestUtil.waitForPromise(promise);
     }
     catch (AssertionError e) {
       if (promise.getState() == Promise.State.PENDING) {
@@ -734,10 +736,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myProjectsManager.waitForFoldersResolvingCompletion();
     if (isNewImportingProcess) {
       importProject();
-    } else {
+    }
+    else {
       ApplicationManager.getApplication().invokeAndWait(() -> myProjectsManager.performScheduledImportInTests());
     }
-
   }
 
   protected void resolvePlugins() {
