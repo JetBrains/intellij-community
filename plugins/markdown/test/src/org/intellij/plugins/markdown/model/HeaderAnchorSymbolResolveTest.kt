@@ -45,6 +45,12 @@ class HeaderAnchorSymbolResolveTest: BasePlatformTestCase() {
   @Test
   fun `reference to header in other file without extension is resolved`() = doTest("header-near-main")
 
+  @Test
+  fun `special gfm case`() = doTest("get-method")
+
+  @Test
+  fun `weird date case`() = doTest("100-april-8-2018")
+
   private fun doTest(expectedAnchor: String) {
     val testName = getTestName(true)
     val file = myFixture.configureFromTempProjectFile("$testName.md")
