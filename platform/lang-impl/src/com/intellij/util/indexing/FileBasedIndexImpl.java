@@ -145,7 +145,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   final Lock myReadLock;
   public final Lock myWriteLock;
-  private final UnindexedFilesUpdaterListener myUnindexedFilesUpdaterListener;
 
   private IndexConfiguration getState() {
     return myRegisteredIndexes.getConfigurationState();
@@ -170,8 +169,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
     SimpleMessageBusConnection connection = messageBus.simpleConnect();
-
-    myUnindexedFilesUpdaterListener = messageBus.syncPublisher(UnindexedFilesUpdaterListener.TOPIC);
 
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       @Override
@@ -867,11 +864,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     ensureStaleIdsDeleted();
     getChangedFilesCollector().ensureUpToDate();
-    fireUpdateStarted(project);
-  }
-
-  void fireUpdateStarted(Project project) {
-    myUnindexedFilesUpdaterListener.updateStarted(project);
   }
 
   void ensureStaleIdsDeleted() {
@@ -893,13 +885,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void filesUpdateFinished(@NotNull Project project) {
     myIndexableFilesFilterHolder.entireProjectUpdateFinished(project);
-    fireUpdateFinished(project);
   }
-
-  void fireUpdateFinished(@NotNull Project project) {
-    myUnindexedFilesUpdaterListener.updateFinished(project);
-  }
-
 
   @Override
   @Nullable

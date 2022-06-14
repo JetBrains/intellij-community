@@ -95,7 +95,6 @@ public final class FileBasedIndexProjectHandler {
       ProjectIndexingHistoryImpl projectIndexingHistory =
         new ProjectIndexingHistoryImpl(project, "On refresh of " + files.size() + " files", ScanningType.REFRESH);
       IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
-      ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateStarted(project);
 
       try {
         int numberOfIndexingThreads = UnindexedFilesUpdater.getNumberOfIndexingThreads();
@@ -133,7 +132,6 @@ public final class FileBasedIndexProjectHandler {
       finally {
         IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
         projectIndexingHistory.setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
-        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateFinished(project);
       }
     }
 
