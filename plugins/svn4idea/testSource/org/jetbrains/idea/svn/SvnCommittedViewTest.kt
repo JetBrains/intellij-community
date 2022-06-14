@@ -125,7 +125,7 @@ class SvnCommittedViewTest : SvnTestCase() {
     assertRevisions(
       r(2,
         Data(d1, FileStatus.MODIFIED, "- moved from .." + File.separatorChar),
-        Data(f11, FileStatus.MODIFIED, "- moved from $oldF11Path")
+        Data(f11, FileStatus.MODIFIED, "- moved from ../../d1/")
       )
     )
   }
