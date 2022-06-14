@@ -28,6 +28,7 @@ object MarkdownPsiFactory {
       MarkdownElementTypes.TABLE_ROW, MarkdownElementTypes.TABLE_HEADER -> MarkdownTableRow(node)
       MarkdownElementTypes.TABLE_CELL -> MarkdownTableCell(node)
       else -> when {
+        elementType in MarkdownTokenTypeSets.HEADER_CONTENT -> MarkdownHeaderContent(node)
         MarkdownTokenTypeSets.HEADERS.contains(elementType) -> MarkdownHeader(node)
         MarkdownTokenTypeSets.LISTS.contains(elementType) -> MarkdownList(node)
         else -> ASTWrapperPsiElement(node)

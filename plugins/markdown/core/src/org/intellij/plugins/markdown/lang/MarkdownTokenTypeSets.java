@@ -25,6 +25,7 @@ public interface MarkdownTokenTypeSets extends MarkdownElementTypes {
     MarkdownTokenTypes.ATX_HEADER,
     MarkdownTokenTypes.SETEXT_1,
     MarkdownTokenTypes.SETEXT_2);
+
   TokenSet HEADER_LEVEL_1_SET = TokenSet.create(ATX_1, SETEXT_1);
   TokenSet HEADER_LEVEL_2_SET = TokenSet.create(ATX_2, SETEXT_2);
   TokenSet HEADER_LEVEL_3_SET = TokenSet.create(ATX_3);
@@ -38,6 +39,10 @@ public interface MarkdownTokenTypeSets extends MarkdownElementTypes {
                                     HEADER_LEVEL_5_SET,
                                     HEADER_LEVEL_6_SET);
   TokenSet ATX_HEADERS = TokenSet.create(ATX_1, ATX_2, ATX_3, ATX_4, ATX_5, ATX_6);
+
+  TokenSet SETEXT_HEADERS = TokenSet.create(MarkdownTokenTypes.SETEXT_1, MarkdownTokenTypes.SETEXT_2);
+
+  TokenSet HEADER_CONTENT = TokenSet.create(MarkdownTokenTypes.ATX_CONTENT, MarkdownTokenTypes.SETEXT_CONTENT);
 
   TokenSet REFERENCE_LINK_SET = TokenSet.create(FULL_REFERENCE_LINK, SHORT_REFERENCE_LINK);
 

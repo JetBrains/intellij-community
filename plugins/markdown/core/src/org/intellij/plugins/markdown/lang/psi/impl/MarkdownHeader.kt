@@ -17,6 +17,7 @@ import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.util.children
+import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElement
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElementType
@@ -24,6 +25,11 @@ import org.intellij.plugins.markdown.structureView.MarkdownStructureColors
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+/**
+ * Corresponds to both ATX and SETEXT headers.
+ *
+ * Use [contentElement] to agnostically obtain a content element for current header.
+ */
 @Suppress("DEPRECATION")
 class MarkdownHeader: MarkdownHeaderImpl {
   constructor(node: ASTNode): super(node)
@@ -43,6 +49,9 @@ class MarkdownHeader: MarkdownHeaderImpl {
    */
   val anchorText: String?
     get() = obtainAnchorText(this)
+
+  val contentElement: MarkdownHeaderContent?
+    get() = childrenOfType(MarkdownTokenTypeSets.HEADER_CONTENT).filterIsInstance<MarkdownHeaderContent>().firstOrNull()
 
   override fun accept(visitor: PsiElementVisitor) {
     when (visitor) {

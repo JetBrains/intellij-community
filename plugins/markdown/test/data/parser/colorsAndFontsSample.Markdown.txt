@@ -1,14 +1,14 @@
 Markdown file
   ASTWrapperPsiElement(Markdown:Markdown:MARKDOWN_FILE)
     markdown: Markdown:SETEXT_1
-      ASTWrapperPsiElement(Markdown:SETEXT_CONTENT)
+      MarkdownHeaderContent(Markdown:SETEXT_CONTENT)
         PsiElement(Markdown:Markdown:TEXT)('Test Markdown document')
       PsiWhiteSpace('\n')
       PsiElement(Markdown:Markdown:SETEXT_1)('======================')
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
     markdown: Markdown:SETEXT_2
-      ASTWrapperPsiElement(Markdown:SETEXT_CONTENT)
+      MarkdownHeaderContent(Markdown:SETEXT_CONTENT)
         PsiElement(Markdown:Markdown:TEXT)('Text')
       PsiWhiteSpace('\n')
       PsiElement(Markdown:Markdown:SETEXT_2)('----')
@@ -67,7 +67,7 @@ Markdown file
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
     markdown: Markdown:SETEXT_2
-      ASTWrapperPsiElement(Markdown:SETEXT_CONTENT)
+      MarkdownHeaderContent(Markdown:SETEXT_CONTENT)
         PsiElement(Markdown:Markdown:TEXT)('Links')
       PsiWhiteSpace('\n')
       PsiElement(Markdown:Markdown:SETEXT_2)('-----')
@@ -125,7 +125,7 @@ Markdown file
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
     markdown: Markdown:SETEXT_2
-      ASTWrapperPsiElement(Markdown:SETEXT_CONTENT)
+      MarkdownHeaderContent(Markdown:SETEXT_CONTENT)
         PsiElement(Markdown:Markdown:TEXT)('Images')
       PsiWhiteSpace('\n')
       PsiElement(Markdown:Markdown:SETEXT_2)('------')
@@ -149,7 +149,7 @@ Markdown file
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
     markdown: Markdown:SETEXT_2
-      ASTWrapperPsiElement(Markdown:SETEXT_CONTENT)
+      MarkdownHeaderContent(Markdown:SETEXT_CONTENT)
         PsiElement(Markdown:Markdown:TEXT)('Headers')
       PsiWhiteSpace('\n')
       PsiElement(Markdown:Markdown:SETEXT_2)('-------')
@@ -157,44 +157,44 @@ Markdown file
     PsiWhiteSpace('\n')
     markdown: Markdown:ATX_1
       PsiElement(Markdown:Markdown:ATX_HEADER)('#')
-      ASTWrapperPsiElement(Markdown:ATX_CONTENT)
+      MarkdownHeaderContent(Markdown:ATX_CONTENT)
         PsiWhiteSpace(' ')
         PsiElement(Markdown:Markdown:TEXT)('First level title')
     PsiWhiteSpace('\n')
     markdown: Markdown:ATX_2
       PsiElement(Markdown:Markdown:ATX_HEADER)('##')
-      ASTWrapperPsiElement(Markdown:ATX_CONTENT)
+      MarkdownHeaderContent(Markdown:ATX_CONTENT)
         PsiWhiteSpace(' ')
         PsiElement(Markdown:Markdown:TEXT)('Second level title')
     PsiWhiteSpace('\n')
     markdown: Markdown:ATX_3
       PsiElement(Markdown:Markdown:ATX_HEADER)('###')
-      ASTWrapperPsiElement(Markdown:ATX_CONTENT)
+      MarkdownHeaderContent(Markdown:ATX_CONTENT)
         PsiWhiteSpace(' ')
         PsiElement(Markdown:Markdown:TEXT)('Third level title')
     PsiWhiteSpace('\n')
     markdown: Markdown:ATX_4
       PsiElement(Markdown:Markdown:ATX_HEADER)('####')
-      ASTWrapperPsiElement(Markdown:ATX_CONTENT)
+      MarkdownHeaderContent(Markdown:ATX_CONTENT)
         PsiWhiteSpace(' ')
         PsiElement(Markdown:Markdown:TEXT)('Fourth level title')
     PsiWhiteSpace('\n')
     markdown: Markdown:ATX_5
       PsiElement(Markdown:Markdown:ATX_HEADER)('#####')
-      ASTWrapperPsiElement(Markdown:ATX_CONTENT)
+      MarkdownHeaderContent(Markdown:ATX_CONTENT)
         PsiWhiteSpace(' ')
         PsiElement(Markdown:Markdown:TEXT)('Fifth level title')
     PsiWhiteSpace('\n')
     markdown: Markdown:ATX_6
       PsiElement(Markdown:Markdown:ATX_HEADER)('######')
-      ASTWrapperPsiElement(Markdown:ATX_CONTENT)
+      MarkdownHeaderContent(Markdown:ATX_CONTENT)
         PsiWhiteSpace(' ')
         PsiElement(Markdown:Markdown:TEXT)('Sixth level title')
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
     markdown: Markdown:ATX_3
       PsiElement(Markdown:Markdown:ATX_HEADER)('###')
-      ASTWrapperPsiElement(Markdown:ATX_CONTENT)
+      MarkdownHeaderContent(Markdown:ATX_CONTENT)
         PsiWhiteSpace(' ')
         PsiElement(Markdown:Markdown:TEXT)('Title with')
         PsiWhiteSpace(' ')
@@ -210,7 +210,7 @@ Markdown file
     PsiWhiteSpace('\n')
     markdown: Markdown:ATX_3
       PsiElement(Markdown:Markdown:ATX_HEADER)('###')
-      ASTWrapperPsiElement(Markdown:ATX_CONTENT)
+      MarkdownHeaderContent(Markdown:ATX_CONTENT)
         PsiWhiteSpace(' ')
         PsiElement(Markdown:Markdown:TEXT)('Title with')
         PsiWhiteSpace(' ')
@@ -228,7 +228,7 @@ Markdown file
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
     markdown: Markdown:SETEXT_2
-      ASTWrapperPsiElement(Markdown:SETEXT_CONTENT)
+      MarkdownHeaderContent(Markdown:SETEXT_CONTENT)
         PsiElement(Markdown:Markdown:TEXT)('Code')
       PsiWhiteSpace('\n')
       PsiElement(Markdown:Markdown:SETEXT_2)('----')
@@ -295,7 +295,7 @@ Markdown file
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
     markdown: Markdown:SETEXT_2
-      ASTWrapperPsiElement(Markdown:SETEXT_CONTENT)
+      MarkdownHeaderContent(Markdown:SETEXT_CONTENT)
         PsiElement(Markdown:Markdown:TEXT)('Quotes')
       PsiWhiteSpace('\n')
       PsiElement(Markdown:Markdown:SETEXT_2)('------')
@@ -362,7 +362,7 @@ Markdown file
       PsiWhiteSpace('> ')
       markdown: Markdown:ATX_3
         PsiElement(Markdown:Markdown:ATX_HEADER)('###')
-        ASTWrapperPsiElement(Markdown:ATX_CONTENT)
+        MarkdownHeaderContent(Markdown:ATX_CONTENT)
           PsiWhiteSpace(' ')
           PsiElement(Markdown:Markdown:TEXT)('header')
       PsiWhiteSpace('\n')
@@ -385,7 +385,7 @@ Markdown file
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
     markdown: Markdown:SETEXT_2
-      ASTWrapperPsiElement(Markdown:SETEXT_CONTENT)
+      MarkdownHeaderContent(Markdown:SETEXT_CONTENT)
         PsiElement(Markdown:Markdown:TEXT)('Html')
       PsiWhiteSpace('\n')
       PsiElement(Markdown:Markdown:SETEXT_2)('-------')
@@ -433,7 +433,7 @@ Markdown file
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
     markdown: Markdown:SETEXT_2
-      ASTWrapperPsiElement(Markdown:SETEXT_CONTENT)
+      MarkdownHeaderContent(Markdown:SETEXT_CONTENT)
         PsiElement(Markdown:Markdown:TEXT)('Horizontal rules')
       PsiWhiteSpace('\n')
       PsiElement(Markdown:Markdown:SETEXT_2)('----------------')
@@ -451,7 +451,7 @@ Markdown file
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
     markdown: Markdown:SETEXT_2
-      ASTWrapperPsiElement(Markdown:SETEXT_CONTENT)
+      MarkdownHeaderContent(Markdown:SETEXT_CONTENT)
         PsiElement(Markdown:Markdown:TEXT)('Lists')
       PsiWhiteSpace('\n')
       PsiElement(Markdown:Markdown:SETEXT_2)('-----')
