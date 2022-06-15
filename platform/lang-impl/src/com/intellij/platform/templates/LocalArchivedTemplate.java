@@ -190,6 +190,9 @@ public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
     for (RootDescription description : myModuleDescriptions) {
       File root = new File(dir, ROOT_FILE_NAME + description.myIndex);
+      if (!root.exists()) { // inconsistent metadata
+        continue;
+      }
       File target = new File(dir.getAbsolutePath() + "/" + description.myRelativePath);
       //noinspection ResultOfMethodCallIgnored
       target.mkdirs();
