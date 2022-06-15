@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ExpandableItemsHandler
@@ -42,6 +41,7 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.commit.CommitChecksResult
 import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
 import com.intellij.vcs.commit.EditedCommitNode
@@ -476,7 +476,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     override fun vcsesChanged() = Unit
     override fun executionStarted() = Unit
     override fun beforeCommitChecksStarted() = Unit
-    override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) = Unit
+    override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) = Unit
   }
 
   companion object {

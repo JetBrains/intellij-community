@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.actions.ShowCommitOptionsAction
 import com.intellij.openapi.vcs.changes.InclusionListener
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.JBColor
@@ -88,7 +87,7 @@ abstract class NonModalCommitPanel(
   protected fun fireInclusionChanged() = inclusionEventDispatcher.multicaster.inclusionChanged()
 
   override fun startBeforeCommitChecks() = Unit
-  override fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult) = Unit
+  override fun endBeforeCommitChecks(result: CommitChecksResult) = Unit
 
   override fun dispose() = Unit
 
