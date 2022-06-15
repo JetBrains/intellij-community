@@ -64,6 +64,11 @@ public class PinActiveTabAction extends DumbAwareAction {
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   protected Handler getHandler(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     EditorWindow currentWindow = e.getData(EditorWindow.DATA_KEY);

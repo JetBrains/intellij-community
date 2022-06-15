@@ -62,6 +62,11 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
     };
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static boolean hasLocalBrowser() {
     return JBCefApp.isSupported() && Registry.is("ide.web.preview.enabled");
   }

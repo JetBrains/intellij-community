@@ -55,4 +55,9 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
       e.getPresentation().setText(ActionsBundle.messagePointer("action.ShowNavBar.ShortText"));
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }
