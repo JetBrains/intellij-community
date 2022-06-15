@@ -54,8 +54,7 @@ public class YAMLKeyNavigationItem implements NavigationItem {
     return myName;
   }
 
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
