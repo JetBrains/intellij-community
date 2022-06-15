@@ -174,7 +174,9 @@ data class ClientId(val value: String) {
      * Consider using a lifetime that is usually passed along with the ID
      */
     @JvmStatic
-    fun ClientId?.toDisposable(): Disposable {
+    @Deprecated("Use create a per-client service that implements disposable to get proper disposable associated with the client id")
+        fun ClientId?.toDisposable(): Disposable {
+          @Suppress("DEPRECATION")
       return getCachedService()?.toDisposable(this) ?: Disposer.newDisposable()
     }
 
