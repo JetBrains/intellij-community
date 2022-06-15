@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Disposer;
@@ -168,7 +167,7 @@ public class MainPassesRunner {
                ? new InspectionProfileWrapper((InspectionProfileImpl)p) 
                : new InspectionProfileWrapper(currentProfile, ((InspectionProfileImpl)p).getProfileManager());
         InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, profileProvider, () -> {
-          List<HighlightInfo> infos = DumbService.getInstance(project).runReadActionInSmartMode(() -> codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator));
+          List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);
           result.computeIfAbsent(document, __ -> new ArrayList<>()).addAll(infos);
         });
         break;
@@ -176,7 +175,7 @@ public class MainPassesRunner {
       catch (ProcessCanceledException e) {
         Throwable cause = e.getCause();
         if (cause != null && cause.getClass() != Throwable.class) {
-          // canceled because of an exception, no need to repeat the same a lot times
+          // canceled because of an exception, no need to repeat the same a lot of times
           throw e;
         }
 
