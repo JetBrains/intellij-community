@@ -556,6 +556,7 @@ public class AllIcons {
   }
 
   public static final class Gutter {
+    /** 12x12 */ public static final @NotNull Icon Bookmark = load("gutter/bookmark.svg", 186471320, 2);
     /** 12x12 */ public static final @NotNull Icon Colors = load("gutter/colors.svg", 185017205, 2);
     /** 12x12 */ public static final @NotNull Icon ExtAnnotation = load("gutter/extAnnotation.svg", -921380497, 2);
     /** 12x12 */ public static final @NotNull Icon ImplementedMethod = load("gutter/implementedMethod.svg", 2039465810, 7);
@@ -732,6 +733,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon AnonymousClass = load("nodes/anonymousClass.svg", 1886284385, 0);
     /** 16x16 */ public static final @NotNull Icon Artifact = load("nodes/artifact.svg", 277587837, 0);
     /** 16x16 */ public static final @NotNull Icon Aspect = load("nodes/aspect.svg", 1072447779, 0);
+    /** 16x16 */ public static final @NotNull Icon Bookmark = load("nodes/bookmark.svg", 1961991700, 2);
     /** 16x16 */ public static final @NotNull Icon BookmarkGroup = load("nodes/bookmarkGroup.svg", -388261783, 0);
     /** 16x16 */ public static final @NotNull Icon C_plocal = load("nodes/c_plocal.svg", -1537953031, 0);
     /** 16x16 */ public static final @NotNull Icon C_private = load("nodes/c_private.svg", -704550289, 0);

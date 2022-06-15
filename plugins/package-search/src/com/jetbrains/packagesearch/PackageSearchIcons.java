@@ -13,8 +13,8 @@ public final class PackageSearchIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PackageSearchIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Artifact = load("icons/artifact.svg", -700400148, 2);
-  /** 13x13 */ public static final @NotNull Icon ArtifactSmall = load("icons/artifactSmall.svg", 143042270, 2);
-  /** 16x16 */ public static final @NotNull Icon Checkmark = load("icons/checkmark.svg", -383357801, 2);
-  /** 16x16 */ public static final @NotNull Icon Package = load("icons/package.svg", -269315220, 0);
+  /** 16x16 */ public static final @NotNull Icon Artifact = load("icons/artifact.svg", -272263023, 2);
+  /** 13x13 */ public static final @NotNull Icon ArtifactSmall = load("icons/artifactSmall.svg", 1814813218, 2);
+  /** 16x16 */ public static final @NotNull Icon Checkmark = load("icons/checkmark.svg", -193344402, 2);
+  /** 16x16 */ public static final @NotNull Icon Package = load("icons/package.svg", 1934024300, 0);
 }
