@@ -34,6 +34,7 @@ import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +66,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     setToolbar((JComponent)createToolbar(SIMILAR_USAGES_PREVIEW_TOOLBAR));
     myMainPanel = new JBPanelWithEmptyText();
     myMainPanel.setLayout(new VerticalLayout(0));
+    myMainPanel.setBackground(UIUtil.getTextFieldBackground());
     addMostCommonUsagesForSelectedGroups(myUsageView.getSelectedUsages());
     myScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);

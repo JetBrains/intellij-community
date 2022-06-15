@@ -11,6 +11,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,6 +31,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     titlePanel.getLabel().setHorizontalAlignment(SwingConstants.LEFT);
     titlePanel.setText(UsageViewBundle.message("similar.usages.tab.title"));
     add(titlePanel);
+    setBackground(UIUtil.getTextFieldBackground());
     Disposer.register(parent, this);
   }
 
