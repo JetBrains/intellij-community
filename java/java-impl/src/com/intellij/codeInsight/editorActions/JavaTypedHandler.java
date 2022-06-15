@@ -277,7 +277,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     editor.getCaretModel().moveToOffset(offsetBefore + 1);
     PsiDocumentManager.getInstance(project).commitDocument(doc);
     PsiElement element = file.findElementAt(offsetBefore);
-    if (!(element instanceof PsiJavaToken) || !((PsiJavaToken)element).getTokenType().equals(JavaTokenType.QUEST)) return true;
+    if (!PsiUtil.isJavaToken(element, JavaTokenType.QUEST)) return true;
     PsiConditionalExpression cond = ObjectUtils.tryCast(element.getParent(), PsiConditionalExpression.class);
     if (cond == null || cond.getThenExpression() != null || cond.getElseExpression() != null) return true;
     PsiExpression condition = cond.getCondition();
