@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.extensions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.runModalTask
@@ -26,5 +27,9 @@ internal class CleanupExtensionsExternalFilesAction: AnAction() {
         message = MarkdownBundle.message("Markdown.Extensions.CleanupExternalFiles.notification.text"),
       )
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
