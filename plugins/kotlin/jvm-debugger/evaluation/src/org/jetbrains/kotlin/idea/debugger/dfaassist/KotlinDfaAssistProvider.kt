@@ -21,11 +21,11 @@ import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.debugger.ClassNameCalculator
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.inspections.dfa.*
-import org.jetbrains.kotlin.idea.util.toJvmFqName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -86,7 +86,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
                 val thisObject = proxy.thisObject()
                 if (thisObject != null) {
                     val signature = AsmType.getType(thisObject.referenceType().signature()).className
-                    val jvmName = declarationDescriptor.fqNameSafe.toJvmFqName
+                    val jvmName = KotlinPsiHeuristics.getJvmName(declarationDescriptor.fqNameSafe)
                     if (signature == jvmName) {
                         return thisObject
                     }

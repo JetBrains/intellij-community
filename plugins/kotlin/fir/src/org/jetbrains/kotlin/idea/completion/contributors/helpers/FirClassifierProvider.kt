@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
-import org.jetbrains.kotlin.idea.util.classIdIfNonLocal
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -39,7 +39,7 @@ internal object FirClassifierProvider {
 
         yieldAll(
             indexHelper.getJavaClasses(scopeNameFilter).asSequence()
-                .mapNotNull { it.classIdIfNonLocal()?.getCorrespondingToplevelClassOrObjectSymbol() }
+                .mapNotNull { it.classIdIfNonLocal?.getCorrespondingToplevelClassOrObjectSymbol() }
                 .filter { with(visibilityChecker) { isVisible(it) } }
         )
     }

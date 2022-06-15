@@ -8,8 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.ClassUtil
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.jps.backwardRefs.NameEnumerator
-import org.jetbrains.kotlin.idea.util.jvmFqName
-import org.jetbrains.kotlin.idea.util.toJvmFqName
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
@@ -33,14 +32,14 @@ sealed class FqNameWrapper {
         fun createFromSearchId(searchId: SearchId): FqNameWrapper? = searchId.deserializedName?.let(::JvmFqNameBasedWrapper)
         fun createFromPsiElement(clazz: PsiElement): FqNameWrapper? = when (clazz) {
             is PsiClass -> ClassUtil.getJVMClassName(clazz)
-            is KtClassOrObject -> clazz.jvmFqName
+            is KtClassOrObject -> KotlinPsiHeuristics.getJvmName(clazz)
             else -> null
         }?.let(::createFromJvmFqName)
     }
 }
 
 private class FqNameBasedWrapper(override val fqName: FqName) : FqNameWrapper() {
-    override val jvmFqName: String = fqName.toJvmFqName
+    override val jvmFqName: String = KotlinPsiHeuristics.getJvmName(fqName)
 }
 
 private class JvmFqNameBasedWrapper(override val jvmFqName: String) : FqNameWrapper() {

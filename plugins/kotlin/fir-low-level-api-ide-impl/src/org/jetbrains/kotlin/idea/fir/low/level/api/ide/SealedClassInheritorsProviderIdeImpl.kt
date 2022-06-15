@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.declarations.utils.isSealed
 import org.jetbrains.kotlin.fir.psi
-import org.jetbrains.kotlin.idea.util.classIdIfNonLocal
+import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
@@ -49,7 +49,7 @@ internal class SealedClassInheritorsProviderIdeImpl : SealedClassInheritorsProvi
         val searchScope: SearchScope = getSearchScope(module, psiPackage)
         val searchParameters = ClassInheritorsSearch.SearchParameters(lightClass, searchScope, false, true, false)
         val subclasses = ClassInheritorsSearch.search(searchParameters)
-            .mapNotNull { it.classIdIfNonLocal() }
+            .mapNotNull { it.classIdIfNonLocal }
             .toMutableList()
 
         // Enforce a deterministic order on the result.

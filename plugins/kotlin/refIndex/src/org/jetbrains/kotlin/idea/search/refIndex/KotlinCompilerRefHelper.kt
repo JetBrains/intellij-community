@@ -15,17 +15,16 @@ import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.numberOfArguments
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasBody
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
-import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
-import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_OVERLOADS_FQ_NAME
 
 class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelper() {
     override fun getAffectedFileTypes(): Set<FileType> = setOf(KotlinFileType.INSTANCE)
@@ -146,7 +145,8 @@ private fun KtNamedFunction.asFunctionCompilerRefs(
     names: NameEnumerator,
     isDefaultImplsMember: Boolean = false,
 ): List<CompilerRef.CompilerMember> {
-    val nameId = names.tryEnumerate(jvmName ?: name)
+    val jvmName = KotlinPsiHeuristics.findJvmName(this) ?: name
+    val nameId = names.tryEnumerate(jvmName)
     return asCompilerRefsWithJvmOverloads(owner, nameId, isDefaultImplsMember)
 }
 
@@ -193,7 +193,7 @@ private fun KtNamedFunction.asObjectMemberFunctionCompilerRefs(
 ): List<CompilerRef.CompilerMember>? {
     val owner = containingObject.asClassCompilerRef(names) ?: return null
     val compilerMembers = asFunctionCompilerRefs(owner, names)
-    val additionalOwner = containingObject.takeIf { hasJvmStaticAnnotation() }
+    val additionalOwner = containingObject.takeIf { KotlinPsiHeuristics.hasJvmStaticAnnotation(this) }
         ?.containingClassOrObject
         ?.asClassCompilerRef(names)
         ?: return compilerMembers
@@ -207,7 +207,7 @@ private fun KtFunction.asCompilerRefsWithJvmOverloads(
     isDefaultImplsMember: Boolean = false,
 ): List<CompilerRef.CompilerMember> {
     val numberOfArguments = numberOfArguments(countReceiver = true) + (1.takeIf { isDefaultImplsMember } ?: 0)
-    if (!hasJvmOverloadsAnnotation()) {
+    if (!KotlinPsiHeuristics.hasJvmOverloadsAnnotation(this)) {
         val mainMethodRef = owner.createMethod(nameId, numberOfArguments)
         return if (this is KtPrimaryConstructor && valueParameters.all(KtParameter::hasDefaultValue)) {
             listOf(mainMethodRef, owner.createMethod(nameId, 0))
@@ -232,7 +232,7 @@ private fun KtProperty.asObjectMemberPropertyCompilerRefs(
 
     val fieldOwner = containingObject.containingClassOrObject?.asClassCompilerRef(names)
     val compilerMembers = asPropertyCompilerRefs(owner, names, fieldOwner)
-    if (!hasJvmStaticAnnotation() || fieldOwner == null) return compilerMembers
+    if (!KotlinPsiHeuristics.hasJvmStaticAnnotation(this) || fieldOwner == null) return compilerMembers
 
     val staticMembers = asPropertyCompilerRefs(fieldOwner, names, fieldOwner = null) ?: return compilerMembers
     return compilerMembers?.plus(staticMembers) ?: staticMembers
@@ -273,7 +273,7 @@ private fun <T> T.asPropertyOrParameterCompilerRefs(
     isDefaultImplsMember: Boolean = false,
 ): List<CompilerRef.CompilerMember>? where T : KtCallableDeclaration, T : KtValVarKeywordOwner {
     val name = name ?: return null
-    if (fieldOwner != null && (hasModifier(KtTokens.CONST_KEYWORD) || hasJvmFieldAnnotation())) {
+    if (fieldOwner != null && (hasModifier(KtTokens.CONST_KEYWORD) || KotlinPsiHeuristics.hasJvmFieldAnnotation(this))) {
         return listOf(fieldOwner.createField(names.tryEnumerate(name)))
     }
 
@@ -284,22 +284,15 @@ private fun <T> T.asPropertyOrParameterCompilerRefs(
     }
 
     val numberOfArguments = numberOfArguments(countReceiver = true) + (1.takeIf { isDefaultImplsMember } ?: 0)
-    val getter = owner.createMethod(
-        names.tryEnumerate(jvmGetterName ?: JvmAbi.getterName(name)),
-        numberOfArguments,
-    )
+    val jvmGetterName = KotlinPsiHeuristics.findJvmGetterName(this) ?: JvmAbi.getterName(name)
+    val getter = owner.createMethod(names.tryEnumerate(jvmGetterName), numberOfArguments)
 
-    val setter = if (isMutable)
-        owner.createMethod(
-            names.tryEnumerate(jvmSetterName ?: JvmAbi.setterName(name)),
-            numberOfArguments + 1,
-        )
-    else
+    val setter = if (isMutable) {
+        val jvmSetterName = KotlinPsiHeuristics.findJvmSetterName(this) ?: JvmAbi.setterName(name)
+        owner.createMethod(names.tryEnumerate(jvmSetterName), numberOfArguments + 1)
+    } else {
         null
+    }
 
     return listOfNotNull(field, getter, setter)
 }
-
-private fun KtAnnotated.hasJvmStaticAnnotation(): Boolean = hasAnnotationWithShortName(JVM_STATIC_ANNOTATION_FQ_NAME.shortName())
-private fun KtAnnotated.hasJvmOverloadsAnnotation(): Boolean = hasAnnotationWithShortName(JVM_OVERLOADS_FQ_NAME.shortName())
-private fun KtAnnotated.hasJvmFieldAnnotation(): Boolean = hasAnnotationWithShortName(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME.shortName())

@@ -5,7 +5,7 @@ import com.intellij.compiler.backwardRefs.SearchId
 import com.intellij.compiler.backwardRefs.SearchIdHolder
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.jps.backwardRefs.NameEnumerator
-import org.jetbrains.kotlin.idea.util.jvmFqName
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 class JavaCompilerClassRefWithSearchId private constructor(
@@ -24,7 +24,7 @@ class JavaCompilerClassRefWithSearchId private constructor(
 
     companion object {
         fun create(classOrObject: KtClassOrObject, names: NameEnumerator): JavaCompilerClassRefWithSearchId? {
-            val qualifier = classOrObject.jvmFqName ?: return null
+            val qualifier = KotlinPsiHeuristics.getJvmName(classOrObject) ?: return null
             return JavaCompilerClassRefWithSearchId(qualifier, names.tryEnumerate(qualifier))
         }
 

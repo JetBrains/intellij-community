@@ -48,11 +48,11 @@ import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle.message
 import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService
 import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getStartClassFqName
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
-import org.jetbrains.kotlin.idea.util.jvmName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -354,7 +354,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
         private fun KtNamedFunction.isAMainCandidate(): Boolean {
             if (isLocal) return false
 
-            val jvmName = jvmName
+            val jvmName = KotlinPsiHeuristics.findJvmName(this)
             if (!(name == "main" && jvmName == null || jvmName == "main")) return false
 
             // method annotated with @JvmName("main") could be a candidate as well
