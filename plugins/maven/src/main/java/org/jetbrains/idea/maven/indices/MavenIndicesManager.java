@@ -15,6 +15,9 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -30,10 +33,7 @@ import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -172,13 +172,17 @@ public final class MavenIndicesManager implements Disposable {
    * @param mavenId
    * @param artifactFile
    */
-  public void addArtifactIndexAsync(@Nullable MavenId mavenId, @NotNull File artifactFile) {
-    if (myMavenIndices.isNotInit()) return;
+  public Promise<Void> addArtifactIndexAsync(@Nullable MavenId mavenId, @NotNull File artifactFile) {
+    if (myMavenIndices.isNotInit()) return Promises.rejectedPromise();
     MavenIndex localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
     if (localIndex == null) {
-      return;
+      return Promises.rejectedPromise();
     }
-    AppExecutorUtil.getAppExecutorService().execute(() -> myIndexFixer.fixIndex(mavenId, artifactFile, localIndex));
+    AsyncPromise<Void> result = new AsyncPromise<>();
+    AppExecutorUtil.getAppExecutorService().execute(() -> {
+      myIndexFixer.fixIndex(mavenId, artifactFile, localIndex).processed(result);
+    });
+    return result;
   }
 
   /**
@@ -236,7 +240,7 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   private final class IndexFixer {
-    private final ConcurrentLinkedQueue<File> queueToAdd = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<Pair<File, AsyncPromise<Void>>> queueToAdd = new ConcurrentLinkedQueue<>();
     private final MergingUpdateQueue myMergingUpdateQueue;
     private final AddToIndexRunnable taskConsumer = new AddToIndexRunnable();
 
@@ -246,15 +250,18 @@ public final class MavenIndicesManager implements Disposable {
       ).usePassThroughInUnitTestMode();
     }
 
-    public void fixIndex(@Nullable MavenId mavenId, @NotNull File file, @NotNull MavenIndex localIndex) {
+    public Promise<Void> fixIndex(@Nullable MavenId mavenId, @NotNull File file, @NotNull MavenIndex localIndex) {
       if (mavenId != null) {
-        if (mavenId.getGroupId() == null || mavenId.getArtifactId() == null || mavenId.getVersion() == null) return;
-        if (localIndex.hasVersion(mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion())) return;
+        if (mavenId.getGroupId() == null || mavenId.getArtifactId() == null || mavenId.getVersion() == null) {
+          return Promises.rejectedPromise();
+        }
+        if (localIndex.hasVersion(mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion())) return Promises.rejectedPromise();
       }
+      AsyncPromise<Void> result = new AsyncPromise<>();
 
-      queueToAdd.add(file);
-
+      queueToAdd.add(new Pair<>(file, result));
       myMergingUpdateQueue.queue(Update.create(this, taskConsumer));
+      return result;
     }
 
     private class AddToIndexRunnable implements Runnable {
@@ -263,15 +270,19 @@ public final class MavenIndicesManager implements Disposable {
       public void run() {
         MavenIndex localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
         if (localIndex == null) return;
-        File elementToAdd;
-        Set<File> retryElements = new TreeSet<>();
+        Pair<File, AsyncPromise<Void>> elementToAdd;
+        List<Pair<File, AsyncPromise<Void>>> retryElements = new ArrayList<>();
         Set<File> addedFiles = new TreeSet<>();
         while ((elementToAdd = queueToAdd.poll()) != null) {
-          if (addedFiles.contains(elementToAdd)) continue;
+          if (addedFiles.contains(elementToAdd.first)) {
+            elementToAdd.second.setResult(null);
+            continue;
+          }
 
-          boolean added = localIndex.tryAddArtifact(elementToAdd);
+          boolean added = localIndex.tryAddArtifact(elementToAdd.first);
           if (added) {
-            addedFiles.add(elementToAdd);
+            addedFiles.add(elementToAdd.first);
+            elementToAdd.second.setResult(null);
           }
           else {
             retryElements.add(elementToAdd);
