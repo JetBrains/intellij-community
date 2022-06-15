@@ -42,8 +42,8 @@ interface JetBrainsClientDownloaderConfigurationProvider {
 class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownloaderConfigurationProvider {
   override fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine) { }
 
-  override val clientDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/")
-  override val jreDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/")
+  override val clientDownloadLocation: URI = URI("https://download.jetbrains.com/idea/code-with-me/")
+  override val jreDownloadLocation: URI = URI("https://download.jetbrains.com/idea/jbr/")
   override val clientCachesDir: Path = getJetBrainsSystemCachesDir() / "JetBrainsClientDist"
   override val verifySignature: Boolean = true
 
@@ -70,8 +70,8 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     }
   }
 
-  override var clientDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/")
-  override var jreDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/")
+  override var clientDownloadLocation: URI = URI("https://download.jetbrains.com/idea/code-with-me/")
+  override var jreDownloadLocation: URI = URI("https://download.jetbrains.com/idea/jbr/")
   override var clientCachesDir: Path = Files.createTempDirectory("")
   override var verifySignature: Boolean = true
 
