@@ -11,6 +11,12 @@ interface CommitWorkflowHandler {
   fun execute(executor: CommitExecutor)
 }
 
-enum class CommitChecksResult {
-  COMMIT, CANCEL, CLOSE_WINDOW;
+sealed class CommitChecksResult {
+  class Passed(val toCommit: Boolean) : CommitChecksResult()
+  class Failed(val toCloseWindow: Boolean = false) : CommitChecksResult()
+  object Cancelled : CommitChecksResult()
+  object ExecutionError : CommitChecksResult()
+
+  val shouldCommit: Boolean get() = this is Passed && toCommit
+  val shouldCloseWindow: Boolean get() = this is Failed && toCloseWindow
 }
