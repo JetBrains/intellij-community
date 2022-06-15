@@ -1222,6 +1222,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/ktij21907.kt");
             }
 
+            @TestMetadata("ktij21963.kt")
+            public void testKtij21963() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/ktij21963.kt");
+            }
+
             @TestMetadata("lambdaToString.kt")
             public void testLambdaToString() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
