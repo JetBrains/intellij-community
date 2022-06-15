@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.test
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
-import org.jetbrains.kotlin.idea.artifacts.KotlinLibraryData
+import org.jetbrains.kotlin.idea.base.platforms.KotlinLibraryData
 
 object KotlinStdJSProjectDescriptor : KotlinLightProjectDescriptor() {
     override fun getSdk(): Sdk? = null

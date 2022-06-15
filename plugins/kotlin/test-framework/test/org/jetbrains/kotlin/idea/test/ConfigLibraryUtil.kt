@@ -16,7 +16,7 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
-import org.jetbrains.kotlin.idea.artifacts.KotlinLibraryData
+import org.jetbrains.kotlin.idea.base.platforms.KotlinLibraryData
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
