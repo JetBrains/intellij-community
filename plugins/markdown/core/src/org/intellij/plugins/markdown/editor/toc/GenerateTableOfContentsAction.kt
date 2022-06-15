@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.editor.toc
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -55,6 +56,10 @@ internal class GenerateTableOfContentsAction: AnAction() {
     if (findExistingTocs(file).any()) {
       event.presentation.text = MarkdownBundle.message("action.Markdown.GenerateTableOfContents.update.text")
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   companion object {

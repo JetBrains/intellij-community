@@ -50,4 +50,8 @@ internal class CreateOrChangeListPopupAction: AnAction(), Toggleable {
     event.presentation.icon = active.templatePresentation.icon
     active.update(event)
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
