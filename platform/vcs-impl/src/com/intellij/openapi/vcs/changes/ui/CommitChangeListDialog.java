@@ -710,11 +710,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @Override
   public void endBeforeCommitChecks(@NotNull CommitChecksResult result) {
-    if (result == CommitChecksResult.CANCEL) {
-      restartUpdate();
-    }
-    else if (result == CommitChecksResult.CLOSE_WINDOW) {
+    if (result.getShouldCommit()) return;
+    if (result.getShouldCloseWindow()) {
       doCancelAction();
+    }
+    else {
+      restartUpdate();
     }
   }
 

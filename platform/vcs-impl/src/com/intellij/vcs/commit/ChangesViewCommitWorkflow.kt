@@ -26,14 +26,14 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
     changes.firstOrNull()?.let { changeListManager.getChangeList(it) } ?: changeListManager.defaultChangeList
 
   override fun processExecuteDefaultChecksResult(result: CommitChecksResult) {
-    if (result == CommitChecksResult.COMMIT) doCommit()
+    if (result.shouldCommit) doCommit()
   }
 
   override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
     executeCustom(executor, session, commitState.changes, commitState.commitMessage)
 
   override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CommitChecksResult) {
-    if (result == CommitChecksResult.COMMIT) doCommitCustom(executor, session)
+    if (result.shouldCommit) doCommitCustom(executor, session)
   }
 
   override fun doRunBeforeCommitChecks(checks: Runnable) =

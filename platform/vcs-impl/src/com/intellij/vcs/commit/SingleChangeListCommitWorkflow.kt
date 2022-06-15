@@ -55,24 +55,22 @@ open class SingleChangeListCommitWorkflow(
 
   internal lateinit var commitState: ChangeListCommitState
 
-  override fun processExecuteDefaultChecksResult(result: CommitChecksResult) = when (result) {
-    CommitChecksResult.COMMIT -> DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
-    CommitChecksResult.CLOSE_WINDOW ->
+  override fun processExecuteDefaultChecksResult(result: CommitChecksResult) = when {
+    result.shouldCommit -> DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
+    result.shouldCloseWindow ->
       moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
-
-    CommitChecksResult.CANCEL -> Unit
+    else -> Unit
   }
 
   override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
     executeCustom(executor, session, commitState.changes, commitState.commitMessage)
 
   override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CommitChecksResult) =
-    when (result) {
-      CommitChecksResult.COMMIT -> doCommitCustom(executor, session)
-      CommitChecksResult.CLOSE_WINDOW ->
+    when {
+      result.shouldCommit -> doCommitCustom(executor, session)
+      result.shouldCloseWindow ->
         moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
-
-      CommitChecksResult.CANCEL -> Unit
+      else -> Unit
     }
 
   override fun doRunBeforeCommitChecks(checks: Runnable) =

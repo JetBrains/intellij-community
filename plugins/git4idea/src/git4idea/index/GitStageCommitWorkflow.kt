@@ -37,7 +37,7 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
   override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean = error("Not supported currently")
 
   override fun processExecuteDefaultChecksResult(result: CommitChecksResult) {
-    if (result == CommitChecksResult.COMMIT) doCommit()
+    if (result.shouldCommit) doCommit()
   }
 
   private fun doCommit() {

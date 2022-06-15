@@ -197,7 +197,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) {
     super.beforeCommitChecksEnded(isDefaultCommit, result)
-    if (result == CommitChecksResult.COMMIT) {
+    if (result.shouldCommit) {
       ui.commitProgressUi.clearCommitCheckFailures()
     }
   }
@@ -212,7 +212,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
         commitContext.isOnlyRunCommitChecks = false
 
-        if (isSkipCommitChecks() && !isOnlyRunCommitChecks) return@executeDefault CommitChecksResult.COMMIT
+        if (isSkipCommitChecks() && !isOnlyRunCommitChecks) return@executeDefault CommitChecksResult.Passed(toCommit = true)
 
         val indicator = ui.commitProgressUi.startProgress(isOnlyRunCommitChecks)
         indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
@@ -242,21 +242,24 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
     val plainHandlers = commitHandlers.filterNot { it is CommitCheck<*> }
     val plainHandlersResult = workflow.runBeforeCommitHandlersChecks(executor, plainHandlers)
-    if (plainHandlersResult != CommitChecksResult.COMMIT) return plainHandlersResult
+    if (!plainHandlersResult.shouldCommit) return plainHandlersResult
 
     val commitChecks = commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()
     val checksPassed = workflow.runCommitChecks(commitChecks, ui.commitProgressUi, indicator)
     when {
       isOnlyRunCommitChecks -> {
         isCommitChecksResultUpToDate = true
-        return CommitChecksResult.CANCEL
+        return when {
+          checksPassed -> CommitChecksResult.Passed(toCommit = false)
+          else -> CommitChecksResult.Failed()
+        }
       }
       checksPassed -> {
-        return CommitChecksResult.COMMIT
+        return CommitChecksResult.Passed(toCommit = true)
       }
       else -> {
         isCommitChecksResultUpToDate = true
-        return CommitChecksResult.CANCEL
+        return CommitChecksResult.Failed()
       }
     }
   }

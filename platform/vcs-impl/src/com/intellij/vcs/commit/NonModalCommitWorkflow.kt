@@ -35,18 +35,18 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
   }
 
   suspend fun executeDefault(checker: suspend () -> CommitChecksResult) {
-    var result = CommitChecksResult.CANCEL
+    var result: CommitChecksResult = CommitChecksResult.ExecutionError
     try {
       result = checkCommit(checker)
       processExecuteDefaultChecksResult(result)
     }
     finally {
-      if (result != CommitChecksResult.COMMIT) endExecution()
+      if (!result.shouldCommit) endExecution()
     }
   }
 
   private suspend fun checkCommit(checker: suspend () -> CommitChecksResult): CommitChecksResult {
-    var result = CommitChecksResult.CANCEL
+    var result: CommitChecksResult = CommitChecksResult.ExecutionError
 
     fireBeforeCommitChecksStarted()
     try {
