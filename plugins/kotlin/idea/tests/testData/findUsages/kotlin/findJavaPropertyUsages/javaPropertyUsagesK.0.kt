@@ -26,4 +26,4 @@ fun test() {
     B().p = 1
 }
 
-// FIR_IGNORE
+// FIR_COMPARISON
