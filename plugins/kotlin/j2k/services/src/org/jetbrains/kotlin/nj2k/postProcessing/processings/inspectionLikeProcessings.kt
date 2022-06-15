@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.inspections.*
@@ -411,19 +411,6 @@ class MayBeConstantInspectionBasedProcessing : InspectionLikeProcessingForElemen
         AddConstModifierFix.addConstModifier(element)
     }
 }
-
-class RemoveExplicitUnitTypeProcessing : InspectionLikeProcessingForElement<KtNamedFunction>(KtNamedFunction::class.java) {
-    override fun isApplicableTo(element: KtNamedFunction, settings: ConverterSettings?): Boolean {
-        val typeReference = element.typeReference?.typeElement ?: return false
-        if (!typeReference.textMatches("Unit")) return false
-        return RedundantUnitReturnTypeInspection.hasRedundantUnitReturnType(element)
-    }
-
-    override fun apply(element: KtNamedFunction) {
-        element.typeReference = null
-    }
-}
-
 
 class RemoveExplicitGetterInspectionBasedProcessing :
     InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
