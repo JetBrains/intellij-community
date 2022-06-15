@@ -213,7 +213,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     private EventStealer(@NotNull Disposable parent, @NotNull Consumer<? super InputEvent> inputConsumer) {
       myInputEventDispatcher = inputConsumer;
       IdeEventQueue.getInstance().addPostEventListener(event -> {
-        if (event instanceof MouseEvent || event instanceof KeyEvent && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ESCAPE) {
+        if (event instanceof MouseEvent || event instanceof KeyEvent) {
           myInputEvents.offer((InputEvent)event);
           return true;
         }
