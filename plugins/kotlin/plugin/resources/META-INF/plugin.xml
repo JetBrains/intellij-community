@@ -185,17 +185,17 @@ The plugin supports Kotlin 1.7 and lower.
 
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlin-core-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="navigation-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="resolution.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="highlighting-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="resolution-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="highlighting-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="language.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="light-classes.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="light-classes-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="formatter.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="completion.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="refactorings.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="inspections.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="completion-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="refactorings-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="inspections-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="indices.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="caches-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
