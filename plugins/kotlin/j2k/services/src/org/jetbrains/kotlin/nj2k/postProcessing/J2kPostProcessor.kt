@@ -180,16 +180,6 @@ private val removeRedundantElementsProcessingGroup =
         )
     )
 
-private val removeRedundantSemicolonProcessing =
-    InspectionLikeProcessingGroup(
-        runSingleTime = true,
-        acceptNonKtElements = true,
-        processings = listOf(
-            RedundantSemicolonInspectionBasedProcessing()
-        )
-    )
-
-
 private val inspectionLikePostProcessingGroup =
     InspectionLikeProcessingGroup(
         RemoveRedundantConstructorKeywordProcessing(),
@@ -286,7 +276,6 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
             errorsFixingDiagnosticBasedPostProcessingGroup,
             addOrRemoveModifiersProcessingGroup,
             inspectionLikePostProcessingGroup,
-            removeRedundantSemicolonProcessing,
             removeRedundantElementsProcessingGroup,
             cleaningUpDiagnosticBasedPostProcessingGroup
         )

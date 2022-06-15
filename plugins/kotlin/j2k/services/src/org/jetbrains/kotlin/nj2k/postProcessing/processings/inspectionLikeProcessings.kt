@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.nj2k.postProcessing.processings
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -429,18 +428,6 @@ class RemoveExplicitSetterInspectionBasedProcessing :
 
     override fun apply(element: KtPropertyAccessor) {
         removeRedundantSetter(element)
-    }
-}
-
-
-class RedundantSemicolonInspectionBasedProcessing :
-    InspectionLikeProcessingForElement<PsiElement>(PsiElement::class.java) {
-    override fun isApplicableTo(element: PsiElement, settings: ConverterSettings?): Boolean =
-        element.node.elementType == KtTokens.SEMICOLON
-                && RedundantSemicolonInspection.isRedundantSemicolon(element)
-
-    override fun apply(element: PsiElement) {
-        element.delete()
     }
 }
 

@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.nj2k.postProcessing.processings
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.childrenOfType
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
@@ -14,9 +16,7 @@ import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.escaped
 import org.jetbrains.kotlin.nj2k.postProcessing.*
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.asAssignment
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -127,6 +127,22 @@ class ConvertToDataClassProcessing : ElementsBasedPostProcessing() {
         }
     }
 
+    private fun KtClass.removeRedundantEnumSemicolon() {
+        if (!isEnum()) return
+        val enumEntries = body?.childrenOfType<KtEnumEntry>().orEmpty()
+        val otherMembers = body?.childrenOfType<KtDeclaration>()?.filterNot { it is KtEnumEntry }.orEmpty()
+        if (otherMembers.isNotEmpty()) return
+        if (enumEntries.isNotEmpty()) {
+            enumEntries.lastOrNull()?.removeSemicolon()
+        } else {
+            body?.removeSemicolon()
+        }
+    }
+
+    private fun KtElement.removeSemicolon() {
+        getChildrenOfType<LeafPsiElement>().find { it.text == ";" }?.delete()
+    }
+
     private fun convertClass(klass: KtClass) {
         val initialisations = runReadAction { collectInitializations(klass) }
         if (initialisations.isEmpty()) return
@@ -149,6 +165,7 @@ class ConvertToDataClassProcessing : ElementsBasedPostProcessing() {
                 statementCommentSaver.restore(restoreStatementCommentsTarget, forceAdjustIndent = false)
             }
             klass.removeEmptyInitBlocks()
+            klass.removeRedundantEnumSemicolon()
         }
     }
 }
