@@ -18,6 +18,8 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.ComponentWithEmptyText
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
+import java.awt.MouseInfo
+import java.awt.Rectangle
 import java.awt.event.*
 import java.io.File
 import javax.swing.*
@@ -37,6 +39,14 @@ inline fun <reified T> JComponent.getUserData(key: Key<T>): T? {
 fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
   val position = viewToModel2D(e.point)
   return position in 1 until text.length
+}
+
+fun Component.isComponentUnderMouse(): Boolean {
+  val pointerInfo = MouseInfo.getPointerInfo() ?: return false
+  val location = pointerInfo.location
+  SwingUtilities.convertPointFromScreen(location, this)
+  val bounds = Rectangle(0, 0, width, height)
+  return bounds.contains(location)
 }
 
 fun getActionShortcutText(actionId: String): String {

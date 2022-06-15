@@ -2,8 +2,6 @@
 package com.intellij.openapi.editor.toolbar.floating
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -21,35 +19,21 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
     isOpaque = false
 
     FloatingToolbarProvider.EP_NAME.forEachExtensionSafe { provider ->
-      addFloatingToolbarComponent(provider, editor)
+      addFloatingToolbarComponent(editor, provider)
     }
     FloatingToolbarProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<FloatingToolbarProvider> {
       override fun extensionAdded(extension: FloatingToolbarProvider, pluginDescriptor: PluginDescriptor) {
-        addFloatingToolbarComponent(extension, editor)
+        addFloatingToolbarComponent(editor, extension)
       }
     }, editor.disposable)
-
-    val executor = ExecutorWithThrottling(SCHEDULE_SHOW_DELAY)
-    editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
-      override fun mouseMoved(e: EditorMouseEvent) {
-        executor.executeOrSkip {
-          components.asSequence()
-            .filterIsInstance<FloatingToolbarComponentImpl>()
-            .filter { it.autoHideable }
-            .forEach { it.scheduleShow() }
-        }
-      }
-    })
   }
 
-  private fun addFloatingToolbarComponent(provider: FloatingToolbarProvider, editor: EditorImpl) {
-    val disposable = createExtensionDisposable(provider, editor.disposable)
-    val targetComponent = editor.contentComponent
-    val actionGroup = provider.actionGroup
-    val autoHideable = provider.autoHideable
-    val component = FloatingToolbarComponentImpl(this, targetComponent, actionGroup, autoHideable, disposable)
-    provider.register(editor.dataContext, component, disposable)
-    add(component, disposable)
+  private fun addFloatingToolbarComponent(editor: EditorImpl, provider: FloatingToolbarProvider) {
+    if (provider.isApplicable(editor.dataContext)) {
+      val disposable = createExtensionDisposable(provider, editor.disposable)
+      val component = FloatingToolbarComponentImpl(editor, provider, disposable)
+      add(component, disposable)
+    }
   }
 
   private fun add(component: Component, parentDisposable: Disposable) {
@@ -70,10 +54,5 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
       }
     }, disposable)
     return disposable
-  }
-
-  companion object {
-    // Should be less than [VisibilityController.RETENTION_DELAY]
-    private const val SCHEDULE_SHOW_DELAY = 1000
   }
 }

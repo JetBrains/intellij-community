@@ -176,7 +176,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       final var editorKeyListener = new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent event) {
-          toolbar.getVisibilityController().scheduleHide();
+          toolbar.scheduleHide();
         }
       };
       actualEditor.getEditor().getContentComponent().addKeyListener(editorKeyListener);
@@ -638,15 +638,15 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
         var isMouseOutsideToolbar = toolbar.getMousePosition() == null;
         if (myComponent.getMousePosition() != null) {
           alarm.cancelAllRequests();
-          toolbar.getVisibilityController().scheduleShow();
+          toolbar.scheduleShow();
           if (isMouseOutsideToolbar) {
             alarm.addRequest(() -> {
-              toolbar.getVisibilityController().scheduleHide();
+              toolbar.scheduleHide();
             }, 1400);
           }
         }
         else if (isMouseOutsideToolbar) {
-          toolbar.getVisibilityController().scheduleHide();
+          toolbar.scheduleHide();
         }
       } catch (NullPointerException ignore) { //EA-356093 problem inside OpenJDK
       }
