@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import com.intellij.util.lang.CompoundRuntimeException;
+import it.unimi.dsi.fastutil.bytes.ByteArrays;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,10 +18,9 @@ import java.util.List;
 
 public class AppendableStorageBackedByResizableMappedFile<Data> extends ResizeableMappedFile implements AppendableObjectStorage<Data> {
   private static final ThreadLocal<MyDataIS> ourReadStream = ThreadLocal.withInitial(() -> new MyDataIS());
-  private volatile byte[] myAppendBuffer;
+
   private volatile int myFileLength;
-  private volatile int myBufferPosition;
-  private static final int ourAppendBufferLength = 4096;
+  private volatile @Nullable AppendMemoryBuffer myAppendBuffer;
   @NotNull
   private final DataExternalizer<Data> myDataDescriptor;
 
@@ -42,10 +42,11 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   }
 
   private void flushKeyStoreBuffer() throws IOException {
-    if (myBufferPosition > 0) {
-      put(myFileLength, myAppendBuffer, 0, myBufferPosition);
-      myFileLength += myBufferPosition;
-      myBufferPosition = 0;
+    if (AppendMemoryBuffer.hasChanges(myAppendBuffer)) {
+      int bufferPosition = myAppendBuffer.getBufferPosition();
+      put(myFileLength, myAppendBuffer.getAppendBuffer(), 0, bufferPosition);
+      myFileLength += bufferPosition;
+      myAppendBuffer = myAppendBuffer.rewind(myFileLength);
     }
   }
 
@@ -72,19 +73,25 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
 
   @Override
   public Data read(int addr, boolean checkAccess) throws IOException {
-    if (myFileLength <= addr) {
+    AppendMemoryBuffer buffer = myAppendBuffer;
+    AppendMemoryBuffer memoryBufferForRead = buffer != null ? buffer.copyToRead(addr) : null;
+    if (memoryBufferForRead != null) {
       // addr points to un-existed data
-      if (myAppendBuffer == null) {
+      int bufferOffset = addr - memoryBufferForRead.myCreationFileLength;
+      if (bufferOffset > memoryBufferForRead.getBufferPosition()) {
         throw new NoDataException("requested address points to un-existed data");
       }
 
-      // addr points to un-existed data
-      int bufferOffset = addr - myFileLength;
-      if (bufferOffset > myBufferPosition) {
-        throw new NoDataException("requested address points to un-existed data");
-      }
-
-      return myDataDescriptor.read(new DataInputStream(new UnsyncByteArrayInputStream(myAppendBuffer, bufferOffset, myBufferPosition)));
+      UnsyncByteArrayInputStream is =
+        new UnsyncByteArrayInputStream(
+          memoryBufferForRead.getAppendBuffer(),
+          bufferOffset,
+          memoryBufferForRead.getBufferPosition()
+        );
+      return myDataDescriptor.read(new DataInputStream(is));
+    }
+    if (addr >= myFileLength) {
+      throw new NoDataException("requested address points to un-existed data");
     }
     // we do not need to flushKeyBuffer since we store complete records
     MyDataIS rs = ourReadStream.get();
@@ -124,7 +131,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
 
   @Override
   public int getCurrentLength() {
-    return myBufferPosition + myFileLength;
+    return AppendMemoryBuffer.getBufferPosition(myAppendBuffer) + myFileLength;
   }
 
   @Override
@@ -137,21 +144,20 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
 
     int currentLength = getCurrentLength();
 
-    if (size > ourAppendBufferLength) {
+    if (size > AppendMemoryBuffer.ourAppendBufferLength) {
       flushKeyStoreBuffer();
       put(currentLength, buffer, 0, size);
       myFileLength += size;
     }
     else {
-      if (size > ourAppendBufferLength - myBufferPosition) {
+      if (size > AppendMemoryBuffer.ourAppendBufferLength - AppendMemoryBuffer.getBufferPosition(myAppendBuffer)) {
         flushKeyStoreBuffer();
       }
       // myAppendBuffer will contain complete records
       if (myAppendBuffer == null) {
-        myAppendBuffer = new byte[ourAppendBufferLength];
+        myAppendBuffer = new AppendMemoryBuffer(myFileLength);
       }
-      System.arraycopy(buffer, 0, myAppendBuffer, myBufferPosition, size);
-      myBufferPosition += size;
+      myAppendBuffer.append(buffer, size);
     }
     return currentLength;
   }
@@ -180,7 +186,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
         @Override
         public void write(int b) {
           if (same) {
-            same = address < myBufferPosition && myAppendBuffer[address++] == (byte)b;
+            same = address < myAppendBuffer.getBufferPosition() && myAppendBuffer.getAppendBuffer()[address++] == (byte)b;
           }
         }
       };
@@ -243,4 +249,58 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
       throw new IllegalStateException("should not happen");
     }
   };
+
+  private static class AppendMemoryBuffer {
+    private static final int ourAppendBufferLength = 4096;
+
+    private final byte[] myAppendBuffer;
+    private int myBufferPosition;
+
+    private final int myCreationFileLength;
+
+    private AppendMemoryBuffer(int creationFileLength) {
+      this(new byte[ourAppendBufferLength], 0, creationFileLength);
+    }
+
+    private AppendMemoryBuffer(byte[] appendBuffer, int bufferPosition, int creationFileLength) {
+      myAppendBuffer = appendBuffer;
+      myCreationFileLength = creationFileLength;
+      myBufferPosition = bufferPosition;
+    }
+
+    private @Nullable AppendMemoryBuffer copyToRead(long readOffset) {
+      if (readOffset >= myCreationFileLength) {
+        synchronized (this) {
+          return new AppendMemoryBuffer(ByteArrays.copy(myAppendBuffer), myBufferPosition, myCreationFileLength);
+        }
+      }
+      return null;
+    }
+
+
+    private synchronized byte[] getAppendBuffer() {
+      return myAppendBuffer;
+    }
+
+    private synchronized int getBufferPosition() {
+      return myBufferPosition;
+    }
+
+    public synchronized void append(byte[] buffer, int size) {
+      System.arraycopy(buffer, 0, myAppendBuffer, myBufferPosition, size);
+      myBufferPosition += size;
+    }
+
+    public synchronized AppendMemoryBuffer rewind(int newFileLength) {
+      return new AppendMemoryBuffer(myAppendBuffer, 0, newFileLength);
+    }
+
+    private static int getBufferPosition(@Nullable AppendMemoryBuffer buffer) {
+      return buffer != null ? buffer.myBufferPosition : 0;
+    }
+
+    private static boolean hasChanges(@Nullable AppendMemoryBuffer buffer) {
+      return buffer != null && buffer.getBufferPosition() > 0;
+    }
+  }
 }
