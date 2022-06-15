@@ -88,11 +88,19 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   override fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable) =
     executorEventDispatcher.addListener(listener, parent)
 
+  override fun runDefaultCommitAction() {
+    if (isDefaultExecutorEnabled()) {
+      fireDefaultExecutorCalled()
+    }
+  }
+
+  private fun isDefaultExecutorEnabled() = isActive && defaultCommitAction.isEnabled
+
   private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)
 
   inner class DefaultCommitAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = isActive && defaultCommitAction.isEnabled && commitButton.isDefaultButton
+      e.presentation.isEnabledAndVisible = isDefaultExecutorEnabled() && commitButton.isDefaultButton
     }
 
     override fun actionPerformed(e: AnActionEvent) = fireDefaultExecutorCalled()

@@ -162,12 +162,16 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     progress.finish(taskInfo)
   }
 
-  override fun addCommitCheckFailure(text: String, detailsViewer: (() -> Unit)?) {
+  override fun addCommitCheckFailure(failure: CommitCheckFailure) {
     progress?.component?.isVisible = false
-    failuresPanel.addFailure(CommitCheckFailure(text, detailsViewer))
+    failuresPanel.addFailure(failure)
   }
 
   override fun clearCommitCheckFailures() = failuresPanel.clearFailures()
+
+  override fun getCommitCheckFailures(): List<CommitCheckFailure> {
+    return failuresPanel.getFailures()
+  }
 
   override fun documentChanged(event: DocumentEvent) = clearError()
   override fun inclusionChanged() = clearError()
@@ -197,7 +201,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     }
 }
 
-private class CommitCheckFailure(@Nls val text: String, val detailsViewer: (() -> Unit)?)
+class CommitCheckFailure(@Nls val text: String, val detailsViewer: (() -> Unit)?)
 
 private class FailuresPanel : JBPanel<FailuresPanel>() {
   private var nextFailureId = 0
@@ -236,6 +240,8 @@ private class FailuresPanel : JBPanel<FailuresPanel>() {
     isVisible = failures.isNotEmpty()
     if (isVisible) iconLabel.icon = AllIcons.General.Warning
   }
+
+  fun getFailures() = failures.values.toList()
 
   private fun update() {
     description.failures = failures
