@@ -79,8 +79,8 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     }
   }
 
-  override var clientDownloadUrl: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/")
-  override var jreDownloadUrl: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/")
+  override var clientDownloadUrl: URI = URI("https://download.jetbrains.com/idea/code-with-me/")
+  override var jreDownloadUrl: URI = URI("https://download.jetbrains.com/idea/jbr/")
   override var clientCachesDir: Path = Files.createTempDirectory("")
   override var verifySignature: Boolean = true
 
