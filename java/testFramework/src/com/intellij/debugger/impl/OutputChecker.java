@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Producer;
+import com.intellij.util.UriUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -219,7 +220,7 @@ public class OutputChecker {
 
       File productionFile = new File(PathUtil.getJarPathForClass(OutputChecker.class));
       if (productionFile.isDirectory()) {
-        result = replacePath(result, StringUtil.trimTrailing(productionFile.getParentFile().toURI().toString(), '/'), "!PRODUCTION_PATH!");
+        result = replacePath(result, UriUtil.trimTrailingSlashes(productionFile.getParentFile().toURI().toString()), "!PRODUCTION_PATH!");
       }
 
       result = replacePath(result, PathManager.getHomePath(), "!IDEA_HOME!");

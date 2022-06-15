@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -326,7 +327,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   private static @NotNull String trimTrailingSeparators(@NotNull String path) {
     path = StringUtil.trimEnd(path, JarFileSystem.JAR_SEPARATOR);
-    path = StringUtil.trimTrailing(path, '/');
+    path = UriUtil.trimTrailingSlashes(path);
     return path;
   }
 

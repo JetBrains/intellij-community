@@ -1387,7 +1387,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (root != null) return root;
 
       try {
-        String pathBeforeSlash = StringUtil.trimTrailing(rootPath, '/');
+        String pathBeforeSlash = UriUtil.trimTrailingSlashes(rootPath);
         newRoot = new FsRoot(rootId, rootNameId, myVfsData, fs, pathBeforeSlash, attributes, path);
       }
       catch (VfsData.FileAlreadyCreatedException e) {

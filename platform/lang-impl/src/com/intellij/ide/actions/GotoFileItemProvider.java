@@ -27,6 +27,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.*;
 import com.intellij.util.indexing.FindSymbolParameters;
 import one.util.streamex.StreamEx;
@@ -152,7 +153,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
   @NotNull
   private static String removeSlashes(@NotNull String s) {
-    return StringUtil.trimLeading(StringUtil.trimTrailing(s, '/'), '/');
+    return UriUtil.trimLeadingSlashes(UriUtil.trimTrailingSlashes(s));
   }
 
   @Nullable

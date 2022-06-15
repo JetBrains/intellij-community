@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.local.CoreLocalVirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -685,7 +686,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   // faster than `Files#getFileStore` (at least for ZipFS); not suitable for local FS
   private static String storeName(Path path) {
-    return StringUtil.trimTrailing(path.getFileSystem().getFileStores().iterator().next().name(), '/');
+    return UriUtil.trimTrailingSlashes(path.getFileSystem().getFileStores().iterator().next().name());
   }
 
   private static Future<Void> execute(Runnable operation) {
