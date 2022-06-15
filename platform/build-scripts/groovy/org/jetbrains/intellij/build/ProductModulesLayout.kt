@@ -7,10 +7,7 @@ import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentSet
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.*
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import java.util.function.BiConsumer
@@ -41,36 +38,25 @@ class ProductModulesLayout {
 
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. Layouts of the
-   * bundled plugins are specified in {@link #pluginLayouts} list.
+   * bundled plugins are specified in {@link [pluginLayouts]} list.
    */
   var bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
-
-  private var pluginsToPublish: LinkedHashSet<String> = LinkedHashSet()
-
-  fun addPluginToPublish(id: String) {
-    pluginsToPublish.add(id)
-  }
 
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
    * into it. Zip archives of these plugins will be built and placed under "&lt;product-code&gt;-plugins" directory in the build artifacts.
-   * Layouts of the plugins are specified in {@link #pluginLayouts} list.
+   * Layouts of the plugins are specified in {@link [pluginLayouts]} list.
    */
-  fun setPluginModulesToPublish(plugins: List<String>) {
-    pluginsToPublish = LinkedHashSet(plugins)
-  }
-
-  /**
-   * @see #setPluginModulesToPublish
-   */
-  fun getPluginModulesToPublish(): List<String> {
-    return java.util.List.copyOf(pluginsToPublish)
-  }
+  var pluginModulesToPublish: Collection<String> = LinkedHashSet()
+    get() = java.util.Set.copyOf(field)
+    set(value) {
+      field = LinkedHashSet(value)
+    }
 
   /**
    * Describes layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled
-   * with the product is specified by {@link #bundledPluginModules}, the actual list of plugins which need to be prepared for publishing
-   * is specified by {@link #setPluginModulesToPublish pluginModulesToPublish}.
+   * with the product is specified by {@link [bundledPluginModules]}, the actual list of plugins which need to be prepared for publishing
+   * is specified by {@link [pluginModulesToPublish]}.
    *
    * For trivial plugins, i.e. for plugins which include an output of a single module and its module libraries, it's enough to use
    * [org.jetbrains.intellij.build.impl.PluginLayout.Companion.simplePlugin] as layout.

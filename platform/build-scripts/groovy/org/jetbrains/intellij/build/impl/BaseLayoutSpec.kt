@@ -26,7 +26,7 @@ open class BaseLayoutSpec(private val layout: BaseLayout) {
 
   /**
    * Include the project library to 'lib' directory or its subdirectory of the plugin distribution
-   * @relativeOutputPath path relative to 'lib' plugin directory
+   * @param libraryName path relative to 'lib' plugin directory
    */
   fun withProjectLibrary(libraryName: String) {
     layout.withProjectLibrary(libraryName)

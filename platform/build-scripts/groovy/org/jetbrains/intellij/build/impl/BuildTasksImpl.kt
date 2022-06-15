@@ -626,7 +626,7 @@ internal class BuildTaskRunnable(
 )
 
 private fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
-  val pluginsToPublish = getPluginsByModules(context.productProperties.productLayout.getPluginModulesToPublish(), context)
+  val pluginsToPublish = getPluginsByModules(context.productProperties.productLayout.pluginModulesToPublish, context)
   return compileModulesForDistribution(pluginsToPublish, context)
 }
 
@@ -636,7 +636,7 @@ fun buildDistributions(context: BuildContext) {
       checkProductProperties(context)
       copyDependenciesFile(context)
       logFreeDiskSpace("before compilation", context)
-      val pluginsToPublish = getPluginsByModules(context.productProperties.productLayout.getPluginModulesToPublish(), context)
+      val pluginsToPublish = getPluginsByModules(context.productProperties.productLayout.pluginModulesToPublish, context)
       val distributionState = compileModulesForDistribution(context)
       logFreeDiskSpace("after compilation", context)
 
@@ -797,8 +797,7 @@ private fun checkProductLayout(context: BuildContext) {
   checkScrambleClasspathPlugins(pluginLayouts, context)
   checkPluginDuplicates(pluginLayouts, context)
   checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", pluginLayouts, context)
-  checkPluginModules(layout.getPluginModulesToPublish(), "productProperties.productLayout.pluginModulesToPublish", pluginLayouts,
-                     context)
+  checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", pluginLayouts, context)
   checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", pluginLayouts,
                      context)
   if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
@@ -814,11 +813,10 @@ private fun checkProductLayout(context: BuildContext) {
   if (!context.shouldBuildDistributions() && layout.buildAllCompatiblePlugins) {
     messages.warning("Distribution is not going to build. Hence all compatible plugins won't be built despite " +
                      "layout.buildAllCompatiblePlugins option is enabled. layout.pluginModulesToPublish will be used (" +
-                     layout.getPluginModulesToPublish().toString() +
-                     ")")
+                     layout.pluginModulesToPublish + ")")
   }
   if (layout.prepareCustomPluginRepositoryForPublishedPlugins &&
-      layout.getPluginModulesToPublish().isEmpty() &&
+      layout.pluginModulesToPublish.isEmpty() &&
       !layout.buildAllCompatiblePlugins) {
     messages.error("productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled" +
                    " but no pluginModulesToPublish are specified")
@@ -918,10 +916,12 @@ private fun checkScrambleClasspathPlugins(pluginLayoutList: List<PluginLayout>, 
   }
 }
 
-private fun checkPluginModules(pluginModules: List<String>?,
-                               fieldName: String,
-                               pluginLayoutList: List<PluginLayout>,
-                               context: BuildContext) {
+private fun checkPluginModules(
+  pluginModules: Collection<String>?,
+  fieldName: String,
+  pluginLayoutList: List<PluginLayout>,
+  context: BuildContext,
+) {
   if (pluginModules == null) {
     return
   }
