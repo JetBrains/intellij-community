@@ -26,6 +26,7 @@ public class PerformanceTestInfo {
   private boolean adjustForIO;// true if test uses IO, timings need to be re-calibrated according to this agent disk performance
   private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
   private boolean useLegacyScaling;
+  private int warmupIterations = Integer.MIN_VALUE;
 
   static {
     // to use JobSchedulerImpl.getJobPoolParallelism() in tests which don't init application
@@ -82,6 +83,18 @@ public class PerformanceTestInfo {
   }
 
   /**
+   * Runs the payload {@code iterations} times before starting measuring the time.
+   * By default, iterations == 0 (in which case we don't run warmup passes at all)
+   */
+  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+  public PerformanceTestInfo warmupIterations(int iterations) {
+    assert warmupIterations == Integer.MIN_VALUE : "Already called warmupIterations()";
+    assert iterations >= 1 : "invalid argument: " + iterations+"; must be >= 1";
+    warmupIterations = iterations;
+    return this;
+  }
+
+  /**
    * @deprecated Enables procedure for nonlinear scaling of results between different machines. This was historically enabled, but doesn't
    * seem to be meaningful, and is known to make results worse in some cases. Consider migration off this setting, recalibrating
    * expected execution time accordingly.
@@ -93,7 +106,6 @@ public class PerformanceTestInfo {
     return this;
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void assertTiming() {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
     Timings.getStatistics(); // warm-up, measure
@@ -112,9 +124,12 @@ public class PerformanceTestInfo {
         if (setup != null) setup.run();
         PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
         actualInputSize = new AtomicInteger(expectedInputSize);
-        data = CpuUsageData.measureCpuUsage(() -> {
-          actualInputSize.set(test.compute());
-        });
+        if (warmupIterations != Integer.MIN_VALUE) {
+          for (int i = 0; i < warmupIterations; i++) {
+            test.compute();
+          }
+        }
+        data = CpuUsageData.measureCpuUsage(() -> actualInputSize.set(test.compute()));
       }
       catch (Throwable throwable) {
         ExceptionUtil.rethrowUnchecked(throwable);
