@@ -173,7 +173,18 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
-  public void testGroovyEclipsePlugin() {
+  public void testGroovyEclipsePlugin() throws IOException {
+
+    File batchDir = new File(repoPath, "org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/");
+    //noinspection ResultOfMethodCallIgnored
+    batchDir.mkdirs();
+    File batchJar = new File(batchDir, "groovy-eclipse-batch-2.1.3-01.jar");
+    //noinspection ResultOfMethodCallIgnored
+    if (!isNewImportingProcess) { // old import tests are not resolving anything
+      batchJar.createNewFile();
+    }
+
+
     createStdProjectFolders();
     createProjectSubDirs("src/main/groovy",
                          "src/test/groovy");
@@ -236,7 +247,7 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "src/test/resources");
 
     GreclipseIdeaCompilerSettings compilerSettings = myProject.getService(GreclipseIdeaCompilerSettings.class);
-    assertEquals("", compilerSettings.getState().greclipsePath);
+    assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar).getPath(), compilerSettings.getState().greclipsePath);
   }
 
   @Test
@@ -669,7 +680,8 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
       ApplicationManager.getApplication().runWriteAction(() -> {
         MavenRootModelAdapter a = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(getProjectsTree().findProject(myProjectPom),
                                                                                                 getModule("project"),
-                                                                                                new ModifiableModelsProviderProxyWrapper(myProject)));
+                                                                                                new ModifiableModelsProviderProxyWrapper(
+                                                                                                  myProject)));
         a.unregisterAll(getProjectPath() + "/target", true, true);
         a.getRootModel().commit();
       });
