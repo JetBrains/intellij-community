@@ -258,7 +258,7 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.keymap.eclipse"),
     simplePlugin("intellij.keymap.visualStudio"),
     simplePlugin("intellij.keymap.netbeans"),
-    simplePlugin("kotlin.resources-fir"),
+    simplePlugin("kotlin.plugin-fir"),
   )
 
   public final static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = List.of(

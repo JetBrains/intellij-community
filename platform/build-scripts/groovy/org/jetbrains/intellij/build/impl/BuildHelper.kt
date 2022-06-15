@@ -212,9 +212,9 @@ private fun disableCompatibleIgnoredPlugins(context: BuildContext,
   for (moduleName in context.productProperties.productLayout.compatiblePluginsToIgnore) {
     // TODO: It is temporary solution to avoid exclude Kotlin from searchable options build because Kotlin team
     // need to use the same id in fir plugin.
-    // Remove it when "kotlin.resources-fir" will removed from compatiblePluginsToIgnore
+    // Remove it when "kotlin.plugin-fir" will removed from compatiblePluginsToIgnore
     // see: org/jetbrains/intellij/build/BaseIdeaProperties.groovy:179
-    if (moduleName == "kotlin.resources-fir") {
+    if (moduleName == "kotlin.plugin-fir") {
       continue
     }
 

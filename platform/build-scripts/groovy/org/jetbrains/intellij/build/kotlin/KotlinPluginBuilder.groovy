@@ -254,7 +254,7 @@ final class KotlinPluginBuilder {
         withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
           @Override
           void accept(ModuleOutputPatcher patcher, BuildContext context) {
-            def firResourcesDir = context.findModule("kotlin.resources-fir").sourceRoots
+            def firResourcesDir = context.findModule("kotlin.plugin-fir").sourceRoots
               .findAll { it.rootType instanceof JavaResourceRootType }[0]
               .file.toPath()
 
