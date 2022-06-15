@@ -208,10 +208,6 @@ final class CommunityRepositoryModules {
     plugin("intellij.statsCollector") {
       bundlingRestrictions.includeInEapOnly = true
     },
-    plugin("intellij.ml.models.local") {
-      withModule("intellij.ml.models.local.java")
-      bundlingRestrictions.includeInEapOnly = true
-    },
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
     },
