@@ -68,7 +68,7 @@ class PropertyListStubElementType extends ILightStubElementType<PropertiesListSt
 
   @NotNull
   @Override
-  public PropertiesListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
+  public PropertiesListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     return new PropertiesListStubImpl(parentStub);
   }
 }
