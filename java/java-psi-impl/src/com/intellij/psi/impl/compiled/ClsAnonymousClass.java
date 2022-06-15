@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClsAnonymousClass extends ClsClassImpl implements PsiAnonymousClass {
-  public ClsAnonymousClass(@NotNull PsiClassStub stub) {
+  public ClsAnonymousClass(@NotNull PsiClassStub<?> stub) {
     super(stub);
   }
 
@@ -22,6 +22,7 @@ public class ClsAnonymousClass extends ClsClassImpl implements PsiAnonymousClass
       visitor.visitElement(this);
     }
   }
+
   @Override
   public @NotNull PsiJavaCodeReferenceElement getBaseClassReference() {
     return CachedValuesManager.getCachedValue(this, () -> {

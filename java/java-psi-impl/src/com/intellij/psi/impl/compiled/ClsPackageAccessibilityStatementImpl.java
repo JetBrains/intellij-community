@@ -39,6 +39,7 @@ public final class ClsPackageAccessibilityStatementImpl extends ClsRepositoryPsi
       visitor.visitElement(this);
     }
   }
+
   @NotNull
   @Override
   public Role getRole() {

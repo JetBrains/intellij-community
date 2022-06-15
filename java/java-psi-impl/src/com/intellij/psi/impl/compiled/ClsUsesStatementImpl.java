@@ -27,6 +27,7 @@ public class ClsUsesStatementImpl extends ClsRepositoryPsiElement<PsiUsesStateme
       visitor.visitElement(this);
     }
   }
+
   @Override
   public PsiJavaCodeReferenceElement getClassReference() {
     return myClassReference;

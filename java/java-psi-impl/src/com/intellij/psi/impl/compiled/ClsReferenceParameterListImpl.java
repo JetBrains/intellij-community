@@ -29,13 +29,14 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
   @NonNls private static final Pattern EXTENDS_PREFIX = Pattern.compile("^(\\?\\s*extends\\s*)(.*)");
   @NonNls private static final Pattern SUPER_PREFIX = Pattern.compile("^(\\?\\s*super\\s*)(.*)");
 
+  @NotNull
   private final PsiElement myParent;
   private final ClsTypeElementImpl[] myTypeParameters;
   private volatile PsiType[] myTypeParametersCachedTypes;
 
-  public ClsReferenceParameterListImpl(PsiElement parent,
-                                       @NotNull String @NotNull [] classParameters,
-                                       @NotNull TypeAnnotationContainer annotations) {
+  ClsReferenceParameterListImpl(@NotNull PsiElement parent,
+                                @NotNull String @NotNull [] classParameters,
+                                @NotNull TypeAnnotationContainer annotations) {
     myParent = parent;
 
     int length = classParameters.length;
@@ -74,6 +75,7 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
       visitor.visitElement(this);
     }
   }
+
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) { }
 
@@ -104,7 +106,7 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
   }
 
   @Override
-  public PsiElement getParent() {
+  public @NotNull PsiElement getParent() {
     return myParent;
   }
 }

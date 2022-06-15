@@ -36,11 +36,11 @@ import java.util.*;
 import static java.util.Arrays.asList;
 
 public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiExtensibleClass, Queryable {
-  public static final Key<PsiClass> DELEGATE_KEY = Key.create("DELEGATE");
+  private static final Key<PsiClass> DELEGATE_KEY = Key.create("DELEGATE");
 
   private final ClassInnerStuffCache myInnersCache = new ClassInnerStuffCache(this);
 
-  public ClsClassImpl(final PsiClassStub stub) {
+  public ClsClassImpl(final PsiClassStub<?> stub) {
     super(stub);
   }
 

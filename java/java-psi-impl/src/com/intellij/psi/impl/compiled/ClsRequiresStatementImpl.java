@@ -17,9 +17,7 @@ public final class ClsRequiresStatementImpl extends ClsRepositoryPsiElement<PsiR
 
   public ClsRequiresStatementImpl(PsiRequiresStatementStub stub) {
     super(stub);
-    myModuleReference = NotNullLazyValue.atomicLazy(() -> {
-      return new ClsJavaModuleReferenceElementImpl(this, getStub().getModuleName());
-    });
+    myModuleReference = NotNullLazyValue.atomicLazy(() -> new ClsJavaModuleReferenceElementImpl(this, getStub().getModuleName()));
   }
 
   @Override
@@ -31,6 +29,7 @@ public final class ClsRequiresStatementImpl extends ClsRepositoryPsiElement<PsiR
       visitor.visitElement(this);
     }
   }
+
   @Override
   public PsiJavaModuleReferenceElement getReferenceElement() {
     return myModuleReference.getValue();
