@@ -1,17 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
-import com.intellij.codeInsight.hints.MethodChainsInlayProvider
-import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import com.intellij.codeInsight.hints.JavaMethodChainsDeclarativeInlayProvider
+import com.intellij.lang.java.JavaLanguage
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import org.intellij.lang.annotations.Language
 
-class MethodChainHintsTest : InlayHintsProviderTestCase() {
-  fun check(@Language("Java") text: String) {
-    doTestProvider("A.java", text, MethodChainsInlayProvider())
-  }
-
+class JavaMethodChainHintsTest : DeclarativeInlayHintsProviderTestCase() {
   fun `test plain builder`() {
     check("""
+
 public class Chains {
   static class A {
     B b() {return null;}
@@ -31,10 +29,9 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
-    new A()
-      .b()<# [temp:///src/A.java:99]B #>
-                .c()<# [temp:///src/A.java:173]C #>
-                .a()<# [temp:///src/A.java:25]A #>
+      .b()<# B #>
+                .c()<# C #>
+                .a()<# A #>
                 .c();
   }
 }""")
@@ -62,10 +59,10 @@ public class Chains {
   public static void main(String[] args) {
     A a = new A();
     a.b().c() // comment
-     .a()<# [temp:///src/A.java:24]A #>
-     .b()<# [temp:///src/A.java:98]B #>
+     .a()<# A #>
+     .b()<# B #>
      .a() // comment
-     .c()<# [temp:///src/A.java:172]C #>
+     .c()<# C #>
      .b();
   }
 }
@@ -92,11 +89,11 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     A a = new A();
-    a.b().c()<# [temp:///src/A.java:172]C #>
-     .a()<# [temp:///src/A.java:24]A #>
-     .b()<# [temp:///src/A.java:98]B #>
-     .a()<# [temp:///src/A.java:24]A #>
-     .c()<# [temp:///src/A.java:172]C #>
+    a.b().c()<# C #>
+     .a()<# A #>
+     .b()<# B #>
+     .a()<# A #>
+     .c()<# C #>
      .b();
   }
 }
@@ -124,10 +121,10 @@ public class Chains {
   public static void main(String[] args) {
     A a = new A();
     a.b().c() // comment
-     .a()<# [temp:///src/A.java:24]A #>
-     .b()<# [temp:///src/A.java:98]B #>
+     .a()<# A #>
+     .b()<# B #>
      .a() // comment
-     .c()<# [temp:///src/A.java:172]C #>
+     .c()<# C #>
      .b();
   }
 }
@@ -154,15 +151,15 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
-      .b()<# [temp:///src/A.java:98]B #>
-                .c()<# [temp:///src/A.java:172]C #>
-                .a()<# [temp:///src/A.java:24]A #>
+      .b()<# B #>
+                .c()<# C #>
+                .a()<# A #>
                 .c();
 
     new A()
-      .b()<# [temp:///src/A.java:98]B #>
-                .c()<# [temp:///src/A.java:172]C #>
-                .a()<# [temp:///src/A.java:24]A #>
+      .b()<# B #>
+                .c()<# C #>
+                .a()<# A #>
                 .c();
   }
 }
@@ -171,6 +168,7 @@ public class Chains {
 
   fun `test nested call chains`() {
     check("""
+
 public class Chains {
   interface Callable {
     void call();
@@ -196,16 +194,43 @@ public class Chains {
     new A()
       .b(() -> {
         new B()
-          .a()<# [temp:///src/A.java:70]A #>
-          .c()<# [temp:///src/A.java:235]C #>
-          .b()<# [temp:///src/A.java:161]B #>
+          .a()<# A #>
+          .c()<# C #>
+          .b()<# B #>
           .a();
-      })<# [temp:///src/A.java:161]B #>
-      .c()<# [temp:///src/A.java:235]C #>
-      .a()<# [temp:///src/A.java:70]A #>
+      })<# B #>
+      .c()<# C #>
+      .a()<# A #>
       .c();
   }
 }
 """)
   }
+
+  fun testPreview() {
+    doTestPreview("""
+      abstract class Foo<T> {
+        void main() {
+          listOf(1, 2, 3).filter(it -> it % 2 == 0)<# Foo|<|Integer|> #>
+            .map(it -> it * 2)<# Foo|<|int|> #>
+            .map(it -> "item: " + it)<# Foo|<|Object|> #>
+            .forEach(this::println);
+        }
+
+        abstract Void println(Object any);
+        abstract Foo<Integer> listOf(int... args);
+        abstract Foo<T> filter(Function<T, Boolean> isAccepted);
+        abstract <R> Foo<R> map(Function<T, R> mapper);
+        abstract void forEach(Function<T, Void> fun);
+        interface Function<T, R> {
+          R call(T t);
+        }
+      }
+    """.trimIndent(), JavaMethodChainsDeclarativeInlayProvider.PROVIDER_ID, JavaMethodChainsDeclarativeInlayProvider(), JavaLanguage.INSTANCE)
+  }
+
+  fun check(@Language("Java") text: String) {
+    doTestProvider("A.java", text, JavaMethodChainsDeclarativeInlayProvider())
+  }
+
 }

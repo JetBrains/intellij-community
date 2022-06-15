@@ -10,6 +10,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 
+@Deprecated("Not used in new UI")
 internal class SingleLanguageInlayHintsConfigurable(project: Project, val language: Language) : Configurable, SearchableConfigurable {
   private val panel by lazy {
     SingleLanguageInlayHintsSettingsPanel(getInlayProviderSettingsModels(project, language), language, project)

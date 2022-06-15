@@ -36,9 +36,13 @@ enum class InlayGroup(val key: String, @Nls val description: String? = null) {
   }}
 
 /**
+ * ATTENTION! Consider using [com.intellij.codeInsight.hints.declarative.InlayHintsProvider] whenever possible!
+ * It is order of magnitude faster, much simpler and less error-prone. This class is very likely to be deprecated in the future.
+ *
  * Provider of inlay hints for single language. If you need to create hints for multiple languages, please use [InlayHintsProviderFactory].
  * Both block and inline hints collection are supported.
  * Block hints draws between lines of code text. Inline ones are placed on the code text line (like parameter hints)
+ *
  * @param T settings type of this provider, if no settings required, please, use [NoSettings]
  * @see com.intellij.openapi.editor.InlayModel.addInlineElement
  * @see com.intellij.openapi.editor.InlayModel.addBlockElement
@@ -154,7 +158,7 @@ interface ImmediateConfigurable {
     @Nls val name: String,
     val id: String,
     private val loadFromSettings: () -> Boolean,
-    private val onUserChanged: (Boolean) -> Unit,
+    private val onUserChanged: (newValue: Boolean) -> Unit,
     @NlsContexts.DetailedDescription
     val extendedDescription: String? = null
   ) {

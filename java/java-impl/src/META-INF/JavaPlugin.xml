@@ -1258,12 +1258,29 @@
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.ReferenceParameterInfoHandler"/>
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler"/>
     <codeInsight.parameterNameHints language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider"/>
-    <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.MethodChainsInlayProvider"/>
-    <codeInsight.inlayProvider language="JAVA"
-                               implementationClass="com.intellij.codeInsight.hints.ImplicitTypeInlayProvider"
-                               isEnabledByDefault="false"
-                               settingsKeyId="java.implicit.types"/>
+    <!--suppress PluginXmlValidity -->
+    <codeInsight.declarativeInlayProviderCustomSettingsProvider language="JAVA"
+                                                                providerId="java.method.chains"
+                                                                implementationClass="com.intellij.codeInsight.hints.chain.DeclarativeCallChainCustomSettingsProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.AnnotationInlayProvider"/>
+    <codeInsight.declarativeInlayProvider language="JAVA"
+                                          implementationClass="com.intellij.codeInsight.hints.JavaImplicitTypeDeclarativeInlayHintsProvider"
+                                          isEnabledByDefault="false"
+                                          group="TYPES_GROUP"
+                                          providerId="java.implicit.types"
+                                          bundle="messages.JavaBundle"
+                                          nameKey="java.implicit.types.inlay.provider.name"
+                                          descriptionKey="settings.inlay.java.implicit.types.description"/>
+    <codeInsight.declarativeInlayProvider language="JAVA"
+                                          implementationClass="com.intellij.codeInsight.hints.JavaMethodChainsDeclarativeInlayProvider"
+                                          isEnabledByDefault="true"
+                                          group="METHOD_CHAINS_GROUP"
+                                          providerId="java.method.chains"
+                                          bundle="messages.JavaBundle"
+                                          nameKey="java.method.chains.inlay.provider.name"
+                                          descriptionKey="inlay.MethodChainsInlayProvider.description"/>
+    <codeInsight.inlayActionHandler implementationClass="com.intellij.codeInsight.hints.JavaFqnDeclarativeInlayActionHandler" handlerId="java.fqn.class" />
+
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.folding.impl.JavaFoldingBuilder"/>
     <lang.braceMatcher language="JAVA" implementationClass="com.intellij.codeInsight.highlighting.JavaPairedBraceMatcher"/>
     <anonymousElementProvider implementation="com.intellij.lang.java.JavaAnonymousClassesProvider" />
