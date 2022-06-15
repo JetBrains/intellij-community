@@ -30,6 +30,7 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.isAncestor
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.castSafelyTo
+import com.intellij.util.containers.stream
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.uast.*
@@ -450,7 +451,7 @@ private class JUnitMalformedSignatureVisitor(
                                               providerName)
       holder.registerProblem(place, message, *quickFixes)
     }
-    else if (sourceProvider.uastParameters.isNotEmpty()) {
+    else if (sourceProvider.uastParameters.isNotEmpty() && !classHasParameterResolverField(containingClass)) {
       val message = JvmAnalysisBundle.message(
         "jvm.inspections.junit.malformed.param.method.source.no.params.descriptor", providerName)
       holder.registerProblem(place, message)
@@ -471,6 +472,15 @@ private class JUnitMalformedSignatureVisitor(
           "jvm.inspections.junit.malformed.param.wrapped.in.arguments.descriptor")
         holder.registerProblem(place, message)
       }
+    }
+  }
+
+  private fun classHasParameterResolverField(aClass: PsiClass?): Boolean {
+    if (aClass == null) return false
+    if (aClass.isInterface) return false
+    return aClass.fields.stream().anyMatch { field ->
+      AnnotationUtil.isAnnotated(field, ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION, 0) &&
+      field.type.isInheritorOf(ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
     }
   }
 
