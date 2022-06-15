@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -30,8 +29,6 @@ import java.lang.ref.Reference;
 import java.util.Arrays;
 
 public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> implements PsiParameter {
-  private static final Logger LOG = Logger.getInstance(PsiParameterImpl.class);
-
   private volatile Reference<PsiType> myCachedType;
   private volatile String myCachedName;
 
@@ -249,9 +246,9 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
       }
     }
 
-    LOG.error("Code block not found among parameter' (" + this + ") parent' (" + parent + ") children: " + Arrays.asList(children));
-    //noinspection ConstantConditions
-    return null;
+    StringBuilder ancestors = new StringBuilder();
+    for (PsiElement e = parent; e != null; e = e.getParent()) ancestors.append(' ').append(e);
+    throw new IllegalStateException("Parameter: " + this + "; siblings: " + Arrays.asList(children) + "; ancestors:" + ancestors);
   }
 
   @Override
