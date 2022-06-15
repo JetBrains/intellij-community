@@ -42,12 +42,15 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
   <xi:include href="firIntentions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="fe10Binding.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="codeInsigts.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="analysisApiProviders.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="light-classes-fir.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <xi:include href="extensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <content>
+    <module name="kotlin.base.analysis-api-providers"/>
+    <module name="kotlin.base.fir.analysis-api-providers"/>
+  </content>
 
   <!--  <xi:include href="jvm-common.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
   <!--  <xi:include href="jvm.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
