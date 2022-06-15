@@ -429,7 +429,7 @@
     </group>
 
     <group id="JavaDebuggerActions">
-      <action id="Debugger.ShowCollectionModificationHistory" class="com.intellij.debugger.actions.ShowCollectionHistoryAction">
+      <action id="Debugger.ShowCollectionHistory" class="com.intellij.debugger.actions.ShowCollectionHistoryAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
