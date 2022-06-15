@@ -2481,13 +2481,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  }" +
                     "}";
 
-    String pattern1 = "() -> {}";
+    String pattern1 = "() -> '_body";
     assertEquals("should find lambdas", 4, findMatchesCount(source, pattern1));
 
-    String pattern2 = "(int '_a) -> {}";
+    String pattern2 = "(int '_a) -> '_body";
     assertEquals("should find lambdas with specific parameter type", 1, findMatchesCount(source, pattern2));
 
-    String pattern3 = "('_a{0,0})->{}";
+    String pattern3 = "('_a{0,0})->'_body";
     assertEquals("should find lambdas without any parameters", 2, findMatchesCount(source, pattern3));
 
     String pattern4 = "()->System.out.println()";
@@ -2563,6 +2563,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                       "    '_statements*;\n" +
                       "})";
     assertEquals("match lambda body correctly", 1, findMatchesCount(source4, pattern9));
+
+    String source5 = "class X {" +
+                     "  void x() {" +
+                     "    Runnable r = () -> {};" +
+                     "  }" +
+                     "}";
+    String pattern10 = "() -> '_B";
+    assertEquals("match empty lambda expression body", 1, findMatchesCount(source5, pattern10));
   }
 
   public void testFindDefaultMethods() {

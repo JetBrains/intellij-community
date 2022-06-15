@@ -410,7 +410,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   private static PsiElement getElementToMatch(PsiElement element) {
     if (element instanceof PsiCodeBlock) {
       final List<PsiElement> list = PsiTreeUtil.getChildrenOfAnyType(element, PsiStatement.class, PsiComment.class);
-      if (list.isEmpty()) return null;
+      if (list.isEmpty()) return element;
       element = list.get(0);
       if (list.size() > 1) return element;
     }
@@ -586,6 +586,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (getExpression(PsiMethodReferenceExpression.class, expression) == null) return;
     super.visitMethodReferenceExpression(expression);
   }
+
+
+
+
+
+
+
 
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression reference) {
