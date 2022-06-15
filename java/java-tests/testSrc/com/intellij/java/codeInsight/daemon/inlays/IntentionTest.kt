@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
@@ -21,10 +21,16 @@ class BlackListMethodIntentionTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   override fun tearDown() {
-    EditorSettingsExternalizable.getInstance().isShowParameterNameHints = isParamHintsEnabledBefore
-    ParameterNameHintsSettings.getInstance().loadState(default.state)
-
-    super.tearDown()
+    try {
+      EditorSettingsExternalizable.getInstance().isShowParameterNameHints = isParamHintsEnabledBefore
+      ParameterNameHintsSettings.getInstance().loadState(default.state)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
   
   fun `test add to blacklist by alt enter`() {

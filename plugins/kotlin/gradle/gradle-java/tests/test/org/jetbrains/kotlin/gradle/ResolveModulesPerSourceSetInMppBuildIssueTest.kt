@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle
 
 import com.intellij.openapi.actionSystem.DataContext
@@ -12,14 +12,18 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
 
 class ResolveModulesPerSourceSetInMppBuildIssueTest : LightPlatformTestCase() {
-
     override fun tearDown() {
-        GradleSettings.getInstance(project).apply {
-            linkedProjectsSettings.forEach { projectSetting ->
-                unlinkExternalProject(projectSetting.externalProjectPath)
+        try {
+            GradleSettings.getInstance(project).apply {
+                linkedProjectsSettings.forEach { projectSetting ->
+                    unlinkExternalProject(projectSetting.externalProjectPath)
+                }
             }
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
         }
-        super.tearDown()
     }
 
 

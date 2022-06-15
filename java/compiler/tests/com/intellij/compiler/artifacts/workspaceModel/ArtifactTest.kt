@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.workspaceModel
 
 import com.intellij.compiler.artifacts.ArtifactsTestCase
@@ -41,7 +41,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactProperties
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactRootElementEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Assume.assumeTrue
 import org.junit.runner.RunWith
 import java.util.concurrent.Callable
@@ -50,8 +49,15 @@ import java.util.concurrent.Callable
 class ArtifactTest : ArtifactsTestCase() {
 
   override fun tearDown() {
-    ArtifactsTestingState.reset()
-    super.tearDown()
+    try {
+      ArtifactsTestingState.reset()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun `test rename artifact via model`() = runWriteAction {

@@ -18,8 +18,15 @@ abstract class LightJava9ModulesCodeInsightFixtureTestCase : LightJavaCodeInsigh
   override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
 
   override fun tearDown() {
-    super.tearDown()
-    MultiModuleJava9ProjectDescriptor.cleanupSourceRoots()
+    try {
+      MultiModuleJava9ProjectDescriptor.cleanupSourceRoots()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   protected fun addFile(path: String, text: String, module: ModuleDescriptor = MAIN): VirtualFile =

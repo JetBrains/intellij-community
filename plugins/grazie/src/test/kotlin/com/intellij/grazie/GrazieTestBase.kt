@@ -55,8 +55,15 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
   }
 
   override fun tearDown() {
-    GrazieConfig.update { GrazieConfig.State() }
-    super.tearDown()
+    try {
+      GrazieConfig.update { GrazieConfig.State() }
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   protected open fun runHighlightTestForFile(file: String) {

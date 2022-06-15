@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -73,8 +73,13 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
     }
 
     override fun tearDown() {
-        tearDownImportStatusCollector()
-        super.tearDown()
+        try {
+            tearDownImportStatusCollector()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
     }
 
     protected open fun setUpImportStatusCollector() {

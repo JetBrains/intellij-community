@@ -28,8 +28,15 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
   }
 
   override fun tearDown() {
-    project.putUserData(CodeVisionHost.isCodeVisionTestKey, null)
-    super.tearDown()
+    try {
+      project.putUserData(CodeVisionHost.isCodeVisionTestKey, null)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor {

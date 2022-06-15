@@ -34,11 +34,16 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
 
     @Throws(Exception::class)
     override fun tearDown() {
-        val runManager = getInstance(project)
-        for (setting in tempSettings) {
-            runManager.removeConfiguration(setting)
+        try {
+            val runManager = getInstance(project)
+            for (setting in tempSettings) {
+                runManager.removeConfiguration(setting)
+            }
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
         }
-        super.tearDown()
     }
     
     override fun setUp() {

@@ -32,9 +32,15 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
   private var testConfigDir: Path? = null
 
   override fun tearDown() {
-    super.tearDown()
-
-    testConfigDir?.delete()
+    try {
+      testConfigDir?.delete()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun testAllTemplates() {

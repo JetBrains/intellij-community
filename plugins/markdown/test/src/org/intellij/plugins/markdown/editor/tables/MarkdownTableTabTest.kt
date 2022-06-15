@@ -7,8 +7,15 @@ import org.intellij.plugins.markdown.editor.tables.TableTestUtils.runWithChanged
 
 class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
   override fun tearDown() {
-    TestScaleHelper.restoreRegistryProperties()
-    super.tearDown()
+    try {
+      TestScaleHelper.restoreRegistryProperties()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun `test single tab forward`() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.codeWithMe.ClientId;
@@ -40,8 +40,15 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(myDisposable);
-    super.tearDown();
+    try {
+      Disposer.dispose(myDisposable);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testUndoSimpleCommandWithMovedRanges() {

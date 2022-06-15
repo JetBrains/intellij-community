@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.notifications
 
 import com.intellij.notification.Notification
@@ -40,13 +40,18 @@ class LegacyIsResolveModulePerSourceSetNotificationTest : LightPlatformTestCase(
     }
 
     override fun tearDown() {
-        GradleSettings.getInstance(project).apply {
-            linkedProjectsSettings.forEach { projectSetting ->
-                unlinkExternalProject(projectSetting.externalProjectPath)
+        try {
+            GradleSettings.getInstance(project).apply {
+                linkedProjectsSettings.forEach { projectSetting ->
+                    unlinkExternalProject(projectSetting.externalProjectPath)
+                }
             }
+            notifications.forEach { it.expire() }
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
         }
-        notifications.forEach { it.expire() }
-        super.tearDown()
     }
 
     fun `test shows notification when isResolveModulePerSourceSet is false`() {

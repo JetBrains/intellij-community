@@ -29,10 +29,17 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   public override fun tearDown() {
-    GlobalInspectionContextImpl.TESTING_VIEW = false
-    InspectionProfileImpl.INIT_INSPECTIONS = false
-    AnalysisUIOptions.getInstance(project).SHOW_STRUCTURE = myDefaultShowStructure
-    super.tearDown()
+    try {
+      GlobalInspectionContextImpl.TESTING_VIEW = false
+      InspectionProfileImpl.INIT_INSPECTIONS = false
+      AnalysisUIOptions.getInstance(project).SHOW_STRUCTURE = myDefaultShowStructure
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun testModuleInfoProblemsTree() {

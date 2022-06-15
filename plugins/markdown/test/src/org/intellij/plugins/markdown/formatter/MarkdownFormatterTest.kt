@@ -38,16 +38,21 @@ open class MarkdownFormatterTest : LightPlatformCodeInsightTestCase() {
   }
 
   override fun tearDown() {
-    val settings = CodeStyle.getSettings(project)
-    val common = settings.getCommonSettings(MarkdownLanguage.INSTANCE)
-    val custom = settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java)
-
-    settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myOldWrap
-    common.RIGHT_MARGIN = myOldMargin
-    custom.WRAP_TEXT_IF_LONG = myOldWrapTextBlocksIfLong
-    custom.KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = myOldKeepLineBreaks
-
-    super.tearDown()
+    try {
+      val settings = CodeStyle.getSettings(project)
+      val common = settings.getCommonSettings(MarkdownLanguage.INSTANCE)
+      val custom = settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java)
+      settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myOldWrap
+      common.RIGHT_MARGIN = myOldMargin
+      custom.WRAP_TEXT_IF_LONG = myOldWrapTextBlocksIfLong
+      custom.KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = myOldKeepLineBreaks
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun testSmoke() {

@@ -21,9 +21,12 @@ class LazyFileOutputProducerTest : TestCase() {
     }
 
     override fun tearDown() {
-        super.tearDown()
-        tempDir.deleteRecursively()
-        AbstractLazyFileOutputProducer.invalidateCaches()
+        try {
+            tempDir.deleteRecursively()
+            AbstractLazyFileOutputProducer.invalidateCaches()
+        } finally {
+            super.tearDown()
+        }
     }
 
     fun `test simple upToDate`() {

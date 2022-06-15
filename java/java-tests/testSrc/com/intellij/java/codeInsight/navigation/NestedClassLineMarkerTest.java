@@ -24,11 +24,18 @@ public class NestedClassLineMarkerTest extends LightJavaCodeInsightFixtureTestCa
   private final Set<RunnerAndConfigurationSettings> myTempSettings = new HashSet<>();
   @Override
   protected void tearDown() throws Exception {
-    RunManager runManager = RunManager.getInstance(getProject());
-    for (RunnerAndConfigurationSettings setting : myTempSettings) {
-      runManager.removeConfiguration(setting);
+    try {
+      RunManager runManager = RunManager.getInstance(getProject());
+      for (RunnerAndConfigurationSettings setting : myTempSettings) {
+        runManager.removeConfiguration(setting);
+      }
     }
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
