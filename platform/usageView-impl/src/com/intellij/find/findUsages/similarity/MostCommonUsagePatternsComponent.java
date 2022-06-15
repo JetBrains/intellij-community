@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
 
 import static com.intellij.openapi.actionSystem.ActionPlaces.SIMILAR_USAGES_PREVIEW_TOOLBAR;
@@ -210,11 +209,9 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
         public void run(@NotNull ProgressIndicator indicator) {
           ClusteringSearchSession session = getSession();
           if (session != null) {
-            final List<UsageCluster> clusters = new ArrayList<>();
             ApplicationManager.getApplication().runReadAction(() -> {
-              clusters.addAll(session.getClustersForSelectedUsages(indicator, selectedUsages));
+              sortedClusters.set(session.getClustersForSelectedUsages(indicator, selectedUsages));
             });
-            sortedClusters.set(clusters);
           }
         }
       };
