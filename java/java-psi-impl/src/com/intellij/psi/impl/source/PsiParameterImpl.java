@@ -94,8 +94,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   }
 
   @Override
-  @NotNull
-  public final String getName() {
+  public final @NotNull String getName() {
     String name = myCachedName;
     if (name == null) {
       PsiParameterStub stub = getGreenStub();
@@ -117,20 +116,17 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   }
 
   @Override
-  @NotNull
-  public final PsiIdentifier getNameIdentifier() {
+  public final @NotNull PsiIdentifier getNameIdentifier() {
     return PsiTreeUtil.getRequiredChildOfType(this, PsiIdentifier.class);
   }
 
   @Override
-  @NotNull
-  public CompositeElement getNode() {
+  public @NotNull CompositeElement getNode() {
     return (CompositeElement)super.getNode();
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     PsiParameterStub stub = getStub();
     if (stub != null) {
       PsiType type = SoftReference.dereference(myCachedType);
@@ -169,8 +165,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   }
 
   @Override
-  @NotNull
-  public PsiModifierList getModifierList() {
+  public @NotNull PsiModifierList getModifierList() {
     PsiModifierList modifierList = getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
     assert modifierList != null : this;
     return modifierList;
@@ -218,8 +213,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   }
 
   @Override
-  @NotNull
-  public PsiElement getDeclarationScope() {
+  public @NotNull PsiElement getDeclarationScope() {
     PsiElement parent = getParent();
     if (parent == null) return this;
 
@@ -234,15 +228,12 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
 
     PsiElement[] children = parent.getChildren();
-    //noinspection ConstantConditions
-    if (children != null) {
-      for (int i = 0; i < children.length; i++) {
-        if (children[i].equals(this)) {
-          for (int j = i + 1; j < children.length; j++) {
-            if (children[j] instanceof PsiCodeBlock) return children[j];
-          }
-          break;
+    for (int i = 0; i < children.length; i++) {
+      if (children[i].equals(this)) {
+        for (int j = i + 1; j < children.length; j++) {
+          if (children[j] instanceof PsiCodeBlock) return children[j];
         }
+        break;
       }
     }
 
@@ -273,14 +264,14 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(this, PlatformIcons.PARAMETER_ICON, 0);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
+
   @Override
   protected boolean isVisibilitySupported() {
     return true;
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     PsiElement declarationScope = getDeclarationScope();
     return new LocalSearchScope(declarationScope);
   }
