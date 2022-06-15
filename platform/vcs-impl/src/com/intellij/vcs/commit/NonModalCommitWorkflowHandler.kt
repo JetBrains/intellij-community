@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -22,14 +25,14 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.checkin.CommitCheck
@@ -68,6 +71,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     if (oldValue == newValue) return@observable
     updateDefaultCommitActionName()
   }
+
+  private val checkinErrorNotifications = SingletonNotificationManager(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId,
+                                                                       NotificationType.ERROR)
 
   protected fun setupCommitHandlersTracking() {
     isBackgroundCommitChecksValue.addListener(object : RegistryValueListener {
@@ -196,9 +202,36 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) {
+    checkinErrorNotifications.clear()
     super.beforeCommitChecksEnded(isDefaultCommit, result)
     if (result.shouldCommit) {
       ui.commitProgressUi.clearCommitCheckFailures()
+    }
+    if (result is CommitChecksResult.Failed ||
+        result is CommitChecksResult.ExecutionError) {
+      val commitText = getCommitActionName()
+      val messageText = ui.commitProgressUi.getCommitCheckFailures().joinToString { it.text }
+
+      checkinErrorNotifications.notify(message("commit.checks.failed.notification.title", commitText), messageText, project) {
+        it.setDisplayId(VcsNotificationIdsHolder.COMMIT_CHECKS_FAILED)
+        it.addAction(
+          NotificationAction.createExpiring(message("commit.checks.failed.notification.commit.anyway.action", commitText)) { _, _ ->
+            ui.runDefaultCommitAction()
+          })
+        it.addAction(
+          NotificationAction.create(message("commit.checks.failed.notification.show.details.action")) { _, _ ->
+            val detailsViewer = ui.commitProgressUi.getCommitCheckFailures().mapNotNull { it.detailsViewer }.singleOrNull()
+            if (detailsViewer != null) {
+              detailsViewer()
+            }
+            else {
+              val toolWindow = ChangesViewContentManager.getToolWindowFor(project, LOCAL_CHANGES)
+              toolWindow?.activate {
+                ChangesViewContentManager.getInstance(project).selectContent(LOCAL_CHANGES)
+              }
+            }
+          })
+      }
     }
   }
 

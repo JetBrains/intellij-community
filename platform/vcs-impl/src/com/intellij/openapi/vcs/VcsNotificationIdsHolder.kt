@@ -15,6 +15,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       COMMIT_FAILED,
       COMMIT_FINISHED,
       COMMIT_FINISHED_WITH_WARNINGS,
+      COMMIT_CHECKS_FAILED,
       COMPARE_FAILED,
       COULD_NOT_COMPARE_WITH_BRANCH,
       INACTIVE_RANGES_DAMAGED,
@@ -54,6 +55,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
     const val COMMIT_FAILED = "vcs.commit.failed"
     const val COMMIT_FINISHED = "vcs.commit.finished"
     const val COMMIT_FINISHED_WITH_WARNINGS = "vcs.commit.finished.with.warnings"
+    const val COMMIT_CHECKS_FAILED = "vcs.commit.checks.failed"
     const val COMPARE_FAILED = "vcs.compare.failed"
     const val COULD_NOT_COMPARE_WITH_BRANCH = "vcs.could.not.compare.with.branch"
     const val INACTIVE_RANGES_DAMAGED = "vcs.inactive.ranges.damaged"

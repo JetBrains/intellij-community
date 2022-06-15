@@ -25,6 +25,8 @@ interface CommitActionsUi {
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)
 
   fun setCustomCommitActions(actions: List<AnAction>)
+
+  fun runDefaultCommitAction()
 }
 
 @ApiStatus.Experimental
@@ -35,6 +37,11 @@ interface CommitProgressUi {
   var isDumbMode: Boolean
 
   fun startProgress(isOnlyRunCommitChecks: Boolean): ProgressIndicatorEx
-  fun addCommitCheckFailure(@Nls(capitalization = Sentence) text: String, detailsViewer: (() -> Unit)?)
+
+  fun addCommitCheckFailure(failure: CommitCheckFailure)
+  fun addCommitCheckFailure(@Nls(capitalization = Sentence) text: String, detailsViewer: (() -> Unit)?) =
+    addCommitCheckFailure(CommitCheckFailure(text, detailsViewer))
+
   fun clearCommitCheckFailures()
+  fun getCommitCheckFailures(): List<CommitCheckFailure>
 }
