@@ -29,7 +29,7 @@ object DebuggerUtils {
     @get:TestOnly
     var forceRanking = false
 
-    private val IR_BACKEND_LAMBDA_REGEX = ".+\\\$lambda-\\d+".toRegex()
+    private val IR_BACKEND_LAMBDA_REGEX = ".+\\\$lambda[$-]\\d+".toRegex()
 
     fun findSourceFileForClassIncludeLibrarySources(
         project: Project,
