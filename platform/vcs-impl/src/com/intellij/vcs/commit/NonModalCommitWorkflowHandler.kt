@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
-import com.intellij.openapi.vcs.checkin.CheckinHandler.ReturnResult
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.checkin.CommitCheck
@@ -196,9 +195,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     isCommitChecksResultUpToDate = false
   }
 
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: ReturnResult) {
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) {
     super.beforeCommitChecksEnded(isDefaultCommit, result)
-    if (result == ReturnResult.COMMIT) {
+    if (result == CommitChecksResult.COMMIT) {
       ui.commitProgressUi.clearCommitCheckFailures()
     }
   }
@@ -213,7 +212,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
         commitContext.isOnlyRunCommitChecks = false
 
-        if (isSkipCommitChecks() && !isOnlyRunCommitChecks) return@executeDefault ReturnResult.COMMIT
+        if (isSkipCommitChecks() && !isOnlyRunCommitChecks) return@executeDefault CommitChecksResult.COMMIT
 
         val indicator = ui.commitProgressUi.startProgress(isOnlyRunCommitChecks)
         indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
@@ -236,28 +235,28 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     executor: CommitExecutor?,
     indicator: ProgressIndicator,
     isOnlyRunCommitChecks: Boolean
-  ): ReturnResult {
+  ): CommitChecksResult {
     val metaHandlers = commitHandlers.filterIsInstance<CheckinMetaHandler>()
     workflow.runMetaHandlers(metaHandlers, ui.commitProgressUi, indicator)
     FileDocumentManager.getInstance().saveAllDocuments()
 
     val plainHandlers = commitHandlers.filterNot { it is CommitCheck<*> }
     val plainHandlersResult = workflow.runBeforeCommitHandlersChecks(executor, plainHandlers)
-    if (plainHandlersResult != ReturnResult.COMMIT) return plainHandlersResult
+    if (plainHandlersResult != CommitChecksResult.COMMIT) return plainHandlersResult
 
     val commitChecks = commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()
     val checksPassed = workflow.runCommitChecks(commitChecks, ui.commitProgressUi, indicator)
     when {
       isOnlyRunCommitChecks -> {
         isCommitChecksResultUpToDate = true
-        return ReturnResult.CANCEL
+        return CommitChecksResult.CANCEL
       }
       checksPassed -> {
-        return ReturnResult.COMMIT
+        return CommitChecksResult.COMMIT
       }
       else -> {
         isCommitChecksResultUpToDate = true
-        return ReturnResult.CANCEL
+        return CommitChecksResult.CANCEL
       }
     }
   }

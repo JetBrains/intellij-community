@@ -10,3 +10,7 @@ interface CommitWorkflowHandler {
   fun isExecutorEnabled(executor: CommitExecutor): Boolean
   fun execute(executor: CommitExecutor)
 }
+
+enum class CommitChecksResult {
+  COMMIT, CANCEL, CLOSE_WINDOW;
+}

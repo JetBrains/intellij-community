@@ -112,7 +112,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun executionEnded() = Unit
 
   override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) = ui.endBeforeCommitChecks(result)
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) = ui.endBeforeCommitChecks(result)
 
   private fun executeDefault(executor: CommitExecutor?): Boolean {
     val proceed = checkCommit(executor) &&
