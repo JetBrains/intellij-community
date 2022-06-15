@@ -102,7 +102,7 @@ object UastFacade : UastLanguagePlugin {
   override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
     object : ClassSet<PsiElement>, UastPluginListener {
 
-      fun initInner() = ClassSetsWrapper(languagePlugins.map2Array { it.getPossiblePsiSourceTypes(*uastTypes) })
+      fun initInner(): ClassSetsWrapper<PsiElement> = ClassSetsWrapper(languagePlugins.map2Array { it.getPossiblePsiSourceTypes(*uastTypes) })
 
       private var inner: ClassSetsWrapper<PsiElement> = initInner()
 

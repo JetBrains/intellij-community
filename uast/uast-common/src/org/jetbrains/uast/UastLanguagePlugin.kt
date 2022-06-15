@@ -72,16 +72,9 @@ interface UastLanguagePlugin {
    */
   fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement?
 
-  fun getMethodCallExpression(
-    element: PsiElement,
-    containingClassFqName: String?,
-    methodName: String
-  ): ResolvedMethod?
+  fun getMethodCallExpression(element: PsiElement, containingClassFqName: String?, methodName: String): ResolvedMethod?
 
-  fun getConstructorCallExpression(
-    element: PsiElement,
-    fqName: String
-  ): ResolvedConstructor?
+  fun getConstructorCallExpression(element: PsiElement, fqName: String): ResolvedConstructor?
 
   fun getMethodBody(element: PsiMethod): UExpression? {
     if (element is UMethod) return element.uastBody
