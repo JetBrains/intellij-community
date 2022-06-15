@@ -192,7 +192,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deprecation.RedundantScheduledForRemovalAnnotationInspection"
                      key="inspection.name.redundant.scheduled.for.removal.annotation" bundle="messages.JavaAnalysisBundle"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="removal" shortName="MarkedForRemoval"
+    <localInspection groupPath="Java" language="UAST"  suppressId="removal" shortName="MarkedForRemoval"
                      key="inspection.marked.for.removal.display.name" bundle="messages.AnalysisBundle"
                      groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="ERROR" implementationClass="com.intellij.codeInspection.deprecation.MarkedForRemovalInspection"/>
