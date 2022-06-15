@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.hint.HintManager;
@@ -45,7 +44,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
@@ -263,9 +265,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (ApplicationManager.getApplication().isDispatchThread()) {
       throw new IllegalStateException("Must not run highlighting from under EDT");
     }
-    if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
-      throw new IllegalStateException("Must run highlighting from under read action");
-    }
     assertMyFile(psiFile.getProject(), psiFile);
 
     GlobalInspectionContextBase.assertUnderDaemonProgress();
@@ -279,19 +278,30 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       result = new ArrayList<>();
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
-        List<TextEditorHighlightingPass> passes =
-          TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject).instantiateMainPasses(psiFile, document,
-                                                                                               HighlightInfoProcessor.getEmpty());
+        List<TextEditorHighlightingPass> passes = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
+          List<TextEditorHighlightingPass> mainPasses =
+            TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject).instantiateMainPasses(psiFile, document,
+                                                                                                 HighlightInfoProcessor.getEmpty());
+          mainPasses.sort((o1, o2) -> {
+            if (o1 instanceof GeneralHighlightingPass) return -1;
+            if (o2 instanceof GeneralHighlightingPass) return 1;
+            return 0;
+          });
 
-        passes.sort((o1, o2) -> {
-          if (o1 instanceof GeneralHighlightingPass) return -1;
-          if (o2 instanceof GeneralHighlightingPass) return 1;
-          return 0;
+          try {
+            for (TextEditorHighlightingPass pass : mainPasses) {
+              pass.doCollectInformation(progress);
+            }
+          }
+          catch (ProcessCanceledException e) {
+            LOG.debug("Canceled: " + progress);
+            throw e;
+          }
+          return mainPasses;
         });
 
         try {
           for (TextEditorHighlightingPass pass : passes) {
-            pass.doCollectInformation(progress);
             result.addAll(pass.getInfos());
           }
         }
