@@ -4,7 +4,8 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
-import org.jetbrains.kotlin.idea.debugger.KotlinEditorTextProvider
+import org.jetbrains.kotlin.idea.debugger.core.KotlinEditorTextProvider
+import org.jetbrains.kotlin.idea.debugger.core.withCustomConfiguration
 import org.jetbrains.kotlin.idea.test.*
 import org.junit.Assert
 
@@ -26,8 +27,8 @@ sealed class AbstractSelectExpressionForDebuggerTest : KotlinLightCodeInsightFix
             val allowMethodCalls = !InTextDirectivesUtils.isDirectiveDefined(fileText, "DISALLOW_METHOD_CALLS")
             val elementAt = myFixture.file?.findElementAt(myFixture.caretOffset)!!
 
-            withAnalysisApiUsage(useAnalysisApi) {
-                KotlinEditorTextProvider.findEvaluationTarget(elementAt, allowMethodCalls)
+            KotlinEditorTextProvider.withCustomConfiguration(useAnalysisApi = useAnalysisApi) { provider ->
+                provider.findEvaluationTarget(elementAt, allowMethodCalls)
             }
         }
 
@@ -44,16 +45,6 @@ sealed class AbstractSelectExpressionForDebuggerTest : KotlinLightCodeInsightFix
                 val expected = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// EXPECTED: ")
                 Assert.assertEquals("Another expression should be selected", expected, actual)
             }
-        }
-    }
-
-    private fun <T> withAnalysisApiUsage(useAnalysisApi: Boolean, block: () -> T): T {
-        val oldValue = KotlinEditorTextProvider.useAnalysisApi
-        try {
-            KotlinEditorTextProvider.useAnalysisApi = useAnalysisApi
-            return block()
-        } finally {
-            KotlinEditorTextProvider.useAnalysisApi = oldValue
         }
     }
 

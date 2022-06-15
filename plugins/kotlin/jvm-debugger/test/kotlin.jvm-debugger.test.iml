@@ -30,6 +30,7 @@
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />

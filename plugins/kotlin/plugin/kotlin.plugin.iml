@@ -73,6 +73,7 @@
     <orderEntry type="module" module-name="kotlin.junit" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" scope="PROVIDED" />

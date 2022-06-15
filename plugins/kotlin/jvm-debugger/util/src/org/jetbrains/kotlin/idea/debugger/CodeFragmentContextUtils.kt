@@ -6,6 +6,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.debugger.core.KotlinEditorTextProvider
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -59,15 +60,17 @@ private fun getAccurateContextElement(elementAt: PsiElement, containingFile: KtF
 
     val targetExpression = PsiTreeUtil.findElementOfClassAtOffset(containingFile, lineStartOffset, KtExpression::class.java, false)
 
+    val editorTextProvider = KotlinEditorTextProvider.instance
+
     if (targetExpression != null) {
-        if (KotlinEditorTextProvider.isAcceptedAsCodeFragmentContext(targetExpression)) {
+        if (editorTextProvider.isAcceptedAsCodeFragmentContext(targetExpression)) {
             return targetExpression
         }
 
-        KotlinEditorTextProvider.findEvaluationTarget(elementAt, true)?.let { return it }
+        editorTextProvider.findEvaluationTarget(elementAt, true)?.let { return it }
 
         targetExpression.parents
-            .firstOrNull { KotlinEditorTextProvider.isAcceptedAsCodeFragmentContext(it) }
+            .firstOrNull { editorTextProvider.isAcceptedAsCodeFragmentContext(it) }
             ?.let { return it }
     }
 

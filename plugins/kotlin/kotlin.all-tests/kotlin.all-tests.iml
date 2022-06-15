@@ -68,6 +68,7 @@
     <orderEntry type="module" module-name="kotlin.i18n" />
     <orderEntry type="module" module-name="kotlin.jvm" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" />

@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />

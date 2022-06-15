@@ -64,12 +64,15 @@
         <applicationService serviceInterface="org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade"
                           serviceImplementation="org.jetbrains.kotlin.idea.debugger.KotlinJvmDebuggerFacadeImpl"/>
 
+        <applicationService serviceInterface="org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade"
+                          serviceImplementation="org.jetbrains.kotlin.idea.debugger.fe10.core.Fe10KotlinDebuggerLegacyFacade"/>
+
         <debugger.asyncStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
         <debugger.compoundRendererProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinClassRendererProvider"/>
         <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler"/>
         <debugger.positionManagerFactory implementation="org.jetbrains.kotlin.idea.debugger.KotlinPositionManagerFactory"/>
         <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory"/>
-        <debuggerEditorTextProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.debugger.KotlinEditorTextProvider"/>
+        <debuggerEditorTextProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.debugger.core.EnclosingKotlinEditorTextProvider"/>
         <debuggerClassFilterProvider implementation="org.jetbrains.kotlin.idea.debugger.filter.KotlinDebuggerInternalClassesFilterProvider"/>
         <debugger.sourcePositionProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionProvider"/>
         <debugger.sourcePositionHighlighter implementation="org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionHighlighter"/>
