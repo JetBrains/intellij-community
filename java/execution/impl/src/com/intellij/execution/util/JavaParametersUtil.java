@@ -15,7 +15,10 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -100,16 +103,7 @@ public final class JavaParametersUtil {
     Module classModule = psiClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(psiClass) : null;
     if (classModule == null) classModule = module;
     ModuleFileIndex fileIndex = ModuleRootManager.getInstance(classModule).getFileIndex();
-    if (fileIndex.isInSourceContent(virtualFile)) {
-      return !fileIndex.isInTestSourceContent(virtualFile);
-    }
-    final List<OrderEntry> entriesForFile = fileIndex.getOrderEntriesForFile(virtualFile);
-    for (OrderEntry entry : entriesForFile) {
-      if (entry instanceof ExportableOrderEntry && ((ExportableOrderEntry)entry).getScope() == DependencyScope.TEST) {
-        return false;
-      }
-    }
-    return true;
+    return fileIndex.isInSourceContent(virtualFile) && !fileIndex.isInTestSourceContent(virtualFile);
   }
 
   public static void configureModule(final RunConfigurationModule runConfigurationModule,
