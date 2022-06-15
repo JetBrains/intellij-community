@@ -36,6 +36,6 @@
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" />
   </component>
 </module>

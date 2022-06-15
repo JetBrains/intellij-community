@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="kotlin.plugin" />
     <orderEntry type="module" module-name="kotlin.copyright" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.tests-common" />
     <orderEntry type="module" module-name="kotlin.test-framework" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="RUNTIME" />

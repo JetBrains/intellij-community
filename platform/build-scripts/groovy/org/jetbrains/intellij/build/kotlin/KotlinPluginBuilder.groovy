@@ -145,7 +145,7 @@ final class KotlinPluginBuilder {
     "kotlin.project-wizard-compose",
     "kotlin.jvm-debugger.base.util",
     "kotlin.jvm-debugger.util",
-    "kotlin.jvm-debugger.core",
+    "kotlin.jvm-debugger.core-fe10",
     "kotlin.jvm-debugger.evaluation",
     "kotlin.jvm-debugger.coroutines",
     "kotlin.jvm-debugger.sequence",
