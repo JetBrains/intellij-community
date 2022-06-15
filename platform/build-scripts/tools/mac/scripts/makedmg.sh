@@ -17,6 +17,28 @@ function log() {
   echo "$(date '+[%H:%M:%S]') $*"
 }
 
+function retry() {
+  local operation=$1
+  local limit=$2
+  shift
+  shift
+  local attempt=1
+  while true; do
+    # shellcheck disable=SC2015
+    "$@" && { log "$operation done"; return 0; } || {
+      ec=$?
+      if [[ $attempt -ge limit ]]; then
+        log "$operation failed with exit code $ec. Attempt $attempt/$limit."
+        return $ec
+      fi
+      log "$operation failed with exit code $ec. Attempt $attempt/$limit, will wait 30 seconds before next attempt."
+      sleep 30;
+      ((attempt++))
+    }
+  done
+}
+
+
 BUILD_NAME=$(ls "$EXPLODED")
 log "BUILD_NAME is $BUILD_NAME"
 VOLNAME="${BUILD_NAME%.app}"
@@ -88,7 +110,7 @@ log "DMG/DS_Store is generated"
 rm -rf "/Volumes/$1/.fseventsd"
 
 sync;sync;sync
-hdiutil detach "$device"
+retry "Detaching disk" 3 hdiutil detach "$device"
 
 log "Compressing r/w disk image to ${RESULT_DMG}..."
 hdiutil convert "$TEMP_DMG" -format ULFO -imagekey lzfse-level=9 -o "$RESULT_DMG"
