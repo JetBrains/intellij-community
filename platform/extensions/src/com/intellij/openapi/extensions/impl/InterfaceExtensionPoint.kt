@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.SimpleConstructorInjectionAdapter
 
-internal class InterfaceExtensionPoint<T>(
+internal class InterfaceExtensionPoint<T : Any>(
   name: String,
   className: String,
   pluginDescriptor: PluginDescriptor,
