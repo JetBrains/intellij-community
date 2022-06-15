@@ -20,11 +20,11 @@ class UastContext(val project: Project) : UastLanguagePlugin by UastFacade {
 
   fun findPlugin(element: PsiElement): UastLanguagePlugin? = UastFacade.findPlugin(element)
 
-  fun getMethod(method: PsiMethod): UMethod = convertWithParent<UMethod>(method)!!
+  fun getMethod(method: PsiMethod): UMethod = convertWithParent(method)!!
 
-  fun getVariable(variable: PsiVariable): UVariable = convertWithParent<UVariable>(variable)!!
+  fun getVariable(variable: PsiVariable): UVariable = convertWithParent(variable)!!
 
-  fun getClass(clazz: PsiClass): UClass = convertWithParent<UClass>(clazz)!!
+  fun getClass(clazz: PsiClass): UClass = convertWithParent(clazz)!!
 }
 
 /**
@@ -136,9 +136,17 @@ fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? = this?.let { U
 
 @Suppress("UNCHECKED_CAST")
 @SafeVarargs
-fun <T : UElement> PsiElement?.toUElementOfExpectedTypes(vararg clss: Class<out T>): T? =
+fun <T : UElement> PsiElement?.toUElementOfExpectedTypes(vararg classes: Class<out T>): T? =
   this?.let {
-    UastFacade.convertElementWithParent(this, if (clss.isNotEmpty()) clss else DEFAULT_TYPES_LIST) as T?
+    if (classes.isEmpty()) {
+      UastFacade.convertElementWithParent(this, UElement::class.java) as T?
+    }
+    else if (classes.size == 1) {
+      UastFacade.convertElementWithParent(this, classes[0]) as T?
+    }
+    else {
+      UastFacade.convertElementWithParent(this, classes)
+    }
   }
 
 
