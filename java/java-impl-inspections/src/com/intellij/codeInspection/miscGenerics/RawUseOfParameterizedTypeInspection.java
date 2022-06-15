@@ -3,7 +3,6 @@ package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -30,8 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -111,6 +108,9 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       PsiElement parent = target.getParent();
       if (parent instanceof PsiTypeElement) {
         PsiTypeElement typeElement = (PsiTypeElement)parent;
+        PsiReferenceParameterList params = ((PsiJavaCodeReferenceElement)target).getParameterList();
+        // Can be erroneous empty <>
+        if (params != null && !params.textMatches("")) return null;
         PsiTypeCastExpression cast = ObjectUtils.tryCast(typeElement.getParent(), PsiTypeCastExpression.class);
         if (cast == null) return null;
         if (!canUseUpperBound(cast)) return null;
