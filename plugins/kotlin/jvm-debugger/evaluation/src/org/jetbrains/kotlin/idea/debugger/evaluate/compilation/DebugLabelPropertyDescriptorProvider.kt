@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.descriptors.impl.PackageFragmentDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyGetterDescriptorImpl
 import org.jetbrains.kotlin.idea.core.util.externalDescriptors
-import org.jetbrains.kotlin.idea.debugger.getClassDescriptor
+import org.jetbrains.kotlin.idea.debugger.evaluate.getClassDescriptor
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
