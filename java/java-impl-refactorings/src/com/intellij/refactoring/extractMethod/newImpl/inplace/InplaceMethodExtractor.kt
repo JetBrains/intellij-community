@@ -53,11 +53,17 @@ class InplaceMethodExtractor(private val editor: Editor,
     }
   }
 
-  private val extractor: DuplicatesMethodExtractor = DuplicatesMethodExtractor()
+  private val file: PsiFile = targetClass.containingFile
+
+  private fun createExtractor(): DuplicatesMethodExtractor {
+    val elements = ExtractSelector().suggestElementsToExtract(file, range)
+    val shouldBeStatic = popupProvider.makeStatic ?: false
+    return DuplicatesMethodExtractor.create(targetClass, elements, initialMethodName, shouldBeStatic)
+  }
+
+  private val extractor: DuplicatesMethodExtractor = createExtractor()
 
   private val editorState = EditorState(editor)
-
-  private val file: PsiFile = targetClass.containingFile
 
   private var methodIdentifierRange: RangeMarker? = null
 
@@ -73,7 +79,7 @@ class InplaceMethodExtractor(private val editor: Editor,
       Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
       val elements = ExtractSelector().suggestElementsToExtract(file, range)
       MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
-      val (callElements, method) = extractor.extract(targetClass, elements, initialMethodName, popupProvider.makeStatic ?: false)
+      val (callElements, method) = extractor.extract()
       val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)
                            ?: throw IllegalStateException()
       val methodIdentifier = method.nameIdentifier ?: throw IllegalStateException()
@@ -101,7 +107,7 @@ class InplaceMethodExtractor(private val editor: Editor,
           InplaceExtractMethodCollector.executed.log(initialMethodName != methodName)
           installGotItTooltips(editor, callIdentifierRange?.range, methodIdentifierRange?.range)
           MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
-          extractor.postprocess(editor, extractedMethod)
+          extractor.replaceDuplicates(editor, extractedMethod)
         }
         .disposeWithTemplate(disposable)
         .withValidation { variableRange ->
@@ -181,7 +187,7 @@ class InplaceMethodExtractor(private val editor: Editor,
     val elements = ExtractSelector().suggestElementsToExtract(targetClass.containingFile, range)
     val methodRange = callIdentifierRange?.range
     val methodName = if (methodRange != null) editor.document.getText(methodRange) else ""
-    extractor.extractInDialog(targetClass, elements, methodName, popupProvider.makeStatic ?: false)
+    extractInDialog(targetClass, elements, methodName, popupProvider.makeStatic ?: false)
   }
 
   private fun restartInplace() {

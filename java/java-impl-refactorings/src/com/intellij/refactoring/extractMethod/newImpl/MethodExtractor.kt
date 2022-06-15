@@ -32,9 +32,9 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.find
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.MapFromDialog.mapFromDialog
-import com.intellij.refactoring.extractMethod.newImpl.inplace.DuplicatesMethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodPopupProvider
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceMethodExtractor
+import com.intellij.refactoring.extractMethod.newImpl.inplace.extractInDialog
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
@@ -62,7 +62,7 @@ class MethodExtractor {
       }
     } else {
       findAndSelectExtractOption(editor, file, range)?.thenApply { options ->
-        DuplicatesMethodExtractor().extractInDialog(options.targetClass, options.elements, "", options.isStatic)
+        extractInDialog(options.targetClass, options.elements, "", options.isStatic)
       }
     }
 }
