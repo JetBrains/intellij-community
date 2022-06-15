@@ -30,6 +30,8 @@ abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value: An
             .mapNotNull { map(storageBefore, it) }
             .toList()
 
-        entitiesChanged(outdatedEntities)
+        if (outdatedEntities.isNotEmpty()) {
+            entitiesChanged(outdatedEntities)
+        }
     }
 }

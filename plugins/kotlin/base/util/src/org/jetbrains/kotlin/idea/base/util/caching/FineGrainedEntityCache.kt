@@ -8,6 +8,7 @@ import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val project: Project, cleanOnLowMemory: Boolean): Disposable {
     private val cache: MutableMap<Key, Value> = HashMap()
@@ -57,14 +58,22 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
         ProgressManager.checkCanceled()
 
         val newValue = calculate(key)
+        val extraCalculatedValues = extraCalculatedValues(key, newValue)
 
         ProgressManager.checkCanceled()
 
         synchronized(cache) {
             val existingValue = cache.putIfAbsent(key, newValue)
-            if (existingValue != null) {
-                return existingValue
+
+            extraCalculatedValues?.let {
+                val iterator = it.entries.iterator()
+                while (iterator.hasNext()) {
+                    val (k, v) = iterator.next()
+                    cache.putIfAbsent(k, v)
+                }
             }
+
+            existingValue?.let { return it }
         }
 
         return newValue
@@ -76,12 +85,39 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
         }
     }
 
-    protected fun invalidateKeys(keys: Collection<Key>) {
+    protected open fun invalidateKeys(keys: Collection<Key>): Collection<Value> {
+        val removedValues = mutableListOf<Value>()
         synchronized(cache) {
             for (key in keys) {
-                cache.remove(key)
+                removedValues.addIfNotNull(cache.remove(key))
             }
         }
+        return removedValues
+    }
+
+    protected fun checkKeysValidity(condition: (Key) -> Boolean = { true }) {
+        synchronized(cache) {
+            for(key in cache.keys) {
+                if (condition(key)) {
+                    checkValidity(key)
+                }
+            }
+        }
+    }
+
+    protected open fun invalidateKeys(condition: (Key) -> Boolean): Collection<Value> {
+        val removedValues = mutableListOf<Value>()
+        synchronized(cache) {
+            val iterator = cache.entries.iterator()
+            while(iterator.hasNext()) {
+                val (key, value )= iterator.next()
+                if (condition(key)) {
+                    removedValues += value
+                    iterator.remove()
+                }
+            }
+        }
+        return removedValues
     }
 
     protected abstract fun subscribe()
@@ -91,6 +127,8 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
     protected abstract fun checkValidity(key: Key)
 
     protected abstract fun calculate(key: Key): Value
+
+    protected open fun extraCalculatedValues(key: Key, value: Value): Map<Key, Value>? = null
 
     companion object {
         val isFineGrainedCacheInvalidationEnabled: Boolean

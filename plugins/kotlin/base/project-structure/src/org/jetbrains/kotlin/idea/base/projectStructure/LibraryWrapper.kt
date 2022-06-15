@@ -5,11 +5,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 // Workaround for duplicated libraries, see KT-42607
 @ApiStatus.Internal
 class LibraryWrapper(val library: LibraryEx) {
-    private val allRootUrls by lazy {
+    private val allRootUrls: Set<String> by lazy {
         mutableSetOf<String>().apply {
             for (orderRootType in OrderRootType.getAllTypes()) {
                 ProgressManager.checkCanceled()
@@ -18,16 +19,19 @@ class LibraryWrapper(val library: LibraryEx) {
         }
     }
 
+    private val excludedRootUrls: Array<String> by lazy {
+        library.excludedRootUrls
+    }
+
     private val hashCode by lazy {
-        31 + allRootUrls.hashCode()
+        31 + 37 * allRootUrls.hashCode() + Arrays.hashCode(excludedRootUrls)
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is LibraryWrapper) return false
 
-        if (allRootUrls != other.allRootUrls) return false
-        return library.excludedRootUrls.contentEquals(other.library.excludedRootUrls)
+        return allRootUrls == other.allRootUrls && excludedRootUrls.contentEquals(other.excludedRootUrls)
     }
 
     override fun hashCode(): Int = hashCode

@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
+import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -92,11 +93,28 @@ class LibraryInfoCache(project: Project): FineGrainedEntityCache<Library, List<L
         override fun map(storage: EntityStorage, entity: LibraryEntity): Library? = entity.findLibraryBridge(storage)
 
         override fun entitiesChanged(outdated: List<Library>) {
-            getInstance(project).invalidateKeys(outdated)
+            val libraryInfoCache = getInstance(project)
+            val droppedLibraryInfos = libraryInfoCache.invalidateKeys(outdated).flatMapTo(hashSetOf()) { it }
+            libraryInfoCache.checkKeysValidity()
+
+            if (droppedLibraryInfos.isNotEmpty()) {
+                project.messageBus.syncPublisher(OutdatedLibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
+            }
         }
     }
 
     companion object {
         fun getInstance(project: Project): LibraryInfoCache = project.service()
+    }
+}
+
+interface OutdatedLibraryInfoListener {
+
+    fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>)
+
+    companion object {
+        @JvmStatic
+        @Topic.ProjectLevel
+        val TOPIC = Topic.create("library info listener", OutdatedLibraryInfoListener::class.java)
     }
 }
