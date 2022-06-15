@@ -15,10 +15,7 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleFileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -102,8 +99,21 @@ public final class JavaParametersUtil {
     if (virtualFile == null) return null;
     Module classModule = psiClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(psiClass) : null;
     if (classModule == null) classModule = module;
-    ModuleFileIndex fileIndex = ModuleRootManager.getInstance(classModule).getFileIndex();
-    return fileIndex.isInSourceContent(virtualFile) && !fileIndex.isInTestSourceContent(virtualFile);
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(classModule);
+    final ModuleFileIndex fileIndex = rootManager.getFileIndex();
+    if (fileIndex.isInSourceContent(virtualFile)) {
+      return !fileIndex.isInTestSourceContent(virtualFile);
+    }
+    // the mainClass is located in libraries
+    for (OrderEntry entry : fileIndex.getOrderEntriesForFile(virtualFile)) {
+      if (entry instanceof ExportableOrderEntry && ((ExportableOrderEntry)entry).getScope() == DependencyScope.TEST) {
+        return false;
+      }
+    }
+    if (rootManager.getSourceRoots(false).length == 0) {
+      return false; // there are no 'non-test' sources in the module
+    }
+    return true;
   }
 
   public static void configureModule(final RunConfigurationModule runConfigurationModule,
