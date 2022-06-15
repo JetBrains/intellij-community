@@ -852,7 +852,7 @@
         <separator/>
         <group id="HelpDiagnosticTools" popup="true">
           <action id="Performance.ActivityMonitor" class="com.intellij.ide.actions.ActivityMonitorAction"/>
-          <action id="Performance.DumpThreads" class="com.intellij.ide.actions.DumpThreadsAction" internal="true"/>
+          <action id="Performance.DumpThreads" class="com.intellij.ide.actions.DumpThreadsAction"/>
           <separator/>
           <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
           <action id="CollectTroubleshootingInformation" class="com.intellij.ide.actions.CollectTroubleshootingInformationAction" internal="true"/>
