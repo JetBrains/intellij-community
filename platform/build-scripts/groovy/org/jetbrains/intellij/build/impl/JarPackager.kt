@@ -397,7 +397,7 @@ class JarPackager private constructor(private val context: BuildContext) {
       val sources = extraLibSources.computeIfAbsent(targetFilename) { mutableListOf() }
       val targetFile = outputDir.resolve(targetFilename)
       for (file in files) {
-        sources.add(ZipSource(file = file) { size ->
+        sources.add(ZipSource(file) { size ->
           projectStructureMapping.add(ModuleLibraryFileEntry(targetFile, moduleName, file, size))
         })
       }
@@ -405,21 +405,26 @@ class JarPackager private constructor(private val context: BuildContext) {
   }
 
   private fun filesToSourceWithMapping(to: MutableList<Source>, files: List<Path>, library: JpsLibrary, targetFile: Path) {
-    val moduleReference = library.createReference().parentReference as? JpsModuleReference
+    val moduleName = (library.createReference().parentReference as? JpsModuleReference)
+      ?.moduleName
+
     for (file in files) {
       to.add(ZipSource(file) { size ->
-        if (moduleReference == null) {
-          projectStructureMapping.add(ProjectLibraryEntry(path = targetFile,
-                                                          data = libToMetadata.get(library)!!,
-                                                          libraryFile = file,
-                                                          size = size))
-        }
-        else {
-          projectStructureMapping.add(ModuleLibraryFileEntry(path = targetFile,
-                                                             moduleName = moduleReference.moduleName,
-                                                             libraryFile = file,
-                                                             size = size))
-        }
+        val libraryEntry = moduleName?.let {
+          ModuleLibraryFileEntry(
+            path = targetFile,
+            moduleName = it,
+            libraryFile = file,
+            size = size,
+          )
+        } ?: ProjectLibraryEntry(
+          path = targetFile,
+          data = libToMetadata.get(library)!!,
+          libraryFile = file,
+          size = size,
+        )
+
+        projectStructureMapping.add(libraryEntry)
       })
     }
   }
