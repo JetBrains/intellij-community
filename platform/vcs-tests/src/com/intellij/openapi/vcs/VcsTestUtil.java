@@ -6,6 +6,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -127,6 +128,9 @@ public final class VcsTestUtil {
   }
 
   public static void moveFileInCommand(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) {
+    // Workaround for IDEA-182560, try to wait until ongoing refreshes are finished
+    VfsUtil.markDirtyAndRefresh(false, true, true, file);
+
     try {
       WriteCommandAction.writeCommandAction(project)
         .withName("VcsTestUtil MoveFileInCommand") //NON-NLS
