@@ -1874,6 +1874,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       });
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     static final class AbbreviatePackageNames extends Action {
       AbbreviatePackageNames() {
         super(view -> view.myAbbreviatePackageNames);

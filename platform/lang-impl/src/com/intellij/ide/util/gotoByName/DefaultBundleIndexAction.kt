@@ -45,4 +45,8 @@ class DefaultBundleIndexAction : AnAction() {
         }
       }
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
