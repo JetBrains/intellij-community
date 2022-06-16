@@ -5,6 +5,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +29,7 @@ final class DirectByteBufferAllocator {
     ? ConcurrencyUtil.newSingleThreadExecutor("DirectBufferWrapper allocation thread")
     : null;
 
-  private static final boolean USE_POOLED_ALLOCATOR = Boolean.getBoolean("idea.index.use.pooled.page.allocator");
+  private static final boolean USE_POOLED_ALLOCATOR = SystemProperties.getBooleanProperty("idea.index.use.pooled.page.allocator", true);
 
   static <E extends Exception>  ByteBuffer allocate(ThrowableComputable<? extends ByteBuffer, E> computable) throws E {
     if (ourAllocator != null) {
