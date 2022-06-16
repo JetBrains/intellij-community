@@ -5,8 +5,10 @@ package com.intellij.find.impl;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +28,18 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
+    e.getPresentation().putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true);
+    e.getPresentation().setPerformGroup(true);
     e.getPresentation().setEnabledAndVisible(project != null);
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    JBPopupFactory.getInstance().createActionGroupPopup(
+      e.getPresentation().getText(), this, e.getDataContext(),
+      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+      false, null, -1, null, ActionPlaces.getActionGroupPopupPlace(e.getPlace()))
+      .showInBestPositionFor(e.getDataContext());
   }
 
   @Override
