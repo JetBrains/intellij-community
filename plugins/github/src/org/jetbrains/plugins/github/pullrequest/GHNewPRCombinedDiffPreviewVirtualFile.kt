@@ -7,9 +7,9 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 
 @Suppress("EqualsOrHashCode")
 internal class GHNewPRCombinedDiffPreviewVirtualFile(sourceId: String,
-                                            fileManagerId: String,
-                                            project: Project,
-                                            repository: GHRepositoryCoordinates) :
+                                                     fileManagerId: String,
+                                                     project: Project,
+                                                     repository: GHRepositoryCoordinates) :
   GHPRCombinedDiffPreviewVirtualFileBase(sourceId, fileManagerId, project, repository) {
 
   override fun getName() = "newPR.diff"

@@ -10,11 +10,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.ChangeWrapper
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.DiffPreview
+import com.intellij.openapi.vcs.changes.DiffPreviewController
+import com.intellij.openapi.vcs.changes.DiffPreviewControllerBase
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -47,7 +48,7 @@ internal class GHPRDiffPreview(private val prId: GHPRIdentifier?,
 
   override fun openPreview(requestFocus: Boolean): Boolean {
     if (prId == null) {
-      filesManager.createAndOpenNewPRDiffPreviewFile(sourceId, requestFocus)
+      filesManager.createAndOpenNewPRDiffPreviewFile(sourceId, false, requestFocus)
     }
     else {
       filesManager.createAndOpenDiffFile(prId, requestFocus)
@@ -69,7 +70,7 @@ internal class GHPRCombinedDiffPreview(private val dataProvider: GHPRDataProvide
     val sourceId = tree.id
     val prId = dataProvider?.id
     if (prId == null) {
-      filesManager.createAndOpenNewPRDiffPreviewFile(sourceId, requestFocus)
+      filesManager.createAndOpenNewPRDiffPreviewFile(sourceId, true, requestFocus)
     }
     else {
       filesManager.createAndOpenDiffPreviewFile(prId, sourceId, requestFocus)
@@ -88,10 +89,10 @@ internal abstract class GHPRCombinedDiffPreviewBase(private val dataProvider: GH
     get() =
       dataProvider?.id.let { prId ->
         if (prId == null) {
-          filesManager.createOrGetNewPRDiffFile(tree.id)
+          filesManager.createOrGetNewPRDiffFile(tree.id, true)
         }
         else {
-          filesManager.createOrGetDiffFile(prId, tree.id)
+          filesManager.createOrGetDiffFile(prId, tree.id, true)
         }
       }
 
@@ -145,28 +146,26 @@ internal abstract class GHPRCombinedDiffPreviewBase(private val dataProvider: GH
     fun createAndSetupDiffPreview(tree: ChangesTree,
                                   producerFactory: ChangeDiffRequestProducerFactory,
                                   dataProvider: GHPRDataProvider?,
-                                  filesManager: GHPRFilesManager): DiffPreview {
-      val diffPreview =
-        if (Registry.`is`("enable.combined.diff")) {
-          GHPRCombinedDiffPreview(dataProvider, filesManager, producerFactory, tree)
-        }
-        else {
-          GHPRDiffPreview(dataProvider?.id, filesManager)
+                                  filesManager: GHPRFilesManager): DiffPreviewController {
+      val diffPreviewHolder =
+        object : DiffPreviewControllerBase() {
+          override val combinedPreview = GHPRCombinedDiffPreview(dataProvider, filesManager, producerFactory, tree)
+          override val simplePreview = GHPRDiffPreview(dataProvider?.id, filesManager)
         }
 
       tree.apply {
         doubleClickHandler = Processor { e ->
           if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
-          diffPreview.performDiffAction()
+          diffPreviewHolder.activePreview.performDiffAction()
           true
         }
         enterKeyHandler = Processor {
-          diffPreview.performDiffAction()
+          diffPreviewHolder.activePreview.performDiffAction()
           true
         }
       }
 
-      return diffPreview
+      return diffPreviewHolder
     }
   }
 }

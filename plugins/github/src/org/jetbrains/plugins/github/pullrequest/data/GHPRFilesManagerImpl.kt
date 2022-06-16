@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -27,9 +26,9 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   private val diffFiles = ContainerUtil.createWeakValueMap<GHPRIdentifier, DiffVirtualFileBase>()
   private var newPRDiffFiles = ContainerUtil.createWeakValueMap<String, DiffVirtualFileBase>()
 
-  override fun createOrGetNewPRDiffFile(sourceId: String): DiffVirtualFileBase {
+  override fun createOrGetNewPRDiffFile(sourceId: String, combinedDiff: Boolean): DiffVirtualFileBase {
     return newPRDiffFiles.getOrPut(sourceId) {
-      if (Registry.`is`("enable.combined.diff")) {
+      if (combinedDiff) {
         GHNewPRCombinedDiffPreviewVirtualFile(sourceId, id, project, repository)
       }
       else {
@@ -38,9 +37,9 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     }
   }
 
-  override fun createOrGetDiffFile(pullRequest: GHPRIdentifier, sourceId: String): DiffVirtualFileBase {
+  override fun createOrGetDiffFile(pullRequest: GHPRIdentifier, sourceId: String, combinedDiff: Boolean): DiffVirtualFileBase {
     return diffFiles.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
-      if (Registry.`is`("enable.combined.diff")) {
+      if (combinedDiff) {
         GHPRCombinedDiffPreviewVirtualFile(sourceId, id, project, repository, pullRequest)
       }
       else {
@@ -77,9 +76,9 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     }
   }
 
-  override fun createAndOpenNewPRDiffPreviewFile(sourceId: String, requestFocus: Boolean): DiffVirtualFileBase {
+  override fun createAndOpenNewPRDiffPreviewFile(sourceId: String, combinedDiff: Boolean, requestFocus: Boolean): DiffVirtualFileBase {
     return newPRDiffFiles.getOrPut(sourceId) {
-      if (Registry.`is`("enable.combined.diff")) {
+      if (combinedDiff) {
         GHNewPRCombinedDiffPreviewVirtualFile(sourceId, id, project, repository)
       }
       else {

@@ -244,11 +244,11 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
                                 emptyTextText: String): JComponent {
     val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText)
 
-    val diffPreview = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, null, dataContext.filesManager)
+    val diffPreviewHolder = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, null, dataContext.filesManager)
 
     DataManager.registerDataProvider(parentPanel) { dataId ->
       when {
-        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> diffPreview
+        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> diffPreviewHolder.activePreview
         tree.isShowing -> tree.getData(dataId)
         else -> null
       }

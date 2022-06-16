@@ -22,7 +22,7 @@ internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualF
     val pullRequest = path.prId
     val sourceId = path.sourceId
     return when {
-      pullRequest == null && sourceId != null -> filesManager.createOrGetNewPRDiffFile(sourceId)
+      pullRequest == null && sourceId != null -> filesManager.createOrGetNewPRDiffFile(sourceId, true)
       pullRequest == null -> null
       path.isDiff -> filesManager.findDiffFile(pullRequest)
       else -> filesManager.findTimelineFile(pullRequest)

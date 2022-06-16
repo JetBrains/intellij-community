@@ -386,14 +386,14 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   ): JComponent {
     val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText)
 
-    val diffPreview = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider, dataContext.filesManager)
+    val diffPreviewController = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider, dataContext.filesManager)
 
     reloadChangesAction.registerCustomShortcutSet(tree, null)
     tree.installPopupHandler(actionManager.getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
 
     DataManager.registerDataProvider(parentPanel) { dataId ->
       when {
-        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> diffPreview
+        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> diffPreviewController.activePreview
         tree.isShowing -> tree.getCustomData(dataId) ?: tree.getData(dataId)
         else -> null
       }

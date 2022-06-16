@@ -97,6 +97,8 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
   override fun getCurrentName(): String? = model.selected?.presentableName
   override fun hasContent(): Boolean = model.requests.isNotEmpty()
 
+  internal fun getFileSize(): Int = model.requests.size
+
   protected val ChangesTree.id: @NonNls String get() = javaClass.name + "@" + Integer.toHexString(hashCode())
 }
 
@@ -111,6 +113,7 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
       scrollToChange(change)
     }
   }
+
 companion object {
   @JvmStatic
   fun prepareCombinedDiffModelRequests(project: Project, changes: List<Wrapper>): Map<CombinedBlockId, DiffRequestProducer> {

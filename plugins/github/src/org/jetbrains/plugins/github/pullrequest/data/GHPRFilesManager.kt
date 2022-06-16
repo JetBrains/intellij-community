@@ -7,8 +7,8 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineVirtualFile
 
 internal interface GHPRFilesManager : Disposable {
-  fun createOrGetNewPRDiffFile(sourceId: String): DiffVirtualFileBase
-  fun createOrGetDiffFile(pullRequest: GHPRIdentifier, sourceId: String): DiffVirtualFileBase
+  fun createOrGetNewPRDiffFile(sourceId: String, combinedDiff: Boolean): DiffVirtualFileBase
+  fun createOrGetDiffFile(pullRequest: GHPRIdentifier, sourceId: String, combinedDiff: Boolean): DiffVirtualFileBase
 
   fun createAndOpenTimelineFile(pullRequest: GHPRIdentifier, requestFocus: Boolean)
 
@@ -16,7 +16,7 @@ internal interface GHPRFilesManager : Disposable {
 
   fun createAndOpenDiffPreviewFile(pullRequest: GHPRIdentifier, sourceId: String, requestFocus: Boolean): DiffVirtualFileBase
 
-  fun createAndOpenNewPRDiffPreviewFile(sourceId: String, requestFocus: Boolean): DiffVirtualFileBase
+  fun createAndOpenNewPRDiffPreviewFile(sourceId: String, combinedDiff: Boolean, requestFocus: Boolean): DiffVirtualFileBase
 
   fun findTimelineFile(pullRequest: GHPRIdentifier): GHPRTimelineVirtualFile?
 

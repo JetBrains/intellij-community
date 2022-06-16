@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -77,7 +76,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull private Consumer<StatusText> myUpdateEmptyText = this::updateEmptyText;
   @NotNull private final Wrapper myToolbarWrapper;
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  @Nullable private DiffPreview myEditorDiffPreview;
+  @Nullable private DiffPreviewController myEditorDiffPreviewController;
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
@@ -401,20 +400,17 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   }
 
   private void setEditorDiffPreview() {
-    DiffPreview preview = myEditorDiffPreview;
+
+    DiffPreviewController editorDiffPreviewController = myEditorDiffPreviewController;
+
     boolean isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
 
-    if (Registry.is("enable.combined.diff") && isWithEditorDiffPreview && preview == null) {
-      preview = new VcsLogCombinedDiffPreview(this);
-      myEditorDiffPreview = preview;
+    if (isWithEditorDiffPreview && editorDiffPreviewController == null) {
+      myEditorDiffPreviewController = new VcsLogChangesBrowserDiffPreviewController(myProject, this);
     }
-    else if (isWithEditorDiffPreview && preview == null) {
-      preview = new VcsLogEditorDiffPreview(myProject, this);
-      myEditorDiffPreview = preview;
-    }
-    else if (!isWithEditorDiffPreview && preview != null) {
-      preview.closePreview();
-      myEditorDiffPreview = null;
+    else if (!isWithEditorDiffPreview && editorDiffPreviewController != null) {
+      editorDiffPreviewController.getActivePreview().closePreview();
+      myEditorDiffPreviewController = null;
     }
   }
 
@@ -425,7 +421,8 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
   @Override
   protected @Nullable DiffPreview getShowDiffActionPreview() {
-    return myEditorDiffPreview;
+    DiffPreviewController editorDiffPreviewController = myEditorDiffPreviewController;
+    return editorDiffPreviewController != null ? editorDiffPreviewController.getActivePreview() : null;
   }
 
   public void selectChange(@NotNull Object userObject, @Nullable ChangesBrowserNode.Tag tag) {
