@@ -689,7 +689,9 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
                 printer.print(" : ")
                 constructor.delegationCall.accept(this)
             }
-            constructor.block.accept(this)
+            if (constructor.block.statements.isNotEmpty()) {
+                constructor.block.accept(this)
+            }
         }
 
         override fun visitKtPrimaryConstructorRaw(ktPrimaryConstructor: JKKtPrimaryConstructor) {
