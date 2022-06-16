@@ -15,10 +15,11 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThreadAware;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 
-public interface DeleteProvider {
+public interface DeleteProvider extends ActionUpdateThreadAware {
   void deleteElement(@NotNull DataContext dataContext);
   boolean canDeleteElement(@NotNull DataContext dataContext);
 }

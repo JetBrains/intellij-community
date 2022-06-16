@@ -27,9 +27,4 @@ public interface UpdateSession {
   @NotNull <T> T compute(@NotNull String operationName,
                          @NotNull ActionUpdateThread updateThread,
                          @NotNull Supplier<? extends T> supplier);
-
-  @Deprecated(forRemoval = true)
-  default @NotNull <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> supplier) {
-    return compute(operationName, ActionUpdateThread.EDT, supplier);
-  }
 }

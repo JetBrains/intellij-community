@@ -41,9 +41,9 @@ public class CopyAction extends AnAction implements DumbAware, LightEditCompatib
     });
   }
 
-  static <T> void updateFromProvider(@NotNull AnActionEvent event,
-                                             DataKey<T> key,
-                                             BiConsumer<T, Presentation> presentationUpdater) {
+  static <T extends ActionUpdateThreadAware> void updateFromProvider(@NotNull AnActionEvent event,
+                                                                     @NotNull DataKey<T> key,
+                                                                     @NotNull BiConsumer<T, Presentation> presentationUpdater) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     T provider = key.getData(dataContext);
@@ -52,13 +52,16 @@ public class CopyAction extends AnAction implements DumbAware, LightEditCompatib
       presentation.setVisible(true);
       return;
     }
-    if (provider instanceof UpdateInBackground && ((UpdateInBackground)provider).isUpdateInBackground() ||
-        EDT.isCurrentThreadEdt()) {
+    ActionUpdateThread updateThread = provider.getActionUpdateThread();
+    if (updateThread == ActionUpdateThread.BGT || EDT.isCurrentThreadEdt()) {
       presentationUpdater.accept(provider, presentation);
     }
     else {
-      Utils.getOrCreateUpdateSession(event).computeOnEdt(
-        "ProviderState#create", () -> {presentationUpdater.accept(provider, presentation); return presentation;});
+      Utils.getOrCreateUpdateSession(event).compute(
+        "ProviderState#create", updateThread, () -> {
+          presentationUpdater.accept(provider, presentation);
+          return presentation;
+        });
     }
   }
 }
