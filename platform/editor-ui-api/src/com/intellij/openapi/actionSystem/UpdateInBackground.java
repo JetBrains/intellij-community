@@ -2,7 +2,6 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.progress.ProgressManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,9 +16,9 @@ import org.jetbrains.annotations.NotNull;
  *
  * Update methods should call {@link ProgressManager#checkCanceled()} often enough to guard against UI freezes.
  *
- * @deprecated Use {@link AnAction#getActionUpdateThread()} instead.
+ * @deprecated Use {@link AnAction#getActionUpdateThread()} or {@link ActionUpdateThreadAware} instead.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface UpdateInBackground {
   default boolean isUpdateInBackground() {
     return true;
@@ -27,10 +26,5 @@ public interface UpdateInBackground {
 
   static boolean isUpdateInBackground(@NotNull AnAction action) {
     return action.getActionUpdateThread() == ActionUpdateThread.BGT;
-  }
-
-  @ApiStatus.Experimental
-  interface Recursive extends UpdateInBackground {
-
   }
 }
