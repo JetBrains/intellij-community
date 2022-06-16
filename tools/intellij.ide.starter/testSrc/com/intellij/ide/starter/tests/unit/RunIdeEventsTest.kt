@@ -14,10 +14,10 @@ import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.hyphenateTestName
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
-import io.kotest.common.runBlocking
 import io.kotest.inspectors.shouldForAtLeastOne
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
