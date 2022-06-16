@@ -41,8 +41,7 @@ public class ReassignedToPlainTextInspection extends LocalInspectionTool {
     if (fileType != PlainTextFileType.INSTANCE) {
       return null;
     }
-    if (PlainTextFileType.INSTANCE.getDefaultExtension().equals(virtualFile.getExtension()) ||
-        virtualFile.getName().equals("go.mod")) {
+    if (PlainTextFileType.INSTANCE.getDefaultExtension().equals(virtualFile.getExtension())) {
       return null;
     }
     FileType assigned = FileTypeManager.getInstance().getFileTypeByFileName(virtualFile.getNameSequence());
