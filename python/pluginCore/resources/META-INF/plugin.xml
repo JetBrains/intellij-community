@@ -36,6 +36,5 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.jetbrains.python.console.PythonConsoleRunnerFactory"
                         serviceImplementation="com.jetbrains.python.console.PydevConsoleRunnerFactory" />
-    <iconMapper mappingFile="PythonIconMappings.json"/>
   </extensions>
 </idea-plugin>
