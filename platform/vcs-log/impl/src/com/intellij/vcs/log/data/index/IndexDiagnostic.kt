@@ -2,15 +2,35 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.data.VcsLogStorage
+import com.intellij.vcs.log.graph.api.LiteLinearGraph
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.utils.BfsWalk
+import com.intellij.vcs.log.graph.utils.IntHashSetFlags
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import it.unimi.dsi.fastutil.ints.IntArrayList
 
-object IndexDiagnostic {
+internal object IndexDiagnostic {
   private const val FILTERED_PATHS_LIMIT = 1000
+  private const val COMMITS_TO_CHECK = 10
 
-  fun IndexDataGetter.getDiffFor(commitId: Int, commitDetails: VcsFullCommitDetails): String? {
+  fun IndexDataGetter.getDiffFor(commitsIdsList: List<Int>, commitDetailsList: List<VcsFullCommitDetails>): String {
+    val report = StringBuilder()
+    for ((commitId, commitDetails) in commitsIdsList.zip(commitDetailsList)) {
+      getDiffFor(commitId, commitDetails)?.let { commitReport ->
+        report.append(commitReport).append("\n")
+      }
+    }
+    return report.toString()
+  }
+
+  private fun IndexDataGetter.getDiffFor(commitId: Int, commitDetails: VcsFullCommitDetails): String? {
     val difference = getCommitDetailsDiff(commitDetails, IndexedDetails(this, logStorage, commitId))
                      ?: getFilteringDiff(commitId, commitDetails)
     if (difference == null) return null
@@ -61,5 +81,32 @@ object IndexDiagnostic {
     }
     if (sb.isEmpty()) return null
     return sb.toString()
+  }
+
+  fun DataPack.getFirstCommits(storage: VcsLogStorage, roots: Collection<VirtualFile>): List<Int> {
+    val rootsToCheck = roots.toMutableSet()
+    val commitsToCheck = IntArrayList()
+
+    @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<Int> ?: return emptyList()
+    val graph = LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph)
+    for (node in graph.nodesCount() - 1 downTo 0) {
+      if (!graph.getNodes(node, LiteLinearGraph.NodeFilter.DOWN).isEmpty()) continue
+
+      val root = storage.getCommitId(permanentGraphInfo.permanentCommitsInfo.getCommitId(node))?.root
+      if (!rootsToCheck.remove(root)) continue
+
+      // initial commit may not have files (in case of shallow clone), or it may have too many files
+      // checking next commits instead
+      BfsWalk(node, graph, IntHashSetFlags(COMMITS_TO_CHECK), false).walk { nextNode ->
+        if (nextNode != node && graph.getNodes(nextNode, LiteLinearGraph.NodeFilter.DOWN).size == 1) {
+          // skipping merge commits since they can have too many changes
+          commitsToCheck.add(permanentGraphInfo.permanentCommitsInfo.getCommitId(nextNode))
+        }
+        return@walk commitsToCheck.size < COMMITS_TO_CHECK
+      }
+      if (rootsToCheck.isEmpty()) break
+    }
+
+    return commitsToCheck
   }
 }

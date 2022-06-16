@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.index.IndexDiagnosticRunner;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
@@ -69,6 +70,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
   @NotNull private final VcsLogModifiableIndex myIndex;
+  @NotNull private final IndexDiagnosticRunner myIndexDiagnosticRunner;
 
   @NotNull private final Object myLock = new Object();
   @NotNull private State myState = State.CREATED;
@@ -118,6 +120,9 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
     myUserResolver = new MyVcsLogUserResolver();
+
+    myIndexDiagnosticRunner = new IndexDiagnosticRunner(myIndex, myStorage, myLogProviders.keySet(),
+                                                        this::getDataPack, myDetailsGetter, myFatalErrorsConsumer, this);
 
     Disposer.register(parentDisposable, this);
     Disposer.register(this, () -> {
@@ -232,6 +237,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
         listener.onDataPackChange(dataPack);
       }
     }, o -> myDisposableFlag.isDisposed());
+    myIndexDiagnosticRunner.onDataPackChange();
   }
 
   public void addDataPackChangeListener(@NotNull final DataPackChangeListener listener) {
