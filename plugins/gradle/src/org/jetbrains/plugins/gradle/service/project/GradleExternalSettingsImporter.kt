@@ -152,7 +152,7 @@ class IDEAProjectFilesPostProcessor: ConfigurationHandler {
     val sourceSetNodes = moduleNodes.flatMap { ExternalSystemApiUtil.getChildren(it, GradleSourceSetData.KEY) }
 
     val sourceSetsToImls = (moduleNodes + sourceSetNodes)
-      .groupBy({ it.data.externalName }, { modelsProvider.findIdeModule(it.data)?.moduleFilePath })
+      .groupBy({ it.data.id }, { modelsProvider.findIdeModule(it.data)?.moduleFilePath })
       .filterValues { it.isNotEmpty() }
       .mapValues { it.value.first() ?: "" }
 
