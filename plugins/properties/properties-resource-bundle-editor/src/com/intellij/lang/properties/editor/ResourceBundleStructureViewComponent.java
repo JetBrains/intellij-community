@@ -211,6 +211,11 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void deleteElement(@NotNull final DataContext dataContext) {
       final List<PropertiesFile> bundlePropertiesFiles = myResourceBundle.getPropertiesFiles();
 
