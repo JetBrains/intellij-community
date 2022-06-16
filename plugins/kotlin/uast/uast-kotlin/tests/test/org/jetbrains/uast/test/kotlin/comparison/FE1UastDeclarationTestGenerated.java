@@ -55,6 +55,11 @@ public abstract class FE1UastDeclarationTestGenerated extends AbstractFE1UastDec
             runTest("../../uast-kotlin-fir/testData/declaration/importOnDemand.kt");
         }
 
+        @TestMetadata("init.kt")
+        public void testInit() throws Exception {
+            runTest("../../uast-kotlin-fir/testData/declaration/init.kt");
+        }
+
         @TestMetadata("labeledExpression.kt")
         public void testLabeledExpression() throws Exception {
             runTest("../../uast-kotlin-fir/testData/declaration/labeledExpression.kt");

@@ -9,6 +9,10 @@ UFile (package = )
                         UObjectLiteralExpression
                             UClass (name = null)
                                 UMethod (name = )
+                                    UBlockExpression
+                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
+                                            UIdentifier (Identifier (TypeBase))
+                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: TypeBase)
                 UDeclarationsExpression
                     ULocalVariable (name = superType)
                         UPostfixExpression (operator = !!)

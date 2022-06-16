@@ -25,6 +25,8 @@ class KotlinUAnonymousClass(
 
     override val sourcePsi: KtClassOrObject? = ktClass
 
+    override fun getSourceElement() = sourcePsi ?: this
+
     override fun getOriginalElement(): PsiElement? = super<AbstractKotlinUClass>.getOriginalElement()
 
     override fun getNameIdentifier(): PsiIdentifier? {
@@ -36,14 +38,24 @@ class KotlinUAnonymousClass(
 
     override fun getSuperClass(): UClass? = super<AbstractKotlinUClass>.getSuperClass()
     override fun getFields(): Array<UField> = super<AbstractKotlinUClass>.getFields()
-    override fun getMethods(): Array<UMethod> = super<AbstractKotlinUClass>.getMethods()
+    override fun getMethods(): Array<UMethod> =
+        // TODO: better not discriminate enum entry (but non-trivial to preserve parent tree consistency)
+        if (sourcePsi is KtEnumEntry)
+            super<AbstractKotlinUClass>.getMethods()
+        else
+            computeMethods()
     override fun getInitializers(): Array<UClassInitializer> = super<AbstractKotlinUClass>.getInitializers()
     override fun getInnerClasses(): Array<UClass> = super<AbstractKotlinUClass>.getInnerClasses()
 
     override fun getContainingFile(): PsiFile = unwrapFakeFileForLightClass(psi.containingFile)
 
     override val uastAnchor: UIdentifier? by lz {
-        val ktClassOrObject = (psi.originalElement as? KtLightClass)?.kotlinOrigin as? KtObjectDeclaration ?: return@lz null
-        KotlinUIdentifier(ktClassOrObject.getObjectKeyword(), this)
+        val ktClassOrObject = (psi.originalElement as? KtLightClass)?.kotlinOrigin ?: return@lz null
+        val sourcePsi = when (ktClassOrObject) {
+            is KtObjectDeclaration -> ktClassOrObject.getObjectKeyword()
+            is KtEnumEntry -> ktClassOrObject.nameIdentifier
+            else -> null
+        } ?: return@lz null
+        KotlinUIdentifier(sourcePsi, this)
     }
 }

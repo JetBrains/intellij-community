@@ -1,5 +1,3 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
 class A<in I> {
     private val bar: I
 
@@ -7,7 +5,7 @@ class A<in I> {
 
 
     fun test() {
-        with(A()) {
+        with(A<Int>()) {
             this.<caret>
         }
     }

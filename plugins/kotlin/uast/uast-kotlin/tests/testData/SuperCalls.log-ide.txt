@@ -14,7 +14,17 @@ UFile (package = )
                                     ULiteralExpression (value = "inner literal")
                                     UClass (name = null)
                                         UMethod (name = )
+                                            UBlockExpression
+                                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                                                    UIdentifier (Identifier (A))
+                                                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A)
+                                                    ULiteralExpression (value = "inner literal")
                     UMethod (name = )
+                        UBlockExpression
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                                UIdentifier (Identifier (A))
+                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A)
+                                ULiteralExpression (value = "textForAnon")
                     UClass (name = InnerClass)
                         UMethod (name = InnerClass)
                             UBlockExpression

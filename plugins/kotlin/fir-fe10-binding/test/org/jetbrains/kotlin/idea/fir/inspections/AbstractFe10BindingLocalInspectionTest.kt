@@ -2,9 +2,12 @@
 package org.jetbrains.kotlin.idea.fir.inspections
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.highlighter.KotlinHighLevelDiagnosticHighlightingPass
+import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
@@ -15,6 +18,13 @@ abstract class AbstractFe10BindingLocalInspectionTest : AbstractLocalInspectionT
 
     override fun collectHighlightInfos(): List<HighlightInfo> {
         return KotlinHighLevelDiagnosticHighlightingPass.ignoreThisPassInTests { super.collectHighlightInfos() }
+    }
+
+    override fun tearDown() {
+        runAll(
+            ThrowableRunnable { project.invalidateCaches() },
+            ThrowableRunnable { super.tearDown() }
+        )
     }
 
     override fun doTestFor(mainFile: File, inspection: AbstractKotlinInspection, fileText: String) {

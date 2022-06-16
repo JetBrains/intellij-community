@@ -214,7 +214,7 @@ open class FirUastApiTest : AbstractFirUastTest() {
 
         @TestMetadata("StringTemplateComplexForUInjectionHost.kt")
         fun testStringTemplateComplexForUInjectionHost() {
-            doCheck("StringTemplateComplexForUInjectionHost", ::checkCallbackForComplexStrings)
+            doCheck("uast-kotlin/tests/testData/StringTemplateComplexForUInjectionHost.kt", ::checkCallbackForComplexStrings)
         }
     }
 }

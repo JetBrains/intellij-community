@@ -144,7 +144,13 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                     ULiteralExpression (value = 1) [1] : PsiType:int
                     ULiteralExpression (value = "foo") ["foo"] : PsiType:String
                     UClass (name = null) [final class null : Parent {...}]
-                        UMethod (name = ) [private fun () = UastEmptyExpression]
+                        UMethod (name = ) [private fun () {...}]
+                            UBlockExpression [{...}]
+                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(1, "foo")]
+                                    UIdentifier (Identifier (Parent)) [UIdentifier (Identifier (Parent))]
+                                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Parent) [<init>]
+                                    ULiteralExpression (value = 1) [1] : PsiType:int
+                                    ULiteralExpression (value = "foo") ["foo"] : PsiType:String
     UClass (name = A) [public final class A {...}]
         UMethod (name = with2Receivers) [public final fun with2Receivers(@org.jetbrains.annotations.NotNull $this$with2Receivers: java.lang.String, @org.jetbrains.annotations.NotNull a: int, @org.jetbrains.annotations.NotNull b: float) : void {...}]
             UParameter (name = $this$with2Receivers) [@org.jetbrains.annotations.NotNull var $this$with2Receivers: java.lang.String]

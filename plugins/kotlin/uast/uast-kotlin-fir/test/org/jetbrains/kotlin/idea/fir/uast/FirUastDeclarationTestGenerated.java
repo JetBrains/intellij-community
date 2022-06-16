@@ -55,6 +55,11 @@ public abstract class FirUastDeclarationTestGenerated extends AbstractFirUastDec
             runTest("testData/declaration/importOnDemand.kt");
         }
 
+        @TestMetadata("init.kt")
+        public void testInit() throws Exception {
+            runTest("testData/declaration/init.kt");
+        }
+
         @TestMetadata("labeledExpression.kt")
         public void testLabeledExpression() throws Exception {
             runTest("testData/declaration/labeledExpression.kt");

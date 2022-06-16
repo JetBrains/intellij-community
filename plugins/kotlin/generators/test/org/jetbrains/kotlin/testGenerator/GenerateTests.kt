@@ -1216,6 +1216,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/inspectionsLocal/booleanLiteralArgument", pattern = pattern)
             model("testData/inspectionsLocal/convertSealedSubClassToObject", pattern = pattern)
             model("testData/inspectionsLocal/cascadeIf", pattern = pattern)
+            model("testData/inspectionsLocal/collections/convertCallChainIntoSequence", pattern = pattern)
         }
     }
 

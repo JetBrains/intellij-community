@@ -24,7 +24,7 @@ foo -> UMethod (name = foo)
     run -> UMethod (name = run)
     runnableIs -> ULocalVariable (name = runnableIs)
     object -> UClass (name = null)
-    InputStream -> UObjectLiteralExpression
+    InputStream -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
     Runnable -> USimpleNameReferenceExpression (identifier = Runnable)
     read -> UMethod (name = read)
     Int -> USimpleNameReferenceExpression (identifier = Int)
