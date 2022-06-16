@@ -233,7 +233,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                           private val wrapper: Wrapper,
                                           private val parentDisposable: Disposable) : GHPRToolWindowTabComponentController {
 
-    private val listComponent by lazy { GHPRListComponent.create(project, dataContext, parentDisposable) }
+    private val listComponent by lazy { GHPRListComponentFactory(project, dataContext, parentDisposable).create() }
     private val createComponentHolder = ClearableLazyValue.create {
       GHPRCreateComponentHolder(ActionManager.getInstance(), project, projectSettings, repositoryManager, dataContext, this,
                                 parentDisposable)

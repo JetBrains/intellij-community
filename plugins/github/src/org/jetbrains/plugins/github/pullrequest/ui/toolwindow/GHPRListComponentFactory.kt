@@ -45,11 +45,11 @@ import javax.swing.JPanel
 import javax.swing.event.ChangeEvent
 import javax.swing.ScrollPaneConstants
 
-internal object GHPRListComponent {
+internal class GHPRListComponentFactory(private val project: Project,
+                                        private val dataContext: GHPRDataContext,
+                                        private val disposable: Disposable) {
 
-  fun create(project: Project,
-             dataContext: GHPRDataContext,
-             disposable: Disposable): JComponent {
+  fun create(): JComponent {
 
     val actionManager = ActionManager.getInstance()
 
