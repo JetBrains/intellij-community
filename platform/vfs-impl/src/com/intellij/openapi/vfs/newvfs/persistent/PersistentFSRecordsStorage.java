@@ -263,6 +263,7 @@ public final class PersistentFSRecordsStorage {
   public void setAttributesAndIncModCount(int id, long timestamp, long length, int flags, int nameId, int parentId,
                                           boolean overwriteMissed) throws IOException {
     write(() -> {
+      assert myPooledWriteBuffer.position() == 0;
       myPooledWriteBuffer.putLong(TIMESTAMP_OFFSET, timestamp);
       myPooledWriteBuffer.putInt(ATTR_REF_OFFSET, overwriteMissed ? 0 : getAttributeRecordId(id));
       myPooledWriteBuffer.putLong(LENGTH_OFFSET, length);
@@ -270,6 +271,7 @@ public final class PersistentFSRecordsStorage {
       myPooledWriteBuffer.putInt(NAME_OFFSET, nameId);
       myPooledWriteBuffer.putInt(PARENT_OFFSET, parentId);
       myPooledWriteBuffer.putInt(MOD_COUNT_OFFSET, overwriteMissed ? 0 : getModCount(id) + 1);
+      assert myPooledWriteBuffer.position() == 0;
       myFile.put(((long)id) * RECORD_SIZE, myPooledWriteBuffer);
       myPooledWriteBuffer.rewind();
       return null;

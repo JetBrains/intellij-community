@@ -162,11 +162,10 @@ public final class DirectBufferWrapper {
 
     markDirty();
     ByteBuffer buf = myBuffer.duplicate();
-    int dataLength = data.limit() - data.position();
 
     buf.position(page_offset);
     buf.put(data);
-    fileSizeMayChanged(dataLength);
+    fileSizeMayChanged(buf.position());
   }
 
 
