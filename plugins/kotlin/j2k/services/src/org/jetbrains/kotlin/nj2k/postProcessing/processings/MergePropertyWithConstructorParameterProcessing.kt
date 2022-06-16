@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class ConvertToDataClassProcessing : ElementsBasedPostProcessing() {
+class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcessing() {
     private fun KtCallableDeclaration.rename(newName: String) {
         val factory = KtPsiFactory(this)
         val escapedName = newName.escaped()

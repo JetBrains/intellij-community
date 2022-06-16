@@ -272,7 +272,7 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
                 RemoveExplicitGetterInspectionBasedProcessing(),
                 RemoveExplicitSetterInspectionBasedProcessing()
             ),
-            ConvertToDataClassProcessing(),
+            MergePropertyWithConstructorParameterProcessing(),
             errorsFixingDiagnosticBasedPostProcessingGroup,
             addOrRemoveModifiersProcessingGroup,
             inspectionLikePostProcessingGroup,
