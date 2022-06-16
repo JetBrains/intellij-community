@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects
 
 import com.intellij.CommonBundle
+import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.application.ApplicationManager
@@ -81,9 +82,10 @@ class CloneableProjectsService {
     fireCloneRemovedEvent()
   }
 
-  fun removeClonedProject(projectPath: String) {
-    RecentlyClonedProjectsState.instance.removeClonedProject(projectPath)
-    fireCloneRemovedEvent()
+  private fun upgradeCloneProjectToRecent(cloneableProject: CloneableProject) {
+    val recentProjectsManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
+    recentProjectsManager.addRecentPath(cloneableProject.projectPath, RecentProjectMetaInfo())
+    removeCloneableProject(cloneableProject)
   }
 
   private fun addCloneableProject(cloneableProject: CloneableProject) {
@@ -94,8 +96,7 @@ class CloneableProjectsService {
 
   private fun onSuccess(cloneableProject: CloneableProject) {
     cloneableProject.cloneStatus = CloneStatus.SUCCESS
-    cloneableProjects.removeIf { it.projectPath == cloneableProject.projectPath }
-    RecentlyClonedProjectsState.instance.addClonedProject(cloneableProject.projectPath)
+    upgradeCloneProjectToRecent(cloneableProject)
     fireCloneSuccessEvent()
   }
 

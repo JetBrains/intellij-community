@@ -13,7 +13,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
-import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.RecentlyClonedProjectsState
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
@@ -140,15 +139,10 @@ object ProjectCollectors {
   }
 
   @JvmField
-  val clonedProjectsCollector: () -> List<RecentProjectTreeItem> = {
-    RecentlyClonedProjectsState.instance.collectRecentlyClonedProjects()
-  }
-
-  @JvmField
   val cloneableProjectsCollector: () -> List<RecentProjectTreeItem> = {
     CloneableProjectsService.getInstance().collectCloneableProjects()
   }
 
   @JvmField
-  val all = listOf(cloneableProjectsCollector, clonedProjectsCollector, recentProjectsCollector)
+  val all = listOf(cloneableProjectsCollector, recentProjectsCollector)
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.impl.ProjectUiFrameManager
 import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
@@ -32,7 +33,6 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
@@ -50,6 +50,7 @@ import java.awt.AWTEvent
 import java.awt.Toolkit
 import java.awt.event.WindowEvent
 import java.awt.image.BufferedImage
+import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -373,8 +374,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   @Internal
   class MyProjectListener : ProjectManagerListener {
     private val manager = instanceEx
-    private val cloneService: CloneableProjectsService
-      get() = CloneableProjectsService.getInstance()
 
     override fun projectOpened(project: Project) {
       if (manager.disableUpdatingRecentInfo.get() || LightEdit.owns(project)) {
@@ -383,7 +382,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
       val path = manager.getProjectPath(project)
       if (path != null) {
-        cloneService.removeClonedProject(path)
+        manager.findAndRemoveNewlyClonedProject(path)
         manager.markPathRecent(path, project)
         manager.setLastOpenedProject(path)
       }
@@ -682,6 +681,26 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
         takeASelfie(frameHelper, workspaceId)
       }
+    }
+  }
+
+  /**
+   * Finding a project that has just been cloned.
+   * Skip a project with a similar path for [markPathRecent] to work correctly
+   *
+   * @param projectPath path to file that opens project (may differ with directory specified during cloning)
+   */
+  private fun findAndRemoveNewlyClonedProject(projectPath: String) {
+    if (state.additionalInfo.containsKey(projectPath)) {
+      return
+    }
+
+    var file: File? = File(projectPath)
+    while (file != null) {
+      val projectMetaInfo = state.additionalInfo.remove(projectPath)
+      if (projectMetaInfo != null) break
+
+      file = FileUtil.getParentFile(file)
     }
   }
 
