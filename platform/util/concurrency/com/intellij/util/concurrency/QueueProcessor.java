@@ -244,6 +244,9 @@ public final class QueueProcessor<T> {
       throw e;
     }
     catch (Throwable e) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw e;
+      }
       try {
         LOG.error(e);
       }
@@ -252,9 +255,6 @@ public final class QueueProcessor<T> {
           //noinspection CallToPrintStackTrace
           e2.printStackTrace();
         }
-      }
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw e;
       }
     }
   }

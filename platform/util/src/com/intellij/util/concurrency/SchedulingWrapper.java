@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +23,8 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCa
  * Unlike the existing {@link ScheduledThreadPoolExecutor}, this pool can be unbounded if the {@code backendExecutorService} is.
  */
 class SchedulingWrapper implements ScheduledExecutorService {
+  private static final Logger LOG = Logger.getInstance(SchedulingWrapper.class);
+  
   private final AtomicBoolean shutdown = new AtomicBoolean();
   @NotNull final ExecutorService backendExecutorService;
   final AppDelayQueue delayQueue;
@@ -226,6 +230,14 @@ class SchedulingWrapper implements ScheduledExecutorService {
       else if (runAndReset()) {
         setNextRunTime();
         delayQueue.offer(this);
+      }
+    }
+
+    @Override
+    protected void setException(Throwable t) {
+      super.setException(t);
+      if (!(t instanceof ControlFlowException)) {
+        LOG.error(t);
       }
     }
 

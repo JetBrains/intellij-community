@@ -137,7 +137,8 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       try {
         UIUtil.dispatchAllInvocationEvents();
       }
-      catch (MyException e) {
+      catch (Throwable e) {
+        assertTrue(e.toString(), ExceptionUtil.causedBy(e, MyException.class));
         break;
       }
       assertFalse(t.timedOut());

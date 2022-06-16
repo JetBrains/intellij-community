@@ -14,7 +14,9 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.UncaughtExceptionsExtension
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
@@ -364,8 +366,17 @@ class CancellationPropagationTest {
           }
         }
       }
-      val future = service.scheduleWithFixedDelay(runnable, 10, 10, TimeUnit.NANOSECONDS)
-      waitAssertCompletedWith(future, throwable::class)
+      val expectedThrowableProcessor = object : LoggedErrorProcessor() {
+        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+          assertNotNull(t, "Unexpected error: $message")
+          assertInstanceOf(throwable::class.java, t)
+          return false
+        }
+      }
+      LoggedErrorProcessor.executeWith(expectedThrowableProcessor, ThrowableRunnable {
+        val future = service.scheduleWithFixedDelay(runnable, 10, 10, TimeUnit.NANOSECONDS)
+        waitAssertCompletedWith(future, throwable::class)
+      })
     }
     rootJob.join()
     val ce = assertThrows<CancellationException> {
