@@ -127,24 +127,8 @@ public class UsageViewImpl implements UsageViewEx {
     if (o1 == o2) return 0;
     if (o1 == NullUsage.INSTANCE) return -1;
     if (o2 == NullUsage.INSTANCE) return 1;
-    if (o1 instanceof Comparable && o2 instanceof Comparable && o1.getClass() == o2.getClass()) {
-      //noinspection unchecked
-      int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
-      if (selfcompared != 0) return selfcompared;
-
-      if (o1 instanceof UsageInFile && o2 instanceof UsageInFile) {
-        UsageInFile u1 = (UsageInFile)o1;
-        UsageInFile u2 = (UsageInFile)o2;
-
-        VirtualFile f1 = u1.getFile();
-        VirtualFile f2 = u2.getFile();
-
-        if (f1 != null && f1.isValid() && f2 != null && f2.isValid()) {
-          return f1.getPresentableUrl().compareTo(f2.getPresentableUrl());
-        }
-      }
-
-      return 0;
+    if (o1 instanceof UsageInfo2UsageAdapter && o2 instanceof UsageInfo2UsageAdapter) {
+      return ((UsageInfo2UsageAdapter)o1).compareTo((UsageInfo2UsageAdapter)o2);
     }
     return o1.toString().compareTo(o2.toString());
   };
@@ -242,7 +226,7 @@ public class UsageViewImpl implements UsageViewEx {
         setExcludeNodes(nodes, true, false);
       }
 
-      // include the parent if its all children (except the "node" itself) excluded flags are "almostAllChildrenExcluded"
+      // include the parent if all its children (except the "node" itself) excluded flags are "almostAllChildrenExcluded"
       private void collectParentNodes(@NotNull DefaultMutableTreeNode node,
                                       boolean almostAllChildrenExcluded,
                                       @NotNull Set<? super Node> nodes) {
@@ -426,7 +410,7 @@ public class UsageViewImpl implements UsageViewEx {
   };
 
   /**
-   * Type of a change that occurs in the GroupNode.myChildren
+   * Type of change that occurs in the GroupNode.myChildren
    * and has to be applied to the swing children list
    */
   enum NodeChangeType {
@@ -676,7 +660,7 @@ public class UsageViewImpl implements UsageViewEx {
 
     JScrollPane treePane = ScrollPaneFactory.createScrollPane(myTree);
     // add reaction to scrolling:
-    // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect
+    // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect,
     // and we need to recalculate them when the node scrolled into the visible rectangle
     treePane.getViewport().addChangeListener(__ -> clearRendererCache());
     myPreviewSplitter = new OnePixelSplitter(false, 0.5f, 0.1f, 0.9f);
@@ -1314,7 +1298,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  protected void addUpdateRequest(@NotNull Runnable request) {
+  private void addUpdateRequest(@NotNull Runnable request) {
     updateRequests.execute(request);
   }
 
@@ -1350,7 +1334,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   public UsageNode doAppendUsage(@NotNull Usage usage) {
     assert !ApplicationManager.getApplication().isDispatchThread();
-    // invoke in ReadAction to be be sure that usages are not invalidated while the tree is being built
+    // invoke in ReadAction to be sure that usages are not invalidated while the tree is being built
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!usage.isValid()) {
       // because the view is built incrementally, the usage may be already invalid, so need to filter such cases
@@ -2012,7 +1996,7 @@ public class UsageViewImpl implements UsageViewEx {
       else if (USAGES_KEY.is(dataId) && !hasSelectedNodes()) {
         return Usage.EMPTY_ARRAY;
       }
-      else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId) && !hasSelectedNodes()) {
+      else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId) && !hasSelectedNodes()) {
         return PsiElement.EMPTY_ARRAY;
       }
       else if (USAGE_TARGETS_KEY.is(dataId)) {
@@ -2043,7 +2027,7 @@ public class UsageViewImpl implements UsageViewEx {
       return selectedUsages(selectedNodes)
         .toArray(n -> n == 0 ? Usage.EMPTY_ARRAY : new Usage[n]);
     }
-    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       return selectedUsages(selectedNodes)
         .filter(usage -> usage instanceof PsiElementUsage)
         .map(usage -> ((PsiElementUsage)usage).getElement())
@@ -2262,7 +2246,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   /**
    * The element the "find usages" action was invoked on.
-   * E.g. if the "find usages" was invoked on the reference "getName(2)" pointing to the method "getName()" then the origin usage is this reference.
+   * E.g., if the "find usages" was invoked on the reference "getName(2)" pointing to the method "getName()" then the origin usage is this reference.
    *
    * @deprecated store origin usage elsewhere
    */
