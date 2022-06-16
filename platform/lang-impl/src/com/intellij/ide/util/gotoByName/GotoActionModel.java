@@ -3,7 +3,6 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.BundleBase;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
@@ -364,17 +363,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
                               @NotNull List<ActionGroup> path,
                               boolean showNonPopupGroups) {
     if (actionGroups.containsKey(group)) return;
-
-    List<? extends AnAction> actions = ReadAction.nonBlocking(() -> {
-      try {
-        return myUpdateSession.children(group);
-      }
-      catch (PluginException e) {
-        LOG.error(e);
-        return Collections.<AnAction>emptyList();
-      }
-    })
-      .executeSynchronously();
+    AnAction[] actions = group instanceof DefaultActionGroup ?
+                         group.getChildren(null, ActionManager.getInstance()) : AnAction.EMPTY_ARRAY;
 
     boolean hasRegisteredChild = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
     if (!hasRegisteredChild) {
