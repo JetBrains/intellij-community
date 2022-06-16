@@ -31,6 +31,7 @@ import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 import java.awt.BorderLayout
+import javax.swing.JComponent
 import kotlin.properties.Delegates
 
 internal class GHPRToolWindowTabControllerImpl(private val project: Project,
@@ -233,7 +234,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                           private val wrapper: Wrapper,
                                           private val parentDisposable: Disposable) : GHPRToolWindowTabComponentController {
 
-    private val listComponent by lazy { GHPRListComponentFactory(project, dataContext, parentDisposable).create() }
+    private val listComponent by lazy { createListPanel() }
     private val createComponentHolder = ClearableLazyValue.create {
       GHPRCreateComponentHolder(ActionManager.getInstance(), project, projectSettings, repositoryManager, dataContext, this,
                                 parentDisposable)
@@ -316,5 +317,9 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
 
     override fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean) =
       dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
+
+    private fun createListPanel(): JComponent {
+      return GHPRListComponentFactory(project, dataContext, parentDisposable).create()
+    }
   }
 }
