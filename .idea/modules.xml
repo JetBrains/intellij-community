@@ -20,7 +20,6 @@
     <module old-name="android-annotations" new-name="android.sdktools.android-annotations" />
     <module old-name="android-common" new-name="intellij.android.common" />
     <module old-name="android-gradle-jps" new-name="intellij.android.gradle.jps" />
-    <module old-name="android-gradle-jps" new-name="intellij.android.gradle.jps" />
     <module old-name="android-jps-plugin" new-name="intellij.android.jpsBuildPlugin.jps" />
     <module old-name="android-plugin" new-name="intellij.android.plugin" />
     <module old-name="android-test-framework" new-name="intellij.android.testFramework" />

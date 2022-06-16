@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.high-level-api-fe10" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-fe10-for-ide:1.7.20-dev-1829" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-fe10-for-ide:1.7.20-dev-2106" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fe10-for-ide/1.7.20-dev-1829/high-level-api-fe10-for-ide-1.7.20-dev-1829.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fe10-for-ide/1.7.20-dev-2106/high-level-api-fe10-for-ide-1.7.20-dev-2106.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fe10-for-ide/1.7.20-dev-1829/high-level-api-fe10-for-ide-1.7.20-dev-1829-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fe10-for-ide/1.7.20-dev-2106/high-level-api-fe10-for-ide-1.7.20-dev-2106-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
