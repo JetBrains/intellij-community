@@ -21,11 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionConsumer;
-import org.jetbrains.plugins.groovy.lang.completion.impl.AccumulatingGroovyCompletionConsumer;
+import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionCustomizer;
 import org.jetbrains.plugins.groovy.lang.completion.impl.FastGroovyCompletionConsumer;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
@@ -515,10 +514,12 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
   private static GroovyCompletionConsumer getCompletionConsumer(CompletionResultSet resultSet, CompletionParameters completionParameters) {
     PsiFile file = completionParameters.getOriginalFile();
-    if (file instanceof GroovyFileBase && ((GroovyFileBase)file).isScript()) {
-      return new AccumulatingGroovyCompletionConsumer(resultSet);
-    } else {
-      return new FastGroovyCompletionConsumer(resultSet);
+    for (GroovyCompletionCustomizer customizer : GroovyCompletionContributor.EP_NAME.getExtensionList()) {
+      GroovyCompletionConsumer consumer = customizer.generateCompletionConsumer(file, resultSet);
+      if (consumer != null) {
+        return consumer;
+      }
     }
+    return new FastGroovyCompletionConsumer(resultSet);
   }
 }

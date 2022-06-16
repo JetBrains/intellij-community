@@ -3,13 +3,18 @@ package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.parentOfType
 import icons.GradleIcons
+import org.jetbrains.plugins.gradle.service.completion.GradleLookupWeigher
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleConfiguration
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
@@ -44,9 +49,16 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
         addParameter("dependencyNotation", objectVarargType)
         setBaseIcon(GradleIcons.Gradle)
         putUserData(NonCodeMembersHolder.DOCUMENTATION, configuration.getDescription())
+        if (worthLifting(place)) {
+          GradleLookupWeigher.setGradleCompletionPriority(this, 10)
+        }
       }
       if (!processor.execute(method, state)) return
     }
+  }
+
+  private fun worthLifting(place: PsiElement): Boolean {
+    return place.parentOfType<GrFunctionalExpression>()?.ownerType?.resolve() is GroovyScriptClass
   }
 
   private fun GradleConfiguration.getDescription(): String? {

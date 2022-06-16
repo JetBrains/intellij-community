@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * Intended for sorting completion elements, avoid the troubles with "frozen" completion results
+ * Intended for sorting completion elements, avoids the troubles with "frozen" completion results
  */
 public class AccumulatingGroovyCompletionConsumer implements GroovyCompletionConsumer {
 

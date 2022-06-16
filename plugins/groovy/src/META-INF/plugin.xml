@@ -112,6 +112,9 @@
     <extensionPoint name="customAnnotationChecker" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.annotator.checkers.CustomAnnotationChecker"/>
 
+    <extensionPoint name="completionCustomizer" dynamic="true"
+                    interface="org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionCustomizer"/>
+
     <extensionPoint name="convertToJava.customMethodInvocator" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.CustomMethodInvocator"/>
 
