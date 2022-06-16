@@ -3,6 +3,7 @@ package org.jetbrains.plugins.javaFX.wizard
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.shared.*
@@ -15,7 +16,7 @@ import org.jetbrains.plugins.javaFX.JavaFXBundle
 import javax.swing.Icon
 
 internal class JavaFxModuleBuilder : StarterModuleBuilder() {
-  override fun getBuilderId(): String = "javafx"
+  override fun getBuilderId(): String = Generators.JAVAFX
   override fun getNodeIcon(): Icon = AllIcons.Nodes.Module
   override fun getPresentableName(): String = JavaFXBundle.JAVA_FX
   override fun getDescription(): String = JavaFXBundle.message("javafx.module.builder.description")

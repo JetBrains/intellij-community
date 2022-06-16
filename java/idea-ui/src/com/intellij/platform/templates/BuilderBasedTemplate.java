@@ -33,6 +33,11 @@ public class BuilderBasedTemplate implements ProjectTemplate {
     myBuilder = builder;
   }
 
+  @Override
+  public String getId() {
+    return myBuilder.getBuilderId();
+  }
+
   @NotNull
   @Override
   public String getName() {

@@ -22,6 +22,8 @@ import org.jetbrains.plugins.groovy.config.wizard.GroovyProjectWizardUtils;
 
 import javax.swing.*;
 
+import static com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators;
+
 /**
  * @author peter
  */
@@ -70,7 +72,7 @@ public final class GroovyAwareModuleBuilder extends JavaModuleBuilder {
 
   @Override
   public @NonNls String getBuilderId() {
-    return "groovy";
+    return Generators.GROOVY;
   }
 
   public void addGroovySample(@NotNull String path) {

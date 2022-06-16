@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.projectView.actions.MarkRootActionBase
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.shared.*
@@ -40,7 +41,7 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
 
   private val PLUGIN_TYPE_KEY: Key<PluginType> = Key.create("ide.plugin.type")
 
-  override fun getBuilderId(): String = "idea-plugin"
+  override fun getBuilderId(): String = Generators.IDEA_PLUGIN
   override fun getPresentableName(): String = DevKitBundle.message("module.builder.title")
   override fun getWeight(): Int = IJ_PLUGIN_WEIGHT
   override fun getNodeIcon(): Icon = AllIcons.Nodes.Plugin

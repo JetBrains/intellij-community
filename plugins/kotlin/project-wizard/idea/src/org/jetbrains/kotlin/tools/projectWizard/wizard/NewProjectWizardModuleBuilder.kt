@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.NewProjectAction
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators
 import com.intellij.ide.util.projectWizard.*
 import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
@@ -75,7 +76,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     }
 
     companion object {
-        const val MODULE_BUILDER_ID = "kotlin.newProjectWizard.builder"
+        const val MODULE_BUILDER_ID = Generators.KOTLIN_MPP
         private val projectNameValidator = StringValidators.shouldBeValidIdentifier("Project name", setOf('-', '_'))
         private val INVALID_PROJECT_NAME_MESSAGE
             @NlsContexts.DialogTitle

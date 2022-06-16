@@ -1,10 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.wizard
 
-import com.intellij.ide.projectWizard.NewProjectWizardCollector
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logGeneratorFinished
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.Companion.NPW_PREFIX
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
@@ -23,7 +24,7 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
   protected abstract fun createStep(context: WizardContext): NewProjectWizardStep
 
   final override fun getModuleType() =
-    object : ModuleType<AbstractNewProjectWizardBuilder>("newWizard.${this::class.java.name}") {
+    object : ModuleType<AbstractNewProjectWizardBuilder>(NPW_PREFIX + javaClass.simpleName) {
       override fun createModuleBuilder() = this@AbstractNewProjectWizardBuilder
       override fun getName() = this@AbstractNewProjectWizardBuilder.presentableName
       override fun getDescription() = this@AbstractNewProjectWizardBuilder.description
@@ -40,7 +41,7 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
     val step = panel!!.step
     return detectCreatedModule(project) {
       step.setupProject(project)
-      NewProjectWizardCollector.logGeneratorFinished(step.context, this::class.java)
+      step.context.logGeneratorFinished()
     }
   }
 

@@ -27,6 +27,8 @@ import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators;
+
 
 public class CloudModuleBuilder extends JavaModuleBuilder {
 
@@ -60,7 +62,7 @@ public class CloudModuleBuilder extends JavaModuleBuilder {
 
   @Override
   public @NonNls String getBuilderId() {
-    return getClass().getName();
+    return Generators.CLOUD;
   }
 
   @Override

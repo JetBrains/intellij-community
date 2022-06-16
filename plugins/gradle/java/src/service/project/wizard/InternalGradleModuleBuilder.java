@@ -12,8 +12,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators;
+
 @ApiStatus.Internal
 public final class InternalGradleModuleBuilder extends AbstractGradleModuleBuilder {
+
+  @Override
+  public String getBuilderId() {
+    return Generators.LEGACY_GRADLE;
+  }
+
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     return new ModuleWizardStep[]{new GradleStructureWizardStep(this, wizardContext)};

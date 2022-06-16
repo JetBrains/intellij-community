@@ -7,6 +7,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.OTHER
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.BuildSystemNewProjectWizardData
+import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.Companion.NPW_PREFIX
 import com.intellij.ide.wizard.LanguageNewProjectWizardData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -24,25 +25,25 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
     // @formatter:off
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 9)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 10)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = EventFields.Int("screen")
     private val typedCharsField = IntEventField("typed_chars")
     private val hitsField = IntEventField("hits")
-    private val generatorTypeField = ClassEventField("generator")
-    private val languageField = BoundedStringEventField("language", *NewProjectWizardConstants.Language.ALL)
+    private val generatorTypeField = BoundedStringEventField.enum("generator", *NewProjectWizardConstants.Generators.ALL)
+    private val languageField = BoundedStringEventField.lowercase("language", *NewProjectWizardConstants.Language.ALL)
     private val gitField = EventFields.Boolean("git")
     private val isSucceededField = EventFields.Boolean("project_created")
     private val inputMaskField = EventFields.Long("input_mask")
     private val addSampleCodeField = EventFields.Boolean("add_sample_code")
-    private val buildSystemField = BoundedStringEventField("build_system", *NewProjectWizardConstants.BuildSystem.ALL)
-    private val buildSystemDslField = BoundedStringEventField("build_system_dsl", *NewProjectWizardConstants.Language.ALL_DSL)
+    private val buildSystemField = BoundedStringEventField.lowercase("build_system", *NewProjectWizardConstants.BuildSystem.ALL)
+    private val buildSystemDslField = BoundedStringEventField.lowercase("build_system_dsl", *NewProjectWizardConstants.Language.ALL_DSL)
     private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
     private val buildSystemParentField = EventFields.Boolean("build_system_parent")
     private val groovyVersionField = EventFields.Version
-    private val groovySourceTypeField = BoundedStringEventField("groovy_sdk_type", "maven", "local")
-    private val pluginField = BoundedStringEventField("plugin_selected", *NewProjectWizardConstants.Language.ALL)
+    private val groovySourceTypeField = BoundedStringEventField.lowercase("groovy_sdk_type", "maven", "local")
+    private val pluginField = BoundedStringEventField.lowercase("plugin_selected", *NewProjectWizardConstants.Language.ALL)
 
     //events
     private val open = GROUP.registerVarargEvent("wizard.dialog.open", sessionIdField, screenNumField)
@@ -51,7 +52,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val prev = GROUP.registerVarargEvent("navigate.prev", sessionIdField, screenNumField, inputMaskField)
     private val projectCreated = GROUP.registerVarargEvent("project.created", screenNumField)
     private val search = GROUP.registerVarargEvent("search", sessionIdField, screenNumField, typedCharsField, hitsField)
-    private val generator = GROUP.registerVarargEvent("generator.selected", sessionIdField, screenNumField, generatorTypeField)
+    private val generatorSelected = GROUP.registerVarargEvent("generator.selected", sessionIdField, screenNumField, generatorTypeField)
     private val location = GROUP.registerVarargEvent("project.location.changed", sessionIdField, screenNumField, generatorTypeField)
     private val name = GROUP.registerVarargEvent("project.name.changed", sessionIdField, screenNumField, generatorTypeField)
     private val languageSelected = GROUP.registerVarargEvent("select.language", sessionIdField, screenNumField, languageField)
@@ -85,11 +86,11 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     @JvmStatic fun logOpen(context: WizardContext) = open.log(context.project,sessionIdField with context.sessionId.id, screenNumField with context.screen)
     @JvmStatic fun logFinish(context: WizardContext, success: Boolean, duration: Long) = finish.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, isSucceededField with success, EventFields.DurationMs with duration)
     @JvmStatic fun logSearchChanged(context: WizardContext, chars: Int, results: Int) = search.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, typedCharsField with min(chars, 10), hitsField with results)
-    @JvmStatic fun logLocationChanged(context: WizardContext, generator: Class<*>) = location.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
-    @JvmStatic fun logNameChanged(context: WizardContext, generator: Class<*>) = name.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
+    @JvmStatic fun logLocationChanged(context: WizardContext, generator: String) = location.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
+    @JvmStatic fun logNameChanged(context: WizardContext, generator: String) = name.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
     @JvmStatic fun logLanguageChanged(context: WizardContext, language: String) = languageSelected.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, languageField with language)
     @JvmStatic fun logGitChanged(context: WizardContext) = gitChanged.log(context.project,screenNumField with context.screen)
-    @JvmStatic fun logGeneratorSelected(context: WizardContext, title: Class<*>) = generator.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with title)
+    @JvmStatic fun logGeneratorSelected(context: WizardContext, generator: String) = generatorSelected.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
     @JvmStatic fun logCustomTemplateSelected(context: WizardContext) = templateSelected.log(context.project,screenNumField with context.screen)
     @JvmStatic fun logNext(context: WizardContext, inputMask: Long = -1) = next.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, inputMaskField with inputMask)
     @JvmStatic fun logPrev(context: WizardContext, inputMask: Long = -1) = prev.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, inputMaskField with inputMask)
@@ -99,21 +100,23 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     @JvmStatic fun logProjectCreated(project: Project?, context: WizardContext) = projectCreated.log(project,screenNumField with context.screen)
     @JvmStatic fun logLanguageFinished(context: WizardContext, language: String) = languageFinished.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, languageField with language)
     @JvmStatic fun logGitFinished(context: WizardContext, git: Boolean) = gitFinish.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, gitField with git)
-    @JvmStatic fun logGeneratorFinished(context: WizardContext, generator: Class<*>) = generatorFinished.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
+    @JvmStatic fun logGeneratorFinished(context: WizardContext, generator: String) = generatorFinished.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
     @JvmStatic fun logAddPlugin(context: WizardContext) = addPlugin.log(context.project,screenNumField with context.screen)
     @JvmStatic fun logPluginSelected(context: WizardContext, plugin: String) = pluginSelected.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, pluginField with plugin)
 
-    fun NewProjectWizardStep.logNameChanged() = logNameChanged(context, generator)
-    fun NewProjectWizardStep.logLocationChanged() = logLocationChanged(context, generator)
+    fun NewProjectWizardStep.logNameChanged() = logNameChanged(context, context.generator)
+    fun NewProjectWizardStep.logLocationChanged() = logLocationChanged(context, context.generator)
     fun NewProjectWizardStep.logLanguageChanged() = logLanguageChanged(context, language)
+    fun WizardContext.logGeneratorSelected() = logGeneratorSelected(this, generator)
+    fun WizardContext.logGeneratorFinished() = logGeneratorFinished(this, generator)
     // @formatter:on
 
     private val Sdk.featureVersion: Int?
       get() = JavaVersion.tryParse(versionString)?.feature
 
-    private val NewProjectWizardStep.generator: Class<*>
-      get() = context.projectBuilder?.let { it::class.java }
-              ?: ModuleBuilder::class.java
+    private val WizardContext.generator: String
+      get() = (projectBuilder as? ModuleBuilder)?.builderId?.removePrefix(NPW_PREFIX)
+              ?: OTHER
 
     private val NewProjectWizardStep.language: String
       get() = (this as? LanguageNewProjectWizardData)?.language
@@ -175,22 +178,38 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
   }
 
   object Groovy {
+    // @formatter:off
     fun logGroovyLibraryChanged(context: WizardContext, groovyLibrarySource: String, groovyLibraryVersion: String?) = groovyLibraryChanged.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, groovySourceTypeField with groovyLibrarySource, groovyVersionField with groovyLibraryVersion)
     fun logGroovyLibraryFinished(context: WizardContext, groovyLibrarySource: String, groovyLibraryVersion: String?) = groovyLibraryFinished.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, groovySourceTypeField with groovyLibrarySource, groovyVersionField with groovyLibraryVersion)
+    // @formatter:on
   }
 
-  private class BoundedStringEventField(name: String, vararg allowedValues: String) : StringEventField(name) {
+  private class BoundedStringEventField private constructor(
+    name: String,
+    allowedValues: List<String>,
+    private val transform: (String) -> String
+  ) : StringEventField(name) {
 
-    private val myAllowedValues = allowedValues.map { it.lowercase() }
+    private val myAllowedValues = (allowedValues + OTHER).map(transform)
 
     override fun addData(fuData: FeatureUsageData, value: String?) {
-      var boundedValue = value?.lowercase() ?: return
+      var boundedValue = value?.let(transform) ?: return
       if (boundedValue !in myAllowedValues) {
         boundedValue = OTHER
       }
       super.addData(fuData, boundedValue)
     }
 
-    override val validationRule = EventFields.String(name, myAllowedValues + OTHER).validationRule
+    override val validationRule = EventFields.String(name, myAllowedValues).validationRule
+
+    companion object {
+      fun lowercase(name: String, vararg allowedValues: String): BoundedStringEventField {
+        return BoundedStringEventField(name, allowedValues.toList(), String::lowercase)
+      }
+
+      fun enum(name: String, vararg allowedValues: String): BoundedStringEventField {
+        return BoundedStringEventField(name, allowedValues.toList()) { it }
+      }
+    }
   }
 }

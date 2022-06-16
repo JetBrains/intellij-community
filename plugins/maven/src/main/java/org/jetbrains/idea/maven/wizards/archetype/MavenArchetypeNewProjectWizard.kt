@@ -7,6 +7,7 @@ import com.intellij.execution.util.setVisibleRowCount
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
@@ -65,7 +66,7 @@ import javax.swing.Icon
 import javax.swing.JList
 
 class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
-  override val id: String = javaClass.name
+  override val id: String = Generators.MAVEN_ARCHETYPE
 
   override val name: String = MavenWizardBundle.message("maven.new.project.wizard.archetype.generator.name")
 
