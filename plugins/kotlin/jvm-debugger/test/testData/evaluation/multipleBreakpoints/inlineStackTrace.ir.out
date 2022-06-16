@@ -104,13 +104,13 @@ KotlinStackFrameWithProvidedVariables (inlineStackTrace.kt:73)
 inlineStackTrace.kt:99
 Compile bytecode for w2
 InlineStackFrame lambda 'with' in 'fun8' (inlineStackTrace.kt:99)
-    JavaValue[local] this (@fun8_u24lambda_u2d1): java.lang.String = A
+    JavaValue[local] this (@fun8_u24lambda_u241): java.lang.String = A
     JavaValue[local] this: java.lang.String = B
     JavaValue[local] x8: int = 1 (inlineStackTrace.kt:85)
     JavaValue[local] w1: int = 1 (inlineStackTrace.kt:90)
     JavaValue[local] w2: int = 1 (inlineStackTrace.kt:95)
 InlineStackFrame lambda 'with' in 'fun8' (inlineStackTrace.kt:94)
-    JavaValue[local] this (@fun8_u24lambda_u2d1): java.lang.String = A
+    JavaValue[local] this (@fun8_u24lambda_u241): java.lang.String = A
     JavaValue[local] this: java.lang.String = B
     JavaValue[local] x8: int = 1 (inlineStackTrace.kt:85)
     JavaValue[local] w1: int = 1 (inlineStackTrace.kt:90)
@@ -126,13 +126,13 @@ Compile bytecode for x9
 InlineStackFrame fun9 (inlineStackTrace.kt:109)
     JavaValue[local] x9: int = 1 (inlineStackTrace.kt:105)
 InlineStackFrame lambda 'with' in 'fun8' (inlineStackTrace.kt:99)
-    JavaValue[local] this (@fun8_u24lambda_u2d1): java.lang.String = A
+    JavaValue[local] this (@fun8_u24lambda_u241): java.lang.String = A
     JavaValue[local] this: java.lang.String = B
     JavaValue[local] x8: int = 1
     JavaValue[local] w1: int = 1
     JavaValue[local] w2: int = 1
 InlineStackFrame lambda 'with' in 'fun8' (inlineStackTrace.kt:94)
-    JavaValue[local] this (@fun8_u24lambda_u2d1): java.lang.String = A
+    JavaValue[local] this (@fun8_u24lambda_u241): java.lang.String = A
     JavaValue[local] this: java.lang.String = B
     JavaValue[local] x8: int = 1
     JavaValue[local] w1: int = 1
