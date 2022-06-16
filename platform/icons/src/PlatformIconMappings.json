@@ -1,5 +1,10 @@
 {
   "expui": {
+    "bookmarks": {
+      "addBookmarksList.svg": "actions/addList.svg",
+      "bookmark.svg": "nodes/bookmark.svg",
+      "bookmarksList.svg": "nodes/bookmarkGroup.svg"
+    },
     "breakpoints": {
       "breakpoint.svg": "debugger/db_set_breakpoint.svg",
       "breakpointDependent.svg": "debugger/db_dep_line_breakpoint.svg",
@@ -276,6 +281,7 @@
       "projectStructure.svg": "general/projectStructure.svg"
     },
     "gutter": {
+      "bookmark.svg": "gutter/bookmark.svg",
       "colors.svg": "gutter/colors.svg",
       "extAnnotation.svg": "gutter/extAnnotation.svg",
       "javadocEdit.svg": "gutter/javadocEdit.svg",
@@ -407,6 +413,7 @@
       "generatedSource.svg": "modules/generatedSourceRoot.svg",
       "generatedTestRoot.svg": "modules/generatedTestRoot.svg",
       "interface.svg": "nodes/interface.svg",
+      "jdk.svg": "nodes/ppJdk.svg",
       "lambda.svg": "nodes/lambda.svg",
       "library.svg": "nodes/ppLib.svg",
       "libraryFolder.svg": "nodes/ppLibFolder.svg",
