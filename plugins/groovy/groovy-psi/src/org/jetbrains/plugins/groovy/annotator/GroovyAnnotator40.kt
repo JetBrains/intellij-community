@@ -208,13 +208,15 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
       if (this in permittedClasses) {
         continue
       }
+      val message = GroovyBundle.message("inspection.message.not.allowed.in.sealed.hierarchy", ownerType.className)
+      val problemDescriptor = InspectionManager.getInstance(project).createProblemDescriptor(element, element, message, ProblemHighlightType.ERROR, true)
       holder
         .newAnnotation(HighlightSeverity.ERROR,
-                       GroovyBundle.message("inspection.message.not.allowed.in.sealed.hierarchy", ownerType.className))
+                       message)
         .range(element)
         .apply {
           if (baseClass.hasModifierProperty(GrModifier.SEALED)) {
-            baseClass.permitsClause?.let { withFix(AddToPermitsList(this@checkPermissions, it)) }
+            baseClass.permitsClause?.let { newLocalQuickFix(AddToPermitsList(name ?: "", element.text), problemDescriptor).range(element.textRange).registerFix() }
           }
         }
         .create()

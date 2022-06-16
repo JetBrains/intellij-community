@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -11,7 +11,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.AddToImplementsList
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.util.SealedHelper.inferReferencedClass
 import org.jetbrains.plugins.groovy.lang.psi.util.getAllPermittedClassElements
@@ -44,9 +43,9 @@ class GrPermitsClauseInspection : BaseInspection() {
             GroovyBundle.message("inspection.message.invalid.permits.clause.must.directly.extend", subClass.name, baseClass.name),
             arrayOf<LocalQuickFix>(
               if (targetReferenceList is GrExtendsClause)
-                AddToExtendsList(baseClass, targetReferenceList)
+                AddToExtendsList(baseClass.name ?: "", element.text)
               else
-                AddToImplementsList(baseClass, targetReferenceList as GrImplementsClause)),
+                AddToImplementsList(baseClass.name ?: "", element.text)),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         }
       }
