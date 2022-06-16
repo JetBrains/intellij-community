@@ -1,25 +1,30 @@
 package com.intellij.ide.starter.bus
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 /**
  * @author https://github.com/Kosert/FlowBus
  * @license Apache 2.0 https://github.com/Kosert/FlowBus/blob/master/LICENSE
  *
- * This class holds all state flows and handles event posting.
- * You can use [GlobalBus] that is just plain instance of this class or create your own implementation.
+ * This class holds all shared flows and handles event posting.
+ * You can use [StarterBus] that is just plain instance of this class or create your own implementation.
  */
 open class FlowBus {
 
-  private val flows = mutableMapOf<Class<*>, MutableStateFlow<*>>()
+  private val flows = mutableMapOf<Class<*>, MutableSharedFlow<*>>()
 
   /**
-   * Gets a MutableStateFlow for events of the given type. Creates new if one doesn't exist.
-   * @return MutableStateFlow for events that are instances of clazz
+   * Gets a MutableSharedFlow for events of the given type. Creates new if one doesn't exist.
+   * @return MutableSharedFlow for events that are instances of clazz
    */
-  internal fun <T : Any> forEvent(clazz: Class<T>): MutableStateFlow<T?> {
-    return flows.getOrPut(clazz) { MutableStateFlow<T?>(null) } as MutableStateFlow<T?>
+  internal fun <T : Any> forEvent(clazz: Class<T>): MutableSharedFlow<T?> {
+    return flows.getOrPut(clazz) {
+      MutableSharedFlow<T?>(extraBufferCapacity = 5000)
+    } as MutableSharedFlow<T?>
   }
 
   /**
@@ -33,35 +38,28 @@ open class FlowBus {
    * @see [SharedFlow]
    */
   fun <T : Any> getFlow(clazz: Class<T>): Flow<T> {
-    return forEvent(clazz).asStateFlow().filterNotNull()
+    return forEvent(clazz).filterNotNull()
   }
 
   /**
-   * Posts new event to StateFlow of the [event] type.
+   * Posts new event to SharedFlow of the [event] type.
    * @param retain If the [event] should be retained in the flow for future subscribers. This is true by default.
    */
   @JvmOverloads
   fun <T : Any> post(event: T, retain: Boolean = true) {
     val flow = forEvent(event.javaClass)
+
     flow.tryEmit(event).also {
       if (!it)
-        throw IllegalStateException("StateFlow cannot take element, this should never happen")
+        throw IllegalStateException("SharedFlow cannot take element, this should never happen")
     }
     if (!retain) {
       // without starting a coroutine here, the event is dropped immediately
       // and not delivered to subscribers
-      CoroutineScope(Job() + Dispatchers.Unconfined).launch {
+      CoroutineScope(Job() + Dispatchers.Default).launch {
         dropEvent(event.javaClass)
       }
     }
-  }
-
-  /**
-   * Returns last posted event that was instance of [clazz] or `null` if no event of the given type is retained.
-   * @return Retained event that is instance of [clazz]
-   */
-  fun <T : Any> getLastEvent(clazz: Class<T>): T? {
-    return flows.getOrElse(clazz) { null }?.value as T?
   }
 
   /**
@@ -69,7 +67,7 @@ open class FlowBus {
    */
   fun <T> dropEvent(clazz: Class<T>) {
     if (!flows.contains(clazz)) return
-    val channel = flows[clazz] as MutableStateFlow<T?>
+    val channel = flows[clazz] as MutableSharedFlow<T?>
     channel.tryEmit(null)
   }
 
@@ -78,7 +76,7 @@ open class FlowBus {
    */
   fun dropAll() {
     flows.values.forEach {
-      (it as MutableStateFlow<Any?>).tryEmit(null)
+      (it as MutableSharedFlow<Any?>).tryEmit(null)
     }
   }
 }

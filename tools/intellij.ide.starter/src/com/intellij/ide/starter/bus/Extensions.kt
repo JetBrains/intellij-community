@@ -11,11 +11,6 @@ package com.intellij.ide.starter.bus
 inline fun <reified T : Any> FlowBus.dropEvent() = dropEvent(T::class.java)
 
 /**
- * @see FlowBus.getLastEvent
- */
-inline fun <reified T : Any> FlowBus.getLastEvent(): T? = getLastEvent(T::class.java)
-
-/**
  * @see FlowBus.getFlow
  */
 inline fun <reified T : Any> FlowBus.getFlow() = getFlow(T::class.java)

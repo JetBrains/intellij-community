@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.io.path.*
 import kotlin.time.Duration
 
-fun formatArtifactName(artifactType: String, testName: String): String{
+fun formatArtifactName(artifactType: String, testName: String): String {
   val testNameFormatted = testName.replace("/", "-").replace(" ", "")
   val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
   return "$artifactType-$testNameFormatted-$time"
@@ -35,7 +35,7 @@ inline fun catchAll(action: () -> Unit) {
     action()
   }
   catch (t: Throwable) {
-    logOutput("CatchAll swallowed error: ${t.message}")
+    logError("CatchAll swallowed error: ${t.message}")
     logError(getThrowableText(t))
   }
 }
@@ -135,7 +135,7 @@ fun String.withIndent(indent: String = "  "): String = lineSequence().map { "$in
 private fun quoteArg(arg: String): String {
 
   val specials = " #'\"\n\r\t\u000c"
-  if(!specials.any { arg.contains(it) }){
+  if (!specials.any { arg.contains(it) }) {
     return arg
   }
 

@@ -1,6 +1,9 @@
 package com.intellij.ide.starter.tests.unit
 
-import com.intellij.ide.starter.bus.*
+import com.intellij.ide.starter.bus.Signal
+import com.intellij.ide.starter.bus.StarterBus
+import com.intellij.ide.starter.bus.StarterListener
+import com.intellij.ide.starter.bus.subscribe
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
@@ -13,7 +16,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 
 class EventBusTest {
-  private val receiver = EventsReceiver()
   private var isEventHappened: AtomicBoolean = AtomicBoolean(false)
 
   private fun checkIsEventFired(shouldEventBeFired: Boolean, isEventFiredGetter: () -> Boolean) {
@@ -22,7 +24,7 @@ class EventBusTest {
     withClue("Event should $shouldNotMessage be fired") {
       runBlocking {
         try {
-          withTimeout(timeout = Duration.seconds(5)) {
+          withTimeout(timeout = Duration.seconds(10)) {
             while (shouldEventBeFired != isEventFiredGetter()) {
               delay(Duration.milliseconds(500))
             }
@@ -43,19 +45,19 @@ class EventBusTest {
 
   @After
   fun afterEach() {
-    receiver.unsubscribe()
+    StarterListener.unsubscribe()
   }
 
   @Test
   fun filteringEventsByTypeIsWorking() {
-    receiver.subscribe { event: Int ->
+    StarterListener.subscribe { event: Signal ->
       isEventHappened.set(true)
     }
 
-    EventBus.post(Signal<EventBusTest>(EventTimelineState.READY))
+    StarterBus.post(2)
     checkIsEventFired(false) { isEventHappened.get() }
 
-    EventBus.post(2)
+    StarterBus.post(Signal())
     checkIsEventFired(true) { isEventHappened.get() }
   }
 }

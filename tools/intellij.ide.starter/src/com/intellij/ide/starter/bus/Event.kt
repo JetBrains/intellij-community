@@ -1,3 +1,6 @@
 package com.intellij.ide.starter.bus
 
-class Event<T>
+open class Event<T>(
+  state: EventState = EventState.UNDEFINED,
+  val data: T
+) : Signal(state)

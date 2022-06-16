@@ -1,5 +1,7 @@
 package com.intellij.ide.starter.runner
 
+import com.intellij.ide.starter.bus.EventState
+import com.intellij.ide.starter.bus.StarterBus
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.exec.ExecOutputRedirect
 import com.intellij.ide.starter.exec.ExecTimeoutException
@@ -90,6 +92,8 @@ data class IDERunContext(
 
   // TODO: refactor this
   private fun prepareToRunIDE(): IDEStartResult {
+    StarterBus.post(IdeLaunchEvent(EventState.BEFORE, this))
+
     deleteSavedAppStateOnMac()
     val paths = testContext.paths
     val logsDir = paths.logsDir.createDirectories()
@@ -266,37 +270,42 @@ data class IDERunContext(
     }
     finally {
 
-      if (SystemInfo.isWindows) {
-        destroyGradleDaemonProcessIfExists()
-      }
-
-      listOf(heapDumpOnOomDirectory, jvmCrashLogDirectory).filter { dir ->
-        dir.listDirectoryEntries().isEmpty()
-      }.forEach { it.toFile().deleteRecursively() }
-
-      ErrorReporter.reportErrorsAsFailedTests(logsDir / "script-errors", contextName)
-      val (artifactPath, artifactName) = if (successfulRun) contextName to "logs" else "run/$contextName" to "crash"
-      testContext.publishArtifact(logsDir, artifactPath, formatArtifactName(artifactName, testContext.testName))
-      val snapshotFiles = Files.list(testContext.paths.snapshotsDir).use { it.filter { it.isRegularFile() }.toList() }
-      if (snapshotFiles.isNotEmpty()) {
-        testContext.publishArtifact(testContext.paths.snapshotsDir, contextName, formatArtifactName("snapshots", testContext.testName))
-      }
-      if (codeBuilder != null) {
-        host.tearDown(testContext)
-      }
-
-      val closeContext = object : IDERunCloseContext {
-        override val wasRunSuccessful: Boolean = successfulRun
-      }
-
-      closeHandlers.forEach {
-        try {
-          it.invoke(closeContext)
+      try {
+        if (SystemInfo.isWindows) {
+          destroyGradleDaemonProcessIfExists()
         }
-        catch (t: Throwable) {
-          logOutput("Failed to complete close step. ${t.message}.\n" + t)
-          t.printStackTrace(System.err)
+
+        listOf(heapDumpOnOomDirectory, jvmCrashLogDirectory).filter { dir ->
+          dir.listDirectoryEntries().isEmpty()
+        }.forEach { it.toFile().deleteRecursively() }
+
+        ErrorReporter.reportErrorsAsFailedTests(logsDir / "script-errors", contextName)
+        val (artifactPath, artifactName) = if (successfulRun) contextName to "logs" else "run/$contextName" to "crash"
+        testContext.publishArtifact(logsDir, artifactPath, formatArtifactName(artifactName, testContext.testName))
+        val snapshotFiles = Files.list(testContext.paths.snapshotsDir).use { it.filter { it.isRegularFile() }.toList() }
+        if (snapshotFiles.isNotEmpty()) {
+          testContext.publishArtifact(testContext.paths.snapshotsDir, contextName, formatArtifactName("snapshots", testContext.testName))
         }
+        if (codeBuilder != null) {
+          host.tearDown(testContext)
+        }
+
+        val closeContext = object : IDERunCloseContext {
+          override val wasRunSuccessful: Boolean = successfulRun
+        }
+
+        closeHandlers.forEach {
+          try {
+            it.invoke(closeContext)
+          }
+          catch (t: Throwable) {
+            logOutput("Failed to complete close step. ${t.message}.\n" + t)
+            t.printStackTrace(System.err)
+          }
+        }
+      }
+      finally {
+        StarterBus.post(IdeLaunchEvent(EventState.AFTER, this))
       }
     }
   }
