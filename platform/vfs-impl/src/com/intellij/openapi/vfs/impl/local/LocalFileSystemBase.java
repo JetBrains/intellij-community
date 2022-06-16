@@ -47,7 +47,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     ExtensionPointName.create("com.intellij.vfs.local.pluggableContentLoader");
 
   @ApiStatus.Internal
-  public static final ExtensionPointName<LocalFileOperationsHandler> FILE_OPERATIONS_HANDLER_EP_NAME =
+  private static final ExtensionPointName<LocalFileOperationsHandler> FILE_OPERATIONS_HANDLER_EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.fileOperationsHandler");
 
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
@@ -133,7 +133,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return VfsImplUtil.refreshAndFindFileByPath(this, path);
   }
 
-  protected static @NotNull String toIoPath(@NotNull VirtualFile file) {
+  private static @NotNull String toIoPath(@NotNull VirtualFile file) {
     String path = file.getPath();
     if (path.length() == 2 && SystemInfo.isWindows && OSAgnosticPathUtil.startsWithWindowsDrive(path)) {
       // makes 'C:' resolve to a root directory of the drive C:, not the current directory on that drive
@@ -151,7 +151,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return file.getFileSystem() == this ? Paths.get(toIoPath(file)) : null;
   }
 
-  protected static @NotNull File convertToIOFileAndCheck(@NotNull VirtualFile file) throws FileNotFoundException {
+  private static @NotNull File convertToIOFileAndCheck(@NotNull VirtualFile file) throws FileNotFoundException {
     File ioFile = convertToIOFile(file);
 
     if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening fifo files
@@ -407,7 +407,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         throw new IOException(IdeCoreBundle.message("new.file.failed.error", ioFile.getPath()));
       }
       else if (existing != null) {
-        // wow, IO created file successfully although it already existed in VFS. Maybe we got dir case sensitivity wrong?
+        // wow, IO created file successfully even though it already existed in VFS. Maybe we got dir case sensitivity wrong?
         boolean oldCaseSensitive = parent.isCaseSensitive();
         FileAttributes.CaseSensitivity actualSensitivity = FileSystemUtil.readParentCaseSensitivity(new File(existing.getPath()));
         if ((actualSensitivity == FileAttributes.CaseSensitivity.SENSITIVE) != oldCaseSensitive) {
@@ -703,10 +703,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
 
       // linux & mac support symbolic links
-      // unfortunately canonical file resolves sym links
+      // unfortunately canonical file resolves symlinks
       // so its name may differ from name of origin file
       //
-      // Here FS is case sensitive, so let's check that original and
+      // Here FS is case-sensitive, so let's check that original and
       // canonical file names are equal if we ignore name case
       if (canonicalFileName.compareToIgnoreCase(originalFileName) == 0) {
         // p.s. this should cover most cases related to not symbolic links
@@ -747,8 +747,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    String path = file.getPath();
-    if (SystemInfo.isWindows && file.getParent() == null && path.startsWith("//")) {
+    if (SystemInfo.isWindows && file.getParent() == null && file.getPath().startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // UNC roots
     }
     return myAttrGetter.accessDiskWithCheckCanceled(file);
