@@ -11,8 +11,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -92,21 +90,15 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
       inputEvent == null ? modifiers : inputEvent.getModifiers());
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      if (action instanceof ActionGroup && !event.getPresentation().isPerformGroup()) {
-        ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-          event.getPresentation().getText(), (ActionGroup)action, context,
-          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, null, -1, null, ActionPlaces.ACTION_SEARCH_INDUCED_POPUP);
-        Window window = SwingUtilities.getWindowAncestor(component);
+      Window window = SwingUtilities.getWindowAncestor(component);
+      ActionUtil.doPerformActionOrShowPopup(action, event, popup -> {
         if (window != null) {
           popup.showInCenterOf(window);
         }
         else {
           popup.showInFocusCenter();
         }
-      }
-      else {
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-      }
+      });
     }
   }
 

@@ -55,7 +55,6 @@ public abstract class ActionPlaces {
 
   public static final String SCOPE_VIEW_POPUP = "ScopeViewPopup";
   public static final String ACTION_SEARCH = "GoToAction";
-  public static final String ACTION_SEARCH_INDUCED_POPUP = "GoToActionInducedPopup";
 
   public static final String TESTTREE_VIEW_POPUP = "TestTreeViewPopup";
   public static final String TESTTREE_VIEW_TOOLBAR = "TestTreeViewToolbar";
@@ -192,7 +191,8 @@ public abstract class ActionPlaces {
 
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place) ||
-           ACTION_SEARCH_INDUCED_POPUP.equals(place) || MAIN_MENU_IN_POPUP.equals(place);
+           MAIN_MENU_IN_POPUP.equals(place) ||
+           place != null && place.startsWith(POPUP_PREFIX) && isMainMenuOrActionSearch(place.substring(POPUP_PREFIX.length()));
   }
 
   public static boolean isShortcutPlace(String place) {
@@ -232,7 +232,7 @@ public abstract class ActionPlaces {
     EDITOR_ANNOTATIONS_AREA_POPUP,
     RUN_ANYTHING_POPUP, RUN_TOOLBAR_LEFT_SIDE,
     VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE, VCS_TOOLBAR_WIDGET,
-    ACTION_SEARCH_INDUCED_POPUP, MAIN_MENU_IN_POPUP, PROJECT_WIDGET_POPUP
+    MAIN_MENU_IN_POPUP, PROJECT_WIDGET_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";
