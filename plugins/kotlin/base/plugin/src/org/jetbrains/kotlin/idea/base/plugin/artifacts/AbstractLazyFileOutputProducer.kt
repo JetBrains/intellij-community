@@ -13,7 +13,7 @@ private const val BUFFER_SIZE = 512 * 1024
 
 /**
  * - Re-calculates output when one of the inputs changes
- * - Re-calculates input when one of the outputs changes
+ * - Re-calculates output when one of the outputs changes
  * - Supports "Invalidate caches"
  */
 internal abstract class AbstractLazyFileOutputProducer<I : Any, C>(uniquePipelineId: String) : LazyFileOutputProducer<I, C> {
