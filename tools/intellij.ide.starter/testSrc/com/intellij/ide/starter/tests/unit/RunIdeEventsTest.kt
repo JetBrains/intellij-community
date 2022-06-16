@@ -18,6 +18,7 @@ import io.kotest.inspectors.shouldForAtLeastOne
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.junit.Ignore
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
@@ -41,6 +42,7 @@ class RunIdeEventsTest {
   @Mock
   private lateinit var ide: InstalledIDE
 
+  @Ignore("Rewrite the test to be more stable")
   @Test
   fun eventsForIdeLaunchShouldBeFired() {
     val testName = object {}.javaClass.enclosingMethod.name.hyphenateTestName()
