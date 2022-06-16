@@ -932,12 +932,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public boolean contains(int fileId) {
-      return ((CompactVirtualFileSet)getFiles()).containsId(fileId);
+      return ((VirtualFileSetEx)getFiles()).containsId(fileId);
     }
 
     @Override
     public int @NotNull [] asArray() {
-      return ((CompactVirtualFileSet)getFiles()).onlyInternalFileIds();
+      return ((VirtualFileSetEx)getFiles()).onlyInternalFileIds();
     }
   }
 

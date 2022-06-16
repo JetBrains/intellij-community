@@ -6,10 +6,7 @@ import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -845,14 +842,15 @@ public class VfsUtilCore {
     return file;
   }
 
+  private static final NotNullLazyValue<VirtualFileSetFactory> VIRTUAL_FILE_SET_FACTORY =
+    NotNullLazyValue.lazy(VirtualFileSetFactory::getInstance);
+
   @NotNull
   public static VirtualFileSet createCompactVirtualFileSet() {
-    //noinspection deprecation
-    return new CompactVirtualFileSet();
+    return VIRTUAL_FILE_SET_FACTORY.getValue().createCompactVirtualFileSet();
   }
   @NotNull
   public static VirtualFileSet createCompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {
-    //noinspection deprecation
-    return new CompactVirtualFileSet(files);
+    return VIRTUAL_FILE_SET_FACTORY.getValue().createCompactVirtualFileSet(files);
   }
 }
