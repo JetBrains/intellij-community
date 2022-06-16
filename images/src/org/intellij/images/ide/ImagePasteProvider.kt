@@ -2,6 +2,7 @@
 package org.intellij.images.ide
 
 import com.intellij.ide.PasteProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runWriteAction
@@ -23,6 +24,7 @@ import javax.imageio.ImageIO
  * NOTE: If registered as `filePasteProvider` handles paste operations in project view.
  */
 open class ImagePasteProvider : PasteProvider {
+  final override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   final override fun isPastePossible(dataContext: DataContext): Boolean = true
   final override fun isPasteEnabled(dataContext: DataContext): Boolean =
     CopyPasteManager.getInstance().areDataFlavorsAvailable(imageFlavor)

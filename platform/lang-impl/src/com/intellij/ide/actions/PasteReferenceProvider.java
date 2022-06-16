@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +25,11 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.Transferable;
 
 public class PasteReferenceProvider implements PasteProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void performPaste(@NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);

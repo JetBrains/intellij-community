@@ -452,6 +452,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   protected final class MyPanel extends JPanel implements DataProvider {
     final PasteProvider myPasteProvider = new PasteProvider() {
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
       public void performPaste(@NotNull DataContext dataContext) {
         if (myPathTextField != null) {
           String path = calculatePath();
