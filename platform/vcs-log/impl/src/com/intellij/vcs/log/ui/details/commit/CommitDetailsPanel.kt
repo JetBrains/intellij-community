@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
@@ -65,7 +64,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     isOpaque = false
 
     val mainPanel = JPanel(null).apply {
-      layout = VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false)
+      layout = MigLayout(LC().flowY())
       isOpaque = false
 
       val metadataPanel = BorderLayoutPanel().apply {
@@ -75,11 +74,12 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
         addToCenter(hashAndAuthorPanel)
       }
 
-      add(messagePanel)
-      add(metadataPanel)
-      add(branchesPanel)
-      add(tagsPanel)
-      add(containingBranchesPanel)
+      val componentLayout = CC().minWidth("0").grow().push()
+      add(messagePanel, componentLayout)
+      add(metadataPanel, componentLayout)
+      add(branchesPanel, componentLayout)
+      add(tagsPanel, componentLayout)
+      add(containingBranchesPanel, componentLayout)
     }
 
     add(mainPanel, CC().grow().push())
@@ -232,7 +232,8 @@ private class ContainingBranchesPanel : HtmlPanel() {
 
   override fun getBody(): String {
     val insets = insets
-    val text = getBranchesText(branches, expanded, width - insets.left - insets.right, getFontMetrics(bodyFont))
+    val availableWidth = width - insets.left - insets.right
+    val text = getBranchesText(branches, expanded, availableWidth, getFontMetrics(bodyFont))
     return if (expanded) text else HtmlChunk.raw(text).wrapWith("nobr").toString()
   }
 
