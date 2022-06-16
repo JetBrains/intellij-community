@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
+import org.jetbrains.kotlin.j2k.getContainingClass
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.symbols.*
@@ -175,11 +176,29 @@ class JavaToJKTreeBuilder constructor(
                     qualifier?.referenceName?.let { JKLabelText(JKNameIdentifier(it)) } ?: JKLabelEmpty(),
                     type.toJK()
                 )
-            is PsiSuperExpression ->
-                JKSuperExpression(
-                    qualifier?.referenceName?.let { JKLabelText(JKNameIdentifier(it)) } ?: JKLabelEmpty(),
-                    type.toJK()
-                )
+
+            is PsiSuperExpression -> {
+                val qualifyingType = qualifier?.resolve() as? PsiClass
+                if (qualifyingType == null) {
+                    // Case 0: plain "super.foo()" call
+                    JKSuperExpression(type.toJK())
+                } else {
+                    // Java's qualified super call syntax "A.super.foo()" is represented by two different cases in Kotlin.
+                    // See https://kotlinlang.org/docs/inheritance.html#calling-the-superclass-implementation
+                    val isQualifiedSuperTypeCall = getContainingClass()?.supers?.contains(qualifyingType) == true
+                    var superTypeQualifier: JKClassSymbol? = null
+                    var outerTypeQualifier: JKLabel = JKLabelEmpty()
+                    if (isQualifiedSuperTypeCall) {
+                        // Case 1: "super<A>.foo()" for accessing the superclass of the current class
+                        superTypeQualifier = symbolProvider.provideDirectSymbol(qualifyingType) as? JKClassSymbol
+                    } else {
+                        // Case 2: "super@A.foo()" for accessing the superclass of the outer class
+                        outerTypeQualifier = qualifier?.referenceName?.let { JKLabelText(JKNameIdentifier(it)) } ?: outerTypeQualifier
+                    }
+                    JKSuperExpression(type.toJK(), superTypeQualifier, outerTypeQualifier)
+                }
+            }
+
             is PsiConditionalExpression -> JKIfElseExpression(
                 condition.toJK(),
                 thenExpression.toJK(),
@@ -345,7 +364,7 @@ class JavaToJKTreeBuilder constructor(
             return when {
                 methodExpression.referenceNameElement is PsiKeyword -> {
                     val callee = when ((methodExpression.referenceNameElement as PsiKeyword).tokenType) {
-                        SUPER_KEYWORD -> JKSuperExpression(JKLabelEmpty(), JKNoType)
+                        SUPER_KEYWORD -> JKSuperExpression()
                         THIS_KEYWORD -> JKThisExpression(JKLabelEmpty(), JKNoType)
                         else -> createErrorExpression("unknown keyword in callee position")
                     }

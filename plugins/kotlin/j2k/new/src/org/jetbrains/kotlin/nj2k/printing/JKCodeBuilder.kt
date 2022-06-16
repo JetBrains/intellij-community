@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.printing
 
 import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
 import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
@@ -393,7 +394,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitTypeParameterListRaw(typeParameterList: JKTypeParameterList) {
             if (typeParameterList.typeParameters.isNotEmpty()) {
-                printer.par(JKPrinterBase.ParenthesisKind.ANGLE) {
+                printer.par(ParenthesisKind.ANGLE) {
                     printer.renderList(typeParameterList.typeParameters) {
                         it.accept(this)
                     }
@@ -426,7 +427,13 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitSuperExpressionRaw(superExpression: JKSuperExpression) {
             printer.print("super")
-            superExpression.qualifierLabel.accept(this)
+            if (superExpression.superTypeQualifier != null) {
+                printer.par(ParenthesisKind.ANGLE) {
+                    printer.renderSymbol(superExpression.superTypeQualifier, superExpression)
+                }
+            } else {
+                superExpression.outerTypeQualifier.accept(this)
+            }
         }
 
         override fun visitContinueStatementRaw(continueStatement: JKContinueStatement) {
@@ -492,7 +499,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitTypeArgumentListRaw(typeArgumentList: JKTypeArgumentList) {
             if (typeArgumentList.typeArguments.isNotEmpty()) {
-                printer.par(JKPrinterBase.ParenthesisKind.ANGLE) {
+                printer.par(ParenthesisKind.ANGLE) {
                     printer.renderList(typeArgumentList.typeArguments) {
                         it.accept(this)
                     }
@@ -568,7 +575,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             printer.renderSymbol(newExpression.classSymbol, newExpression)
             newExpression.typeArgumentList.accept(this)
             if (!newExpression.classSymbol.isInterface() || newExpression.arguments.arguments.isNotEmpty()) {
-                printer.par(JKPrinterBase.ParenthesisKind.ROUND) {
+                printer.par(ParenthesisKind.ROUND) {
                     newExpression.arguments.accept(this)
                 }
             }
@@ -670,7 +677,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         private fun renderParameterList(parameters: List<JKParameter>) {
-            printer.par(JKPrinterBase.ParenthesisKind.ROUND) {
+            printer.par(ParenthesisKind.ROUND) {
                 printer.renderList(parameters) {
                     it.accept(this)
                 }
@@ -707,7 +714,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitLambdaExpressionRaw(lambdaExpression: JKLambdaExpression) {
             val printLambda = {
-                printer.par(JKPrinterBase.ParenthesisKind.CURVED) {
+                printer.par(ParenthesisKind.CURVED) {
                     if (lambdaExpression.statement.statements.size > 1)
                         printer.println()
                     printer.renderList(lambdaExpression.parameters) {
@@ -731,7 +738,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             if (lambdaExpression.functionalType.present()) {
                 printer.renderType(lambdaExpression.functionalType.type, lambdaExpression)
                 printer.print(" ")
-                printer.par(JKPrinterBase.ParenthesisKind.ROUND, printLambda)
+                printer.par(ParenthesisKind.ROUND, printLambda)
             } else {
                 printLambda()
             }

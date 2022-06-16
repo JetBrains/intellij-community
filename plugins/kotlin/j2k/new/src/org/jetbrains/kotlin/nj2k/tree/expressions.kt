@@ -1,15 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.tree
+
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiSwitchExpression
 import org.jetbrains.kotlin.nj2k.symbols.*
-
-
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
-import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.nj2k.types.JKContextType
+import org.jetbrains.kotlin.nj2k.types.JKNoType
+import org.jetbrains.kotlin.nj2k.types.JKType
+import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 
 abstract class JKExpression : JKAnnotationMemberValue(), PsiOwner by PsiOwnerImpl() {
     protected abstract val expressionType: JKType?
@@ -130,10 +132,11 @@ class JKThisExpression(
 }
 
 class JKSuperExpression(
-    qualifierLabel: JKLabel,
-    override val expressionType: JKType? = null,
+    override val expressionType: JKType = JKNoType,
+    val superTypeQualifier: JKClassSymbol? = null,
+    outerTypeQualifier: JKLabel = JKLabelEmpty(),
 ) : JKExpression() {
-    var qualifierLabel: JKLabel by child(qualifierLabel)
+    var outerTypeQualifier: JKLabel by child(outerTypeQualifier)
     override fun accept(visitor: JKVisitor) = visitor.visitSuperExpression(this)
 }
 

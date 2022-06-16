@@ -4873,11 +4873,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("classAdotSuperFoo.java")
-        public void testClassAdotSuperFoo() throws Exception {
-            runTest("testData/newJ2k/superExpression/classAdotSuperFoo.java");
-        }
-
         @TestMetadata("classAextendsB.java")
         public void testClassAextendsB() throws Exception {
             runTest("testData/newJ2k/superExpression/classAextendsB.java");
@@ -4888,9 +4883,24 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/superExpression/kotlinSuperClassWithImplicitConstructor.java");
         }
 
+        @TestMetadata("outerTypeQualifier.java")
+        public void testOuterTypeQualifier() throws Exception {
+            runTest("testData/newJ2k/superExpression/outerTypeQualifier.java");
+        }
+
         @TestMetadata("superStatement.java")
         public void testSuperStatement() throws Exception {
             runTest("testData/newJ2k/superExpression/superStatement.java");
+        }
+
+        @TestMetadata("superTypeQualifier.java")
+        public void testSuperTypeQualifier() throws Exception {
+            runTest("testData/newJ2k/superExpression/superTypeQualifier.java");
+        }
+
+        @TestMetadata("superTypeQualifier2.java")
+        public void testSuperTypeQualifier2() throws Exception {
+            runTest("testData/newJ2k/superExpression/superTypeQualifier2.java");
         }
     }
 
