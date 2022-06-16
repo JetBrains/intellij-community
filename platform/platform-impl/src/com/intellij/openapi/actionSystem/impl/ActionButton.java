@@ -65,7 +65,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   private boolean myNoIconsInPopup;
   private Insets myInsets;
-  private boolean myManualUpdate;
 
   public ActionButton(@NotNull AnAction action,
                       Presentation presentation,
@@ -231,9 +230,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (!(myAction instanceof ActionGroup)) return false;
     if (myAction instanceof CustomComponentAction) return false;
     if (!event.getPresentation().isPopupGroup()) return false;
-    // do not call potentially slow `canBePerformed` for a button managed by a toolbar
-    if (event.getPresentation().isPerformGroup() ||
-        myManualUpdate && ((ActionGroup)myAction).canBePerformed(event.getDataContext())) return false;
+    if (event.getPresentation().isPerformGroup()) return false;
     return true;
   }
 
@@ -271,7 +268,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void update() {
-    myManualUpdate = true;
     // the following code mirrors the ActionUpdater#updateActionReal code
     boolean wasPopup = myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup();
     myPresentation.setPopupGroup(myAction instanceof ActionGroup && (myPresentation.isPopupGroup() || wasPopup));

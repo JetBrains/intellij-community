@@ -83,7 +83,7 @@ public abstract class ActionGroup extends AnAction {
   }
 
   /**
-   * This method can be called in popup menus if {@link #canBePerformed(DataContext)} is {@code true}.
+   * This method can be called in popup menus if {@link Presentation#isPerformGroup()} is {@code true}.
    */
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -93,7 +93,7 @@ public abstract class ActionGroup extends AnAction {
    * @return {@code true} if {@link #actionPerformed(AnActionEvent)} should be called.
    * @deprecated Use {@link Presentation#isPerformGroup()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean canBePerformed(@NotNull DataContext context) {
     return false;
   }
