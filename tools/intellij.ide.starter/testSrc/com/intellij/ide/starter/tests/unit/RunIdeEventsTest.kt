@@ -14,8 +14,10 @@ import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.hyphenateTestName
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
+import io.kotest.common.runBlocking
 import io.kotest.inspectors.shouldForAtLeastOne
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.delay
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
@@ -24,6 +26,7 @@ import org.kodein.di.instance
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import java.nio.file.Path
+import kotlin.time.Duration
 
 
 @ExtendWith(MockitoExtension::class)
@@ -59,6 +62,8 @@ class RunIdeEventsTest {
     catchAll {
       context.runIDE(commands = CommandChain())
     }
+
+    runBlocking { delay(Duration.seconds(3)) }
 
     assertSoftly {
       withClue("During IDE run should be fired 2 events: before ide start and after ide finished") {
