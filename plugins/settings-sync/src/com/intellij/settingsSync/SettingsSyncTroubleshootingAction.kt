@@ -42,7 +42,7 @@ import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null && isSettingsSyncEnabledByKey()
+    e.presentation.isEnabledAndVisible = isSettingsSyncEnabledByKey()
   }
 
   override fun actionPerformed(e: AnActionEvent) {
