@@ -229,7 +229,7 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
 
     moveFileInCommand(child, parent2)
-    undo()
+    undoFileMove()
     Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
     val childPath = File(parent1.path, "child")
     assertExists(childPath)
@@ -243,7 +243,7 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
 
     renameFileInCommand(file, "b.txt")
-    undo()
+    undoFileRename()
     assertExists(File(myWorkingCopyDir.path, "a.txt"))
     assertDoesntExist(File(myWorkingCopyDir.path, "b.txt"))
   }
@@ -255,7 +255,7 @@ class SvnRenameTest : SvnTestCase() {
 
     renameFileInCommand(file, "b.txt")
     checkin()
-    undo()
+    undoFileRename()
     runAndVerifyStatus(
       "A + a.txt", "> moved from b.txt",
       "D b.txt", "> moved to a.txt"
@@ -275,7 +275,7 @@ class SvnRenameTest : SvnTestCase() {
     moveFileInCommand(child, parent2)
     checkin()
 
-    undo()
+    undoFileMove()
     Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
     runAndVerifyStatus(
       "A + parent1/child", "> moved from parent2/child",
@@ -313,7 +313,7 @@ class SvnRenameTest : SvnTestCase() {
     moveFileInCommand(child, unversioned)
     runAndVerifyStatusSorted("? unversioned", "D child", "D child/a.txt")
 
-    undo()
+    undoFileMove()
     Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
     runAndVerifyStatusSorted("? unversioned")
   }
@@ -326,7 +326,7 @@ class SvnRenameTest : SvnTestCase() {
     val unversioned = createDirInCommand(myWorkingCopyDir, "unversioned")
     moveFileInCommand(file, unversioned)
     runAndVerifyStatusSorted("? unversioned")
-    undo()
+    undoFileMove()
     Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", file.isValid)
     runAndVerifyStatusSorted("? a.txt", "? unversioned")
   }
@@ -339,7 +339,7 @@ class SvnRenameTest : SvnTestCase() {
     val unversioned = createDirInCommand(myWorkingCopyDir, "unversioned")
     moveFileInCommand(file, unversioned)
     runAndVerifyStatusSorted("? unversioned")
-    undo()
+    undoFileMove()
     Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", file.isValid)
     runAndVerifyStatusSorted("? a.txt", "? unversioned")
   }
@@ -359,7 +359,7 @@ class SvnRenameTest : SvnTestCase() {
     runAndVerifyStatusSorted("? unversioned", "D child", "D child/a.txt")
     checkin()
 
-    undo()
+    undoFileMove()
     Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
     runAndVerifyStatusSorted("? child", "? unversioned")
   }
@@ -375,7 +375,7 @@ class SvnRenameTest : SvnTestCase() {
     runAndVerifyStatusSorted("A child/a.txt")
     moveFileInCommand(file, sink)
     runAndVerifyStatusSorted("A sink/a.txt")
-    undo()
+    undoFileMove()
     Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", file.isValid)
     runAndVerifyStatusSorted("A child/a.txt")
   }
