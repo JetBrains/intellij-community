@@ -90,13 +90,13 @@ class LibraryLicensesListGenerator(private val libraryLicenses: List<LibraryLice
         "<span class=\"name\">${lib.presentableName}</span>"
       }
       else {
-        "<a id=\"${libKey}_lib_url\" class=\"name\" href=\"$lib.url\">${lib.presentableName}</a>"
+        "<a id=\"${libKey}_lib_url\" class=\"name\" href=\"${lib.url}\">${lib.presentableName}</a>"
       }
       val license = if (lib.getLibraryLicenseUrl() != null) {
-        "<a id=\"${libKey}_license_url\" class=\"licence\" href=\"$lib.libraryLicenseUrl\">$lib.license</a>"
+        "<a id=\"${libKey}_license_url\" class=\"licence\" href=\"${lib.getLibraryLicenseUrl()}\">${lib.license}</a>"
       }
       else {
-        "<span class=\"licence\">$lib.license</span>"
+        "<span class=\"licence\">${lib.license}</span>"
       }
       out.append('\n')
       out.append(generateHtmlLine(name = name, libVersion = lib.version ?: "", license = license))
