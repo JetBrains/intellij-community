@@ -9,17 +9,20 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
+import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -319,7 +322,32 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
 
     private fun createListPanel(): JComponent {
-      return GHPRListComponentFactory(project, dataContext, parentDisposable).create()
+      val listLoader = dataContext.listLoader
+      val listModel = CollectionListModel(listLoader.loadedData)
+      listLoader.addDataListener(parentDisposable, object : GHListLoader.ListDataListener {
+        override fun onDataAdded(startIdx: Int) {
+          val loadedData = listLoader.loadedData
+          listModel.add(loadedData.subList(startIdx, loadedData.size))
+        }
+
+        override fun onDataUpdated(idx: Int) = listModel.setElementAt(listLoader.loadedData[idx], idx)
+        override fun onDataRemoved(data: Any) {
+          (data as? GHPullRequestShort)?.let { listModel.remove(it) }
+        }
+
+        override fun onAllDataRemoved() = listModel.removeAll()
+      })
+
+      val list = GHPRListComponentFactory(listModel).create(dataContext.avatarIconsProvider)
+
+      return GHPRListPanelFactory(project,
+                                  dataContext.repositoryDataService,
+                                  dataContext.listLoader,
+                                  dataContext.searchHolder,
+                                  dataContext.listUpdatesChecker,
+                                  dataContext.securityService.account,
+                                  parentDisposable)
+        .create(list)
     }
   }
 }
