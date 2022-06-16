@@ -198,7 +198,11 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       }
     };
 
-    myProjectTypeList.getSelectionModel().addListSelectionListener(__ -> projectTypeChanged());
+    myProjectTypeList.getSelectionModel().addListSelectionListener(it -> {
+      if (!it.getValueIsAdjusting()) {
+        projectTypeChanged();
+      }
+    });
 
     myTemplatesList.addListSelectionListener(__ -> updateSelection());
 
