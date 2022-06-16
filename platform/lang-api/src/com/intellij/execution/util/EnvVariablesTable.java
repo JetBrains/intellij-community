@@ -173,10 +173,16 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   }
 
   private final class CopyPasteProviderPanel extends JPanel implements DataProvider, CopyProvider, PasteProvider {
-    private CopyPasteProviderPanel(JComponent component) {
+    CopyPasteProviderPanel(JComponent component) {
       super(new GridLayout(1, 1));
       add(component);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Nullable
     @Override
     public Object getData(@NotNull String dataId) {

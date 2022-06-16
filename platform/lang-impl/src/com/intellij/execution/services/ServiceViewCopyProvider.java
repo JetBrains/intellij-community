@@ -3,6 +3,7 @@ package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -19,6 +20,11 @@ class ServiceViewCopyProvider implements CopyProvider {
 
   ServiceViewCopyProvider(@NotNull ServiceView serviceView) {
     myServiceView = serviceView;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

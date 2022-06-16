@@ -164,6 +164,11 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return new CopyProvider() {
         @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
+        }
+
+        @Override
         public void performCopy(@NotNull final DataContext dataContext) {
           final PsiElement[] selectedPsiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
           if (selectedPsiElements != null) {
