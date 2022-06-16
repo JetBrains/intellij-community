@@ -163,7 +163,6 @@ final class TeamCityBuildMessageLogger extends BuildMessageLogger {
       case '[': return '[' as char
       case ']': return ']' as char
     }
-
     return 0
   }
 

@@ -50,6 +50,7 @@ final class WinExeInstallerBuilder {
 
     Files.createDirectories(targetFilePath.parent)
     Files.copy(silentConfigTemplate, targetFilePath)
+    
     List<String> extensionsList = getFileAssociations()
     String associations = "\n\n; List of associations. To create an association change value to 1.\n"
     if (extensionsList.isEmpty()) {

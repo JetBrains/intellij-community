@@ -67,6 +67,7 @@ final class MacDmgBuilder {
     else {
       buildAndSignWithMacBuilderHost(sitFile, jreArchivePath, macHostProperties, notarize, customizer, context)
     }
+    
     if (jreArchivePath != null && Files.exists(sitFile)) {
       context.bundledRuntime.checkExecutablePermissions(sitFile, zipRoot, OsFamily.MACOS)
     }

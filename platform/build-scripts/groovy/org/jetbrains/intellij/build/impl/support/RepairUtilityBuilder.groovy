@@ -59,7 +59,7 @@ final class RepairUtilityBuilder {
     }
   }
 
-  public static synchronized void bundle(BuildContext context, OsFamily os, JvmArchitecture arch, Path distributionDir) {
+  static synchronized void bundle(BuildContext context, OsFamily os, JvmArchitecture arch, Path distributionDir) {
     BuildContextKt.executeStep(context, spanBuilder("bundle repair-utility")
                                .setAttribute("os", os.osName), BuildOptions.REPAIR_UTILITY_BUNDLE_STEP, new Function0<Unit>() {
       @Override
