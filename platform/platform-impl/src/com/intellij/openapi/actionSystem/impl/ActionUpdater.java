@@ -178,7 +178,7 @@ final class ActionUpdater {
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
     }
-    if (updateThread == ActionUpdateThread.BGT) {
+    if (isEDT || !shallEDT) {
       long start = System.nanoTime();
       try (AccessToken ignored = ProhibitAWTEvents.start(operationName)) {
         return call.get();
@@ -186,7 +186,7 @@ final class ActionUpdater {
       finally {
         long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 1000) {
-          LOG.warn(elapsedReport(elapsed, EDT.isCurrentThreadEdt(), operationName));
+          LOG.warn(elapsedReport(elapsed, isEDT, operationName));
         }
       }
     }
