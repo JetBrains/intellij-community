@@ -1930,6 +1930,11 @@ public class UsageViewImpl implements UsageViewEx {
         }
       };
       myCopyProvider = new TextCopyProvider() {
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
+
         @Nullable
         @Override
         public Collection<String> getTextLinesToCopy() {

@@ -585,6 +585,11 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     //noinspection unchecked
     return ((List<TreeNodeOnVcsRevision>)myDualView.getSelection()).size() > 0;

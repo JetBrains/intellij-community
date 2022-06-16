@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.repositories
 
 import com.intellij.ide.CopyProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -30,6 +31,8 @@ internal sealed class RepositoryTreeItem {
             PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> this
             else -> null
         }
+
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
         override fun performCopy(dataContext: DataContext) =
             CopyPasteManager.getInstance().setContents(StringSelection(getTextForCopy()))

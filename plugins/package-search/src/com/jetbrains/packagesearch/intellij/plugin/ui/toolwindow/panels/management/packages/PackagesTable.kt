@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.ide.CopyProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -314,6 +315,8 @@ internal class PackagesTable(
         PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> this
         else -> null
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun performCopy(dataContext: DataContext) {
         getSelectedTableItem()?.performCopy(dataContext)

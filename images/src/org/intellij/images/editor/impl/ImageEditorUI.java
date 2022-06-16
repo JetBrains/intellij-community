@@ -640,6 +640,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     return true;
   }

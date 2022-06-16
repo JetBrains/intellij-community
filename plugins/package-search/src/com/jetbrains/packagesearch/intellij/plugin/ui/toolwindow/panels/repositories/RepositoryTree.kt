@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.repositories
 
 import com.intellij.ide.CopyProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.EDT
@@ -126,6 +127,8 @@ internal class RepositoryTree(
             is DataProvider -> selectedItem.getData(dataId)
             else -> null
         }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun performCopy(dataContext: DataContext) {
         val selectedItem = getSelectedRepositoryItem()
