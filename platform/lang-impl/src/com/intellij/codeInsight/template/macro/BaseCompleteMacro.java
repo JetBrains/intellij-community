@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.macro;
 
@@ -57,8 +57,9 @@ public abstract class BaseCompleteMacro extends Macro {
     final Editor editor = context.getEditor();
 
     final PsiFile psiFile = editor != null ? PsiUtilBase.getPsiFileInEditor(editor, project) : null;
+    if (psiFile == null) return;
     Runnable runnable = () -> {
-      if (project.isDisposed() || editor == null || editor.isDisposed() || psiFile == null || !psiFile.isValid()) return;
+      if (project.isDisposed() || editor.isDisposed() || !psiFile.isValid()) return;
 
       // it's invokeLater, so another completion could have started
       if (CompletionServiceImpl.getCompletionService().getCurrentCompletion() != null) return;
