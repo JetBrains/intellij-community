@@ -251,7 +251,7 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
 
     moveFileInCommand(child, parent2)
-    undo()
+    undoFileMove()
     val childPath = File(parent1.path, "child")
     assertExists(childPath)
     assertExists(File(childPath, "a.txt"))
@@ -264,7 +264,7 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
 
     renameFileInCommand(file, "b.txt")
-    undo()
+    undoFileRename()
     assertExists(File(myWorkingCopyDir.path, "a.txt"))
     assertDoesntExist(File(myWorkingCopyDir.path, "b.txt"))
   }
@@ -276,7 +276,7 @@ class SvnRenameTest : SvnTestCase() {
 
     renameFileInCommand(file, "b.txt")
     checkin()
-    undo()
+    undoFileRename()
     runAndVerifyStatus(
       "A + a.txt", "> moved from b.txt",
       "D b.txt", "> moved to a.txt"
@@ -296,7 +296,7 @@ class SvnRenameTest : SvnTestCase() {
     moveFileInCommand(child, parent2)
     checkin()
 
-    undo()
+    undoFileMove()
     runAndVerifyStatus(
       "A + parent1/child", "> moved from parent2/child",
       "D parent2/child", "> moved to parent1/child",
@@ -333,7 +333,7 @@ class SvnRenameTest : SvnTestCase() {
     moveFileInCommand(child, unversioned)
     runAndVerifyStatusSorted("? unversioned", "D child", "D child/a.txt")
 
-    undo()
+    undoFileMove()
     runAndVerifyStatusSorted("? unversioned")
   }
 
@@ -345,7 +345,7 @@ class SvnRenameTest : SvnTestCase() {
     val unversioned = createDirInCommand(myWorkingCopyDir, "unversioned")
     moveFileInCommand(file, unversioned)
     runAndVerifyStatusSorted("? unversioned")
-    undo()
+    undoFileMove()
     runAndVerifyStatusSorted("? a.txt", "? unversioned")
   }
 
@@ -357,7 +357,7 @@ class SvnRenameTest : SvnTestCase() {
     val unversioned = createDirInCommand(myWorkingCopyDir, "unversioned")
     moveFileInCommand(file, unversioned)
     runAndVerifyStatusSorted("? unversioned")
-    undo()
+    undoFileMove()
     runAndVerifyStatusSorted("? a.txt", "? unversioned")
   }
 
@@ -376,7 +376,7 @@ class SvnRenameTest : SvnTestCase() {
     runAndVerifyStatusSorted("? unversioned", "D child", "D child/a.txt")
     checkin()
 
-    undo()
+    undoFileMove()
     runAndVerifyStatusSorted("? child", "? unversioned")
   }
 
@@ -391,7 +391,7 @@ class SvnRenameTest : SvnTestCase() {
     runAndVerifyStatusSorted("A child/a.txt")
     moveFileInCommand(file, sink)
     runAndVerifyStatusSorted("A sink/a.txt")
-    undo()
+    undoFileMove()
     runAndVerifyStatusSorted("A child/a.txt")
   }
 
