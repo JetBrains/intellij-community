@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -104,6 +105,8 @@ class IndexDiagnosticDumper : Disposable {
 
   private var isDisposed = false
 
+  private val unsavedIndexingHistories = ConcurrentCollectionFactory.createConcurrentIdentitySet<ProjectIndexingHistoryImpl>()
+
   fun onIndexingStarted(projectIndexingHistory: ProjectIndexingHistoryImpl) {
     runAllListenersSafely { onStartedIndexing(projectIndexingHistory) }
   }
@@ -117,6 +120,7 @@ class IndexDiagnosticDumper : Disposable {
         return
       }
       projectIndexingHistory.indexingFinished()
+      unsavedIndexingHistories.add(projectIndexingHistory)
       NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
     }
     finally {
@@ -144,6 +148,9 @@ class IndexDiagnosticDumper : Disposable {
 
   @Synchronized
   private fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistoryImpl) {
+    if (!unsavedIndexingHistories.remove(projectIndexingHistory)) {
+      return
+    }
     try {
       check(!isDisposed)
 
@@ -278,8 +285,11 @@ class IndexDiagnosticDumper : Disposable {
 
   @Synchronized
   override fun dispose() {
+    // it's important to save diagnostic, no matter how
+    for (unsavedIndexingHistory in unsavedIndexingHistories) {
+      dumpProjectIndexingHistoryToLogSubdirectory(unsavedIndexingHistory)
+    }
     // The synchronized block allows to wait for unfinished background dumpers.
     isDisposed = true
   }
-
 }
