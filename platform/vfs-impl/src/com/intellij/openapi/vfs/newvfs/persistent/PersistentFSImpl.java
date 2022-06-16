@@ -1341,14 +1341,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     VirtualFileSystemEntry root = myRoots.get(rootUrl);
     if (root != null) return root;
 
-    CharSequence rootName;
+    String rootName;
     String rootPath;
     FileAttributes attributes;
     if (fs instanceof ArchiveFileSystem) {
       ArchiveFileSystem afs = (ArchiveFileSystem)fs;
       VirtualFile localFile = afs.findLocalByRootPath(path);
       if (localFile == null) return null;
-      rootName = localFile.getNameSequence();
+      rootName = localFile.getName();
       rootPath = afs.getRootPathByLocal(localFile);
       rootUrl = UriUtil.trimTrailingSlashes(VirtualFileManager.constructUrl(fs.getProtocol(), rootPath));
       attributes = afs.getArchiveRootAttributes(new StubVirtualFile(fs) {
@@ -1379,7 +1379,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     int rootId = FSRecords.findRootRecord(rootUrl);
     FSRecords.loadRootData(rootId, path, fs);
 
-    int rootNameId = FileNameCache.storeName(rootName.toString());
+    int rootNameId = FileNameCache.storeName(rootName);
     boolean mark;
     VirtualFileSystemEntry newRoot;
     synchronized (myRoots) {

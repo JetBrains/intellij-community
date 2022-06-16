@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.DeprecationStripePanel;
@@ -558,17 +559,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   }
 
-  private void assertState(State... expected) {
+  private void assertState(@NotNull State @NotNull ... expected) {
     State state = myState.get();
-    List<State> expectedList = Arrays.asList(expected);
-    if (!expectedList.contains(state)) {
+    if (!ArrayUtil.contains(state, expected)) {
       List<Attachment> attachments = new ArrayList<>();
       if (myDumbEnterTrace != null) {
         attachments.add(new Attachment("indexingStart", myDumbEnterTrace));
       }
       attachments.add(new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
       throw new RuntimeExceptionWithAttachments("Internal error, please include thread dump attachment. " +
-                                                "Expected " + expectedList + ", but was " + state.toString(),
+                                                "Expected " + Arrays.asList(expected) + ", but was " + state.toString(),
                                                 attachments.toArray(Attachment.EMPTY_ARRAY));
     }
   }
