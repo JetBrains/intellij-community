@@ -64,7 +64,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     isOpaque = false
 
     val mainPanel = JPanel(null).apply {
-      layout = MigLayout(LC().flowY())
+      layout = MigLayout(LC().gridGap("0", "0").insets("0").fill().flowY())
       isOpaque = false
 
       val metadataPanel = BorderLayoutPanel().apply {
