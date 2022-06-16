@@ -79,7 +79,7 @@ final class ActionUpdater {
 
   private boolean myAllowPartialExpand = true;
   private boolean myPreCacheSlowDataKeys;
-  private boolean myForceAsync;
+  private ActionUpdateThread myForcedUpdateThread;
   private final Function<? super AnActionEvent, ? extends AnActionEvent> myEventTransform;
   private final Consumer<? super Runnable> myLaterInvocator;
   private final int myTestDelayMillis;
@@ -111,7 +111,7 @@ final class ActionUpdater {
     myEventTransform = eventTransform;
     myLaterInvocator = laterInvocator;
     myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
-    myForceAsync = Registry.is("actionSystem.update.actions.async.unsafe");
+    myForcedUpdateThread = Registry.is("actionSystem.update.actions.async.unsafe") ? ActionUpdateThread.BGT : null;
     myRealUpdateStrategy = new UpdateStrategy(
       action -> updateActionReal(action),
       group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(orDefault(group, myUpdatedPresentations.get(group))))));
@@ -162,20 +162,23 @@ final class ActionUpdater {
   }
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
-    ActionUpdateThread updateThread = action.getActionUpdateThread();
     String operationName = action.getClass().getSimpleName() + "#" + operation + " (" + action.getClass().getName() + ", " + myPlace + ")";
-    // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
-    boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
-    boolean shallAsync = myForceAsync || canAsync && updateThread == ActionUpdateThread.BGT;
+    return callAction(operationName, action.getActionUpdateThread(), call);
+  }
+
+  <T> T callAction(@NotNull String operationName, @NotNull ActionUpdateThread updateThreadOrig, @NotNull Supplier<? extends T> call) {
+    ActionUpdateThread updateThread = myForcedUpdateThread != null ? myForcedUpdateThread : updateThreadOrig;
+    boolean canAsync = Utils.isAsyncDataContext(myDataContext);
+    boolean shallAsync = updateThread == ActionUpdateThread.BGT;
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean shallEDT = !(canAsync && shallAsync);
     if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
-      LOG.error("Calling on EDT " + operationName + (myForceAsync ? "(forceAsync=true)" : "(actionUpdateThread=" + updateThread + ")"));
+      LOG.error("Calling on EDT " + operationName + "(" + (myForcedUpdateThread != null ? "forced-" : "") + updateThread + ")");
     }
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
     }
-    if (isEDT || !shallEDT) {
+    if (updateThread == ActionUpdateThread.BGT) {
       long start = System.nanoTime();
       try (AccessToken ignored = ProhibitAWTEvents.start(operationName)) {
         return call.get();
@@ -183,7 +186,7 @@ final class ActionUpdater {
       finally {
         long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 1000) {
-          LOG.warn(elapsedReport(elapsed, isEDT, operationName));
+          LOG.warn(elapsedReport(elapsed, EDT.isCurrentThreadEdt(), operationName));
         }
       }
     }
@@ -194,7 +197,7 @@ final class ActionUpdater {
   }
 
   /** @noinspection AssignmentToStaticFieldFromInstanceMethod*/
-  <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> call, boolean noRulesInEDT) {
+  private <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> call, boolean noRulesInEDT) {
     long start0 = System.nanoTime();
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
     ConcurrentList<String> warns = ContainerUtil.createConcurrentList();
@@ -470,8 +473,8 @@ final class ActionUpdater {
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
     }
-    boolean prevForceAsync = myForceAsync;
-    myForceAsync |= group instanceof UpdateInBackground.Recursive;
+    ActionUpdateThread prevForceAsync = myForcedUpdateThread;
+    myForcedUpdateThread = group instanceof ActionUpdateThreadAware.Recursive ? group.getActionUpdateThread() : prevForceAsync;
     Presentation presentation = update(group, strategy);
     if (presentation == null || !presentation.isVisible()) { // don't process invisible groups
       return Collections.emptyList();
@@ -479,7 +482,7 @@ final class ActionUpdater {
 
     List<AnAction> children = getGroupChildren(group, strategy);
     List<AnAction> result = ContainerUtil.concat(children, child -> expandGroupChild(child, hideDisabled, strategy));
-    myForceAsync = prevForceAsync;
+    myForcedUpdateThread = prevForceAsync;
     return group.postProcessVisibleChildren(result, asUpdateSession(strategy));
   }
 
@@ -735,7 +738,7 @@ final class ActionUpdater {
     }
   }
 
-  private enum Op { update, beforeActionPerformedUpdate, getChildren, canBePerformed }
+  private enum Op { update, getChildren, canBePerformed }
 
   private static class UpdateStrategy {
     final NullableFunction<? super AnAction, Presentation> update;
@@ -784,8 +787,10 @@ final class ActionUpdater {
     }
 
     @Override
-    public <T> @NotNull T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> supplier) {
-      return updater.computeOnEdt(operationName, supplier, true);
+    public <T> @NotNull T compute(@NotNull String operationName,
+                                  @NotNull ActionUpdateThread updateThread,
+                                  @NotNull Supplier<? extends T> supplier) {
+      return updater.callAction(operationName, updateThread, supplier);
     }
   }
 }

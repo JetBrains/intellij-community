@@ -20,7 +20,7 @@ public enum ActionUpdateThread {
    * All accessed models should be thread-safe (several update sessions can be run at the same time).
    * When on background thread, application-wide read access is guaranteed, so no synchronization for PSI, VFS and project model is necessary.
    * <p>
-   * When the UI thread is absolutely necessary, use {@link UpdateSession#computeOnEdt(String, Supplier)}.
+   * When the UI thread is absolutely necessary, use {@link UpdateSession#compute(String, ActionUpdateThread, Supplier)}.
    */
   BGT,
   /**
