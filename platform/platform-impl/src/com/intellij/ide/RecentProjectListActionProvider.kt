@@ -28,20 +28,21 @@ open class RecentProjectListActionProvider {
     else
       LinkedHashSet(recentProjectManager.getRecentPaths()).apply { removeAll(openedPaths) }
 
-    val recentProjects = mutableListOf<RecentProjectTreeItem>()
     val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths)
     val groups = recentProjectManager.groups.sortedWith(ProjectGroupComparator(allRecentProjectPaths))
-    groups.forEach { projectGroup ->
+    val projectGroups =  groups.map { projectGroup ->
       val children = projectGroup.projects.map { recentProject ->
         createRecentProject(recentProject, duplicates, projectGroup)
       }
       allRecentProjectPaths.removeAll(projectGroup.projects.toSet())
-      recentProjects.add(ProjectsGroupItem(projectGroup, children))
+      return@map ProjectsGroupItem(projectGroup, children)
     }
 
-    allRecentProjectPaths.forEach { recentProject -> recentProjects.add(createRecentProject(recentProject, duplicates, null)) }
+    val projectsWithoutGroups =  allRecentProjectPaths.map { recentProject ->
+      createRecentProject(recentProject, duplicates, null)
+    }
 
-    return recentProjects
+    return ContainerUtil.concat(projectsWithoutGroups, projectGroups)
   }
 
   @JvmOverloads
