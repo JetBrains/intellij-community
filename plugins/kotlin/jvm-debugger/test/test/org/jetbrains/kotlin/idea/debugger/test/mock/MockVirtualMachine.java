@@ -11,6 +11,21 @@ import java.util.List;
 import java.util.Map;
 
 public class MockVirtualMachine implements VirtualMachine {
+    private final String name;
+
+    public MockVirtualMachine() {
+        this("JVM mock");
+    }
+
+    public MockVirtualMachine(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String name() {
+        return name;
+    }
+
     @Override
     public List<ThreadGroupReference> topLevelThreadGroups() {
         return Collections.emptyList();
@@ -141,11 +156,6 @@ public class MockVirtualMachine implements VirtualMachine {
     @Override
     public String description() {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String name() {
-        return "JVM mock";
     }
 
     @Override
