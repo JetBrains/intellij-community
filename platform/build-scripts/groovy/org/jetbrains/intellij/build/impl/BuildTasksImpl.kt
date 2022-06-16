@@ -1154,7 +1154,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
         !p.startsWith("bin/printenv") &&
         !p.startsWith("help/") &&
         p != "bin/idea.properties" &&
-        !(p.startsWith("bin/") && (p.endsWith(".sh") || p.endsWith(".vmoptions") || p.endsWith(".py"))) &&
+        !(p.startsWith("bin/") && listOf(".sh", ".vmoptions", ".py").any { p.endsWith(it) } && p.count { it == '/' } == 1) &&
         // do not copy common files, error if they are different
         filterFileIfAlreadyInZip(p, linuxX64DistDir.resolve(p), zipFiles)
       }, entryCustomizer = entryCustomizer)
