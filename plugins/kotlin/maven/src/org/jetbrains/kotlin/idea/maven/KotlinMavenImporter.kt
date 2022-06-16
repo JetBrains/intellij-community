@@ -250,10 +250,6 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
                 arguments.jdkHome = configuration?.getChild("jdkHome")?.text
                 arguments.javaParameters = configuration?.getChild("javaParameters")?.text?.toBoolean() ?: false
 
-                check(PluginManagerCore.getBuildNumber().baselineVersion in setOf(222, 221, 213, 212)) {
-                    "This commit should be present only in 222, 221, 213, 212 platforms"
-                }
-
                 val jvmTarget = configuration?.getChild("jvmTarget")?.text ?: mavenProject.properties["kotlin.compiler.jvmTarget"]?.toString()
                 if (jvmTarget == JvmTarget.JVM_1_6.description &&
                     KotlinJpsPluginSettings.getInstance(project)?.settings?.version?.isBlank() != false
