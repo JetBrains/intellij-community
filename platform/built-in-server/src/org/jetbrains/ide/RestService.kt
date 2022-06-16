@@ -167,6 +167,10 @@ abstract class RestService : HttpRequestHandler() {
 
   private var isBlockUnknownHosts = false
 
+  private val localhostRequestsAreTrusted = BuiltInServerBundle.message("trust.localhost").toBoolean()
+
+  private val cacheTrustedHosts = BuiltInServerBundle.message("cache.trusted.origins").toBoolean()
+
   /**
    * Service url must be "/api/$serviceName", but to preserve backward compatibility, prefixless path could be also supported
    */
@@ -256,7 +260,7 @@ abstract class RestService : HttpRequestHandler() {
   @Throws(InterruptedException::class, InvocationTargetException::class)
   // e.g. upsource trust to configured host
   protected open fun isHostTrusted(request: FullHttpRequest): Boolean {
-    if (request.isSignedRequest() || isOriginAllowed(request) == OriginCheckResult.ALLOW) {
+    if (request.isSignedRequest() || isLocalHostRequestAllowed(request)) {
       return true
     }
 
@@ -271,7 +275,7 @@ abstract class RestService : HttpRequestHandler() {
     val lock = hostLocks.computeIfAbsent(host ?: "") { Object() }
     synchronized(lock) {
       if (host != null) {
-        if (NetUtils.isLocalhost(host)) {
+        if (localhostRequestsAreTrusted && NetUtils.isLocalhost(host)) {
           return true
         }
         else {
@@ -293,7 +297,7 @@ abstract class RestService : HttpRequestHandler() {
             else -> IdeBundle.message("warning.use.rest.api.0.and.trust.host.1", getServiceName(), host)
           }
           isTrusted = showYesNoDialog(message, "title.use.rest.api")
-          if (host != null) {
+          if (cacheTrustedHosts && host != null) {
             trustedOrigins.put(host, isTrusted)
           }
           else {
@@ -305,6 +309,9 @@ abstract class RestService : HttpRequestHandler() {
       return isTrusted
     }
   }
+
+  private fun isLocalHostRequestAllowed(request: FullHttpRequest) =
+    (localhostRequestsAreTrusted && isOriginAllowed(request) == OriginCheckResult.ALLOW)
 
   /**
    * Return error or send response using [sendOk], [send]

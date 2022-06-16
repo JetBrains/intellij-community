@@ -60,6 +60,8 @@ private val notificationManager by lazy {
 
 private val WEB_SERVER_PATH_HANDLER_EP_NAME = ExtensionPointName.create<WebServerPathHandler>("org.jetbrains.webServerPathHandler")
 
+val validateAllRequests = BuiltInServerBundle.message("validate.all.requests").toBoolean()
+
 class BuiltInWebServer : HttpRequestHandler() {
   override fun isAccessible(request: HttpRequest): Boolean {
     return BuiltInServerOptions.getInstance().builtInServerAvailableExternally ||
@@ -147,6 +149,8 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   var isEmptyPath: Boolean
   val isCustomHost = projectNameAsHost != null
   var projectName: String
+  val cookieHeader : HttpHeaders? =  if (validateAllRequests) validateToken(request, context.channel(), request.isSignedRequest()) ?: return true else null
+
   if (isCustomHost) {
     projectName = projectNameAsHost!!
     // host mapped to us
@@ -246,7 +250,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
 
   for (pathHandler in WEB_SERVER_PATH_HANDLER_EP_NAME.extensionList) {
     LOG.runAndLogException {
-      if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
+      if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost, cookieHeader)) {
         return true
       }
     }

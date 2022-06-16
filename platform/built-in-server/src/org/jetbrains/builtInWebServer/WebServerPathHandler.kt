@@ -24,7 +24,8 @@ abstract class WebServerPathHandler {
                        context: ChannelHandlerContext,
                        projectName: String,
                        decodedRawPath: String,
-                       isCustomHost: Boolean): Boolean
+                       isCustomHost: Boolean,
+                       extraHeaders: HttpHeaders?): Boolean
 }
 
 internal fun redirectToDirectory(request: HttpRequest, channel: Channel, path: String, extraHeaders: HttpHeaders?) {
@@ -42,7 +43,8 @@ abstract class WebServerPathHandlerAdapter : WebServerPathHandler() {
                        context: ChannelHandlerContext,
                        projectName: String,
                        decodedRawPath: String,
-                       isCustomHost: Boolean): Boolean {
+                       isCustomHost: Boolean,
+                       extraHeaders: HttpHeaders?): Boolean {
     return process(path, project, request, context)
   }
 }

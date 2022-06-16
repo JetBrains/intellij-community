@@ -14,6 +14,7 @@ import com.intellij.util.io.*
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaders
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.jetbrains.ide.orInSafeMode
@@ -26,18 +27,20 @@ val chromeVersionFromUserAgent: Pattern = Pattern.compile(" Chrome/([\\d.]+) ")
 private val WEB_SERVER_FILE_HANDLER_EP_NAME = ExtensionPointName<WebServerFileHandler>("org.jetbrains.webServerFileHandler")
 
 private class DefaultWebServerPathHandler : WebServerPathHandler() {
-  override fun process(path: String,
-                       project: Project,
-                       request: FullHttpRequest,
-                       context: ChannelHandlerContext,
-                       projectName: String,
-                       decodedRawPath: String,
-                       isCustomHost: Boolean): Boolean {
+  override fun process(
+    path: String,
+    project: Project,
+    request: FullHttpRequest,
+    context: ChannelHandlerContext,
+    projectName: String,
+    decodedRawPath: String,
+    isCustomHost: Boolean,
+    tokenHeaders: HttpHeaders?): Boolean {
     val channel = context.channel()
 
     val isSignedRequest = request.isSignedRequest()
-    val extraHeaders = validateToken(request, channel, isSignedRequest) ?: return true
-
+    // if validateAllRequests is false, the token hasn't been validated yet, do so now
+    val extraHeaders = if (!validateAllRequests) validateToken(request, channel, request.isSignedRequest()) ?: return true else tokenHeaders
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
     if (pathInfo == null || !pathInfo.isValid) {
@@ -110,7 +113,8 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     val canonicalPath = if (indexUsed) "$path/${pathInfo.name}" else path
     for (fileHandler in WEB_SERVER_FILE_HANDLER_EP_NAME.extensionList) {
       LOG.runAndLogException {
-        if (fileHandler.process(pathInfo, canonicalPath, project, request, channel, if (isCustomHost) null else projectName, extraHeaders)) {
+        if (fileHandler.process(pathInfo, canonicalPath, project, request, channel, if (isCustomHost) null else projectName,
+                                extraHeaders!!)) {
           return true
         }
       }
