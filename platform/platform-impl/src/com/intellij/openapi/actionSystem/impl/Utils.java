@@ -29,10 +29,7 @@ import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.mac.screenmenu.Menu;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SlowOperations;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -742,13 +739,13 @@ public final class Utils {
       return promise.isCancelled() ? defValue : promise.get();
     }
     catch (Throwable ex) {
-      Throwable cause = ExceptionUtil.getRootCause(ex);
-      if (!(cause instanceof ProcessCanceledException)) {
-        LOG.error(cause);
+      ProcessCanceledException pce = ExceptionUtilRt.findCause(ex, ProcessCanceledException.class);
+      if (pce == null) {
+        LOG.error(ex);
       }
       else if (rethrowCancellation) {
-        cause.fillInStackTrace();
-        throw (ProcessCanceledException)cause;
+        pce.fillInStackTrace();
+        throw pce;
       }
     }
     return defValue;
