@@ -10,7 +10,6 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.util.Condition
@@ -29,6 +28,7 @@ import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.tree.ui.Control
+import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
@@ -88,6 +88,7 @@ class RecentProjectFilteringTree(
       background = WelcomeScreenUIManager.getProjectsBackground()
       toggleClickCount = 0
 
+      setUI(FullRendererComponentTreeUI())
       setExpandableItemsEnabled(false)
       UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
     }
@@ -573,6 +574,41 @@ class RecentProjectFilteringTree(
         hoveredIcon
       else
         icon
+    }
+  }
+
+  private class FullRendererComponentTreeUI : DefaultTreeUI() {
+    override fun getPathBounds(tree: JTree, path: TreePath?): Rectangle? {
+      val bounds = super.getPathBounds(tree, path)
+      if (bounds != null) {
+        bounds.width = bounds.width.coerceAtLeast(tree.width - bounds.x)
+      }
+
+      return bounds
+    }
+
+    override fun paintRow(g: Graphics, clipBounds: Rectangle,
+                          insets: Insets, bounds: Rectangle,
+                          path: TreePath, row: Int,
+                          isExpanded: Boolean, hasBeenExpanded: Boolean, isLeaf: Boolean) {
+      if (tree != null) {
+        bounds.width = tree.width
+        val viewport = ComponentUtil.getViewport(tree)
+        if (viewport != null) {
+          bounds.width = viewport.width - viewport.viewPosition.x - insets.right / 2
+        }
+        bounds.width -= bounds.x
+      }
+
+      super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf)
+    }
+
+    override fun getRowX(row: Int, depth: Int): Int {
+      return JBUIScale.scale(getLeftMargin(depth - 1))
+    }
+
+    private fun getLeftMargin(level: Int): Int {
+      return 3 + level * (11 + 5)
     }
   }
 
