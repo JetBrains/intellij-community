@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -450,6 +451,8 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
     try (GroovyCompletionConsumer consumer = getCompletionConsumer(result, parameters)) {
       doAddCompletions(parameters, consumer);
+    } catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       throw new RuntimeException(e);
