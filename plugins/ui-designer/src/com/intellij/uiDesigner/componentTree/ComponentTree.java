@@ -601,21 +601,26 @@ public final class ComponentTree extends Tree implements DataProvider {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      DeleteProvider baseProvider = myEditor == null ? null : PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(myEditor);
+      return baseProvider == null ? ActionUpdateThread.BGT : baseProvider.getActionUpdateThread();
+    }
+
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
-      if (myEditor != null) {
-        LwInspectionSuppression[] suppressions = LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.getData(dataContext);
-        if (suppressions != null) {
-          if (!myEditor.ensureEditable()) return;
-          for(LwInspectionSuppression suppression: suppressions) {
-            myEditor.getRootContainer().removeInspectionSuppression(suppression);
-          }
-          myEditor.refreshAndSave(true);
+      if (myEditor == null) return;
+      LwInspectionSuppression[] suppressions = LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.getData(dataContext);
+      if (suppressions != null) {
+        if (!myEditor.ensureEditable()) return;
+        for(LwInspectionSuppression suppression: suppressions) {
+          myEditor.getRootContainer().removeInspectionSuppression(suppression);
         }
-        else {
-          DeleteProvider baseProvider = (DeleteProvider) myEditor.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getName());
-          if (baseProvider != null) {
-            baseProvider.deleteElement(dataContext);
-          }
+        myEditor.refreshAndSave(true);
+      }
+      else {
+        DeleteProvider baseProvider = PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(myEditor);
+        if (baseProvider != null) {
+          baseProvider.deleteElement(dataContext);
         }
       }
     }
@@ -627,7 +632,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         if (suppressions != null) {
           return true;
         }
-        DeleteProvider baseProvider = (DeleteProvider) myEditor.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getName());
+        DeleteProvider baseProvider = PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(myEditor);
         if (baseProvider != null) {
           return baseProvider.canDeleteElement(dataContext);
         }
