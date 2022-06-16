@@ -182,7 +182,13 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             KtTokens.FOR_KEYWORD to ForKeyword,
 
             KtTokens.REGULAR_STRING_PART to RegularStringPart,
+
             KtTokens.IDENTIFIER to Identifier,
+            KtTokens.GET_KEYWORD to Identifier,
+            KtTokens.SET_KEYWORD to Identifier,
+            KtTokens.CONSTRUCTOR_KEYWORD to Identifier,
+            KtTokens.CATCH_KEYWORD to Identifier,
+
             KtTokens.FUN_KEYWORD to FunctionKeyword,
             KtTokens.DOT to Dot,
             KtTokens.QUEST to Quest,
