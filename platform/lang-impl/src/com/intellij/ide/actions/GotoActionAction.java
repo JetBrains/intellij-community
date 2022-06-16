@@ -96,8 +96,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
       inputEvent == null ? modifiers : inputEvent.getModifiers());
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      if (action instanceof ActionGroup &&
-          !(event.getPresentation().isPerformGroup() || ((ActionGroup)action).canBePerformed(context))) {
+      if (action instanceof ActionGroup && !event.getPresentation().isPerformGroup()) {
         ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
           event.getPresentation().getText(), (ActionGroup)action, context,
           JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, null, -1, null, ActionPlaces.ACTION_SEARCH_INDUCED_POPUP);

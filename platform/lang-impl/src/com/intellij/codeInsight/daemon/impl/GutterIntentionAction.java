@@ -43,8 +43,7 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
     AnActionEvent event = AnActionEvent.createFromInputEvent(
       relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU, null, EditorUtil.getEditorDataContext(editor));
     if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) return;
-    if (myAction instanceof ActionGroup &&
-        !(event.getPresentation().isPerformGroup() || ((ActionGroup)myAction).canBePerformed(event.getDataContext()))) {
+    if (myAction instanceof ActionGroup && !event.getPresentation().isPerformGroup()) {
       ActionGroup group = (ActionGroup)myAction;
       JBPopupFactory.getInstance().createActionGroupPopup(
         group.getTemplatePresentation().getText(), group, event.getDataContext(),

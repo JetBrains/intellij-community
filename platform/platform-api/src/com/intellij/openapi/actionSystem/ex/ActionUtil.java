@@ -147,6 +147,10 @@ public final class ActionUtil {
             action.update(e);
           }
         }
+        //to be removed when ActionGroup#canBePerformed is dropped
+        e.getPresentation().setPerformGroup(
+          action instanceof ActionGroup && e.getPresentation().isPopupGroup() &&
+          (e.getPresentation().isPerformGroup() || ((ActionGroup)action).canBePerformed(e.getDataContext())));
       };
       boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
       try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE

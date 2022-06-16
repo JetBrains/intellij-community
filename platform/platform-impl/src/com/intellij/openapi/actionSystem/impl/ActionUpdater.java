@@ -670,15 +670,7 @@ final class ActionUpdater {
   static boolean doUpdate(@NotNull AnAction action, @NotNull AnActionEvent e) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
     try {
-      boolean result = !ActionUtil.performDumbAwareUpdate(action, e, false);
-      if (result) {
-        Presentation presentation = e.getPresentation();
-        // to be removed when ActionGroup#canBePerformed is dropped
-        presentation.setPerformGroup(
-          action instanceof ActionGroup && presentation.isPopupGroup() &&
-          (presentation.isPerformGroup() || doCanBePerformed((ActionGroup)action, e.getDataContext())));
-      }
-      return result;
+      return !ActionUtil.performDumbAwareUpdate(action, e, false);
     }
     catch (Throwable ex) {
       handleException(Op.update, action, e, ex);
@@ -693,16 +685,6 @@ final class ActionUpdater {
     catch (Throwable ex) {
       handleException(Op.getChildren, group, e, ex);
       return AnAction.EMPTY_ARRAY;
-    }
-  }
-
-  private static boolean doCanBePerformed(@NotNull ActionGroup group, @NotNull DataContext context) {
-    try {
-      return group.canBePerformed(context);
-    }
-    catch (Throwable ex) {
-      handleException(Op.canBePerformed, group, null, ex);
-      return true;
     }
   }
 
@@ -738,7 +720,7 @@ final class ActionUpdater {
     }
   }
 
-  private enum Op { update, getChildren, canBePerformed }
+  private enum Op { update, getChildren }
 
   private static class UpdateStrategy {
     final NullableFunction<? super AnAction, Presentation> update;
