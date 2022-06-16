@@ -14,6 +14,7 @@ import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.hyphenateTestName
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
+import io.kotest.inspectors.shouldForAtLeastOne
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -61,8 +62,8 @@ class RunIdeEventsTest {
 
     assertSoftly {
       withClue("During IDE run should be fired 2 events: before ide start and after ide finished") {
-        firedEvents.first().state.shouldBe(EventState.BEFORE)
-        firedEvents.last().state.shouldBe(EventState.AFTER)
+        firedEvents.shouldForAtLeastOne { it.state.shouldBe(EventState.BEFORE) }
+        firedEvents.shouldForAtLeastOne { it.state.shouldBe(EventState.AFTER) }
       }
     }
   }
