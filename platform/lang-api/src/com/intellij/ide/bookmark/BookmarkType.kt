@@ -6,10 +6,8 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.editor.colors.EditorColorsUtil
 import com.intellij.openapi.editor.colors.EditorFontType
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconWrapperWithToolTip
 import com.intellij.ui.JBColor
-import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.RegionPaintIcon
 import com.intellij.util.ui.RegionPainter
 import java.awt.Component
@@ -60,7 +58,7 @@ private class MnemonicPainter(val icon: Icon, val mnemonic: String) : RegionPain
   override fun paint(g: Graphics2D, x: Int, y: Int, width: Int, height: Int, c: Component?) {
     icon.paintIcon(null, g, x, y)
 
-    val foreground = EditorColorsUtil.getColor(c, MNEMONIC_ICON_FOREGROUND)
+    val foreground = EditorColorsUtil.getColor(null, MNEMONIC_ICON_FOREGROUND)
     g.paint = foreground
     UISettings.setupAntialiasing(g)
     val frc = g.fontRenderContext

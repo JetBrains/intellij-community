@@ -132,6 +132,10 @@
       "hoverSeparatorColor": "Grey8"
     },
 
+    "Bookmark": {
+      "Mnemonic.iconForeground": "Grey1"
+    },
+
     "Borders.color": "Grey11",
     "Borders.ContrastBorderColor": "Grey11",
 
