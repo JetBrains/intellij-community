@@ -46,7 +46,7 @@ data class JsonProjectIndexingHistory(
     val totalNumberOfFiles: Int = 0,
     val totalNumberOfFilesIndexedByExtensions: Int = 0,
     val totalFilesSize: JsonFileSize = JsonFileSize(),
-    val indexingSpeed: JsonProcessingSpeed = JsonProcessingSpeed(),
+    val indexValueChangerEvaluationSpeed: JsonProcessingSpeed = JsonProcessingSpeed(),
     val snapshotInputMappingStats: JsonSnapshotInputMappingStats = JsonSnapshotInputMappingStats()
   ) {
     @JsonIgnoreProperties(ignoreUnknown = true)

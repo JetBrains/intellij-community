@@ -79,7 +79,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
           totalNumberOfFiles = 0,
           totalNumberOfFilesIndexedByExtensions = 0,
           totalBytes = 0,
-          totalIndexingTimeInAllThreads = 0,
+          totalIndexValueChangerEvaluationTimeInAllThreads = 0,
           snapshotInputMappingStats = SnapshotInputMappingStatsImpl(
             requests = 0,
             misses = 0
@@ -89,7 +89,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
       totalStats.totalNumberOfFiles += stats.numberOfFiles
       totalStats.totalNumberOfFilesIndexedByExtensions += stats.numberOfFilesIndexedByExtensions
       totalStats.totalBytes += stats.totalBytes
-      totalStats.totalIndexingTimeInAllThreads += stats.indexingTime
+      totalStats.totalIndexValueChangerEvaluationTimeInAllThreads += stats.evaluateIndexValueChangerTime
     }
   }
 
@@ -100,7 +100,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
           totalNumberOfFiles = 0,
           totalNumberOfFilesIndexedByExtensions = 0,
           totalBytes = 0,
-          totalIndexingTimeInAllThreads = 0,
+          totalIndexValueChangerEvaluationTimeInAllThreads = 0,
           snapshotInputMappingStats = SnapshotInputMappingStatsImpl(requests = 0, misses = 0))
       }
       totalStats.snapshotInputMappingStats.requests += mappingsStatistic.totalRequests
@@ -318,7 +318,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     override var totalNumberOfFiles: Int,
     override var totalNumberOfFilesIndexedByExtensions: Int,
     override var totalBytes: BytesNumber,
-    override var totalIndexingTimeInAllThreads: TimeNano,
+    override var totalIndexValueChangerEvaluationTimeInAllThreads: TimeNano,
     override var snapshotInputMappingStats: SnapshotInputMappingStatsImpl
   ): StatsPerIndexer
 

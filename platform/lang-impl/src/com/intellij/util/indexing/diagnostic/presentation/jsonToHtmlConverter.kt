@@ -433,7 +433,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                     td(if (index == 0) providerStatistic.providerName else "^")
                     td(slowFile.fileName)
                     td(slowFile.contentLoadingTime.presentableDuration())
-                    td(slowFile.indexingTime.presentableDuration())
+                    td(slowFile.evaluationOfIndexValueChangerTime.presentableDuration())
                     td(slowFile.processingTime.presentableDuration())
                   }
                 }
@@ -507,7 +507,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                   td(statsPerIndexer.partOfTotalIndexingTime.presentablePercentages())
                   td(statsPerIndexer.totalNumberOfFilesIndexedByExtensions.toString())
                   td(statsPerIndexer.totalFilesSize.presentableSize())
-                  td(statsPerIndexer.indexingSpeed.presentableSpeed())
+                  td(statsPerIndexer.indexValueChangerEvaluationSpeed.presentableSpeed())
 
                   fun JsonProjectIndexingHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats.presentable(): String {
                     val hitsPercentages = JsonPercentages(totalHits, totalRequests)

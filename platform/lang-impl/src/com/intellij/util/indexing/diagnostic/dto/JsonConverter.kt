@@ -72,7 +72,7 @@ private fun convertAllThreadsTimeToVisibleDuration(allThreadsTime: TimeNano, vis
 fun SlowIndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonSlowIndexedFile(
   fileName = fileName,
   processingTime = JsonDuration(processingTime),
-  indexingTime = JsonDuration(indexingTime),
+  evaluationOfIndexValueChangerTime = JsonDuration(evaluationOfIndexValueChangerTime),
   contentLoadingTime = JsonDuration(contentLoadingTime)
 )
 
@@ -172,13 +172,13 @@ private fun ProjectIndexingHistoryImpl.aggregateStatsPerFileType(): List<JsonPro
 }
 
 private fun ProjectIndexingHistoryImpl.aggregateStatsPerIndexer(): List<JsonProjectIndexingHistory.JsonStatsPerIndexer> {
-  val totalIndexingTime = totalStatsPerIndexer.values.sumOf { it.totalIndexingTimeInAllThreads }
+  val totalIndexingTime = totalStatsPerIndexer.values.sumOf { it.totalIndexValueChangerEvaluationTimeInAllThreads }
   val indexIdToIndexingTimePart = totalStatsPerIndexer.mapValues {
-    calculatePercentages(it.value.totalIndexingTimeInAllThreads, totalIndexingTime)
+    calculatePercentages(it.value.totalIndexValueChangerEvaluationTimeInAllThreads, totalIndexingTime)
   }
 
-  val indexIdToProcessingSpeed = totalStatsPerIndexer.mapValues {
-    JsonProcessingSpeed(it.value.totalBytes, it.value.totalIndexingTimeInAllThreads)
+  val indexIdToIndexValueChangerEvaluationSpeed = totalStatsPerIndexer.mapValues {
+    JsonProcessingSpeed(it.value.totalBytes, it.value.totalIndexValueChangerEvaluationTimeInAllThreads)
   }
 
   return totalStatsPerIndexer.map { (indexId, stats) ->
@@ -188,7 +188,7 @@ private fun ProjectIndexingHistoryImpl.aggregateStatsPerIndexer(): List<JsonProj
       totalNumberOfFiles = stats.totalNumberOfFiles,
       totalNumberOfFilesIndexedByExtensions = stats.totalNumberOfFilesIndexedByExtensions,
       totalFilesSize = JsonFileSize(stats.totalBytes),
-      indexingSpeed = indexIdToProcessingSpeed.getValue(indexId),
+      indexValueChangerEvaluationSpeed = indexIdToIndexValueChangerEvaluationSpeed.getValue(indexId),
       snapshotInputMappingStats = JsonProjectIndexingHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats(
         totalRequests = stats.snapshotInputMappingStats.requests,
         totalMisses = stats.snapshotInputMappingStats.misses,

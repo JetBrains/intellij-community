@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.fileTypes.FileType
@@ -8,6 +8,6 @@ class FileIndexingStatistics(
   val fileType: FileType,
   val indexesProvidedByExtensions: Set<ID<*, *>>,
   val wasFullyIndexedByExtensions: Boolean,
-  val perIndexerUpdateTimes: Map<ID<*, *>, TimeNano>,
-  val perIndexerDeleteTimes: Map<ID<*, *>, TimeNano>
+  val perIndexerEvaluateIndexValueTimes: Map<ID<*, *>, TimeNano>,
+  val perIndexerEvaluatingIndexValueRemoversTimes: Map<ID<*, *>, TimeNano>
 )

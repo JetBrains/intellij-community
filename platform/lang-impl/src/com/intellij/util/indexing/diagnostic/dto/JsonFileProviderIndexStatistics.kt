@@ -34,7 +34,7 @@ data class JsonFileProviderIndexStatistics(
   data class JsonSlowIndexedFile(
     val fileName: String = "",
     val processingTime: JsonDuration = JsonDuration(0),
-    val indexingTime: JsonDuration = JsonDuration(0),
+    val evaluationOfIndexValueChangerTime: JsonDuration = JsonDuration(0),
     val contentLoadingTime: JsonDuration = JsonDuration(0)
   )
 
