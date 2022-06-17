@@ -9,12 +9,12 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import org.jetbrains.kotlin.types.KotlinType
 
-class KotlinClassToJavaClassInstruction(private val ktAnchor: KotlinAnchor.KotlinExpressionAnchor,
+class KotlinClassToJavaClassInstruction(ktAnchor: KotlinAnchor.KotlinExpressionAnchor,
         private val targetClassType: TypeConstraint): EvalInstruction(ktAnchor, 1) {
     override fun eval(factory: DfaValueFactory, state: DfaMemoryState, vararg arguments: DfaValue): DfaValue {
         val arg = state.getDfType(arguments[0]).getConstantOfType(KotlinType::class.java)
         if (arg != null) {
-            val psiType = TypeConstraint.fromDfType(arg.toDfType(ktAnchor.expression)).getPsiType(factory.project)
+            val psiType = TypeConstraint.fromDfType(arg.toDfType()).getPsiType(factory.project)
             if (psiType != null) {
                 return factory.fromDfType(DfTypes.referenceConstant(psiType, targetClassType))
             }
