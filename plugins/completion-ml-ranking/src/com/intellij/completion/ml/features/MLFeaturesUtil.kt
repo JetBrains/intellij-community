@@ -14,7 +14,6 @@ internal object MLFeaturesUtil {
       is MLFeatureValue.CategoricalValue -> featureValue.value
       is MLFeatureValue.ClassNameValue -> getClassNameSafe(featureValue)
       is MLFeatureValue.VersionValue -> getVersionSafe(featureValue)
-      else -> if (featureValue.isSafe) featureValue.value else throw IllegalArgumentException("Feature value $featureValue is unsafe")
     }
   }
 
