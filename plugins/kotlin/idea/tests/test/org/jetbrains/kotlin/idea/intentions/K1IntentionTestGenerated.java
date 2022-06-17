@@ -18109,6 +18109,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/suppressedByAtomicLongList.kt");
         }
 
+        @TestMetadata("suppressedByByteBufferList.kt")
+        public void testSuppressedByByteBufferList() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/suppressedByByteBufferList.kt");
+        }
+
         @TestMetadata("suppressedByNotPropertyList.kt")
         public void testSuppressedByNotPropertyList() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/suppressedByNotPropertyList.kt");
