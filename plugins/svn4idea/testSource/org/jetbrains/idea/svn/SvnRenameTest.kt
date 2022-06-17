@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn
 
+import com.intellij.idea.Bombed
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.util.Disposer
@@ -31,6 +32,7 @@ import java.nio.file.Paths
 @NonNls
 private const val LOG_SEPARATOR_START = "-------------"
 
+@Bombed(year = 2023, month = 6, day = 1, user = "Roman Shevchenko", description = "IDEA-182560 is flaky")
 class SvnRenameTest : SvnTestCase() {
   private var testRootDisposable: Disposable? = null
 
