@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl.preview
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.fragments.LineFragment
+import com.intellij.diff.fragments.LineFragmentImpl
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -22,6 +23,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.util.ui.JBUI
+import one.util.streamex.StreamEx
 import java.awt.Color
 
 internal class IntentionPreviewModel {
@@ -38,6 +40,13 @@ internal class IntentionPreviewModel {
       CodeStyleManager.getInstance(project).reformatRange(psiFileCopy, start, end, true)
     }
 
+    private fun squash(lines: List<LineFragment>): List<LineFragment> = StreamEx.of(lines)
+      .collapse({f1, f2 -> f2.startLine1 - f1.endLine1 == 1 && f2.startLine2 - f1.endLine2 == 1},
+                { f1, f2 ->
+                  LineFragmentImpl(f1.startLine1, f2.endLine1, f1.startLine2, f2.endLine2,
+                                   f1.startOffset1, f2.endOffset1, f1.startOffset2, f2.endOffset2)
+                }).toList()
+
     fun createEditors(project: Project, result: IntentionPreviewDiffResult?): List<EditorEx> {
       if (result == null) return emptyList()
 
@@ -50,8 +59,8 @@ internal class IntentionPreviewModel {
 
       val fileText = psiFileCopy.text
       val origText = result.origFile.text
-      val diff = ComparisonManager.getInstance().compareLines(origText, fileText,
-                                                              ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE)
+      val diff = squash(ComparisonManager.getInstance().compareLines(origText, fileText,
+                                                                     ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE))
       var diffs = diff.mapNotNull { fragment ->
         val start = getOffset(fileText, fragment.startLine2)
         val end = getOffset(fileText, fragment.endLine2)
