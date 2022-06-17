@@ -1116,8 +1116,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
         Processor<PsiElement> localProcessor = localProcessor(searcher, adapted);
 
-        assert !localProcessors.containsKey(singleRequest) || localProcessors.get(singleRequest) == localProcessor;
-        localProcessors.put(singleRequest, localProcessor);
+        Processor<? super PsiElement> old = localProcessors.put(singleRequest, localProcessor);
+        assert old == null : old + ";" + localProcessor +"; singleRequest="+singleRequest;
       }
     }
   }
