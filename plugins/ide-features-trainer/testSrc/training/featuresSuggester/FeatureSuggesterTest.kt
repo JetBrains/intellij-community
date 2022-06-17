@@ -39,7 +39,7 @@ abstract class FeatureSuggesterTest : BasePlatformTestCase() {
   }
 
   fun assertSuggestedCorrectly() {
-    TestCase.assertTrue(expectedSuggestion is PopupSuggestion)
+    TestCase.assertTrue(expectedSuggestion.javaClass.name, expectedSuggestion is PopupSuggestion)
     TestCase.assertEquals(testingSuggesterId, (expectedSuggestion as PopupSuggestion).suggesterId)
   }
 }
