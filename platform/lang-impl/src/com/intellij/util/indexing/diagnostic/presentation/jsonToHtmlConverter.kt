@@ -452,7 +452,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                 th("Total processing time")
                 th("Content loading time")
                 th("Total files size")
-                th("Indexing speed")
+                th("Total processing speed")
                 th("The biggest contributors")
               }
             }
@@ -470,7 +470,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                   td(visibleIndexingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalProcessingTime.presentablePercentages() + ")")
                   td(visibleContentLoadingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalContentLoadingTime.presentablePercentages() + ")")
                   td(statsPerFileType.totalFilesSize.presentableSize())
-                  td(statsPerFileType.indexingSpeed.presentableSpeed())
+                  td(statsPerFileType.totalProcessingSpeed.presentableSpeed())
                   td(
                     statsPerFileType.biggestContributors.joinToString("\n") {
                       it.partOfTotalProcessingTimeOfThisFileType.presentablePercentages() + ": " +
