@@ -76,7 +76,7 @@ class MavenMigrateTest : KotlinMavenImportingTestCase() {
         )
 
         assertTrue(
-            /* message = */ notifications.asText,
+            /* message = */ notifications.asText(),
             /* condition = */ notifications.any {
                 it.content == "Migrations for Kotlin code are available<br/><br/>Detected migration:<br/>&nbsp;&nbsp;Language version: 1.5 -> 1.6<br/>&nbsp;&nbsp;API version: 1.5 -> 1.6<br/>"
             }
