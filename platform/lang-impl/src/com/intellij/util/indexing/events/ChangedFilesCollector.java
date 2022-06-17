@@ -36,7 +36,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public final class ChangedFilesCollector extends IndexedFilesListener {
@@ -104,8 +103,8 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     return myFilesToUpdate.containsKey(fileId);
   }
 
-  public Stream<VirtualFile> getFilesToUpdate() {
-    return myFilesToUpdate.values().stream();
+  public Iterator<@NotNull VirtualFile> getFilesToUpdate() {
+    return myFilesToUpdate.values().iterator();
   }
 
   public Collection<VirtualFile> getAllFilesToUpdate() {

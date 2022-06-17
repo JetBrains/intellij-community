@@ -294,8 +294,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     // can be performance critical, better to use cycle instead of streams
     // avoid missing files when events are processed concurrently
     Iterator<VirtualFile> iterator = Iterators.concat(
-      getChangedFilesCollector().getEventMerger().getChangedFiles().iterator(),
-      getChangedFilesCollector().getFilesToUpdate().iterator()
+      getChangedFilesCollector().getEventMerger().getChangedFiles(),
+      getChangedFilesCollector().getFilesToUpdate()
     );
 
     HashSet<VirtualFile> checkedFiles = new HashSet<>();
