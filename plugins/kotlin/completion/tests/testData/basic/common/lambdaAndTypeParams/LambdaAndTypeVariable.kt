@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun test() {
     buildList { // this: MutableList<out Any?>
         val foo = this // MutableList<TypeVariable<E>>
