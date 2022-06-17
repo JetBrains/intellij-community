@@ -186,7 +186,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
         @Override
         public void write(int b) {
           if (same) {
-            same = address < myAppendBuffer.getBufferPosition() && myAppendBuffer.getAppendBuffer()[address++] == (byte)b;
+            same = address < AppendMemoryBuffer.getBufferPosition(myAppendBuffer) && myAppendBuffer.getAppendBuffer()[address++] == (byte)b;
           }
         }
       };
