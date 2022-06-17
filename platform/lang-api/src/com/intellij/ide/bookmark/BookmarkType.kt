@@ -30,10 +30,10 @@ enum class BookmarkType(val mnemonic: Char) {
 
   DEFAULT(0.toChar());
 
-  val icon by lazy { createIcon(IconSize.REGULAR, 1) }
-  val gutterIcon by lazy { createIcon(IconSize.GUTTER, 0) }
+  val icon by lazy { createIcon(IconSize.REGULAR) }
+  val gutterIcon by lazy { createIcon(IconSize.GUTTER) }
 
-  private fun createIcon(size: IconSize, insets: Int): Icon = BookmarkIcon(mnemonic, size, insets)
+  private fun createIcon(size: IconSize): Icon = BookmarkIcon(mnemonic, size)
 
   companion object {
     @JvmStatic
@@ -47,10 +47,8 @@ internal enum class IconSize {
 }
 
 private val MNEMONIC_ICON_FOREGROUND = EditorColorsUtil.createColorKey("Bookmark.Mnemonic.iconForeground", JBColor(0x000000, 0xBBBBBB))
-private val MNEMONIC_ICON_BACKGROUND = EditorColorsUtil.createColorKey("Bookmark.Mnemonic.iconBackground", JBColor(0xFEF7EC, 0x5B5341))
-private val MNEMONIC_ICON_BORDER_COLOR = EditorColorsUtil.createColorKey("Bookmark.Mnemonic.iconBorderColor", JBColor(0xF4AF3D, 0xD9A343))
 
-private class MnemonicPainter(val mnemonic: String) : RegionPainter<Component?> {
+private class MnemonicPainter(val icon: Icon, val mnemonic: String) : RegionPainter<Component?> {
   override fun toString() = "BookmarkMnemonicIcon:$mnemonic"
   override fun hashCode() = mnemonic.hashCode()
   override fun equals(other: Any?): Boolean {
@@ -60,60 +58,47 @@ private class MnemonicPainter(val mnemonic: String) : RegionPainter<Component?> 
   }
 
   override fun paint(g: Graphics2D, x: Int, y: Int, width: Int, height: Int, c: Component?) {
+    icon.paintIcon(null, g, x, y)
+
     val foreground = EditorColorsUtil.getColor(c, MNEMONIC_ICON_FOREGROUND)
-    val background = EditorColorsUtil.getColor(c, MNEMONIC_ICON_BACKGROUND)
-    val borderColor = EditorColorsUtil.getColor(c, MNEMONIC_ICON_BORDER_COLOR)
-    val divisor = Registry.intValue("ide.mnemonic.icon.round", 0)
-    val round = if (divisor > 0) width.coerceAtLeast(height) / divisor else null
-    if (background != null) {
-      g.paint = background
-      RectanglePainter.FILL.paint(g, x, y, width, height, round)
-    }
-    if (foreground != null) {
-      g.paint = foreground
-      UISettings.setupAntialiasing(g)
-      val frc = g.fontRenderContext
-      val font = EditorFontType.PLAIN.globalFont
+    g.paint = foreground
+    UISettings.setupAntialiasing(g)
+    val frc = g.fontRenderContext
+    val font = EditorFontType.PLAIN.globalFont
 
-      val size1 = .8f * height
-      val vector1 = font.deriveFont(size1).createGlyphVector(frc, mnemonic)
-      val bounds1 = vector1.visualBounds
+    val size1 = .75f * height
+    val vector1 = font.deriveFont(size1).createGlyphVector(frc, mnemonic)
+    val bounds1 = vector1.visualBounds
 
-      val size2 = .8f * size1 * size1 / bounds1.height.toFloat()
-      val vector2 = font.deriveFont(size2).createGlyphVector(frc, mnemonic)
-      val bounds2 = vector2.visualBounds
-
-      val dx = x - bounds2.x + .5 * (width - bounds2.width)
-      val dy = y - bounds2.y + .5 * (height - bounds2.height)
-      g.drawGlyphVector(vector2, dx.toFloat(), dy.toFloat())
-    }
-    if (borderColor != null && borderColor != background) {
-      g.paint = borderColor
-      RectanglePainter.DRAW.paint(g, x, y, width, height, round)
-    }
+    val dx = x - bounds1.x + .5 * (width - bounds1.width)
+    val dy = y - bounds1.y + .5 * (height - bounds1.height)
+    g.drawGlyphVector(vector1, dx.toFloat(), dy.toFloat())
   }
 }
 
 class BookmarkIcon internal constructor(
   val mnemonic: Char,
   size: IconSize,
-  insets: Int,
-) : IconWrapperWithToolTip(createBookmarkIcon(mnemonic, size, insets),
+) : IconWrapperWithToolTip(createBookmarkIcon(mnemonic, size),
                            LangBundle.messagePointer("tooltip.bookmarked")) {
   companion object {
-    private fun createBookmarkIcon(mnemonic: Char, size: IconSize, insets: Int): Icon {
+    private fun createBookmarkIcon(mnemonic: Char, size: IconSize): Icon {
       if (mnemonic == 0.toChar()) {
         return when (size) {
           IconSize.GUTTER -> AllIcons.Gutter.Bookmark
           else -> AllIcons.Nodes.Bookmark
         }
       }
-      val painter = MnemonicPainter(mnemonic.toString())
+      val icon = when (size) {
+        IconSize.GUTTER -> AllIcons.Gutter.Mnemonic
+        else -> AllIcons.Nodes.Mnemonic
+      }
+      val painter = MnemonicPainter(icon, mnemonic.toString())
       val paintSize = when (size) {
         IconSize.GUTTER -> 12
         else -> 16
       }
-      return RegionPaintIcon(paintSize, paintSize, insets, painter).withIconPreScaled(false)
+      return RegionPaintIcon(paintSize, paintSize, 0, painter).withIconPreScaled(false)
     }
   }
 }
