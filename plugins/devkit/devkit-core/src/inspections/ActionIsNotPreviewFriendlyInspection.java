@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
@@ -75,7 +76,8 @@ public class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBa
         }
       } else {
         holder.registerProblem(psiAnchor,
-                               DevKitBundle.message("inspection.message.field.may.prevent.intention.preview.to.work.properly"));
+                               DevKitBundle.message("inspection.message.field.may.prevent.intention.preview.to.work.properly"),
+                               new AddAnnotationFix(FileModifier.SafeFieldForPreview.class.getCanonicalName(), field));
       }
     }
     return holder.getResultsArray();
