@@ -13,6 +13,7 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.UsefulTestCase.assertDoesntExist
 import com.intellij.testFramework.UsefulTestCase.assertExists
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.systemIndependentPath
 import org.hamcrest.CoreMatchers.allOf
@@ -42,7 +43,8 @@ class SvnRenameTest : SvnTestCase() {
     TestLoggerFactory.enableDebugLogging(testRootDisposable!!,
                                          "#com.intellij.openapi.command.impl",
                                          "#com.intellij.history.integration.revertion.UndoChangeRevertingVisitor",
-                                         "#com.intellij.openapi.command.impl.ChangeRange")
+                                         "#com.intellij.openapi.command.impl.ChangeRange",
+                                         "#com.intellij.openapi.command.impl.UndoableGroup")
   }
 
   override fun after() {
@@ -251,10 +253,13 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
 
     moveFileInCommand(child, parent2)
-    undoFileMove()
-    val childPath = File(parent1.path, "child")
-    assertExists(childPath)
-    assertExists(File(childPath, "a.txt"))
+
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      val childPath = File(parent1.path, "child")
+      assertExists(childPath)
+      assertExists(File(childPath, "a.txt"))
+    }
   }
 
   // IDEADEV-19552
@@ -264,9 +269,12 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
 
     renameFileInCommand(file, "b.txt")
-    undoFileRename()
-    assertExists(File(myWorkingCopyDir.path, "a.txt"))
-    assertDoesntExist(File(myWorkingCopyDir.path, "b.txt"))
+
+    makeVfsRefreshBehaveMaybe {
+      undoFileRename()
+      assertExists(File(myWorkingCopyDir.path, "a.txt"))
+      assertDoesntExist(File(myWorkingCopyDir.path, "b.txt"))
+    }
   }
 
   @Test
@@ -276,11 +284,14 @@ class SvnRenameTest : SvnTestCase() {
 
     renameFileInCommand(file, "b.txt")
     checkin()
-    undoFileRename()
-    runAndVerifyStatus(
-      "A + a.txt", "> moved from b.txt",
-      "D b.txt", "> moved to a.txt"
-    )
+
+    makeVfsRefreshBehaveMaybe {
+      undoFileRename()
+      runAndVerifyStatus(
+        "A + a.txt", "> moved from b.txt",
+        "D b.txt", "> moved to a.txt"
+      )
+    }
   }
 
   // IDEADEV-19336
@@ -296,12 +307,14 @@ class SvnRenameTest : SvnTestCase() {
     moveFileInCommand(child, parent2)
     checkin()
 
-    undoFileMove()
-    runAndVerifyStatus(
-      "A + parent1/child", "> moved from parent2/child",
-      "D parent2/child", "> moved to parent1/child",
-      "D parent2/child/a.txt"
-    )
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      runAndVerifyStatus(
+        "A + parent1/child", "> moved from parent2/child",
+        "D parent2/child", "> moved to parent1/child",
+        "D parent2/child/a.txt"
+      )
+    }
   }
 
   @Test
@@ -333,8 +346,10 @@ class SvnRenameTest : SvnTestCase() {
     moveFileInCommand(child, unversioned)
     runAndVerifyStatusSorted("? unversioned", "D child", "D child/a.txt")
 
-    undoFileMove()
-    runAndVerifyStatusSorted("? unversioned")
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      runAndVerifyStatusSorted("? unversioned")
+    }
   }
 
   @Test
@@ -345,8 +360,11 @@ class SvnRenameTest : SvnTestCase() {
     val unversioned = createDirInCommand(myWorkingCopyDir, "unversioned")
     moveFileInCommand(file, unversioned)
     runAndVerifyStatusSorted("? unversioned")
-    undoFileMove()
-    runAndVerifyStatusSorted("? a.txt", "? unversioned")
+
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      runAndVerifyStatusSorted("? a.txt", "? unversioned")
+    }
   }
 
   @Test
@@ -357,8 +375,11 @@ class SvnRenameTest : SvnTestCase() {
     val unversioned = createDirInCommand(myWorkingCopyDir, "unversioned")
     moveFileInCommand(file, unversioned)
     runAndVerifyStatusSorted("? unversioned")
-    undoFileMove()
-    runAndVerifyStatusSorted("? a.txt", "? unversioned")
+
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      runAndVerifyStatusSorted("? a.txt", "? unversioned")
+    }
   }
 
   @Test
@@ -376,8 +397,10 @@ class SvnRenameTest : SvnTestCase() {
     runAndVerifyStatusSorted("? unversioned", "D child", "D child/a.txt")
     checkin()
 
-    undoFileMove()
-    runAndVerifyStatusSorted("? child", "? unversioned")
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      runAndVerifyStatusSorted("? child", "? unversioned")
+    }
   }
 
   // IDEA-92941
@@ -391,8 +414,11 @@ class SvnRenameTest : SvnTestCase() {
     runAndVerifyStatusSorted("A child/a.txt")
     moveFileInCommand(file, sink)
     runAndVerifyStatusSorted("A sink/a.txt")
-    undoFileMove()
-    runAndVerifyStatusSorted("A child/a.txt")
+
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      runAndVerifyStatusSorted("A child/a.txt")
+    }
   }
 
   // todo undo, undo committed?
@@ -443,4 +469,11 @@ class SvnRenameTest : SvnTestCase() {
 
   fun pathMatcher(path: String?): Matcher<in String?> = if (path == null) nullValue()
   else equalToIgnoringCase(Paths.get(myWorkingCopyDir.path).resolve(toSystemDependentName(path)).systemIndependentPath)
+
+  /*
+   * Try to workaround IDEA-182560
+   */
+  private inline fun makeVfsRefreshBehaveMaybe(crossinline runnable: () -> Unit) {
+    runInEdtAndWait(runnable)
+  }
 }
