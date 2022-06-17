@@ -669,9 +669,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 )
             }
 
-            // TODO: should be reverted after KTI-724
-            assertNotEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
-            assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            Assert.assertEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java")
@@ -2184,9 +2182,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertImporterStatePresent()
             assertEquals("", notifications.asText())
             // The highest of available versions should be picked
-            // TODO: should be reverted after KTI-724
-            assertNotEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
-            assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
         }
     }
 
