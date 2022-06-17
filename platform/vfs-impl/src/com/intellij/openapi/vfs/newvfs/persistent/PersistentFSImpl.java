@@ -473,7 +473,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     // for case-sensitive systems, the above check is exhaustive in consistent state of VFS
     if (!parent.isCaseSensitive()) {
       for (ChildInfo info : children) {
-        if (namesEqual(fs, parent, childName, FSRecords.getNameByNameId(info.getNameId()))) {
+        if (namesEqual(fs, parent, childName, FileNameCache.getVFileName(info.getNameId()))) {
           return info;
         }
       }
