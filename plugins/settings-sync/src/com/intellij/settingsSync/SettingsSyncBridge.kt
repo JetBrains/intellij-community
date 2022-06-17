@@ -41,22 +41,52 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     // activate the stream provider at this point to correctly process the event from the server (e.g. to synchronize the access to xmls)
     ideMediator.activateStreamProvider()
 
-    val initialEvent = when (initMode) {
-      is InitMode.TakeFromServer -> initMode.cloudEvent
-      InitMode.PushToServer -> SyncSettingsEvent.MustPushRequest
-      InitMode.JustInit -> null
-    }
-    pendingEvents.add(SyncSettingsEvent.LogCurrentSettings)
-    if (initialEvent != null) {
-      pendingEvents.add(initialEvent)
-    }
-    processPendingEvents()
+    applyInitialChanges(initMode)
 
     // todo copy existing settings again here
     // because local events could happen between activating the stream provider above and starting processing events here
     SettingsSyncEvents.getInstance().addSettingsChangedListener { event ->
       pendingEvents.add(event)
       queue.queue(updateObject)
+    }
+  }
+
+  private fun applyInitialChanges(initMode: InitMode) {
+    val previousIdePosition = settingsLog.getIdePosition()
+    val previousCloudPosition = settingsLog.getCloudPosition()
+
+    settingsLog.logExistingSettings()
+
+    when (initMode) {
+      is InitMode.TakeFromServer ->
+        applySnapshotFromServer(initMode.cloudEvent.snapshot)
+      InitMode.PushToServer ->
+        // todo this should be a force push, no reject is expected
+        mergeAndPush(previousIdePosition, previousCloudPosition, pushToCloudRequested = false, mustPushToCloud = true)
+      InitMode.JustInit ->
+        mergeAndPush(previousIdePosition, previousCloudPosition, pushToCloudRequested = false, mustPushToCloud = false)
+    }
+  }
+
+  private fun applySnapshotFromServer(settingsSnapshot: SettingsSnapshot) {
+    settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings
+
+    val masterPosition = settingsLog.forceWriteToMaster(settingsSnapshot)
+    settingsLog.setIdePosition(masterPosition)
+
+    // normally we set cloud position only after successful push to cloud, but in this case we take all settings from the cloud,
+    // so no push is needed, and we know the cloud settings state.
+    settingsLog.setCloudPosition(masterPosition)
+
+    val pushResult = pushToIde(settingsLog.collectCurrentSnapshot())
+    LOG.info("Result of pushing settings to the IDE: $pushResult")
+    when (pushResult) {
+      SettingsSyncPushResult.Success -> SettingsSyncStatusTracker.getInstance().updateOnSuccess()
+      is SettingsSyncPushResult.Error ->
+        SettingsSyncStatusTracker.getInstance().updateOnError(SettingsSyncBundle.message("notification.title.apply.error") + ": " + pushResult.message)
+      SettingsSyncPushResult.Rejected -> {
+        // todo this should be a force push, no reject is expected
+      }
     }
   }
 

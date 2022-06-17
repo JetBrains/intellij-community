@@ -140,6 +140,11 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     applyState(CLOUD_REF_NAME, snapshot)
   }
 
+  override fun forceWriteToMaster(snapshot: SettingsSnapshot): SettingsLog.Position {
+    applyState(MASTER_REF_NAME, snapshot)
+    return getMasterPosition()
+  }
+
   private fun applyState(refName: String, snapshot: SettingsSnapshot) {
     if (snapshot.isEmpty()) {
       LOG.error("Empty snapshot")

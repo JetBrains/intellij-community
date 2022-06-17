@@ -8,7 +8,7 @@ import java.nio.file.Path
 import kotlin.streams.toList
 
 internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {
-  private val files = mutableMapOf<String, String>()
+  internal val files = mutableMapOf<String, String>()
 
   override fun applyToIde(snapshot: SettingsSnapshot) {
     for (fileState in snapshot.fileStates) {

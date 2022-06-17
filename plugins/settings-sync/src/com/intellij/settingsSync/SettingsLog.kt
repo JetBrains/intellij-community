@@ -68,4 +68,14 @@ internal interface SettingsLog {
    */
   fun advanceMaster(): Position
 
+  /**
+   * Applies the given state to the master branch of the settings without any merging (as opposed to [advanceMaster] which merges
+   * changes coming from different sources).
+   *
+   * This operation is used, for example, when initially taking all the settings from the server: they should be applied right away to
+   * the local state, and no merge should happen, since local settings are not needed at this point and should be overwritten.
+   *
+   * @return New position of 'master'.
+   */
+  fun forceWriteToMaster(snapshot: SettingsSnapshot) : Position
 }
