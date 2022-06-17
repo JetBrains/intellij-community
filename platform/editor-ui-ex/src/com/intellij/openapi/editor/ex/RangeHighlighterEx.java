@@ -104,6 +104,7 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   /**
    * Put user data and call {@link MarkupModelEx#fireAttributesChanged(RangeHighlighterEx, boolean, boolean)}
    */
+  @ApiStatus.Experimental
   default <T> void putUserDataAndFireChanged(@NotNull Key<T> key, @Nullable T value) {
     putUserData(key, value);
   }
