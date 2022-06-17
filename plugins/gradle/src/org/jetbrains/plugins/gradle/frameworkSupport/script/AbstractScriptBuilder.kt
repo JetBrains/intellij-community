@@ -75,6 +75,9 @@ abstract class AbstractScriptBuilder(private val indent: Int = 0) : ScriptBuilde
       is IntElement -> {
         add(element.value.toString(), indent, isNewLine)
       }
+      is BooleanElement -> {
+        add(element.value.toString(), indent, isNewLine)
+      }
       is StringElement -> {
         add(""""${element.value}"""", indent, isNewLine)
       }
