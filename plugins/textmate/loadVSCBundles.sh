@@ -62,17 +62,16 @@ cp -r "syntaxes" "$ROOT/lib/bundles/mdx/"
 
 cd ..
 
-# kotlin
-git clone https://github.com/sargunv/kotlin-textmate-bundle.git
-cd kotlin-textmate-bundle/Kotlin.tmbundle
-mv "Snippets" "snippets"
-mv "Syntaxes" "syntaxes"
+#twig
+echo "Adding twig"
+git clone https://github.com/mblode/vscode-twig-language-2
+cd vscode-twig-language-2
 
-echo "Adding kotlin"
-mkdir -p "$ROOT/lib/bundles/kotlin"
-cp -r "info.plist" "$ROOT/lib/bundles/kotlin/"
-cp -r "snippets" "$ROOT/lib/bundles/kotlin/"
-cp -r "syntaxes" "$ROOT/lib/bundles/kotlin/"
+mkdir -p "$ROOT/lib/bundles/twig"
+cp -r "LICENSE.md" "$ROOT/lib/bundles/twig"
+cp -r "package.json" "$ROOT/lib/bundles/twig"
+cp -r "README.md" "$ROOT/lib/bundles/twig"
+cp -r "src" "$ROOT/lib/bundles/twig"
 
 cd ..
 
