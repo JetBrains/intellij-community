@@ -1,5 +1,5 @@
 PsiJavaFile:Record9.java
-  PsiRecordPattern
+  PsiDeconstructionPattern
     PsiModifierList:
       <empty list>
     PsiTypeElement:Rec
@@ -7,7 +7,7 @@ PsiJavaFile:Record9.java
         PsiIdentifier:Rec('Rec')
         PsiReferenceParameterList
           <empty list>
-    PsiRecordStructurePattern
+    PsiDeconstructionList
       PsiJavaToken:LPARENTH('(')
       PsiTypeTestPattern
         PsiPatternVariable:a

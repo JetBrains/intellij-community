@@ -9,12 +9,12 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * Represents record pattern, for example: {@code Point(int x, int y) p }
  */
-public interface PsiRecordPattern extends PsiPrimaryPattern {
+public interface PsiDeconstructionPattern extends PsiPrimaryPattern {
   /**
    * @return element representing code inside '(...)' inclusive parenthesis
    */
   @NotNull
-  PsiRecordStructurePattern getStructurePattern();
+  PsiDeconstructionList getDeconstructionList();
 
   /**
    * @return type of the pattern, for example in {@code Point(int x, int y) p } it is {@code Point }

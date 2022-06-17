@@ -2,24 +2,24 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiDeconstructionList;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPattern;
-import com.intellij.psi.PsiRecordStructurePattern;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.RECORD_STRUCTURE_PATTERN;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECONSTRUCTION_LIST;
 
-public class PsiRecordStructurePatternImpl extends CompositePsiElement implements PsiRecordStructurePattern {
-  public PsiRecordStructurePatternImpl() {
-    super(RECORD_STRUCTURE_PATTERN);
+public class PsiDeconstructionListImpl extends CompositePsiElement implements PsiDeconstructionList {
+  public PsiDeconstructionListImpl() {
+    super(DECONSTRUCTION_LIST);
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitRecordStructurePattern(this);
+      ((JavaElementVisitor)visitor).visitDeconstructionList(this);
     }
     else {
       visitor.visitElement(this);
@@ -37,6 +37,6 @@ public class PsiRecordStructurePatternImpl extends CompositePsiElement implement
 
   @Override
   public String toString() {
-    return "PsiRecordStructurePattern";
+    return "PsiDeconstructionList";
   }
 }
