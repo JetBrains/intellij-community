@@ -24,7 +24,7 @@ final class DataTable implements Closeable, Forceable {
 
   private static final int HEADER_MAGIC_OFFSET = 0;
   private static final int HEADER_WASTE_SIZE_OFFSET = 4;
-  private boolean myIsDirty = false;
+  private volatile boolean myIsDirty;
 
   DataTable(@NotNull Path filePath, @NotNull StorageLockContext context) throws IOException {
     myFile = new PagedFileStorage(filePath, context, 8 * 1024, false, false);

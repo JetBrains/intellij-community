@@ -227,7 +227,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
   @Override
   public boolean isDirty() {
-    return withReadLock(() -> myDataTable.isDirty() || myRecordsTable.isDirty());
+    return myDataTable.isDirty() || myRecordsTable.isDirty();
   }
 
   @TestOnly

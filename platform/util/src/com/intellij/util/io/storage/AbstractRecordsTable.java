@@ -84,7 +84,8 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
     markDirty();
     ensureFreeRecordsScanned();
 
-    if (myFreeRecordsList.isEmpty()) {
+    int reusedRecord = reserveFreeRecord();
+    if (reusedRecord == -1) {
       int result = getRecordsCount() + 1;
       doCleanRecord(result);
       if (getRecordsCount() != result) {
@@ -93,11 +94,17 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
       return result;
     }
     else {
-      final int result = myFreeRecordsList.removeInt(myFreeRecordsList.size() - 1);
-      assert isSizeOfRemovedRecord(getSize(result));
-      setSize(result, 0);
-      setCapacity(result, 0);
-      return result;
+      assert isSizeOfRemovedRecord(getSize(reusedRecord));
+      setSize(reusedRecord, 0);
+      setCapacity(reusedRecord, 0);
+      return reusedRecord;
+    }
+  }
+
+  private int reserveFreeRecord() throws IOException {
+    ensureFreeRecordsScanned();
+    synchronized (myFreeRecordsList) {
+      return myFreeRecordsList.isEmpty() ? -1 : myFreeRecordsList.removeInt(myFreeRecordsList.size() - 1);
     }
   }
 
@@ -188,7 +195,7 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
   }
 
   protected int getOffset(int record, int section) {
-    assert record > 0;
+    assert record > 0 : "record = " + record;
     int offset = getHeaderSize() + (record - 1) * getRecordSize() + section;
     if (offset < 0) {
       throw new IllegalArgumentException("offset is negative (" + offset + "): " +
