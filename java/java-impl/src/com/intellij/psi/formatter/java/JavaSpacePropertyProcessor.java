@@ -1900,8 +1900,8 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitRecordPattern(PsiRecordPattern recordPattern) {
-    if (myType1 == JavaElementType.RECORD_STRUCTURE_PATTERN && myType2 == JavaTokenType.IDENTIFIER) {
+  public void visitDeconstructionPattern(PsiDeconstructionPattern deconstructionPattern) {
+    if (myType1 == JavaElementType.DECONSTRUCTION_LIST && myType2 == JavaTokenType.IDENTIFIER) {
       createSpaceInCode(true);
     }
   }

@@ -100,7 +100,7 @@ public class PsiRecordPatternVariableImpl extends CompositePsiElement implements
   }
 
   @Override
-  public @NotNull PsiRecordPattern getPattern() {
-    return (PsiRecordPattern)getParent();
+  public @NotNull PsiDeconstructionPattern getPattern() {
+    return (PsiDeconstructionPattern)getParent();
   }
 }

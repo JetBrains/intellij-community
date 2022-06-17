@@ -4,9 +4,9 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents elements between '(' and ')' (inclusive) in {@link PsiRecordPattern}.
+ * Represents elements between '(' and ')' (inclusive) in {@link PsiDeconstructionPattern}.
  */
-public interface PsiRecordStructurePattern extends PsiElement {
+public interface PsiDeconstructionList extends PsiElement {
   @NotNull
   PsiPattern @NotNull [] getRecordComponents();
 }

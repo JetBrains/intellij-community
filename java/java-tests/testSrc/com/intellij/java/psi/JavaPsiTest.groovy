@@ -319,9 +319,9 @@ class B {}""")
 
   void "test record pattern"() {
     def expression = (PsiInstanceOfExpression)PsiElementFactory.getInstance(project).createExpressionFromText("o instanceof Record(int a, boolean b) r", null)
-    def recordPattern = (PsiRecordPattern)expression.pattern
+    def recordPattern = (PsiDeconstructionPattern)expression.pattern
     assert recordPattern.patternVariable.name == "r"
-    def structurePattern = recordPattern.structurePattern
+    def structurePattern = recordPattern.deconstructionList
     assert structurePattern != null
     def components = structurePattern.recordComponents
     def pattern = (PsiTypeTestPattern)components[1]
@@ -330,14 +330,14 @@ class B {}""")
 
   void "test record pattern rename"() {
     def expression = (PsiInstanceOfExpression)PsiElementFactory.getInstance(project).createExpressionFromText("o instanceof Record(int a, boolean b) r", null)
-    def recordPattern = (PsiRecordPattern)expression.pattern
+    def recordPattern = (PsiDeconstructionPattern)expression.pattern
     recordPattern.patternVariable.setName("foo")
     assert expression.text == "o instanceof Record(int a, boolean b) foo"
   }
 
   void "test record pattern type"() {
     def expression = (PsiInstanceOfExpression)PsiElementFactory.getInstance(project).createExpressionFromText("o instanceof Record(int a, boolean b)", null)
-    def recordPattern = (PsiRecordPattern)expression.pattern
+    def recordPattern = (PsiDeconstructionPattern)expression.pattern
     assert recordPattern.typeElement.text == "Record"
   }
 }

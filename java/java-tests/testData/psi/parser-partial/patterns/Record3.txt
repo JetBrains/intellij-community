@@ -1,5 +1,5 @@
 PsiJavaFile:Record3.java
-  PsiRecordPattern
+  PsiDeconstructionPattern
     PsiModifierList:
       <empty list>
     PsiTypeElement:NamedRecord
@@ -7,7 +7,7 @@ PsiJavaFile:Record3.java
         PsiIdentifier:NamedRecord('NamedRecord')
         PsiReferenceParameterList
           <empty list>
-    PsiRecordStructurePattern
+    PsiDeconstructionList
       PsiJavaToken:LPARENTH('(')
       PsiTypeTestPattern
         PsiPatternVariable:s

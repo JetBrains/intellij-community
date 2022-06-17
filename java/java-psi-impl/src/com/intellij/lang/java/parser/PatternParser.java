@@ -102,7 +102,7 @@ public class PatternParser {
     if (!expect(builder, JavaTokenType.RPARENTH)) {
       builder.error(JavaPsiBundle.message("expected.rparen"));
     }
-    recordStructure.done(JavaElementType.RECORD_STRUCTURE_PATTERN);
+    recordStructure.done(JavaElementType.DECONSTRUCTION_LIST);
   }
 
   private PsiBuilder.@NotNull Marker parseTypeOrRecordPattern(final PsiBuilder builder) {

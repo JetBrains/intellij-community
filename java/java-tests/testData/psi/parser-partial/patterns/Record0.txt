@@ -1,5 +1,5 @@
 PsiJavaFile:Record0.java
-  PsiRecordPattern
+  PsiDeconstructionPattern
     PsiModifierList:
       <empty list>
     PsiTypeElement:Point
@@ -7,7 +7,7 @@ PsiJavaFile:Record0.java
         PsiIdentifier:Point('Point')
         PsiReferenceParameterList
           <empty list>
-    PsiRecordStructurePattern
+    PsiDeconstructionList
       PsiJavaToken:LPARENTH('(')
       PsiTypeTestPattern
         PsiPatternVariable:x

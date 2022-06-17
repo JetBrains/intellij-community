@@ -1,5 +1,5 @@
 PsiJavaFile:Record2.java
-  PsiRecordPattern
+  PsiDeconstructionPattern
     PsiModifierList:
       <empty list>
     PsiTypeElement:Box<Object>
@@ -13,7 +13,7 @@ PsiJavaFile:Record2.java
               PsiReferenceParameterList
                 <empty list>
           PsiJavaToken:GT('>')
-    PsiRecordStructurePattern
+    PsiDeconstructionList
       PsiJavaToken:LPARENTH('(')
       PsiTypeTestPattern
         PsiPatternVariable:s

@@ -10,15 +10,15 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.RECORD_PATTERN;
 
-public class PsiRecordPatternImpl extends CompositePsiElement implements PsiRecordPattern {
-  public PsiRecordPatternImpl() {
+public class PsiDeconstructionPatternImpl extends CompositePsiElement implements PsiDeconstructionPattern {
+  public PsiDeconstructionPatternImpl() {
     super(RECORD_PATTERN);
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitRecordPattern(this);
+      ((JavaElementVisitor)visitor).visitDeconstructionPattern(this);
     }
     else {
       visitor.visitElement(this);
@@ -26,9 +26,9 @@ public class PsiRecordPatternImpl extends CompositePsiElement implements PsiReco
   }
 
   @Override
-  public @NotNull PsiRecordStructurePattern getStructurePattern() {
-    PsiRecordStructurePattern recordStructurePattern =
-      (PsiRecordStructurePattern)findPsiChildByType(JavaElementType.RECORD_STRUCTURE_PATTERN);
+  public @NotNull PsiDeconstructionList getDeconstructionList() {
+    PsiDeconstructionList recordStructurePattern =
+      (PsiDeconstructionList)findPsiChildByType(JavaElementType.DECONSTRUCTION_LIST);
     assert recordStructurePattern != null; // guaranteed by parser
     return recordStructurePattern;
   }
@@ -76,8 +76,8 @@ public class PsiRecordPatternImpl extends CompositePsiElement implements PsiReco
   public String toString() {
     String name = getName();
     if (name == null) {
-      return "PsiRecordPattern";
+      return "PsiDeconstructionPattern";
     }
-    return "PsiRecordPattern " + name;
+    return "PsiDeconstructionPattern " + name;
   }
 }

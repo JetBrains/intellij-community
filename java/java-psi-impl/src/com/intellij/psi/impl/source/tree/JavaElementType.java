@@ -138,8 +138,8 @@ public interface JavaElementType {
   IElementType MODULE_REFERENCE = new JavaCompositeElementType("MODULE_REFERENCE", () -> new PsiJavaModuleReferenceElementImpl());
   IElementType TYPE_TEST_PATTERN = new JavaCompositeElementType("TYPE_TEST_PATTERN", () -> new PsiTypeTestPatternImpl());
   IElementType PATTERN_VARIABLE = new JavaCompositeElementType("PATTERN_VARIABLE", () -> new PsiPatternVariableImpl());
-  IElementType RECORD_PATTERN = new JavaCompositeElementType("RECORD_PATTERN", () -> new PsiRecordPatternImpl());
-  IElementType RECORD_STRUCTURE_PATTERN = new JavaCompositeElementType("RECORD_STRUCTURE_PATTERN", () -> new PsiRecordStructurePatternImpl());
+  IElementType RECORD_PATTERN = new JavaCompositeElementType("RECORD_PATTERN", () -> new PsiDeconstructionPatternImpl());
+  IElementType DECONSTRUCTION_LIST = new JavaCompositeElementType("DECONSTRUCTION_LIST", () -> new PsiDeconstructionListImpl());
   IElementType RECORD_PATTERN_VARIABLE = new JavaCompositeElementType("RECORD_PATTERN_VARIABLE", () -> new PsiRecordPatternVariableImpl());
   IElementType PATTERN_GUARD = new JavaCompositeElementType("PATTERN_GUARD", () -> new PsiPatternGuardImpl());
   IElementType PARENTHESIZED_PATTERN = new JavaCompositeElementType("PARENTHESIZED_PATTERN", () -> new PsiParenthesizedPatternImpl());
