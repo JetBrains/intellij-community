@@ -388,7 +388,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               tr { td("Iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
               if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
                 tr {
-                  td("Indexing visible time")
+                  td("Total processing visible time")
                   td(JsonDuration(
                     projectIndexingHistory.fileProviderStatistics.sumOf { stat -> stat.totalIndexingVisibleTime.nano }).presentableDuration())
                 }
@@ -449,7 +449,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               tr {
                 th("File type")
                 th("Number of files")
-                th("Indexing time")
+                th("Total processing time")
                 th("Content loading time")
                 th("Total files size")
                 th("Indexing speed")
@@ -598,7 +598,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             thead {
               tr {
                 th("Provider name")
-                th("Indexing time")
+                th("Total processing time")
                 th("Content loading time")
                 th("Number of indexed files")
                 th("Number of files indexed by $INDEX_INFRA_EXTENSIONS")

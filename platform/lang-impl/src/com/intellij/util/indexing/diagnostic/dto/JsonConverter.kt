@@ -55,7 +55,7 @@ fun IndexingFileSetStatistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio:
     totalNumberOfIndexedFiles = numberOfIndexedFiles,
     totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
     filesFullyIndexedByExtensions = listOfFilesFullyIndexedByExtensions,
-    totalIndexingVisibleTime = convertAllThreadsTimeToVisibleDuration(indexingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
+    totalIndexingVisibleTime = convertAllThreadsTimeToVisibleDuration(processingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
     contentLoadingVisibleTime = convertAllThreadsTimeToVisibleDuration(contentLoadingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
     slowIndexedFiles = slowIndexedFiles.biggestElements.map { it.toJson() },

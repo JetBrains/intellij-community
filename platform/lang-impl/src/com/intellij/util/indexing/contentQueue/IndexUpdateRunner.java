@@ -130,10 +130,10 @@ public final class IndexUpdateRunner {
       throw new IndexingInterruptedException(e);
     }
     finally {
-      long visibleIndexingTime = System.nanoTime() - startTime;
-      long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getIndexingTimeInAllThreads()).sum();
+      long visibleProcessingTime = System.nanoTime() - startTime;
+      long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getProcessingTimeInAllThreads()).sum();
       projectIndexingHistory.setVisibleTimeToAllThreadsTimeRatio(totalProcessingTimeInAllThreads == 0
-                                                                 ? 0 : ((double)visibleIndexingTime) / totalProcessingTimeInAllThreads);
+                                                                 ? 0 : ((double)visibleProcessingTime) / totalProcessingTimeInAllThreads);
       if (myIndexWriteExecutor != null) {
         ProgressIndicatorUtils.awaitWithCheckCanceled(myIndexWriteExecutor.submit(EmptyRunnable.getInstance()));
       }
