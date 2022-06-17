@@ -402,7 +402,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
               tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
               tr {
-                td("Separate application time")
+                td("Index writing time")
                 td(if (times.isAppliedAllValuesSeparately)
                      StringUtil.formatDuration(times.separateApplyingIndexesVisibleTime.milliseconds)
                    else
