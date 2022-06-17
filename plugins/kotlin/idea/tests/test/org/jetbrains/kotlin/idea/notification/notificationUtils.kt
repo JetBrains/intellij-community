@@ -6,6 +6,8 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 
 fun catchNotificationText(project: Project, action: () -> Unit): String? {
     val notifications = catchNotifications(project, action).ifEmpty { return null }
@@ -33,5 +35,15 @@ fun catchNotifications(project: Project, action: () -> Unit): List<Notification>
 }
 
 val Notification.asText: String get() = "Title: '$title'\nContent: '$content'"
-val List<Notification>.asText: String
-    get() = sortedBy { it.content }.joinToString(separator = "\n-----\n", transform = Notification::asText)
+fun List<Notification>.asText(filterNotificationAboutNewKotlinVersion: Boolean = true): String =
+    sortedBy { it.content }
+        .filter {
+            !filterNotificationAboutNewKotlinVersion ||
+                    !it.content.contains(
+                        KotlinBundle.message(
+                            "kotlin.external.compiler.updates.notification.content.0",
+                            KotlinPluginLayout.instance.standaloneCompilerVersion.kotlinVersion
+                        )
+                    )
+        }
+        .joinToString(separator = "\n-----\n", transform = Notification::asText)

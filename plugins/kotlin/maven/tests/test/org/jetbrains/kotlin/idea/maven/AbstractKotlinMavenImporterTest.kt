@@ -2184,7 +2184,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertModules("project", "module1", "module2")
             assertImporterStatePresent()
-            assertEquals(0, notifications.size)
+            assertEquals("", notifications.asText())
             // The highest of available versions should be picked
             // TODO: should be reverted after KTI-724
             assertNotEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
@@ -2201,7 +2201,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             }
 
             val notification = notifications.find { it.title == "Unsupported Kotlin JPS plugin version" }
-            assertNotNull(notifications.asText, notification)
+            assertNotNull(notifications.asText(), notification)
             assertEquals(
                 notification?.content,
                 "Version (${KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler}) of the Kotlin JPS plugin will be used<br>" +
@@ -3383,7 +3383,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             val (facet, notifications) = doJvmTarget6Test(version = null)
             Assert.assertEquals("JVM 1.6", facet.targetPlatform!!.oldFashionedDescription)
             Assert.assertEquals("1.6", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            Assert.assertEquals("", notifications.asText)
+            Assert.assertEquals("", notifications.asText())
         }
 
         @Test
@@ -3413,7 +3413,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                     Title: 'Unsupported JVM target 1.6'
                     Content: 'Maven project uses JVM target 1.6 for Kotlin compilation, which is no longer supported. It has been imported as JVM target 1.8. Consider migrating the project to JVM 1.8.'
                 """.trimIndent(),
-                notifications.asText,
+                notifications.asText(),
             )
         }
     }
