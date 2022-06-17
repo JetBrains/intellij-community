@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper;
@@ -53,5 +53,9 @@ public class CreateFieldFix {
     Template template = CreateFieldFromUsageHelper.setupTemplate(field, typeConstraints, myTargetClass, newEditor, context, false);
     TemplateManager manager = TemplateManager.getInstance(project);
     manager.startTemplate(newEditor, template);
+  }
+
+  public PsiClass getTargetClass() {
+    return myTargetClass;
   }
 }
