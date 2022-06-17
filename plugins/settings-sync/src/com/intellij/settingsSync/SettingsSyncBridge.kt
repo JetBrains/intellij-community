@@ -92,6 +92,13 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
       }
     }
 
+    mergeAndPush(previousIdePosition, previousCloudPosition, pushToCloudRequested, mustPushToCloud)
+  }
+
+  private fun mergeAndPush(previousIdePosition: SettingsLog.Position,
+                           previousCloudPosition: SettingsLog.Position,
+                           pushToCloudRequested: Boolean,
+                           mustPushToCloud: Boolean) {
     val newIdePosition = settingsLog.getIdePosition()
     val newCloudPosition = settingsLog.getCloudPosition()
     val masterPosition: SettingsLog.Position
