@@ -104,7 +104,7 @@ public final class FileNameCache {
   }
 
   @NotNull
-  public static CharSequence getVFileName(int nameId, @NotNull NameComputer computeName) throws IOException {
+  private static CharSequence getVFileName(int nameId, @NotNull NameComputer computeName) throws IOException {
     assert nameId > 0 : nameId;
 
     if (ourTrackStats) {

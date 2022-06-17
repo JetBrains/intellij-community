@@ -619,13 +619,7 @@ public final class FSRecords {
   @NotNull
   static CharSequence getNameSequence(int id) {
     int nameId = readAndHandleErrors(() -> ourConnection.getRecords().getNameId(id));
-    try {
-      return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId);
-    }
-    catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
-    }
+    return nameId == 0 ? "" : FileNameCache.getVFileName(nameId);
   }
 
   public static CharSequence getNameByNameId(int nameId) {
