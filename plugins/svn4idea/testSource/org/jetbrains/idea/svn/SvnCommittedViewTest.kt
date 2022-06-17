@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn
 
 import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
@@ -125,7 +126,7 @@ class SvnCommittedViewTest : SvnTestCase() {
     assertRevisions(
       r(2,
         Data(d1, FileStatus.MODIFIED, "- moved from .." + File.separatorChar),
-        Data(f11, FileStatus.MODIFIED, "- moved from ../../d1/")
+        Data(f11, FileStatus.MODIFIED, "- moved from " + StringUtil.convertLineSeparators("../../d1/"))
       )
     )
   }
