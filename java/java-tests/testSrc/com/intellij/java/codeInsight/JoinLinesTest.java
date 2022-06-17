@@ -290,6 +290,13 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testJoinFields2() {doTest(3);}
   public void testJoinFields3() {doTest();}
 
+  public void testCaseLabels() {doTest();}
+  public void testCaseLabels2() {
+    CommonCodeStyleSettings settings = getJavaSettings();
+    settings.SPACE_AFTER_COMMA = false;
+    doTest();
+  }
+
   private void doTest() {
     doTest(".java");
   }
