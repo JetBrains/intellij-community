@@ -130,7 +130,7 @@ public abstract class Bin {
       long offset = getOffset();
       for (Bin bin : myMembers) {
         bin.resetOffsets(offset);
-        offset = offset + bin.sizeInBytes();
+        offset += bin.sizeInBytes();
       }
       updateSizeOffsetHolders();
     }
@@ -515,7 +515,7 @@ public abstract class Bin {
 
     @Override
     public long sizeInBytes() {
-      return myValue.length() * 2 + 2;
+      return myValue.length() * 2L + 2;
     }
 
     @Override
@@ -680,9 +680,7 @@ public abstract class Bin {
           Bin bin = (Bin) myClass.newInstance();
           bin.setName("[" + i + "]");
           myValues[i] = bin;
-        } catch (InstantiationException e) {
-          throw new RuntimeException(e.getMessage());
-        } catch (IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException e) {
           throw new RuntimeException(e.getMessage());
         }
       }
@@ -696,7 +694,7 @@ public abstract class Bin {
       }
       for (Bin bin : myValues) {
         bin.resetOffsets(offset);
-        offset = offset + bin.sizeInBytes();
+        offset += bin.sizeInBytes();
       }
     }
 
