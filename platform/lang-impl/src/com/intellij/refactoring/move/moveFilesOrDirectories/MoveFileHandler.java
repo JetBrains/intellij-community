@@ -39,6 +39,8 @@ public abstract class MoveFileHandler {
    * @param oldToNewMap the map of elements which can be referenced from other files directly (not through a file reference)
    *                    to their counterparts after the move. The handler needs to add elements to this map according to the
    *                    file modifications that it has performed.
+   * @apiNote please note, that the contract is partially broken when we move directories. Since the directory move is a single operation
+   * the method is called for nested files AFTER the moving.
    */
   public abstract void prepareMovedFile(PsiFile file, PsiDirectory moveDestination, Map<PsiElement, PsiElement> oldToNewMap);
 
