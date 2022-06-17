@@ -1,0 +1,12 @@
+UFile (package = ) [public final class IntToStringCallKt {...]
+    UClass (name = IntToStringCallKt) [public final class IntToStringCallKt {...}]
+        UMethod (name = test) [public static final fun test(@org.jetbrains.annotations.NotNull i: int) : java.lang.String {...}]
+            UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}] : PsiType:Void
+                UReturnExpression [return i.toString()] : PsiType:Void
+                    UQualifiedReferenceExpression [i.toString()] : PsiType:String
+                        USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String
+                            UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : PsiType:String

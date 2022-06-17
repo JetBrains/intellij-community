@@ -1,0 +1,6 @@
+test -> UMethod (name = test)
+i -> UParameter (name = i)
+Int -> USimpleNameReferenceExpression (identifier = Int)
+String -> USimpleNameReferenceExpression (identifier = String)
+    i -> USimpleNameReferenceExpression (identifier = i)
+    toString -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))

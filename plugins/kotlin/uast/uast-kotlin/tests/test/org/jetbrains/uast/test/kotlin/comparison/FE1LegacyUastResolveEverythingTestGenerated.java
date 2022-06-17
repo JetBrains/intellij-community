@@ -188,6 +188,11 @@ public class FE1LegacyUastResolveEverythingTestGenerated extends AbstractFE1Lega
         runTest("testData/InnerNonFixedTypeVariable.kt");
     }
 
+    @TestMetadata("IntToStringCall.kt")
+    public void testIntToStringCall() throws Exception {
+        runTest("testData/IntToStringCall.kt");
+    }
+
     @TestMetadata("LambdaExpressionFunctionalInterfaceType.kt")
     public void testLambdaExpressionFunctionalInterfaceType() throws Exception {
         runTest("testData/LambdaExpressionFunctionalInterfaceType.kt");
