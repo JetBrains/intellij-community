@@ -48,7 +48,7 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   /**
    * @return a number that's incremented every time modification count for some file is advanced, @see {@link #getModificationCount(VirtualFile)}.
-   * This number is persisted between IDE sessions and so it'll always increase. This method invocation means disk access, so it's not terribly cheap.
+   * This number is persisted between IDE sessions and so it'll always increase.
    */
   @TestOnly
   public abstract int getFilesystemModificationCount();

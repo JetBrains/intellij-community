@@ -30,7 +30,7 @@ final class PersistentFSConnector {
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
   private static final AtomicInteger INITIALIZATION_COUNTER = new AtomicInteger();
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false, true);
-  private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT_RW = new StorageLockContext(true, true);
+  private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT_RW = new StorageLockContext(true, true, true);
 
   static @NotNull PersistentFSConnection connect(@NotNull String cachesDir, int version, boolean useContentHashes) {
     return FSRecords.writeAndHandleErrors(() -> {
@@ -117,16 +117,17 @@ final class PersistentFSConnector {
 
       SimpleStringPersistentEnumerator enumeratedAttributes = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
 
-      boolean aligned = PagedFileStorage.BUFFER_SIZE % PersistentFSRecordsStorage.RECORD_SIZE == 0;
+      int pageSize = PagedFileStorage.BUFFER_SIZE * PersistentFSRecordsStorage.recordsLength() / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
+      boolean aligned = pageSize % PersistentFSRecordsStorage.recordsLength() == 0;
       if (!aligned) {
-        LOG.error("Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + PersistentFSRecordsStorage.RECORD_SIZE);
+        LOG.error("Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + PersistentFSRecordsStorage.recordsLength());
       }
-      records = new PersistentFSRecordsStorage(new ResizeableMappedFile(recordsFile,
-                                                                        20 * 1024,
-                                                                        PERSISTENT_FS_STORAGE_CONTEXT_RW,
-                                                                        PagedFileStorage.BUFFER_SIZE,
-                                                                        aligned,
-                                                                        IOUtil.useNativeByteOrderForByteBuffers()));
+      records = PersistentFSRecordsStorage.createStorage(new ResizeableMappedFile(recordsFile,
+                                                                                  20 * 1024,
+                                                                                  PERSISTENT_FS_STORAGE_CONTEXT_RW,
+                                                                                  pageSize,
+                                                                                  aligned,
+                                                                                  IOUtil.useNativeByteOrderForByteBuffers()));
 
       boolean initial = records.length() == 0;
 

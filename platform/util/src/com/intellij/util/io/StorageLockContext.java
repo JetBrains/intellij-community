@@ -19,27 +19,36 @@ public final class StorageLockContext {
   private final FilePageCache myFilePageCache;
   private final boolean myUseReadWriteLock;
   private final boolean myCacheChannels;
+  private final boolean myDisableAssertions;
 
   private StorageLockContext(@NotNull FilePageCache filePageCache,
                              boolean useReadWriteLock,
-                             boolean cacheChannels) {
+                             boolean cacheChannels,
+                             boolean disableAssertions) {
     myLock = new ReentrantReadWriteLock();
     myFilePageCache = filePageCache;
     myUseReadWriteLock = useReadWriteLock;
     myCacheChannels = cacheChannels;
+    myDisableAssertions = disableAssertions;
   }
 
   public StorageLockContext(boolean useReadWriteLock,
                             boolean cacheChannels) {
-    this(ourDefaultCache, useReadWriteLock, cacheChannels);
+    this(ourDefaultCache, useReadWriteLock, cacheChannels, false);
+  }
+
+  public StorageLockContext(boolean useReadWriteLock,
+                            boolean cacheChannels,
+                            boolean disableAssertions) {
+    this(ourDefaultCache, useReadWriteLock, cacheChannels, disableAssertions);
   }
 
   public StorageLockContext(boolean useReadWriteLock) {
-    this(ourDefaultCache, useReadWriteLock, false);
+    this(ourDefaultCache, useReadWriteLock, false, false);
   }
 
   public StorageLockContext() {
-    this(ourDefaultCache, false, false);
+    this(ourDefaultCache, false, false, false);
   }
 
   boolean useChannelCache() {
@@ -86,7 +95,7 @@ public final class StorageLockContext {
 
   @ApiStatus.Internal
   public void checkWriteAccess() {
-    if (IndexDebugProperties.DEBUG) {
+    if (!myDisableAssertions && IndexDebugProperties.DEBUG) {
       if (myLock.writeLock().isHeldByCurrentThread()) return;
       throw new IllegalStateException("Must hold StorageLock write lock to access PagedFileStorage");
     }
@@ -94,7 +103,7 @@ public final class StorageLockContext {
 
   @ApiStatus.Internal
   public void checkReadAccess() {
-    if (IndexDebugProperties.DEBUG) {
+    if (!myDisableAssertions && IndexDebugProperties.DEBUG) {
       if (myLock.getReadHoldCount() > 0 || myLock.writeLock().isHeldByCurrentThread()) return;
       throw new IllegalStateException("Must hold StorageLock read lock to access PagedFileStorage"); }
   }

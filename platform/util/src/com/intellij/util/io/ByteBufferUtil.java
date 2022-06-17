@@ -108,6 +108,15 @@ public final class ByteBufferUtil {
     buf.get(dst, dstIndex, length);
   }
 
+  public static long getAddress(@NotNull ByteBuffer src) {
+    try {
+      return (long)address.invoke(src);
+    }
+    catch (Throwable e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @NotNull
   private static Logger getLogger() {
     return Logger.getInstance(ByteBufferUtil.class);

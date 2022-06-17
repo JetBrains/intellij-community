@@ -79,7 +79,7 @@ public final class FSRecords {
   }
 
   private static int calculateVersion() {
-    return nextMask(59,  // acceptable range is [0..255]
+    return nextMask(59 + (PersistentFSRecordsStorage.useLockFreeRecordsStorage ? 1 : 0),  // acceptable range is [0..255]
                     8,
                     nextMask(useContentHashes,
                     nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
@@ -107,17 +107,19 @@ public final class FSRecords {
   /**
    * @return nameId > 0
    */
-  static int writeAttributesToRecord(int fileId, int parentId, @NotNull FileAttributes attributes, @NotNull String name,
-                                     boolean overwriteMissed) {
+  static int writeAttributesToRecord(int fileId, int parentId, @NotNull FileAttributes attributes, @NotNull String name, boolean overwriteMissed) {
     int nameId = getNameId(name);
     long timestamp = attributes.lastModified;
     long length = attributes.isDirectory() ? -1L : attributes.length;
     int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
 
-    writeAndHandleErrors(() -> {
+    try {
       setAttributes(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
-      return null;
-    });
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
 
     InvertedNameIndex.updateFileName(fileId, nameId, 0);
     ourNamesIndexModCount.incrementAndGet();
@@ -130,9 +132,9 @@ public final class FSRecords {
     invalidateCaches();
     int parentId = getParent(fileId);
     String msg = "File already created: fileId=" + fileId +
-                 "; nameId=" + nameId + "(" + getNameByNameId(nameId) + ")" +
+                 "; nameId=" + nameId + "(" + FileNameCache.getVFileName(nameId) + ")" +
                  "; parentId=" + parentId +
-                 "; existingData=" + existingData;
+                 "; \nexistingData=" + existingData;
     if (parentId > 0) {
       msg += "; parent.name=" + getName(parentId);
       msg += "; parent.children=" + list(parentId);
@@ -162,6 +164,7 @@ public final class FSRecords {
         ourTreeAccessor.ensureLoaded();
       }
       catch (IOException e) {
+        LOG.error(e);
         handleError(e);
       }
     }
@@ -177,7 +180,13 @@ public final class FSRecords {
   }
 
   public static long getCreationTimestamp() {
-    return readAndHandleErrors(() -> ourConnection.getTimestamp());
+    try {
+      return ourConnection.getTimestamp();
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   // todo: Address  / capacity store in records table, size store with payload
@@ -218,27 +227,51 @@ public final class FSRecords {
 
   @TestOnly
   static int @NotNull [] listRoots() {
-    return readAndHandleErrors(() -> ourTreeAccessor.listRoots());
+    try {
+      return ourTreeAccessor.listRoots();
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   @TestOnly
   static void force() {
-    writeAndHandleErrors(ourConnection::doForce);
+    try {
+      ourConnection.doForce();
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   @TestOnly
   static boolean isDirty() {
-    return readAndHandleErrors(ourConnection::isDirty);
+    return ourConnection.isDirty();
   }
 
   @PersistentFS.Attributes
   static int getFlags(int id) {
-    return readAndHandleErrors(() -> ourConnection.getRecords().doGetFlags(id));
+    try {
+      return ourConnection.getRecords().getFlags(id);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   @ApiStatus.Internal
   public static boolean isDeleted(int id) {
-    return readAndHandleErrors(() -> ourRecordAccessor.isDeleted(id));
+    try {
+      return ourRecordAccessor.isDeleted(id);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static int findRootRecord(@NotNull String rootUrl) {
@@ -258,17 +291,35 @@ public final class FSRecords {
   }
 
   public static int @NotNull [] listIds(int fileId) {
-    return readAndHandleErrors(() -> ourTreeAccessor.listIds(fileId));
+    try {
+      return ourTreeAccessor.listIds(fileId);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static boolean mayHaveChildren(int fileId) {
-    return readAndHandleErrors(() -> ourTreeAccessor.mayHaveChildren(fileId));
+    try {
+      return ourTreeAccessor.mayHaveChildren(fileId);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   // returns child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
   @NotNull
   static ListResult list(int parentId) {
-    return readAndHandleErrors(() -> ourTreeAccessor.doLoadChildren(parentId));
+    try {
+      return ourTreeAccessor.doLoadChildren(parentId);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull
@@ -277,10 +328,16 @@ public final class FSRecords {
   }
 
   static boolean wereChildrenAccessed(int id) {
-    return readAndHandleErrors(() -> ourTreeAccessor.wereChildrenAccessed(id));
+    try {
+      return ourTreeAccessor.wereChildrenAccessed(id);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
-  static <T> T readAndHandleErrors(@NotNull ThrowableComputable<T, ? extends Exception> action) {
+  static <T> T read(@NotNull ThrowableComputable<T, ? extends Exception> action) {
     // otherwise DbConnection.handleError(e) (requires write lock) could fail
     if (lock.getReadHoldCount() != 0) {
       try {
@@ -299,6 +356,19 @@ public final class FSRecords {
       finally {
         r.unlock();
       }
+    }
+    catch (ProcessCanceledException e) {
+      // long reads like processXXX can be safely cancelled
+      throw e;
+    }
+    catch (Throwable e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  static <T> T readAndHandleErrors(@NotNull ThrowableComputable<T, ? extends Exception> action) {
+    try {
+      return read(action);
     }
     catch (ProcessCanceledException e) {
       // long reads like processXXX can be safely cancelled
@@ -454,13 +524,17 @@ public final class FSRecords {
   }
 
   static @Nullable String readSymlinkTarget(int id) {
-    String result = readAndHandleErrors(() -> {
-      try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
-        if (stream != null) return StringUtil.nullize(IOUtil.readUTF(stream));
+    try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
+      if (stream != null) {
+        String result = StringUtil.nullize(IOUtil.readUTF(stream));
+        return result == null ? null : FileUtil.toSystemIndependentName(result);
       }
-      return null;
-    });
-    return result != null ? FileUtil.toSystemIndependentName(result) : null;
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
+    return null;
   }
 
   static void storeSymlinkTarget(int id, @Nullable String symlinkTarget) {
@@ -479,23 +553,31 @@ public final class FSRecords {
 
   @TestOnly
   static int getPersistentModCount() {
-    return readAndHandleErrors(ourConnection::getPersistentModCount);
+    return ourConnection.getPersistentModCount();
   }
 
-  private static void incModCount(int id) throws IOException {
+  static void incModCount(int id) throws IOException {
     ourConnection.incModCount(id);
   }
 
+  public static int incGlobalModCount() throws IOException {
+    return ourConnection.incGlobalModCount();
+  }
+
   public static int getParent(int id) {
-    return readAndHandleErrors(() -> {
-      final int parentId = ourConnection.getRecords().getParent(id);
+    try {
+      int parentId = ourConnection.getRecords().getParent(id);
       if (parentId == id) {
         LOG.error("Cyclic parent child relations in the database. id = " + id);
         return 0;
       }
 
       return parentId;
-    });
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   @Nullable
@@ -569,7 +651,7 @@ public final class FSRecords {
   @ApiStatus.Internal
   @NotNull
   public static IntList getRemainFreeRecords() {
-    return readAndHandleErrors(() -> new IntArrayList(ourConnection.getFreeRecords()));
+    return ourConnection.getFreeRecords();
   }
 
   @ApiStatus.Internal
@@ -584,14 +666,23 @@ public final class FSRecords {
       return;
     }
 
-    writeAndHandleErrors(() -> {
-      incModCount(id);
+    try {
+      incGlobalModCount();
       ourConnection.getRecords().setParent(id, parentId);
-    });
+    } catch (Throwable e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   public static boolean processAllNames(@NotNull Processor<? super CharSequence> processor) {
-    return readAndHandleErrors(() -> ourConnection.getNames().processAllDataObjects(processor));
+    try {
+      return ourConnection.getNames().processAllDataObjects(processor);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   public static boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
@@ -618,7 +709,14 @@ public final class FSRecords {
 
   @NotNull
   static CharSequence getNameSequence(int id) {
-    int nameId = readAndHandleErrors(() -> ourConnection.getRecords().getNameId(id));
+    int nameId = 0;
+    try {
+      nameId = ourConnection.getRecords().getNameId(id);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
     return nameId == 0 ? "" : FileNameCache.getVFileName(nameId);
   }
 
@@ -652,45 +750,67 @@ public final class FSRecords {
   }
 
   static void setFlags(int id, @PersistentFS.Attributes int flags) {
-    writeAndHandleErrors(() -> {
-      incModCount(id);
+    try {
       ourConnection.getRecords().setFlags(id, flags);
-    });
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static long getLength(int id) {
-    return readAndHandleErrors(() -> ourConnection.getRecords().getLength(id));
+    try {
+      return ourConnection.getRecords().getLength(id);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static void setLength(int id, long len) {
-    writeAndHandleErrors(() -> {
-      PersistentFSRecordsStorage records = ourConnection.getRecords();
-      if (records.putLength(id, len)) {
-        incModCount(id);
-      }
-    });
+    try {
+      ourConnection.getRecords().putLength(id, len);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static void setAttributes(int id, long timestamp, long length, int flags, int nameId, int parentId, boolean overwriteMissed) throws IOException {
-    PersistentFSRecordsStorage records = ourConnection.getRecords();
-    records.setAttributesAndIncModCount(id, timestamp, length, flags, nameId, parentId, overwriteMissed);
+    ourConnection.getRecords().setAttributesAndIncModCount(id, timestamp, length, flags, nameId, parentId, overwriteMissed);
   }
 
   static long getTimestamp(int id) {
-    return readAndHandleErrors(() -> ourConnection.getRecords().getTimestamp(id));
+    try {
+      return ourConnection.getRecords().getTimestamp(id);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static void setTimestamp(int id, long value) {
-    writeAndHandleErrors(() -> {
-      PersistentFSRecordsStorage records = ourConnection.getRecords();
-      if (records.putTimeStamp(id, value)) {
-        incModCount(id);
-      }
-    });
+    try {
+      ourConnection.getRecords().putTimestamp(id, value);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   static int getModCount(int id) {
-    return readAndHandleErrors(() -> ourConnection.getRecords().getModCount(id));
+    try {
+      return ourConnection.getRecords().getModCount(id);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   @Nullable
@@ -759,12 +879,24 @@ public final class FSRecords {
   }
 
   static int getContentId(int fileId) {
-    return readAndHandleErrors(() -> ourConnection.getRecords().getContentRecordId(fileId));
+    try {
+      return ourConnection.getRecords().getContentRecordId(fileId);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   @TestOnly
   static byte[] getContentHash(int fileId) {
-    return readAndHandleErrors(() -> ourContentAccessor.getContentHash(fileId));
+    try {
+      return ourContentAccessor.getContentHash(fileId);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull

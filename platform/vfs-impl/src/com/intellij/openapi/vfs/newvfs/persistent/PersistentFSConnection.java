@@ -17,6 +17,7 @@ import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingContentStorage;
 import com.intellij.util.io.storage.Storage;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -137,7 +138,9 @@ final class PersistentFSConnection {
 
   @NotNull
   IntList getFreeRecords() {
-    return myFreeRecords;
+    synchronized (myFreeRecords) {
+      return new IntArrayList(myFreeRecords);
+    }
   }
 
   long getTimestamp() throws IOException {
@@ -175,7 +178,7 @@ final class PersistentFSConnection {
     return myRecords.getGlobalModCount();
   }
 
-  int incGlobalModCount() throws IOException {
+  public int incGlobalModCount() throws IOException {
     incLocalModCount();
     return myRecords.incGlobalModCount();
   }
@@ -189,7 +192,6 @@ final class PersistentFSConnection {
 
   void incLocalModCount() throws IOException {
     markDirty();
-    //noinspection NonAtomicOperationOnVolatileField
     myLocalModificationCount.incrementAndGet();
   }
 
@@ -212,10 +214,13 @@ final class PersistentFSConnection {
   // must not be run under write lock to avoid other clients wait for read lock
   private void flush() {
     if (isDirty() && !HeavyProcessLatch.INSTANCE.isRunning()) {
-      FSRecords.readAndHandleErrors(() -> {
+      try {
         doForce();
-        return null;
-      });
+      }
+      catch (IOException e) {
+        handleError(e);
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -273,12 +278,10 @@ final class PersistentFSConnection {
     }
   }
 
-  // either called from FlushingDaemon thread under read lock, or from handleError under write lock
   void markClean() throws IOException {
-    assert FSRecords.lock.isWriteLocked() || FSRecords.lock.getReadHoldCount() != 0;
+    // no synchronization, it's ok to have race here
     if (myDirty) {
       myDirty = false;
-      // writing here under read lock is safe because no-one else read or write at this offset (except at startup)
       myRecords.setConnectionStatus(myCorrupted
                                     ? PersistentFSHeaders.CORRUPTED_MAGIC
                                     : PersistentFSHeaders.SAFELY_CLOSED_MAGIC);

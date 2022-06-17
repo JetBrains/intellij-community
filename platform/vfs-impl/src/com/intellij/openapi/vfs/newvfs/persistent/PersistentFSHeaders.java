@@ -15,6 +15,7 @@ final class PersistentFSHeaders {
 
   static {
     //noinspection ConstantConditions
-    assert HEADER_SIZE <= PersistentFSRecordsStorage.RECORD_SIZE;
+    assert HEADER_SIZE <= PersistentFSLockFreeRecordsStorage.RECORD_SIZE;
+    assert HEADER_SIZE <= PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
   }
 }
