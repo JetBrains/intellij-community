@@ -474,7 +474,11 @@ public final class EditorWindow {
   }
 
   private void checkConsistency() {
-    LOG.assertTrue(myOwner.containsWindow(this), "EditorWindow not in collection");
+    LOG.assertTrue(isValid(), "EditorWindow not in collection");
+  }
+
+  public boolean isValid() {
+    return myOwner.containsWindow(this);
   }
 
   /**
