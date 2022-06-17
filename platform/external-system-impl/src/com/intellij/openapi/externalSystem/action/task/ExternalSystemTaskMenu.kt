@@ -27,6 +27,8 @@ class ExternalSystemTaskMenu : DefaultActionGroup(), DumbAware {
       }
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   private interface MyDelegatingAction
 
   private class DelegatingActionGroup internal constructor(action: ActionGroup, private val executor: Executor) :
