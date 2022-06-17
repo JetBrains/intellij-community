@@ -60,14 +60,15 @@ abstract class LibraryInfo(
     override fun getLibraryRoots(): Collection<String> =
         library.getFiles(OrderRootType.CLASSES).mapNotNull(PathUtil::getLocalPath)
 
-    override fun createModificationTracker(): ModificationTracker {
-        if (!project.useLibraryToSourceAnalysis)
-            return ModificationTracker.NEVER_CHANGED
+    override fun createModificationTracker(): ModificationTracker =
+        if (!project.useLibraryToSourceAnalysis) {
+            ModificationTracker.NEVER_CHANGED
+        } else {
+            ResolutionAnchorAwareLibraryModificationTracker(this)
+        }
 
-        return ResolutionAnchorAwareLibraryModificationTracker(this)
-    }
-
-    override fun toString() = "${this::class.simpleName}(libraryName=${library.name}, libraryRoots=${getLibraryRoots()})"
+    override fun toString() =
+        "${this::class.simpleName}(libraryName=${library.name}${if (library !is LibraryEx || !library.isDisposed) ", libraryRoots=${getLibraryRoots()})" else ""}"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
