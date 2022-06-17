@@ -50,9 +50,14 @@ import java.util.concurrent.TimeUnit;
 
 public final class ActionMenu extends JBMenu {
   /**
-   * By default, a "performable" popup action group menu item provides a submenu.
-   * Use this key to avoid suppress that submenu for a presentation or a template presentation like this:
+   * By default, a "performable" non-empty popup action group menu item still shows a submenu.
+   * Use this key to disable the submenu and avoid children expansion on update as follows:
+   * <p>
    * {@code presentation.putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true)}.
+   * <p>
+   * Both ordinary and template presentations are supported.
+   *
+   * @see Presentation#setPerformGroup(boolean)
    */
   public static final Key<Boolean> SUPPRESS_SUBMENU = Key.create("SUPPRESS_SUBMENU");
 
