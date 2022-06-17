@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -142,7 +143,8 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
     }
   }
 
-  private fun isLoggingEnabled() = !Registry.`is`("search.everywhere.force.disable.logging.ml")
+  private fun isLoggingEnabled() =
+    ApplicationManager.getApplication().isEAP && !Registry.`is`("search.everywhere.force.disable.logging.ml")
 
   private fun getElementsData(selectedElements: IntArray,
                               elements: List<SearchEverywhereFoundElementInfo>,

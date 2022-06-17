@@ -10,7 +10,8 @@ import java.util.concurrent.TimeUnit
 
 class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider("MLSE", 7, TimeUnit.MINUTES.toMillis(10), 75 * 1024, sendLogsOnIdeClose = true) {
   override fun isRecordEnabled(): Boolean {
-    return !ApplicationManager.getApplication().isUnitTestMode &&
+    val app = ApplicationManager.getApplication()
+    return !app.isUnitTestMode && app.isEAP &&
            StatisticsUploadAssistant.isCollectAllowed() &&
            (ApplicationInfo.getInstance() == null || PlatformUtils.isJetBrainsProduct())
   }
