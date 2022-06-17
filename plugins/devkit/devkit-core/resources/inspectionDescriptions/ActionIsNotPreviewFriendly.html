@@ -7,9 +7,9 @@ whose types are known to be safe.
   Intention preview is an IntelliJ platform feature that displays how quick-fix or intention action
   will change the current file when applied. To implement this in quick fixes,
   <code>LocalQuickFix.generatePreview()</code> is called with a custom <code>ProblemDescriptor</code>
-  that points to the non-physical copy of current file. In intention actions, <code>IntentionAction.generatePreview</code>
+  that points to the non-physical copy of current file. In intention actions, <code>IntentionAction.generatePreview()</code>
   is called with the non-physical copy of current file and imaginary editor.
-  Normally, these methods just delegate to <code>LocalQuickFix.applyFix()</code> or <code>IntentionAction.invoke</code>.
+  Normally, these methods just delegate to <code>LocalQuickFix.applyFix()</code> or <code>IntentionAction.invoke()</code>.
   However, some quick-fixes may refer directly or indirectly to physical elements and use them for writing. As a result,
   preview won't work, as the quick-fix will attempt to update physical PSI instead of non-physical one.
   To avoid this, default implementation of <code>generatePreview()</code> delegates only if all the
@@ -34,7 +34,7 @@ whose types are known to be safe.
     Instead of storing PSI references in fields, try to extract all the necessary information from
     <code>ProblemDescriptor.getPsiElement()</code> in quick fix or from the supplied file/editor in intention action.
     You may also inherit the abstract <code>LocalQuickFixAndIntentionActionOnPsiElement</code> class and
-    implement its <code>invoke</code> and <code>isAvailable</code> methods, which have
+    implement its <code>invoke()</code> and <code>isAvailable()</code> methods, which have
     <code>startElement</code> and <code>endElement</code> parameters. These parameters are automatically
     mapped to a non-physical file copy for you.
   </li>
