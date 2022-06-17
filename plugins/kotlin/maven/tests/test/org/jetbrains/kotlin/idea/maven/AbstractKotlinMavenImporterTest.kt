@@ -2194,7 +2194,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         fun testJpsCompilerUnsupportedVersionDown() {
             val version = "1.1.0"
             val notifications = catchNotifications(myProject) {
-                doUnsupportedVersionTest(version)
+                doUnsupportedVersionTest(version, KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler)
             }
 
             val notification = notifications.find { it.title == "Unsupported Kotlin JPS plugin version" }
@@ -2221,7 +2221,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             )
         }
 
-        private fun doUnsupportedVersionTest(version: String) {
+        private fun doUnsupportedVersionTest(version: String, expectedFallbackVersion: String = KotlinJpsPluginSettings.rawBundledVersion) {
             createProjectSubDirs("src/main/kotlin")
 
             val mainPom = createProjectPom(
@@ -2257,7 +2257,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             // Fallback to bundled to unsupported version
             assertNotEquals(version, KotlinJpsPluginSettings.jpsVersion(myProject))
-            assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertEquals(expectedFallbackVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
         }
 
         @Test
