@@ -118,6 +118,10 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             return factory.createIndentCalculator(indent, it.startOffset)
         }
 
+        findContextReceiverListBefore(before)?.let {
+            return factory.createIndentCalculator(Indent.getNoneIndent(), it.startOffset)
+        }
+
         return before.controlFlowStatementBefore()?.let { controlFlowKeywordPosition ->
             val indent = when {
                 controlFlowKeywordPosition.similarToCatchKeyword() -> if (before.isAt(RightParenthesis)) Indent.getNoneIndent() else Indent.getNormalIndent()
@@ -325,6 +329,28 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                 createIndentCalculator(Indent.getContinuationIndent(), leftParenthesis.startOffset)
             }
         }
+
+        /**
+         * ```
+         * context(A) <caret> fun x()
+         * ```
+         */
+        private fun findContextReceiverListBefore(before: SemanticEditorPosition): SemanticEditorPosition? {
+            if (!before.isAt(RightParenthesis)) return null
+
+            val probableContextReceiverKeyword = before.copy().apply {
+                moveBeforeParentheses(LeftParenthesis, RightParenthesis)
+            }
+
+            if (probableContextReceiverKeyword.isAt(Identifier)
+                && probableContextReceiverKeyword.after().isAt(LeftParenthesis)
+                && probableContextReceiverKeyword.textOfCurrentPosition() == KtTokens.CONTEXT_KEYWORD.value
+            ) {
+                return probableContextReceiverKeyword
+            }
+            return null
+        }
+
 
         /**
          * @param endOfDeclaration is position before '=' for expression body or '{' for block body

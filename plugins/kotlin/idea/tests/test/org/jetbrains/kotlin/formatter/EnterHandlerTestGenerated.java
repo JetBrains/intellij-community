@@ -166,6 +166,54 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/editor/enterHandler/contextReceivers")
+        public static class ContextReceivers extends AbstractEnterHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("memberFunctionWithContextReceiver.after.kt")
+            public void testMemberFunctionWithContextReceiver() throws Exception {
+                runTest("testData/editor/enterHandler/contextReceivers/memberFunctionWithContextReceiver.after.kt");
+            }
+
+            @TestMetadata("memberFunctionWithContextReceiverNoModifiers.after.kt")
+            public void testMemberFunctionWithContextReceiverNoModifiers() throws Exception {
+                runTest("testData/editor/enterHandler/contextReceivers/memberFunctionWithContextReceiverNoModifiers.after.kt");
+            }
+
+            @TestMetadata("memberPropertyWithContextReceiver.after.kt")
+            public void testMemberPropertyWithContextReceiver() throws Exception {
+                runTest("testData/editor/enterHandler/contextReceivers/memberPropertyWithContextReceiver.after.kt");
+            }
+
+            @TestMetadata("memberPropertyWithContextReceiverNoModifiers.after.kt")
+            public void testMemberPropertyWithContextReceiverNoModifiers() throws Exception {
+                runTest("testData/editor/enterHandler/contextReceivers/memberPropertyWithContextReceiverNoModifiers.after.kt");
+            }
+
+            @TestMetadata("topLevelFunctionWithContextReceiver.after.kt")
+            public void testTopLevelFunctionWithContextReceiver() throws Exception {
+                runTest("testData/editor/enterHandler/contextReceivers/topLevelFunctionWithContextReceiver.after.kt");
+            }
+
+            @TestMetadata("topLevelFunctionWithContextReceiverNoModifiers.after.kt")
+            public void testTopLevelFunctionWithContextReceiverNoModifiers() throws Exception {
+                runTest("testData/editor/enterHandler/contextReceivers/topLevelFunctionWithContextReceiverNoModifiers.after.kt");
+            }
+
+            @TestMetadata("topLevelPropertyWithContextReceiver.after.kt")
+            public void testTopLevelPropertyWithContextReceiver() throws Exception {
+                runTest("testData/editor/enterHandler/contextReceivers/topLevelPropertyWithContextReceiver.after.kt");
+            }
+
+            @TestMetadata("topLevelPropertyWithContextReceiverNoModifiers.after.kt")
+            public void testTopLevelPropertyWithContextReceiverNoModifiers() throws Exception {
+                runTest("testData/editor/enterHandler/contextReceivers/topLevelPropertyWithContextReceiverNoModifiers.after.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/controlFlowConstructions")
         public static class ControlFlowConstructions extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
