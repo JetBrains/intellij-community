@@ -892,7 +892,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             )
 
             assertNotEquals(kotlinVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
-            Assert.assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            Assert.assertEquals(KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler, KotlinJpsPluginSettings.jpsVersion(myProject))
 
             assertModules("project")
             assertImporterStatePresent()
