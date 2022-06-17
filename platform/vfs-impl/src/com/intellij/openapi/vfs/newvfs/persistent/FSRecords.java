@@ -575,7 +575,7 @@ public final class FSRecords {
   @ApiStatus.Internal
   @NotNull
   public static IntList getNewFreeRecords() {
-    return readAndHandleErrors(() -> new IntArrayList(ourRecordAccessor.getNewFreeRecords()));
+    return ourRecordAccessor.getNewFreeRecords();
   }
 
   static void setParent(int id, int parentId) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.BitUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntLists;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +27,11 @@ final class PersistentFSRecordAccessor {
   @NotNull
   private final PersistentFSAttributeAccessor myPersistentFSAttributeAccessor;
   private final PersistentFSConnection myFSConnection;
+
+  private final Object myNewFreeRecordsSync = new Object();
   @NotNull
-  private final IntList myNewFreeRecords = new IntArrayList();
+  private final IntList myNewFreeRecords = IntLists.synchronize(new IntArrayList(), myNewFreeRecordsSync);
+
 
   PersistentFSRecordAccessor(@NotNull PersistentFSContentAccessor contentAccessor,
                              @NotNull PersistentFSAttributeAccessor attributeAccessor,
@@ -118,7 +122,9 @@ final class PersistentFSRecordAccessor {
   }
 
   @NotNull IntList getNewFreeRecords() {
-    return myNewFreeRecords;
+    synchronized (myNewFreeRecordsSync) {
+      return new IntArrayList(myNewFreeRecords);
+    }
   }
 
   @Nullable
