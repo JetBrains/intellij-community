@@ -26,5 +26,5 @@ public interface PsiRecordPattern extends PsiPrimaryPattern {
    * @return pattern variable if the pattern has a name, {@code null} otherwise
    */
   @Nullable
-  PsiRecordPatternVariable getPatternVariable();
+  PsiPatternVariable getPatternVariable();
 }

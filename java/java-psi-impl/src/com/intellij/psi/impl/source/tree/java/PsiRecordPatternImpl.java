@@ -41,8 +41,8 @@ public class PsiRecordPatternImpl extends CompositePsiElement implements PsiReco
   }
 
   @Override
-  public @Nullable PsiRecordPatternVariable getPatternVariable() {
-    return (PsiRecordPatternVariable)findPsiChildByType(JavaElementType.RECORD_PATTERN_VARIABLE);
+  public @Nullable PsiPatternVariable getPatternVariable() {
+    return (PsiPatternVariable)findPsiChildByType(JavaElementType.RECORD_PATTERN_VARIABLE);
   }
 
   @Override

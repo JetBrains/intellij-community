@@ -333,8 +333,6 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitRecordPattern(PsiRecordPattern recordPattern) { visitElement(recordPattern); }
 
-  public void visitRecordPatternVariable(PsiRecordPatternVariable variable) { visitPatternVariable(variable); }
-
   public void visitRecordStructurePattern(PsiRecordStructurePattern recordStructurePattern) { visitElement(recordStructurePattern); }
 
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
