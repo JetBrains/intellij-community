@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -46,6 +47,7 @@ open class GHOpenInBrowserActionGroup
     val data = getData(e.dataContext)
     e.presentation.isEnabledAndVisible = !data.isNullOrEmpty()
     e.presentation.isPerformGroup = data?.size == 1
+    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup);
     e.presentation.isPopupGroup = true
   }
 
