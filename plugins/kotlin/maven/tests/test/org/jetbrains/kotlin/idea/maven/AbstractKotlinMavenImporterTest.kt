@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.packaging.impl.artifacts.ArtifactUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
@@ -113,6 +114,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertModules("project")
             assertImporterStatePresent()
             assertSources("project", "src/main/java")
+            assertFalse(ArtifactUtil.areResourceFilesFromSourceRootsCopiedToOutput(getModule("project")))
         }
     }
 
