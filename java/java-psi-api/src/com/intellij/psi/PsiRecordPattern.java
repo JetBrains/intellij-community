@@ -15,5 +15,5 @@ public interface PsiRecordPattern extends PsiPrimaryPattern {
   PsiTypeElement getTypeElement();
 
   @Nullable
-  PsiRecordPatternVariable getPatternVariable();
+  PsiPatternVariable getPatternVariable();
 }

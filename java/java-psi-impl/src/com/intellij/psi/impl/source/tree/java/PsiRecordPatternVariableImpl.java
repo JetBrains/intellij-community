@@ -13,7 +13,7 @@ import java.util.Objects;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.RECORD_PATTERN_VARIABLE;
 
-public class PsiRecordPatternVariableImpl extends CompositePsiElement implements PsiRecordPatternVariable {
+public class PsiRecordPatternVariableImpl extends CompositePsiElement implements PsiPatternVariable {
   public PsiRecordPatternVariableImpl() {
     super(RECORD_PATTERN_VARIABLE);
   }
@@ -21,7 +21,7 @@ public class PsiRecordPatternVariableImpl extends CompositePsiElement implements
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitRecordPatternVariable(this);
+      ((JavaElementVisitor)visitor).visitPatternVariable(this);
     }
     else {
       visitor.visitElement(this);
