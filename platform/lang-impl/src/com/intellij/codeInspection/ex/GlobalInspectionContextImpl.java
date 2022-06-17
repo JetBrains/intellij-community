@@ -21,6 +21,7 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.diagnostic.opentelemetry.TraceManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -71,6 +72,9 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,6 +111,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   private Content myContent;
   private volatile boolean myViewClosed = true;
   private long myInspectionStartedTimestamp;
+  private Span runToolsSpan;
   private final ConcurrentMap<InspectionToolWrapper<?, ?>, InspectionToolPresentation> myPresentationMap = new ConcurrentHashMap<>();
   private boolean forceInspectAllScope;
 
@@ -238,6 +243,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (ApplicationManager.getApplication().isUnitTestMode() && !TESTING_VIEW) return;
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
+    runToolsSpan.end();
     LOG.info("Code inspection finished. Took " + elapsed + " ms");
     if (ApplicationManagerEx.isInIntegrationTest()) {
       String logPath = PathManager.getLogPath();
@@ -288,6 +294,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   @Override
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
+    Tracer tracer = TraceManager.INSTANCE.getTracer("codeInspection");
+    runToolsSpan = tracer.spanBuilder("global_inspection").setNoParent().startSpan();
     myInspectionStartedTimestamp = System.currentTimeMillis();
     ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (!(progressIndicator instanceof ProgressIndicatorWithDelayedPresentation)) {
