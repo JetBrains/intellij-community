@@ -26,17 +26,12 @@ import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectServ
 
 abstract class PackageVersionRangeInspection : AbstractPackageUpdateInspectionCheck() {
 
-    companion object {
-
-        private fun isRange(version: String) = version.any { !it.isLetter() && !it.isDigit() && it != '_' && it != '.' && it != '-' }
-    }
-
     override fun ProblemsHolder.checkFile(file: PsiFile, fileModule: Module) {
         file.project.packageSearchProjectService.dependenciesByModuleStateFlow.value
             .entries
             .find { it.key.nativeModule == fileModule }
             ?.value
-            ?.filter { it.dependency.coordinates.version?.let { isRange(it) } ?: false }
+            ?.filter { it.dependency.coordinates.version?.let { isIvyRange(it) } ?: false }
             ?.mapNotNull { coordinates ->
                 runCatching {
                     coordinates.declarationIndexes
@@ -53,5 +48,19 @@ abstract class PackageVersionRangeInspection : AbstractPackageUpdateInspectionCh
 
                 registerProblem(psiElement, message, ProblemHighlightType.WEAK_WARNING)
             }
+    }
+
+    private fun isIvyRange(version: String): Boolean {
+        // See https://ant.apache.org/ivy/history/2.1.0/ivyfile/dependency.html
+        val normalizedVersion = version.trimEnd()
+        if (normalizedVersion.endsWith('+')) return true
+
+        if (normalizedVersion.startsWith("latest.")) return true
+
+        val startsWithParenthesisOrBrackets = normalizedVersion.startsWith('(') || normalizedVersion.startsWith('[')
+        val endsWithParenthesisOrBrackets = normalizedVersion.endsWith(')') || normalizedVersion.endsWith(']')
+        if (startsWithParenthesisOrBrackets && endsWithParenthesisOrBrackets) return true
+
+        return false
     }
 }

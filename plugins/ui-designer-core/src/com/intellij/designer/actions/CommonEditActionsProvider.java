@@ -30,6 +30,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.uiDesigner.SerializedComponentData;
@@ -54,6 +55,11 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
 
   public CommonEditActionsProvider(DesignerEditorPanel designer) {
     myDesigner = designer;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   protected EditableArea getArea(DataContext dataContext) {

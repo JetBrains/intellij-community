@@ -183,6 +183,7 @@
             description="Enable new Java to Kotlin converter"
             defaultValue="true"
             restartRequired="false"/>
+    <iconMapper mappingFile="KotlinIconMappings.json"/>
   </extensions>
 
   <projectListeners>

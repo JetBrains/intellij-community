@@ -9,10 +9,7 @@ import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.*;
 import com.intellij.ide.CopyProvider;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -187,6 +184,11 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
   }
 
   private class MyCopyProvider implements CopyProvider {
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
 
     @Override
     public void performCopy(@NotNull DataContext dataContext) {

@@ -1893,6 +1893,27 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find SuppressWarnings annotations", 2, findMatchesCount(source6, "@SuppressWarnings"));
     assertEquals("Find SuppressWarnings annotations", 2, findMatchesCount(source6, "@SuppressWarnings(value='_any)"));
     assertEquals("Find annotation with 3 value array initializer", 1, findMatchesCount(source6, "@SuppressWarnings({'_value{3,3} })"));
+
+    String source7 = "class X {" +
+                     "    @interface Annotation {\n" +
+                     "        String[] value() default {};\n" +
+                     "    }\n" +
+                     "    @Annotation(\"Hello\")\n" +
+                     "    static void singleValue() {}\n" +
+                     "    @Annotation({\"Hello\"})\n" +
+                     "    static void multiValue() {}\n" +
+                     "    @Annotation(value = \"Hello\")\n" +
+                     "    static void explicitSingleValue() {}\n" +
+                     "    @Annotation(value = {\"Hello\"})\n" +
+                     "    static void explicitMultiValue() {}\n" +
+                     "    @Annotation({\"Hello\", \"World\"})\n" +
+                     "    static void different() {}\n" +
+                     "    @Annotation(\"Bye!\")\n" +
+                     "    static void end() {}\n" +
+                     "}";
+    assertEquals("Find all equivalent annotations", 4, findMatchesCount(source7, "@Annotation(\"Hello\")"));
+    assertEquals("Find all annotations with a specific value", 5, findMatchesCount(source7, "@Annotation({\"Hello\", '_O*})"));
+    assertEquals("Find all annotations", 6, findMatchesCount(source7, "@Annotation('_V)"));
   }
 
   public void testBoxingAndUnboxing() {
@@ -2481,13 +2502,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  }" +
                     "}";
 
-    String pattern1 = "() -> {}";
+    String pattern1 = "() -> '_body";
     assertEquals("should find lambdas", 4, findMatchesCount(source, pattern1));
 
-    String pattern2 = "(int '_a) -> {}";
+    String pattern2 = "(int '_a) -> '_body";
     assertEquals("should find lambdas with specific parameter type", 1, findMatchesCount(source, pattern2));
 
-    String pattern3 = "('_a{0,0})->{}";
+    String pattern3 = "('_a{0,0})->'_body";
     assertEquals("should find lambdas without any parameters", 2, findMatchesCount(source, pattern3));
 
     String pattern4 = "()->System.out.println()";
@@ -2563,6 +2584,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                       "    '_statements*;\n" +
                       "})";
     assertEquals("match lambda body correctly", 1, findMatchesCount(source4, pattern9));
+
+    String source5 = "class X {" +
+                     "  void x() {" +
+                     "    Runnable r = () -> {};" +
+                     "  }" +
+                     "}";
+    String pattern10 = "() -> '_B";
+    assertEquals("match empty lambda expression body", 1, findMatchesCount(source5, pattern10));
   }
 
   public void testFindDefaultMethods() {

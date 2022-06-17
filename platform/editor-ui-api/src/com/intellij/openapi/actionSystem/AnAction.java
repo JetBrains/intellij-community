@@ -227,7 +227,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   public final void copyFrom(@NotNull AnAction sourceAction) {
     Presentation sourcePresentation = sourceAction.getTemplatePresentation();
     Presentation presentation = getTemplatePresentation();
-    presentation.copyFrom(sourcePresentation);
+    boolean allFlags = this instanceof ActionGroup && sourceAction instanceof ActionGroup;
+    presentation.copyFrom(sourcePresentation, null, allFlags);
     copyShortcutFrom(sourceAction);
   }
 

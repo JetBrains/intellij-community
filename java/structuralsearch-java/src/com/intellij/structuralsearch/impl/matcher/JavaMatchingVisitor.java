@@ -297,8 +297,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (nameIdentifier != null) context.pushResult();
     final PsiIdentifier otherIdentifier = other.getNameIdentifier();
     try {
-      final PsiAnnotationMemberValue value = pair.getValue();
-      if (myMatchingVisitor.setResult(myMatchingVisitor.match(value, other.getValue()))) {
+      final PsiAnnotationMemberValue value1 = pair.getValue();
+      final PsiAnnotationMemberValue value2 = other.getValue();
+      if (myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(getElementToMatch(value1), getElementToMatch(value2)) ||
+                                      value1 instanceof PsiReferenceExpression && myMatchingVisitor.match(value1, value2))) {
         if (nameIdentifier != null) {
           myMatchingVisitor.setResult(isTypedVar ||
             myMatchingVisitor.matchText(nameIdentifier.getText(),
@@ -324,11 +326,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
   }
 
-  @Override
-  public void visitAnnotationArrayInitializer(@NotNull PsiArrayInitializerMemberValue initializer) {
-    final PsiArrayInitializerMemberValue otherInitializer = (PsiArrayInitializerMemberValue)myMatchingVisitor.getElement();
-    final PsiAnnotationMemberValue[] initializers = initializer.getInitializers();
-    myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(initializers, otherInitializer.getInitializers()));
+  private static PsiElement getElementToMatch(PsiAnnotationMemberValue value) {
+    if (value instanceof PsiArrayInitializerMemberValue) {
+      PsiArrayInitializerMemberValue arrayInitializer = (PsiArrayInitializerMemberValue)value;
+      PsiAnnotationMemberValue[] initializers = arrayInitializer.getInitializers();
+      if (initializers.length > 0) {
+        return initializers[0];
+      }
+    }
+    return value;
   }
 
   private boolean checkHierarchy(PsiMember element, PsiMember patternElement) {
@@ -410,7 +416,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   private static PsiElement getElementToMatch(PsiElement element) {
     if (element instanceof PsiCodeBlock) {
       final List<PsiElement> list = PsiTreeUtil.getChildrenOfAnyType(element, PsiStatement.class, PsiComment.class);
-      if (list.isEmpty()) return null;
+      if (list.isEmpty()) return element;
       element = list.get(0);
       if (list.size() > 1) return element;
     }
@@ -586,6 +592,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (getExpression(PsiMethodReferenceExpression.class, expression) == null) return;
     super.visitMethodReferenceExpression(expression);
   }
+
+
+
+
+
+
+
 
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression reference) {

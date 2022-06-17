@@ -44,9 +44,12 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     val initialEvent = when (initMode) {
       is InitMode.TakeFromServer -> initMode.cloudEvent
       InitMode.PushToServer -> SyncSettingsEvent.MustPushRequest
-      InitMode.JustInit -> SyncSettingsEvent.LogCurrentSettings
+      InitMode.JustInit -> null
     }
-    pendingEvents.add(initialEvent)
+    pendingEvents.add(SyncSettingsEvent.LogCurrentSettings)
+    if (initialEvent != null) {
+      pendingEvents.add(initialEvent)
+    }
     processPendingEvents()
 
     // todo copy existing settings again here

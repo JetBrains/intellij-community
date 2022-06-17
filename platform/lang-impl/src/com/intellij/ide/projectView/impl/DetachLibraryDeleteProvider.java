@@ -3,6 +3,7 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -23,6 +24,11 @@ final class DetachLibraryDeleteProvider implements DeleteProvider {
   DetachLibraryDeleteProvider(@NotNull Project project, @NotNull LibraryOrderEntry orderEntry) {
     myProject = project;
     myOrderEntry = orderEntry;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

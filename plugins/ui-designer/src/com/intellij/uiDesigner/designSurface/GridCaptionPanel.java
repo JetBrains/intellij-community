@@ -458,6 +458,11 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
 
   private class MyDeleteProvider implements DeleteProvider {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       int[] selection = getSelectedCells(null);
       if (selection.length > 0) {

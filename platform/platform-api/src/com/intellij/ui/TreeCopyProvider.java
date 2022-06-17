@@ -3,6 +3,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,11 @@ public class TreeCopyProvider implements CopyProvider {
 
   public TreeCopyProvider(final JTree tree) {
     myTree = tree;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -298,7 +298,12 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
                              !(referenceParent instanceof PsiExpressionStatement);
 
     final MatchingHandler handler = pattern.getHandler(reference);
-    GlobalCompilingVisitor.setFilter(handler, ExpressionFilter.getInstance());
+    if (reference.getParent() instanceof PsiLambdaExpression) {
+      GlobalCompilingVisitor.setFilter(handler, element -> true);
+    }
+    else {
+      GlobalCompilingVisitor.setFilter(handler, ExpressionFilter.getInstance());
+    }
 
     // We want to merge qname related to class to find it in any form
     final String referencedName = reference.getReferenceName();

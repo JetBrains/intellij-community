@@ -17,6 +17,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
 import com.intellij.ide.CopyProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
@@ -96,6 +97,8 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
     }
 
     protected abstract fun additionalCopyText(): String
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun isCopyVisible(dataContext: DataContext) = true
 

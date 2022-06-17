@@ -8,6 +8,14 @@ import java.io.Serializable
 data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity> {
   override val presentableName: String
     get() = name
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ModuleId) return false
+    return name == other.name
+  }
+
+  override fun hashCode(): Int  = name.hashCode()
 }
 
 data class FacetId(val name: String, val type: String, val parentId: ModuleId) : PersistentEntityId<FacetEntity> {
@@ -78,4 +86,26 @@ sealed class LibraryTableId : Serializable {
 data class LibraryId(val name: String, val tableId: LibraryTableId) : PersistentEntityId<LibraryEntity> {
   override val presentableName: String
     get() = name
+
+  @Transient
+  private var codeCache: Int = 0
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is LibraryId) return false
+
+    if (this.codeCache != 0 && other.codeCache != 0 && this.codeCache != other.codeCache) return false
+    if (name != other.name) return false
+    if (tableId != other.tableId) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    if (codeCache != 0) return codeCache
+    var result = name.hashCode()
+    result = 31 * result + tableId.hashCode()
+    this.codeCache = result
+    return result
+  }
 }

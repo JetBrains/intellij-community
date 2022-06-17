@@ -261,6 +261,11 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
               if (rows.length > 0) {
                   return new TextCopyProvider() {
                     @Override
+                    public @NotNull ActionUpdateThread getActionUpdateThread() {
+                      return ActionUpdateThread.EDT;
+                    }
+
+                    @Override
                     public Collection<String> getTextLinesToCopy() {
                       List<String> result = new ArrayList<>();
                       String tail = rows.length > 1 ? "," : "";

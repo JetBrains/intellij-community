@@ -10,6 +10,7 @@ import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -542,6 +543,11 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
   }
 
   private class MyInspectorTableCopyProvider implements CopyProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
       int[] rows = myTable.getSelectedRows();

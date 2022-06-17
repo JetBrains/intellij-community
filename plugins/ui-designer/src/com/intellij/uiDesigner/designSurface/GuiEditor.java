@@ -1112,6 +1112,11 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
    */
   private final class MyDeleteProvider implements DeleteProvider {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void deleteElement(@NotNull final DataContext dataContext) {
       if (!ensureEditable()) {
         return;
