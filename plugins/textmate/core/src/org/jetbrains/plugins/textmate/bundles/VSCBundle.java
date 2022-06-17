@@ -24,6 +24,7 @@ import static org.jetbrains.plugins.textmate.plist.PListValue.*;
 public class VSCBundle extends Bundle {
   private final Map<String, Collection<String>> grammarToExtensions = new LinkedHashMap<>();
   private final Map<String, Collection<String>> configToScopes = new HashMap<>();
+  private final List<String> snippetPaths = new ArrayList<>();
 
   public VSCBundle(@NotNull String name,
                    @NotNull String bundle) {
@@ -47,6 +48,13 @@ public class VSCBundle extends Bundle {
     return result;
   }
 
+  @Override
+  public @NotNull Collection<File> getSnippetFiles() {
+    loadExtensions();
+    //noinspection SSBasedInspection
+    return snippetPaths.stream().map((path) -> new File(bundleFile, path)).collect(Collectors.toList());
+  }
+
   private void loadExtensions() {
     if (!grammarToExtensions.isEmpty()) return;
     File packageJson = new File(bundleFile, "package.json");
@@ -57,6 +65,7 @@ public class VSCBundle extends Bundle {
         if (contributes instanceof Map) {
           Object languages = ((Map<?, ?>)contributes).get("languages");
           Object grammars = ((Map<?, ?>)contributes).get("grammars");
+          Object snippets = ((Map<?, ?>)contributes).get("snippets");
           if (languages instanceof ArrayList && grammars instanceof ArrayList) {
             Map<String, Collection<String>> idToExtension = new HashMap<>();
             Map<String, String> idToConfig = new HashMap<>();
@@ -66,11 +75,13 @@ public class VSCBundle extends Bundle {
                 if (id instanceof String) {
                   Object extensions = ((Map<?, ?>)language).get("extensions");
                   if (extensions instanceof ArrayList) {
+                    //noinspection unchecked
                     Stream<String> stream = ((ArrayList)extensions).stream().map(ext -> Strings.trimStart((String)ext, "."));
                     idToExtension.computeIfAbsent((String)id, (key) -> new HashSet<>()).addAll(stream.collect(Collectors.toList()));
                   }
                   Object filenames = ((Map<?, ?>)language).get("filenames");
                   if (filenames instanceof ArrayList) {
+                    //noinspection unchecked
                     idToExtension.computeIfAbsent((String)id, (key) -> new HashSet<>()).addAll((ArrayList)filenames);
                   }
                   Object configuration = ((Map<?, ?>)language).get("configuration");
@@ -80,6 +91,18 @@ public class VSCBundle extends Bundle {
                 }
               }
             }
+
+            if (snippets instanceof ArrayList) {
+              for (Object snippet : (ArrayList)snippets) {
+                if (snippet instanceof Map) {
+                  Object path = ((Map<?, ?>)snippet).get("path");
+                  if (path instanceof String) {
+                    snippetPaths.add((String)path);
+                  }
+                }
+              }
+            }
+
             Map<String, Collection<String>> grammarExtensions = new LinkedHashMap<>();
             Map<String, Collection<String>> scopeConfig = new HashMap<>();
             for (Object grammar : (ArrayList)grammars) {
