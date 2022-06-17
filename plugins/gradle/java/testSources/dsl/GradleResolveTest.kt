@@ -8,7 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_DATE
 import com.intellij.testFramework.assertInstanceOf
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.builders.EmptyGradleTestFixtureBuilder.Companion.EMPTY_PROJECT
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.EMPTY_PROJECT
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest

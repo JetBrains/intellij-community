@@ -7,7 +7,7 @@ import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.junit.jupiter.params.ParameterizedTest
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
-import org.jetbrains.plugins.gradle.testFramework.builders.PluginGradleTestFixtureBuilder.Companion.JAVA_PROJECT
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.JAVA_PROJECT
 
 class GradleDependenciesTest : GradleCodeInsightTestCase() {
 

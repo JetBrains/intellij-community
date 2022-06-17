@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsS
 import org.junit.jupiter.params.ParameterizedTest
 import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
-import org.jetbrains.plugins.gradle.testFramework.builders.PluginGradleTestFixtureBuilder.Companion.JAVA_PROJECT
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.JAVA_PROJECT
 import org.junit.jupiter.api.Assertions.assertEquals
 
 class GradleTasksTest : GradleCodeInsightTestCase() {

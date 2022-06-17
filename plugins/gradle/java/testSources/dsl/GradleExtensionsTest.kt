@@ -12,8 +12,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty
 import org.junit.jupiter.params.ParameterizedTest
 import com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
 import com.intellij.testFramework.assertInstanceOf
-import org.jetbrains.plugins.gradle.testFramework.builders.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.builders.SingleGradleBuildFileFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.junit.jupiter.api.Assertions.assertTrue
 
 class GradleExtensionsTest : GradleCodeInsightTestCase() {
@@ -66,13 +65,12 @@ class GradleExtensionsTest : GradleCodeInsightTestCase() {
   }
 
   companion object {
-    val FIXTURE_BUILDER: GradleTestFixtureBuilder =
-      SingleGradleBuildFileFixtureBuilder.create("GradleExtensionsTest") {
-        withPrefix {
-          call("ext") {
-            assign("prop", 1)
-          }
+    val FIXTURE_BUILDER = GradleTestFixtureBuilder.buildFile("GradleExtensionsTest") {
+      withPrefix {
+        call("ext") {
+          assign("prop", 1)
         }
       }
+    }
   }
 }

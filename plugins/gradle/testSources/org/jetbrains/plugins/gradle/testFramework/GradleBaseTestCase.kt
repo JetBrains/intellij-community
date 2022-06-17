@@ -5,7 +5,6 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.runAll
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
-import org.jetbrains.plugins.gradle.testFramework.builders.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.onFailureCatching
 import org.junit.jupiter.api.AfterAll
 

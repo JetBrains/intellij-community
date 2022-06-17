@@ -10,7 +10,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContri
 import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_MODULE_IML_FQN
 import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_PROJECT_FQN
 import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDE_XML_MERGER_FQN
-import org.jetbrains.plugins.gradle.testFramework.builders.PluginGradleTestFixtureBuilder.Companion.IDEA_PLUGIN_PROJECT
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.IDEA_PLUGIN_PROJECT
 
 class GradleIdeaPluginTest : GradleCodeInsightTestCase() {
 

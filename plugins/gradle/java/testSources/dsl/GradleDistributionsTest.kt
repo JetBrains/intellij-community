@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DISTRIBUTION
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_FILE_COPY_SPEC
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.builders.PluginGradleTestFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -138,6 +138,6 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   }
   
   companion object {
-    val FIXTURE_BUILDER = PluginGradleTestFixtureBuilder("distribution")
+    val FIXTURE_BUILDER = GradleTestFixtureBuilder.plugin("distribution")
   }
 }

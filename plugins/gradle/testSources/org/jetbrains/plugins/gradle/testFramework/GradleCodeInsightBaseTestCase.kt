@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTestFixture
-import org.jetbrains.plugins.gradle.testFramework.builders.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.groovy.util.BaseTest
 

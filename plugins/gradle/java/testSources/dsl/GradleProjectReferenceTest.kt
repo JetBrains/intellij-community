@@ -7,8 +7,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.resolve.GradleSubprojectSymbol
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.builders.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.builders.SingleGradleSettingsFileFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleProjectReferenceTest : GradleCodeInsightTestCase() {
@@ -96,14 +95,13 @@ class GradleProjectReferenceTest : GradleCodeInsightTestCase() {
   }
 
   companion object {
-    private val FIXTURE_BUILDER: GradleTestFixtureBuilder =
-      SingleGradleSettingsFileFixtureBuilder.create("GradleProjectReferenceTest") {
-        include("child")
-        include("child:foo")
-        include("child:foo:bar")
-        include("child:foo:baz")
-        include("child:bar")
-        include("child:bar:foo")
-      }
+    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.settingsFile("GradleProjectReferenceTest") {
+      include("child")
+      include("child:foo")
+      include("child:foo:bar")
+      include("child:foo:baz")
+      include("child:bar")
+      include("child:bar:foo")
+    }
   }
 }
