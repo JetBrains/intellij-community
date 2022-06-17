@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * In VFS/Index/PersistentMap storages typically we use 8kb, 1mb and 10mb pages.
  */
 @ApiStatus.Internal
-final class DirectByteBufferAllocator {
+public final class DirectByteBufferAllocator {
   // Fixes IDEA-222358 Linux native memory leak. Please do not replace to BoundedTaskExecutor
   private static final ExecutorService ourAllocator =
     SystemInfoRt.isLinux && Boolean.parseBoolean(System.getProperty("idea.limit.paged.storage.allocators", "true"))
@@ -74,6 +74,8 @@ final class DirectByteBufferAllocator {
     }
   }
 
+  public static final DirectByteBufferAllocator ALLOCATOR = new DirectByteBufferAllocator();
+
   private DirectByteBufferAllocator(int sizeLimitInBytes) {
     mySizeLimitInBytes = sizeLimitInBytes;
   }
@@ -82,7 +84,7 @@ final class DirectByteBufferAllocator {
     this(100 * PagedFileStorage.MB);
   }
 
-  @NotNull ByteBuffer allocate(int size) {
+  public @NotNull ByteBuffer allocate(int size) {
     if (USE_POOLED_ALLOCATOR) {
       Map.Entry<Integer, ArrayBlockingQueue<ByteBuffer>> buffers = myPool.ceilingEntry(size);
 
@@ -113,7 +115,7 @@ final class DirectByteBufferAllocator {
     return allocate(() -> ByteBuffer.allocateDirect(size));
   }
 
-  void release(@NotNull ByteBuffer buffer) {
+  public void release(@NotNull ByteBuffer buffer) {
     if (USE_POOLED_ALLOCATOR) {
       // mySize can be slightly more than limit due to race
       if (mySize.get() < mySizeLimitInBytes) {

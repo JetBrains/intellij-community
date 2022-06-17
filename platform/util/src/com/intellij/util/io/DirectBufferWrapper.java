@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 @ApiStatus.Internal
 public final class DirectBufferWrapper {
-  private static final DirectByteBufferAllocator ALLOCATOR = new DirectByteBufferAllocator();
   private static final int RELEASED_CODE = -1;
 
   private static final AtomicIntegerFieldUpdater<DirectBufferWrapper> REF_UPDATER =
@@ -34,7 +33,11 @@ public final class DirectBufferWrapper {
     myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
   }
 
-  private void markDirty() throws IOException {
+  public ByteBuffer getBuffer() {
+    return myBuffer;
+  }
+
+  public void markDirty() throws IOException {
     if (!myDirty) {
       if (myFile.isReadOnly()) {
         throw new IOException("Read-only byte buffer can't be modified. File: " + myFile);
@@ -44,7 +47,7 @@ public final class DirectBufferWrapper {
     }
   }
 
-  private void fileSizeMayChanged(int bufferDataEndPos) {
+  public void fileSizeMayChanged(int bufferDataEndPos) {
     if (bufferDataEndPos > myBufferDataEndPos) {
       myBufferDataEndPos = bufferDataEndPos;
       myFile.ensureCachedSizeAtLeast(myPosition + myBufferDataEndPos);
@@ -170,7 +173,7 @@ public final class DirectBufferWrapper {
 
 
   private ByteBuffer create() throws IOException {
-    ByteBuffer buffer = ALLOCATOR.allocate(myFile.myPageSize);
+    ByteBuffer buffer = DirectByteBufferAllocator.ALLOCATOR.allocate(myFile.myPageSize);
     buffer.order(myFile.useNativeByteOrder() ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN);
     assert buffer.limit() > 0;
     return myFile.useChannel(ch -> {
@@ -186,7 +189,7 @@ public final class DirectBufferWrapper {
 
       if (isDirty()) force();
       if (myBuffer != null) {
-        ALLOCATOR.release(myBuffer);
+        DirectByteBufferAllocator.ALLOCATOR.release(myBuffer);
         myBuffer = null;
       }
 
