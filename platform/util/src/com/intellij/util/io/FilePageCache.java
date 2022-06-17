@@ -204,7 +204,7 @@ final class FilePageCache {
         if (wrapper != null) {
           //noinspection NonAtomicOperationOnVolatileField
           ++myMappingChangeCount;
-          mySegmentsToRemove.put((Long)key, wrapper);
+          mySegmentsToRemove.put(key, wrapper);
           mySize -= wrapper.getLength();
         }
         return wrapper;
