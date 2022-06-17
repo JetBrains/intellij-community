@@ -123,7 +123,7 @@ public class PatternParser {
       if (isRecord) {
         PsiBuilder.Marker variable = builder.mark();
         builder.advanceLexer();
-        variable.done(JavaElementType.RECORD_PATTERN_VARIABLE);
+        variable.done(JavaElementType.DECONSTRUCTION_PATTERN_VARIABLE);
       } else {
         builder.advanceLexer();
       }
@@ -134,7 +134,7 @@ public class PatternParser {
 
     if (isRecord) {
       patternVariable.drop();
-      done(pattern, JavaElementType.RECORD_PATTERN);
+      done(pattern, JavaElementType.DECONSTRUCTION_PATTERN);
     }
     else {
       assert hasIdentifier;// guarded by isPattern

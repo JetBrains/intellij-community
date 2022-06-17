@@ -22,5 +22,5 @@ PsiJavaFile:Record3.java
           PsiIdentifier:s('s')
       PsiJavaToken:RPARENTH(')')
     PsiWhiteSpace(' ')
-    PsiRecordPatternVariable
+    PsiDeconstructionPatternVariable
       PsiIdentifier:name('name')
