@@ -794,15 +794,15 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (scope == null) return null;
 
     VirtualFileEnumeration enumeration = VirtualFileEnumeration.extract(scope);
-    Iterable<VirtualFile> scopeAsFileIterable = enumeration != null ? toFileIterable(enumeration.asArray()) :
+    Iterable<VirtualFile> scopeAsFileIterable = enumeration != null ? enumeration.getFilesIfCollection() :
                                                 scope instanceof Iterable<?> ? (Iterable<VirtualFile>)scope :
                                                 null;
     if (scopeAsFileIterable == null) return null;
 
     VirtualFile result = null;
     boolean isFirst = true;
+
     for (VirtualFile file : scopeAsFileIterable) {
-      if (!scope.contains(file)) continue;
       if (!isFirst) return null;
       result = file;
       isFirst = false;
