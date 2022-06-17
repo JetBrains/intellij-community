@@ -11,11 +11,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.RECORD_PATTERN_VARIABLE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECONSTRUCTION_PATTERN_VARIABLE;
 
-public class PsiRecordPatternVariableImpl extends CompositePsiElement implements PsiPatternVariable {
-  public PsiRecordPatternVariableImpl() {
-    super(RECORD_PATTERN_VARIABLE);
+public class PsiDeconstructionPatternVariableImpl extends CompositePsiElement implements PsiPatternVariable {
+  public PsiDeconstructionPatternVariableImpl() {
+    super(DECONSTRUCTION_PATTERN_VARIABLE);
   }
 
   @Override
@@ -30,7 +30,7 @@ public class PsiRecordPatternVariableImpl extends CompositePsiElement implements
 
   @Override
   public String toString() {
-    return "PsiRecordPatternVariable";
+    return "PsiDeconstructionPatternVariable";
   }
 
   @Override

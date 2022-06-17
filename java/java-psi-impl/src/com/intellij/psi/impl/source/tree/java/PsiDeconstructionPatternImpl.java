@@ -8,11 +8,11 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.RECORD_PATTERN;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECONSTRUCTION_PATTERN;
 
 public class PsiDeconstructionPatternImpl extends CompositePsiElement implements PsiDeconstructionPattern {
   public PsiDeconstructionPatternImpl() {
-    super(RECORD_PATTERN);
+    super(DECONSTRUCTION_PATTERN);
   }
 
   @Override
@@ -42,7 +42,7 @@ public class PsiDeconstructionPatternImpl extends CompositePsiElement implements
 
   @Override
   public @Nullable PsiPatternVariable getPatternVariable() {
-    return (PsiPatternVariable)findPsiChildByType(JavaElementType.RECORD_PATTERN_VARIABLE);
+    return (PsiPatternVariable)findPsiChildByType(JavaElementType.DECONSTRUCTION_PATTERN_VARIABLE);
   }
 
   @Override

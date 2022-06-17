@@ -22,5 +22,5 @@ PsiJavaFile:Record7.java
         <empty list>
       PsiJavaToken:RPARENTH(')')
     PsiWhiteSpace(' ')
-    PsiRecordPatternVariable
+    PsiDeconstructionPatternVariable
       PsiIdentifier:a('a')
