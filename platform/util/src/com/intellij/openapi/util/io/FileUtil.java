@@ -868,12 +868,12 @@ public class FileUtil extends FileUtilRt {
         // UNC (https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/62e862f4-2a51-452e-8eeb-dc4ff5ee33cc)
         int p1 = normalizedPath.indexOf('/', 2);
         if (p1 > 2) {
-          if (StringUtil.indexOf(normalizedPath,"..", 2, p1) == -1) {
+          if (PathUtilRt.isWindowsUNCRoot(normalizedPath, p1)) {
             int p2 = normalizedPath.indexOf('/', p1 + 1);
             if (p2 > p1 + 1) return normalizedPath.substring(0, p2);
             if (p2 < 0) return normalizedPath;
           }
-          // else the path doesn't look like UNC: "//.."
+          // else the path doesn't look like UNC, e.g. "//.."
         }
       }
     }

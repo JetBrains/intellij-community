@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -104,8 +105,10 @@ public class PathUtilTest {
     assertThat(OSAgnosticPathUtil.isAbsolute("/")).isTrue();
     assertThat(OSAgnosticPathUtil.isAbsolute("C:/")).isTrue();
     assertThat(OSAgnosticPathUtil.isAbsolute("d:\\x")).isTrue();
-    assertThat(OSAgnosticPathUtil.isAbsolute("\\\\host")).isTrue();
-    assertThat(OSAgnosticPathUtil.isAbsolute("\\\\")).isTrue();
+    if (SystemInfo.isWindows) {
+      assertThat(OSAgnosticPathUtil.isAbsolute("\\\\host")).isTrue();
+      assertThat(OSAgnosticPathUtil.isAbsolute("\\\\")).isTrue();
+    }
     assertThat(OSAgnosticPathUtil.isAbsolute("//host")).isTrue();
 
     assertThat(OSAgnosticPathUtil.isAbsolute("")).isFalse();
@@ -126,6 +129,9 @@ public class PathUtilTest {
     assertThat(OSAgnosticPathUtil.getParent("/tmp/a/")).isEqualTo("/tmp");
     assertThat(OSAgnosticPathUtil.getParent("/tmp")).isEqualTo("/");
     assertThat(OSAgnosticPathUtil.getParent("/")).isNull();
+    assertThat(OSAgnosticPathUtil.getParent("/tmp/a/.")).isEqualTo("/tmp/a");
+    assertThat(OSAgnosticPathUtil.getParent("/tmp/a/../b")).isEqualTo("/tmp/a/..");
+
 
     assertThat(OSAgnosticPathUtil.getParent("c:/tmp/a")).isEqualTo("c:/tmp");
     assertThat(OSAgnosticPathUtil.getParent("c:\\tmp\\a\\")).isEqualTo("c:\\tmp");
@@ -135,16 +141,14 @@ public class PathUtilTest {
     assertThat(OSAgnosticPathUtil.getParent("c:\\")).isNull();
     assertThat(OSAgnosticPathUtil.getParent("c:")).isNull();
     assertThat(OSAgnosticPathUtil.getParent("c:x")).isNull();
-
-    assertThat(OSAgnosticPathUtil.getParent("//host/share/a")).isEqualTo("//host/share");
-    assertThat(OSAgnosticPathUtil.getParent("\\\\host\\share/a/")).isEqualTo("\\\\host\\share");
-    assertThat(OSAgnosticPathUtil.getParent("//host/share")).isNull();
-    assertThat(OSAgnosticPathUtil.getParent("\\\\host\\share/")).isNull();
-    assertThat(OSAgnosticPathUtil.getParent("//host")).isNull();
-    assertThat(OSAgnosticPathUtil.getParent("\\\\")).isNull();
-
-    assertThat(OSAgnosticPathUtil.getParent("/tmp/a/.")).isEqualTo("/tmp/a");
-    assertThat(OSAgnosticPathUtil.getParent("/tmp/a/../b")).isEqualTo("/tmp/a/..");
+    if (SystemInfo.isWindows) {
+      assertThat(OSAgnosticPathUtil.getParent("//host/share/a")).isEqualTo("//host/share");
+      assertThat(OSAgnosticPathUtil.getParent("\\\\host\\share/a/")).isEqualTo("\\\\host\\share");
+      assertThat(OSAgnosticPathUtil.getParent("//host/share")).isNull();
+      assertThat(OSAgnosticPathUtil.getParent("\\\\host\\share/")).isNull();
+      assertThat(OSAgnosticPathUtil.getParent("//host")).isNull();
+      assertThat(OSAgnosticPathUtil.getParent("\\\\")).isNull();
+    }
   }
 
   @Test

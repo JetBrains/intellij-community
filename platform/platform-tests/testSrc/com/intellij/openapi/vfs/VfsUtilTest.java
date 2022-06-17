@@ -225,7 +225,8 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertNotNull(root1);
     assertSame(root1, root2);
 
-    assertNull(LocalFileSystem.getInstance().findFileByPath("//../src")); // must not crash in FsRoot("//..")
+    assertNull(LocalFileSystem.getInstance().findFileByPath("//../blah-blah")); // must not crash in FsRoot("//..")
+    assertNull(LocalFileSystem.getInstance().findFileByPath("//./blah-blah")); // must not crash in FsRoot("//.")
   }
 
   @Test
