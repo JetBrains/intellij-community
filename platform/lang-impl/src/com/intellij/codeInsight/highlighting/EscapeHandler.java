@@ -60,7 +60,7 @@ public class EscapeHandler extends EditorActionHandler {
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
       if (highlightManager != null && highlightManager.hasHideByEscapeHighlighters(editor)) return true;
       // Escape can be used to get rid of light bulb
-      if (DaemonCodeAnalyzerEx.getInstanceEx(project).hasIntentionHint()) return true;
+      if (DaemonCodeAnalyzerEx.getInstanceEx(project).hasVisibleLightBulbOrPopup()) return true;
     }
 
     return myOriginalHandler.isEnabled(editor, caret, dataContext);

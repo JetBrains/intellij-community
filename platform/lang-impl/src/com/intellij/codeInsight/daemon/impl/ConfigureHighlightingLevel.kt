@@ -10,6 +10,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.editor.markup.InspectionsLevel
 import com.intellij.openapi.project.DumbAware
@@ -39,7 +40,9 @@ fun getConfigureHighlightingLevelPopup(context: DataContext): JBPopup? {
     group.add(LevelAction(InspectionsLevel.NONE, provider, it))
     group.add(LevelAction(InspectionsLevel.SYNTAX, provider, it))
     if (isAllInspectionsEnabled) {
-      group.add(LevelAction(InspectionsLevel.ESSENTIAL, provider, it))
+      if (ApplicationManager.getApplication().isInternal) {
+        group.add(LevelAction(InspectionsLevel.ESSENTIAL, provider, it))
+      }
       group.add(LevelAction(InspectionsLevel.ALL, provider, it))
     }
   }

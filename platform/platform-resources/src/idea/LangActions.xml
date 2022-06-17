@@ -1634,8 +1634,7 @@
     </action>
     <group id="TodoMainGroup">
       <add-to-group group-id="Other.KeymapGroup"/>
-      <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup" icon="AllIcons.Actions.GroupBy"
-             popup="true">
+      <group id="TodoViewGroupByGroup" icon="AllIcons.Actions.GroupBy" popup="true">
         <separator text="Group By"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages"/>

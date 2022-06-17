@@ -34,20 +34,20 @@ open class LanguageToolChecker : TextChecker() {
     return grammarRules(LangTool.getTool(lang), lang)
   }
 
-  override fun check(extracted: TextContent): List<TextProblem> {
+  override fun check(extracted: TextContent): List<Problem> {
     return CachedValuesManager.getManager(extracted.containingFile.project).getCachedValue(extracted) {
       CachedValueProvider.Result.create(doCheck(extracted), extracted.containingFile)
     }
   }
 
-  private fun doCheck(extracted: TextContent): List<TextProblem> {
+  private fun doCheck(extracted: TextContent): List<Problem> {
     val str = extracted.toString()
     if (str.isBlank()) return emptyList()
 
     val lang = LangDetector.getLang(str) ?: return emptyList()
 
     return try {
-      ClassLoaderUtil.computeWithClassLoader<List<TextProblem>, Throwable>(GraziePlugin.classLoader) {
+      ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
         val tool = LangTool.getTool(lang)
         val sentences = tool.sentenceTokenize(str)
         if (sentences.any { it.length > 1000 }) emptyList()
@@ -86,7 +86,7 @@ open class LanguageToolChecker : TextChecker() {
     return TextRange(start, end)
   }
 
-  private class Problem(val match: RuleMatch, lang: Lang, text: TextContent, val testDescription: Boolean)
+  class Problem(val match: RuleMatch, lang: Lang, text: TextContent, val testDescription: Boolean)
     : TextProblem(LanguageToolRule(lang, match.rule), text, TextRange(match.fromPos, match.toPos)) {
 
     override fun getShortMessage(): String =

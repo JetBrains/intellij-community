@@ -23,7 +23,6 @@ import net.schmizz.sshj.userauth.password.PasswordFinder
 import net.schmizz.sshj.userauth.password.Resource
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jetbrains.intellij.build.io.*
 import java.nio.charset.StandardCharsets
@@ -51,7 +50,7 @@ fun prepareMacZip(macZip: Path,
   Files.newByteChannel(macZip, StandardOpenOption.READ).use { sourceFileChannel ->
     ZipFile(sourceFileChannel).use { zipFile ->
       writeNewFile(sitFile) { targetFileChannel ->
-        ZipArchiveOutputStream(targetFileChannel).use { out ->
+        NoDuplicateZipArchiveOutputStream(targetFileChannel).use { out ->
           // file is used only for transfer to mac builder
           out.setLevel(Deflater.BEST_SPEED)
           out.setUseZip64(Zip64Mode.Never)

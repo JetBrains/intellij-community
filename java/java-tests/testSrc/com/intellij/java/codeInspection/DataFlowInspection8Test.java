@@ -206,6 +206,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("foo", myFixture);
     doTest();
   }
+  public void testStreamFindFirstExpectNotNull() { doTest(); }
   public void testStreamAnyMatchIsNull() { doTest(); }
   public void testStreamCustomSumMethod() { doTest(); }
   public void testStreamReduceLogicalAnd() { doTest(); }

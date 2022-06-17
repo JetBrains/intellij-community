@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.util.LinkNewProjectWizardStep
 import com.intellij.openapi.project.Project
@@ -66,6 +67,8 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
     }
 
     override val name: String = "Kotlin"
+
+    override fun isEnabled(context: WizardContext): Boolean = context.isCreatingNewProject
 
     override fun createStep(parent: NewProjectWizardLanguageStep) =
         CommentStep(parent)

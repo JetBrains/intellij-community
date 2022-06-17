@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.CheckedDisposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,12 +32,15 @@ import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +76,6 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter;
 
-  protected final PsiTodoSearchHelper mySearchHelper;
   private final JTree myTree;
   /**
    * If this flag is false then the refresh() method does nothing. But when
@@ -100,12 +104,15 @@ public abstract class TodoTreeBuilder implements Disposable {
     myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap(); //used from EDT and from StructureTreeModel invoker thread
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
-    mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
     psiManager.addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
 
     myFileStatusListener = new MyFileStatusListener();
 
     //setCanYieldUpdate(true);
+  }
+
+  protected @NotNull PsiTodoSearchHelper getSearchHelper() {
+    return PsiTodoSearchHelper.SERVICE.getInstance(myProject);
   }
 
   public void setModel(StructureTreeModel<TodoTreeStructure> model) {
@@ -325,49 +332,69 @@ public abstract class TodoTreeBuilder implements Disposable {
       clearPendingUpdates();
       myPendingUpdates.add(uiUpdater);
     }
+    JBLoadingPanel loadingPanel = UIUtil.getParentOfType(JBLoadingPanel.class, myTree);
+    if (loadingPanel != null) loadingPanel.startLoading();
+    Set<VirtualFile> files = ContainerUtil.newConcurrentSet();
+    SingleAlarm alarm = new SingleAlarm(() -> uiUpdater.accept(files), 1000, ModalityState.NON_MODAL, uiUpdater);
     ReadAction.nonBlocking(() -> {
-      Set<VirtualFile> files = new HashSet<>();
       collectFiles(virtualFile -> {
-        files.add(virtualFile);
+        if (uiUpdater.isDisposed()) return false;
+        if (files.add(virtualFile)) {
+          alarm.request();
+        }
         return true;
       });
       return files;
-    }).finishOnUiThread(ModalityState.NON_MODAL, uiUpdater)
-      .inSmartMode(myProject)
-      .expireWith(this)
-      .submit(NonUrgentExecutor.getInstance());
+    })
+    .finishOnUiThread(ModalityState.NON_MODAL, o -> {
+      if (uiUpdater.isDisposed()) return;
+      if (loadingPanel != null) loadingPanel.stopLoading();
+      uiUpdater.accept(o);
+      Disposer.dispose(uiUpdater);
+    })
+    .expireWith(uiUpdater)
+    .submit(NonUrgentExecutor.getInstance());
   }
 
   private void clearPendingUpdates() {
     for (TreeUpdater request : myPendingUpdates) {
-      request.cancel();
+      Disposer.dispose(request);
     }
     myPendingUpdates.clear();
   }
 
-  private class TreeUpdater implements Consumer<Set<VirtualFile>> {
-    private volatile boolean myCanceled = false;
+  private class TreeUpdater implements CheckedDisposable, Consumer<Set<VirtualFile>> {
+    volatile boolean disposed;
+    int prevFilesSize = -1;
 
-    private void cancel() {
-      myCanceled = true;
+    @Override
+    public void dispose() {
+      disposed = true;
+    }
+
+    @Override
+    public boolean isDisposed() {
+      return disposed;
     }
 
     @Override
     public void accept(Set<VirtualFile> files) {
-      if (myCanceled) return;
+      if (disposed || myDisposed || prevFilesSize == files.size()) return;
+      prevFilesSize = files.size();
       rebuildCache(files);
       updateTree();
     }
   }
   
-  void collectFiles(Processor<? super VirtualFile> collector) {
-    TodoTreeStructure treeStructure=getTodoTreeStructure();
-    PsiFile[] psiFiles= mySearchHelper.findFilesWithTodoItems();
-    for (PsiFile psiFile : psiFiles) {
-      if (mySearchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)) {
+  void collectFiles(@NotNull Processor<? super VirtualFile> collector) {
+    TodoTreeStructure treeStructure = getTodoTreeStructure();
+    PsiTodoSearchHelper searchHelper = getSearchHelper();
+    searchHelper.processFilesWithTodoItems(psiFile -> {
+      if (searchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)) {
         collector.process(psiFile.getVirtualFile());
       }
-    }
+      return true;
+    });
   }
 
   protected void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
@@ -386,7 +413,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   private void validateCache() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     TodoTreeStructure treeStructure = getTodoTreeStructure();
-    // First of all we need to update "dirty" file set.
+    // First we need to update "dirty" file set.
     for (Iterator<VirtualFile> i = myDirtyFileSet.iterator(); i.hasNext();) {
       VirtualFile file = i.next();
       PsiFile psiFile = file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;

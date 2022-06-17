@@ -124,7 +124,7 @@ class CompilationPartsUtil {
     }
 
     // TODO: Remove hardcoded constant
-    String uploadPrefix = "intellij-compile/v1/$branch".toString()
+    String uploadPrefix = "intellij-compile/v2".toString()
 
     messages.block("Compute archives checksums") {
       runUnderStatisticsTimer(messages, 'compile-parts:checksum:time') {
@@ -246,7 +246,7 @@ class CompilationPartsUtil {
     }
     String persistentCache = System.getProperty('agent.persistent.cache')
     String cache = persistentCache ?: classesOutput.parentFile.getAbsolutePath()
-    File tempDownloadsStorage = new File(cache, "idea-compile-parts-${metadata.branch}")
+    File tempDownloadsStorage = new File(cache, "idea-compile-parts-v2")
 
     Set<String> upToDate = ContainerUtil.newConcurrentSet()
 

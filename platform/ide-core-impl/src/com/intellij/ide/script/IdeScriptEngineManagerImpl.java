@@ -14,9 +14,9 @@ import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,12 +37,10 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
   private final ClearableLazyValue<Map<EngineInfo, ScriptEngineFactory>> myFactories = ClearableLazyValue.createAtomic(() -> {
     long start = System.nanoTime();
-    try {
-      return calcFactories();
-    }
-    finally {
-      LOG.info(ScriptEngineManager.class.getName() + " initialized in " + TimeoutUtil.getDurationMillis(start) + " ms");
-    }
+    Map<EngineInfo, ScriptEngineFactory> map = calcFactories();
+    LOG.info(TimeoutUtil.getDurationMillis(start) + " ms to enumerate javax.scripting engines on " +
+             (EDT.isCurrentThreadEdt() ? "EDT" : "BGT"));
+    return map;
   });
 
   IdeScriptEngineManagerImpl() {
@@ -95,14 +93,6 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     return null;
   }
 
-  @Override
-  public boolean isInitialized() {
-    boolean result = myFactories.isCached();
-    if (!result) {
-      AppExecutorUtil.getAppExecutorService().execute(myFactories::getValue);
-    }
-    return result;
-  }
 
   private @NotNull Map<EngineInfo, ScriptEngineFactory> getFactories() {
     try {

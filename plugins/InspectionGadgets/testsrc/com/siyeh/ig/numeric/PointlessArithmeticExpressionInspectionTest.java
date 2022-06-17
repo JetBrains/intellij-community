@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 public class PointlessArithmeticExpressionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testPointlessArithmeticExpression() { doTest(); }
+  public void testNestedVersusSuper() { doTest(); }
   public void testComments() { doQuickFixTest(); }
   public void testCast() { doQuickFixTest(); }
   public void testCommentInsideCall() { doQuickFixTest(); }

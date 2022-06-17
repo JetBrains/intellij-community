@@ -17,6 +17,10 @@ package org.jetbrains.jps.model;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.workspaceModel.storage.WorkspaceEntityStorage the workspace model}.
+ */
+@Deprecated
 public interface JpsUrlListChangeListener<T extends JpsElement> {
   void urlAdded(@NotNull T element, @NotNull String url);
 

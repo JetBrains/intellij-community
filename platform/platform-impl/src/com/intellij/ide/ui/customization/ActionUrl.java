@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.*;
-import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +45,7 @@ public final class ActionUrl implements JDOMExternalizable {
 
   public ActionUrl(final ArrayList<String> groupPath,
                    final Object component,
-                   @MagicConstant(intValues = {ADDED, DELETED, MOVE}) int actionType,
+                   final int actionType,
                    final int position) {
     myGroupPath = groupPath;
     myComponent = component;
@@ -88,12 +87,11 @@ public final class ActionUrl implements JDOMExternalizable {
     return null;
   }
 
-  @MagicConstant(intValues = {ADDED, DELETED, MOVE})
   public int getActionType() {
     return myActionType;
   }
 
-  public void setActionType(@MagicConstant(intValues = {ADDED, DELETED, MOVE}) int actionType) {
+  public void setActionType(final int actionType) {
     myActionType = actionType;
   }
 

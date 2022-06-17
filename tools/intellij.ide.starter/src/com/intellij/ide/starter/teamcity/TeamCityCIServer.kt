@@ -30,7 +30,7 @@ object TeamCityCIServer : CIServer {
   override fun reportTestFailure(testName: String, message: String, details: String) {
     val flowId = UUID.randomUUID().toString()
 
-    val generifiedTestName = generifyErrorMessage(testName)
+    val generifiedTestName = generifyErrorMessage(testName).processStringForTC()
 
     logOutput(String.format("##teamcity[testStarted name='%s' flowId='%s']", generifiedTestName, flowId))
     logOutput(String.format(

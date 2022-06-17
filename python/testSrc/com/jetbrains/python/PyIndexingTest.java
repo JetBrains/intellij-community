@@ -7,9 +7,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.psi.impl.cache.TodoCacheManager;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -31,7 +30,6 @@ public class PyIndexingTest extends PyTestCase {
 
   @Override
   protected void setUp() throws Exception {
-
     super.setUp();
     final String testName = getTestName(false);
     myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
@@ -48,12 +46,10 @@ public class PyIndexingTest extends PyTestCase {
 
   private static List<VirtualFile> getTodoFiles(@NotNull Project project) {
     List<VirtualFile> files = new ArrayList<>();
-    ManagingFS fs = ManagingFS.getInstance();
-    FileBasedIndex.getInstance().processAllKeys(TodoIndex.NAME, fileId -> {
-      VirtualFile file = fs.findFileById(fileId);
-      if (file != null) files.add(file);
+    TodoCacheManager.SERVICE.getInstance(project).processFilesWithTodoItems(psi -> {
+      files.add(psi.getVirtualFile());
       return true;
-    }, GlobalSearchScope.allScope(project), null);
+    });
     return files;
   }
 

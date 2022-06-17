@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -13,7 +13,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -248,4 +251,14 @@ public abstract class ProjectLevelVcsManager {
    * Checks whether VCS console is enabled and VCS tool window exists.
    */
   public abstract boolean isConsoleVisible();
+
+  /**
+   * Whether vcs mappings were already processed after opening the project.
+   * ie: if true, one can assume that {@link #hasActiveVcss()} and {@link #hasAnyMappings()} match if the mappings are correct.
+   * <p>
+   * See {@link #VCS_ACTIVATED} listener that will be notified when this value changes.
+   */
+  public boolean areVcsesActivated() {
+    return false;
+  }
 }

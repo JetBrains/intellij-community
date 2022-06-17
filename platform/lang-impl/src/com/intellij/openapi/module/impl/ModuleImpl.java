@@ -170,6 +170,11 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   }
 
   @Override
+  public boolean canStoreSettings() {
+    return !(getStore() instanceof NonPersistentModuleStore);
+  }
+
+  @Override
   @NotNull
   public Path getModuleNioFile() {
     if (!isPersistent()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -271,21 +271,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   public void editorScrolled() {
     closePopup();
   }
-
-  @Nullable
-  @TestOnly
-  public IntentionAction getAction(int index) {
-    IntentionPopup that = myPopup;
-    if (that.myListPopup == null || that.myListPopup.isDisposed()) {
-      return null;
-    }
-    List<IntentionActionWithTextCaching> values = that.myCachedIntentions.getAllActions();
-    if (values.size() <= index) {
-      return null;
-    }
-    return values.get(index).getAction();
-  }
-
 
   private void showIntentionHintImpl(boolean delay) {
     int offset = myEditor.getCaretModel().getOffset();
@@ -739,5 +724,11 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private void setShouldDelay(boolean shouldDelay) {
       myShouldDelay = shouldDelay;
     }
+  }
+
+  public boolean hasVisibleLightBulbOrPopup() {
+    return !isDisposed()
+           && isVisible()
+           && (myComponentHint.isVisible() || myPopup.isVisible() || ApplicationManager.getApplication().isUnitTestMode());
   }
 }

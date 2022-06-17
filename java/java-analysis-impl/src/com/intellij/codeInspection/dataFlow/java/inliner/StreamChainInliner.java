@@ -382,8 +382,14 @@ public class StreamChainInliner implements CallInliner {
   }
 
   static class OptionalTerminalStep extends TerminalStep {
+    private final boolean myExpectNotNull;
+
     OptionalTerminalStep(@NotNull PsiMethodCallExpression call) {
       super(call, ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
+      String methodName = call.getMethodExpression().getReferenceName();
+      // While findFirst/findAny will work if the found element is definitely not-null,
+      // it's highly suspicious to supply a nullable element there
+      myExpectNotNull = "findFirst".equals(methodName) || "findAny".equals(methodName);
     }
 
     @Override
@@ -404,6 +410,11 @@ public class StreamChainInliner implements CallInliner {
       }
       DfType source = DfaOptionalSupport.getOptionalValue(true);
       builder.pushForWrite(myResult).push(source).assign().splice(2);
+    }
+
+    @Override
+    boolean expectNotNull() {
+      return myExpectNotNull;
     }
   }
 

@@ -89,7 +89,8 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
   }
 
   private fun getCodeVisionColor(): Color {
-    return EditorColorsManager.getInstance().globalScheme.getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES).foregroundColor
+    val globalScheme = EditorColorsManager.getInstance().globalScheme
+    return globalScheme.getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES).foregroundColor ?: globalScheme.defaultForeground
   }
 
 

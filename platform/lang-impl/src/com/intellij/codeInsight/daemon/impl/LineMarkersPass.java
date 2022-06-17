@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -73,7 +74,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (!EditorSettingsExternalizable.getInstance().areGutterIconsShown()) {
+    if (!EditorSettingsExternalizable.getInstance().areGutterIconsShown() && !Registry.is("calculate.gutter.actions.always")) {
       // optimization: do not even try to query expensive providers if icons they are going to produce are not to be displayed
       return;
     }

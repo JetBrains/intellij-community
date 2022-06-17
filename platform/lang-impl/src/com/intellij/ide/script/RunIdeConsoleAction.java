@@ -74,9 +74,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction implements Update
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    IdeScriptEngineManager manager = IdeScriptEngineManager.getInstance();
-    e.getPresentation().setVisible(e.getProject() != null);
-    e.getPresentation().setEnabled(manager.isInitialized() && !manager.getEngineInfos().isEmpty());
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
   @Override

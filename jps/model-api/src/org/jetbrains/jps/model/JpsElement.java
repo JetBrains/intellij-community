@@ -18,9 +18,19 @@ package org.jetbrains.jps.model;
 import org.jetbrains.annotations.NotNull;
 
 public interface JpsElement {
+  /**
+   * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.workspaceModel.storage.WorkspaceEntityStorage the workspace model}.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @NotNull
   BulkModificationSupport<?> getBulkModificationSupport();
 
+  /**
+   * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.workspaceModel.storage.WorkspaceEntityStorage the workspace model}.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   interface BulkModificationSupport<E extends JpsElement> extends JpsElement {
     @NotNull
     E createCopy();

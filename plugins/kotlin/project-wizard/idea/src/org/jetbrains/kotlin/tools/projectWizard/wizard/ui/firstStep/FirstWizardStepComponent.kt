@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.JBColor
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
@@ -24,11 +23,9 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
 import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
-import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.ProjectTemplatesPlugin
 import org.jetbrains.kotlin.tools.projectWizard.wizard.IdeWizard
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.*
-import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.modulesEditor.ModulesEditorComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.PathSettingComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.StringSettingComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.TitledComponentsList
@@ -39,15 +36,9 @@ import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
 class FirstWizardStepComponent(ideWizard: IdeWizard) : WizardStepComponent(ideWizard.context) {
-    private val context = ideWizard.context
     private val projectSettingsComponent = ProjectSettingsComponent(ideWizard).asSubComponent()
-    private val projectPreviewComponent = ProjectPreviewComponent(context).asSubComponent()
 
-    override val component: JComponent = SmartTwoComponentPanel(
-        projectSettingsComponent.component,
-        projectPreviewComponent.component,
-        sideIsOnTheRight = true
-    )
+    override val component: JComponent = projectSettingsComponent.component
 }
 
 class ProjectSettingsComponent(ideWizard: IdeWizard) : DynamicComponent(ideWizard.context) {
@@ -91,14 +82,12 @@ class ProjectSettingsComponent(ideWizard: IdeWizard) : DynamicComponent(ideWizar
                 buildSystemAdditionalSettingsComponent.component(growX)
             }.largeGapAfter()
             row {
-                cell {
-                    comment(
-                        KotlinNewProjectWizardUIBundle.message(
-                            "feedback.link.tooltip.text",
-                            "https://youtrack.jetbrains.com/newIssue?project=KTIJ&Type=Feature&Subsystems=IDE.Wizards"
-                        )
-                    ).constraints(pushY)
-                }
+                comment(
+                    KotlinNewProjectWizardUIBundle.message(
+                        "feedback.link.tooltip.text",
+                        "https://youtrack.jetbrains.com/newIssue?project=KTIJ&Type=Feature&Subsystems=IDE.Wizards"
+                    ), 100
+                ).constraints(pushY).withLargeLeftGap()
             }
         }.addBorder(JBUI.Borders.emptyRight(UIConstants.PADDING))
     }
@@ -247,28 +236,5 @@ private class HideableSection(@NlsContexts.Separator text: String, component: JC
         this.isExpanded = isExpanded
         contentPanel.isVisible = isExpanded
         titledSeparator.label.icon = if (isExpanded) AllIcons.General.ArrowDown else AllIcons.General.ArrowRight
-    }
-}
-
-class ProjectPreviewComponent(context: Context) : DynamicComponent(context) {
-    private val modulesEditorComponent = ModulesEditorComponent(
-        context,
-        null,
-        needBorder = false,
-        editable = false,
-        oneEntrySelected = {}
-    ).asSubComponent()
-
-    override val component: JComponent = borderPanel {
-        addToTop(label(KotlinNewProjectWizardUIBundle.message("project.preview"), bold = true).addBorder(JBUI.Borders.emptyBottom(5)))
-        addToCenter(modulesEditorComponent.component)
-    }.addBorder(JBUI.Borders.empty(UIConstants.PADDING,  /*left*/UIConstants.PADDING * 2, UIConstants.PADDING, UIConstants.PADDING))
-        .addBorder(JBUI.Borders.customLine(JBColor.border(), 0,  /*left*/1, 0, 0))
-
-    override fun onValueUpdated(reference: SettingReference<*, *>?) {
-        super.onValueUpdated(reference)
-        if (reference == ProjectTemplatesPlugin.template.reference) {
-            modulesEditorComponent.updateModel()
-        }
     }
 }

@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.codeVision
 
+import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsLiveModel
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
@@ -35,6 +36,7 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.lifetime.onTermination
@@ -151,8 +153,11 @@ open class CodeVisionHost(val project: Project) {
     if (!lifeSettingModel.isEnabledWithRegistry.value) return emptyList()
     val bypassBasedCollectors = ArrayList<Pair<BypassBasedPlaceholderCollector, CodeVisionProvider<*>>>()
     val placeholders = ArrayList<Pair<TextRange, CodeVisionEntry>>()
+    val settings = CodeVisionSettings.instance()
     for (provider in providers) {
-      val placeholderCollector: CodeVisionPlaceholderCollector? = provider.getPlaceholderCollector(editor, psiFile) ?: continue
+      if (!settings.isProviderEnabled(provider.id)) continue
+      if (getAnchorForProvider(provider) != CodeVisionAnchorKind.Top) continue
+      val placeholderCollector: CodeVisionPlaceholderCollector = provider.getPlaceholderCollector(editor, psiFile) ?: continue
       if (placeholderCollector is BypassBasedPlaceholderCollector) {
         bypassBasedCollectors.add(placeholderCollector to provider)
       } else if (placeholderCollector is GenericPlaceholderCollector) {
@@ -231,6 +236,10 @@ open class CodeVisionHost(val project: Project) {
 
   open fun getAnchorForEntry(entry: CodeVisionEntry): CodeVisionAnchorKind {
     val provider = getProviderById(entry.providerId) ?: return lifeSettingModel.defaultPosition.value
+    return getAnchorForProvider(provider)
+  }
+
+  private fun getAnchorForProvider(provider: CodeVisionProvider<*>): CodeVisionAnchorKind{
     return lifeSettingModel.codeVisionGroupToPosition[provider.name].nullIfDefault() ?: lifeSettingModel.defaultPosition.value
   }
 
@@ -352,8 +361,13 @@ open class CodeVisionHost(val project: Project) {
           return@forEach
         }
         providerWhoWantToUpdate.add(it.id)
-        val result = it.computeForEditor(editor, precalculatedUiThings[it.id])
-        results.addAll(result)
+        try {
+          val result = it.computeForEditor(editor, precalculatedUiThings[it.id])
+          results.addAll(result)
+        }
+        catch (e: Exception) {
+          logger.error("Exception during computeForEditor for ${it.id}", e)
+        }
       }
 
       if (!everyProviderReadyToUpdate) {

@@ -1,4 +1,10 @@
 // WITH_STDLIB
+fun complexQualifier() {
+    val map = mutableMapOf(1 to mutableListOf<Int>())
+    val list = mutableListOf<Int>()
+    (map[2] ?: list).add(3)
+    if (list.isNotEmpty()) println()
+}
 fun listIsEmpty(x: List<Int>): Unit {
     if (x.size == 0) return
     if (<warning descr="Condition 'x.isEmpty()' is always false">x.isEmpty()</warning>) {}

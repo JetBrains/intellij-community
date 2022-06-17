@@ -52,12 +52,19 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
       }
     }
     val browser = DocumentationBrowser.createBrowser(project, request)
-    withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
+    val hasContent: Boolean? = withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
       // to avoid flickering: wait a bit before showing the hover popup,
       // otherwise, the popup will be shown with "Fetching..." message,
       // which will immediately get replaced with loaded docs
       browser.waitForContent()
     }
+    if (hasContent != null && !hasContent) {
+      // If we are sure that there is nothing to show, then return `null`.
+      return@runBlockingCancellable null
+    }
+    // Other two possibilities:
+    // - we don't know yet because DEFAULT_UI_RESPONSE_TIMEOUT wasn't enough to compute the doc, or
+    // - we do know that there is something to show.
     DocumentationTargetHoverInfo(browser)
   }
 }

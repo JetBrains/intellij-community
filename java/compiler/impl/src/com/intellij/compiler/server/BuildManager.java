@@ -47,6 +47,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -138,7 +139,6 @@ public final class BuildManager implements Disposable {
   private static final Key<CharSequence> STDERR_OUTPUT = Key.create("_process_launch_errors_");
   private static final SimpleDateFormat USAGE_STAMP_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 
-  public static final String LOW_PRIORITY_REGISTRY_KEY = "compiler.process.low.priority";
   private static final Logger LOG = Logger.getInstance(BuildManager.class);
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
@@ -1512,7 +1512,7 @@ public final class BuildManager implements Disposable {
 
     cmdLine.addParameter(cmdLine.getWorkingDirectory());
 
-    boolean lowPriority = Registry.is(LOW_PRIORITY_REGISTRY_KEY);
+    boolean lowPriority = AdvancedSettings.getBoolean("compiler.lower.process.priority");
     if (SystemInfo.isUnix && lowPriority) {
       cmdLine.setUnixProcessPriority(10);
     }

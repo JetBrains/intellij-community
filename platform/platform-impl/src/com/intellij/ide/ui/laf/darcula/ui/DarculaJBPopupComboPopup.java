@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.DataManager;
@@ -52,6 +52,11 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     myComboBox.addItemListener(this);
     myComboBox.addAncestorListener(this);
     myComboBox.addPropertyChangeListener(this);
+  }
+
+  @ApiStatus.Internal
+  public ComboBoxPopup<T> getPopup() {
+    return myPopup;
   }
 
   @Nullable

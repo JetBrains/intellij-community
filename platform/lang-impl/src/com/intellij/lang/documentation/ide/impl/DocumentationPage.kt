@@ -20,8 +20,11 @@ internal class DocumentationPage(val request: DocumentationRequest) {
   val contentFlow: SharedFlow<DocumentationPageContent?> = myContentFlow.asSharedFlow()
   val currentContent: DocumentationPageContent.Content? get() = myContentFlow.value as? DocumentationPageContent.Content
 
-  suspend fun waitForContent() {
-    myContentFlow.filterNotNull().first()
+  /**
+   * @return `true` if some content was loaded, `false` if content is empty
+   */
+  suspend fun waitForContent(): Boolean {
+    return myContentFlow.filterNotNull().first() is DocumentationPageContent.Content
   }
 
   suspend fun loadPage() {

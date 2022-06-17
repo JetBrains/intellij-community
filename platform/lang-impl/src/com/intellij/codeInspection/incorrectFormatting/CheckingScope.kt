@@ -22,6 +22,12 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
   fun createAllReports(changes: List<FormattingChange>): Array<ProblemDescriptor>? {
     if (changes.isEmpty()) return null
 
+    // TODO: move to LangBundle.properties
+    // inspection.incorrect.formatting.notification.title=New code style inspection
+    // inspection.incorrect.formatting.notification.contents=It can help you maintain a consistent code style in your codebase in any language
+    // inspection.incorrect.formatting.notification.action.enable=Enable inspection
+    // inspection.incorrect.formatting.notification.action.dont.show=Don’t show again
+
     // TODO: move to reformat action
     //if (silentMode && notificationShown.compareAndSet(false, true)) {
     //  NotificationGroupManager.getInstance()
@@ -73,10 +79,6 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
 
   // Collect all formatting changes for the file
   fun getChanges(): List<FormattingChange> {
-    val virtualFile = file.virtualFile ?: return emptyList()
-    val fileIndex = ProjectRootManager.getInstance(file.project).fileIndex
-    if (!fileIndex.isInSource(virtualFile)) return emptyList()
-
     if (!LanguageFormatting.INSTANCE.isAutoFormatAllowed(file)) {
       return emptyList()
     }

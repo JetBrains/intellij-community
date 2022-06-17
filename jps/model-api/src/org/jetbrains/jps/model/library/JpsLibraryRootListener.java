@@ -19,6 +19,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
+/**
+ * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.workspaceModel.storage.WorkspaceEntityStorage the workspace model}.
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public interface JpsLibraryRootListener extends EventListener {
   void rootAdded(@NotNull JpsLibraryRoot root);
   void rootRemoved(@NotNull JpsLibraryRoot root);

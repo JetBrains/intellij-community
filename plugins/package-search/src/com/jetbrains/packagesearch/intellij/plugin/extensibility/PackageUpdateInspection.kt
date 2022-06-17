@@ -1,22 +1,11 @@
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
-import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.codeInsight.intention.HighPriorityAction
-import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.codeInspection.InspectionManager
-import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.ListEditForm
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.module.Module
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpgradeQuickFix
@@ -25,7 +14,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.NotifyingOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
-import org.jetbrains.annotations.Nls
 import javax.swing.JPanel
 
 /**
@@ -43,11 +31,12 @@ import javax.swing.JPanel
  * @see ProjectModuleOperationProvider.usesSharedPackageUpdateInspection
  * @see PackageSearchDependencyUpgradeQuickFix
  */
-abstract class PackageUpdateInspection : LocalInspectionTool() {
+abstract class PackageUpdateInspection : AbstractPackageUpdateInspectionCheck() {
 
     @JvmField
     var onlyStable: Boolean = true
 
+    @JvmField
     var excludeList: MutableList<String> = mutableListOf()
 
     companion object {
@@ -64,6 +53,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                 else -> false
             }
         }
+
     }
 
     override fun createOptionsPanel(): JPanel {
@@ -71,29 +61,14 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
 
         val injectionListTable = ListEditForm("", PackageSearchBundle.message("packagesearch.inspection.upgrade.excluded.dependencies"), excludeList)
 
-        panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"), "onlyStable")
+        panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"), ::onlyStable.name)
         panel.addGrowing(injectionListTable.contentPanel)
 
         return panel
     }
 
-    protected abstract fun getVersionPsiElement(file: PsiFile, dependency: UnifiedDependency): PsiElement?
-
-    final override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
-        if (!shouldCheckFile(file)) {
-            return null
-        }
-
-        val project = file.project
-        val fileModule = ModuleUtil.findModuleForFile(file)
-        if (fileModule == null) {
-            thisLogger().warn("Inspecting file belonging to an unknown module")
-            return null
-        }
-
-        val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
-
-        project.packageSearchProjectService.packageUpgradesStateFlow.value
+    override fun ProblemsHolder.checkFile(file: PsiFile, fileModule: Module) {
+        file.project.packageSearchProjectService.packageUpgradesStateFlow.value
             .getPackagesToUpgrade(onlyStable).upgradesByModule[fileModule]
             ?.filter { isNotExcluded(it.packageModel.identifier) }
             ?.filter { it.computeUpgradeOperationsForSingleModule.isNotEmpty() }
@@ -105,7 +80,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                 val unifiedDependency = packageModel.toUnifiedDependency(currentVersion, scope)
                 val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: return@forEach
 
-                problemsHolder.registerProblem(
+                registerProblem(
                     versionElement,
                     PackageSearchBundle.message(
                         "packagesearch.inspection.upgrade.description",
@@ -134,22 +109,10 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                         isHighPriority = false
                     ) {
                         excludeList.add(packageModel.identifier.rawValue)
-                        ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
+                        ProjectInspectionProfileManager.getInstance(file.project).fireProfileChanged()
                     }
                 )
             }
-
-        return problemsHolder.resultsArray
-    }
-
-    private fun shouldCheckFile(file: PsiFile): Boolean {
-        if (!file.project.packageSearchProjectService.isAvailable) return false
-
-        val provider = ProjectModuleOperationProvider.forProjectPsiFileOrNull(file.project, file)
-            ?.takeIf { it.usesSharedPackageUpdateInspection() }
-            ?: return false
-
-        return provider.hasSupportFor(file.project, file)
     }
 
     private fun isNotExcluded(packageIdentifier: PackageIdentifier) =
@@ -158,21 +121,3 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
     override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WARNING
 }
 
-@Suppress("FunctionName")
-internal fun LocalQuickFixOnPsiElement(
-    element: PsiElement,
-    @Nls familyName: String,
-    @Nls text: String,
-    isHighPriority: Boolean,
-    action: Project.() -> Unit
-): LocalQuickFix = if (isHighPriority) object : LocalQuickFixOnPsiElement(element), HighPriorityAction {
-    override fun getFamilyName() = familyName
-    override fun getText() = text
-    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) =
-        project.action()
-} else object : LocalQuickFixOnPsiElement(element), LowPriorityAction {
-    override fun getFamilyName() = familyName
-    override fun getText() = text
-    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) =
-        project.action()
-}

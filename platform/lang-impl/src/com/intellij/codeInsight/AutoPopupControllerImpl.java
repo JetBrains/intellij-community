@@ -22,7 +22,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -33,7 +32,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
 import static com.intellij.codeInsight.completion.CompletionPhase.*;
@@ -118,8 +117,9 @@ public class AutoPopupControllerImpl extends AutoPopupController {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_PARAMETER_INFO) {
-      int offset = editor.getCaretModel().getOffset();
+      AtomicInteger offset = new AtomicInteger(-1);
       ReadAction.nonBlocking(() -> {
+          offset.set(editor.getCaretModel().getOffset());
           final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
           PsiFile file = documentManager.getPsiFile(editor.getDocument());
           if (file == null) return;
@@ -130,9 +130,8 @@ public class AutoPopupControllerImpl extends AutoPopupController {
           }
 
           Runnable request = () -> {
-            if (!myProject.isDisposed() && !editor.isDisposed() &&
-                UIUtil.isShowing(editor.getContentComponent())) {
-              int lbraceOffset = offset - 1;
+            if (!myProject.isDisposed() && !editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
+              int lbraceOffset = offset.get() - 1;
               try {
                 PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
                 if (file1 != null) {
@@ -148,7 +147,10 @@ public class AutoPopupControllerImpl extends AutoPopupController {
           myAlarm.addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
         }).expireWith(myAlarm)
         .coalesceBy(this, editor)
-        .expireWhen(() -> editor.isDisposed() || editor.getCaretModel().getOffset() != offset)
+        .expireWhen(() -> {
+          int initialOffset = offset.get();
+          return editor.isDisposed() || initialOffset != -1 && editor.getCaretModel().getOffset() != initialOffset;
+        })
         .submit(AppExecutorUtil.getAppExecutorService());
     }
   }

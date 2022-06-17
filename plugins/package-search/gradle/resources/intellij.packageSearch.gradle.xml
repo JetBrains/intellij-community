@@ -15,6 +15,15 @@
                 hasStaticDescription="true"
                 level="WEAK WARNING"/>
 
+        <localInspection
+                bundle="messages.packageSearchBundle"
+                enabledByDefault="true"
+                groupKey="packagesearch.inspection.upgrade.group"
+                implementationClass="com.jetbrains.packagesearch.intellij.plugin.gradle.GradlePackageVersionRangeInspection"
+                key="packagesearch.inspection.range.key.gradle"
+                hasStaticDescription="true"
+                level="WEAK WARNING"/>
+
         <packagesearch.projectModuleOperationProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleProjectModuleOperationProvider"/>
         <packagesearch.moduleTransformer

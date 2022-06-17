@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public interface TodoCacheManager {
@@ -21,8 +22,12 @@ public interface TodoCacheManager {
 
   /**
    * @return all VirtualFile's that contain todoItems under project roots
+   * @deprecated Use {@link #processFilesWithTodoItems(Processor)} instead.
    */
+  @Deprecated
   PsiFile @NotNull [] getFilesWithTodoItems();
+
+  boolean processFilesWithTodoItems(@NotNull Processor<? super PsiFile> processor);
 
   /**
    * @return -1 if it's not known

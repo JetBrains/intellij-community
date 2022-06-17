@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -32,6 +33,7 @@ import com.intellij.util.application
 import com.intellij.util.text.nullize
 import com.intellij.vcs.CacheableAnnotationProvider
 import java.awt.event.MouseEvent
+import java.lang.Integer.min
 import javax.swing.JComponent
 
 class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
@@ -61,11 +63,15 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
         for (element in traverser.preOrderDfsTraversal()) {
           if (visionLanguageContext.isAccepted(element)) {
             val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
-            val codeAuthorInfo = getCodeAuthorInfo(element.project, textRange, editor, aspect)
+            val length = editor.document.textLength
+            val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
+            val codeAuthorInfo = getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
             val text = codeAuthorInfo.getText()
             val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
             val clickHandler = CodeAuthorClickHandler(element, language)
-            lenses.add(textRange to ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList()).apply { this.showInMorePopup = false })
+            val entry = ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList())
+            entry.showInMorePopup = false
+            lenses.add(adjustedRange to entry)
           }
         }
       }
@@ -197,7 +203,9 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
 
   editor.putUserData(VCS_CODE_AUTHOR_ANNOTATION, annotation)
   registerAnnotation(file, annotation)
-  EditorUtil.disposeWithEditor(editor, annotationDisposable)
+  ApplicationManager.getApplication().invokeLater {
+    EditorUtil.disposeWithEditor(editor, annotationDisposable)
+  }
 
   return annotation
 }

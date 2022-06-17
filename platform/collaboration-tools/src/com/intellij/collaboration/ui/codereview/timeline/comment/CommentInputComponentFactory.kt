@@ -35,10 +35,10 @@ import javax.swing.JLayeredPane
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 
-private val defaultSubmitShortcut = CommonShortcuts.CTRL_ENTER
-private val defaultCancelShortcut = CommonShortcuts.ESCAPE
-
 object CommentInputComponentFactory {
+  val defaultSubmitShortcut: ShortcutSet = CommonShortcuts.CTRL_ENTER
+  val defaultCancelShortcut: ShortcutSet = CommonShortcuts.ESCAPE
+
   fun create(
     model: CommentTextFieldModel,
     textField: EditorTextField,

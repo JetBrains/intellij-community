@@ -9,6 +9,7 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
+import com.intellij.ide.scratch.RootType
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchTreeStructureProvider
 import com.intellij.ide.util.treeView.AbstractTreeNode
@@ -56,11 +57,14 @@ fun ProjectViewNode<*>.computeDirectoryChildren(): Collection<AbstractTreeNode<*
     return ProjectViewDirectoryHelper.getInstance(directory.project).getDirectoryChildren(directory, settings, true)
   }
   val children = directory.virtualFile.children ?: return emptyList()
+  val type = RootType.forFile(directory.virtualFile)
   return mutableListOf<AbstractTreeNode<*>>().apply {
     children.forEach {
-      when (val item = findFileSystemItem(directory.project, it)) {
-        is PsiDirectory -> add(ExternalFolderNode(item, settings))
-        is PsiFile -> add(PsiFileNode(item.project, item, settings))
+      if (type == null || !type.isIgnored(directory.project, directory.virtualFile)) {
+        when (val item = findFileSystemItem(directory.project, it)) {
+          is PsiDirectory -> add(ExternalFolderNode(item, settings))
+          is PsiFile -> add(PsiFileNode(item.project, item, settings))
+        }
       }
     }
   }

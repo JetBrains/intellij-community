@@ -402,25 +402,14 @@
       <reference id="Git.Stash.Apply"/>
       <reference id="Git.Stash.UnstashAs"/>
       <reference id="Git.Stash.Drop"/>
+      <add-to-group group-id="Vcs.SavedPatches.ContextMenu" anchor="first"/>
     </group>
 
-    <group id="Git.Stash.ContextMenu">
-      <reference id="Git.Stash.Operations.ContextMenu"/>
-      <reference id="Vcs.Shelf.Operations.ContextMenu"/>
-      <separator/>
-      <reference id="Diff.ShowDiff"/>
-      <reference ref="Diff.ShowStandaloneDiff"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
-
-      <add-to-group group-id="Vcs.SavedPatches.ContextMenu"/>
-    </group>
-    <group id="Git.Stash.ChangesBrowser.ContextMenu">
-      <reference ref="Vcs.ShowDiffWithLocal"/>
+    <group id="Git.Stash.ChangesBrowser.ContextMenu" class="git4idea.stash.ui.GitStashOperationsGroup">
       <reference ref="Vcs.ShowDiffWithLocal.Before"/>
       <reference ref="Vcs.EditSource"/>
       <reference ref="Vcs.OpenRepositoryVersion"/>
       <reference ref="Vcs.ApplySelectedChanges"/>
-
       <add-to-group group-id="Vcs.SavedPatches.ChangesBrowser.ContextMenu"/>
     </group>
 
