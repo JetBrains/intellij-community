@@ -1,15 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
-import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
-import com.intellij.ui.IdeBorderFactory
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
@@ -20,18 +18,23 @@ import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
 import com.intellij.vcs.log.ui.frame.ProgressStripe
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
+import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListUpdatesChecker
-import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
-import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchCompletionProvider
-import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolder
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import java.awt.FlowLayout
@@ -43,32 +46,27 @@ import javax.swing.event.ChangeEvent
 
 internal class GHPRListPanelFactory(private val project: Project,
                                     private val repositoryDataService: GHPRRepositoryDataService,
-                                    private val listLoader: GHListLoader<GHPullRequestShort>,
-                                    private val searchQueryHolder: GHPRSearchQueryHolder,
+                                    private val listLoader: GHPRListLoader,
                                     private val listUpdatesChecker: GHPRListUpdatesChecker,
                                     private val account: GithubAccount,
                                     private val disposable: Disposable) {
 
-  fun create(list: JBList<GHPullRequestShort>): JComponent {
+  private val scope = MainScope().also { Disposer.register(disposable) { it.cancel() } }
+
+  fun create(list: JBList<GHPullRequestShort>, avatarIconsProvider: GHAvatarIconsProvider): JComponent {
 
     val actionManager = ActionManager.getInstance()
 
-    val searchStringModel = SingleValueModel(searchQueryHolder.queryString)
-    searchQueryHolder.addQueryChangeListener(disposable) {
-      if (searchStringModel.value != searchQueryHolder.queryString)
-        searchStringModel.value = searchQueryHolder.queryString
-    }
-    searchStringModel.addListener {
-      searchQueryHolder.queryString = searchStringModel.value
+    val searchState = MutableStateFlow(GHPRListSearchState.DEFAULT)
+    scope.launch {
+      searchState.collectLatest {
+        listLoader.searchQuery = it.toQuery()
+      }
     }
 
-    ListEmptyTextController(listLoader, searchQueryHolder, list.emptyText, disposable)
+    ListEmptyTextController(scope, listLoader, searchState, list.emptyText, disposable)
 
-    val searchCompletionProvider = GHPRSearchCompletionProvider(project, repositoryDataService)
-    val pullRequestUiSettings = GithubPullRequestsProjectUISettings.getInstance(project)
-    val search = GHPRSearchPanel.create(project, searchStringModel, searchCompletionProvider, pullRequestUiSettings).apply {
-      border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
-    }
+    val searchPanel = GHPRSearchPanelFactory(searchState, repositoryDataService).create(scope, avatarIconsProvider)
 
     val outdatedStatePanel = JPanel(FlowLayout(FlowLayout.LEFT, JBUIScale.scale(5), 0)).apply {
       background = UIUtil.getPanelBackground()
@@ -95,7 +93,7 @@ internal class GHPRListPanelFactory(private val project: Project,
 
     val controlsPanel = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
-      add(search)
+      add(searchPanel)
       add(outdatedStatePanel)
       add(errorPane)
     }
@@ -147,13 +145,18 @@ internal class GHPRListPanelFactory(private val project: Project,
     return progressStripe
   }
 
-  private class ListEmptyTextController(private val listLoader: GHListLoader<*>,
-                                        private val searchHolder: GHPRSearchQueryHolder,
+  private class ListEmptyTextController(scope: CoroutineScope,
+                                        private val listLoader: GHListLoader<*>,
+                                        private val searchState: MutableStateFlow<GHPRListSearchState>,
                                         private val emptyText: StatusText,
                                         listenersDisposable: Disposable) {
     init {
       listLoader.addLoadingStateChangeListener(listenersDisposable, ::update)
-      searchHolder.addQueryChangeListener(listenersDisposable, ::update)
+      scope.launch {
+        searchState.collect {
+          update()
+        }
+      }
     }
 
     private fun update() {
@@ -161,22 +164,23 @@ internal class GHPRListPanelFactory(private val project: Project,
       if (listLoader.loading || listLoader.error != null) return
 
 
-      val query = searchHolder.query
-      if (query == GHPRSearchQuery.DEFAULT) {
+      val search = searchState.value
+      if (search == GHPRListSearchState.DEFAULT) {
         emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
           .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters"),
                                SimpleTextAttributes.LINK_ATTRIBUTES) {
-            searchHolder.query = GHPRSearchQuery.EMPTY
+            searchState.update { GHPRListSearchState.EMPTY }
           }
       }
-      else if (query.isEmpty()) {
+      else if (search.isEmpty) {
         emptyText.appendText(GithubBundle.message("pull.request.list.nothing.loaded"))
       }
       else {
         emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
-          .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters.to.default", GHPRSearchQuery.DEFAULT.toString()),
+          .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters.to.default",
+                                                    GHPRListSearchState.DEFAULT.toQuery().toString()),
                                SimpleTextAttributes.LINK_ATTRIBUTES) {
-            searchHolder.query = GHPRSearchQuery.DEFAULT
+            searchState.update { GHPRListSearchState.DEFAULT }
           }
       }
     }

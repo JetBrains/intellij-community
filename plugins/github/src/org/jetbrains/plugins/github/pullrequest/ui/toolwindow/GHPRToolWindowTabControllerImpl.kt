@@ -343,11 +343,10 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       return GHPRListPanelFactory(project,
                                   dataContext.repositoryDataService,
                                   dataContext.listLoader,
-                                  dataContext.searchHolder,
                                   dataContext.listUpdatesChecker,
                                   dataContext.securityService.account,
                                   parentDisposable)
-        .create(list)
+        .create(list, dataContext.avatarIconsProvider)
     }
   }
 }
