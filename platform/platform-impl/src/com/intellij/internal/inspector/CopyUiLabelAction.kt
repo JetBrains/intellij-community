@@ -3,6 +3,7 @@ package com.intellij.internal.inspector
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.ide.HelpTooltip
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
@@ -30,7 +31,10 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeCellRenderer
 import javax.swing.tree.TreeCellRenderer
 
-class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
+internal class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     val showFullDescription = e.inputEvent?.isShiftDown ?: false
     val component = getComponentFor(e) ?: return

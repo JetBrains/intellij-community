@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.jcef;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -22,15 +23,24 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.List;
 
 /**
  * @author tav
  */
-public class JBCefBrowserDemo extends AnAction implements DumbAware {
+final class JBCefBrowserDemo extends AnAction implements DumbAware {
+
   private static final String URL = "https://maps.google.com";
   private static final String myCookieManagerText = "Cookie Manager";
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -39,7 +49,7 @@ public class JBCefBrowserDemo extends AnAction implements DumbAware {
 
     if (!JBCefApp.isSupported()) {
       JBPopupFactory.getInstance().createComponentPopupBuilder(
-        new JTextArea("Set the reg key to enable JCEF:\n\"ide.browser.jcef.enabled=true\""), null).
+          new JTextArea("Set the reg key to enable JCEF:\n\"ide.browser.jcef.enabled=true\""), null).
         setTitle("JCEF Web Browser Is not Supported").
         createPopup().
         showInCenterOf(activeFrame);

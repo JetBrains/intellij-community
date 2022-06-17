@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.ide.util.BrowseFilesListener
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -30,20 +31,29 @@ import javax.swing.JTextArea
 /**
  * @author gregsh
  */
-class ShowUpdateInfoDialogAction : DumbAwareAction() {
+internal class ShowUpdateInfoDialogAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
-    val dialog = MyDialog(e.project)
+    val project = e.project ?: return
+
+    val dialog = MyDialog(project)
     if (dialog.showAndGet()) {
       try {
         UpdateChecker.testPlatformUpdate(
-          e.project,
+          project,
           dialog.updateXmlText(),
           dialog.patchFilePath()?.let { File(FileUtil.toSystemDependentName(it)) },
           dialog.forceUpdate(),
         )
       }
       catch (ex: Exception) {
-        Messages.showErrorDialog(e.project, "${ex.javaClass.name}: ${ex.message}", "Something Went Wrong")
+        Messages.showErrorDialog(project, "${ex.javaClass.name}: ${ex.message}", "Something Went Wrong")
       }
     }
   }

@@ -4,10 +4,14 @@ package com.intellij.internal.statistic.devkit.groups
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.getLogProvidersInTestMode
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class CleanupEventLogByIdActionGroup : ActionGroup() {
+internal class CleanupEventLogByIdActionGroup : ActionGroup() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     return getLogProvidersInTestMode()
       .map { logger ->

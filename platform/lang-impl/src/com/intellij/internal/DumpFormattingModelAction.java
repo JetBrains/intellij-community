@@ -43,8 +43,8 @@ final class DumpFormattingModelAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getProject() != null &&
-                                   e.getData(CommonDataKeys.PSI_FILE) != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null &&
+                                             e.getData(CommonDataKeys.PSI_FILE) != null);
   }
 
   @Override

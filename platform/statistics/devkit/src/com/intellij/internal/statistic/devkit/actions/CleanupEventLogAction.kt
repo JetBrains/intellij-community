@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.devkit.actions
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
@@ -9,6 +10,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 
 internal class CleanupEventLogAction(val recorderId: String, val actionText: String) : AnAction(actionText) {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
 

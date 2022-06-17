@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector
 
 import com.intellij.ide.util.propComponentProperty
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.components.dialog
@@ -13,7 +14,10 @@ import java.awt.GraphicsEnvironment
 /**
  * @author Konstantin Bulenkov
  */
-class ConfigureCustomSizeAction: DumbAwareAction() {
+internal class ConfigureCustomSizeAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     val centerPanel = panel {
       row("Width:") {

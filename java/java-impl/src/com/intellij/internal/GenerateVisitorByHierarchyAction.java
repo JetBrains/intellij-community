@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
@@ -9,10 +9,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -41,7 +38,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public final class GenerateVisitorByHierarchyAction extends AnAction {
+final class GenerateVisitorByHierarchyAction extends AnAction {
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Ref<String> visitorNameRef = Ref.create("MyVisitor");
@@ -141,8 +139,8 @@ public final class GenerateVisitorByHierarchyAction extends AnAction {
   }
 
   public static String generateEverything(final PsiPackage psiPackage, final PsiClass rootClass, final String visitorName) {
-    final String visitorQName = PsiNameHelper.getShortClassName(visitorName).equals(visitorName)?
-                                psiPackage.getQualifiedName()+"."+ visitorName : visitorName;
+    final String visitorQName = PsiNameHelper.getShortClassName(visitorName).equals(visitorName) ?
+                                psiPackage.getQualifiedName() + "." + visitorName : visitorName;
     final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(rootClass.getProject(),
                                                                                StringUtil.getPackageName(visitorQName), null, false);
     generateVisitorClass(visitorQName, rootClass, directory, new PackageScope(psiPackage, false, false));
@@ -150,8 +148,13 @@ public final class GenerateVisitorByHierarchyAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull final AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
+    e.getPresentation().setEnabled(e.getProject() != null);
   }
 
   private static void generateVisitorClass(final String visitorName,

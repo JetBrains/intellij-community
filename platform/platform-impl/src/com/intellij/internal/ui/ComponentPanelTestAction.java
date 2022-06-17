@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -55,12 +55,12 @@ import java.util.List;
 import java.util.*;
 import java.util.function.BiFunction;
 
-public class ComponentPanelTestAction extends DumbAwareAction {
+final class ComponentPanelTestAction extends DumbAwareAction {
   private enum Placement {
-    Top    (SwingConstants.TOP, "Top"),
-    Bottom (SwingConstants.BOTTOM, "Bottom"),
-    Left   (SwingConstants.LEFT, "Left"),
-    Right  (SwingConstants.RIGHT, "Right");
+    Top(SwingConstants.TOP, "Top"),
+    Bottom(SwingConstants.BOTTOM, "Bottom"),
+    Left(SwingConstants.LEFT, "Left"),
+    Right(SwingConstants.RIGHT, "Right");
 
     private final String name;
     private final int placement;
@@ -79,6 +79,16 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     public int placement() {
       return placement;
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
   @Override

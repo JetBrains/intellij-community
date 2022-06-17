@@ -4,6 +4,7 @@ package com.intellij.internal
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.impl.EditorCssFontResolver
@@ -31,7 +32,10 @@ import javax.swing.JEditorPane
 import javax.swing.JTree
 import javax.swing.tree.DefaultTreeCellRenderer
 
-class TestTooltipsAction: DumbAwareAction() {
+internal class TestTooltipsAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     val panel = panel {
       row("javax.swing.JComponent.setToolTipText") { label("Standard AWT tooltip").applyToComponent { toolTipText = "Plain tooltip" } }

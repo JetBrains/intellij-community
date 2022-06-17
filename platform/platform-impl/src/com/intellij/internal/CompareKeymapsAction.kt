@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.keymap.Keymap
@@ -13,7 +14,10 @@ import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import javax.swing.JTextArea
 
-class CompareKeymapsAction : AnAction() {
+internal class CompareKeymapsAction : AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     val allKeymaps = (KeymapManager.getInstance() as KeymapManagerEx).allKeymaps
     val keymapsComboBoxModel1 = CollectionComboBoxModel(allKeymaps.toList())
