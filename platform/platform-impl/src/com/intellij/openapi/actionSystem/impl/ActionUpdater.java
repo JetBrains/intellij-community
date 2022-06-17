@@ -506,63 +506,54 @@ final class ActionUpdater {
     if (presentation == null) {
       return Collections.emptyList();
     }
-
-    if (!presentation.isVisible() || (!presentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
+    else if (!presentation.isVisible() || hideDisabled && !presentation.isEnabled()) {
       return Collections.emptyList();
     }
-    if (child instanceof ActionGroup) {
-      ActionGroup actionGroup = (ActionGroup)child;
+    else if (!(child instanceof ActionGroup)) {
+      return Collections.singletonList(child);
+    }
+    ActionGroup group = (ActionGroup)child;
 
-      boolean isPopup = presentation.isPopupGroup();
-      boolean hasEnabled = false, hasVisible = false;
+    boolean isPopup = presentation.isPopupGroup();
+    boolean canBePerformed = presentation.isPerformGroup();
+    boolean performOnly = isPopup && canBePerformed && (
+      Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.SUPPRESS_SUBMENU)) ||
+      child instanceof AlwaysPerformingActionGroup);
+    boolean hideEmpty = isPopup && group.hideIfNoVisibleChildren();
+    boolean checkChildren = isPopup && (canBePerformed || hideDisabled || hideEmpty) &&
+                            !(performOnly || child instanceof AlwaysVisibleActionGroup);
 
-      if (child instanceof AlwaysVisibleActionGroup) {
-        hasEnabled = hasVisible = true;
+    boolean hasEnabled = false, hasVisible = false;
+    if (checkChildren) {
+      JBIterable<AnAction> childrenIterable = iterateGroupChildren(group, strategy);
+      for (AnAction action : childrenIterable.take(100)) {
+        if (action instanceof Separator) continue;
+        Presentation p = update(action, strategy);
+        if (p == null) continue;
+        hasVisible |= p.isVisible();
+        hasEnabled |= p.isEnabled();
+        // stop early if all the required flags are collected
+        if (hasVisible && (hasEnabled || !hideDisabled)) break;
       }
-      else if (hideDisabled || isPopup) {
-        JBIterable<AnAction> childrenIterable = iterateGroupChildren(actionGroup, strategy);
-        for (AnAction action : childrenIterable.take(100)) {
-          if (action instanceof Separator) continue;
-          Presentation p = update(action, strategy);
-          if (p == null) continue;
-          hasVisible |= p.isVisible();
-          hasEnabled |= p.isEnabled();
-          // stop early if all the required flags are collected
-          if (hasEnabled && hasVisible) break;
-          if (hideDisabled && hasEnabled && !isPopup) break;
-          if (isPopup && hasVisible && !hideDisabled) break;
-        }
+      performOnly = canBePerformed && !hasVisible;
+    }
+    if (isPopup) {
+      presentation.putClientProperty(SUPPRESS_SUBMENU_IMPL, performOnly ? true : null);
+      if (checkChildren && !hasVisible && group.disableIfNoVisibleChildren()) {
+        presentation.setEnabled(false);
       }
-
-      if (hideDisabled && !hasEnabled) {
-        return Collections.emptyList();
-      }
-      if (isPopup) {
-        boolean canBePerformed = presentation.isPerformGroup();
-        boolean performOnly = canBePerformed && (
-          !hasVisible || Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.SUPPRESS_SUBMENU)) ||
-          actionGroup instanceof AlwaysPerformingActionGroup);
-        presentation.putClientProperty(SUPPRESS_SUBMENU_IMPL, performOnly ? true : null);
-
-        if (!hasVisible && actionGroup.disableIfNoVisibleChildren()) {
-          if (actionGroup.hideIfNoVisibleChildren()) {
-            return Collections.emptyList();
-          }
-          if (!canBePerformed) {
-            presentation.setEnabled(false);
-          }
-        }
-
-        if (hideDisabled && !(child instanceof CompactActionGroup)) {
-          return Collections.singletonList(new EmptyAction.DelegatingCompactActionGroup((ActionGroup)child));
-        }
-        return Collections.singletonList(child);
-      }
-
-      return doExpandActionGroup((ActionGroup)child, hideDisabled || actionGroup instanceof CompactActionGroup, strategy);
     }
 
-    return Collections.singletonList(child);
+    if (checkChildren && (!hasEnabled && hideDisabled || !hasVisible && hideEmpty)) {
+      return Collections.emptyList();
+    }
+    else if (isPopup) {
+      return Collections.singletonList(!hideDisabled || child instanceof CompactActionGroup ? group :
+                                       new EmptyAction.DelegatingCompactActionGroup(group));
+    }
+    else {
+      return doExpandActionGroup(group, hideDisabled || child instanceof CompactActionGroup, strategy);
+    }
   }
 
   private Presentation orDefault(AnAction action, Presentation presentation) {
