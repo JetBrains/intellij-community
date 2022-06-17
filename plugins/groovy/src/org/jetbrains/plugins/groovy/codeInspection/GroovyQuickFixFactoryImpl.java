@@ -69,7 +69,7 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
 
   @Override
   public IntentionAction createCreateGetterFromUsageFix(GrReferenceExpression expr, PsiClass aClass) {
-    return new CreateGetterFromUsageFix(expr, aClass);
+    return new CreateGetterFromUsageFix(expr);
   }
 
   @Override

@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
@@ -33,8 +34,24 @@ public class CreateFieldFix {
                        @NotNull @NonNls String fieldName,
                        TypeConstraint @NotNull [] typeConstraints,
                        @NotNull PsiElement context) throws IncorrectOperationException {
+    PsiField field = getFieldRepresentation(project, modifiers, fieldName, context, false);
+    if (field == null) return;
+
+    Editor newEditor = IntentionUtils.positionCursor(project, myTargetClass.getContainingFile(), field);
+
+    Template template = CreateFieldFromUsageHelper.setupTemplate(field, typeConstraints, myTargetClass, newEditor, context, false);
+    TemplateManager manager = TemplateManager.getInstance(project);
+    manager.startTemplate(newEditor, template);
+  }
+
+  @Nullable
+  PsiField getFieldRepresentation(@NotNull Project project,
+                                  String @NotNull [] modifiers,
+                                  @NonNls @NotNull String fieldName,
+                                  @NotNull PsiElement context,
+                                  boolean readOnly) {
     JVMElementFactory factory = JVMElementFactories.getFactory(myTargetClass.getLanguage(), project);
-    if (factory == null) return;
+    if (factory == null) return null;
 
     PsiField field = factory.createField(fieldName, PsiType.INT);
     if (myTargetClass instanceof GroovyScriptClass) {
@@ -45,14 +62,11 @@ public class CreateFieldFix {
       PsiUtil.setModifierProperty(field, modifier, true);
     }
 
-    field = CreateFieldFromUsageHelper.insertField(myTargetClass, field, context);
+    if (!readOnly) {
+      field = CreateFieldFromUsageHelper.insertField(myTargetClass, field, context);
+    }
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(field.getParent());
-
-    Editor newEditor = IntentionUtils.positionCursor(project, myTargetClass.getContainingFile(), field);
-
-    Template template = CreateFieldFromUsageHelper.setupTemplate(field, typeConstraints, myTargetClass, newEditor, context, false);
-    TemplateManager manager = TemplateManager.getInstance(project);
-    manager.startTemplate(newEditor, template);
+    return field;
   }
 
   public PsiClass getTargetClass() {

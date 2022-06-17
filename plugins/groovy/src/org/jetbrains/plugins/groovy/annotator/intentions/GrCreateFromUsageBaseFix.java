@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -27,7 +27,7 @@ import java.util.List;
 public abstract class GrCreateFromUsageBaseFix extends Intention {
   protected final SmartPsiElementPointer<GrReferenceExpression> myRefExpression;
 
-  public GrCreateFromUsageBaseFix(@NotNull GrReferenceExpression refExpression) {
+  protected GrCreateFromUsageBaseFix(@NotNull GrReferenceExpression refExpression) {
     myRefExpression = SmartPointerManager.getInstance(refExpression.getProject()).createSmartPsiElementPointer(refExpression);
   }
 
@@ -86,7 +86,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
 
   protected abstract void invokeImpl(Project project, @NotNull PsiClass targetClass);
 
-  private List<PsiClass> getTargetClasses() {
+  protected List<PsiClass> getTargetClasses() {
     final GrReferenceExpression ref = getRefExpr();
     final PsiClass targetClass = QuickfixUtil.findTargetClass(ref);
     if (targetClass == null || !canBeTargetClass(targetClass)) return Collections.emptyList();

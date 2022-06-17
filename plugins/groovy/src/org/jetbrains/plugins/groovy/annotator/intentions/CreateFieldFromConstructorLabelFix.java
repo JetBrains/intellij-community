@@ -4,13 +4,13 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -35,7 +35,19 @@ public class CreateFieldFromConstructorLabelFix extends GroovyFix {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    return IntentionPreviewInfo.EMPTY;
+    PsiClass targetClass = myFix.getTargetClass();
+    final CreateFieldFix fix = new CreateFieldFix(targetClass);
+    String name = getFieldName();
+    if (name == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    PsiField representation =
+      fix.getFieldRepresentation(targetClass.getProject(), ArrayUtilRt.EMPTY_STRING_ARRAY, name, targetClass, true);
+    PsiElement parent = representation == null ? null : representation.getParent();
+    if (parent == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, "", parent.getText());
   }
 
   @Nullable
