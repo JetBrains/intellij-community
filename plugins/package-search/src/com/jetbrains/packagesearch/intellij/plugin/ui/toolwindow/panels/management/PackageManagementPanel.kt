@@ -131,7 +131,6 @@ internal class PackageManagementPanel(
 
         project.packageSearchProjectService.moduleModelsStateFlow
             .map { computeModuleTreeModel(it) }
-            .flowOn(Dispatchers.Default)
             .onEach { modulesTree.display(it) }
             .flowOn(Dispatchers.EDT)
             .launchIn(project.lifecycleScope)
@@ -159,7 +158,7 @@ internal class PackageManagementPanel(
                 onlyStable = onlyStable,
                 invokeLaterScope = project.lifecycleScope
             )
-        }.flowOn(Dispatchers.Default)
+        }.flowOn(project.lifecycleScope.dispatcher)
             .onEach { packageDetailsPanel.display(it) }
             .flowOn(Dispatchers.EDT)
             .launchIn(project.lifecycleScope)

@@ -133,8 +133,8 @@ internal fun Project.getNativeModules(): List<Module> = ModuleManager.getInstanc
 internal val Project.moduleChangesSignalFlow
     get() = merge(ModuleChangesSignalProvider.listenToModuleChanges(this), FlowModuleChangesSignalProvider.listenToModuleChanges(this))
 
-internal val Project.lifecycleScope: CoroutineScope
-    get() = service<PackageSearchLifecycleScope>()
+internal val Project.lifecycleScope: PackageSearchLifecycleScope
+    get() = service()
 
 internal val Project.uiStateModifier: UiStateModifier
     get() = service<UiCommandsService>()
