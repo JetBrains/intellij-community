@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewEditor;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -57,7 +58,7 @@ public abstract class BaseCompleteMacro extends Macro {
     final Editor editor = context.getEditor();
 
     final PsiFile psiFile = editor != null ? PsiUtilBase.getPsiFileInEditor(editor, project) : null;
-    if (psiFile == null) return;
+    if (psiFile == null || editor instanceof IntentionPreviewEditor) return;
     Runnable runnable = () -> {
       if (project.isDisposed() || editor.isDisposed() || !psiFile.isValid()) return;
 
