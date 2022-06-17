@@ -364,6 +364,9 @@ public final class Presentation implements Cloneable {
 
   /**
    * For an action group presentation sets whether the action group is "performable" as an ordinary action or not.
+   *
+   * @see com.intellij.openapi.actionSystem.impl.ActionMenu#SUPPRESS_SUBMENU
+   * @see com.intellij.openapi.actionSystem.impl.ActionButton#HIDE_DROPDOWN_ICON
    */
   public void setPerformGroup(boolean performing) {
     myFlags = BitUtil.set(myFlags, IS_PERFORM_GROUP, performing);

@@ -42,9 +42,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   @NonNls private static final Set<String> WHITE_LIST = Set.of("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
 
   /**
-   * By default, a popup action group button displays 'dropdown' icon.
-   * Use this key to avoid suppress that icon for a presentation or a template presentation like this:
+   * By default, a toolbar button for a popup action group paints additional "drop-down-arrow" mark over its icon.
+   * Set this key to disable the painting of that mark as follows:
+   * <p>
    * {@code presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)}.
+   * <p>
+   * Both ordinary and template presentations are supported.
+   *
+   * @see Presentation#setPerformGroup(boolean)
    */
   public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
 
