@@ -105,10 +105,6 @@
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "jshint.svg": "icons/fileTypes/jsHint.svg",
       "json.svg": "fileTypes/json.svg",
-      "kotlin.svg": [
-        "org/jetbrains/kotlin/idea/icons/kotlin.svg",
-        "org/jetbrains/kotlin/idea/icons/kotlin_file.svg"
-      ],
       "less.svg": "icons/less.svg",
       "lombok.svg": "icons/lombok.svg",
       "lombokConfig.svg": "icons/config.svg",
