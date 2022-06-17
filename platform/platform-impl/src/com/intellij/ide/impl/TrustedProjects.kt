@@ -9,6 +9,7 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
@@ -184,7 +185,7 @@ private fun createDoNotAskOptionForLocation(projectLocation: Path): DoNotAskOpti
 @ApiStatus.Internal
 fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
                                ApplicationManager.getApplication().isHeadlessEnvironment ||
-                               java.lang.Boolean.getBoolean("idea.is.integration.test") ||
+                               ApplicationManagerEx.isInIntegrationTest() ||
                                java.lang.Boolean.getBoolean("idea.trust.all.projects")
 
 private fun isTrustedCheckDisabledForProduct(): Boolean = java.lang.Boolean.getBoolean("idea.trust.disabled")

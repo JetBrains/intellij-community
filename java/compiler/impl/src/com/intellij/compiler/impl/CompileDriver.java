@@ -14,6 +14,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -512,7 +513,7 @@ public final class CompileDriver {
           duration
         );
 
-        if (SystemProperties.getBooleanProperty("idea.is.integration.test", false)) {
+        if (ApplicationManagerEx.isInIntegrationTest()) {
           String logPath = PathManager.getLogPath();
           Path perfMetrics = Paths.get(logPath).resolve("performance-metrics").resolve("buildMetrics.json");
           try {

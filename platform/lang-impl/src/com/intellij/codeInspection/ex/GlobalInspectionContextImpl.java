@@ -239,7 +239,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
     LOG.info("Code inspection finished. Took " + elapsed + " ms");
-    if (SystemProperties.getBooleanProperty("idea.is.integration.test", false)) {
+    if (ApplicationManagerEx.isInIntegrationTest()) {
       String logPath = PathManager.getLogPath();
       Path perfMetrics = Paths.get(logPath).resolve("performance-metrics").resolve("inspectionMetrics.json");
       try {

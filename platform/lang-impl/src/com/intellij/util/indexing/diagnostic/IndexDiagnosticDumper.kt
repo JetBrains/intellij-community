@@ -4,6 +4,7 @@ package com.intellij.util.indexing.diagnostic
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
@@ -83,9 +84,6 @@ class IndexDiagnosticDumper : Disposable {
     @JvmStatic
     @TestOnly
     var shouldDumpInUnitTestMode: Boolean = false
-
-    private val isIntegrationTest: Boolean
-      get() = SystemProperties.getBooleanProperty("idea.is.integration.test", false)
 
     private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
@@ -231,9 +229,10 @@ class IndexDiagnosticDumper : Disposable {
 
     var sizeLimit = indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()
     val numberLimit: Int
-    if (isIntegrationTest) {
+    if (ApplicationManagerEx.isInIntegrationTest()) {
       numberLimit = existingDiagnostics.size
-    } else if (sizeLimit > 0) {
+    }
+    else if (sizeLimit > 0) {
       var number = 0
       for (diagnostic in existingDiagnostics) {
         sizeLimit -= max(0, diagnostic.jsonFile.sizeOrNull())
