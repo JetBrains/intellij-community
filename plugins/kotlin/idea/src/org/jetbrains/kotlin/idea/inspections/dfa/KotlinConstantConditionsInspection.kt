@@ -542,7 +542,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         }
                     }
                     val kotlinType = expression.getKotlinType()
-                    if (kotlinType.toDfType(expression) == DfTypes.NULL) {
+                    if (kotlinType.toDfType() == DfTypes.NULL) {
                         // According to type system, nothing but null could be stored in such an expression (likely "Void?" type)
                         return true
                     }
