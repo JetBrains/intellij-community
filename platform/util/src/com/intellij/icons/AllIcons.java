@@ -565,6 +565,7 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon Java9Service = load("gutter/java9Service.svg", 67211354, 2);
     /** 12x12 */ public static final @NotNull Icon JavadocEdit = load("gutter/javadocEdit.svg", 406293995, 0);
     /** 12x12 */ public static final @NotNull Icon JavadocRead = load("gutter/javadocRead.svg", -932783319, 0);
+    /** 12x12 */ public static final @NotNull Icon Mnemonic = load("gutter/mnemonic.svg", 246967327, 2);
     /** 12x12 */ public static final @NotNull Icon OverridenMethod = load("gutter/overridenMethod.svg", -1360655128, 2);
     /** 12x12 */ public static final @NotNull Icon OverridingMethod = load("gutter/overridingMethod.svg", 1057326851, 2);
     /** 12x12 */ public static final @NotNull Icon ReadAccess = load("gutter/readAccess.svg", 2017517885, 2);
@@ -800,6 +801,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon LogFolder = load("nodes/logFolder.svg", -1159414905, 2);
     /** 16x16 */ public static final @NotNull Icon Method = load("nodes/method.svg", -1595368278, 1);
     /** 16x16 */ public static final @NotNull Icon MethodReference = load("nodes/methodReference.svg", 752896692, 1);
+    /** 16x16 */ public static final @NotNull Icon Mnemonic = load("nodes/mnemonic.svg", -676742842, 2);
     /** 16x16 */ public static final @NotNull Icon ModelClass = load("nodes/modelClass.svg", 830021468, 0);
     /** 16x16 */ public static final @NotNull Icon Models = load("nodes/models.svg", -585065085, 0);
     /** 16x16 */ public static final @NotNull Icon Module = load("nodes/Module.svg", 855828362, 0);
