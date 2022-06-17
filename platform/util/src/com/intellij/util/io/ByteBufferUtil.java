@@ -47,7 +47,7 @@ public final class ByteBufferUtil {
       }
     }
     catch (Throwable t) {
-      Logger.getInstance(ByteBufferUtil.class).warn(t);
+      getLogger().warn(t);
     }
     return address;
   }
@@ -69,7 +69,7 @@ public final class ByteBufferUtil {
         return true;
       }
       catch (Throwable t) {
-        Logger.getInstance(ByteBufferUtil.class).warn(t);
+        getLogger().warn(t);
         return false;
       }
     }
@@ -85,7 +85,7 @@ public final class ByteBufferUtil {
         return true;
       }
       catch (Exception e) {
-        Logger.getInstance(ByteBufferUtil.class).warn(e);
+        getLogger().warn(e);
         return false;
       }
     }
@@ -99,12 +99,17 @@ public final class ByteBufferUtil {
         return;
       }
       catch (Throwable e) {
-        Logger.getInstance(ByteBufferUtil.class).warn(e);
+        getLogger().warn(e);
       }
     }
 
     ByteBuffer buf = src.duplicate();
     buf.position(index);
     buf.get(dst, dstIndex, length);
+  }
+
+  @NotNull
+  private static Logger getLogger() {
+    return Logger.getInstance(ByteBufferUtil.class);
   }
 }
