@@ -249,7 +249,8 @@ internal class FileTestFixtureImpl(
       override fun isProcessRecursively(): Boolean = true
 
       override fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean {
-        return file != fixtureStateFile &&
+        return !file.isDirectory &&
+               file != fixtureStateFile &&
                VfsUtil.isAncestor(root, file, false) &&
                file.toNioPath() !in snapshots
       }

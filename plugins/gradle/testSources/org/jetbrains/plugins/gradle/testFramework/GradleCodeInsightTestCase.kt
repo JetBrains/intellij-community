@@ -26,8 +26,9 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
     }
   }
 
-  fun testHighlighting(expression: String) {
-    val file = findOrCreateFile("build.gradle", expression)
+  fun testHighlighting(expression: String) = testHighlighting("build.gradle", expression)
+  fun testHighlighting(relativePath: String, expression: String) {
+    val file = findOrCreateFile(relativePath, expression)
     runInEdtAndWait {
       codeInsightFixture.testHighlighting(true, false, true, file)
     }

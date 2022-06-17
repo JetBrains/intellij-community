@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
-import com.intellij.openapi.externalSystem.util.findOrCreateFile
-import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
-import com.intellij.openapi.externalSystem.util.text
+import com.intellij.openapi.externalSystem.util.*
 import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
 
@@ -20,6 +18,12 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     return runWriteActionAndGet {
       gradleFixture.fileFixture.root.findOrCreateFile(relativePath)
         .also { it.text = text }
+    }
+  }
+
+  fun getFile(relativePath: String): VirtualFile {
+    return runReadAction {
+      gradleFixture.fileFixture.root.getFile(relativePath)
     }
   }
 }

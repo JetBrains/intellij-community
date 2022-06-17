@@ -58,7 +58,7 @@ fun VirtualFileSystem.findFile(path: Path): VirtualFile? {
 }
 
 fun VirtualFileSystem.getFile(path: Path): VirtualFile {
-  return requireNotNull(findFile(path)) { "Directory doesn't exist" }
+  return requireNotNull(findFile(path)) { "File doesn't exist" }
 }
 
 fun VirtualFileSystem.findDirectory(path: Path): VirtualFile? {
