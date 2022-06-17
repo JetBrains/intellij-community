@@ -25,6 +25,9 @@ interface NotPropertiesService {
                     add("java.util.concurrent.atomic.$atomicClass.$atomicMethod")
                 }
             }
+            for (byteBufferMethod in listOf("getChar", "getDouble", "getFloat", "getInt", "getLong", "getShort")) {
+                add("java.nio.ByteBuffer.$byteBufferMethod")
+            }
         }
 
         fun getNotProperties(element: PsiElement): Set<FqNameUnsafe> {
