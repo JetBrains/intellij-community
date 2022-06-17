@@ -2182,7 +2182,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertModules("project", "module1", "module2")
             assertImporterStatePresent()
-            assertEquals(1, notifications.count { it.title == "Kotlin JPS plugin artifacts were not found" })
+            assertEquals(0, notifications.size)
             // The highest of available versions should be picked
             // TODO: should be reverted after KTI-724
             assertNotEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
@@ -3388,26 +3388,19 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
     class JvmTarget6IsImported8 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJvmTarget6IsImported8() {
-            // Some version which cannot be downloaded (because it was never published) => explicit
+            // Some version won't be imported into JPS (because it's some milestone version which wasn't published to MC) => explicit
             // JPS version during import will be dropped => we will fall back to the bundled JPS =>
             // we have to load 1.6 jvmTarget as 1.8 KTIJ-21515
-            val (facet, notifications) = doJvmTarget6Test("1.5.135")
+            val (facet, notifications) = doJvmTarget6Test("1.6.20-RC")
 
             Assert.assertEquals("JVM 1.8", facet.targetPlatform!!.oldFashionedDescription)
             Assert.assertEquals("1.8", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
 
             Assert.assertEquals(
-                "Title: 'Unsupported JVM target 1.6'\n" +
-                        "Content: 'Maven project uses JVM target 1.6 for Kotlin compilation, which is no longer supported. " +
-                        "It has been imported as JVM target 1.8. Consider migrating the project to JVM 1.8.'\n" +
-                        "-----\n" +
-                        "Title: 'Kotlin JPS plugin artifacts were not found'\n" +
-                        "Content: 'The bundled version (${KotlinJpsPluginSettings.rawBundledVersion}) of the Kotlin JPS plugin will be used<br>The reason: " +
-                        "Failed to download Maven artifact (org.jetbrains.kotlin:kotlin-jps-plugin:1.5.135). " +
-                        "Searched the artifact in the following repos:\n" +
-                        "https://repo.maven.apache.org/maven2\n" +
-                        "https://repo1.maven.org/maven2\n" +
-                        "https://repository.jboss.org/nexus/content/repositories/public/'",
+                """
+                    Title: 'Unsupported JVM target 1.6'
+                    Content: 'Maven project uses JVM target 1.6 for Kotlin compilation, which is no longer supported. It has been imported as JVM target 1.8. Consider migrating the project to JVM 1.8.'
+                """.trimIndent(),
                 notifications.asText,
             )
         }

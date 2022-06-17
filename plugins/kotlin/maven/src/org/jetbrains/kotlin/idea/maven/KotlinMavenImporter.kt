@@ -2,8 +2,6 @@
 
 package org.jetbrains.kotlin.idea.maven
 
-import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.PersistentStateComponent
@@ -29,7 +27,6 @@ import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.resolved
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -127,23 +124,15 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     ) {
         super.postProcess(module, mavenProject, changes, modifiableModelsProvider)
         module.project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)?.let { version ->
-            val message = KotlinMavenBundle.message("checking.kotlin.jps.availability.in.maven.repos")
-            ProgressManager.getInstance().run(
-                object : Task.Backgroundable(module.project, message, true) {
-                    override fun run(indicator: ProgressIndicator) {
-                        val success = KotlinJpsPluginSettings.updateAndDownloadOrDropVersion(
-                            module.project,
-                            version.rawVersion,
-                            indicator,
-                            showNotification = project.getUserData(NOTIFICATION_KEY) != true,
-                        )
-
-                        if (!success) {
-                            project.putUserData(NOTIFICATION_KEY, true)
-                        }
-                    }
-                }
+            val success = KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
+                module.project,
+                version.rawVersion,
+                showNotification = module.project.getUserData(NOTIFICATION_KEY) != true,
             )
+
+            if (!success) {
+                module.project.putUserData(NOTIFICATION_KEY, true)
+            }
             module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
         }
 
