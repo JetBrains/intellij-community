@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
@@ -25,6 +26,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,15 +40,25 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
+@ApiStatus.Internal
+@IntellijInternalApi
+public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
+
 
   private static final Logger LOG = Logger.getInstance(ActionUpdatesBenchmarkAction.class);
 
   private static final long MIN_REPORTED_UPDATE_MILLIS = 5;
   private static final long MIN_REPORTED_NO_CHECK_CANCELED_MILLIS = 20;
 
-  /** @noinspection StaticNonFinalField */
+  /**
+   * @noinspection StaticNonFinalField
+   */
   public static Consumer<? super String> ourMissingKeysConsumer;
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {

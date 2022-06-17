@@ -12,13 +12,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +32,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
+@IntellijInternalApi
 public class UiInspectorAction extends UiMouseAction implements LightEditCompatible, ActionPromoter {
+
   private static final String ACTION_ID = "UiInspector";
   public static final String RENDERER_BOUNDS = "clicked renderer";
 
@@ -43,6 +44,7 @@ public class UiInspectorAction extends UiMouseAction implements LightEditCompati
   public static final Key<Throwable> ADDED_AT_STACKTRACE = Key.create("uiInspector.addedAt");
 
   private static boolean ourGlobalInstanceInitialized = false;
+
   public static synchronized void initGlobalInspector() {
     if (!ourGlobalInstanceInitialized) {
       ourGlobalInstanceInitialized = true;
@@ -54,6 +56,11 @@ public class UiInspectorAction extends UiMouseAction implements LightEditCompati
 
   public UiInspectorAction() {
     super(ACTION_ID);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -154,7 +161,7 @@ public class UiInspectorAction extends UiMouseAction implements LightEditCompati
       List<PropertyBean> clickInfo = new ArrayList<>();
       //clickInfo.add(new PropertyBean("Click point", me.getPoint()));
       if (component instanceof JList) {
-        @SuppressWarnings("unchecked") 
+        @SuppressWarnings("unchecked")
         JList<Object> list = (JList<Object>)component;
         int row = list.getUI().locationToIndex(list, me.getPoint());
         if (row != -1) {
@@ -188,10 +195,10 @@ public class UiInspectorAction extends UiMouseAction implements LightEditCompati
         if (path != null) {
           Object object = path.getLastPathComponent();
           Component rendererComponent = tree.getCellRenderer().getTreeCellRendererComponent(
-              tree, object, tree.getSelectionModel().isPathSelected(path),
-              tree.isExpanded(path),
-              tree.getModel().isLeaf(object),
-              tree.getRowForPath(path), tree.hasFocus());
+            tree, object, tree.getSelectionModel().isPathSelected(path),
+            tree.isExpanded(path),
+            tree.getModel().isLeaf(object),
+            tree.getRowForPath(path), tree.hasFocus());
           rendererComponent.setBounds(tree.getPathBounds(path));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, tree.getPathBounds(path)));
           clickInfo.addAll(ComponentPropertiesCollector.collect(rendererComponent));
@@ -232,17 +239,20 @@ public class UiInspectorAction extends UiMouseAction implements LightEditCompati
     }
   }
 
-  public static class ToggleHierarchyTraceAction extends ToggleAction implements AWTEventListener {
+  static class ToggleHierarchyTraceAction extends ToggleAction implements AWTEventListener {
+
     private boolean myEnabled = false;
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
-      if (isSelected(e)) {
-        e.getPresentation().setText(ActionsBundle.message("action.ToggleUiInspectorHierarchyTrace.text.disable"));
-      }
-      else {
-        e.getPresentation().setText(ActionsBundle.message("action.ToggleUiInspectorHierarchyTrace.text.enable"));
-      }
+      e.getPresentation().setText(isSelected(e) ?
+                                  ActionsBundle.message("action.ToggleUiInspectorHierarchyTrace.text.disable") :
+                                  ActionsBundle.message("action.ToggleUiInspectorHierarchyTrace.text.enable"));
     }
 
     @Override

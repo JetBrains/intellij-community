@@ -101,6 +101,6 @@ final class LoadAllVfsStoredContentsAction extends AnAction implements DumbAware
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getProject() != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 }

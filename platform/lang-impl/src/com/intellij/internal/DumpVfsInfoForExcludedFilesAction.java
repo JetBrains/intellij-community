@@ -33,7 +33,7 @@ final class DumpVfsInfoForExcludedFilesAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getProject() != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
   @Override

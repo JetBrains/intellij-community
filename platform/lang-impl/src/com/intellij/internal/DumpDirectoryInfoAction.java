@@ -56,6 +56,6 @@ final class DumpDirectoryInfoAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getProject() != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 }

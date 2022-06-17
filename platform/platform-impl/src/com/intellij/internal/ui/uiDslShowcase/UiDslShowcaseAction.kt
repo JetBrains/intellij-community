@@ -2,6 +2,7 @@
 package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleManager
@@ -37,7 +38,9 @@ val DEMOS = arrayOf(
   ::demoTips
 )
 
-class UiDslShowcaseAction : DumbAwareAction() {
+internal class UiDslShowcaseAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     UiDslShowcaseDialog(e.project, templatePresentation.text).show()
