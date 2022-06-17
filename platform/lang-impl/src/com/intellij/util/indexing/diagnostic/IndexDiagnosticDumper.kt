@@ -84,6 +84,9 @@ class IndexDiagnosticDumper : Disposable {
     @TestOnly
     var shouldDumpInUnitTestMode: Boolean = false
 
+    private val isIntegrationTest: Boolean
+      get() = SystemProperties.getBooleanProperty("idea.is.integration.test", false)
+
     private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
     fun readJsonIndexDiagnostic(file: Path): JsonIndexDiagnostic =
@@ -228,7 +231,9 @@ class IndexDiagnosticDumper : Disposable {
 
     var sizeLimit = indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()
     val numberLimit: Int
-    if (sizeLimit > 0) {
+    if (isIntegrationTest) {
+      numberLimit = existingDiagnostics.size
+    } else if (sizeLimit > 0) {
       var number = 0
       for (diagnostic in existingDiagnostics) {
         sizeLimit -= max(0, diagnostic.jsonFile.sizeOrNull())
