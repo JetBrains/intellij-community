@@ -28,8 +28,8 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
+    e.getPresentation().setPerformGroup(!e.isFromActionToolbar());
     e.getPresentation().putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true);
-    e.getPresentation().setPerformGroup(true);
     e.getPresentation().setEnabledAndVisible(project != null);
   }
 
