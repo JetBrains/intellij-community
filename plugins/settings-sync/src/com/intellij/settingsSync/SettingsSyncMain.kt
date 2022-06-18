@@ -30,9 +30,7 @@ internal class SettingsSyncMain : Disposable {
     val application = ApplicationManager.getApplication()
     val appConfigPath = PathManager.getConfigDir()
     val settingsSyncStorage = appConfigPath.resolve(SETTINGS_SYNC_STORAGE_FOLDER)
-    val remoteCommunicator = if (System.getProperty(SETTINGS_SYNC_LOCAL_SERVER_PATH_PROPERTY) != null)
-      LocalDirSettingsSyncRemoteCommunicator(settingsSyncStorage)
-    else CloudConfigServerCommunicator()
+    val remoteCommunicator = CloudConfigServerCommunicator()
 
     componentStore = application.stateStore as ComponentStoreImpl
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, appConfigPath, enabledCondition = {
