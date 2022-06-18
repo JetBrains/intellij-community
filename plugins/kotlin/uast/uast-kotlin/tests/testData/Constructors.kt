@@ -1,8 +1,6 @@
-fun Int.localToString(): String = ""
-
 class A(val str: String) {
 
-    constructor(i: Int) : this(i.localToString())
+    constructor(i: Int) : this(i.toString())
 
 }
 
@@ -12,7 +10,7 @@ class AWithInit(val str: String) {
         println()
     }
 
-    constructor(i: Int) : this(i.localToString())
+    constructor(i: Int) : this(i.toString())
 
 }
 
@@ -26,7 +24,7 @@ class AWith2Init(val str: String) {
         println(2)
     }
 
-    constructor(i: Int) : this(i.localToString())
+    constructor(i: Int) : this(i.toString())
 
 }
 
@@ -46,7 +44,7 @@ class AWithSecondary {
     lateinit var a: String
 
     constructor(i: Int) {
-        a = i.localToString()
+        a = i.toString()
     }
 
     constructor(s: String) {

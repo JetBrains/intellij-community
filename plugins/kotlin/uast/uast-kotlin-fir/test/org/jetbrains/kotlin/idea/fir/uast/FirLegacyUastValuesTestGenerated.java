@@ -188,11 +188,6 @@ public class FirLegacyUastValuesTestGenerated extends AbstractFirLegacyUastValue
         runTest("../uast-kotlin/tests/testData/InnerNonFixedTypeVariable.kt");
     }
 
-    @TestMetadata("IntToStringCall.kt")
-    public void testIntToStringCall() throws Exception {
-        runTest("../uast-kotlin/tests/testData/IntToStringCall.kt");
-    }
-
     @TestMetadata("LambdaExpressionFunctionalInterfaceType.kt")
     public void testLambdaExpressionFunctionalInterfaceType() throws Exception {
         runTest("../uast-kotlin/tests/testData/LambdaExpressionFunctionalInterfaceType.kt");

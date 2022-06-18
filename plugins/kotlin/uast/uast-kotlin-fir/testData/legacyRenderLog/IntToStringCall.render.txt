@@ -1,5 +1,0 @@
-public final class IntToStringCallKt {
-    public static final fun test(@org.jetbrains.annotations.NotNull i: int) : java.lang.String {
-        return i.toString()
-    }
-}
