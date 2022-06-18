@@ -28,7 +28,7 @@ public class PresentationFactory {
 
   public final @NotNull Presentation getPresentation(@NotNull AnAction action) {
     Presentation presentation = myPresentations.get(action);
-    boolean needUpdate = presentation != null && presentation.getClientProperty(NEED_UPDATE_PRESENTATION)  == Boolean.TRUE;
+    boolean needUpdate = presentation != null && Boolean.TRUE.equals(presentation.getClientProperty(NEED_UPDATE_PRESENTATION));
     if (presentation == null || !action.isDefaultIcon() || needUpdate) {
       Presentation templatePresentation = action.getTemplatePresentation();
       if (presentation == null) {
@@ -85,7 +85,10 @@ public class PresentationFactory {
 
   public static void updatePresentation(@NotNull AnAction action)  {
     for (PresentationFactory factory : ourAllFactories) {
-      ObjectUtils.consumeIfNotNull(factory.myPresentations.get(action), p -> p.putClientProperty(NEED_UPDATE_PRESENTATION, Boolean.TRUE));
+      Presentation presentation = factory.myPresentations.get(action);
+      if (presentation != null) {
+        presentation.putClientProperty(NEED_UPDATE_PRESENTATION, true);
+      }
     }
   }
 }
