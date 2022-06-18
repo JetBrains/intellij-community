@@ -1,18 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.util.ThrowableRunnable
-import com.intellij.testFramework.runInEdtAndGet as runInEdtAndGetImpl
-import com.intellij.testFramework.runInEdtAndWait as runInEdtAndWaitImpl
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.ui.UIUtil
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -109,6 +104,10 @@ fun VirtualFileSystem.deleteChildren(path: Path, predicate: (VirtualFile) -> Boo
   }
 }
 
+fun VirtualFile.loadText(): String = VfsUtil.loadText(this)
+
+fun VirtualFile.saveText(text: String) = VfsUtil.saveText(this, text)
+
 fun File.refreshInLfs(async: Boolean = false, recursive: Boolean = true, callback: () -> Unit = {}) {
   toPath().refreshInLfs(async, recursive, callback)
 }
@@ -118,11 +117,11 @@ fun Path.refreshInLfs(async: Boolean = false, recursive: Boolean = true, callbac
   fileSystem.refreshNioFiles(listOf(this), async, recursive, callback)
 }
 
-var VirtualFile.text: String
-  get() = VfsUtil.loadText(this)
-  set(text) {
-    VfsUtil.saveText(this, text)
-  }
+fun VirtualFile.reloadFromDisk() {
+  val fileDocumentManager = FileDocumentManager.getInstance()
+  val document = fileDocumentManager.getCachedDocument(this) ?: return
+  fileDocumentManager.reloadFromDisk(document)
+}
 
 fun Path.getAbsoluteNioPath(relativePath: String): Path {
   val path = "$systemIndependentPath/$relativePath"
@@ -148,63 +147,4 @@ fun VirtualFile.getAbsolutePath(relativePath: String): String {
 
 fun VirtualFile.getRelativePath(path: Path): String {
   return getRelativeNioPath(path).systemIndependentPath
-}
-
-fun VirtualFile.refreshAndWait() {
-  runWriteActionAndWait {
-    refresh(false, true)
-  }
-  runInEdtAndWait {
-    UIUtil.dispatchAllInvocationEvents()
-  }
-}
-
-fun <R> runReadAction(action: () -> R): R {
-  @Suppress("RemoveExplicitTypeArguments")
-  return ApplicationManager.getApplication()
-    .runReadAction(ThrowableComputable<R, Throwable> { action() })
-}
-
-fun <R> runWriteAction(action: () -> R): R {
-  @Suppress("RemoveExplicitTypeArguments")
-  return ApplicationManager.getApplication()
-    .runWriteAction(ThrowableComputable<R, Throwable> { action() })
-}
-
-fun <R> runWriteActionAndGet(action: () -> R): R {
-  return runInEdtAndGet {
-    runWriteAction {
-      action()
-    }
-  }
-}
-
-fun runWriteActionAndWait(action: ThrowableRunnable<*>) {
-  runInEdtAndWait {
-    runWriteAction {
-      action.run()
-    }
-  }
-}
-
-fun <R> runInEdtAndGet(action: () -> R): R {
-  try {
-    return runInEdtAndGetImpl {
-      action()
-    }
-  }
-  catch (e: Throwable) {
-    throw Throwable(e)
-  }
-}
-
-fun runInEdtAndWait(action: ThrowableRunnable<*>) {
-  try {
-    runInEdtAndWaitImpl {
-      action.run()
-    }
-  }
-  catch (e: Throwable) {
-    throw Throwable(e)
-  }
 }
