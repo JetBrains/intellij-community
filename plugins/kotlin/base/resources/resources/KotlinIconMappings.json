@@ -24,7 +24,7 @@
                             "kotlin13.svg": "org/jetbrains/kotlin/idea/icons/kotlin13.svg",
                             "kotlinGradleScript.svg": "org/jetbrains/kotlin/idea/icons/kotlin_gradle_script.svg",
                             "kotlinJs.svg": "org/jetbrains/kotlin/idea/icons/kotlin_js.svg",
-                            "kotlinLaunchConfiguration": "org/jetbrains/kotlin/idea/icons/kotlin_launch_configuration.svg",
+                            "kotlinLaunchConfiguration.svg": "org/jetbrains/kotlin/idea/icons/kotlin_launch_configuration.svg",
                             "kotlinScript.svg": "org/jetbrains/kotlin/idea/icons/kotlin_script.svg",
                             "lambda.svg": "org/jetbrains/kotlin/idea/icons/lambda.svg",
                             "objectKotlin.svg": "org/jetbrains/kotlin/idea/icons/objectKotlin.svg",
