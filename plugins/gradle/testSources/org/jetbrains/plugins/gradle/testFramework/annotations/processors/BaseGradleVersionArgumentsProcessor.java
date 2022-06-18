@@ -38,6 +38,11 @@ public class BaseGradleVersionArgumentsProcessor extends DelegateArgumentsProces
       public char separator() {
         return ',';
       }
+
+      @Override
+      public char delimiter() {
+        return ':';
+      }
     };
   }
 

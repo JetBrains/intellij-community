@@ -115,13 +115,34 @@ public class StringUtilTest {
 
   @Test
   public void testSplitWithQuotes() {
-    final List<String> strings = StringUtil.splitHonorQuotes("aaa bbb   ccc \"ddd\" \"e\\\"e\\\"e\"  ", ' ');
-    assertEquals(5, strings.size());
-    assertEquals("aaa", strings.get(0));
-    assertEquals("bbb", strings.get(1));
-    assertEquals("ccc", strings.get(2));
-    assertEquals("\"ddd\"", strings.get(3));
-    assertEquals("\"e\\\"e\\\"e\"", strings.get(4));
+    UsefulTestCase.assertSameElements(
+      StringUtil.splitHonorQuotes("aaa bbb   ccc ", ' '),
+      "aaa", "bbb", "ccc"
+    );
+    UsefulTestCase.assertSameElements(
+      StringUtil.splitHonorQuotes("'aaa' \"bbb\"", ' '),
+      "'aaa'", "\"bbb\""
+    );
+    UsefulTestCase.assertSameElements(
+      StringUtil.splitHonorQuotes("'a aa' \"bb b\"", ' '),
+      "'a aa'", "\"bb b\""
+    );
+    UsefulTestCase.assertSameElements(
+      StringUtil.splitHonorQuotes("'a\" aa' \"bb 'b\"", ' '),
+      "'a\" aa'", "\"bb 'b\""
+    );
+    UsefulTestCase.assertSameElements(
+      StringUtil.splitHonorQuotes("'a \\'aa' \"bb\\\" b\"", ' '),
+      "'a \\'aa'", "\"bb\\\" b\""
+    );
+    UsefulTestCase.assertSameElements(
+      StringUtil.splitHonorQuotes("'a aa\\\\' \"bb b\\\\\"", ' '),
+      "'a aa\\\\'", "\"bb b\\\\\""
+    );
+    UsefulTestCase.assertSameElements(
+      StringUtil.splitHonorQuotes("'a \\\\\\'aa' \"bb \\\\\\\"b\"", ' '),
+      "'a \\\\\\'aa'", "\"bb \\\\\\\"b\""
+    );
   }
 
   @Test

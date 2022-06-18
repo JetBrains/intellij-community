@@ -65,7 +65,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource("""
-      "dependencies { add('archives', project(":")) { <caret> } }",
+      "dependencies { add('archives', project(':')) { <caret> } }",
       "dependencies { archives(project(':')) { <caret> } }",
       "dependencies.add('archives', project(':')) { <caret> }",
       "dependencies.archives(project(':')) { <caret> }"

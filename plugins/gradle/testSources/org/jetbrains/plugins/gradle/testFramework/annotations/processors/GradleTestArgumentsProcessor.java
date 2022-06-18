@@ -36,7 +36,12 @@ public class GradleTestArgumentsProcessor extends DelegateArgumentsProcessor<Gra
 
       @Override
       public char separator() {
-        return ',';
+        return annotation.separator();
+      }
+
+      @Override
+      public char delimiter() {
+        return annotation.delimiter();
       }
     };
   }

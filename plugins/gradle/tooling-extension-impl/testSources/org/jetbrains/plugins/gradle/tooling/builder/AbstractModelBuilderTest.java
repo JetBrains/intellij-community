@@ -89,7 +89,7 @@ public abstract class AbstractModelBuilderTest {
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-  public static Collection<Object[]> data() {
+  public static Collection<String[]> data() {
     return Arrays.asList(VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS);
   }
 

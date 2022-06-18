@@ -8,6 +8,8 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class AllGradleVersionArgumentsProcessor extends DelegateArgumentsProcessor<AllGradleVersionsSource, GradleTestSource> {
 
@@ -31,12 +33,19 @@ public class AllGradleVersionArgumentsProcessor extends DelegateArgumentsProcess
 
       @Override
       public String value() {
-        return VersionMatcherRule.ALL_GRADLE_VERSIONS;
+        return Arrays.stream(VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS)
+          .flatMap(it -> Arrays.stream(it))
+          .collect(Collectors.joining(","));
       }
 
       @Override
       public char separator() {
         return ',';
+      }
+
+      @Override
+      public char delimiter() {
+        return ':';
       }
     };
   }

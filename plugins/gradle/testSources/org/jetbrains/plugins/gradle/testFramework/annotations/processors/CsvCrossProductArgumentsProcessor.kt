@@ -11,16 +11,18 @@ import java.util.stream.Stream
 class CsvCrossProductArgumentsProcessor : ArgumentsProcessor<CsvCrossProductSource> {
   private var value: List<String> = emptyList()
   private var separator: Char = '\u0000'
+  private var delimiter: Char = '\u0000'
 
   override fun accept(annotation: CsvCrossProductSource) {
     value = annotation.value.toList()
     separator = annotation.separator
+    delimiter = annotation.delimiter
   }
 
   override fun provideArguments(context: ExtensionContext): Stream<out Arguments> {
-    val values = value.map { evaluateValues(it, separator) }
+    val values = value.map { evaluateValues(it, separator, delimiter) }
     return crossProduct(values).stream()
-      .map { Arguments.of(*it.toTypedArray()) }
+      .map { Arguments.of(*it.flatten().toTypedArray()) }
   }
 
   companion object {
@@ -33,6 +35,14 @@ class CsvCrossProductArgumentsProcessor : ArgumentsProcessor<CsvCrossProductSour
         }
       }
       return result
+    }
+
+    private fun evaluateValues(expression: String, separator: Char, delimiter: Char): List<List<String>> {
+      return StringUtil.splitHonorQuotes(expression, separator)
+        .asSequence()
+        .map { it.trim() }
+        .map { evaluateValues(it, delimiter) }
+        .toList()
     }
 
     private fun evaluateValues(expression: String, separator: Char): List<String> {

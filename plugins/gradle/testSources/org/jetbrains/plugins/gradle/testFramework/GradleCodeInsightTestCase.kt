@@ -71,7 +71,7 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
 
   companion object {
     const val DECORATORS = """
-      ,
+      "",
       project(':'), 
       allprojects, 
       subprojects, 

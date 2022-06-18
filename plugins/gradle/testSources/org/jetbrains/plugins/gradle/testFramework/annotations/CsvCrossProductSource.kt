@@ -9,11 +9,30 @@ import org.junit.jupiter.params.provider.ArgumentsSource
  *
  * Test with this annotation will be runned for all parameters combinations.
  *
- * For example: Test with annotation `@CsvCrossProductSource({{1, 2}, {a, b}})`
- * will be runned 4 times with parameters: `{1, a}`, `{1, b}`, `{2, a}` and `{2, b}`.
+ * For example test with annotation:
+ * ```
+ *   CsvCrossProductSource("""
+ *     argument1-a,
+ *     argument1-b,
+ *     argument1-c
+ *   """, """
+ *     argument2-a: argument3-a,
+ *     argument2-b: argument3-b
+ *   """)
+ * ```
+ * will be runned 6 times with parameters:
+ * ```
+ *   argument1-a: argument2-a: argument3-a,
+ *   argument1-a: argument2-b: argument3-b,
+ *   argument1-b: argument2-a: argument3-a,
+ *   argument1-b: argument2-b: argument3-b,
+ *   argument1-c: argument2-a: argument3-a,
+ *   argument1-c: argument2-b: argument3-b
+ * ```
  *
  * @param value is comma-separated test parameters.
- * @param separator is parameter delimiter character.
+ * @param separator divides different test parameters sets.
+ * @param delimiter divides parameters in one parameter set.
  *
  * @see org.junit.jupiter.params.provider.CsvSource
  * @see org.junit.jupiter.params.provider.ArgumentsSource
@@ -22,4 +41,4 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
 @ArgumentsSource(CsvCrossProductArgumentsProcessor::class)
-annotation class CsvCrossProductSource(vararg val value: String, val separator: Char = ',')
+annotation class CsvCrossProductSource(vararg val value: String, val separator: Char = ',', val delimiter: Char = ':')
