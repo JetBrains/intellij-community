@@ -43,7 +43,7 @@ public abstract class ActionGroup extends AnAction {
    */
   @NonNls private static final String PROP_POPUP = "popup";
 
-  private Boolean myDumbAware;
+  private Boolean myUpdateNotOverridden;
 
   /**
    * Creates a new {@code ActionGroup} with shortName set to {@code null} and
@@ -202,20 +202,30 @@ public abstract class ActionGroup extends AnAction {
 
   @Override
   public boolean isDumbAware() {
-    if (myDumbAware != null) {
-      return myDumbAware;
+    if (super.isDumbAware()) {
+      return true;
     }
+    return updateNotOverridden();
+  }
 
-    boolean dumbAware = super.isDumbAware();
-    if (dumbAware) {
-      myDumbAware = Boolean.TRUE;
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    if (this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground()) {
+      return ActionUpdateThread.BGT;
     }
-    else {
-      Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
-      myDumbAware = AnAction.class.equals(declaringClass) || ActionGroup.class.equals(declaringClass);
+    if (updateNotOverridden()) {
+      return ActionUpdateThread.BGT;
     }
+    return super.getActionUpdateThread();
+  }
 
-    return myDumbAware;
+  private boolean updateNotOverridden() {
+    if (myUpdateNotOverridden != null) {
+      return myUpdateNotOverridden;
+    }
+    Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
+    myUpdateNotOverridden = AnAction.class.equals(declaringClass);
+    return myUpdateNotOverridden;
   }
 
   public boolean hideIfNoVisibleChildren() {
