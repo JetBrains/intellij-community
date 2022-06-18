@@ -328,7 +328,7 @@ public final class CustomizationUtil {
       String name = group.getName();
       @NlsSafe String id = group.getId();
       text = name != null ? name : ObjectUtils.notNull(id, IdeBundle.message("action.group.name.unnamed.group"));
-      icon = ObjectUtils.notNull(group.getIcon(), AllIcons.Nodes.Folder);
+      icon = group.getIcon();
       if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
         description = id;
       }

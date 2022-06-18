@@ -43,6 +43,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -220,7 +221,12 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private static void updateIconFromStub(@NotNull ActionStubBase stub, @NotNull AnAction anAction) {
     String iconPath = stub.getIconPath();
     if (iconPath != null) {
-      setIconFromClass(anAction.getClass(), stub.getPlugin(), iconPath, anAction.getTemplatePresentation());
+      Icon icon = loadIcon(stub.getPlugin(), iconPath, anAction.getClass().getName());
+      anAction.getTemplatePresentation().setIcon(icon);
+    }
+    CustomActionsSchema customActionsSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
+    if (customActionsSchema != null && StringUtil.isNotEmpty(customActionsSchema.getIconPath(stub.getId()))) {
+      customActionsSchema.initActionIcon(anAction, stub.getId(), ActionManager.getInstance());
     }
   }
 
@@ -248,18 +254,17 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     return "true".equalsIgnoreCase(element.attributes.get("secondary"));
   }
 
-  private static void setIconFromClass(@Nullable Class<?> actionClass,
-                                       @NotNull PluginDescriptor module,
-                                       @NotNull String iconPath,
-                                       @NotNull Presentation presentation) {
+  private static @NotNull Icon loadIcon(@NotNull PluginDescriptor module,
+                                        @NotNull String iconPath,
+                                        @Nullable String requestor) {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
     Icon icon = IconLoader.findIcon(iconPath, module.getClassLoader());
     if (icon == null) {
-      reportActionError(module, "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
+      reportActionError(module, "Icon cannot be found in '" + iconPath + "', action '" + requestor + "'");
       icon = AllIcons.Nodes.Unknown;
     }
     IconLoadMeasurer.actionIcon.end(start);
-    presentation.setIcon(icon);
+    return icon;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -816,7 +821,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
         ((ActionGroupStub)group).setIconPath(iconPath);
       }
       else if (iconPath != null) {
-        setIconFromClass(null, module, iconPath, presentation);
+        presentation.setIcon(loadIcon(module, iconPath, className));
       }
 
       // popup
