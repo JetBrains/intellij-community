@@ -125,16 +125,16 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     AnAction action = registerAction(actionManager, executor.getContextActionId(), runContextAction, myContextActionIdToAction);
     if (isExecutorInMainGroup(executor)) {
-      ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP))
+      Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP))
         .add(action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE), actionManager);
     }
     else {
-      ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE))
+      Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP_MORE))
         .add(action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"), actionManager);
     }
 
     AnAction nonExistingAction = registerAction(actionManager, newConfigurationContextActionId(executor), runNonExistingContextAction, myContextActionIdToAction);
-    ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE))
+    Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP_MORE))
       .add(nonExistingAction, new Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"), actionManager);
 
     initRunToolbarExecutorActions(executor, actionManager);
