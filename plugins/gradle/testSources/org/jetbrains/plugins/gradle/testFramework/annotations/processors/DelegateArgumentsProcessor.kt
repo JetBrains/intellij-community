@@ -14,14 +14,17 @@ abstract class DelegateArgumentsProcessor<T : Annotation, D : Annotation> : Argu
 
   abstract fun convertAnnotation(annotation: T): D
 
-  open fun convertArguments(arguments: Arguments): Arguments = arguments
+  open fun convertArguments(arguments: Arguments, context: ExtensionContext): Arguments = arguments
+
+  open fun filterArguments(arguments: Arguments, context: ExtensionContext): Boolean = true
 
   override fun accept(annotation: T) {
     argumentsProcessor.accept(convertAnnotation(annotation))
   }
 
-  final override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> {
+  final override fun provideArguments(context: ExtensionContext): Stream<out Arguments> {
     return argumentsProcessor.provideArguments(context)
-      .map { convertArguments(it) }
+      .map { convertArguments(it, context) }
+      .filter { filterArguments(it, context) }
   }
 }

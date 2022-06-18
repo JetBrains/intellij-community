@@ -7,6 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.testFramework.annotations.ArgumentsProcessor;
 import org.jetbrains.plugins.gradle.testFramework.annotations.CsvCrossProductSource;
 import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
+import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.lang.annotation.Annotation;
@@ -47,11 +50,21 @@ public class GradleTestArgumentsProcessor extends DelegateArgumentsProcessor<Gra
   }
 
   @Override
-  public @NotNull Arguments convertArguments(@NotNull Arguments arguments) {
+  public @NotNull Arguments convertArguments(@NotNull Arguments arguments, @NotNull ExtensionContext context) {
     var collection = new ArrayList<>();
     Collections.addAll(collection, arguments.get());
     collection.set(0, GradleVersion.version(collection.get(0).toString()));
     return Arguments.of(collection.toArray());
+  }
+
+  @Override
+  public boolean filterArguments(@NotNull Arguments arguments, @NotNull ExtensionContext context) {
+    var gradleVersion = (GradleVersion)arguments.get()[0];
+    var versionMatcher = new VersionMatcher(gradleVersion);
+    return context.getTestMethod()
+      .map(it -> it.getAnnotation(TargetVersions.class))
+      .map(it -> versionMatcher.isVersionMatch(it))
+      .orElse(true);
   }
 
   @Override
