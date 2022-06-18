@@ -483,11 +483,13 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         if (myLastPoint.isNull() || myPressPoint.isNull() || myDragTracker.isNull()) return;
         //"Dock" modes,
         // for "Undock" mode processing see com.intellij.toolWindow.InternalDecoratorImpl.ResizeOrMoveDocketToolWindowMouseListener
-        Point newMouseLocation = e.getLocationOnScreen();
+        PointerInfo info = MouseInfo.getPointerInfo();
+        if (info == null) return;
+        Point newMouseLocation = info.getLocation();
 
         Window window = SwingUtilities.windowForComponent(c);
         if (!(window instanceof IdeFrame)) {
-          myDragTracker.get().updateLocationOnDrag(window, newMouseLocation);
+          myDragTracker.get().updateLocationOnDrag(window);
         }
         myLastPoint.set(newMouseLocation);
         Component component = getActualSplitter();

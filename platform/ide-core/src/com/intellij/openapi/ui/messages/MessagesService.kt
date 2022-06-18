@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.messages
 
 import com.intellij.openapi.application.ApplicationManager
@@ -13,15 +13,18 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Function
 import com.intellij.util.PairFunction
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JCheckBox
 import javax.swing.JTextField
 
 /**
- * Allows alternative implementations. If you, as a plugin developer, need to show messages,
- * please use the [com.intellij.openapi.ui.Messages] class.
+ * An internal interface to different backend implementations.
+ * <strong>Do not call directly - the API is subject to change without prior notice</strong>,
+ * use [com.intellij.openapi.ui.Messages] or [com.intellij.openapi.ui.MessageDialogBuilder] instead.
  */
+@ApiStatus.Internal
 interface MessagesService {
   companion object {
     @JvmStatic
@@ -124,13 +127,8 @@ interface MessagesService {
                          parser: Function<in String?, out MutableList<String?>?>?,
                          lineJoiner: Function<in MutableList<String?>?, String?>?)
 
-  fun isAlertEnabled() : Boolean
-
   fun showErrorDialog(project: Project?,
                       message: @DialogMessage String?,
-                      title: @NlsContexts.DialogTitle String);
+                      title: @NlsContexts.DialogTitle String)
 
-  fun showInfoMessage(component: Component, message: @DialogMessage String, title: @NlsContexts.DialogTitle String) {
-
-  }
 }

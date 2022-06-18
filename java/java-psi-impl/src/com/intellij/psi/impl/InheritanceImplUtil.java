@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.JavaClassSupers;
+import com.intellij.util.ObjectUtils;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -181,7 +182,7 @@ public final class InheritanceImplUtil {
       checkedClasses = new ObjectOpenCustomHashSet<>(new PsiClass[]{classToByPass}, new Hash.Strategy<PsiClass>() {
         @Override
         public int hashCode(@Nullable PsiClass o) {
-          return o == null ? 0 : o.hashCode();
+          return o == null ? 0 : ObjectUtils.notNull(o.getName(), o.getContainingFile().getName()).hashCode();
         }
 
         @Override

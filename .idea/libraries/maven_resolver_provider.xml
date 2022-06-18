@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="maven-resolver-provider" type="repository">
-    <properties maven-id="org.apache.maven:maven-resolver-provider:3.8.2">
+    <properties maven-id="org.apache.maven:maven-resolver-provider:3.8.4">
       <exclude>
         <dependency maven-id="org.apache.commons:commons-lang3" />
         <dependency maven-id="org.codehaus.plexus:plexus-utils" />
@@ -9,14 +9,14 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-resolver-provider/3.8.2/maven-resolver-provider-3.8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.8.2/maven-model-3.8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3.8.2/maven-model-builder-3.8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.25/plexus-interpolation-1.25.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.8.2/maven-artifact-3.8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/3.8.2/maven-builder-support-3.8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.4/org.eclipse.sisu.inject-0.3.4.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3.8.2/maven-repository-metadata-3.8.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-resolver-provider/3.8.4/maven-resolver-provider-3.8.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.8.4/maven-model-3.8.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3.8.4/maven-model-builder-3.8.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.26/plexus-interpolation-1.26.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.8.4/maven-artifact-3.8.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/3.8.4/maven-builder-support-3.8.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.5/org.eclipse.sisu.inject-0.3.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3.8.4/maven-repository-metadata-3.8.4.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/1.6.3/maven-resolver-api-1.6.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-spi/1.6.3/maven-resolver-spi-1.6.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/1.6.3/maven-resolver-util-1.6.3.jar!/" />

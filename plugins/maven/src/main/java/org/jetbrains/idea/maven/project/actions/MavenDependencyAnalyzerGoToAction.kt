@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.dependency.analyzer.DAArtifact
 import com.intellij.openapi.externalSystem.dependency.analyzer.DAModule
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,7 +23,7 @@ class MavenDependencyAnalyzerGoToAction : AnAction() {
     val project = e.project ?: return
     val parent = dependency.parent ?: return
     val mavenId = getMavenId(dependency.data) ?: return
-    if (mavenId.groupId == null || mavenId.artifactId == null) return;
+    if (mavenId.groupId == null || mavenId.artifactId == null) return
 
     val artifactFile = getArtifactFile(project, parent.data) ?: return
     val navigatable = MavenNavigationUtil.createNavigatableForDependency(project, artifactFile, mavenId.groupId!!, mavenId.artifactId!!)
@@ -32,7 +33,7 @@ class MavenDependencyAnalyzerGoToAction : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val systemId = e.getData(DependencyAnalyzerView.EXTERNAL_SYSTEM_ID)
+    val systemId = e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID)
     val dependency = e.getData(DependencyAnalyzerView.DEPENDENCY)
     e.presentation.isEnabledAndVisible =
       systemId == MavenUtil.SYSTEM_ID &&

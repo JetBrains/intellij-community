@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
@@ -219,7 +220,9 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     }
 
     if (!exceptionThrown) {
+      boolean dropFilenameIndex = Registry.is("indexing.filename.over.vfs") && indicesToDrop.contains(FilenameIndex.NAME.getName());
       for (ID<?, ?> key : ids) {
+        if (dropFilenameIndex && key == FilenameIndex.NAME) continue;
         indicesToDrop.remove(key.getName());
       }
     }

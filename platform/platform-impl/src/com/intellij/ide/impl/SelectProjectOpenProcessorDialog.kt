@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
@@ -58,11 +58,11 @@ class SelectProjectOpenProcessorDialog(
 
     @JvmStatic
     fun showAndGetChoice(processors: List<ProjectOpenProcessor>, file: VirtualFile): ProjectOpenProcessor? {
-      if (Messages.isApplicationInUnitTestOrHeadless()) {
-        return testShowAndGetChoice(processors, file)
+      val app = ApplicationManager.getApplication()
+      return when {
+        app != null && (app.isUnitTestMode || app.isHeadlessEnvironment) -> testShowAndGetChoice(processors, file)
+        else -> SelectProjectOpenProcessorDialog(processors, file).showAndGetChoice()
       }
-      val dialog = SelectProjectOpenProcessorDialog(processors, file)
-      return dialog.showAndGetChoice()
     }
   }
 }

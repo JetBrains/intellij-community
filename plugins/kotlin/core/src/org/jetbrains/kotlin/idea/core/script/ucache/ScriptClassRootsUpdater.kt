@@ -13,14 +13,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
@@ -177,7 +177,7 @@ abstract class ScriptClassRootsUpdater(
         lock.withLock {
             scheduledUpdate?.cancel()
 
-            if (!Disposer.isDisposed(disposable)) {
+            if (!disposable.disposed) {
                 scheduledUpdate = BackgroundTaskUtil.submitTask(disposable) {
                     doUpdate()
                 }
@@ -202,10 +202,26 @@ abstract class ScriptClassRootsUpdater(
             if (underProgressManager) {
                 ProgressManager.checkCanceled()
             }
-            if (Disposer.isDisposed(disposable)) return
+            if (disposable.disposed) return
 
             if (updates.hasNewRoots) {
-                notifyRootsChanged()
+                runInEdt (ModalityState.NON_MODAL) {
+                    runWriteAction {
+                        if (project.isDisposed) return@runWriteAction
+
+                        scriptingDebugLog { "kotlin.script.dependencies from ${updates.oldRoots} to ${updates.newRoots}" }
+
+                        AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(
+                            project,
+                            KotlinBundle.message("script.name.kotlin.script.dependencies"),
+                            updates.oldRoots,
+                            updates.newRoots,
+                            KotlinBundle.message("script.name.kotlin.script.dependencies")
+                        )
+
+                        ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+                    }
+                }
             }
 
             runReadAction {
@@ -248,19 +264,6 @@ abstract class ScriptClassRootsUpdater(
         } while (!cache.compareAndSet(old, new))
 
         ensureUpdateScheduled()
-    }
-
-    private fun notifyRootsChanged() {
-        runInEdt (ModalityState.NON_MODAL) {
-            runWriteAction {
-                if (project.isDisposed) return@runWriteAction
-
-                scriptingDebugLog { "roots change event" }
-
-                ProjectRootManagerEx.getInstanceEx(project)?.makeRootsChange(EmptyRunnable.getInstance(), false, true)
-                ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
-            }
-        }
     }
 
     private fun updateHighlighting(project: Project, filter: (VirtualFile) -> Boolean) {

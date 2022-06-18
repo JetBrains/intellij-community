@@ -907,6 +907,12 @@
       "key": "ProgressBar.passedEndColor"
     },
     {
+      "key": "ProgressBar.warningColor"
+    },
+    {
+      "key": "ProgressBar.warningEndColor"
+    },
+    {
       "key": "SearchEverywhere.Advertiser.background",
       "description": "The hint text area at the bottom of a popup"
     },

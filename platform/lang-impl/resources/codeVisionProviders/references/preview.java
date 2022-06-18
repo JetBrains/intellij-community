@@ -1,9 +1,9 @@
-class Button { }
+private class Scope {
+  private class Button { }
 
-class AnimatedButton extends Button { }
+  private class AnimatedButton extends Button { }
 
-class UI {
-  public static void main(String[] args) {
+  private void use() {
     Button b = new Button();
   }
 }

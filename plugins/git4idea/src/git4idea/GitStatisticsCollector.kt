@@ -3,6 +3,7 @@ package git4idea
 
 import com.google.common.collect.HashMultiset
 import com.intellij.dvcs.branch.DvcsSyncSettings.Value
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.addBoolIfDiffers
 import com.intellij.internal.statistic.beans.addIfDiffers
@@ -14,6 +15,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
@@ -73,6 +75,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
         REMOTES with repository.remotes.size,
         WORKING_COPY_SIZE with repository.workingCopySize(),
         IS_WORKTREE_USED with repository.isWorkTreeUsed(),
+        FS_MONITOR with repository.detectFsMonitor(),
       )
 
       val remoteTypes = HashMultiset.create(repository.remotes.mapNotNull { getRemoteServerType(it) })
@@ -125,7 +128,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("git.configuration", 5)
+    private val GROUP = EventLogGroup("git.configuration", 9)
 
     private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
     private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -149,6 +152,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     private val REMOTES = EventFields.RoundedInt("remotes")
     private val WORKING_COPY_SIZE = EventFields.RoundedLong("working_copy_size")
     private val IS_WORKTREE_USED = EventFields.Boolean("is_worktree_used")
+    private val FS_MONITOR = EventFields.Enum<FsMonitor>("fs_monitor")
     private val remoteTypes = setOf("github", "gitlab", "bitbucket",
                                     "github_custom", "gitlab_custom", "bitbucket_custom")
 
@@ -162,6 +166,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
                                                        REMOTES,
                                                        WORKING_COPY_SIZE,
                                                        IS_WORKTREE_USED,
+                                                       FS_MONITOR,
                                                        *remoteTypesEventIds.toTypedArray()
     )
 
@@ -184,6 +189,26 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       if (remote.urls.any { it.contains("bitbucket") }) return "bitbucket_custom"
 
       return null
+    }
+
+    private val IS_FULL_REFRESH_FIELD = EventFields.Boolean("is_full_refresh")
+    private val STATUS_REFRESH = GROUP.registerIdeActivity(activityName = "status.refresh",
+                                                           startEventAdditionalFields = arrayOf(IS_FULL_REFRESH_FIELD))
+    private val UNTRACKED_REFRESH = GROUP.registerIdeActivity(activityName = "untracked.refresh",
+                                                              startEventAdditionalFields = arrayOf(IS_FULL_REFRESH_FIELD))
+
+    @JvmStatic
+    fun logStatusRefresh(project: Project, everythingDirty: Boolean): StructuredIdeActivity {
+      return STATUS_REFRESH.started(project) {
+        listOf(IS_FULL_REFRESH_FIELD.with(everythingDirty))
+      }
+    }
+
+    @JvmStatic
+    fun logUntrackedRefresh(project: Project, everythingDirty: Boolean): StructuredIdeActivity {
+      return UNTRACKED_REFRESH.started(project) {
+        listOf(IS_FULL_REFRESH_FIELD.with(everythingDirty))
+      }
     }
   }
 }
@@ -250,4 +275,23 @@ private fun GitRepository.isWorkTreeUsed(): Boolean {
   catch (e: Exception) {
     false
   }
+}
+
+enum class FsMonitor { NONE, BUILTIN, EXTERNAL_FS_MONITOR }
+
+private fun GitRepository.detectFsMonitor(): FsMonitor {
+  try {
+    val useBuiltIn = GitConfigUtil.getBooleanValue(GitConfigUtil.getValue(project, root, "core.useBuiltinFSMonitor"))
+                     ?: false
+    if (useBuiltIn) return FsMonitor.BUILTIN
+
+    val fsMonitorHook = GitConfigUtil.getValue(project, root, "core.fsmonitor")
+    if (fsMonitorHook != null && GitConfigUtil.getBooleanValue(fsMonitorHook) != false) {
+      return FsMonitor.EXTERNAL_FS_MONITOR
+    }
+  }
+  catch (ignore: VcsException) {
+  }
+
+  return FsMonitor.NONE
 }

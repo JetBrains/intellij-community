@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="lucene-core" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-core:8.9.0" />
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-core:8.11.1" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/8.9.0/lucene-core-8.9.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/8.11.1/lucene-core-8.11.1.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/8.9.0/lucene-core-8.9.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/8.11.1/lucene-core-8.11.1-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/8.9.0/lucene-core-8.9.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/8.11.1/lucene-core-8.11.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

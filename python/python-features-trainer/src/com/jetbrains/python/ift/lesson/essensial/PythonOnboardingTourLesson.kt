@@ -210,6 +210,8 @@ class PythonOnboardingTourLesson :
   }
 
   private fun LessonContext.debugTasks() {
+    clearBreakpoints()
+
     var logicalPosition = LogicalPosition(0, 0)
     prepareRuntimeTask {
       logicalPosition = editor.offsetToLogicalPosition(sample.startOffset)
@@ -224,10 +226,13 @@ class PythonOnboardingTourLesson :
       text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.2"))
     }
 
-    highlightButtonByIdTask("Debug")
+    highlightButtonById("Debug")
 
     actionTask("Debug") {
       showBalloonOnHighlightingComponent(PythonLessonsBundle.message("python.onboarding.balloon.start.debugging"))
+      restoreState {
+        lineWithBreakpoints() != setOf(logicalPosition.line)
+      }
       restoreIfModified(sample)
       PythonLessonsBundle.message("python.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
@@ -244,7 +249,7 @@ class PythonOnboardingTourLesson :
       restoreIfModified(sample)
     }
 
-    highlightButtonByIdTask("Stop")
+    highlightButtonById("Stop")
     actionTask("Stop") {
       showBalloonOnHighlightingComponent(
         PythonLessonsBundle.message("python.onboarding.balloon.stop.debugging")) { list -> list.minByOrNull { it.locationOnScreen.y } }

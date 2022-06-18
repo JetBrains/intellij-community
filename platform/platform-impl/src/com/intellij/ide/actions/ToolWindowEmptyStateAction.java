@@ -21,7 +21,7 @@ public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowActio
   }
 
   @Override
-  protected boolean hasEmptyState() {
+  protected boolean hasEmptyState(@NotNull Project project) {
     return true;
   }
 

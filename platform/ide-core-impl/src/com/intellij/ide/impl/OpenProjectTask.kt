@@ -27,7 +27,13 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                            val line: Int = -1,
                            val column: Int = -1,
                            val isRefreshVfsNeeded: Boolean = true,
-                           /** Whether to run `DirectoryProjectConfigurator` if a new project or no modules. */
+                           /**
+                            *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
+                            *
+                            *  **NB**: if project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
+                            *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
+                            *  @see com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
+                            */
                            val runConfigurators: Boolean = false,
                            val runConversionBeforeOpen: Boolean = true,
                            val projectWorkspaceId: String? = null,

@@ -49,7 +49,15 @@ public class TextFieldWithAutoCompletion<T> extends TextFieldWithCompletion {
                                      @NotNull TextFieldWithAutoCompletionListProvider<T> provider,
                                      boolean showCompletionHint,
                                      @Nullable String text) {
-    super(project, provider, text == null ? "" : text, true, true, false, showCompletionHint);
+    this(project, provider, showCompletionHint, false, text);
+  }
+
+  public TextFieldWithAutoCompletion(@Nullable Project project,
+                                     @NotNull TextFieldWithAutoCompletionListProvider<T> provider,
+                                     boolean showCompletionHint,
+                                     boolean forbidWordCompletion,
+                                     @Nullable String text) {
+    super(project, provider, text == null ? "" : text, true, true, false, showCompletionHint, forbidWordCompletion);
     myProvider = provider;
   }
 

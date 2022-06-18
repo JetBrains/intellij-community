@@ -134,6 +134,7 @@ abstract class TaskContext : LearningDslBase {
 
   open fun addFutureStep(p: DoneStepContext.() -> Unit) = Unit
 
+  /* The step should be used only inside one task to preserve problems on restore */
   open fun addStep(step: CompletableFuture<Boolean>) = Unit
 
   /** [action] What should be done to pass the current task */

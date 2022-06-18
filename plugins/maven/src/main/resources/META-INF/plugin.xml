@@ -628,6 +628,12 @@
     <action id="Maven.ShowVersions"
             class="org.jetbrains.idea.maven.navigator.actions.ShowVersionsAction"/>
 
+    <action id="Maven.DependencyAnalyzer" class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerAction"/>
+    <action id="Maven.DependencyAnalyzer.GoTo" class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerGoToAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+    </action>
+
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
               class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction">
@@ -673,6 +679,8 @@
       <reference id="Maven.ToggleSkipTests"/>
       <reference id="Maven.CollapseAll"/>
       <separator/>
+      <reference id="Maven.DependencyAnalyzer"/>
+      <separator/>
       <reference id="Maven.ShowSettingsGroup"/>
     </group>
 
@@ -680,6 +688,8 @@
       <reference id="Maven.DownloadSelectedSources"/>
       <reference id="Maven.DownloadSelectedDocs"/>
       <reference id="Maven.DownloadSelectedSourcesAndDocs"/>
+      <separator/>
+      <reference id="Maven.DependencyAnalyzer"/>
     </group>
 
     <group id="Maven.BaseProjectMenu">
@@ -695,6 +705,8 @@
       <reference id="Maven.DownloadAllGroup"/>
       <separator/>
       <reference id="Maven.ShowEffectivePom"/>
+      <separator/>
+      <reference id="Maven.DependencyAnalyzer"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">
@@ -745,15 +757,6 @@
               icon="AllIcons.General.Remove"
               class="org.jetbrains.idea.maven.navigator.actions.RemoveMavenRunConfigurationAction"/>
     </group>
-
-    <action id="Maven.DependencyAnalyzer" class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerAction">
-      <add-to-group group-id="Maven.BaseProjectMenu" anchor="last"/>
-      <add-to-group group-id="Maven.NavigatorActionsToolbar" anchor="after" relative-to-action="Maven.ToggleSkipTests"/>
-    </action>
-    <action id="Maven.DependencyAnalyzer.GoTo" class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerGoToAction">
-      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
-      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
-    </action>
   </actions>
 
   <projectListeners>

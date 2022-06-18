@@ -580,40 +580,37 @@ fun LessonContext.restoreChangedSettingsInformer(restoreSettings: () -> Unit) {
   }
 }
 
-fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean = true): CompletableFuture<Boolean> {
-  val feature: CompletableFuture<Boolean> = CompletableFuture()
+fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean = true) {
   val needToFindButton = getActionById(actionId)
-  prepareRuntimeTask {
-    if (clearHighlights) {
-      LearningUiHighlightingManager.clearHighlights()
-    }
-    invokeInBackground {
-      val result = try {
-        LearningUiUtil.findAllShowingComponentWithTimeout(project, ActionButton::class.java, seconds01) { ui ->
-          ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
-        }
-      }
-      catch (e: Throwable) {
-        // Just go to the next step if we cannot find needed button (when this method is used as pass trigger)
-        feature.complete(false)
-        throw IllegalStateException("Cannot find button for $actionId", e)
-      }
-      taskInvokeLater {
-        feature.complete(result.isNotEmpty())
-        for (button in result) {
-          val options = LearningUiHighlightingManager.HighlightingOptions(usePulsation = true, clearPreviousHighlights = false)
-          LearningUiHighlightingManager.highlightComponent(button, options)
-        }
-      }
-    }
-  }
-  return feature
-}
 
-fun LessonContext.highlightButtonByIdTask(actionId: String) {
-  val highlighted = highlightButtonById(actionId)
   task {
-    addStep(highlighted)
+    val feature: CompletableFuture<Boolean> = CompletableFuture()
+    transparentRestore = true
+    before {
+      if (clearHighlights) {
+        LearningUiHighlightingManager.clearHighlights()
+      }
+      invokeInBackground {
+        val result = try {
+          LearningUiUtil.findAllShowingComponentWithTimeout(project, ActionButton::class.java, seconds01) { ui ->
+            ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
+          }
+        }
+        catch (e: Throwable) {
+          // Just go to the next step if we cannot find needed button (when this method is used as pass trigger)
+          feature.complete(false)
+          throw IllegalStateException("Cannot find button for $actionId", e)
+        }
+        taskInvokeLater {
+          feature.complete(result.isNotEmpty())
+          for (button in result) {
+            val options = LearningUiHighlightingManager.HighlightingOptions(usePulsation = true, clearPreviousHighlights = false)
+            LearningUiHighlightingManager.highlightComponent(button, options)
+          }
+        }
+      }
+    }
+    addStep(feature)
   }
 }
 

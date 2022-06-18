@@ -15,7 +15,6 @@ import org.jetbrains.annotations.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -249,6 +248,8 @@ public final class EnvironmentUtil {
         reader = SHELL_ENV_COMMAND + "' '" + ENV_ZERO_ARGUMENT;
       }
 
+      Path envDataFile = Files.createTempFile("ij-shell-env-data.", ".tmp");
+
       StringBuilder readerCmd = new StringBuilder();
       if (file != null) {
         if (!Files.exists(file)) {
@@ -257,7 +258,7 @@ public final class EnvironmentUtil {
         readerCmd.append(SHELL_SOURCE_COMMAND).append(" \"").append(file).append("\" && ");
       }
 
-      readerCmd.append("'").append(reader).append("'");
+      readerCmd.append("'").append(reader).append("' > '").append(envDataFile.toAbsolutePath()).append("'");
 
       List<String> command = getShellProcessCommand();
       int idx = command.indexOf(SHELL_COMMAND_ARGUMENT);
@@ -271,19 +272,20 @@ public final class EnvironmentUtil {
       }
 
       LOG.info("loading shell env: " + String.join(" ", command));
-      return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment).getValue();
+      return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment, envDataFile).getValue();
     }
 
     /**
      * @throws IOException if the process fails to start, exits with a non-zero
      *   code, produces no output or the file used to store the output can't be
      *   read.
-     * @see #runProcessAndReadOutputAndEnvs(List, Path, Map)
-     * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Map, Path)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer, Path)
      */
     protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
-                                                                                              @Nullable Path workingDir) throws IOException {
-      return runProcessAndReadOutputAndEnvs(command, workingDir, emptyMap());
+                                                                                                   @Nullable Path workingDir,
+                                                                                                   @NotNull Path envDataFile) throws IOException {
+      return runProcessAndReadOutputAndEnvs(command, workingDir, emptyMap(), envDataFile);
     }
 
     /**
@@ -293,19 +295,20 @@ public final class EnvironmentUtil {
      * @throws IOException if the process fails to start, exits with a non-zero
      *   code, produces no output or the file used to store the output can't be
      *   read.
-     * @see #runProcessAndReadOutputAndEnvs(List, Path)
-     * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Path)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer, Path)
      */
     protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
                                                                                                    @Nullable Path workingDir,
-                                                                                                   @Nullable Map<String, String> scriptEnvironment)
+                                                                                                   @Nullable Map<String, String> scriptEnvironment,
+                                                                                                   @NotNull Path envDataFile)
       throws IOException {
       return runProcessAndReadOutputAndEnvs(command, workingDir, (it) -> {
         if (scriptEnvironment != null) {
           // we might need the default environment for a process to launch correctly
           it.putAll(scriptEnvironment);
         }
-      });
+      }, envDataFile);
     }
 
     /**
@@ -315,13 +318,14 @@ public final class EnvironmentUtil {
      * @return Debugging output of the script, and the map of environment variables.
      * @throws IOException if the process fails to start, exits with a non-zero
      *   code or produces no output
-     * @see #runProcessAndReadOutputAndEnvs(List, Path)
-     * @see #runProcessAndReadOutputAndEnvs(List, Path, Map)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Path)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Map, Path)
      */
     protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
-                                                                                              @Nullable Path workingDir,
-                                                                                              @NotNull Consumer<@NotNull Map<String, String>> scriptEnvironmentProcessor) throws IOException {
-      final ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(false);
+                                                                                                   @Nullable Path workingDir,
+                                                                                                   @NotNull Consumer<@NotNull Map<String, String>> scriptEnvironmentProcessor,
+                                                                                                   @NotNull Path envDataFile) throws IOException {
+      final ProcessBuilder builder = new ProcessBuilder(command);
 
       /*
        * Add, remove or change the environment variables.
@@ -334,31 +338,30 @@ public final class EnvironmentUtil {
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
       builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
 
-      Path stdoutFile = null, stderrFile = null;
+      Path logFile = null;
       try {
-        stdoutFile = Files.createTempFile("ij-shell-env-out.stdout.", ".tmp");
-        stderrFile = Files.createTempFile("ij-shell-env-out.stderr.", ".tmp");
+        logFile = Files.createTempFile("ij-shell-env-log.", ".tmp");
         final Process process = builder
-          .redirectOutput(ProcessBuilder.Redirect.to(stdoutFile.toFile()))
-          .redirectError(ProcessBuilder.Redirect.to(stderrFile.toFile()))
+          .redirectErrorStream(true)
+          .redirectOutput(ProcessBuilder.Redirect.to(logFile.toFile()))
           .start();
         final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
 
-        final String output = new String(Files.readAllBytes(stdoutFile), Charset.defaultCharset());
-        final String stderr = new String(Files.readAllBytes(stderrFile), Charset.defaultCharset());
-        if (exitCode != 0 || output.isEmpty()) {
-          EnvironmentReaderException ex = new EnvironmentReaderException("command " + command +
-                                                                         "\n\texit code: " + exitCode +
-                                                                         "\n\tOS: " + SystemInfoRt.OS_NAME,
-                                                                         output, stderr);
+        final String envData = new String(Files.readAllBytes(envDataFile), Charset.defaultCharset());
+        final String log = new String(Files.readAllBytes(logFile), Charset.defaultCharset());
+        if (exitCode != 0 || envData.isEmpty()) {
+          EnvironmentReaderException ex =  new EnvironmentReaderException("command " + command +
+                                               "\n\texit code: " + exitCode +
+                                               "\n\tOS: " + SystemInfoRt.OS_NAME,
+                                               envData, log);
           LOG.error(ex);
           throw ex;
         }
-        return new AbstractMap.SimpleImmutableEntry<>(stderr, parseEnv(output));
+        return new AbstractMap.SimpleImmutableEntry<>(log, parseEnv(envData));
       }
       finally {
-        deleteTempFile(stdoutFile);
-        deleteTempFile(stderrFile);
+        deleteTempFile(envDataFile);
+        deleteTempFile(logFile);
       }
     }
 

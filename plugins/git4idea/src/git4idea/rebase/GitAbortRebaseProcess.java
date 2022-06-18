@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -29,7 +29,6 @@ import java.util.Map;
 import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
-import static com.intellij.openapi.ui.Messages.canShowMacSheetPanel;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.rebase.GitRebaseUtils.mentionLocalChangesRemainingInStash;
@@ -88,10 +87,6 @@ class GitAbortRebaseProcess {
     if (myRepositoryToAbort != null) {
       if (myRepositoriesToRollback.isEmpty()) {
         String message = GitBundle.message("rebase.abort.dialog.message", getShortRepositoryName(myRepositoryToAbort));
-        if (canShowMacSheetPanel()) {
-          title = message;
-          message = "";
-        }
         int choice = DialogManager.showOkCancelDialog(
           myProject,
           message,
@@ -110,10 +105,6 @@ class GitAbortRebaseProcess {
           getShortRepositoryName(myRepositoryToAbort),
           joinShortNames(myRepositoriesToRollback.keySet(), 5)
         );
-        if (canShowMacSheetPanel()) {
-          title = message;
-          message = "";
-        }
         int choice = DialogManager.showYesNoCancelDialog(
           myProject,
           message,

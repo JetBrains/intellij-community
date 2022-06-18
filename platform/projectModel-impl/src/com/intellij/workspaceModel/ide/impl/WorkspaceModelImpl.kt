@@ -61,7 +61,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     entityTracer.subscribe(project)
   }
 
-  fun blockDelayedLoading() {
+  fun ignoreCache() {
     loadedFromCache = false
   }
 

@@ -51,12 +51,12 @@ class VisualFormattingLayerHighlightingPass(editor: Editor, file: PsiFile) : Edi
       .getBlockElementsInRange(0, Int.MAX_VALUE, InlayPresentation::class.java)
       .forEach { it.dispose() }
 
-    myEditor.foldingModel.runBatchFoldingOperation {
+    myEditor.foldingModel.runBatchFoldingOperation({
       myEditor.foldingModel
         .allFoldRegions
         .filter { it.getUserData(visualFormattingElementKey) == true }
         .forEach { it.dispose() }
-    }
+    }, true, false)
 
     myRunnable?.invoke(myEditor)
   }

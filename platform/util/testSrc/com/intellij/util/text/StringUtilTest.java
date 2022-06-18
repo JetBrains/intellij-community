@@ -229,9 +229,6 @@ public class StringUtilTest {
     strings.sort(NaturalComparator.INSTANCE);
     assertThat(strings).containsExactly("1.2.9.1", "1.2.10.5", "tes0", "test", "test0", "test1", "test2", "test 3", "test10", "test10a",
                                         "test011", "Test99", "test99", "testing");
-    strings.sort(NaturalComparator.CASE_SENSITIVE_INSTANCE);
-    assertThat(strings).containsExactly("1.2.9.1", "1.2.10.5", "Test99", "tes0", "test", "test0", "test1", "test2", "test 3", "test10", "test10a",
-                                        "test011", "test99", "testing");
 
     var strings2 = Arrays.asList("t1", "t001", "T2", "T002", "T1", "t2");
     strings2.sort(NaturalComparator.INSTANCE);

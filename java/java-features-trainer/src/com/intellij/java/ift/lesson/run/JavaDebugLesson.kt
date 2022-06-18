@@ -114,5 +114,5 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
     }
   }
 
-  override val sampleFilePath: String = "$demoClassName.java"
+  override val sampleFilePath: String = "src/$demoClassName.java"
 }

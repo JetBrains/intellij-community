@@ -121,14 +121,6 @@ public class GridBagConstraintHolder {
   }
 
   /**
-   * Adds insets to cells top, left, and bottom sides.
-   */
-  public GridBagConstraintHolder insetsTLB(int topLeftBottom) {
-    constraint.insets.set(topLeftBottom, topLeftBottom, topLeftBottom, 0);
-    return this;
-  }
-
-  /**
    * Makes cells stick to the end of the line.
    */
   public GridBagConstraintHolder anchorEnd() {

@@ -34,7 +34,7 @@ import com.intellij.structuralsearch.Scopes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.GridBagConstraintHolder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +94,6 @@ public class ScopePanel extends JPanel {
     myScopeDetailsPanel.add(Scopes.Type.DIRECTORY.toString(), myDirectoryComboBox);
     myScopeDetailsPanel.add(Scopes.Type.NAMED.toString(), shrinkWrap(myScopesComboBox));
 
-    myScopeDetailsPanel.setBorder(JBUI.Borders.emptyBottom(UIUtil.isUnderDefaultMacTheme() ? 0 : 3));
     final boolean fullVersion = !PlatformUtils.isDataGrip();
     final DefaultActionGroup scopeActionGroup =
       fullVersion
@@ -109,19 +108,12 @@ public class ScopePanel extends JPanel {
     myToolbar.setForceMinimumSize(true);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
-    final GroupLayout layout = new GroupLayout(this);
+    final GridBagLayout layout = new GridBagLayout();
+    final GridBagConstraintHolder constraint = new GridBagConstraintHolder();
     setLayout(layout);
-    layout.setHorizontalGroup(
-      layout.createSequentialGroup()
-            .addComponent(myToolbar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 25, 25)
-            .addComponent(myScopeDetailsPanel)
-    );
-    layout.setVerticalGroup(
-      layout.createParallelGroup()
-            .addComponent(myToolbar)
-            .addComponent(myScopeDetailsPanel)
-    );
+
+    add(myToolbar, constraint.get());
+    add(myScopeDetailsPanel, constraint.insets(0, UIUtil.DEFAULT_HGAP, 0, 0).growX().fillX().get());
   }
 
   private void selectNamedScope(String selectedScope) {

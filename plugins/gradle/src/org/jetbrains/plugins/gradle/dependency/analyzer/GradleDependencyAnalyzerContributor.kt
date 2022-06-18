@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyze
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.dependencies.*
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
@@ -19,6 +20,7 @@ import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -85,6 +87,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
     if (scopeNodes.isEmpty()) return emptyList()
     val dependencies = ArrayList<Dependency>()
     val root = DAModule(moduleData.moduleName)
+    root.putUserData(MODULE_DATA, moduleData.moduleData)
 
     val rootDependency = DADependency(root, defaultConfiguration, null, emptyList())
     dependencies.add(rootDependency)
@@ -144,7 +147,10 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
   private fun DependencyNode.getDependencyData(): Dependency.Data? {
     return when (this) {
       is ProjectDependencyNode -> {
-        DAModule(projectName)
+        val data = DAModule(projectName)
+        val moduleData = getModuleData()
+        data.putUserData(MODULE_DATA, moduleData)
+        data
       }
       is ArtifactDependencyNode -> {
         DAArtifact(group, module, version)
@@ -153,8 +159,16 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
     }
   }
 
+  private fun ProjectDependencyNode.getModuleData(): ModuleData? {
+    return projects.values.asSequence()
+      .map { it.moduleData }
+      .find { it.id == projectPath }
+  }
+
   companion object {
     internal val defaultConfiguration = scope("default")
+
+    internal val MODULE_DATA = Key.create<ModuleData>("GradleDependencyAnalyzerContributor.ModuleData")
 
     private fun GradleModuleData.getDependencies(project: Project): List<DependencyScopeNode> {
       var dependencyScopeNodes: List<DependencyScopeNode> = emptyList()

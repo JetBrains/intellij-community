@@ -41,6 +41,10 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     const val id: String = "vcs.code.vision"
   }
 
+  override fun isAvailableFor(project: Project): Boolean {
+    return VcsCodeVisionLanguageContext.providersExtensionPoint.hasAnyExtensions()
+  }
+
   override fun precomputeOnUiThread(editor: Editor) {
 
   }
@@ -113,7 +117,10 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
   override fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?): CodeVisionPlaceholderCollector? {
     if (psiFile == null) return null
     val language = psiFile.language
+    val project = editor.project ?: return null
     val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return null
+    val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(psiFile.virtualFile) ?: return null
+    if (vcs.annotationProvider !is CacheableAnnotationProvider) return null
     return object: BypassBasedPlaceholderCollector {
       override fun collectPlaceholders(element: PsiElement, editor: Editor): List<TextRange> {
         val ranges = ArrayList<TextRange>()

@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="rhino" type="repository">
-    <properties maven-id="org.mozilla:rhino-runtime:1.7.13" />
+    <properties maven-id="org.mozilla:rhino-runtime:1.7.14" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/mozilla/rhino-runtime/1.7.13/rhino-runtime-1.7.13.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mozilla/rhino-runtime/1.7.14/rhino-runtime-1.7.14.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/mozilla/rhino-runtime/1.7.13/rhino-runtime-1.7.13-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mozilla/rhino-runtime/1.7.14/rhino-runtime-1.7.14-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

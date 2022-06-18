@@ -67,6 +67,7 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
     if (batchFile != null && !Files.exists(batchFile)) {
       throw new NoSuchFileException(batchFile.toString());
     }
+    final Path envDataFile = Files.createTempFile("intellij-cmd-env-data.", ".tmp"); // NON-NLS
 
     final List<String> callArgs = new ArrayList<>();
     if (batchFile != null) {
@@ -86,6 +87,8 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
     callArgs.add(PathManager.getJarPathForClass(ReadEnv.class));
     callArgs.add(ReadEnv.class.getCanonicalName());
 
+    callArgs.add(">");
+    callArgs.add(envDataFile.toString());
     callArgs.add("||");
     callArgs.add("exit"); // NON-NLS
     callArgs.add("/B"); // NON-NLS
@@ -96,7 +99,7 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
     cl.add("/c");
     cl.add(prepareCallArgs(callArgs));
     Map.Entry<String, Map<String, String>> entry =
-      runProcessAndReadOutputAndEnvs(cl, batchFile != null ? batchFile.getParent() : null, scriptEnvironmentProcessor);
+      runProcessAndReadOutputAndEnvs(cl, batchFile != null ? batchFile.getParent() : null, scriptEnvironmentProcessor, envDataFile);
     return new Pair<>(entry.getKey(), entry.getValue());
   }
 

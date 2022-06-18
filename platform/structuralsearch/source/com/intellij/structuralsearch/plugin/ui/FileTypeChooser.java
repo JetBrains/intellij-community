@@ -36,6 +36,7 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
   private final List<FileTypeInfo> myFileTypeInfos;
   private FileTypeInfo mySelectedItem;
   private Consumer<? super FileTypeInfo> myConsumer;
+  private Consumer<? super FileTypeInfo> myUserActionConsumer;
 
   FileTypeChooser() {
     myFileTypeInfos = createFileTypeInfos();
@@ -45,6 +46,10 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
 
   public void setFileTypeInfoConsumer(@Nullable Consumer<? super FileTypeInfo> consumer) {
     myConsumer = consumer;
+  }
+
+  public void setUserActionFileTypeInfoConsumer(@Nullable Consumer<? super FileTypeInfo> consumer) {
+    myUserActionConsumer = consumer;
   }
 
   private static List<FileTypeInfo> createFileTypeInfos() {
@@ -164,6 +169,9 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       setSelectedItem(myFileTypeInfo);
+      if (myUserActionConsumer != null) {
+        myUserActionConsumer.accept(myFileTypeInfo);
+      }
     }
 
     FileTypeInfo getFileTypeInfo() {

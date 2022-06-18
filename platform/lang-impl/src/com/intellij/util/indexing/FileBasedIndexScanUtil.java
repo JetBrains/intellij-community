@@ -22,6 +22,7 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,10 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.BooleanSupplier;
@@ -58,6 +56,12 @@ public final class FileBasedIndexScanUtil {
                                                         @NotNull VirtualFile file) {
     ensureUpToDate(indexId);
     return getIndexer(indexId, project, true).apply(file);
+  }
+
+  public static <V, K> @Nullable Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId, @NotNull K key, @NotNull GlobalSearchScope scope) {
+    CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<>(new HashSet<>());
+    Boolean result = processFilesContainingAnyKey(indexId, Set.of(key), scope, null, null, processor);
+    return result == null ? null : processor.getResults();
   }
 
   static <K> @Nullable Boolean processAllKeys(@NotNull ID<K, ?> indexId,
@@ -265,24 +269,34 @@ public final class FileBasedIndexScanUtil {
     FileBasedIndexExtension<K, V> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
     FileBasedIndex.InputFilter inputFilter = indexExtension.getInputFilter();
     DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     return file -> {
-      if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return null;
+      IndexedFileImpl indexedFile = new IndexedFileImpl(file, project);
+      if (!FileBasedIndexEx.acceptsInput(inputFilter, indexedFile)) return null;
       int fileId = FileBasedIndex.getFileId(file);
-      if (IndexingStamp.isFileIndexedStateCurrent(fileId, TodoIndex.NAME) == FileIndexingState.UP_TO_DATE) {
-        try {
-          return index.getIndexedFileData(fileId);
+      Document document = fileDocumentManager.getCachedDocument(file);
+      boolean unsavedDocument = document != null && fileDocumentManager.isDocumentUnsaved(document);
+      try {
+        if (!unsavedDocument && index.getIndexingStateForFile(fileId, indexedFile) == FileIndexingState.UP_TO_DATE) {
+          try {
+            return index.getIndexedFileData(fileId);
+          }
+          catch (StorageException e) {
+            throw new RuntimeException(e);
+          }
         }
-        catch (StorageException e) {
-          throw new RuntimeException(e);
-        }
+        FileContent content = getFileContent(file, project, binary);
+        Map<K, V> map = content == null ? null : indexer.map(content);
+        if (unsavedDocument) return map;
+        InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
+        Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
+        ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);
+        IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
+        return map;
       }
-      FileContent content = getFileContent(file, project, binary);
-      Map<K, V> map = content == null ? null : indexer.map(content);
-      InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
-      Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
-      ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);
-      IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
-      return map;
+      finally {
+        IndexingStamp.flushCache(fileId);
+      }
     };
   }
 

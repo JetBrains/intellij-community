@@ -1,2 +1,4 @@
-class Button { }
-class AnimatedButton extends Button { }
+private class Scope {
+  private class MyButton { }
+  private class AnimatedButton extends MyButton { }
+}

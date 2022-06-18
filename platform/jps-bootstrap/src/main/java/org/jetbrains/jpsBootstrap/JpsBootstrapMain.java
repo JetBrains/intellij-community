@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,10 +40,11 @@ public class JpsBootstrapMain {
   private static final Option OPT_HELP = Option.builder("h").longOpt("help").build();
   private static final Option OPT_VERBOSE = Option.builder("v").longOpt("verbose").desc("Show more logging from jps-bootstrap and the building process").build();
   private static final Option OPT_SYSTEM_PROPERTY = Option.builder("D").hasArgs().valueSeparator('=').desc("Pass system property to the build script").build();
+  private static final Option OPT_PROPERTIES_FILE = Option.builder().longOpt("properties-file").hasArg().desc("Pass system properties to the build script from specified properties file https://en.wikipedia.org/wiki/.properties").build();
   private static final Option OPT_BUILD_TARGET_XMX = Option.builder().longOpt("build-target-xmx").hasArg().desc("Specify Xmx to run build script. default: " + DEFAULT_BUILD_SCRIPT_XMX).build();
   private static final Option OPT_JAVA_ARGFILE_TARGET = Option.builder().longOpt("java-argfile-target").required().hasArg().desc("Write java argfile to this file").build();
   private static final List<Option> ALL_OPTIONS =
-    Arrays.asList(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_JAVA_ARGFILE_TARGET, OPT_BUILD_TARGET_XMX);
+    Arrays.asList(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET, OPT_BUILD_TARGET_XMX);
 
   private static Options createCliOptions() {
     Options opts = new Options();
@@ -74,6 +76,7 @@ public class JpsBootstrapMain {
   private final Path javaArgsFileTarget;
   private final List<String> mainArgsToRun;
   private final Properties additionalSystemProperties;
+  private final Properties additionalSystemPropertiesFromPropertiesFile;
 
   public JpsBootstrapMain(String[] args) throws IOException {
     initLogging();
@@ -99,6 +102,15 @@ public class JpsBootstrapMain {
     mainArgsToRun = freeArgs.subList(3, freeArgs.size());
 
     additionalSystemProperties = cmdline.getOptionProperties("D");
+
+    additionalSystemPropertiesFromPropertiesFile = new Properties();
+    if (cmdline.hasOption(OPT_PROPERTIES_FILE)) {
+      Path propertiesFile = Path.of(cmdline.getOptionValue(OPT_PROPERTIES_FILE));
+      try (Reader reader = Files.newBufferedReader(propertiesFile)) {
+        info("Loading properties from " + propertiesFile);
+        additionalSystemPropertiesFromPropertiesFile.load(reader);
+      }
+    }
 
     String verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE);
     JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
@@ -145,6 +157,7 @@ public class JpsBootstrapMain {
     if (underTeamCity) {
       systemProperties.putAll(getTeamCitySystemProperties());
     }
+    systemProperties.putAll(additionalSystemPropertiesFromPropertiesFile);
     systemProperties.putAll(additionalSystemProperties);
 
     systemProperties.putIfAbsent("file.encoding", "UTF-8"); // just in case

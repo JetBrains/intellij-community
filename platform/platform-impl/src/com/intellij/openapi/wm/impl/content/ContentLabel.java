@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.util.NlsContexts;
@@ -94,7 +93,7 @@ public abstract class ContentLabel extends BaseLabel {
 
   protected boolean handleActionsClick(@NotNull MouseEvent e) {
     for (AdditionalIcon icon : myAdditionalIcons) {
-      if (mouseOverIcon(e, icon)) {
+      if (mouseOverIcon(icon)) {
         icon.runAction();
         e.consume();
         return true;
@@ -104,29 +103,11 @@ public abstract class ContentLabel extends BaseLabel {
   }
 
   final boolean mouseOverIcon(AdditionalIcon icon) {
-    return mouseOverIcon(null, icon);
-  }
-
-  final boolean mouseOverIcon(@Nullable MouseEvent e, AdditionalIcon icon) {
     if (!isHovered() || !icon.getAvailable()) return false;
 
-    Point point = null;
-    if (e != null) {
-      point = e.getLocationOnScreen();
-    }
-    else {
-      PointerInfo info = MouseInfo.getPointerInfo();
-      if (info != null) {
-        point = info.getLocation();
-      }
-      else {
-        AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-        if (event instanceof MouseEvent) {
-          point = ((MouseEvent)event).getLocationOnScreen();
-        }
-      }
-    }
-    if (point == null) return false;
+    PointerInfo info = MouseInfo.getPointerInfo();
+    if (info == null) return false;
+    Point point = info.getLocation();
     SwingUtilities.convertPointFromScreen(point, this);
     return icon.contains(point);
   }

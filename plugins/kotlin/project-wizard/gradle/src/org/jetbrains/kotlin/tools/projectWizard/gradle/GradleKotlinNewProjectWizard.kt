@@ -38,8 +38,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             useKotlinDsl = true
         }
 
-        override fun setupUI(builder: Panel) {
-            super.setupUI(builder)
+        override fun setupSettingsUI(builder: Panel) {
+            super.setupSettingsUI(builder)
             with(builder) {
                 row {
                     checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))

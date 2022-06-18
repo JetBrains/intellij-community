@@ -31,7 +31,7 @@ class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.config
     }
   }
 
-  override val sampleFilePath: String = "${JavaRunLessonsUtils.demoClassName}.java"
+  override val sampleFilePath: String = "src/${JavaRunLessonsUtils.demoClassName}.java"
 }
 
 internal fun TaskContext.highlightRunGutters(startLineIndex: Int, highlightInside: Boolean = false, usePulsation: Boolean = false) {

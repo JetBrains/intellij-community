@@ -266,6 +266,11 @@ internal class LessonExecutor(val lesson: KLesson,
       rehighlightFoundComponent(taskInfo.userVisibleInfo?.ui, taskInfo.rehighlightComponent)
     }
 
+    taskActions[currentTaskIndex].let {
+      it.transparentRestore = taskCallbackData.transparentRestore
+      it.highlightPreviousUi = taskCallbackData.highlightPreviousUi
+    }
+
     if (taskContext.steps.isEmpty()) {
       processNextTask(currentTaskIndex + 1)
       return
@@ -386,10 +391,6 @@ internal class LessonExecutor(val lesson: KLesson,
   private fun chainNextTask(taskContext: TaskContextImpl,
                             recorder: ActionsRecorder,
                             taskData: TaskData) {
-    val taskInfo = taskActions[currentTaskIndex]
-    taskInfo.transparentRestore = taskData.transparentRestore
-    taskInfo.highlightPreviousUi = taskData.highlightPreviousUi
-
     checkForRestore(taskContext, taskData)
 
     recorder.tryToCheckCallback()
@@ -397,7 +398,7 @@ internal class LessonExecutor(val lesson: KLesson,
     taskContext.steps.forEach { step ->
       step.thenAccept {
         try {
-          stepHasBeenCompleted(taskContext, taskInfo)
+          stepHasBeenCompleted(taskContext, taskActions[currentTaskIndex])
         }
         catch (e: Throwable) {
           thisLogger().error("Step exception: ", e)

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.gradle.configuration
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -45,7 +44,8 @@ fun suggestNativeDebug(projectPath: String) {
         notificationContent = KotlinIdeaGradleBundle.message("notification.text.native.debug.provides.debugger.for.kotlin.native"),
         displayId = "kotlin.native.debug",
         pluginId = PluginId.getId("com.intellij.nativeDebug"),
-        onDontShowAgainActionPerformed = { isNativeDebugSuggestionEnabled = false }
+        onDontShowAgainActionPerformed = { isNativeDebugSuggestionEnabled = false },
+        onlyForUltimate = true,
     )
 }
 
@@ -65,9 +65,10 @@ private fun suggestPluginInstall(
     @NlsContexts.NotificationContent notificationContent: String,
     pluginId: PluginId,
     displayId: String,
-    onDontShowAgainActionPerformed: () -> Unit = { }
+    onDontShowAgainActionPerformed: () -> Unit = { },
+    onlyForUltimate: Boolean = false,
 ) {
-    if (!PlatformUtils.isIdeaUltimate()) return
+    if (onlyForUltimate && !PlatformUtils.isIdeaUltimate()) return
     if (PluginManagerCore.isPluginInstalled(pluginId)) return
 
     val projectManager = ProjectManager.getInstance()

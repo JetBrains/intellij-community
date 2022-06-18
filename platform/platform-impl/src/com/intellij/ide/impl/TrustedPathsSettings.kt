@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.isAncestor
 import com.intellij.util.xmlb.annotations.OptionTag
 import java.nio.file.Path
@@ -18,7 +19,15 @@ internal class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPath
   }
 
   fun isPathTrusted(path: Path): Boolean {
-    return state.trustedPaths.map { Paths.get(it) }.any { it.isAncestor(path) }
+    return state.trustedPaths.mapNotNull {
+      try {
+        Paths.get(it)
+      }
+      catch (e: Exception) {
+        LOG.warn(e)
+        null
+      }
+    }.any { it.isAncestor(path) }
   }
 
   fun getTrustedPaths(): List<String> = Collections.unmodifiableList(state.trustedPaths)
@@ -29,5 +38,9 @@ internal class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPath
 
   fun addTrustedPath(path: String) {
     state.trustedPaths.add(path)
+  }
+
+  companion object {
+    val LOG = logger<TrustedPathsSettings>()
   }
 }

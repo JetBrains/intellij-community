@@ -1,39 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
 
-/**
- * @author pegov
- */
 public final class MacUtil {
   private static final Logger LOG = Logger.getInstance(MacUtil.class);
-  private static final String MAC_NATIVE_WINDOW_SHOWING = "MAC_NATIVE_WINDOW_SHOWING";
 
-  private MacUtil() {
-  }
+  private MacUtil() { }
 
   @Nullable
   public static ID findWindowForTitle(@Nullable String title) {
@@ -68,79 +56,10 @@ public final class MacUtil {
     return focusedWindow;
   }
 
-  public static synchronized void startModal(JComponent component, String key) {
-    try {
-      if (SwingUtilities.isEventDispatchThread()) {
-        EventQueue theQueue = component.getToolkit().getSystemEventQueue();
-
-        while (component.getClientProperty(key) == Boolean.TRUE) {
-          AWTEvent event = theQueue.getNextEvent();
-          Object source = event.getSource();
-          if (event instanceof ActiveEvent) {
-            ((ActiveEvent)event).dispatch();
-          }
-          else if (source instanceof Component) {
-            ((Component)source).dispatchEvent(event);
-          }
-          else if (source instanceof MenuComponent) {
-            ((MenuComponent)source).dispatchEvent(event);
-          }
-          else {
-            LOG.debug("Unable to dispatch: " + event);
-          }
-        }
-      }
-      else {
-        assert false: "Should be called from Event-Dispatch Thread only!";
-        while (component.getClientProperty(key) == Boolean.TRUE) {
-          // TODO:
-          //wait();
-        }
-      }
-    }
-    catch (InterruptedException ignored) {
-    }
-  }
-
-  public static synchronized void startModal(JComponent component) {
-    startModal(component, MAC_NATIVE_WINDOW_SHOWING);
-  }
-
-  public static boolean isFullKeyboardAccessEnabled() {
-    if (!SystemInfoRt.isMac) {
-      return false;
-    }
-
-    AtomicBoolean result = new AtomicBoolean();
-    executeOnMainThread(true, true, () -> {
-      result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").booleanValue());
-    });
-    return result.get();
-  }
-
-  public static void adjustFocusTraversal(@NotNull Disposable disposable) {
-    if (!SystemInfoRt.isMac) {
-      return;
-    }
-    final AWTEventListener listener = new AWTEventListener() {
-      @Override
-      public void eventDispatched(AWTEvent event) {
-        if (event instanceof KeyEvent
-            && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_TAB
-            && (!(event.getSource() instanceof JTextComponent))
-            && (!(event.getSource() instanceof JList))
-            && !isFullKeyboardAccessEnabled())
-          ((KeyEvent)event).consume();
-      }
-    };
-    Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
-      }
-    });
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.KEY_EVENT_MASK);
-  }
+  /** @deprecated the method became obsolete with the demise of sheets */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
+  public static void adjustFocusTraversal(@NotNull Disposable disposable) { }
 
   @NotNull
   public static ID getWindowFromJavaWindow(@Nullable Window w) {
@@ -264,21 +183,5 @@ public final class MacUtil {
 
   public static @NotNull Runnable wakeUpNeo(@NotNull Object reason) {
     return new ActivityImpl(reason);
-  }
-
-  @NotNull
-  public static Color colorFromNative(ID color) {
-    final ID colorSpace = invoke("NSColorSpace", "genericRGBColorSpace");
-    final ID colorInSpace = invoke(color, "colorUsingColorSpace:", colorSpace);
-    final long red = invoke(colorInSpace, "redComponent").longValue();
-    final long green = invoke(colorInSpace, "greenComponent").longValue();
-    final long blue = invoke(colorInSpace, "blueComponent").longValue();
-    final long alpha = invoke(colorInSpace, "alphaComponent").longValue();
-    final double realAlpha = alpha != 0 && (int)((alpha >> 52) & 0x7ffL) == 0 ? 1.0 : Double.longBitsToDouble(alpha);
-    //noinspection UseJBColor
-    return new Color((float)Double.longBitsToDouble(red),
-                     (float)Double.longBitsToDouble(green),
-                     (float)Double.longBitsToDouble(blue),
-                     (float)realAlpha);
   }
 }

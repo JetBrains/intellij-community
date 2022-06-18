@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.preview
 
 import com.intellij.codeWithMe.ClientId
@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.util.ui.JBUI
@@ -64,7 +65,7 @@ class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val id: C
       true -> EditorFactory.getInstance().createEditor(document, project, EditorKind.PREVIEW)
       else -> EditorFactory.getInstance().createViewer(document, project, EditorKind.PREVIEW)
     }
-    if (editor is EditorEx) {
+    if (editor is EditorEx && Registry.`is`("ide.color.scheme.for.descriptor.preview.enabled", false)) {
       val scheme = EditorColorsUtil.getGlobalOrDefaultColorScheme()
       editor.colorsScheme = scheme
       editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file, scheme, project)
