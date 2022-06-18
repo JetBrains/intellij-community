@@ -90,7 +90,7 @@ class EntityStorageSerializerImpl(
 
     kryo.register(HashMultimap::class.java, object : Serializer<HashMultimap<*, *>>(false, true) {
       override fun write(kryo: Kryo, output: Output, `object`: HashMultimap<*, *>) {
-        val res = HashMap<Any, Collection<Any>>()
+        val res = HashMap<Any?, Collection<Any?>>()
         `object`.asMap().forEach { (key, values) ->
           res[key] = ArrayList(values)
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
@@ -14,7 +14,8 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 class KotlinInterfaceMemberDependencyGraph<T : KtNamedDeclaration, M : MemberInfoBase<T>>(
     klass: KtClassOrObject
 ) : MemberDependencyGraph<T, M> {
-    private val delegateGraph = InterfaceMemberDependencyGraph<PsiMember, MemberInfoBase<PsiMember>>(klass.toLightClass())
+    private val delegateGraph: MemberDependencyGraph<PsiMember, MemberInfoBase<PsiMember>> =
+        InterfaceMemberDependencyGraph(klass.toLightClass())
 
     override fun memberChanged(memberInfo: M) {
         delegateGraph.memberChanged(memberInfo.toJavaMemberInfo() ?: return)

@@ -43,8 +43,7 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
       val model = FacetManager.getInstance(module).createModifiableModel()
       val invalidFacets = model.getFacetsByType(InvalidFacetType.TYPE_ID).filter { it.configuration.facetState.facetType == facetType.stringId }
       for (invalidFacet in invalidFacets) {
-        val newFacet = FacetManagerBridge.createFacetFromStateRaw(module, facetType, invalidFacet.configuration.facetState,
-                                                                       invalidFacet.underlyingFacet)
+        val newFacet = FacetUtil.createFacetFromStateRawJ(module, facetType, invalidFacet)
         model.replaceFacet(invalidFacet, newFacet)
         for (subFacet in invalidFacet.configuration.facetState.subFacets) {
           model.addFacet(FacetManagerBase.createInvalidFacet(module, subFacet, newFacet, invalidFacet.configuration.errorMessage, false, false))

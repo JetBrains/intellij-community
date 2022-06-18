@@ -25,10 +25,10 @@ import java.util.*
 class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> {
   private var pluginDescriptor: PluginDescriptor? = null
 
-  val enumKlass: Class<Enum<*>>? by lazy {
+  val enumKlass: Class<out Enum<*>>? by lazy {
     @Suppress("UNCHECKED_CAST")
     if (enumClass.isNotBlank())
-      (pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader).loadClass(enumClass) as Class<Enum<*>>
+      (pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader).loadClass(enumClass) as Class<out Enum<*>>
     else
       null
   }

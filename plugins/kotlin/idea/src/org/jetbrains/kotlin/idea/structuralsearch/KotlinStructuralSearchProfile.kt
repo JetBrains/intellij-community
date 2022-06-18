@@ -76,7 +76,7 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
 
     override fun supportsShortenFQNames(): Boolean = true
 
-    override fun compile(elements: Array<out PsiElement>?, globalVisitor: GlobalCompilingVisitor) {
+    override fun compile(elements: Array<out PsiElement>, globalVisitor: GlobalCompilingVisitor) {
         KotlinCompilingVisitor(globalVisitor).compile(elements)
     }
 
