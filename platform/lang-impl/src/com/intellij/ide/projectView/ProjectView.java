@@ -144,6 +144,7 @@ public abstract class ProjectView {
   public abstract boolean isSortByType(String paneId);
   public abstract void setSortByType(@NotNull String paneId, final boolean sortByType);
 
+  @Nullable
   public abstract AbstractProjectViewPane getCurrentProjectViewPane();
 
   @NotNull
