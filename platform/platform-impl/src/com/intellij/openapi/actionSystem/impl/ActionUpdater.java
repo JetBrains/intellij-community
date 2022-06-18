@@ -540,7 +540,7 @@ final class ActionUpdater {
     }
     if (isPopup) {
       presentation.putClientProperty(SUPPRESS_SUBMENU_IMPL, performOnly ? true : null);
-      if (checkChildren && !hasVisible && group.disableIfNoVisibleChildren()) {
+      if (checkChildren && !performOnly && !hasVisible && group.disableIfNoVisibleChildren()) {
         presentation.setEnabled(false);
       }
     }
