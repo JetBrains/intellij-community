@@ -4,9 +4,6 @@ import com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.util.Processor
-import com.intellij.util.io.Compressor
-import com.intellij.util.io.Decompressor
 import com.intellij.util.io.delete
 import com.intellij.util.io.inputStream
 import com.jetbrains.cloudconfig.*
@@ -15,7 +12,6 @@ import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
-import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -129,7 +125,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       val tempFile = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT, UUID.randomUUID().toString() + ".zip")
       try {
         FileUtil.writeToFile(tempFile, stream.readAllBytes())
-        val snapshot = extractZipFile(tempFile.toPath())
+        val snapshot = SettingsSnapshotZipSerializer.extractFromZip(tempFile.toPath())
         return if (snapshot.isEmpty()) UpdateResult.NoFileOnServer else UpdateResult.Success(snapshot)
       }
       finally {
@@ -145,7 +141,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   override fun push(snapshot: SettingsSnapshot): SettingsSyncPushResult {
     LOG.info("Pushing setting snapshot to the cloud config server...")
     val zip = try {
-      prepareTempZipFile(snapshot)
+      SettingsSnapshotZipSerializer.serializeToZip(snapshot)
     }
     catch (e: Throwable) {
       LOG.warn(e)
@@ -273,29 +269,4 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       }
     }
   }
-}
-
-private fun prepareTempZipFile(snapshot: SettingsSnapshot): Path {
-  val file = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, null)
-  Compressor.Zip(file)
-    .use { zip ->
-      for (fileState in snapshot.fileStates) {
-        val content = if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
-        zip.addFile(fileState.file, content)
-      }
-    }
-  return file.toPath()
-}
-
-private fun extractZipFile(zipFile: Path): SettingsSnapshot {
-  val tempDir = FileUtil.createTempDirectory("settings.sync.updates", null)
-  Decompressor.Zip(zipFile).extract(tempDir)
-  val fileStates = mutableSetOf<FileState>()
-  FileUtil.processFilesRecursively(tempDir, Processor {
-    if (it.isFile) {
-      fileStates.add(getFileStateFromFileWithDeletedMarker(it.toPath(), tempDir.toPath()))
-    }
-    true
-  })
-  return SettingsSnapshot(fileStates)
 }
