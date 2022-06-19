@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
@@ -173,12 +172,14 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
   }
 
   private fun remove(project: Project) {
-    RunToolbarSlotManager.getInstance(project).stateListeners.removeListener(managerStateListener)
+    val slotManager = if (!project.isDisposed) RunToolbarSlotManager.getInstance(project) else null
+    slotManager?.stateListeners?.removeListener(managerStateListener)
+
     counter[project]?.let {
       val value = maxOf(it - 1, 0)
       counter[project] = value
       if (value == 0) {
-        RunToolbarSlotManager.getInstance(project).active = false
+        slotManager?.active = false
         counter.remove(project)
       }
     }
