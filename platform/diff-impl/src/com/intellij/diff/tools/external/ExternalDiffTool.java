@@ -3,6 +3,7 @@ package com.intellij.diff.tools.external;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManagerEx;
+import com.intellij.diff.DiffNotificationIdsHolder;
 import com.intellij.diff.chains.*;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
@@ -70,7 +71,9 @@ public final class ExternalDiffTool {
     if (diffProducers.size() <= Registry.intValue("diff.external.tool.file.limit")) return true;
     new Notification("Diff Changes Loading Error",
                      DiffBundle.message("can.t.show.diff.in.external.tool.too.many.files", diffProducers.size()),
-                     NotificationType.WARNING).notify(project);
+                     NotificationType.WARNING)
+      .setDisplayId(DiffNotificationIdsHolder.EXTERNAL_TOO_MANY_SELECTED)
+      .notify(project);
     return false;
   }
 
@@ -200,8 +203,12 @@ public final class ExternalDiffTool {
     if (!errorRequests.isEmpty()) {
       HtmlBuilder message = new HtmlBuilder()
         .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errorRequests, producer -> HtmlChunk.text(producer.getName())));
-      new Notification("Diff Changes Loading Error", DiffBundle.message("can.t.load.some.changes"), message.toString(),
-                       NotificationType.ERROR).notify(project);
+      new Notification("Diff Changes Loading Error",
+                       DiffBundle.message("can.t.load.some.changes"),
+                       message.toString(),
+                       NotificationType.ERROR)
+        .setDisplayId(DiffNotificationIdsHolder.EXTERNAL_CANT_LOAD_CHANGES)
+        .notify(project);
     }
 
     return requests;
