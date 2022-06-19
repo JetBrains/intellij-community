@@ -19,11 +19,15 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
   }
 
   fun testBuildscript(expression: String, test: () -> Unit) {
-    assertTrue("<caret>" in expression, "Please define caret position in build script.")
+    checkCaret(expression)
     updateProjectFile(expression)
     runReadAction {
       test()
     }
+  }
+
+  private fun checkCaret(expression: String) {
+    assertTrue("<caret>" in expression, "Please define caret position in build script.")
   }
 
   fun testHighlighting(expression: String) = testHighlighting("build.gradle", expression)
@@ -31,6 +35,21 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
     val file = findOrCreateFile(relativePath, expression)
     runInEdtAndWait {
       codeInsightFixture.testHighlighting(true, false, true, file)
+    }
+  }
+
+  fun testCompletion(expression: String, vararg completionCandidates: String) {
+    checkCaret(expression)
+    val file = findOrCreateFile("build.gradle", expression)
+    runInEdtAndWait {
+      codeInsightFixture.configureFromExistingVirtualFile(file)
+      val lookup = listOf(*codeInsightFixture.completeBasic())
+      var startIndex = 0
+      for (candidate in completionCandidates) {
+        val newIndex = lookup.subList(startIndex, lookup.size).indexOfFirst { it.lookupString == candidate }
+        assertTrue(newIndex != -1, "Element '$candidate' must be in the lookup")
+        startIndex = newIndex + 1
+      }
     }
   }
 
