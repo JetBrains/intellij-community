@@ -5,7 +5,7 @@
         "mavenChildrenProjects.svg": "images/childrenProjects.svg",
         "mavenLoadChanges.svg": "images/mavenLoadChanges.svg",
         "mavenModule.svg": "images/modulesClosed.svg",
-        "mavenParentProjects.svg": "images/parentProjects.svg",
+        "mavenParentProjects.svg": "images/parentProject.svg",
         "mavenPlugin.svg": "images/mavenPlugin.svg",
         "mavenPluginGoal.svg": "images/pluginGoal.svg",
         "mavenProfiles.svg": "images/profilesClosed.svg",
