@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
+import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassWithKotlinTypeAlias
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -31,7 +32,8 @@ class AllClassesCompletion(
     private val resolutionFacade: ResolutionFacade,
     private val kindFilter: (ClassKind) -> Boolean,
     private val includeTypeAliases: Boolean,
-    private val includeJavaClassesNotToBeUsed: Boolean
+    private val includeJavaClassesNotToBeUsed: Boolean,
+    private val includeJavaClassesWithKotlinTypeAliases: Boolean,
 ) {
     fun collect(classifierDescriptorCollector: (ClassifierDescriptorWithTypeParameters) -> Unit, javaClassCollector: (PsiClass) -> Unit) {
 
@@ -88,7 +90,7 @@ class AllClassesCompletion(
                         psiClass.isEnum -> ClassKind.ENUM_CLASS
                         else -> ClassKind.CLASS
                     }
-                    if (kindFilter(kind) && !isNotToBeUsed(psiClass)) {
+                    if (kindFilter(kind) && !isNotToBeUsed(psiClass) && !hasPreferableKotlinTypeAlias(psiClass)) {
                         collector(psiClass)
                     }
                 }
@@ -102,5 +104,11 @@ class AllClassesCompletion(
         if (includeJavaClassesNotToBeUsed) return false
         val fqName = javaClass.getKotlinFqName()
         return fqName?.isJavaClassNotToBeUsedInKotlin() == true
+    }
+
+    private fun hasPreferableKotlinTypeAlias(javaClass: PsiClass): Boolean {
+        if (includeJavaClassesWithKotlinTypeAliases) return false
+        val fqName = javaClass.getKotlinFqName()
+        return fqName?.isJavaClassWithKotlinTypeAlias() == true
     }
 }

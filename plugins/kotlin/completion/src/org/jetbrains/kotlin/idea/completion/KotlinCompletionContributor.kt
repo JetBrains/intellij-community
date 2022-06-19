@@ -197,7 +197,8 @@ class KotlinCompletionContributor : CompletionContributor() {
                     javaGettersAndSetters = true,
                     javaClassesNotToBeUsed = false,
                     staticMembers = parameters.invocationCount > 0,
-                    dataClassComponentFunctions = true
+                    dataClassComponentFunctions = true,
+                    javaClassesWithKotlinTypeAliases = false,
                 )
 
                 val newSession = BasicCompletionSession(newConfiguration, parameters, result)

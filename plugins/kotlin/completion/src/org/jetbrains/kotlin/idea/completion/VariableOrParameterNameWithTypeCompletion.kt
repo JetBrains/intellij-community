@@ -79,7 +79,8 @@ class VariableOrParameterNameWithTypeCompletion(
         for ((classNameMatcher, userPrefix) in classNamePrefixMatchers.zip(userPrefixes)) {
             AllClassesCompletion(
                 parameters, indicesHelper, classNameMatcher, resolutionFacade, { !it.isSingleton },
-                includeTypeAliases = true, includeJavaClassesNotToBeUsed = false
+                includeTypeAliases = true, includeJavaClassesNotToBeUsed = false,
+                includeJavaClassesWithKotlinTypeAliases = false,
             ).collect(
                 { addSuggestionsForClassifier(it, userPrefix, notImported = true) },
                 { addSuggestionsForJavaClass(it, userPrefix, notImported = true) }

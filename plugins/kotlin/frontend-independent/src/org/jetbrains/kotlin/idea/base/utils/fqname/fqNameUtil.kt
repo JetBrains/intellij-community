@@ -56,3 +56,37 @@ val KotlinType.fqName: FqName?
 
 fun FqName.isJavaClassNotToBeUsedInKotlin(): Boolean =
     JavaToKotlinClassMap.isJavaPlatformClass(this) || javaToKotlinNameMap[this] != null
+
+fun FqName.isJavaClassWithKotlinTypeAlias(): Boolean = this in KOTLIN_TYPE_ALIASES
+
+private val KOTLIN_TYPE_ALIASES = listOf(
+    // kotlin.TypeAliases.kt
+    "java.lang.Error",
+    "java.lang.Exception",
+    "java.lang.RuntimeException",
+    "java.lang.IllegalArgumentException",
+    "java.lang.IllegalStateException",
+    "java.lang.IndexOutOfBoundsException",
+    "java.lang.UnsupportedOperationException",
+    "java.lang.ArithmeticException",
+    "java.lang.NumberFormatException",
+    "java.lang.NullPointerException",
+    "java.lang.ClassCastException",
+    "java.lang.AssertionError",
+    "java.util.NoSuchElementException",
+    "java.util.ConcurrentModificationException",
+    "java.util.Comparator",
+    // kotlin.collections.TypeAliases.kt
+    "java.util.RandomAccess",
+    "java.util.ArrayList",
+    "java.util.LinkedHashMap",
+    "java.util.HashMap",
+    "java.util.LinkedHashSet",
+    "java.util.HashSet",
+    // kotlin.text.TypeAliases.kt
+    "java.lang.Appendable",
+    "java.lang.StringBuilder",
+    "java.nio.charset.CharacterCodingException",
+).map {
+    FqName(it)
+}.toSet()

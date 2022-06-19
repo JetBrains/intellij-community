@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.OriginCapability
+import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassWithKotlinTypeAlias
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
@@ -45,7 +46,8 @@ class CompletionSessionConfiguration(
     val javaGettersAndSetters: Boolean,
     val javaClassesNotToBeUsed: Boolean,
     val staticMembers: Boolean,
-    val dataClassComponentFunctions: Boolean
+    val dataClassComponentFunctions: Boolean,
+    val javaClassesWithKotlinTypeAliases: Boolean,
 )
 
 fun CompletionSessionConfiguration(parameters: CompletionParameters) = CompletionSessionConfiguration(
@@ -54,7 +56,8 @@ fun CompletionSessionConfiguration(parameters: CompletionParameters) = Completio
     javaGettersAndSetters = parameters.invocationCount >= 2,
     javaClassesNotToBeUsed = parameters.invocationCount >= 2,
     staticMembers = parameters.invocationCount >= 2,
-    dataClassComponentFunctions = parameters.invocationCount >= 2
+    dataClassComponentFunctions = parameters.invocationCount >= 2,
+    javaClassesWithKotlinTypeAliases = parameters.invocationCount >= 2,
 )
 
 abstract class CompletionSession(
@@ -190,6 +193,10 @@ abstract class CompletionSession(
     private fun isVisibleDescriptor(descriptor: DeclarationDescriptor, completeNonAccessible: Boolean): Boolean {
         if (!configuration.javaClassesNotToBeUsed && descriptor is ClassDescriptor) {
             if (descriptor.importableFqName?.isJavaClassNotToBeUsedInKotlin() == true) return false
+        }
+
+        if (!configuration.javaClassesWithKotlinTypeAliases && descriptor is ClassDescriptor) {
+            if (descriptor.importableFqName?.isJavaClassWithKotlinTypeAlias() == true) return false
         }
 
         if (descriptor is TypeParameterDescriptor && !isTypeParameterVisible(descriptor)) return false

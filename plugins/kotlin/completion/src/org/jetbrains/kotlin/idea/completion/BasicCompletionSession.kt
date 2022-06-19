@@ -818,6 +818,7 @@ class BasicCompletionSession(
             kindFilter = kindFilter,
             includeTypeAliases = true,
             includeJavaClassesNotToBeUsed = configuration.javaClassesNotToBeUsed,
+            includeJavaClassesWithKotlinTypeAliases = configuration.javaClassesWithKotlinTypeAliases,
         ).collect({ processWithShadowedFilter(it, classifierDescriptorCollector) }, javaClassCollector)
     }
 
