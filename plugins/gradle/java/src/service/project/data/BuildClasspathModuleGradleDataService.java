@@ -133,12 +133,15 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
         projectBuildClasspathPojo.getModulesBuildClasspath().put(externalModulePath,
                                                                  new ExternalModuleBuildClasspathPojo(externalModulePath, buildClasspath));
 
-        DataNode<DependencyAccessorsModel> dependenciesAccessorsModelNode =
-          ExternalSystemApiUtil.find(moduleDataNode, CommonGradleProjectResolverExtension.ACCESSORS);
-        if (dependenciesAccessorsModelNode != null) {
-          DependencyAccessorsModel accessorsModel = dependenciesAccessorsModelNode.getData();
-          buildClasspath.addAll(accessorsModel.getSources());
-          buildClasspath.addAll(accessorsModel.getClasses());
+        DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(moduleDataNode, ProjectKeys.PROJECT);
+        if (projectDataNode != null) {
+          DataNode<DependencyAccessorsModel> dependenciesAccessorsModelNode =
+            ExternalSystemApiUtil.find(projectDataNode, CommonGradleProjectResolverExtension.ACCESSORS);
+          if (dependenciesAccessorsModelNode != null) {
+            DependencyAccessorsModel accessorsModel = dependenciesAccessorsModelNode.getData();
+            buildClasspath.addAll(accessorsModel.getSources());
+            buildClasspath.addAll(accessorsModel.getClasses());
+          }
         }
       }
     }
