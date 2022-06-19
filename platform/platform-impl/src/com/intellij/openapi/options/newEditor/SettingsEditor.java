@@ -49,7 +49,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-final class SettingsEditor extends AbstractEditor implements DataProvider, Place.Navigator {
+public final class SettingsEditor extends AbstractEditor implements DataProvider, Place.Navigator {
   private static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";
   private static final float SPLITTER_PROPORTION_DEFAULT_VALUE = .2f;
@@ -301,6 +301,12 @@ final class SettingsEditor extends AbstractEditor implements DataProvider, Place
         mutable.addListener(createReloadListener(groups));
       }
     }
+  }
+
+  public void select(Configurable configurable) {
+    myTreeView.select(configurable);
+    myEditor.select(configurable);
+    updateController(configurable);
   }
 
   @NotNull
