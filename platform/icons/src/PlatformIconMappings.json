@@ -544,7 +544,7 @@
       "push.svg": "vcs/push.svg",
       "revert.svg": "actions/rollback.svg",
       "stash.svg": [
-        "vcs/shelve.svg",
+        "vcs/Shelve.svg",
         "vcs/shelveSilent.svg"
       ],
       "update.svg": "actions/checkOut.svg"
