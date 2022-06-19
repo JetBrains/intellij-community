@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.gradle.config.GradleFileType
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionConsumer
 import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionCustomizer
@@ -14,8 +15,12 @@ class GradleCompletionCustomizer : GroovyCompletionCustomizer {
 
   override fun customizeCompletionConsumer(completionParameters: CompletionParameters,
                                            resultSet: CompletionResultSet): CompletionResultSet {
-    val sorter = CompletionSorter.defaultSorter(completionParameters, resultSet.prefixMatcher)
-    return resultSet.withRelevanceSorter(sorter.weighBefore("templates", GradleLookupWeigher()))
+    if (completionParameters.originalFile.fileType == GradleFileType) {
+      val sorter = CompletionSorter.defaultSorter(completionParameters, resultSet.prefixMatcher)
+      return resultSet.withRelevanceSorter(sorter.weighBefore("templates", GradleLookupWeigher()))
+    } else {
+      return resultSet
+    }
   }
 
   override fun generateCompletionConsumer(file: PsiFile, resultSet: CompletionResultSet): GroovyCompletionConsumer? {
