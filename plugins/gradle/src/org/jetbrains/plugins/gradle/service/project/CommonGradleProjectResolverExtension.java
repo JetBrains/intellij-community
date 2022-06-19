@@ -106,6 +106,11 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
                              new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
     }
 
+    final DependencyAccessorsModel dependencyAccessorsModel = resolverCtx.getExtraProject(DependencyAccessorsModel.class);
+    if (dependencyAccessorsModel != null) {
+      ideProject.createChild(ACCESSORS, dependencyAccessorsModel);
+    }
+
     populateProjectSdkModel(gradleProject, ideProject);
   }
 
@@ -333,11 +338,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     if (intellijSettings != null) {
       ideModule.createChild(ProjectKeys.CONFIGURATION,
                             new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
-    }
-
-    final DependencyAccessorsModel dependencyAccessorsModel = resolverCtx.getExtraProject(gradleModule, DependencyAccessorsModel.class);
-    if (dependencyAccessorsModel != null) {
-      ideModule.createChild(ACCESSORS, dependencyAccessorsModel);
     }
 
     ProjectImportAction.AllModels models = resolverCtx.getModels();

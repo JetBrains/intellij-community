@@ -15,7 +15,7 @@ class DependencyAccessorsModelBuilder implements ModelBuilderService {
 
   @Override
   boolean canBuild(String modelName) {
-    modelName == DependencyAccessorsModel.name
+    return modelName == DependencyAccessorsModel.name
   }
 
   @Override
@@ -23,8 +23,8 @@ class DependencyAccessorsModelBuilder implements ModelBuilderService {
     if (GradleVersion.current().baseVersion >= GradleVersion.version("7.0") && project instanceof ProjectInternal) {
       try {
         DependenciesAccessors accessors = project.services.get(DependenciesAccessors)
-        List<String> sources = accessors.sources.asFiles.collect {it.toString() }
-        List<String> classes = accessors.classes.asFiles.collect {it.toString() }
+        List<String> sources = accessors.sources.asFiles.collect { it.toString() }
+        List<String> classes = accessors.classes.asFiles.collect { it.toString() }
         return new DefaultDependencyAccessorsModel(sources, classes)
       } catch (UnknownServiceException | ClassNotFoundException ignored) {
       }
