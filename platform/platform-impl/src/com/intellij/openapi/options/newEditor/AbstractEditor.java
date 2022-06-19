@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-abstract class AbstractEditor extends JPanel implements Disposable {
+public abstract class AbstractEditor extends JPanel implements Disposable {
   volatile boolean myDisposed;
 
   AbstractEditor(@NotNull Disposable parent) {
