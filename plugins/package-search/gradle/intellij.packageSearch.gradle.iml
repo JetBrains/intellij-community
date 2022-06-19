@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -Xopt-in=kotlin.ExperimentalStdlibApi -Xopt-in=kotlinx.coroutines.FlowPreview -Xopt-in=kotlin.time.ExperimentalTime -Xopt-in=kotlin.RequiresOptIn" />
+          <option name="additionalArguments" value="-version -Xjvm-default=enable -Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -Xopt-in=kotlin.ExperimentalStdlibApi -Xopt-in=kotlinx.coroutines.FlowPreview -Xopt-in=kotlin.time.ExperimentalTime -Xopt-in=kotlin.RequiresOptIn" />
         </compilerSettings>
         <compilerArguments>
           <option name="jvmTarget" value="11" />

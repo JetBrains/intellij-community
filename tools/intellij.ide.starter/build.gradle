@@ -73,7 +73,6 @@ compileKotlin {
     jvmTarget = JavaVersion.VERSION_11.toString()
     freeCompilerArgs += [
       "-version",
-      "-Xstrict-java-nullability-assertions",
       "-Xjvm-default=enable",
       "-Xopt-in=kotlin.io.path.ExperimentalPathApi",
       "-Xopt-in=kotlin.time.ExperimentalTime"
@@ -89,7 +88,6 @@ compileTestKotlin {
     jvmTarget = JavaVersion.VERSION_11.toString()
     freeCompilerArgs += [
       "-version",
-      "-Xstrict-java-nullability-assertions",
       "-Xjvm-default=enable",
       "-Xopt-in=kotlin.io.path.ExperimentalPathApi",
       "-Xopt-in=kotlin.time.ExperimentalTime"
