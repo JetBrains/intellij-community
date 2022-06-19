@@ -29,7 +29,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
                                                       data.name)
       is Data.NoCommit -> createOrCheckoutNewBranch(data.project, data.repositories, HEAD,
                                                     initialName = data.repositories.getCommonCurrentBranch())
-      else -> {}
+      is Data.Disabled, Data.Invisible -> {}
     }
   }
 

@@ -58,7 +58,7 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
       }
     }
 
-  private fun updateIgnoredOption(option: ManageIgnoredOption?) {
+  private fun updateIgnoredOption(option: ManageIgnoredOption) {
     val applicationSettings = VcsApplicationSettings.getInstance()
     val propertiesComponent = PropertiesComponent.getInstance(project)
     when (option) {
@@ -92,7 +92,6 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
         applicationSettings.MANAGE_IGNORE_FILES = false
         applicationSettings.DISABLE_MANAGE_IGNORE_FILES = false
       }
-      else -> {}
     }
   }
 
