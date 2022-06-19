@@ -9,6 +9,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       EXTERNALLY_ADDED_FILES,
       PROJECT_CONFIGURATION_FILES_ADDED,
       MANAGE_IGNORE_FILES,
+      IGNORED_TO_EXCLUDE_NOT_FOUND,
       CHERRY_PICK_ERROR,
       COMMIT_CANCELED,
       COMMIT_FAILED,
@@ -36,7 +37,10 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       SHELVE_FAILED,
       SHELVE_SUCCESSFUL,
       SHELF_UNDO_DELETE,
-      UNCOMMITTED_CHANGES_SAVING_ERROR
+      UNCOMMITTED_CHANGES_SAVING_ERROR,
+      CANNOT_LOAD_ANNOTATIONS,
+      SUGGESTED_PLUGIN_INSTALL_FAILED,
+      OBSOLETE_PLUGIN_UNBUNDLED
     )
   }
 
@@ -73,6 +77,9 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
     const val SHELVE_SUCCESSFUL = "vcs.shelve.successful"
     const val SHELF_UNDO_DELETE = "vcs.shelf.undo.delete"
     const val UNCOMMITTED_CHANGES_SAVING_ERROR = "vcs.uncommitted.changes.saving.error"
+    const val CANNOT_LOAD_ANNOTATIONS = "vcs.cannot.load.annotations"
+    const val SUGGESTED_PLUGIN_INSTALL_FAILED = "vcs.suggested.plugin.install.failed"
+    const val OBSOLETE_PLUGIN_UNBUNDLED = "vcs.obsolete.plugin.unbundled"
   }
 }
 

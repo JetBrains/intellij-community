@@ -102,7 +102,11 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       UPDATE_ERROR,
       UPDATE_NO_TRACKED_BRANCH,
       UPDATE_NOTHING_TO_UPDATE,
-      BAD_EXECUTABLE
+      BAD_EXECUTABLE,
+      REBASE_STOPPED_ON_CONFLICTS,
+      REBASE_STOPPED_ON_EDITING,
+      REBASE_FAILED,
+      UNTRACKED_FIES_OVERWITTEN
     )
   }
 
@@ -204,5 +208,9 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val UPDATE_NO_TRACKED_BRANCH = "git.update.no.tracked.branch.error"
     const val UPDATE_NOTHING_TO_UPDATE = "git.update.nothing.to.update"
     const val BAD_EXECUTABLE = "git.bad.executable"
+    const val REBASE_STOPPED_ON_CONFLICTS = "git.rebase.stopped.due.to.conflicts"
+    const val REBASE_STOPPED_ON_EDITING = "git.rebase.stopped.for.editing"
+    const val REBASE_FAILED = "git.rebase.failed"
+    const val UNTRACKED_FIES_OVERWITTEN = "untracked.files.overwritten"
   }
 }
