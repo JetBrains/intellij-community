@@ -715,7 +715,9 @@ public final class Utils {
           actions.removeAll(suppressed);
         }
       }
-      catch (Exception e) {
+      catch (ProcessCanceledException ignore) {
+      }
+      catch (Throwable e) {
         LOG.error(e);
       }
     }
