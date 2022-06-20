@@ -5,6 +5,7 @@ import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -413,7 +414,12 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       }
     }
     catch (Throwable e) {
-      LOG.error(e);
+      if (e instanceof ControlFlowException) {
+        LOG.warn(e);
+      }
+      else {
+        LOG.error(e);
+      }
     }
   }
 
