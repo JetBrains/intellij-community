@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId;
@@ -47,7 +48,7 @@ public abstract class FeatureUsagesCollector {
   public String getGroupId() {
     EventLogGroup group = getGroup();
     if (group == null) {
-      throw new IllegalStateException("Please override either getGroupId() or getGroup()");
+      throw PluginException.createByClass("Please override either getGroupId() or getGroup() in " + getClass().getName(), null, getClass());
     }
     return group.getId();
   }
