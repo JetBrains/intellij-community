@@ -27,6 +27,7 @@ import com.intellij.util.io.*
 import com.intellij.util.ui.StartupUiUtil
 import java.io.InputStream
 import java.nio.file.Path
+import java.time.Instant
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
@@ -104,7 +105,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       return
     }
 
-    val snapshot = SettingsSnapshot(setOf(FileState.Modified(file, content, size)))
+    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now()), setOf(FileState.Modified(file, content, size)))
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
@@ -163,7 +164,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       deleteOrLogError(file)
     }
     if (deleted) {
-      val snapshot = SettingsSnapshot(setOf(FileState.Deleted(adjustedSpec)))
+      val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now()), setOf(FileState.Deleted(adjustedSpec)))
       SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
     }
     return deleted

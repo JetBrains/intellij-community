@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.util.PathUtil
 import com.intellij.util.io.*
 import org.eclipse.jgit.api.Git
@@ -19,8 +20,11 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import java.nio.charset.StandardCharsets
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
+import java.time.Instant
+import java.util.regex.Pattern
 import kotlin.io.path.relativeTo
 
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
@@ -100,7 +104,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
         addCommand.addFilepattern(filePattern)
       }
       addCommand.call()
-      commit("Copy existing configs")
+      commit("Copy existing configs", Instant.now())
     }
   }
 
@@ -171,13 +175,17 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
     addCommand.call()
 
-    commit(message)
+    commit(message, snapshot.metaInfo.dateCreated)
   }
 
-  private fun commit(message: String) {
+  private fun commit(message: String, dateCreated: Instant) {
     // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
     try {
-      git.commit().setMessage(message).setAllowEmpty(false).call()
+      val commit = git.commit().setMessage(message).setAllowEmpty(false).call()
+
+      // emulating --author-date since there is no API in JGit to provide this information,
+      // and because the date is 1-second granularity on some OSs
+      git.notesAdd().setMessage("$DATE_PREFIX${dateCreated.toEpochMilli()}").setObjectId(commit).call()
     }
     catch (e: EmptyCommitException) {
       LOG.info("No actual changes in the settings")
@@ -197,7 +205,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       .onEnter { it.name != ".git" }
       .filter { it.isFile && it.name != ".gitignore" }
       .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), settingsSyncStorage) }
-    return SettingsSnapshot(files)
+    return SettingsSnapshot(MetaInfo(Instant.now()), files)
   }
 
   override fun getIdePosition(): SettingsLog.Position {
@@ -277,12 +285,36 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
   private fun mergeUsingSimplifiedLastModifiedStrategy() {
     val ideTip = git.log().add(ide.objectId).setMaxCount(1).call().first()
-    val ideLastDate = ideTip.commitTime
+    val ideLastDate = getDate(ideTip)
     val cloudTip = git.log().add(cloud.objectId).setMaxCount(1).call().first()
-    val cloudLastDate = cloudTip.commitTime
+    val cloudLastDate = getDate(cloudTip)
     val mergeStrategy = if (ideLastDate >= cloudLastDate) MergeStrategy.OURS else MergeStrategy.THEIRS
     val mergeResult = git.merge().include(cloud).setStrategy(mergeStrategy).call()
     LOG.info("Merging with the last-modified strategy completed with result: $mergeResult")
+  }
+
+  private fun getDate(commit: RevCommit) : Instant {
+    try {
+      val noteObject = git.notesShow().setObjectId(commit).call()
+      if (noteObject != null) {
+        val noteContent = String(repository.open(noteObject.data).bytes, StandardCharsets.UTF_8)
+        val matcher = DATE_PATTERN.matcher(noteContent)
+        if (matcher.matches()) {
+          val date = matcher.group(1)
+          return Instant.ofEpochMilli(date.toLong())
+        }
+        else {
+          LOG.warn("Note for commit $commit doesn't match format: [$noteContent]")
+        }
+      }
+      else {
+        LOG.warn("No note assigned to commit $commit")
+      }
+    }
+    catch (e: Throwable) {
+      LOG.warn("Error reading a note assigned to commit $commit", e)
+    }
+    return Instant.ofEpochSecond(commit.commitTime.toLong())
   }
 
   private fun abortMerge() {
@@ -310,5 +342,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     const val MASTER_REF_NAME = "master"
     const val IDE_REF_NAME = "ide"
     const val CLOUD_REF_NAME = "cloud"
+
+    const val DATE_PREFIX = "date: "
+    val DATE_PATTERN = Pattern.compile("$DATE_PREFIX(\\d+)")
   }
 }

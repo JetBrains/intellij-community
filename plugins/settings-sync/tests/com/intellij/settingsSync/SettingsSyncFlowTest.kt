@@ -88,7 +88,11 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     val dotGit = settingsSyncStorage.resolve(".git")
     FileRepositoryBuilder.create(dotGit.toFile()).use { repository ->
       val git = Git(repository)
-      val commits = git.log().all().call().toList()
+      val commits = git.log()
+        .add(repository.findRef("master").objectId)
+        .add(repository.findRef("ide").objectId)
+        .add(repository.findRef("cloud").objectId)
+        .call().toList()
       assertEquals("Unexpected number of commits. Commits: ${commits.joinToString { "'${it.shortMessage}'" }}", 3, commits.size)
       val (applyCloud, copyExistingSettings, initial) = commits
 

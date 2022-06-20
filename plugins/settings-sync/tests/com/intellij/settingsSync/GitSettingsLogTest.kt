@@ -2,7 +2,6 @@ package com.intellij.settingsSync
 
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.util.TimeoutUtil.sleep
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.createFile
 import com.intellij.util.io.readText
@@ -73,7 +72,6 @@ internal class GitSettingsLogTest {
     settingsLog.applyIdeState(settingsSnapshot {
       fileState("options/editor.xml", "ideEditorContent")
     })
-    sleep(1000) // to make sure commits have different timestamps (they are of 1-second granularity)
     settingsLog.applyCloudState(settingsSnapshot {
       fileState("options/editor.xml", "cloudEditorContent")
     })
@@ -96,7 +94,6 @@ internal class GitSettingsLogTest {
     settingsLog.applyIdeState(settingsSnapshot {
       fileState(FileState.Deleted("options/editor.xml"))
     })
-    sleep(1000) // to make sure commits have different timestamps (they are of 1-second granularity)
     settingsLog.applyCloudState(settingsSnapshot {
       fileState("options/editor.xml", "cloudEditorContent")
     })
@@ -119,7 +116,6 @@ internal class GitSettingsLogTest {
     settingsLog.applyCloudState(settingsSnapshot {
       fileState("options/editor.xml", "moreCloudEditorContent")
     })
-    sleep(1000) // to make sure commits have different timestamps (they are of 1-second granularity)
     settingsLog.applyIdeState(settingsSnapshot {
       fileState(FileState.Deleted("options/editor.xml"))
     })

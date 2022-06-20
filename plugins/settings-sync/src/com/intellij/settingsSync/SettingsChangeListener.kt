@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import java.time.Instant
 import java.util.*
 
 internal fun interface SettingsChangeListener : EventListener {
@@ -16,7 +17,10 @@ internal sealed class SyncSettingsEvent {
   object LogCurrentSettings: SyncSettingsEvent()
 }
 
-internal data class SettingsSnapshot(val fileStates: Set<FileState>) {
+internal data class SettingsSnapshot(val metaInfo: MetaInfo, val fileStates: Set<FileState>) {
+
+  data class MetaInfo(val dateCreated: Instant)
+
   fun isEmpty(): Boolean = fileStates.isEmpty()
 }
 

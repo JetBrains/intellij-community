@@ -10,6 +10,7 @@ import com.intellij.util.xmlb.Constants
 import org.jdom.Element
 import org.junit.Assert
 import java.nio.charset.StandardCharsets
+import java.time.Instant
 
 internal fun SettingsSnapshot.assertSettingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
   val settingsSnapshotBuilder = SettingsSnapshotBuilder()
@@ -42,10 +43,10 @@ internal fun PersistentStateComponent<*>.serialize(): ByteArray {
   return appElement.toBufferExposingByteArray().toByteArray()
 }
 
-internal fun settingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) : SettingsSnapshot {
+internal fun settingsSnapshot(date: Instant = Instant.now(), build: SettingsSnapshotBuilder.() -> Unit) : SettingsSnapshot {
   val builder = SettingsSnapshotBuilder()
   builder.build()
-  return SettingsSnapshot(builder.fileStates.toSet())
+  return SettingsSnapshot(SettingsSnapshot.MetaInfo(date), builder.fileStates.toSet())
 }
 
 internal class SettingsSnapshotBuilder {

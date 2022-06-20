@@ -10,6 +10,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
+import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.testFramework.replaceService
 import com.intellij.util.toBufferExposingByteArray
 import kotlinx.coroutines.runBlocking
@@ -21,6 +22,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.charset.Charset
 import java.nio.file.Path
+import java.time.Instant
 import java.util.concurrent.CountDownLatch
 
 @RunWith(JUnit4::class)
@@ -136,7 +138,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     val fileState = GeneralSettings().apply {
       isSaveOnFrameDeactivation = false
     }.toFileState()
-    remoteCommunicator.updateResult = UpdateResult.Success(SettingsSnapshot(setOf(fileState)))
+    remoteCommunicator.updateResult = UpdateResult.Success(SettingsSnapshot(MetaInfo(Instant.now()), setOf(fileState)))
 
     updateChecker.scheduleUpdateFromServer()
 
@@ -170,7 +172,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     val fileState = GeneralSettings().apply {
       isSaveOnFrameDeactivation = false
     }.toFileState()
-    remoteCommunicator.updateResult = UpdateResult.Success(SettingsSnapshot(setOf(fileState)))
+    remoteCommunicator.updateResult = UpdateResult.Success(SettingsSnapshot(MetaInfo(Instant.now()), setOf(fileState)))
     remoteCommunicator.offline = false
 
     updateChecker.scheduleUpdateFromServer() // merge will happen here
