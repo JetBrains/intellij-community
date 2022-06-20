@@ -30,10 +30,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorGutter;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -414,6 +411,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     @Override
     public void mouseMoved(@NotNull EditorMouseEvent e) {
       if (!ExperimentalUI.isNewUI()) return;
+      if (e.getEditor().getEditorKind() != EditorKind.MAIN_EDITOR) return;
       EditorGutter editorGutter = e.getEditor().getGutter();
       if (editorGutter instanceof EditorGutterComponentEx) {
         EditorGutterComponentEx gutter = (EditorGutterComponentEx)editorGutter;
