@@ -14,7 +14,7 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
-            <version>wrong-version</version>
+            <version>1.6.0</version>
         </dependency>
     </dependencies>
 
