@@ -76,7 +76,7 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   }
 
   protected static Path getLibSources() {
-    return IntelliJProjectConfiguration.getJarPathFromSingleJarProjectLibrary("assertJ");
+    return IntelliJProjectConfiguration.getJarPathFromSingleJarProjectLibrary("gson");
   }
 
   protected VirtualFile addSourceRoot(Module module, boolean testSource) throws IOException {

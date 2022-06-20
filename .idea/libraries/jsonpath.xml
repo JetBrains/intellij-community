@@ -1,19 +1,19 @@
 <component name="libraryTable">
   <library name="jsonpath" type="repository">
-    <properties maven-id="com.jayway.jsonpath:json-path:2.6.0">
+    <properties maven-id="com.jayway.jsonpath:json-path:2.7.0">
       <exclude>
         <dependency maven-id="org.ow2.asm:asm" />
         <dependency maven-id="org.slf4j:slf4j-api" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/2.6.0/json-path-2.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/2.7.0/json-path-2.7.0.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/minidev/json-smart/2.4.7/json-smart-2.4.7.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/minidev/accessors-smart/2.4.7/accessors-smart-2.4.7.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/2.6.0/json-path-2.6.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/2.7.0/json-path-2.7.0-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/minidev/json-smart/2.4.7/json-smart-2.4.7-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/minidev/accessors-smart/2.4.7/accessors-smart-2.4.7-sources.jar!/" />
     </SOURCES>

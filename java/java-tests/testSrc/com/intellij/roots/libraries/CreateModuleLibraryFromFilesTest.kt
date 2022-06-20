@@ -56,16 +56,16 @@ class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
   }
 
   fun testJarAndSources() {
-    // classesUrls of assertJ is used as sources JAR because sources maybe not downloaded in test mode
-    val assertJJar = getProjectLibrary("assertJ")
+    // classesUrls of gson is used as sources JAR because sources maybe not downloaded in test mode
+    val gsonJar = getProjectLibrary("gson")
 
     val library = createLibraries(
       OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
-      OrderRoot(IntelliJProjectConfiguration.getVirtualFile(assertJJar), OrderRootType.SOURCES),
+      OrderRoot(IntelliJProjectConfiguration.getVirtualFile(gsonJar), OrderRootType.SOURCES),
     ).single()
     assertThat(library.name).isNull()
     assertThat(library.getFiles(OrderRootType.CLASSES)).containsExactly(getFastUtilJar())
-    assertThat(library.getUrls(OrderRootType.SOURCES).asList()).isEqualTo(assertJJar.classesUrls)
+    assertThat(library.getUrls(OrderRootType.SOURCES).asList()).isEqualTo(gsonJar.classesUrls)
   }
 
   fun testJarWithSourcesInside() {
@@ -77,18 +77,18 @@ class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
   }
 
   fun testTwoJarAndSources() {
-    val assertJLib = getProjectLibrary("assertJ")
+    val gsonLib = getProjectLibrary("gson")
 
     val fastUtilJar = getFastUtilJar()
     val libraries = createLibraries(
       OrderRoot(fastUtilJar, OrderRootType.CLASSES),
       OrderRoot(asmJar, OrderRootType.CLASSES),
-      OrderRoot(IntelliJProjectConfiguration.getVirtualFile(assertJLib), OrderRootType.SOURCES),
+      OrderRoot(IntelliJProjectConfiguration.getVirtualFile(gsonLib), OrderRootType.SOURCES),
     )
     val library = libraries.single()
     assertThat(library.name).isNull()
     assertThat(library.getFiles(OrderRootType.CLASSES)).containsExactly(fastUtilJar, asmJar)
-    assertThat(library.getUrls(OrderRootType.SOURCES).asList()).isEqualTo(assertJLib.classesUrls)
+    assertThat(library.getUrls(OrderRootType.SOURCES).asList()).isEqualTo(gsonLib.classesUrls)
   }
 
   fun testTwoJarWithSourcesInside() {
