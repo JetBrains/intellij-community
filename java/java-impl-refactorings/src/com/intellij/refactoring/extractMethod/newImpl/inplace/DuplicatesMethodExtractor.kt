@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.SignatureSuggesterPreviewDialog
 import com.intellij.refactoring.extractMethod.newImpl.*
@@ -239,6 +240,18 @@ private fun findExtractOptions(targetClass: PsiClass, elements: List<PsiElement>
 }
 
 fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean) {
-  val extractOptions = findExtractOptions(targetClass, elements, methodName, makeStatic)
-  MethodExtractor().doDialogExtract(extractOptions)
+  val extractor = DuplicatesMethodExtractor.create(targetClass, elements, methodName, makeStatic)
+  val dialogOptions = MapFromDialog.mapFromDialog(extractor.extractOptions)
+  if (dialogOptions != null) {
+    val mappedExtractor = DuplicatesMethodExtractor(dialogOptions, extractor.anchor, extractor.elements)
+    MethodExtractor().executeRefactoringCommand(targetClass.project) {
+      MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
+      val (callElements, method) = mappedExtractor.extract()
+      MethodExtractor.sendRefactoringDoneEvent(method)
+      val editor = PsiEditorUtil.findEditor(targetClass)
+      if (editor != null) {
+        mappedExtractor.replaceDuplicates(editor, method)
+      }
+    }
+  }
 }

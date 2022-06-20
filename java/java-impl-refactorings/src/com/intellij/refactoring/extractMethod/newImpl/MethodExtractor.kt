@@ -31,7 +31,6 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replac
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.findAllOptionsToExtract
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
-import com.intellij.refactoring.extractMethod.newImpl.MapFromDialog.mapFromDialog
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodPopupProvider
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceMethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.extractInDialog
@@ -40,7 +39,6 @@ import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.ConflictsUtil
-import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CompletableFuture
@@ -143,26 +141,8 @@ class MethodExtractor {
     )
   }
 
-  fun doDialogExtract(options: ExtractOptions){
-    val dialogOptions = mapFromDialog(options, RefactoringBundle.message("extract.method.title"), HelpID.EXTRACT_METHOD)
-    if (dialogOptions != null) {
-      executeRefactoringCommand(dialogOptions.project) { doRefactoring(dialogOptions) }
-    }
-  }
-
-  private fun executeRefactoringCommand(project: Project, command: () -> Unit){
+  fun executeRefactoringCommand(project: Project, command: () -> Unit) {
     CommandProcessor.getInstance().executeCommand(project, command, ExtractMethodHandler.getRefactoringName(), null)
-  }
-
-  private fun doRefactoring(options: ExtractOptions) {
-    try {
-      sendRefactoringStartedEvent(options.elements.toTypedArray())
-      val extractedElements = extractMethod(options)
-      sendRefactoringDoneEvent(extractedElements.method)
-    }
-    catch (e: IncorrectOperationException) {
-      LOG.error(e)
-    }
   }
 
   fun replaceElements(sourceElements: List<PsiElement>, callElements: List<PsiElement>, anchor: PsiMember, method: PsiMethod): ExtractedElements {
