@@ -677,7 +677,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
       else {
         if (block.addLineSpace &&
             shiftedStartOffset < document.getTextLength() &&
-            document.getCharsSequence().charAt(shiftedStartOffset) != '\n') {
+            (block.caretUpdate == CaretUpdate.PUT_AT_COMMENT_START || document.getCharsSequence().charAt(shiftedStartOffset) != '\n')) {
           prefix += ' ';
         }
         InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(block.psiFile.getProject());
