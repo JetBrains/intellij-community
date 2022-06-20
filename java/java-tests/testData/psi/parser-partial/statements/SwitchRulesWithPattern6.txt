@@ -3,7 +3,7 @@ PsiJavaFile:SwitchRulesWithPattern6.java
     PsiKeyword:case('case')
     PsiWhiteSpace(' ')
     PsiCaseLabelElementList
-      PsiGuardedPattern
+      PsiPatternGuard
         PsiTypeTestPattern
           PsiPatternVariable:i
             PsiModifierList:

@@ -493,7 +493,7 @@ public class StatementParser {
         error(builder, JavaPsiBundle.message("expected.expression"));
       }
       PsiBuilder.Marker patternGuard = pattern.precede();
-      done(patternGuard, JavaElementType.GUARDED_PATTERN);
+      done(patternGuard, JavaElementType.PATTERN_GUARD);
       return Pair.create(patternGuard, false);
     }
     return Pair.create(myParser.getExpressionParser().parseAssignment(builder, BitUtil.set(0, ExpressionParser.FORBID_LAMBDA_MASK, true)), true);
