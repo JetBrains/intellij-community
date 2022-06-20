@@ -131,7 +131,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     myProjectTypeList = new JBList<>();
     myProjectTypeList.setModel(new CollectionListModel<>(groups));
     myProjectTypeList.setSelectionModel(new SingleSelectionModel());
-    myProjectTypeList.addListSelectionListener(__ -> updateSelection());
     myProjectTypeList.setCellRenderer(new ProjectTypeListRenderer(groups));
 
     if (isNewWizard()) {
@@ -198,13 +197,17 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       }
     };
 
-    myProjectTypeList.getSelectionModel().addListSelectionListener(it -> {
-      if (!it.getValueIsAdjusting()) {
+    myProjectTypeList.addListSelectionListener(event -> {
+      if (!event.getValueIsAdjusting()) {
         projectTypeChanged();
       }
     });
 
-    myTemplatesList.addListSelectionListener(__ -> updateSelection());
+    myTemplatesList.addListSelectionListener(event -> {
+      if (!event.getValueIsAdjusting()) {
+        updateSelection();
+      }
+    });
 
     for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
       ModuleBuilder builder = templatesGroup.getModuleBuilder();
@@ -559,8 +562,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     catch (Throwable e) {
       LOG.error(e);
     }
-
-    NewProjectWizardCollector.Companion.logGeneratorSelected(myContext);
     myContext.setScreen(1);
 
     showCard(card);
@@ -774,6 +775,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
     myWizard.setDelegate(builder instanceof WizardDelegate ? (WizardDelegate)builder : null);
     myWizard.updateWizardButtons();
+
+    NewProjectWizardCollector.Companion.logGeneratorSelected(myContext);
   }
 
   @TestOnly
