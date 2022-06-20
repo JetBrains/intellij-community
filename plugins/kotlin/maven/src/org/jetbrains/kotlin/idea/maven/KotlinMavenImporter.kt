@@ -100,9 +100,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             contributeSourceDirectories(mavenProject, module, rootModel)
         }
 
-        if (MavenRunner.getInstance(module.project).settings.isDelegateBuildToMaven ||
-            !KotlinJpsPluginSettings.isUnbundledJpsExperimentalFeatureEnabled(module.project)
-        ) {
+        if (!KotlinJpsPluginSettings.isUnbundledJpsExperimentalFeatureEnabled(module.project)) {
             return
         }
         val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return
