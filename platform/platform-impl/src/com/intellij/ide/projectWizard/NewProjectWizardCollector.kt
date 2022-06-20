@@ -29,7 +29,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
     // @formatter:off
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 10)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 11)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = EventFields.Int("screen")
@@ -210,6 +210,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
         return BoundedStringEventField(name, allowedValues.toList(), String::lowercase)
       }
 
+      @Suppress("unused")
       fun enum(name: String, vararg allowedValues: String): BoundedStringEventField {
         return BoundedStringEventField(name, allowedValues.toList()) { it }
       }
