@@ -232,8 +232,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       private static boolean isParentInThrowsListPresent(@NotNull final PsiClass clazz,
                                                          @NotNull final List<PsiClassType> throwsList) {
         final PsiClassType type = PsiTypesUtil.getClassType(clazz);
-        return throwsList.stream()
-          .anyMatch(e -> e.isAssignableFrom(type));
+        return ContainerUtil.exists(throwsList, e -> e.isAssignableFrom(type));
       }
 
       /**
@@ -241,7 +240,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
        *
        * @param throwsList throws list of a method
        * @param currentRef the currently eliminated throws declaration in the throws list
-       * @return the set of throws declarations as strings from the throws list excluding the currently eliminated throws declaration
+       * @return the list of throws declarations as strings from the throws list excluding the currently eliminated throws declaration
        */
       private static List<PsiClassType> getThrowsListWithoutCurrent(@NotNull final PsiReferenceList throwsList,
                                                                     @NotNull final PsiJavaCodeReferenceElement currentRef) {
@@ -313,7 +312,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
       final Set<PsiClassType> unhandled = RedundantThrowsGraphAnnotator.getUnhandledExceptions(body, method, containingClass);
 
-      return unhandled.stream().anyMatch(myType::isAssignableFrom);
+      return ContainerUtil.exists(unhandled, myType::isAssignableFrom);
     }
 
     @Contract(pure = true)

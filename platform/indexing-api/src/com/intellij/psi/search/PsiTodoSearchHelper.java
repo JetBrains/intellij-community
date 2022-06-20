@@ -29,9 +29,9 @@ public interface PsiTodoSearchHelper {
   }
 
   /**
-   * Returns the list of all files in the project which have to do items.
+   * Returns the array of all files in the project which have to do items.
    *
-   * @return the list of files with to do items.
+   * @return the array of files with to do items.
    * @deprecated Use {@link #processFilesWithTodoItems(Processor)} instead.
    */
   @Deprecated

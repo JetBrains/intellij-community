@@ -129,12 +129,12 @@ public interface RefMethod extends RefJavaElement, RefOverridable {
   /**
    * Returns the list of exceptions which are included in the {@code throws} list
    * of the method but cannot be actually thrown. 
-   * 
+   * <p>
    * To return valid results, requires com.intellij.codeInspection.unneededThrows.RedundantThrowsGraphAnnotator.
    * (Dbl) Annotator registration is possible in {@link GlobalInspectionTool#initialize(com.intellij.codeInspection.GlobalInspectionContext)}
    * or {@link GlobalInspectionTool#getAnnotator(RefManager)} 
    *
-   * @return the list of exceptions declared but not thrown, or null if there are no
+   * @return the array of exceptions declared but not thrown, or null if there are no
    * such exceptions.
    */
   PsiClass @Nullable [] getUnThrownExceptions();

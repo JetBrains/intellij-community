@@ -263,7 +263,7 @@ public class JDParser {
    * @param markers    if this parameter is not null then it will be filled with Boolean values:
    *                   true if the corresponding line in returned list is inside &lt;pre&gt; tag,
    *                   false if it is outside
-   * @return array of strings (lines)
+   * @return list of strings (lines)
    */
   @Nullable
   private List<String> toArray(@Nullable String s, @Nullable List<Boolean> markers) {
@@ -446,7 +446,7 @@ public class JDParser {
    *
    * @param s     the specified string
    * @param width width of the wrapped text
-   * @return array of strings (lines)
+   * @return list of strings (lines)
    */
   @Contract("null, _ -> null")
   private List<String> toArrayWrapping(@Nullable String s, int width) {

@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 public @interface PropertyAccessor {
   /**
-   * @return list of property names corresponding to methods you want to replace calls to
+   * @return array of property names corresponding to methods you want to replace calls to
    */
   String[] value();
 }

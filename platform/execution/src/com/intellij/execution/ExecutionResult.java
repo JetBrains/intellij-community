@@ -37,7 +37,7 @@ public interface ExecutionResult {
   /**
    * Returns the actions to display in the toolbar of the Run/Debug console tab.
    *
-   * @return the list of toolbar actions to display.
+   * @return the array of toolbar actions to display.
    */
   AnAction @NotNull [] getActions();
 

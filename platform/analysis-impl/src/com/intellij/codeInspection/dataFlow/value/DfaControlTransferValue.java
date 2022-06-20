@@ -74,7 +74,7 @@ public final class DfaControlTransferValue extends DfaValue {
    */
   public interface TransferTarget {
     /**
-     * @return list of possible instruction offsets for given target
+     * @return array of possible instruction offsets for given target
      */
     default int @NotNull [] getPossibleTargets() {
       return ArrayUtil.EMPTY_INT_ARRAY;

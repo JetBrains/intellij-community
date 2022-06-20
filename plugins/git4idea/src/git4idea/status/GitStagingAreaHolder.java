@@ -146,7 +146,7 @@ public class GitStagingAreaHolder {
   /**
    * Collect dirty file paths, previous changes are included in collection.
    *
-   * @return the set of dirty paths to check, grouped by root
+   * @return the map whose values are lists of dirty paths to check, grouped by root
    * The paths will be automatically collapsed later if the summary length more than limit, see {@link GitHandler#isLargeCommandLine()}.
    */
   @NotNull

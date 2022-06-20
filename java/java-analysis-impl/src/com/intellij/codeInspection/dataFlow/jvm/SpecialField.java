@@ -390,7 +390,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
   }
 
   /**
-   * @return a list of method contracts which equivalent to checking this special field for zero
+   * @return a array of method contracts which equivalent to checking this special field for zero
    */
   public MethodContract[] getEmptyContracts() {
     ContractValue thisValue = ContractValue.qualifier().specialField(this);

@@ -73,11 +73,11 @@ public interface PsiSearchHelper {
                                        @NotNull Processor<? super VirtualFile> processor);
 
   /**
-   * Returns the list of files which contain the specified word in "plain text"
+   * Returns the array of files which contain the specified word in "plain text"
    * context (for example, plain text files or attribute values in XML files).
    *
    * @param word the word to search.
-   * @return the list of files containing the word.
+   * @return the array of files containing the word.
    */
   PsiFile @NotNull [] findFilesWithPlainTextWords(@NotNull String word);
 

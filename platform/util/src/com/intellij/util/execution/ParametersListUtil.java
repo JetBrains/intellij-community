@@ -97,7 +97,7 @@ public final class ParametersListUtil {
    * </p>
    *
    * @param parameterString parameter string to split.
-   * @return array of parameters.
+   * @return list of parameters.
    */
   @NotNull
   public static List<String> parse(@NotNull String parameterString) {

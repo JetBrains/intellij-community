@@ -33,7 +33,7 @@ public final class ChooseByNameRegistry {
   /**
    * Returns the list of registered contributors for the "Goto Symbol" list.
    *
-   * @return the array of contributors.
+   * @return the list of contributors.
    */
   public List<ChooseByNameContributor> getSymbolModelContributors() {
     return ChooseByNameContributor.SYMBOL_EP_NAME.getExtensionList();

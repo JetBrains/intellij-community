@@ -239,7 +239,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   }
 
   /**
-   * @return a set of valid files that are in the history, oldest first.
+   * @return a list of valid files that are in the history, oldest first.
    */
   @NotNull
   public synchronized List<VirtualFile> getFileList() {

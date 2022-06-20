@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.blockingCallsDetection;
 
+import com.intellij.codeInspection.blockingCallsDetection.ContextType.Blocking;
+import com.intellij.codeInspection.blockingCallsDetection.ContextType.NonBlocking;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,14 +24,15 @@ public interface NonBlockingContextChecker {
   /**
    * @param elementContext metadata that provides info about inspection settings and PsiElement (e.g. method call or reference)
    *                      to check if it is placed in code fragment where thread block is not allowed
-   * @return true if code fragment for {@code element} is considered "non-blocking", false otherwise
+   * @return {@link NonBlocking#INSTANCE} if code fragment for {@code element} is considered "non-blocking",
+   * {@link Blocking#INSTANCE} otherwise
    */
   default ContextType computeContextType(@NotNull ElementContext elementContext) {
     if (isContextNonBlockingFor(elementContext.getElement())) {
-      return ContextType.NonBlocking.INSTANCE;
+      return NonBlocking.INSTANCE;
     }
     else {
-      return ContextType.Blocking.INSTANCE;
+      return Blocking.INSTANCE;
     }
   }
 

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public interface PsiSnippetAttributeList extends PsiElement {
   /**
-   * @return list of name-value pairs of snippet tag.
+   * @return array of name-value pairs of snippet tag.
    */
   PsiSnippetAttribute @NotNull [] getAttributes();
 }
