@@ -237,7 +237,8 @@ class GitMergeDialog(private val project: Project,
 
     val selectedRepository = getSelectedRepository()
     val unmergedBranches = unmergedBranches[selectedRepository] ?: return null
-    val selectedBranchMerged = unmergedBranches.none { equalBranches(it, selectedBranch) }
+    val selectedBranchMerged = unmergedBranches.none { equalBranches(it, selectedBranch) ||
+                                                       equalBranches(it, REMOTE_REF + selectedBranch)}
 
     if (selectedBranchMerged) {
       return ValidationInfo(GitBundle.message("merge.branch.already.merged", selectedBranch), branchField)
