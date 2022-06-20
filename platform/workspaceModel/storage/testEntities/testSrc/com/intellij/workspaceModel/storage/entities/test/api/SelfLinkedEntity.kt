@@ -45,7 +45,7 @@ var SelfLinkedEntity.Builder.children: @Child List<SelfLinkedEntity>
         return referrersx(SelfLinkedEntity::parentEntity)
     }
     set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(SelfLinkedEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(SelfLinkedEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion

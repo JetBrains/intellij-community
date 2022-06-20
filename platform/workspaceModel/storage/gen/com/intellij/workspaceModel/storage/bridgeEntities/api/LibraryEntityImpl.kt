@@ -188,9 +188,9 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneChild(SDK_CONNECTION_ID, this) ?: this.entityLinks[SDK_CONNECTION_ID]?.entity as? SdkEntity
+                    _diff.extractOneToOneChild(SDK_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, SDK_CONNECTION_ID)] as? SdkEntity
                 } else {
-                    this.entityLinks[SDK_CONNECTION_ID]?.entity as? SdkEntity
+                    this.entityLinks[EntityLink(true, SDK_CONNECTION_ID)] as? SdkEntity
                 }
             }
             set(value) {
@@ -198,7 +198,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[SDK_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, SDK_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -208,11 +208,11 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[SDK_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, SDK_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[SDK_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, SDK_CONNECTION_ID)] = value
                 }
                 changedProperty.add("sdk")
             }
@@ -221,9 +221,9 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneChild(LIBRARYPROPERTIES_CONNECTION_ID, this) ?: this.entityLinks[LIBRARYPROPERTIES_CONNECTION_ID]?.entity as? LibraryPropertiesEntity
+                    _diff.extractOneToOneChild(LIBRARYPROPERTIES_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, LIBRARYPROPERTIES_CONNECTION_ID)] as? LibraryPropertiesEntity
                 } else {
-                    this.entityLinks[LIBRARYPROPERTIES_CONNECTION_ID]?.entity as? LibraryPropertiesEntity
+                    this.entityLinks[EntityLink(true, LIBRARYPROPERTIES_CONNECTION_ID)] as? LibraryPropertiesEntity
                 }
             }
             set(value) {
@@ -231,7 +231,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[LIBRARYPROPERTIES_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, LIBRARYPROPERTIES_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -241,11 +241,11 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[LIBRARYPROPERTIES_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, LIBRARYPROPERTIES_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[LIBRARYPROPERTIES_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, LIBRARYPROPERTIES_CONNECTION_ID)] = value
                 }
                 changedProperty.add("libraryProperties")
             }
@@ -254,9 +254,9 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneChild(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this) ?: this.entityLinks[LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID]?.entity as? LibraryFilesPackagingElementEntity
+                    _diff.extractOneToOneChild(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] as? LibraryFilesPackagingElementEntity
                 } else {
-                    this.entityLinks[LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID]?.entity as? LibraryFilesPackagingElementEntity
+                    this.entityLinks[EntityLink(true, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] as? LibraryFilesPackagingElementEntity
                 }
             }
             set(value) {
@@ -264,7 +264,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -274,11 +274,11 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = value
                 }
                 changedProperty.add("libraryFilesPackagingElement")
             }

@@ -104,7 +104,7 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[MODULE_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
                     error("Field FacetEntity#module should be initialized")
                 }
             }
@@ -142,9 +142,9 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[MODULE_CONNECTION_ID]?.entity!! as ModuleEntity
+                    _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
                 } else {
-                    this.entityLinks[MODULE_CONNECTION_ID]?.entity!! as ModuleEntity
+                    this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
                 }
             }
             set(value) {
@@ -153,8 +153,8 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[MODULE_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[MODULE_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -165,12 +165,12 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                 else {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[MODULE_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[MODULE_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[MODULE_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
                 }
                 changedProperty.add("module")
             }
@@ -204,9 +204,9 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this) ?: this.entityLinks[UNDERLYINGFACET_CONNECTION_ID]?.entity as? FacetEntity
+                    _diff.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, UNDERLYINGFACET_CONNECTION_ID)] as? FacetEntity
                 } else {
-                    this.entityLinks[UNDERLYINGFACET_CONNECTION_ID]?.entity as? FacetEntity
+                    this.entityLinks[EntityLink(false, UNDERLYINGFACET_CONNECTION_ID)] as? FacetEntity
                 }
             }
             set(value) {
@@ -215,8 +215,8 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[UNDERLYINGFACET_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[UNDERLYINGFACET_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, UNDERLYINGFACET_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, UNDERLYINGFACET_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -227,12 +227,12 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                 else {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[UNDERLYINGFACET_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[UNDERLYINGFACET_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, UNDERLYINGFACET_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, UNDERLYINGFACET_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[UNDERLYINGFACET_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, UNDERLYINGFACET_CONNECTION_ID)] = value
                 }
                 changedProperty.add("underlyingFacet")
             }

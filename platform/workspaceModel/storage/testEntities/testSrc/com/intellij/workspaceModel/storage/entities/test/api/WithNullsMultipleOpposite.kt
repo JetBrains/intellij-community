@@ -45,7 +45,7 @@ var ParentWithNullsOppositeMultiple.Builder.children: @Child List<ChildWithNulls
         return referrersx(ChildWithNullsOppositeMultiple::parentEntity)
     }
     set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ChildWithNullsOppositeMultiple::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ChildWithNullsOppositeMultiple::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion

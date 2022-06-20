@@ -76,7 +76,7 @@ open class CustomSourceRootPropertiesEntityImpl: CustomSourceRootPropertiesEntit
                 }
             }
             else {
-                if (this.entityLinks[SOURCEROOT_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] == null) {
                     error("Field CustomSourceRootPropertiesEntity#sourceRoot should be initialized")
                 }
             }
@@ -97,9 +97,9 @@ open class CustomSourceRootPropertiesEntityImpl: CustomSourceRootPropertiesEntit
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneParent(SOURCEROOT_CONNECTION_ID, this) ?: this.entityLinks[SOURCEROOT_CONNECTION_ID]?.entity!! as SourceRootEntity
+                    _diff.extractOneToOneParent(SOURCEROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
                 } else {
-                    this.entityLinks[SOURCEROOT_CONNECTION_ID]?.entity!! as SourceRootEntity
+                    this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
                 }
             }
             set(value) {
@@ -107,7 +107,7 @@ open class CustomSourceRootPropertiesEntityImpl: CustomSourceRootPropertiesEntit
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[SOURCEROOT_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -117,11 +117,11 @@ open class CustomSourceRootPropertiesEntityImpl: CustomSourceRootPropertiesEntit
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[SOURCEROOT_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[SOURCEROOT_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
                 }
                 changedProperty.add("sourceRoot")
             }

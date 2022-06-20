@@ -76,7 +76,7 @@ var ChildWithNulls.Builder.parentEntity: ParentWithNulls?
         return referrersx(ParentWithNulls::child).singleOrNull()
     }
     set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ParentWithNulls::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ParentWithNulls::class, false, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion

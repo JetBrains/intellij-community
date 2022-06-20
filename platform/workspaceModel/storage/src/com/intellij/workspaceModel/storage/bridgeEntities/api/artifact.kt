@@ -67,7 +67,7 @@ var ArtifactEntity.Builder.artifactExternalSystemIdEntity: @Child ArtifactExtern
         return referrersx(ArtifactExternalSystemIdEntity::artifactEntity).singleOrNull()
     }
     set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ArtifactExternalSystemIdEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ArtifactExternalSystemIdEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion
@@ -284,7 +284,7 @@ var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity
         return referrersx(ArtifactEntity::artifactOutputPackagingElement).single()
     }
     set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ArtifactEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ArtifactEntity::class, false, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion
@@ -352,7 +352,7 @@ var LibraryFilesPackagingElementEntity.Builder.libraryEntity: LibraryEntity
         return referrersx(LibraryEntity::libraryFilesPackagingElement).single()
     }
     set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(LibraryEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(LibraryEntity::class, false, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion

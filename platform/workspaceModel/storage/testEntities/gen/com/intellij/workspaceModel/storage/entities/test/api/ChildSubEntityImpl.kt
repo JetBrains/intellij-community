@@ -78,7 +78,7 @@ open class ChildSubEntityImpl: ChildSubEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[PARENTENTITY_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] == null) {
                     error("Field ChildSubEntity#parentEntity should be initialized")
                 }
             }
@@ -91,7 +91,7 @@ open class ChildSubEntityImpl: ChildSubEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[CHILD_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] == null) {
                     error("Field ChildSubEntity#child should be initialized")
                 }
             }
@@ -106,9 +106,9 @@ open class ChildSubEntityImpl: ChildSubEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[PARENTENTITY_CONNECTION_ID]?.entity!! as ParentSubEntity
+                    _diff.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSubEntity
                 } else {
-                    this.entityLinks[PARENTENTITY_CONNECTION_ID]?.entity!! as ParentSubEntity
+                    this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSubEntity
                 }
             }
             set(value) {
@@ -116,7 +116,7 @@ open class ChildSubEntityImpl: ChildSubEntity, WorkspaceEntityBase() {
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[PARENTENTITY_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -126,11 +126,11 @@ open class ChildSubEntityImpl: ChildSubEntity, WorkspaceEntityBase() {
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[PARENTENTITY_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[PARENTENTITY_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
                 }
                 changedProperty.add("parentEntity")
             }
@@ -148,9 +148,9 @@ open class ChildSubEntityImpl: ChildSubEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[CHILD_CONNECTION_ID]?.entity!! as ChildSubSubEntity
+                    _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)]!! as ChildSubSubEntity
                 } else {
-                    this.entityLinks[CHILD_CONNECTION_ID]?.entity!! as ChildSubSubEntity
+                    this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)]!! as ChildSubSubEntity
                 }
             }
             set(value) {
@@ -158,7 +158,7 @@ open class ChildSubEntityImpl: ChildSubEntity, WorkspaceEntityBase() {
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[CHILD_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -168,11 +168,11 @@ open class ChildSubEntityImpl: ChildSubEntity, WorkspaceEntityBase() {
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[CHILD_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[CHILD_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] = value
                 }
                 changedProperty.add("child")
             }

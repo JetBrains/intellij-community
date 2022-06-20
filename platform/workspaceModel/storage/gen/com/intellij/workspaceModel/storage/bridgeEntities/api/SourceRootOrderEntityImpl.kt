@@ -77,7 +77,7 @@ open class SourceRootOrderEntityImpl: SourceRootOrderEntity, WorkspaceEntityBase
                 }
             }
             else {
-                if (this.entityLinks[CONTENTROOTENTITY_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, CONTENTROOTENTITY_CONNECTION_ID)] == null) {
                     error("Field SourceRootOrderEntity#contentRootEntity should be initialized")
                 }
             }
@@ -98,9 +98,9 @@ open class SourceRootOrderEntityImpl: SourceRootOrderEntity, WorkspaceEntityBase
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneParent(CONTENTROOTENTITY_CONNECTION_ID, this) ?: this.entityLinks[CONTENTROOTENTITY_CONNECTION_ID]?.entity!! as ContentRootEntity
+                    _diff.extractOneToOneParent(CONTENTROOTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, CONTENTROOTENTITY_CONNECTION_ID)]!! as ContentRootEntity
                 } else {
-                    this.entityLinks[CONTENTROOTENTITY_CONNECTION_ID]?.entity!! as ContentRootEntity
+                    this.entityLinks[EntityLink(false, CONTENTROOTENTITY_CONNECTION_ID)]!! as ContentRootEntity
                 }
             }
             set(value) {
@@ -108,7 +108,7 @@ open class SourceRootOrderEntityImpl: SourceRootOrderEntity, WorkspaceEntityBase
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[CONTENTROOTENTITY_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, CONTENTROOTENTITY_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -118,11 +118,11 @@ open class SourceRootOrderEntityImpl: SourceRootOrderEntity, WorkspaceEntityBase
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[CONTENTROOTENTITY_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, CONTENTROOTENTITY_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[CONTENTROOTENTITY_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, CONTENTROOTENTITY_CONNECTION_ID)] = value
                 }
                 changedProperty.add("contentRootEntity")
             }

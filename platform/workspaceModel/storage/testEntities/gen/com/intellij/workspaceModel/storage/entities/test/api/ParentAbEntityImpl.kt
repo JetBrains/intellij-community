@@ -74,7 +74,7 @@ open class ParentAbEntityImpl: ParentAbEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[CHILDREN_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] == null) {
                     error("Field ParentAbEntity#children should be initialized")
                 }
             }
@@ -92,9 +92,9 @@ open class ParentAbEntityImpl: ParentAbEntity, WorkspaceEntityBase() {
                 get() {
                     val _diff = diff
                     return if (_diff != null) {
-                        _diff.extractOneToAbstractManyChildren<ChildAbstractBaseEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[CHILDREN_CONNECTION_ID]?.entity as? List<ChildAbstractBaseEntity> ?: emptyList())
+                        _diff.extractOneToAbstractManyChildren<ChildAbstractBaseEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildAbstractBaseEntity> ?: emptyList())
                     } else {
-                        this.entityLinks[CHILDREN_CONNECTION_ID]?.entity!! as List<ChildAbstractBaseEntity>
+                        this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ChildAbstractBaseEntity> ?: emptyList()
                     }
                 }
                 set(value) {
@@ -111,12 +111,12 @@ open class ParentAbEntityImpl: ParentAbEntity, WorkspaceEntityBase() {
                     else {
                         for (item_value in value) {
                             if (item_value is ModifiableWorkspaceEntityBase<*>) {
-                                item_value.entityLinks[CHILDREN_CONNECTION_ID] = EntityLink(false, this)
+                                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
                             }
                             // else you're attaching a new entity to an existing entity that is not modifiable
                         }
                         
-                        this.entityLinks[CHILDREN_CONNECTION_ID] = EntityLink(true, value)
+                        this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
                     }
                     changedProperty.add("children")
                 }

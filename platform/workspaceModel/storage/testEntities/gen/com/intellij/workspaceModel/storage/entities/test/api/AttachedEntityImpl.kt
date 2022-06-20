@@ -78,7 +78,7 @@ open class AttachedEntityImpl: AttachedEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[REF_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, REF_CONNECTION_ID)] == null) {
                     error("Field AttachedEntity#ref should be initialized")
                 }
             }
@@ -99,9 +99,9 @@ open class AttachedEntityImpl: AttachedEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneParent(REF_CONNECTION_ID, this) ?: this.entityLinks[REF_CONNECTION_ID]?.entity!! as MainEntity
+                    _diff.extractOneToOneParent(REF_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, REF_CONNECTION_ID)]!! as MainEntity
                 } else {
-                    this.entityLinks[REF_CONNECTION_ID]?.entity!! as MainEntity
+                    this.entityLinks[EntityLink(false, REF_CONNECTION_ID)]!! as MainEntity
                 }
             }
             set(value) {
@@ -109,7 +109,7 @@ open class AttachedEntityImpl: AttachedEntity, WorkspaceEntityBase() {
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[REF_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, REF_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -119,11 +119,11 @@ open class AttachedEntityImpl: AttachedEntity, WorkspaceEntityBase() {
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[REF_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, REF_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[REF_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, REF_CONNECTION_ID)] = value
                 }
                 changedProperty.add("ref")
             }

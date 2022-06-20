@@ -136,7 +136,7 @@ interface ReferableWorkspaceEntity : WorkspaceEntity {
 }
 
 interface ModifiableReferableWorkspaceEntity : ReferableWorkspaceEntity  {
-  fun linkExternalEntity(entityClass: KClass<out WorkspaceEntity>, entities: List<WorkspaceEntity?>)
+  fun linkExternalEntity(entityClass: KClass<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity?>)
 }
 
 /**

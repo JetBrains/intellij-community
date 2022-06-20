@@ -72,7 +72,7 @@ open class ParentSingleAbEntityImpl: ParentSingleAbEntity, WorkspaceEntityBase()
                 }
             }
             else {
-                if (this.entityLinks[CHILD_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] == null) {
                     error("Field ParentSingleAbEntity#child should be initialized")
                 }
             }
@@ -90,9 +90,9 @@ open class ParentSingleAbEntityImpl: ParentSingleAbEntity, WorkspaceEntityBase()
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[CHILD_CONNECTION_ID]?.entity!! as ChildSingleAbstractBaseEntity
+                    _diff.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)]!! as ChildSingleAbstractBaseEntity
                 } else {
-                    this.entityLinks[CHILD_CONNECTION_ID]?.entity!! as ChildSingleAbstractBaseEntity
+                    this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)]!! as ChildSingleAbstractBaseEntity
                 }
             }
             set(value) {
@@ -100,7 +100,7 @@ open class ParentSingleAbEntityImpl: ParentSingleAbEntity, WorkspaceEntityBase()
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[CHILD_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -110,11 +110,11 @@ open class ParentSingleAbEntityImpl: ParentSingleAbEntity, WorkspaceEntityBase()
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[CHILD_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[CHILD_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] = value
                 }
                 changedProperty.add("child")
             }

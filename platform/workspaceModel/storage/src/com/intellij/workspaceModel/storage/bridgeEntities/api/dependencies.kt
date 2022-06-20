@@ -67,7 +67,7 @@ var LibraryEntity.Builder.externalSystemId: @Child LibraryExternalSystemIdEntity
         return referrersx(LibraryExternalSystemIdEntity::library).singleOrNull()
     }
     set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(LibraryExternalSystemIdEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(LibraryExternalSystemIdEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion

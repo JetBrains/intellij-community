@@ -100,7 +100,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[MODULE_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
                     error("Field ContentRootEntity#module should be initialized")
                 }
             }
@@ -123,7 +123,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[SOURCEROOTS_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] == null) {
                     error("Field ContentRootEntity#sourceRoots should be initialized")
                 }
             }
@@ -138,9 +138,9 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[MODULE_CONNECTION_ID]?.entity!! as ModuleEntity
+                    _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
                 } else {
-                    this.entityLinks[MODULE_CONNECTION_ID]?.entity!! as ModuleEntity
+                    this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
                 }
             }
             set(value) {
@@ -149,8 +149,8 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[MODULE_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[MODULE_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -161,12 +161,12 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                 else {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[MODULE_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[MODULE_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[MODULE_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
                 }
                 changedProperty.add("module")
             }
@@ -216,9 +216,9 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                 // Getter of the list of non-abstract referenced types
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyChildren<SourceRootEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[SOURCEROOTS_CONNECTION_ID]?.entity as? List<SourceRootEntity> ?: emptyList())
+                    _diff.extractOneToManyChildren<SourceRootEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootEntity> ?: emptyList())
                 } else {
-                    this.entityLinks[SOURCEROOTS_CONNECTION_ID]?.entity!! as List<SourceRootEntity>
+                    this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootEntity> ?: emptyList()
                 }
             }
             set(value) {
@@ -236,12 +236,12 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                 else {
                     for (item_value in value) {
                         if (item_value is ModifiableWorkspaceEntityBase<*>) {
-                            item_value.entityLinks[SOURCEROOTS_CONNECTION_ID] = EntityLink(false, this)
+                            item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
                     }
                     
-                    this.entityLinks[SOURCEROOTS_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] = value
                 }
                 changedProperty.add("sourceRoots")
             }
@@ -250,9 +250,9 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneChild(SOURCEROOTORDER_CONNECTION_ID, this) ?: this.entityLinks[SOURCEROOTORDER_CONNECTION_ID]?.entity as? SourceRootOrderEntity
+                    _diff.extractOneToOneChild(SOURCEROOTORDER_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] as? SourceRootOrderEntity
                 } else {
-                    this.entityLinks[SOURCEROOTORDER_CONNECTION_ID]?.entity as? SourceRootOrderEntity
+                    this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] as? SourceRootOrderEntity
                 }
             }
             set(value) {
@@ -260,7 +260,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[SOURCEROOTORDER_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, SOURCEROOTORDER_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -270,11 +270,11 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[SOURCEROOTORDER_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, SOURCEROOTORDER_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[SOURCEROOTORDER_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] = value
                 }
                 changedProperty.add("sourceRootOrder")
             }

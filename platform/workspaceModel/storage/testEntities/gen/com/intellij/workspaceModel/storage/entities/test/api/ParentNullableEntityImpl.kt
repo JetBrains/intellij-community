@@ -103,9 +103,9 @@ open class ParentNullableEntityImpl: ParentNullableEntity, WorkspaceEntityBase()
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[CHILD_CONNECTION_ID]?.entity as? ChildNullableEntity
+                    _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildNullableEntity
                 } else {
-                    this.entityLinks[CHILD_CONNECTION_ID]?.entity as? ChildNullableEntity
+                    this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildNullableEntity
                 }
             }
             set(value) {
@@ -113,7 +113,7 @@ open class ParentNullableEntityImpl: ParentNullableEntity, WorkspaceEntityBase()
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[CHILD_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -123,11 +123,11 @@ open class ParentNullableEntityImpl: ParentNullableEntity, WorkspaceEntityBase()
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[CHILD_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[CHILD_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] = value
                 }
                 changedProperty.add("child")
             }

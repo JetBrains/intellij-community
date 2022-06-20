@@ -36,7 +36,7 @@ val ExtField<*, *>.wsCode: String
         line("return ${wsFqn(referrFunction)}(${oppositeField.owner.javaSimpleName}::${oppositeField.javaName})$singleFunction")
       }
       section("set(value)") {
-        line("(this as ${ModifiableReferableWorkspaceEntity::class.fqn}).linkExternalEntity(${oppositeField.owner.name}::class, if (value is List<*>) value as List<${WorkspaceEntity::class.fqn}?> else listOf(value) as List<${WorkspaceEntity::class.fqn}?> )")
+        line("(this as ${ModifiableReferableWorkspaceEntity::class.fqn}).linkExternalEntity(${oppositeField.owner.name}::class, ${isChild}, if (value is List<*>) value as List<${WorkspaceEntity::class.fqn}?> else listOf(value) as List<${WorkspaceEntity::class.fqn}?> )")
       }
     }
   }

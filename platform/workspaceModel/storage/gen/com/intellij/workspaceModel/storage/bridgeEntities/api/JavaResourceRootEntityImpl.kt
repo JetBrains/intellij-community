@@ -77,7 +77,7 @@ open class JavaResourceRootEntityImpl: JavaResourceRootEntity, WorkspaceEntityBa
                 }
             }
             else {
-                if (this.entityLinks[SOURCEROOT_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] == null) {
                     error("Field JavaResourceRootEntity#sourceRoot should be initialized")
                 }
             }
@@ -98,9 +98,9 @@ open class JavaResourceRootEntityImpl: JavaResourceRootEntity, WorkspaceEntityBa
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this) ?: this.entityLinks[SOURCEROOT_CONNECTION_ID]?.entity!! as SourceRootEntity
+                    _diff.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
                 } else {
-                    this.entityLinks[SOURCEROOT_CONNECTION_ID]?.entity!! as SourceRootEntity
+                    this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
                 }
             }
             set(value) {
@@ -109,8 +109,8 @@ open class JavaResourceRootEntityImpl: JavaResourceRootEntity, WorkspaceEntityBa
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[SOURCEROOT_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[SOURCEROOT_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -121,12 +121,12 @@ open class JavaResourceRootEntityImpl: JavaResourceRootEntity, WorkspaceEntityBa
                 else {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[SOURCEROOT_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[SOURCEROOT_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[SOURCEROOT_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
                 }
                 changedProperty.add("sourceRoot")
             }

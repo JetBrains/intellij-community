@@ -104,9 +104,9 @@ open class XChildWithOptionalParentEntityImpl: XChildWithOptionalParentEntity, W
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyParent(OPTIONALPARENT_CONNECTION_ID, this) ?: this.entityLinks[OPTIONALPARENT_CONNECTION_ID]?.entity as? XParentEntity
+                    _diff.extractOneToManyParent(OPTIONALPARENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, OPTIONALPARENT_CONNECTION_ID)] as? XParentEntity
                 } else {
-                    this.entityLinks[OPTIONALPARENT_CONNECTION_ID]?.entity as? XParentEntity
+                    this.entityLinks[EntityLink(false, OPTIONALPARENT_CONNECTION_ID)] as? XParentEntity
                 }
             }
             set(value) {
@@ -115,8 +115,8 @@ open class XChildWithOptionalParentEntityImpl: XChildWithOptionalParentEntity, W
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[OPTIONALPARENT_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[OPTIONALPARENT_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, OPTIONALPARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, OPTIONALPARENT_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -127,12 +127,12 @@ open class XChildWithOptionalParentEntityImpl: XChildWithOptionalParentEntity, W
                 else {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[OPTIONALPARENT_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[OPTIONALPARENT_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, OPTIONALPARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, OPTIONALPARENT_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[OPTIONALPARENT_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, OPTIONALPARENT_CONNECTION_ID)] = value
                 }
                 changedProperty.add("optionalParent")
             }

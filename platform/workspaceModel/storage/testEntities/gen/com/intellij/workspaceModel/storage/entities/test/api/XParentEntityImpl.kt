@@ -93,7 +93,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[CHILDREN_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] == null) {
                     error("Field XParentEntity#children should be initialized")
                 }
             }
@@ -104,7 +104,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[OPTIONALCHILDREN_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(true, OPTIONALCHILDREN_CONNECTION_ID)] == null) {
                     error("Field XParentEntity#optionalChildren should be initialized")
                 }
             }
@@ -115,7 +115,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[CHILDCHILD_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] == null) {
                     error("Field XParentEntity#childChild should be initialized")
                 }
             }
@@ -150,9 +150,9 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 // Getter of the list of non-abstract referenced types
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyChildren<XChildEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[CHILDREN_CONNECTION_ID]?.entity as? List<XChildEntity> ?: emptyList())
+                    _diff.extractOneToManyChildren<XChildEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<XChildEntity> ?: emptyList())
                 } else {
-                    this.entityLinks[CHILDREN_CONNECTION_ID]?.entity!! as List<XChildEntity>
+                    this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<XChildEntity> ?: emptyList()
                 }
             }
             set(value) {
@@ -170,12 +170,12 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 else {
                     for (item_value in value) {
                         if (item_value is ModifiableWorkspaceEntityBase<*>) {
-                            item_value.entityLinks[CHILDREN_CONNECTION_ID] = EntityLink(false, this)
+                            item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
                     }
                     
-                    this.entityLinks[CHILDREN_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
                 }
                 changedProperty.add("children")
             }
@@ -187,9 +187,9 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 // Getter of the list of non-abstract referenced types
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyChildren<XChildWithOptionalParentEntity>(OPTIONALCHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[OPTIONALCHILDREN_CONNECTION_ID]?.entity as? List<XChildWithOptionalParentEntity> ?: emptyList())
+                    _diff.extractOneToManyChildren<XChildWithOptionalParentEntity>(OPTIONALCHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, OPTIONALCHILDREN_CONNECTION_ID)] as? List<XChildWithOptionalParentEntity> ?: emptyList())
                 } else {
-                    this.entityLinks[OPTIONALCHILDREN_CONNECTION_ID]?.entity!! as List<XChildWithOptionalParentEntity>
+                    this.entityLinks[EntityLink(true, OPTIONALCHILDREN_CONNECTION_ID)] as? List<XChildWithOptionalParentEntity> ?: emptyList()
                 }
             }
             set(value) {
@@ -207,12 +207,12 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 else {
                     for (item_value in value) {
                         if (item_value is ModifiableWorkspaceEntityBase<*>) {
-                            item_value.entityLinks[OPTIONALCHILDREN_CONNECTION_ID] = EntityLink(false, this)
+                            item_value.entityLinks[EntityLink(false, OPTIONALCHILDREN_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
                     }
                     
-                    this.entityLinks[OPTIONALCHILDREN_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, OPTIONALCHILDREN_CONNECTION_ID)] = value
                 }
                 changedProperty.add("optionalChildren")
             }
@@ -224,9 +224,9 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 // Getter of the list of non-abstract referenced types
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyChildren<XChildChildEntity>(CHILDCHILD_CONNECTION_ID, this)!!.toList() + (this.entityLinks[CHILDCHILD_CONNECTION_ID]?.entity as? List<XChildChildEntity> ?: emptyList())
+                    _diff.extractOneToManyChildren<XChildChildEntity>(CHILDCHILD_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] as? List<XChildChildEntity> ?: emptyList())
                 } else {
-                    this.entityLinks[CHILDCHILD_CONNECTION_ID]?.entity!! as List<XChildChildEntity>
+                    this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] as? List<XChildChildEntity> ?: emptyList()
                 }
             }
             set(value) {
@@ -244,12 +244,12 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 else {
                     for (item_value in value) {
                         if (item_value is ModifiableWorkspaceEntityBase<*>) {
-                            item_value.entityLinks[CHILDCHILD_CONNECTION_ID] = EntityLink(false, this)
+                            item_value.entityLinks[EntityLink(false, CHILDCHILD_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
                     }
                     
-                    this.entityLinks[CHILDCHILD_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] = value
                 }
                 changedProperty.add("childChild")
             }

@@ -44,7 +44,7 @@ var MainEntityList.Builder.child: @Child List<AttachedEntityList>
         return referrersx(AttachedEntityList::ref)
     }
     set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(AttachedEntityList::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(AttachedEntityList::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion

@@ -114,7 +114,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[ROOTELEMENT_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)] == null) {
                     error("Field ArtifactEntity#rootElement should be initialized")
                 }
             }
@@ -125,7 +125,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[CUSTOMPROPERTIES_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] == null) {
                     error("Field ArtifactEntity#customProperties should be initialized")
                 }
             }
@@ -183,9 +183,9 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this) ?: this.entityLinks[ROOTELEMENT_CONNECTION_ID]?.entity!! as CompositePackagingElementEntity
+                    _diff.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)]!! as CompositePackagingElementEntity
                 } else {
-                    this.entityLinks[ROOTELEMENT_CONNECTION_ID]?.entity!! as CompositePackagingElementEntity
+                    this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)]!! as CompositePackagingElementEntity
                 }
             }
             set(value) {
@@ -193,7 +193,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[ROOTELEMENT_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, ROOTELEMENT_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -203,11 +203,11 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[ROOTELEMENT_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, ROOTELEMENT_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[ROOTELEMENT_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)] = value
                 }
                 changedProperty.add("rootElement")
             }
@@ -219,9 +219,9 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                 // Getter of the list of non-abstract referenced types
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyChildren<ArtifactPropertiesEntity>(CUSTOMPROPERTIES_CONNECTION_ID, this)!!.toList() + (this.entityLinks[CUSTOMPROPERTIES_CONNECTION_ID]?.entity as? List<ArtifactPropertiesEntity> ?: emptyList())
+                    _diff.extractOneToManyChildren<ArtifactPropertiesEntity>(CUSTOMPROPERTIES_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntity> ?: emptyList())
                 } else {
-                    this.entityLinks[CUSTOMPROPERTIES_CONNECTION_ID]?.entity!! as List<ArtifactPropertiesEntity>
+                    this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntity> ?: emptyList()
                 }
             }
             set(value) {
@@ -239,12 +239,12 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                 else {
                     for (item_value in value) {
                         if (item_value is ModifiableWorkspaceEntityBase<*>) {
-                            item_value.entityLinks[CUSTOMPROPERTIES_CONNECTION_ID] = EntityLink(false, this)
+                            item_value.entityLinks[EntityLink(false, CUSTOMPROPERTIES_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
                     }
                     
-                    this.entityLinks[CUSTOMPROPERTIES_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] = value
                 }
                 changedProperty.add("customProperties")
             }
@@ -253,9 +253,9 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneChild(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this) ?: this.entityLinks[ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID]?.entity as? ArtifactOutputPackagingElementEntity
+                    _diff.extractOneToOneChild(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity
                 } else {
-                    this.entityLinks[ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID]?.entity as? ArtifactOutputPackagingElementEntity
+                    this.entityLinks[EntityLink(true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity
                 }
             }
             set(value) {
@@ -263,7 +263,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -273,11 +273,11 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID] = EntityLink(false, this)
+                        value.entityLinks[EntityLink(false, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] = value
                 }
                 changedProperty.add("artifactOutputPackagingElement")
             }

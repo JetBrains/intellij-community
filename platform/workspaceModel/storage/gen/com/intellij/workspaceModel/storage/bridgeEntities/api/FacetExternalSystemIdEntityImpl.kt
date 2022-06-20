@@ -82,7 +82,7 @@ open class FacetExternalSystemIdEntityImpl: FacetExternalSystemIdEntity, Workspa
                 }
             }
             else {
-                if (this.entityLinks[FACET_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, FACET_CONNECTION_ID)] == null) {
                     error("Field FacetExternalSystemIdEntity#facet should be initialized")
                 }
             }
@@ -114,9 +114,9 @@ open class FacetExternalSystemIdEntityImpl: FacetExternalSystemIdEntity, Workspa
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneParent(FACET_CONNECTION_ID, this) ?: this.entityLinks[FACET_CONNECTION_ID]?.entity!! as FacetEntity
+                    _diff.extractOneToOneParent(FACET_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, FACET_CONNECTION_ID)]!! as FacetEntity
                 } else {
-                    this.entityLinks[FACET_CONNECTION_ID]?.entity!! as FacetEntity
+                    this.entityLinks[EntityLink(false, FACET_CONNECTION_ID)]!! as FacetEntity
                 }
             }
             set(value) {
@@ -124,7 +124,7 @@ open class FacetExternalSystemIdEntityImpl: FacetExternalSystemIdEntity, Workspa
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[FACET_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, FACET_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -134,11 +134,11 @@ open class FacetExternalSystemIdEntityImpl: FacetExternalSystemIdEntity, Workspa
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[FACET_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, FACET_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[FACET_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, FACET_CONNECTION_ID)] = value
                 }
                 changedProperty.add("facet")
             }

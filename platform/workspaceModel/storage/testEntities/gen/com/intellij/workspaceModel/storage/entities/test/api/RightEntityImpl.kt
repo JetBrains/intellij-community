@@ -82,7 +82,7 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[CHILDREN_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] == null) {
                     error("Field CompositeBaseEntity#children should be initialized")
                 }
             }
@@ -100,9 +100,9 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[PARENTENTITY_CONNECTION_ID]?.entity as? CompositeBaseEntity
+                    _diff.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositeBaseEntity
                 } else {
-                    this.entityLinks[PARENTENTITY_CONNECTION_ID]?.entity as? CompositeBaseEntity
+                    this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositeBaseEntity
                 }
             }
             set(value) {
@@ -111,8 +111,8 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[PARENTENTITY_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[PARENTENTITY_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -123,12 +123,12 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
                 else {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[PARENTENTITY_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[PARENTENTITY_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[PARENTENTITY_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
                 }
                 changedProperty.add("parentEntity")
             }
@@ -137,9 +137,9 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
                 get() {
                     val _diff = diff
                     return if (_diff != null) {
-                        _diff.extractOneToAbstractManyChildren<BaseEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[CHILDREN_CONNECTION_ID]?.entity as? List<BaseEntity> ?: emptyList())
+                        _diff.extractOneToAbstractManyChildren<BaseEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<BaseEntity> ?: emptyList())
                     } else {
-                        this.entityLinks[CHILDREN_CONNECTION_ID]?.entity!! as List<BaseEntity>
+                        this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<BaseEntity> ?: emptyList()
                     }
                 }
                 set(value) {
@@ -156,12 +156,12 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
                     else {
                         for (item_value in value) {
                             if (item_value is ModifiableWorkspaceEntityBase<*>) {
-                                item_value.entityLinks[CHILDREN_CONNECTION_ID] = EntityLink(false, this)
+                                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
                             }
                             // else you're attaching a new entity to an existing entity that is not modifiable
                         }
                         
-                        this.entityLinks[CHILDREN_CONNECTION_ID] = EntityLink(true, value)
+                        this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
                     }
                     changedProperty.add("children")
                 }

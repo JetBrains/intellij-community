@@ -77,7 +77,7 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[PARENT1_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)] == null) {
                     error("Field XChildChildEntity#parent1 should be initialized")
                 }
             }
@@ -90,7 +90,7 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[PARENT2_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, PARENT2_CONNECTION_ID)] == null) {
                     error("Field XChildChildEntity#parent2 should be initialized")
                 }
             }
@@ -105,9 +105,9 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyParent(PARENT1_CONNECTION_ID, this) ?: this.entityLinks[PARENT1_CONNECTION_ID]?.entity!! as XParentEntity
+                    _diff.extractOneToManyParent(PARENT1_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)]!! as XParentEntity
                 } else {
-                    this.entityLinks[PARENT1_CONNECTION_ID]?.entity!! as XParentEntity
+                    this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)]!! as XParentEntity
                 }
             }
             set(value) {
@@ -116,8 +116,8 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[PARENT1_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[PARENT1_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, PARENT1_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, PARENT1_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -128,12 +128,12 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                 else {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[PARENT1_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[PARENT1_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, PARENT1_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, PARENT1_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[PARENT1_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)] = value
                 }
                 changedProperty.add("parent1")
             }
@@ -151,9 +151,9 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyParent(PARENT2_CONNECTION_ID, this) ?: this.entityLinks[PARENT2_CONNECTION_ID]?.entity!! as XChildEntity
+                    _diff.extractOneToManyParent(PARENT2_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, PARENT2_CONNECTION_ID)]!! as XChildEntity
                 } else {
-                    this.entityLinks[PARENT2_CONNECTION_ID]?.entity!! as XChildEntity
+                    this.entityLinks[EntityLink(false, PARENT2_CONNECTION_ID)]!! as XChildEntity
                 }
             }
             set(value) {
@@ -162,8 +162,8 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[PARENT2_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[PARENT2_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, PARENT2_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, PARENT2_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -174,12 +174,12 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                 else {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[PARENT2_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[PARENT2_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, PARENT2_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, PARENT2_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[PARENT2_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, PARENT2_CONNECTION_ID)] = value
                 }
                 changedProperty.add("parent2")
             }

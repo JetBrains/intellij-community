@@ -70,7 +70,7 @@ var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntit
         return referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()
     }
     set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(EclipseProjectPropertiesEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(EclipseProjectPropertiesEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity?
@@ -78,7 +78,7 @@ var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity?
         return referrersx(FacetsOrderEntity::moduleEntity).singleOrNull()
     }
     set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(FacetsOrderEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(FacetsOrderEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion

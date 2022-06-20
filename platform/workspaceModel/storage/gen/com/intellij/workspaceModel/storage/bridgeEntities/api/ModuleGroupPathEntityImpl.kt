@@ -79,7 +79,7 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
                 }
             }
             else {
-                if (this.entityLinks[MODULE_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
                     error("Field ModuleGroupPathEntity#module should be initialized")
                 }
             }
@@ -100,9 +100,9 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[MODULE_CONNECTION_ID]?.entity!! as ModuleEntity
+                    _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
                 } else {
-                    this.entityLinks[MODULE_CONNECTION_ID]?.entity!! as ModuleEntity
+                    this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
                 }
             }
             set(value) {
@@ -110,7 +110,7 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[MODULE_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -120,11 +120,11 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[MODULE_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[MODULE_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
                 }
                 changedProperty.add("module")
             }

@@ -87,7 +87,7 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                 }
             }
             else {
-                if (this.entityLinks[PARENTINLIST_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] == null) {
                     error("Field SimpleAbstractEntity#parentInList should be initialized")
                 }
             }
@@ -98,7 +98,7 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                 }
             }
             else {
-                if (this.entityLinks[CHILDREN_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] == null) {
                     error("Field CompositeAbstractEntity#children should be initialized")
                 }
             }
@@ -116,9 +116,9 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this) ?: this.entityLinks[PARENTINLIST_CONNECTION_ID]?.entity!! as CompositeAbstractEntity
+                    _diff.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)]!! as CompositeAbstractEntity
                 } else {
-                    this.entityLinks[PARENTINLIST_CONNECTION_ID]?.entity!! as CompositeAbstractEntity
+                    this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)]!! as CompositeAbstractEntity
                 }
             }
             set(value) {
@@ -127,8 +127,8 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[PARENTINLIST_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[PARENTINLIST_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, PARENTINLIST_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, PARENTINLIST_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -139,12 +139,12 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                 else {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[PARENTINLIST_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[PARENTINLIST_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, PARENTINLIST_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, PARENTINLIST_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[PARENTINLIST_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] = value
                 }
                 changedProperty.add("parentInList")
             }
@@ -153,9 +153,9 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                 get() {
                     val _diff = diff
                     return if (_diff != null) {
-                        _diff.extractOneToAbstractManyChildren<SimpleAbstractEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[CHILDREN_CONNECTION_ID]?.entity as? List<SimpleAbstractEntity> ?: emptyList())
+                        _diff.extractOneToAbstractManyChildren<SimpleAbstractEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<SimpleAbstractEntity> ?: emptyList())
                     } else {
-                        this.entityLinks[CHILDREN_CONNECTION_ID]?.entity!! as List<SimpleAbstractEntity>
+                        this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<SimpleAbstractEntity> ?: emptyList()
                     }
                 }
                 set(value) {
@@ -172,12 +172,12 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                     else {
                         for (item_value in value) {
                             if (item_value is ModifiableWorkspaceEntityBase<*>) {
-                                item_value.entityLinks[CHILDREN_CONNECTION_ID] = EntityLink(false, this)
+                                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
                             }
                             // else you're attaching a new entity to an existing entity that is not modifiable
                         }
                         
-                        this.entityLinks[CHILDREN_CONNECTION_ID] = EntityLink(true, value)
+                        this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
                     }
                     changedProperty.add("children")
                 }
@@ -195,9 +195,9 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToAbstractOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[PARENTENTITY_CONNECTION_ID]?.entity as? ParentChainEntity
+                    _diff.extractOneToAbstractOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ParentChainEntity
                 } else {
-                    this.entityLinks[PARENTENTITY_CONNECTION_ID]?.entity as? ParentChainEntity
+                    this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ParentChainEntity
                 }
             }
             set(value) {
@@ -205,7 +205,7 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[PARENTENTITY_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -215,11 +215,11 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                 }
                 else {
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.entityLinks[PARENTENTITY_CONNECTION_ID] = EntityLink(true, this)
+                        value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[PARENTENTITY_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
                 }
                 changedProperty.add("parentEntity")
             }

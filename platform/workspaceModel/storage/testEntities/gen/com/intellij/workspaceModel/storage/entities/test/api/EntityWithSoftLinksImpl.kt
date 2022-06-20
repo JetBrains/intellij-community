@@ -162,7 +162,7 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (this.entityLinks[CHILDREN_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] == null) {
                     error("Field EntityWithSoftLinks#children should be initialized")
                 }
             }
@@ -304,9 +304,9 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
                 // Getter of the list of non-abstract referenced types
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[CHILDREN_CONNECTION_ID]?.entity as? List<SoftLinkReferencedChild> ?: emptyList())
+                    _diff.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<SoftLinkReferencedChild> ?: emptyList())
                 } else {
-                    this.entityLinks[CHILDREN_CONNECTION_ID]?.entity!! as List<SoftLinkReferencedChild>
+                    this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<SoftLinkReferencedChild> ?: emptyList()
                 }
             }
             set(value) {
@@ -324,12 +324,12 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
                 else {
                     for (item_value in value) {
                         if (item_value is ModifiableWorkspaceEntityBase<*>) {
-                            item_value.entityLinks[CHILDREN_CONNECTION_ID] = EntityLink(false, this)
+                            item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
                     }
                     
-                    this.entityLinks[CHILDREN_CONNECTION_ID] = EntityLink(true, value)
+                    this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
                 }
                 changedProperty.add("children")
             }

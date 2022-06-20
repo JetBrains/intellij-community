@@ -84,7 +84,7 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
                 }
             }
             else {
-                if (this.entityLinks[ARTIFACT_CONNECTION_ID] == null) {
+                if (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] == null) {
                     error("Field ArtifactPropertiesEntity#artifact should be initialized")
                 }
             }
@@ -105,9 +105,9 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyParent(ARTIFACT_CONNECTION_ID, this) ?: this.entityLinks[ARTIFACT_CONNECTION_ID]?.entity!! as ArtifactEntity
+                    _diff.extractOneToManyParent(ARTIFACT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ArtifactEntity
                 } else {
-                    this.entityLinks[ARTIFACT_CONNECTION_ID]?.entity!! as ArtifactEntity
+                    this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ArtifactEntity
                 }
             }
             set(value) {
@@ -116,8 +116,8 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[ARTIFACT_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[ARTIFACT_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -128,12 +128,12 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
                 else {
                     // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        val data = (value.entityLinks[ARTIFACT_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[ARTIFACT_CONNECTION_ID] = EntityLink(true, data)
+                        val data = (value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] = data
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this.entityLinks[ARTIFACT_CONNECTION_ID] = EntityLink(false, value)
+                    this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] = value
                 }
                 changedProperty.add("artifact")
             }

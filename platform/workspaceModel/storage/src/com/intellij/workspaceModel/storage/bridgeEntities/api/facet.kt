@@ -63,7 +63,7 @@ var FacetEntity.Builder.childrenFacets: @Child List<FacetEntity>
         return referrersx(FacetEntity::underlyingFacet)
     }
     set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(FacetEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(FacetEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 var FacetEntity.Builder.facetExternalSystemIdEntity: @Child FacetExternalSystemIdEntity?
@@ -71,7 +71,7 @@ var FacetEntity.Builder.facetExternalSystemIdEntity: @Child FacetExternalSystemI
         return referrersx(FacetExternalSystemIdEntity::facet).singleOrNull()
     }
     set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(FacetExternalSystemIdEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(FacetExternalSystemIdEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion
