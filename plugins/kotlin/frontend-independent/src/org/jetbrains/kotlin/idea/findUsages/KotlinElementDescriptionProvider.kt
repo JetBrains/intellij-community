@@ -60,6 +60,14 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
                     return if (typeReference.hasParentheses()) "($typeText)" else typeText
                 }
 
+                override fun visitIntersectionType(definitelyNotNullType: KtIntersectionType, data: Unit): String {
+                    return buildString {
+                        append(definitelyNotNullType.getLeftTypeRef()?.typeElement?.accept(visitor, data) ?: "???")
+                        append(" & ")
+                        append(definitelyNotNullType.getRightTypeRef()?.typeElement?.accept(visitor, data) ?: "???")
+                    }
+                }
+
                 override fun visitDynamicType(type: KtDynamicType, data: Unit) = type.text
 
                 override fun visitFunctionType(type: KtFunctionType, data: Unit): String {
