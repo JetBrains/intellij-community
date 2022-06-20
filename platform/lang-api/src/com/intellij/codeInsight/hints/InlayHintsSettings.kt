@@ -15,7 +15,7 @@ import org.jdom.Element
 import java.util.*
 
 @State(name = "InlayHintsSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
-class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State>, Disposable {
+class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   companion object {
     @JvmStatic
     fun instance(): InlayHintsSettings {
@@ -61,7 +61,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State>, D
       synchronized(lock) {
         isEnabledByDefaultIdsCache.clear()
       }
-    }, this)
+    }, null)
   }
 
   fun changeHintTypeStatus(key: SettingsKey<*>, language: Language, enable: Boolean) {
@@ -259,10 +259,6 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State>, D
      * Called when any settings in inlay hints were changed
      */
     fun settingsChanged() {}
-  }
-
-  override fun dispose() {
-
   }
 }
 
