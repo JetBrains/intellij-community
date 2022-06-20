@@ -15,7 +15,7 @@ public interface PsiPatternGuard extends PsiCaseLabelElement {
   PsiPattern getPattern();
 
   /**
-   * @return expression which guards the pattern (after {@code &&}) or null if pattern is incomplete
+   * @return expression which guards the pattern (after {@code when}) or null if pattern is incomplete
    */
   @Nullable
   PsiExpression getGuardingExpression();
