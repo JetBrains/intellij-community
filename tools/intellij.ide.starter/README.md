@@ -3,7 +3,7 @@
 
 #### Overview
 
-In general - this package helps you write tests/code, that will start IDE from installer in external process.
+Starter helps you write tests/code, that will start IntelliJ-based IDE from installer in external process.
 Aside from that, you may find useful functionality as below:
 
 * execution commands in plugins (list of available commands described below)
@@ -12,7 +12,7 @@ Aside from that, you may find useful functionality as below:
 * integration with CI (optional)
 * collecting test artifacts
 * reporting of artifacts to CI (optional)
-* run a test with profiler (not yet included)
+* run a test with a profiler (not yet included)
 
 
 #### Supported products
@@ -133,6 +133,7 @@ Dependency `performance-testing-commands`
 - storeIndices()
 - compareIndices()
 - recoveryAction(action: RecoveryActionType)
+- ... **TBD**
 
 Dependency `performance-testing-maven-commands`
 - importMavenProject()
@@ -145,6 +146,8 @@ Dependency `performance-testing-gradle-commands`
 Everything, that initializes via DI framework (Kodein DI) might be modified in your code for your need.   
 [DI container initialization](https://github.com/JetBrains/intellij-community/blob/master/tools/intellij.ide.starter/src/com/intellij/ide/starter/di/diContainer.kt)  
 For example, you might write your own implementation of CIServer and provide it via DI.
+
+NOTE: Be sure to use the same version of Kodein, that is used in `build.gradle` for starter project.
 
 E.g:
 ```
