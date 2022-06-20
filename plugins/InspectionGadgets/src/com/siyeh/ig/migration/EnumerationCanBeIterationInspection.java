@@ -34,6 +34,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -248,9 +249,11 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
     }
 
     /**
-     * @return true if the initialization of the Enumeration variable can
-     * be deleted.
+     * @return {@link #KEEP_NOTHING} if both the variable declaration and initialization can be deleted;
+     * {@link #KEEP_DECLARATION} if the initialization of the Enumeration variable can be deleted but the variable must be kept;
+     * {@link #KEEP_INITIALIZATION} if the variable along with initialization should be preserved.
      */
+    @MagicConstant(valuesFromClass = EnumerationCanBeIterationInspection.class)
     private static int replaceMethodCalls(PsiVariable enumerationVariable, int startOffset, String newVariableName) {
       final PsiManager manager = enumerationVariable.getManager();
       final Project project = manager.getProject();
@@ -264,7 +267,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
         referenceElements.add(referenceElement);
       }
       referenceElements.sort(PsiElementOrderComparator.getInstance());
-      int result = 0;
+      int result = KEEP_NOTHING;
       for (PsiElement referenceElement : referenceElements) {
         if (!(referenceElement instanceof PsiReferenceExpression)) {
           result = KEEP_DECLARATION;
@@ -338,7 +341,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
       final SuggestedNameInfo nameInfo =
         codeStyleManager.suggestUniqueVariableName(baseNameInfo,
                                                    context, true);
-      if (nameInfo.names.length <= 0) {
+      if (nameInfo.names.length == 0) {
         return "iterator";
       }
       return nameInfo.names[0];
@@ -401,12 +404,12 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
       if (!isEnumerationMethodCalled(variable, containingMethod)) {
         return;
       }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
       if (isElements) {
-        final PsiMethod method = expression.resolveMethod();
-        if (method == null) {
-          return;
-        }
-        final PsiClass containingClass = method.getContainingClass();
         if (InheritanceUtil.isInheritor(containingClass,
                                         "java.util.Vector")) {
           registerMethodCallError(expression, ITERATOR_TEXT);
@@ -417,11 +420,6 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
         }
       }
       else {
-        final PsiMethod method = expression.resolveMethod();
-        if (method == null) {
-          return;
-        }
-        final PsiClass containingClass = method.getContainingClass();
         if (InheritanceUtil.isInheritor(containingClass,
                                         "java.util.Hashtable")) {
           registerMethodCallError(expression, KEY_SET_ITERATOR_TEXT);
