@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ProjectGroup
 import com.intellij.ide.RecentProjectsManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.Messages
@@ -36,6 +37,10 @@ class CreateNewProjectGroupAction : RecentProjectsWelcomeScreenActionBase() {
   override fun update(event: AnActionEvent) {
     val item = getSelectedItem(event)
     event.presentation.isEnabled = item == null || item is RecentProjectItem || item is ProjectsGroupItem
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   companion object {
