@@ -8,7 +8,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 interface FloatingToolbarProvider {
-  @JvmDefault
   @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("Use [order] option in plugin.xml")
   val priority: Int
@@ -21,7 +20,6 @@ interface FloatingToolbarProvider {
   @JvmDefault
   fun isApplicable(dataContext: DataContext): Boolean = true
 
-  @JvmDefault
   fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {}
 
   companion object {
