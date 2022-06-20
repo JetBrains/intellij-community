@@ -72,9 +72,6 @@ sealed class JpsFileEntitySource : EntitySource {
   @DefaultSerializer(FileInDirectorySerializer::class)
   data class FileInDirectory(val directory: VirtualFileUrl,
                              override val projectLocation: JpsProjectConfigLocation) : JpsFileEntitySource() {
-    init {
-      println("")
-    }
     /**
      * Automatically generated value which is used to distinguish different files in [directory]. The actual name is stored in serialization
      * structures and may change if name of the corresponding entity has changed.
