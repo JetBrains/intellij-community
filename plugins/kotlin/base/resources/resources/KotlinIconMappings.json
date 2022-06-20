@@ -15,7 +15,6 @@
                             "expect.svg": "org/jetbrains/kotlin/idea/icons/expect.svg",
                             "fieldValue.svg": "org/jetbrains/kotlin/idea/icons/field_value.svg",
                             "fieldVariable.svg": "org/jetbrains/kotlin/idea/icons/field_variable.svg",
-                            "function.svg": "org/jetbrains/kotlin/idea/icons/function.svg",
                             "interfaceKotlin.svg": "org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg",
                              "kotlin.svg": [
                                  "org/jetbrains/kotlin/idea/icons/kotlin.svg",
