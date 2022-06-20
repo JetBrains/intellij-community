@@ -224,10 +224,9 @@ private fun processSealedClass(simpleTypes: List<DefType>,
       item.structure.declaredFields.filter { it.constructorField }.forEach {
         it.type.operate("$newVarName.${it.name}", simpleTypes, linesBuilder, operation)
       }
-      if (!linesBuilder.result.isEmpty())
-        section("is ${item.javaFullName} -> ") {
-          result.append(linesBuilder.result)
-        }
+      section("is ${item.javaFullName} -> ") {
+        result.append(linesBuilder.result)
+      }
     }
   }
 }

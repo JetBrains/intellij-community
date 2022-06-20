@@ -1,4 +1,3 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
 import com.intellij.workspaceModel.storage.*
@@ -418,7 +417,12 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
                         }
                     }
                 }
-              else -> {}
+                is ModuleDependencyItem.SdkDependency ->  {
+                }
+                is ModuleDependencyItem.InheritedSdkDependency ->  {
+                }
+                is ModuleDependencyItem.ModuleSourceDependency ->  {
+                }
             }
         }
         return result
@@ -437,7 +441,12 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
                         }
                     }
                 }
-              else -> {}
+                is ModuleDependencyItem.SdkDependency ->  {
+                }
+                is ModuleDependencyItem.InheritedSdkDependency ->  {
+                }
+                is ModuleDependencyItem.ModuleSourceDependency ->  {
+                }
             }
         }
     }
@@ -459,7 +468,12 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
                         index.index(this, item.library)
                     }
                 }
-              else -> {}
+                is ModuleDependencyItem.SdkDependency ->  {
+                }
+                is ModuleDependencyItem.InheritedSdkDependency ->  {
+                }
+                is ModuleDependencyItem.ModuleSourceDependency ->  {
+                }
             }
         }
         for (removed in mutablePreviousSet) {
