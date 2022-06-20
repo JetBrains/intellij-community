@@ -151,15 +151,11 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             }
         }
 
-        fun importKotlinJpsVersionFromExternalBuildSystem(
-            project: Project,
-            rawVersion: String,
-            showNotification: Boolean = true,
-        ): Boolean {
-            val instance = getInstance(project) ?: return true
+        fun importKotlinJpsVersionFromExternalBuildSystem(project: Project, rawVersion: String) {
+            val instance = getInstance(project) ?: return
             if (rawVersion == rawBundledVersion) {
                 instance.setVersion(rawVersion)
-                return true
+                return
             }
 
             val error = checkJpsVersion(rawVersion)
@@ -170,32 +166,27 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             }
 
             if (error != null) {
-                if (showNotification) {
-                    showNotificationUnsupportedJpsPluginVersion(
-                        project,
-                        KotlinBasePluginBundle.message("notification.title.unsupported.kotlin.jps.plugin.version"),
-                        KotlinBasePluginBundle.message(
-                            "notification.content.bundled.version.0.will.be.used.reason.1",
-                            version,
-                            error.message
-                        ),
-                    )
-                }
+                showNotificationUnsupportedJpsPluginVersion(
+                    project,
+                    KotlinBasePluginBundle.message("notification.title.unsupported.kotlin.jps.plugin.version"),
+                    KotlinBasePluginBundle.message(
+                        "notification.content.bundled.version.0.will.be.used.reason.1",
+                        version,
+                        error.message
+                    ),
+                )
 
                 if (error !is OutdatedCompilerVersion) {
                     instance.dropExplicitVersion()
-                    return false
+                    return
                 }
             }
 
-            val ok = shouldImportKotlinJpsPluginVersionFromExternalBuildSystem(IdeKotlinVersion.get(version))
-            if (ok) {
+            if (shouldImportKotlinJpsPluginVersionFromExternalBuildSystem(IdeKotlinVersion.get(version))) {
                 instance.setVersion(version)
             } else {
                 instance.dropExplicitVersion()
             }
-
-            return ok
         }
 
         fun shouldImportKotlinJpsPluginVersionFromExternalBuildSystem(version: IdeKotlinVersion): Boolean {
