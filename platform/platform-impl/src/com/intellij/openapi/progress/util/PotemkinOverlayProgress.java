@@ -79,12 +79,15 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     long now = System.currentTimeMillis();
     if (now == myLastInteraction) return;
     myLastInteraction = now;
-    myEventStealer.dispatchEvents(0);
     if (!myShowing && now - myLastUiUpdate > myDelayInMillis) {
       myShowing = true;
     }
     if (myShowing) {
-      updateUI(now);
+      myEventStealer.dispatchEvents(0);
+    }
+    if (myShowing && now - myLastUiUpdate > ProgressDialog.UPDATE_INTERVAL) {
+      myLastUiUpdate = now;
+      paintProgress();
     }
   }
 
@@ -111,14 +114,6 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
       return ks == null ? null : new KeyboardShortcut(ks, null);
     }
     return null;
-  }
-
-  private void updateUI(long now) {
-    if (now - myLastUiUpdate <= ProgressDialog.UPDATE_INTERVAL) {
-      return;
-    }
-    myLastUiUpdate = now;
-    paintProgress();
   }
 
   private void paintProgress() {
