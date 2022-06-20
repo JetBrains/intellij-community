@@ -27,8 +27,8 @@ class JKDoWhileStatement(body: JKStatement, condition: JKExpression) : JKLoopSta
     override fun accept(visitor: JKVisitor) = visitor.visitDoWhileStatement(this)
 }
 
-class JKForInStatement(declaration: JKDeclaration, iterationExpression: JKExpression, body: JKStatement) : JKStatement() {
-    var declaration: JKDeclaration by child(declaration)
+class JKForInStatement(variable: JKForLoopVariable, iterationExpression: JKExpression, body: JKStatement) : JKStatement() {
+    var variable: JKForLoopVariable by child(variable)
     var iterationExpression: JKExpression by child(iterationExpression)
     var body: JKStatement by child(body)
     override fun accept(visitor: JKVisitor) = visitor.visitForInStatement(this)

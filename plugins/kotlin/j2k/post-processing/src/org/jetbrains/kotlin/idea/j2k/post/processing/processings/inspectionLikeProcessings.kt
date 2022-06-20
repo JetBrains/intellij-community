@@ -279,20 +279,6 @@ internal class PrivateVarToValProcessing : InspectionLikeProcessingForElement<Kt
     }
 }
 
-internal class RemoveForExpressionLoopParameterTypeProcessing :
-    InspectionLikeProcessingForElement<KtForExpression>(KtForExpression::class.java) {
-    override fun isApplicableTo(element: KtForExpression, settings: ConverterSettings?): Boolean {
-        val typeReference = element.loopParameter?.typeReference ?: return false
-        return (typeReference.annotationEntries.isEmpty()
-                && typeReference.typeElement != null
-                && settings?.specifyLocalVariableTypeByDefault != true)
-    }
-
-    override fun apply(element: KtForExpression) {
-        element.loopParameter?.typeReference = null
-    }
-}
-
 internal class RemoveRedundantModalityModifierProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
     override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean {
         if (element.hasModifier(KtTokens.FINAL_KEYWORD)) {

@@ -24,6 +24,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
     private val elementInfoStorage = context.elementsInfoStorage
     private val printer = JKPrinter(context.project, context.importStorage, elementInfoStorage)
     private val commentPrinter = JKCommentPrinter(printer)
+    private val settings = context.converter.settings
 
     fun printCodeOut(root: JKTreeElement): String {
         Visitor().also { root.accept(it) }
@@ -121,7 +122,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitForInStatementRaw(forInStatement: JKForInStatement) {
             printer.print("for (")
-            forInStatement.declaration.accept(this)
+            forInStatement.variable.accept(this)
             printer.printWithSurroundingSpaces("in")
             forInStatement.iterationExpression.accept(this)
             printer.print(") ")
@@ -321,7 +322,10 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitForLoopVariableRaw(forLoopVariable: JKForLoopVariable) {
             forLoopVariable.annotationList.accept(this)
             forLoopVariable.name.accept(this)
-            if (forLoopVariable.type.present() && forLoopVariable.type.type !is JKContextType) {
+            if (forLoopVariable.type.present() &&
+                forLoopVariable.type.type !is JKContextType &&
+                (settings.specifyLocalVariableTypeByDefault || forLoopVariable.type.annotationList.annotations.isNotEmpty())
+            ) {
                 printer.print(": ")
                 forLoopVariable.type.accept(this)
             }
