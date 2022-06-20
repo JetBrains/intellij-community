@@ -6,7 +6,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -28,11 +27,7 @@ class ModulePlatformCache(project: Project): FineGrainedEntityCache<Module, Targ
         WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener(project))
     }
 
-    override fun globalDependencies(key: Module, value: TargetPlatform): List<Any> {
-        return listOf(ProjectRootModificationTracker.getInstance(key.project))
-    }
-
-    override fun checkValidity(key: Module) {
+    override fun checkKeyValidity(key: Module) {
         if (key.isDisposed) {
             throw IllegalStateException("Module ${key.name} is already disposed")
         }

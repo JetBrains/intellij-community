@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -35,11 +34,7 @@ class LibraryInfoCache(project: Project): FineGrainedEntityCache<Library, List<L
         WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener(project))
     }
 
-    override fun globalDependencies(key: Library, value: List<LibraryInfo>): List<Any> {
-        return listOf(ProjectRootModificationTracker.getInstance(project))
-    }
-
-    override fun checkValidity(key: Library) {
+    override fun checkKeyValidity(key: Library) {
         if (key is LibraryEx && key.isDisposed) {
             throw AlreadyDisposedException("Library ${key.name} is already disposed")
         }
@@ -94,7 +89,7 @@ class LibraryInfoCache(project: Project): FineGrainedEntityCache<Library, List<L
 
         override fun entitiesChanged(outdated: List<Library>) {
             val libraryInfoCache = getInstance(project)
-            val droppedLibraryInfos = libraryInfoCache.invalidateKeys(outdated).flatten()
+            val droppedLibraryInfos = libraryInfoCache.invalidateKeysAndGetOutdatedValues(outdated).flatten()
 
             if (droppedLibraryInfos.isNotEmpty()) {
                 project.messageBus.syncPublisher(OutdatedLibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)

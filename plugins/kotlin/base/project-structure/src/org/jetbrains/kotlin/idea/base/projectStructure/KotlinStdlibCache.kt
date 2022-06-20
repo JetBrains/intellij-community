@@ -13,7 +13,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
@@ -24,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.messages.MessageBusConnection
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.VersionedStorageChange
@@ -130,16 +130,12 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             busConnection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
         }
 
-        override fun checkValidity(key: LibraryInfo) {
-            val library = key.library
-            library.checkValidity()
+        override fun checkKeyValidity(key: LibraryInfo) {
+            key.library.checkValidity()
         }
 
-        override fun globalDependencies(key: LibraryInfo, value: Boolean): List<Any> =
-            listOf(ProjectRootModificationTracker.getInstance(project))
-
         override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
-            super.invalidateKeys(libraryInfos) { true }
+            super.invalidateKeys(libraryInfos) { _, _ -> true }
         }
 
     }
@@ -157,97 +153,152 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
     }
 
-    private inner class ModuleStdlibDependencyCache :
-        FineGrainedEntityCache<IdeaModuleInfo, StdlibDependency>(project, cleanOnLowMemory = true),
-        WorkspaceModelChangeListener,
-        OutdatedLibraryInfoListener,
-        ProjectJdkTable.Listener {
+    private inner class ModuleStdlibDependencyCache : Disposable {
+        private val libraryCache = LibraryCache()
+        private val sdkCache = SdkCache()
+        private val moduleCache = ModuleCache()
 
-        override fun changed(event: VersionedStorageChange) {
-            event.getChanges(ModuleEntity::class.java).ifEmpty { return }
-
-            // libs and sdks are invalidated by its own listeners
-            val condition: (IdeaModuleInfo) -> Boolean = { it !is LibraryInfo && it !is SdkInfo }
-            invalidateKeys(condition, condition)
+        init {
+            Disposer.register(this, libraryCache)
+            Disposer.register(this, sdkCache)
+            Disposer.register(this, moduleCache)
         }
 
-        override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
-            invalidateKeys(libraryInfos) { it is LibraryInfo }
-        }
+        fun get(key: IdeaModuleInfo): StdlibDependency =
+            when(key) {
+                is LibraryInfo -> libraryCache.get(key)
+                is SdkInfo -> sdkCache.get(key)
+                else -> moduleCache.get(key)
+            }
 
-        override fun jdkRemoved(jdk: Sdk) {
-            invalidateKeys({ it is SdkInfo && it.sdk == jdk }, { it is SdkInfo })
-        }
+        override fun dispose() = Unit
 
-        override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-            jdkRemoved(jdk)
-        }
+        private abstract inner class AbstractCache<Key : IdeaModuleInfo> :
+            FineGrainedEntityCache<Key, StdlibDependency>(project, cleanOnLowMemory = true),
+            OutdatedLibraryInfoListener {
+            override fun subscribe() {
+                val connection = project.messageBus.connect(this)
+                connection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+                subscribe(connection)
+            }
 
-        override fun subscribe() {
-            val busConnection = project.messageBus.connect(this)
-            WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, this)
-            busConnection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
-            busConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
-        }
+            protected open fun subscribe(connection: MessageBusConnection) {
+            }
 
-        override fun calculate(key: IdeaModuleInfo): StdlibDependency {
-            val moduleSourceInfo = key.safeAs<ModuleSourceInfo>()
-            val stdLib = moduleSourceInfo?.module?.moduleWithLibrariesScope?.let index@{ scope ->
-                val stdlibManifests = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-                    FileBasedIndex.getInstance().getContainingFiles(
-                        KotlinStdlibIndex.KEY,
-                        KotlinStdlibIndex.KOTLIN_STDLIB_NAME,
-                        scope
-                    )
-                })
-                val index = ProjectFileIndex.getInstance(project)
-                for (manifest in stdlibManifests) {
-                    val orderEntries = index.getOrderEntriesForFile(manifest)
-                    orderEntries.firstNotNullOfOrNull { it.safeAs<LibraryOrderEntry>()?.library.safeAs<LibraryEx>() }?.let {
-                        LibraryInfoCache.getInstance(project).get(it)
-                    }?.firstOrNull(::isStdlib)?.let {
-                        return@index it
-                    }
-                }
-                null
-            } ?: key.safeAs<LibraryInfo>()?.takeIf(::isStdlib) ?: key.dependencies().firstOrNull {
+            protected fun Key.findStdLib(): LibraryInfo? = dependencies().firstOrNull {
                 it is LibraryInfo && isStdlib(it)
             } as LibraryInfo?
 
-            if (stdLib == null && runReadAction { project.isDisposed || DumbService.isDumb(project) }) {
-                throw ProcessCanceledException()
-            }
-
-            return StdlibDependency(stdLib)
-        }
-
-        override fun extraCalculatedValues(key: IdeaModuleInfo, value: StdlibDependency): Map<IdeaModuleInfo, StdlibDependency>? {
-            if (key !is ModuleSourceInfo) {
-                return null
-            }
-
-            val result = hashMapOf<IdeaModuleInfo, StdlibDependency>()
-            // all module dependencies have same stdlib as module itself
-            key.dependencies().forEach {
-                if (it is LibraryInfo) {
-                    result[it] = value
+            protected fun LibraryInfo?.toStdlibDependency(): StdlibDependency {
+                if (this == null && runReadAction { project.isDisposed || DumbService.isDumb(project) }) {
+                    throw ProcessCanceledException()
                 }
+
+                return StdlibDependency(this)
             }
-            return result
+
+            override fun checkValueValidity(value: StdlibDependency) {
+                value.libraryInfo?.library?.checkValidity()
+            }
+
+            override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
+                invalidateEntries({ _, v -> v.libraryInfo in libraryInfos }, { _, v -> v.libraryInfo != null})
+            }
         }
 
-        override fun checkValidity(key: IdeaModuleInfo) {
-            when (key) {
-                is LibraryInfo -> key.library.checkValidity()
-                is ModuleProductionSourceInfo -> key.module.checkValidity()
+        private inner class LibraryCache : AbstractCache<LibraryInfo>() {
+            override fun calculate(key: LibraryInfo): StdlibDependency {
+                val stdLib = key.takeIf(::isStdlib) ?: key.findStdLib()
+
+                return stdLib.toStdlibDependency()
+            }
+
+            fun putExtraValues(map: Map<LibraryInfo, StdlibDependency>) {
+                putAll(map)
+            }
+
+            override fun checkKeyValidity(key: LibraryInfo) {
+                key.library.checkValidity()
+            }
+
+            override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
+                invalidateEntries({ k, v -> k in libraryInfos || v.libraryInfo in libraryInfos })
             }
         }
 
-        override fun globalDependencies(key: IdeaModuleInfo, value: StdlibDependency): List<Any> =
-            listOf(ProjectRootModificationTracker.getInstance(project))
+        private inner class SdkCache : AbstractCache<SdkInfo>(),
+                                       ProjectJdkTable.Listener {
+            override fun subscribe(connection: MessageBusConnection) {
+                connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
+            }
 
+            override fun calculate(key: SdkInfo): StdlibDependency =
+                key.findStdLib().toStdlibDependency()
+
+            override fun checkKeyValidity(key: SdkInfo) = Unit
+
+            override fun jdkRemoved(jdk: Sdk) {
+                invalidateEntries({ k, _ -> k.sdk == jdk })
+            }
+
+            override fun jdkNameChanged(jdk: Sdk, previousName: String) {
+                jdkRemoved(jdk)
+            }
+        }
+
+        private inner class ModuleCache : AbstractCache<IdeaModuleInfo>(), WorkspaceModelChangeListener {
+            override fun subscribe(connection: MessageBusConnection) {
+                WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, this)
+            }
+
+            override fun calculate(key: IdeaModuleInfo): StdlibDependency {
+                val moduleSourceInfo = key.safeAs<ModuleSourceInfo>()
+                val stdLib = moduleSourceInfo?.module?.moduleWithLibrariesScope?.let index@{ scope ->
+                    val stdlibManifests = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+                        FileBasedIndex.getInstance().getContainingFiles(
+                            KotlinStdlibIndex.KEY,
+                            KotlinStdlibIndex.KOTLIN_STDLIB_NAME,
+                            scope
+                        )
+                    })
+                    val index = ProjectFileIndex.getInstance(project)
+                    for (manifest in stdlibManifests) {
+                        val orderEntries = index.getOrderEntriesForFile(manifest)
+                        orderEntries.firstNotNullOfOrNull { it.safeAs<LibraryOrderEntry>()?.library.safeAs<LibraryEx>() }?.let {
+                            LibraryInfoCache.getInstance(project).get(it)
+                        }?.firstOrNull(::isStdlib)?.let {
+                            return@index it
+                        }
+                    }
+                    null
+                } ?: key.findStdLib()
+
+                val stdlibDependency = stdLib.toStdlibDependency()
+
+                moduleSourceInfo?.let {
+                    val result = hashMapOf<LibraryInfo, StdlibDependency>()
+                    // all module dependencies have same stdlib as module itself
+                    key.dependencies().forEach {
+                        if (it is LibraryInfo) {
+                            result[it] = stdlibDependency
+                        }
+                    }
+                    libraryCache.putExtraValues(result)
+                }
+
+                return stdlibDependency
+            }
+
+            override fun checkKeyValidity(key: IdeaModuleInfo) {
+                key.safeAs<ModuleProductionSourceInfo>()?.module?.checkValidity()
+            }
+
+            override fun changed(event: VersionedStorageChange) {
+                event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+                invalidate()
+            }
+        }
     }
-
 }
 
 fun LibraryInfo.isCoreKotlinLibrary(project: Project): Boolean =
@@ -259,12 +310,12 @@ fun LibraryInfo.isKotlinStdlib(project: Project): Boolean =
 fun LibraryInfo.isKotlinStdlibDependency(project: Project): Boolean =
     KotlinStdlibCache.getInstance(project).isStdlibDependency(this)
 
-private fun Library.checkValidity() {
+fun Library.checkValidity() {
     if (this is LibraryEx && isDisposed) {
         throw AlreadyDisposedException("Library ${name} is already disposed")
     }
 }
-private fun Module.checkValidity() {
+fun Module.checkValidity() {
     if (isDisposed) {
         throw AlreadyDisposedException("Module ${name} is already disposed")
     }

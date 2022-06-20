@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 // Workaround for duplicated libraries, see KT-42607
 @ApiStatus.Internal
@@ -24,7 +23,7 @@ class LibraryWrapper(val library: LibraryEx) {
     }
 
     private val hashCode by lazy {
-        31 + 37 * allRootUrls.hashCode() + Arrays.hashCode(excludedRootUrls)
+        31 + 37 * allRootUrls.hashCode() + excludedRootUrls.contentHashCode()
     }
 
     override fun equals(other: Any?): Boolean {
