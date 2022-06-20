@@ -3,9 +3,11 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,14 +190,12 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   @Override
   public String getExternalName() {
     return ReadAction.compute(() -> {
-      UField uField = getUastElement();
-      if (uField == null) {
-        WritableRefEntity owner = getOwner();
-        String parentName = owner != null ? owner.getName() : "no parent class";
-        LOG.error("No uField found for psi: " + getPsiElement() + ", name: " + getName() + ", " + parentName);
+      WritableRefEntity owner = getOwner();
+      if (owner == null) {
+        LOG.error("No parent class for: " + getName());
         return null;
       }
-      return PsiFormatUtil.getExternalName((PsiModifierListOwner)uField.getJavaPsi());
+      return owner.getExternalName() + " " + getName();
     });
   }
 
