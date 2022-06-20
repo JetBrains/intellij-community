@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -270,8 +271,8 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (exceptionClass == null) return false;
       PsiTryStatement parentTry = PsiTreeUtil.getParentOfType(call, PsiTryStatement.class);
       if (parentTry == null || !PsiTreeUtil.isAncestor(parentTry.getTryBlock(), call, true)) return false;
-      return ExceptionUtils.getExceptionTypesHandled(parentTry).stream()
-        .anyMatch(type -> InheritanceUtil.isInheritor(exceptionClass, type.getCanonicalText()));
+      return ContainerUtil.exists(ExceptionUtils.getExceptionTypesHandled(parentTry),
+                                  type -> InheritanceUtil.isInheritor(exceptionClass, type.getCanonicalText()));
     }
 
     private boolean isHardcodedException(PsiExpression expression) {
