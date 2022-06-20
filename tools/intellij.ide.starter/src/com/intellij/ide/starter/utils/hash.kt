@@ -27,8 +27,26 @@ fun convertToHashCodeWithOnlyLetters(hash: Int): String {
  **/
 fun generifyErrorMessage(originalMessage: String): String {
   return originalMessage
-    .replace("[\$@#][A-Za-z\\d-_]+".toRegex(), "<ID>") // text@3ba5aac, text => text<ID>, text
-    .replace("[.]([A-Za-z]+\\d|\\d+[A-Za-z])[A-Za-z\\d]*".toRegex(), ".<HASH>") // some-text.db451f59 => some-text.<HASH>
-    .replace("0x[\\da-fA-F]+".toRegex(), "<HEX>") // 0x01 => <HEX>
-    .replace("\\d+".toRegex(), "<NUM>") // text1234text => text<NUM>text
+    .generifyID()
+    .generifyHash()
+    .generifyHexCode()
+    .generifyNumber()
 }
+
+/** text@3ba5aac, text => text<ID>, text */
+fun String.generifyID(omitDollarSign: Boolean = false): String {
+  val regexpStr = if (omitDollarSign) "[@#][A-Za-z\\d-_]+"
+  else "[\$@#][A-Za-z\\d-_]+"
+
+  return this.replace(regexpStr.toRegex(), "<ID>")
+}
+
+/** some-text.db451f59 => some-text.<HASH> */
+fun String.generifyHash(): String = this
+  .replace("[.]([A-Za-z]+\\d|\\d+[A-Za-z])[A-Za-z\\d]*".toRegex(), ".<HASH>")
+
+/** 0x01 => <HEX> */
+fun String.generifyHexCode(): String = this.replace("0x[\\da-fA-F]+".toRegex(), "<HEX>")
+
+/** text1234text => text<NUM>text */
+fun String.generifyNumber(): String = this.replace("\\d+".toRegex(), "<NUM>")
