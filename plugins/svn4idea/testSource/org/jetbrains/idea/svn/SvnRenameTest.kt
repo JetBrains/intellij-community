@@ -24,6 +24,7 @@ import org.hamcrest.Matcher
 import org.hamcrest.Matchers.*
 import org.jetbrains.annotations.NonNls
 import org.junit.Assert.*
+import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.io.IOException
@@ -258,6 +259,8 @@ class SvnRenameTest : SvnTestCase() {
 
     makeVfsRefreshBehaveMaybe {
       undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
+
       val childPath = File(parent1.path, "child")
       assertExists(childPath)
       assertExists(File(childPath, "a.txt"))
@@ -311,6 +314,8 @@ class SvnRenameTest : SvnTestCase() {
 
     makeVfsRefreshBehaveMaybe {
       undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
+
       runAndVerifyStatus(
         "A + parent1/child", "> moved from parent2/child",
         "D parent2/child", "> moved to parent1/child",
@@ -350,6 +355,8 @@ class SvnRenameTest : SvnTestCase() {
 
     makeVfsRefreshBehaveMaybe {
       undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
+
       runAndVerifyStatusSorted("? unversioned")
     }
   }
@@ -365,6 +372,8 @@ class SvnRenameTest : SvnTestCase() {
 
     makeVfsRefreshBehaveMaybe {
       undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", file.isValid)
+
       runAndVerifyStatusSorted("? a.txt", "? unversioned")
     }
   }
@@ -380,6 +389,8 @@ class SvnRenameTest : SvnTestCase() {
 
     makeVfsRefreshBehaveMaybe {
       undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", file.isValid)
+
       runAndVerifyStatusSorted("? a.txt", "? unversioned")
     }
   }
@@ -401,6 +412,8 @@ class SvnRenameTest : SvnTestCase() {
 
     makeVfsRefreshBehaveMaybe {
       undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
+
       runAndVerifyStatusSorted("? child", "? unversioned")
     }
   }
@@ -419,6 +432,8 @@ class SvnRenameTest : SvnTestCase() {
 
     makeVfsRefreshBehaveMaybe {
       undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", file.isValid)
+
       runAndVerifyStatusSorted("A child/a.txt")
     }
   }
