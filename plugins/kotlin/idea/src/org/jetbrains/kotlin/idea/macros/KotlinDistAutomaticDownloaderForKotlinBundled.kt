@@ -57,7 +57,7 @@ private fun downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries
                         NotificationGroupManager.getInstance()
                             .getNotificationGroup("Kotlin dist downloading failed")
                             .createNotification(
-                                KotlinBundle.message("kotlin.dist.downloading.failed.msg"),
+                                KotlinBundle.message("kotlin.dist.downloading.failed.may.affect.code.resolve"),
                                 KotlinArtifactsDownloader.failedToDownloadUnbundledJpsMavenArtifact(
                                     project,
                                     KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID,
