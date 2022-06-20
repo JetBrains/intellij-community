@@ -148,7 +148,8 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
     protected abstract fun calculate(key: Key): Value
 
     companion object {
-        val isFineGrainedCacheInvalidationEnabled: Boolean
-            get() = Registry.`is`("kotlin.caches.fine.grained.invalidation")
+        val isFineGrainedCacheInvalidationEnabled: Boolean by lazy {
+            Registry.`is`("kotlin.caches.fine.grained.invalidation")
+        }
     }
 }
