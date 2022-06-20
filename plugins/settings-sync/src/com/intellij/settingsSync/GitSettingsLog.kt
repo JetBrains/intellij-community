@@ -201,11 +201,12 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   override fun collectCurrentSnapshot(): SettingsSnapshot {
     // todo check repository consistency, e.g. there should be no uncommitted changes
 
+    val lastModifiedDate = getDate(getBranchTip(master))
     val files = settingsSyncStorage.toFile().walkTopDown()
       .onEnter { it.name != ".git" }
       .filter { it.isFile && it.name != ".gitignore" }
       .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), settingsSyncStorage) }
-    return SettingsSnapshot(MetaInfo(Instant.now()), files)
+    return SettingsSnapshot(MetaInfo(lastModifiedDate), files)
   }
 
   override fun getIdePosition(): SettingsLog.Position {
@@ -284,16 +285,16 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   private fun mergeUsingSimplifiedLastModifiedStrategy() {
-    val ideTip = git.log().add(ide.objectId).setMaxCount(1).call().first()
-    val ideLastDate = getDate(ideTip)
-    val cloudTip = git.log().add(cloud.objectId).setMaxCount(1).call().first()
-    val cloudLastDate = getDate(cloudTip)
+    val ideLastDate = getDate(getBranchTip(ide))
+    val cloudLastDate = getDate(getBranchTip(cloud))
     val mergeStrategy = if (ideLastDate >= cloudLastDate) MergeStrategy.OURS else MergeStrategy.THEIRS
     val mergeResult = git.merge().include(cloud).setStrategy(mergeStrategy).call()
     LOG.info("Merging with the last-modified strategy completed with result: $mergeResult")
   }
 
-  private fun getDate(commit: RevCommit) : Instant {
+  private fun getBranchTip(ref: Ref): RevCommit = git.log().add(ref.objectId).setMaxCount(1).call().first()
+
+  private fun getDate(commit: RevCommit): Instant {
     try {
       val noteObject = git.notesShow().setObjectId(commit).call()
       if (noteObject != null) {
