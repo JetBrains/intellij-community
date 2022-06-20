@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.doGetProjectFileName
 import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
@@ -36,7 +37,12 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   private var dirOrFile: Path? = null
   private var dotIdea: Path? = null
 
-  internal fun getNameFile(): Path = directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
+  internal fun getNameFile(): Path {
+    for (projectNameProvider in ProjectNameProvider.EP_NAME.iterable) {
+      LOG.runAndLogException { projectNameProvider.getNameFile(project)?.let { return it } }
+    }
+    return directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
+  }
 
   final override var loadPolicy = StateLoadPolicy.LOAD
 
@@ -173,10 +179,6 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val storages = stateSpec.storages
-    if (storages.isEmpty()) {
-      return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
-    }
-
     if (isDirectoryBased) {
       if (storages.size == 2 && ApplicationManager.getApplication().isUnitTestMode &&
           isSpecialStorage(storages.first()) &&
@@ -195,26 +197,24 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       }
 
       if (result.isNullOrEmpty()) {
-        return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
+        result = mutableListOf(PROJECT_FILE_STORAGE_ANNOTATION)
       }
-      else {
-        result.sortWith(deprecatedComparator)
-        if (isDirectoryBased) {
-          for (providerFactory in StreamProviderFactory.EP_NAME.getIterable(project)) {
-            LOG.runAndLogException {
-              // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
-              providerFactory.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation)?.let { return it }
-            }
+      result.sortWith(deprecatedComparator)
+      if (isDirectoryBased) {
+        for (providerFactory in StreamProviderFactory.EP_NAME.getIterable(project)) {
+          LOG.runAndLogException {
+            // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
+            providerFactory.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation)?.let { return it }
           }
         }
-
-        // if we create project from default, component state written not to own storage file, but to project file,
-        // we don't have time to fix it properly, so, ancient hack restored
-        if (!isSpecialStorage(result.first())) {
-          result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
-        }
-        return result
       }
+
+      // if we create project from default, component state written not to own storage file, but to project file,
+      // we don't have time to fix it properly, so, ancient hack restored
+      if (!isSpecialStorage(result.first())) {
+        result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
+      }
+      return result
     }
     else {
       var result: MutableList<Storage>? = null

@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -97,7 +98,7 @@ object JpsProjectEntitiesLoader {
       directorySerializersFactories += JpsArtifactsDirectorySerializerFactory(artifactsDirectoryUrl)
     }
     val externalStorageRoot = externalStorageMapping.externalStorageRoot
-    val externalStorageEnabled = isExternalStorageEnabled(reader, ideaFolderUrl)
+    val externalStorageEnabled = isExternalStorageEnabled(reader, ideaFolderUrl, externalStorageRoot)
     val librariesExternalStorageFile = JpsFileEntitySource.ExactFile(externalStorageRoot.append("project/libraries.xml"), configLocation)
     val externalModuleListSerializer = ExternalModuleListSerializer(externalStorageRoot, virtualFileManager)
 
@@ -131,8 +132,9 @@ object JpsProjectEntitiesLoader {
     )
   }
 
-  private fun isExternalStorageEnabled(reader: JpsFileContentReader, ideaFolderPath: String): Boolean {
-    val component = reader.loadComponent("$ideaFolderPath/misc.xml", "ExternalStorageConfigurationManager")
+  private fun isExternalStorageEnabled(reader: JpsFileContentReader, ideaFolderPath: String, externalStorageRoot: VirtualFileUrl): Boolean {
+    val component = reader.loadComponent("$ideaFolderPath/misc.xml", "ExternalStorageConfigurationManager") ?:
+                    reader.loadComponent(externalStorageRoot.append(".idea/misc.xml").url, "ExternalStorageConfigurationManager")
     return component?.getAttributeValue("enabled") == "true"
   }
 
