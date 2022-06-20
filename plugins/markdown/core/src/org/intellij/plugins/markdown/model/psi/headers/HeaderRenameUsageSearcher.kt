@@ -9,6 +9,7 @@ import com.intellij.util.Query
 import com.intellij.util.text.StringOperation
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiUsage
+import org.intellij.plugins.markdown.model.psi.MarkdownSymbolUsageSearcher
 
 internal class HeaderRenameUsageSearcher: RenameUsageSearcher {
   override fun collectSearchRequests(parameters: RenameUsageSearchParameters): Collection<Query<out RenameUsage>> {
@@ -17,8 +18,8 @@ internal class HeaderRenameUsageSearcher: RenameUsageSearcher {
       return emptyList()
     }
     val searchText = target.searchText.takeIf { it.isNotEmpty() } ?: return emptyList()
-    val usages = HeaderUsageSearcher.buildSearchRequest(parameters.project, target, searchText, parameters.searchScope)
-    val selfUsage = HeaderUsageSearcher.buildDirectTargetQuery(MarkdownPsiUsage.create(target.file, target.range, declaration = true))
+    val usages = MarkdownSymbolUsageSearcher.buildSearchRequest(parameters.project, target, searchText, parameters.searchScope)
+    val selfUsage = MarkdownSymbolUsageSearcher.buildDirectTargetQuery(MarkdownPsiUsage.create(target.file, target.range, declaration = true))
     val modifiedUsages = usages.mapping { HeaderAnchorModifiableRenameUsage(it.file, it.range) }
     val modifiedSelfUsage = selfUsage.mapping { PsiModifiableRenameUsage.defaultPsiModifiableRenameUsage(it) }
     return listOf(modifiedUsages, modifiedSelfUsage)

@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.model.psi.headers
+package org.intellij.plugins.markdown.model.psi.labels
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
@@ -7,16 +7,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiSymbolReference
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class UnresolvedHeaderReferenceInspection: LocalInspectionTool() {
+internal class UnresolvedLinkLabelInspection: LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return object: MarkdownElementVisitor() {
-      override fun visitLinkDestination(linkDestination: MarkdownLinkDestination) {
-        checkReference(linkDestination, holder)
+      override fun visitElement(element: PsiElement) {
+        checkReference(element, holder)
+        super.visitElement(element)
       }
     }
   }
@@ -27,7 +25,7 @@ class UnresolvedHeaderReferenceInspection: LocalInspectionTool() {
       val text = reference.rangeInElement.substring(reference.element.text)
       holder.registerProblem(
         element,
-        MarkdownBundle.message("markdown.unresolved.header.reference.inspection.text", text),
+        MarkdownBundle.message("markdown.unresolved.link.label.inspection.text", text),
         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
         reference.rangeInElement
       )

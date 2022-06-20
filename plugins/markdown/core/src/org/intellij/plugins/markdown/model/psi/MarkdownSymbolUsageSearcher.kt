@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.model.psi.headers
+package org.intellij.plugins.markdown.model.psi
 
 import com.intellij.find.usages.api.PsiUsage
 import com.intellij.find.usages.api.Usage
@@ -20,14 +20,11 @@ import com.intellij.psi.util.walkUp
 import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
 import com.intellij.util.Query
-import org.intellij.plugins.markdown.model.psi.MarkdownPsiSymbolReference
-import org.intellij.plugins.markdown.model.psi.MarkdownPsiUsage
-import org.intellij.plugins.markdown.model.psi.MarkdownSymbol
 
-internal class HeaderUsageSearcher: UsageSearcher {
+internal class MarkdownSymbolUsageSearcher: UsageSearcher {
   override fun collectSearchRequests(parameters: UsageSearchParameters): Collection<Query<out Usage>> {
     val target = parameters.target
-    if (target !is HeaderSymbol) {
+    if (target !is MarkdownSymbolWithUsages) {
       return emptyList()
     }
     val project = parameters.project

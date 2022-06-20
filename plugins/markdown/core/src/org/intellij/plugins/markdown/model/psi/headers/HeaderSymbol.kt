@@ -18,16 +18,16 @@ import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderContent
 import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
-import org.intellij.plugins.markdown.model.psi.MarkdownSymbol
+import org.intellij.plugins.markdown.model.psi.MarkdownSymbolWithUsages
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 data class HeaderSymbol(
-  val file: PsiFile,
-  val range: TextRange,
+  override val file: PsiFile,
+  override val range: TextRange,
   val text: String,
   val anchorText: String
-): MarkdownSymbol, SearchTarget, RenameTarget, NavigatableSymbol, NavigationTarget {
+): MarkdownSymbolWithUsages, SearchTarget, RenameTarget, NavigatableSymbol, NavigationTarget {
   override fun createPointer(): Pointer<out HeaderSymbol> {
     val project = file.project
     val base = SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(file, range)
