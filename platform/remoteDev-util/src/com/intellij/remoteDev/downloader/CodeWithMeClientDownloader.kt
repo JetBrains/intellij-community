@@ -530,10 +530,8 @@ object CodeWithMeClientDownloader {
                                      guestRoot: Path,
                                      jdkRoot: Path): Lifetime {
     val (executable, fullLauncherCmd) = findLauncherUnderCwmGuestRoot(guestRoot)
-    val guestHome = findCwmGuestHome(guestRoot)
 
-    val linkTarget = if (SystemInfo.isMac) detectMacOsJbrDirectory(jdkRoot) else detectTrueJdkRoot(jdkRoot)
-    createSymlink(guestHome / "jbr", linkTarget)
+    createSymlinkToJdkFromGuest(guestRoot, jdkRoot)
 
     // Update mtime on JRE & CWM Guest roots. The cleanup process will use it later.
     listOf(guestRoot, jdkRoot).forEach { path ->
