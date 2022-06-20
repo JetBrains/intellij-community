@@ -35,14 +35,14 @@ import static java.util.Collections.emptyMap;
  * <p>NB: works with {@link File}, i.e. reads from disk. Consider using caching.
  * Throws a {@link RepoStateException} in the case of incorrect Git file format.</p>
  */
-class GitRepositoryReader {
+public class GitRepositoryReader {
 
   private static final Logger LOG = Logger.getInstance(GitRepositoryReader.class);
 
-  @NotNull private final File          myHeadFile;       // .git/HEAD
-  @NotNull private final File          myRefsHeadsDir;   // .git/refs/heads/
-  @NotNull private final File          myRefsRemotesDir; // .git/refs/remotes/
-  @NotNull private final File          myPackedRefsFile; // .git/packed-refs
+  @NotNull private final File myHeadFile;       // .git/HEAD
+  @NotNull private final File myRefsHeadsDir;   // .git/refs/heads/
+  @NotNull private final File myRefsRemotesDir; // .git/refs/remotes/
+  @NotNull private final File myPackedRefsFile; // .git/packed-refs
   @NotNull private final GitRepositoryFiles myGitFiles;
 
   GitRepositoryReader(@NotNull GitRepositoryFiles gitFiles) {
@@ -246,7 +246,8 @@ class GitRepositoryReader {
   @NotNull
   private Map<String, String> readBranchRefsFromFiles() {
     try {
-      Map<String, String> result = new HashMap<>(readPackedBranches()); // reading from packed-refs first to overwrite values by values from unpacked refs
+      // reading from packed-refs first to overwrite values by values from unpacked refs
+      Map<String, String> result = new HashMap<>(readPackedBranches());
       result.putAll(readFromBranchFiles(myRefsHeadsDir, REFS_HEADS_PREFIX));
       result.putAll(readFromBranchFiles(myRefsRemotesDir, REFS_REMOTES_PREFIX));
       result.remove(REFS_REMOTES_PREFIX + GitUtil.ORIGIN_HEAD);
@@ -267,17 +268,32 @@ class GitRepositoryReader {
     for (Map.Entry<String, Hash> entry : data.entrySet()) {
       String refName = entry.getKey();
       Hash hash = entry.getValue();
-      if (refName.startsWith(REFS_HEADS_PREFIX)) {
-        localBranches.put(new GitLocalBranch(refName), hash);
+
+      GitBranch branch = parseBranchRef(remotes, refName);
+      if (branch instanceof GitLocalBranch) {
+        localBranches.put((GitLocalBranch)branch, hash);
       }
-      else if (refName.startsWith(REFS_REMOTES_PREFIX)) {
-        remoteBranches.put(parseRemoteBranch(refName, remotes), hash);
+      else if (branch instanceof GitRemoteBranch) {
+        remoteBranches.put((GitRemoteBranch)branch, hash);
       }
       else {
-        LOG.warn("Unexpected ref format: " + refName);
+        LOG.warn(String.format("Unexpected ref format: %s, %s", refName, branch));
       }
     }
     return Pair.create(localBranches, remoteBranches);
+  }
+
+  @Nullable
+  public static GitBranch parseBranchRef(@NotNull Collection<GitRemote> remotes, String refName) {
+    if (refName.startsWith(REFS_HEADS_PREFIX)) {
+      return new GitLocalBranch(refName);
+    }
+    else if (refName.startsWith(REFS_REMOTES_PREFIX)) {
+      return parseRemoteBranch(refName, remotes);
+    }
+    else {
+      return null;
+    }
   }
 
   @Nullable
@@ -296,17 +312,17 @@ class GitRepositoryReader {
       if (!file.isDirectory() && !isHidden(file)) {
         String relativePath = FileUtil.getRelativePath(refsRootDir, file);
         if (relativePath != null) {
-         String branchName = prefix + FileUtil.toSystemIndependentName(relativePath);
-         boolean isBranchNameValid = GitRefNameValidator.getInstance().checkInput(branchName);
-         if (isBranchNameValid) {
-           String hash = loadHashFromBranchFile(file);
-           if (hash != null) {
-             result.put(branchName, hash);
-           }
-           else {
-             couldNotLoadFile.set(true);
-           }
-         }
+          String branchName = prefix + FileUtil.toSystemIndependentName(relativePath);
+          boolean isBranchNameValid = GitRefNameValidator.getInstance().checkInput(branchName);
+          if (isBranchNameValid) {
+            String hash = loadHashFromBranchFile(file);
+            if (hash != null) {
+              result.put(branchName, hash);
+            }
+            else {
+              couldNotLoadFile.set(true);
+            }
+          }
         }
       }
       return true;
@@ -339,7 +355,8 @@ class GitRepositoryReader {
         branchName = stdName.substring(slash + 1);
         remote = GitUtil.findRemoteByName(remotes, remoteName);
         slash = stdName.indexOf('/', slash + 1);
-      } while(remote == null && slash >= 0);
+      }
+      while (remote == null && slash >= 0);
 
       if (remote == null) {
         // user may remove the remote section from .git/config, but leave remote refs untouched in .git/refs/remotes
