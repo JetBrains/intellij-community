@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 /**
  * This is a dummy test bean for testing the toString() plugin.
  */
+@SuppressWarnings("unused")
 public class DummySortTestBean {
 
     private Logger myLogger;

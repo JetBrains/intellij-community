@@ -18,6 +18,7 @@ package org.jetbrains.java.generate.test;
 /**
  * To be used for testing.
  */
+@SuppressWarnings("unused")
 public class Owner {
 
     private String firstName;
