@@ -6,11 +6,12 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.io.exists
+import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -19,6 +20,8 @@ import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_JPS_PLUGIN_SETTINGS_S
 import org.jetbrains.kotlin.config.toKotlinVersion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import java.nio.file.Path
+import kotlin.io.path.bufferedReader
 
 @State(name = KOTLIN_JPS_PLUGIN_SETTINGS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
 class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<JpsPluginSettings>(project) {
@@ -66,6 +69,9 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
         fun jpsVersion(project: Project): String? = getInstance(project)?.settings?.versionWithFallback
 
+        /**
+         * @see readFromKotlincXmlOrIpr
+         */
         @JvmStatic
         fun getInstance(project: Project): KotlinJpsPluginSettings? =
             project.takeIf { isUnbundledJpsExperimentalFeatureEnabled(it) }?.service()
@@ -114,6 +120,22 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
             return null
         }
+
+        /**
+         * Replacement for [getInstance] for cases when it's not possible to use [getInstance] (e.g. project isn't yet initialized).
+         *
+         * Please, prefer [getInstance] if possible.
+         */
+        fun readFromKotlincXmlOrIpr(path: Path) =
+            path.takeIf { it.fileIsNotEmpty() }
+                ?.let { JDOMUtil.load(path) }
+                ?.children
+                ?.singleOrNull { it.getAttributeValue("name") == KotlinJpsPluginSettings::class.java.simpleName }
+                ?.let { xmlElement ->
+                    JpsPluginSettings().apply {
+                        XmlSerializer.deserializeInto(this, xmlElement)
+                    }
+                }
 
         fun supportedJpsVersion(project: Project, onUnsupportedVersion: (String) -> Unit): String? {
             val version = jpsVersion(project) ?: return null
@@ -212,3 +234,5 @@ private fun showNotificationUnsupportedJpsPluginVersion(
         .setImportant(true)
         .notify(project)
 }
+
+fun Path.fileIsNotEmpty() = exists() && bufferedReader().use { it.readLine() != null }
