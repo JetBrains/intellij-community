@@ -594,7 +594,22 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @NotNull
   private Pair<FileEditor[], FileEditorProvider[]> openFileInCommand(@NotNull FileEditorNavigatable descriptor) {
     Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
-    CommandProcessor.getInstance().executeCommand(myProject, () -> result.set(openFileImpl3(descriptor)), "", null);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      Pair<FileEditor[], FileEditorProvider[]> editWithProvider = openFileImpl3(descriptor);
+      FileEditor[] editors = editWithProvider.first;
+      for (int i = 0; i < editors.length; i++) {
+        FileEditor editor = editors[i];
+        if (editor instanceof NavigatableFileEditor && descriptor.getFile().equals(editor.getFile())) {
+          NavigatableFileEditor navEditor = (NavigatableFileEditor)editor;
+          if (navEditor.canNavigateTo(descriptor)) {
+            setSelectedEditor(descriptor.getFile(), editWithProvider.second[i].getEditorTypeId());
+            navEditor.navigateTo(descriptor);
+          }
+          break;
+        }
+      }
+      result.set(editWithProvider);
+    }, "", null);
     return result.get();
   }
 
