@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.codeInspection.HintAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -60,6 +61,13 @@ internal class ImportQuickFix(
 
     override fun showHint(editor: Editor): Boolean {
         val element = element ?: return false
+        if (
+            ApplicationManager.getApplication().isHeadlessEnvironment
+            || HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)
+        ) {
+            return false
+        }
+
         val file = element.containingKtFile
         val project = file.project
 
@@ -104,15 +112,23 @@ internal class ImportQuickFix(
         }
 
         override fun execute(): Boolean {
-            val unambiguousImport = importCandidates.singleOrNull()
-            if (unambiguousImport != null) {
-                addImport(unambiguousImport)
-                return true
+            when (importCandidates.size) {
+                1 -> {
+                    addImport(importCandidates.single())
+                    return true
+                }
+
+                0 -> {
+                    return false
+                }
+
+                else -> {
+                    if (ApplicationManager.getApplication().isUnitTestMode) return false
+                    createImportSelectorPopup().showInBestPositionFor(editor)
+
+                    return true
+                }
             }
-
-            createImportSelectorPopup().showInBestPositionFor(editor)
-
-            return true
         }
 
         private fun createImportSelectorPopup(): JBPopup {
