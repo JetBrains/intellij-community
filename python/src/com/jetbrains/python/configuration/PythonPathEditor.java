@@ -42,6 +42,8 @@ import java.util.*;
 public class PythonPathEditor extends SdkPathEditor {
   private final @NotNull PathListModel myPathListModel;
 
+  private final @NotNull List<Runnable> myReloadPathsActionCallbacks = new ArrayList<>();
+
   public PythonPathEditor(@NlsContexts.TabTitle @NotNull String displayName,
                           @NotNull OrderRootType orderRootType,
                           @NotNull FileChooserDescriptor descriptor) {
@@ -123,12 +125,20 @@ public class PythonPathEditor extends SdkPathEditor {
     toolbarDecorator.addExtraAction(new AnActionButton(PyBundle.message("sdk.paths.dialog.reload.paths"), AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        onReloadButtonClicked();
+        fireReloadPathsActionCallbacks();
       }
     });
   }
 
-  protected void onReloadButtonClicked() { }
+  public void addReloadPathsActionCallback(@NotNull Runnable e) {
+    myReloadPathsActionCallbacks.add(e);
+  }
+
+  private void fireReloadPathsActionCallbacks() {
+    for (Runnable callback : myReloadPathsActionCallbacks) {
+      callback.run();
+    }
+  }
 
   private static class PathListModel {
     private Set<VirtualFile> myAdded = new HashSet<>();
