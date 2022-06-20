@@ -105,7 +105,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       return getOrPut(hash, root);
     }
     catch (IOException e) {
-      myErrorHandler.handleError(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Storage, e);
     }
     return NO_INDEX;
   }
@@ -117,12 +117,12 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     try {
       CommitId commitId = doGetCommitId(commitIndex);
       if (commitId == null) {
-        myErrorHandler.handleError(this, new RuntimeException("Unknown commit index: " + commitIndex));
+        myErrorHandler.handleError(VcsLogErrorHandler.Source.Storage, new RuntimeException("Unknown commit index: " + commitIndex));
       }
       return commitId;
     }
     catch (IOException e) {
-      myErrorHandler.handleError(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Storage, e);
     }
     return null;
   }
@@ -134,7 +134,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       return myCommitIdEnumerator.contains(id);
     }
     catch (IOException e) {
-      myErrorHandler.handleError(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Storage, e);
     }
     return false;
   }
@@ -151,7 +151,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       });
     }
     catch (IOException e) {
-      myErrorHandler.handleError(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Storage, e);
     }
   }
 
@@ -162,7 +162,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       return myRefsEnumerator.enumerate(ref);
     }
     catch (IOException e) {
-      myErrorHandler.handleError(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Storage, e);
     }
     return NO_INDEX;
   }
@@ -175,7 +175,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       return myRefsEnumerator.valueOf(refIndex);
     }
     catch (IOException e) {
-      myErrorHandler.handleError(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Storage, e);
       return null;
     }
   }

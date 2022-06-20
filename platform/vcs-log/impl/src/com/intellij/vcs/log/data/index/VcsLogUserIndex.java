@@ -53,7 +53,7 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
     super(storageId, USERS, new UserIndexer(createUsersEnumerator(storageId, storageLockContext, userRegistry)),
           VoidDataExternalizer.INSTANCE, storageLockContext, errorHandler, disposableParent);
     myUserIndexer = (UserIndexer)myIndexer;
-    ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> errorHandler.handleError(this, e));
+    ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
   }
 
   @Override

@@ -23,7 +23,6 @@ import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStatusBarProgress;
-import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.*;
@@ -293,7 +292,7 @@ public class VcsLogManager implements Disposable {
     private final @NotNull AtomicBoolean myIsBroken = new AtomicBoolean(false);
 
     @Override
-    public void handleError(@Nullable Object source, @NotNull Throwable throwable) {
+    public void handleError(@Nullable Source source, @NotNull Throwable throwable) {
       if (myIsBroken.compareAndSet(false, true)) {
         if (myRecreateMainLogHandler != null) {
           ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(throwable));
@@ -302,7 +301,7 @@ public class VcsLogManager implements Disposable {
           LOG.error(throwable);
         }
 
-        if (source instanceof VcsLogStorage) {
+        if (source == Source.Storage) {
           ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
         }
       }

@@ -253,7 +253,7 @@ public final class IndexDataGetter {
       }
     }
     catch (IOException e) {
-      myErrorHandler.handleError(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
       return false;
     }
     return true;
@@ -447,7 +447,7 @@ public final class IndexDataGetter {
     }
     catch (IOException | StorageException | CorruptedDataException e) {
       myIndexStorage.markCorrupted();
-      myErrorHandler.handleError(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
     catch (RuntimeException e) {
       processRuntimeException(e);
@@ -459,7 +459,7 @@ public final class IndexDataGetter {
     if (e instanceof ProcessCanceledException) throw e;
     myIndexStorage.markCorrupted();
     if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
-      myErrorHandler.handleError(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
     else {
       throw new RuntimeException(e);
