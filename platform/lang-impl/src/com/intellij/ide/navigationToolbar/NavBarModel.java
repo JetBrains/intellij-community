@@ -163,13 +163,16 @@ public class NavBarModel {
     if (ownerExtension == null) {
       psiElement = normalize(psiElement);
     }
-    if (!myModel.isEmpty() && Objects.equals(get(myModel.size() - 1), psiElement) && !myChanged) return null;
+
+    // Save to a local variable in order to avoid OutOfBounds exception while working with a volatile property
+    final List<Object> model = myModel;
+    if (!model.isEmpty() && Objects.equals(get(model, model.size() - 1), psiElement) && !myChanged) return null;
 
     if (psiElement != null && psiElement.isValid()) {
       return createModel(psiElement, dataContext, ownerExtension);
     }
     else {
-      if (UISettings.getInstance().getShowNavigationBar() && !myModel.isEmpty()) return null;
+      if (UISettings.getInstance().getShowNavigationBar() && !model.isEmpty()) return null;
 
       Object root = calculateRoot(dataContext);
 
@@ -360,6 +363,10 @@ public class NavBarModel {
 
   public @Nullable Object get(int index) {
     return unwrapRaw(getRaw(index));
+  }
+
+  private @Nullable Object get(List<Object> model, int index) {
+    return unwrapRaw(model.get(index));
   }
 
   public int indexOf(Object value) {
