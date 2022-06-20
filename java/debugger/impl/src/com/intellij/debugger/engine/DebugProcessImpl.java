@@ -191,10 +191,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void setWatchMethodReturnValuesEnabled(boolean enabled) {
-    final MethodReturnValueWatcher watcher = myReturnValueWatcher;
-    if (watcher != null) {
-      watcher.setEnabled(enabled);
-    }
+    ObjectUtils.consumeIfNotNull(myReturnValueWatcher, v -> v.setEnabled(enabled));
   }
 
   public boolean canGetMethodReturnValue() {
@@ -2354,9 +2351,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       @Override
       public void contextAction() {
         breakpointManager.applyThreadFilter(DebugProcessImpl.this, null); // clear the filter on resume
-        if (myReturnValueWatcher != null) {
-          myReturnValueWatcher.clear();
-        }
+        ObjectUtils.consumeIfNotNull(myReturnValueWatcher, MethodReturnValueWatcher::clear);
         super.contextAction();
       }
 
@@ -2496,15 +2491,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread) {
-    if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.enable(thread.getThreadReference());
-    }
+    ObjectUtils.consumeIfNotNull(myReturnValueWatcher, v -> v.enable(thread.getThreadReference()));
   }
 
   void stopWatchingMethodReturn() {
-    if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.disable();
-    }
+    ObjectUtils.consumeIfNotNull(myReturnValueWatcher, MethodReturnValueWatcher::disable);
   }
 
   private static class VirtualMachineData {
