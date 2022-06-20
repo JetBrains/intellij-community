@@ -139,7 +139,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             listOf(ProjectRootModificationTracker.getInstance(project))
 
         override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
-            super.invalidateKeys(libraryInfos)
+            super.invalidateKeys(libraryInfos) { true }
         }
 
     }
@@ -167,18 +167,16 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             event.getChanges(ModuleEntity::class.java).ifEmpty { return }
 
             // libs and sdks are invalidated by its own listeners
-            invalidateKeys { it !is LibraryInfo && it !is SdkInfo }
-            checkKeysValidity { it !is LibraryInfo && it !is SdkInfo }
+            val condition: (IdeaModuleInfo) -> Boolean = { it !is LibraryInfo && it !is SdkInfo }
+            invalidateKeys(condition, condition)
         }
 
         override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
-            invalidateKeys(libraryInfos)
-            checkKeysValidity { it is LibraryInfo }
+            invalidateKeys(libraryInfos) { it is LibraryInfo }
         }
 
         override fun jdkRemoved(jdk: Sdk) {
-            invalidateKeys { it is SdkInfo && it.sdk == jdk }
-            checkKeysValidity { it is SdkInfo }
+            invalidateKeys({ it is SdkInfo && it.sdk == jdk }, { it is SdkInfo })
         }
 
         override fun jdkNameChanged(jdk: Sdk, previousName: String) {

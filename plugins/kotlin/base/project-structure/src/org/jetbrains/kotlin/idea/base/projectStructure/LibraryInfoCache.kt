@@ -95,7 +95,6 @@ class LibraryInfoCache(project: Project): FineGrainedEntityCache<Library, List<L
         override fun entitiesChanged(outdated: List<Library>) {
             val libraryInfoCache = getInstance(project)
             val droppedLibraryInfos = libraryInfoCache.invalidateKeys(outdated).flatMapTo(hashSetOf()) { it }
-            libraryInfoCache.checkKeysValidity()
 
             if (droppedLibraryInfos.isNotEmpty()) {
                 project.messageBus.syncPublisher(OutdatedLibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)

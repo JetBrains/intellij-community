@@ -85,27 +85,18 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
         }
     }
 
-    protected open fun invalidateKeys(keys: Collection<Key>): Collection<Value> {
+    protected open fun invalidateKeys(keys: Collection<Key>, validityCondition: (Key) -> Boolean = { true }): Collection<Value> {
         val removedValues = mutableListOf<Value>()
         synchronized(cache) {
             for (key in keys) {
                 removedValues.addIfNotNull(cache.remove(key))
             }
+            checkKeys(validityCondition)
         }
         return removedValues
     }
 
-    protected fun checkKeysValidity(condition: (Key) -> Boolean = { true }) {
-        synchronized(cache) {
-            for(key in cache.keys) {
-                if (condition(key)) {
-                    checkValidity(key)
-                }
-            }
-        }
-    }
-
-    protected open fun invalidateKeys(condition: (Key) -> Boolean): Collection<Value> {
+    protected open fun invalidateKeys(condition: (Key) -> Boolean, validityCondition: (Key) -> Boolean = { true }): Collection<Value> {
         val removedValues = mutableListOf<Value>()
         synchronized(cache) {
             val iterator = cache.entries.iterator()
@@ -116,8 +107,17 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
                     iterator.remove()
                 }
             }
+            checkKeys(validityCondition)
         }
         return removedValues
+    }
+
+    private fun checkKeys(validityCondition: (Key) -> Boolean) {
+        for (key in cache.keys) {
+            if (validityCondition(key)) {
+                checkValidity(key)
+            }
+        }
     }
 
     protected abstract fun subscribe()

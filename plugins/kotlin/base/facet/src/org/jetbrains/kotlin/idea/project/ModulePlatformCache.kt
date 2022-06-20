@@ -77,7 +77,6 @@ class ModulePlatformCache(project: Project): FineGrainedEntityCache<Module, Targ
             platformCache.resetAllModulesSupportJvm()
 
             platformCache.invalidateKeys(outdated)
-            platformCache.checkKeysValidity()
         }
     }
 
