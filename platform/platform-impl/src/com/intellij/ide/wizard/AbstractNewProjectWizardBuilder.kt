@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.wizard
 
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logGeneratorFinished
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -41,7 +40,6 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
     val step = panel!!.step
     return detectCreatedModule(project) {
       step.setupProject(project)
-      step.context.logGeneratorFinished()
     }
   }
 
