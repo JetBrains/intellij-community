@@ -15,3 +15,4 @@ fun f(p: P) {
 }
 
 // FIR_COMPARISON
+// IGNORE_FIR_LOG

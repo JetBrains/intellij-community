@@ -63,6 +63,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.test.utils.IgnoreTests.DIRECTIVES.IGNORE_FIR_LOG
 import java.io.File
 
 
@@ -127,6 +128,8 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                 println("test $mainFileName is ignored")
                 return
             }
+
+            val ignoreLog = testType == FindUsageTestType.FIR && InTextDirectivesUtils.isDirectiveDefined(mainFileText, IGNORE_FIR_LOG)
 
             if (testType == FindUsageTestType.CRI) {
                 if (InTextDirectivesUtils.isDirectiveDefined(mainFileText, "// CRI_IGNORE")) {
@@ -239,6 +242,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                             alwaysAppendFileName = false,
                             testType = executionTestType,
                             javaNamesMap = javaNamesMap,
+                            ignoreLog = ignoreLog
                         )
 
                         val navigationElement = caretElement.navigationElement
@@ -253,6 +257,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                                 alwaysAppendFileName = false,
                                 testType = executionTestType,
                                 javaNamesMap = javaNamesMap,
+                                ignoreLog = ignoreLog
                             )
                         }
                     } else {
@@ -266,6 +271,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                             alwaysAppendFileName = false,
                             testType = executionTestType,
                             javaNamesMap = javaNamesMap,
+                            ignoreLog = ignoreLog
                         )
                     }
                 }
@@ -315,6 +321,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     alwaysAppendFileName: Boolean = false,
     testType: FindUsageTestType = FindUsageTestType.DEFAULT,
     javaNamesMap: Map<String, String>? = null,
+    ignoreLog: Boolean = false
 ) {
     val highlightingMode = InTextDirectivesUtils.isDirectiveDefined(mainFileText, "// HIGHLIGHTING")
 
@@ -383,7 +390,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     val finalUsages = filteredUsages.map(convertToString).sorted()
     KotlinTestUtils.assertEqualsToFile(testType.name, File(rootPath, prefix + "results.txt"), finalUsages.joinToString("\n"))
 
-    if (log != null) {
+    if (log != null  && !ignoreLog) {
         KotlinTestUtils.assertEqualsToFile(testType.name, File(rootPath, prefix + "log"), log)
 
         // if log is empty then compare results with plain search

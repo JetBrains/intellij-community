@@ -31,3 +31,4 @@ fun g(z1: Z1, z2: Z2) {
 }
 
 // FIR_COMPARISON
+// IGNORE_FIR_LOG

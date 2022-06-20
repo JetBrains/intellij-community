@@ -23,3 +23,4 @@ fun test(array: Array<A>) {
 }
 
 // FIR_COMPARISON
+// IGNORE_FIR_LOG

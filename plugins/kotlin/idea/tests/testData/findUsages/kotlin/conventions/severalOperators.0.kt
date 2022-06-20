@@ -40,3 +40,4 @@ fun test4() {
 }
 
 // FIR_COMPARISON
+// IGNORE_FIR_LOG

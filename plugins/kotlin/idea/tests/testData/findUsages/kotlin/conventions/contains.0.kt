@@ -16,3 +16,4 @@ fun test() {
 }
 
 // FIR_COMPARISON
+// IGNORE_FIR_LOG
