@@ -1016,7 +1016,7 @@ class JavaToJKTreeBuilder(
 
                 is PsiForeachStatement ->
                     JKForInStatement(
-                        iterationParameter.toJK(),
+                        iterationParameter.toJK().asForLoopVariable(),
                         with(expressionTreeMapper) { iteratedValue?.toJK() ?: JKStubExpression() },
                         body?.toJK() ?: blockStatement()
                     )
@@ -1275,3 +1275,11 @@ class JavaToJKTreeBuilder(
 
 private const val DEPRECATED_ANNOTATION_FQ_NAME = "java.lang.Deprecated"
 private const val NO_NAME_PROVIDED = "NO_NAME_PROVIDED"
+
+private fun JKParameter.asForLoopVariable() =
+    JKForLoopVariable(
+        JKTypeElement(type.type, type::annotationList.detached()),
+        ::name.detached(),
+        JKStubExpression(),
+        ::annotationList.detached()
+    )
