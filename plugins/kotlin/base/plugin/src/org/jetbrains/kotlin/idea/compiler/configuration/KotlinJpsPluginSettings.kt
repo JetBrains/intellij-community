@@ -153,11 +153,13 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                         error.message
                     ),
                 )
-
-                if (error !is OutdatedCompilerVersion) {
+            }
+            when (error) {
+                is ParsingError, is NewCompilerVersion -> {
                     instance.dropExplicitVersion()
                     return
                 }
+                null, is OutdatedCompilerVersion -> Unit
             }
 
             if (shouldImportKotlinJpsPluginVersionFromExternalBuildSystem(IdeKotlinVersion.get(version))) {
