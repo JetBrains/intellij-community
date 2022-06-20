@@ -449,22 +449,20 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     }
   }
 
-  private PythonPathEditor createPathEditor(@NotNull final Sdk sdk) {
+  private @NotNull PythonPathEditor createPathEditor(@NotNull final Sdk sdk) {
+    PythonPathEditor pathEditor;
     if (PythonSdkUtil.isRemote(sdk)) {
-      return new PyRemotePathEditor(myProject, sdk);
+      pathEditor = new PyRemotePathEditor(myProject, sdk);
     }
     else {
-      return new PythonPathEditor(PyBundle.message("python.sdk.configuration.tab.title"), OrderRootType.CLASSES,
-                                  FileChooserDescriptorFactory.createAllButJarContentsDescriptor()) {
-        @Override
-        protected void onReloadButtonClicked() {
-          reloadSdk();
-        }
-      };
+      pathEditor = new PythonPathEditor(PyBundle.message("python.sdk.configuration.tab.title"), OrderRootType.CLASSES,
+                                        FileChooserDescriptorFactory.createAllButJarContentsDescriptor());
     }
+    pathEditor.addReloadPathsActionCallback(this::reloadSdk);
+    return pathEditor;
   }
 
-  private class PyRemotePathEditor extends PythonPathEditor {
+  private static class PyRemotePathEditor extends PythonPathEditor {
     private final RemoteSdkProperties myRemoteSdkData;
     @NotNull private final Project myProject;
     @NotNull private final Sdk mySdk;
@@ -477,11 +475,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       myProject = project;
       mySdk = sdk;
       myRemoteSdkData = (RemoteSdkProperties)mySdk.getSdkAdditionalData();
-    }
-
-    @Override
-    protected void onReloadButtonClicked() {
-      reloadSdk();
     }
 
     @Override
