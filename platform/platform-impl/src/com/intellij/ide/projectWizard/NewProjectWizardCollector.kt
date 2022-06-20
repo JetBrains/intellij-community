@@ -13,7 +13,11 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.lang.JavaVersion
@@ -31,7 +35,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val screenNumField = EventFields.Int("screen")
     private val typedCharsField = IntEventField("typed_chars")
     private val hitsField = IntEventField("hits")
-    private val generatorTypeField = BoundedStringEventField.enum("generator", *NewProjectWizardConstants.Generators.ALL)
+    private val generatorTypeField = GeneratorEventField("generator")
     private val languageField = BoundedStringEventField.lowercase("language", *NewProjectWizardConstants.Language.ALL)
     private val gitField = EventFields.Boolean("git")
     private val isSucceededField = EventFields.Boolean("project_created")
@@ -86,11 +90,11 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     @JvmStatic fun logOpen(context: WizardContext) = open.log(context.project,sessionIdField with context.sessionId.id, screenNumField with context.screen)
     @JvmStatic fun logFinish(context: WizardContext, success: Boolean, duration: Long) = finish.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, isSucceededField with success, EventFields.DurationMs with duration)
     @JvmStatic fun logSearchChanged(context: WizardContext, chars: Int, results: Int) = search.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, typedCharsField with min(chars, 10), hitsField with results)
-    @JvmStatic fun logLocationChanged(context: WizardContext, generator: String) = location.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
-    @JvmStatic fun logNameChanged(context: WizardContext, generator: String) = name.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
+    @JvmStatic fun logLocationChanged(context: WizardContext, generator: ModuleBuilder?) = location.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
+    @JvmStatic fun logNameChanged(context: WizardContext, generator: ModuleBuilder?) = name.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
     @JvmStatic fun logLanguageChanged(context: WizardContext, language: String) = languageSelected.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, languageField with language)
     @JvmStatic fun logGitChanged(context: WizardContext) = gitChanged.log(context.project,screenNumField with context.screen)
-    @JvmStatic fun logGeneratorSelected(context: WizardContext, generator: String) = generatorSelected.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
+    @JvmStatic fun logGeneratorSelected(context: WizardContext, generator: ModuleBuilder?) = generatorSelected.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
     @JvmStatic fun logCustomTemplateSelected(context: WizardContext) = templateSelected.log(context.project,screenNumField with context.screen)
     @JvmStatic fun logNext(context: WizardContext, inputMask: Long = -1) = next.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, inputMaskField with inputMask)
     @JvmStatic fun logPrev(context: WizardContext, inputMask: Long = -1) = prev.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, inputMaskField with inputMask)
@@ -100,7 +104,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     @JvmStatic fun logProjectCreated(project: Project?, context: WizardContext) = projectCreated.log(project,screenNumField with context.screen)
     @JvmStatic fun logLanguageFinished(context: WizardContext, language: String) = languageFinished.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, languageField with language)
     @JvmStatic fun logGitFinished(context: WizardContext, git: Boolean) = gitFinish.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, gitField with git)
-    @JvmStatic fun logGeneratorFinished(context: WizardContext, generator: String) = generatorFinished.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
+    @JvmStatic fun logGeneratorFinished(context: WizardContext, generator: ModuleBuilder?) = generatorFinished.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
     @JvmStatic fun logAddPlugin(context: WizardContext) = addPlugin.log(context.project,screenNumField with context.screen)
     @JvmStatic fun logPluginSelected(context: WizardContext, plugin: String) = pluginSelected.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, pluginField with plugin)
 
@@ -114,9 +118,8 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val Sdk.featureVersion: Int?
       get() = JavaVersion.tryParse(versionString)?.feature
 
-    private val WizardContext.generator: String
-      get() = (projectBuilder as? ModuleBuilder)?.builderId?.removePrefix(NPW_PREFIX)
-              ?: OTHER
+    private val WizardContext.generator: ModuleBuilder?
+      get() = projectBuilder as? ModuleBuilder
 
     private val NewProjectWizardStep.language: String
       get() = (this as? LanguageNewProjectWizardData)?.language
@@ -210,6 +213,30 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
       fun enum(name: String, vararg allowedValues: String): BoundedStringEventField {
         return BoundedStringEventField(name, allowedValues.toList()) { it }
       }
+    }
+  }
+
+  private class GeneratorEventField(override val name: String) : PrimitiveEventField<ModuleBuilder?>() {
+
+    override fun addData(fuData: FeatureUsageData, value: ModuleBuilder?) {
+      fuData.addPluginInfo(value?.let { getPluginInfo(it.javaClass) })
+      fuData.addData(name, value?.builderId?.removePrefix(NPW_PREFIX) ?: OTHER)
+    }
+
+    override val validationRule: List<String>
+      get() = listOf("{util#${GeneratorValidationRule.ID}}")
+  }
+
+  class GeneratorValidationRule : CustomValidationRule() {
+    override fun getRuleId(): String = ID
+
+    override fun doValidate(data: String, context: EventContext): ValidationResultType {
+      if (isThirdPartyValue(data) || OTHER == data) return ValidationResultType.ACCEPTED
+      return acceptWhenReportedByPluginFromPluginRepository(context)
+    }
+
+    companion object {
+      const val ID = "npw_generator"
     }
   }
 }

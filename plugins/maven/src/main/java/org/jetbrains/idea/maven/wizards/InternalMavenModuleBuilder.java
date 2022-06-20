@@ -16,15 +16,8 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators;
-
 @ApiStatus.Internal
 public final class InternalMavenModuleBuilder extends AbstractMavenModuleBuilder {
-
-  @Override
-  public String getBuilderId() {
-    return Generators.LEGACY_MAVEN;
-  }
 
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {

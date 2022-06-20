@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.tools.composeProjectWizard
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
-import com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
@@ -25,8 +24,7 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
         val COMPOSE_PLATFORM_KEY: Key<ComposePWInitialStep.ComposePlatform> = Key.create("compose.platform")
     }
 
-
-    override fun getBuilderId(): String = Generators.COMPOSE
+    override fun getBuilderId(): String = "ComposeModuleBuilder"
     override fun getPresentableName(): String = ComposeProjectWizardBundle.message("module.presentation.name")
     override fun getWeight(): Int = KOTLIN_WEIGHT-1
     override fun getNodeIcon(): Icon = KotlinIcons.Wizard.COMPOSE
