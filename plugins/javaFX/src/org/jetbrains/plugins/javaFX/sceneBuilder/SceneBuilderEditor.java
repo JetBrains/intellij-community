@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -13,7 +14,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
@@ -125,7 +125,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
             list = downloader.downloadWithProgress(tempDir.toString(), myProject, myErrorPanel);
           if (list == null || list.isEmpty()) {
             myErrorLabel.setHyperlinkText(JavaFXBundle.message("javafx.scene.builder.editor.failed.to.download.kit.error"), "", "");
-            myErrorLabel.setIcon(Messages.getErrorIcon());
+            setErrorIcon();
             return;
           }
 
@@ -141,7 +141,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       });
       myErrorLabel.setHyperlinkText(JavaFXBundle.message("javafx.scene.builder.editor.failed.to.open.file.error"),
                                     JavaFXBundle.message("javafx.scene.builder.editor.download.scene.builder.kit"), "");
-      myErrorLabel.setIcon(Messages.getErrorIcon());
+      setErrorIcon();
       myLayout.show(myPanel, ERROR_CARD);
       return;
     }
@@ -155,7 +155,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
         });
         myErrorLabel.setHyperlinkText(JavaFXBundle.message("javafx.scene.builder.editor.failed.to.open.file.error"),
                                       JavaFXBundle.message("javafx.scene.builder.editor.download.javafx"), "");
-        myErrorLabel.setIcon(Messages.getErrorIcon());
+        setErrorIcon();
         myLayout.show(myPanel, ERROR_CARD);
         return;
       }
@@ -181,10 +181,14 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     }
 
     myErrorLabel.setHyperlinkText(JavaFXBundle.message("javafx.scene.builder.editor.failed.to.open.file.error"), "", "");
-    myErrorLabel.setIcon(Messages.getErrorIcon());
+    setErrorIcon();
     myErrorStack.setText(description);
     myErrorStack.setVisible(true);
     myLayout.show(myPanel, ERROR_CARD);
+  }
+
+  private void setErrorIcon() {
+    myErrorLabel.setIcon(AllIcons.General.Error);
   }
 
   private void downloadJavaFxDependencies() {
