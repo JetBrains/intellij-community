@@ -1,14 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util
 
-import com.intellij.testFramework.FileEditorManagerTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.*
 import org.junit.Assert
 import java.awt.EventQueue
 
-abstract class ProgressWindowTestCase<Process> : FileEditorManagerTestCase() { // necessary since setup may query ui
+abstract class ProgressWindowTestCase<Process> : BasePlatformTestCase() {
   protected val TIMEOUT_MS = 30_000L
 
   abstract fun Process.use(block: () -> Unit)
