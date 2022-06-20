@@ -150,6 +150,9 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
            "    public <A> A[] toArray(IntFunction<A[]> generator) {\n" +
            "        return delegate.toArray(generator);\n" +
            "    }\n" +
+           "    public <A extends CharSequence> A[] toArray2(IntFunction<A[]> generator) {\n" +
+           "        return delegate.toArray(/*Array of type 'java.lang.Object[]' expected, 'A[]' found*/generator/**/);\n" +
+           "    }\n" +
            "}");
   }
 
