@@ -398,6 +398,8 @@
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.roots.impl.DirectoryIndexCollector"/>
     <directoryIndexAnalyticsReporter implementation="com.intellij.openapi.roots.impl.DirectoryIndexAnalyticsReporterImpl"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.openapi.roots.impl.BundledResourceUsageCollector"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.openapi.roots.impl.BundledResourcePathValidationRule"/>
 
     <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
                         serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl"/>
