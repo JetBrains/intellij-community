@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -129,7 +130,10 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             }
         }
 
-        fun importKotlinJpsVersionFromExternalBuildSystem(project: Project, rawVersion: String) {
+        /**
+         * @param isDelegatedToExtBuild `true` if compiled with Gradle/Maven. `false` if compiled with JPS
+         */
+        fun importKotlinJpsVersionFromExternalBuildSystem(project: Project, rawVersion: String, isDelegatedToExtBuild: Boolean) {
             val instance = getInstance(project) ?: return
             if (rawVersion == rawBundledVersion) {
                 instance.setVersion(rawVersion)
@@ -162,11 +166,36 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 null, is OutdatedCompilerVersion -> Unit
             }
 
-            if (shouldImportKotlinJpsPluginVersionFromExternalBuildSystem(IdeKotlinVersion.get(version))) {
-                instance.setVersion(version)
-            } else {
+            if (!shouldImportKotlinJpsPluginVersionFromExternalBuildSystem(IdeKotlinVersion.get(version))) {
                 instance.dropExplicitVersion()
+                return
             }
+
+            if (!isDelegatedToExtBuild) {
+                downloadKotlinJpsInBackground(project, version)
+            }
+            instance.setVersion(version)
+        }
+
+        private fun downloadKotlinJpsInBackground(project: Project, version: String) {
+            ProgressManager.getInstance().run(
+                object : Task.Backgroundable(project, KotlinBasePluginBundle.getMessage("progress.text.downloading.kotlinc.dist"), true) {
+                    override fun run(indicator: ProgressIndicator) {
+                        KotlinArtifactsDownloader.lazyDownloadMissingJpsPluginDependencies(
+                            project,
+                            version,
+                            indicator,
+                            onError = {
+                                showNotificationUnsupportedJpsPluginVersion(
+                                    project,
+                                    KotlinBasePluginBundle.message("kotlin.dist.downloading.failed"),
+                                    it,
+                                )
+                            }
+                        )
+                    }
+                }
+            )
         }
 
         fun shouldImportKotlinJpsPluginVersionFromExternalBuildSystem(version: IdeKotlinVersion): Boolean {
