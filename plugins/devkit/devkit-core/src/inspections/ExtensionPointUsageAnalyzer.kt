@@ -74,7 +74,7 @@ private fun findQualifiedCall(element: UElement?): QualifiedCall? {
   return null
 }
 
-internal class LeakSearchContext(val project: Project, val epName: String?, val ignoreSafeClasses: Boolean) {
+internal class LeakSearchContext(val project: Project, private val epName: String?, private val ignoreSafeClasses: Boolean) {
   @NonNls
   private val SAFE_CLASSES = setOf(CommonClassNames.JAVA_LANG_STRING, "javax.swing.Icon", "java.net.URL", "java.io.File", "java.net.URI",
                                    "com.intellij.openapi.vfs.pointers.VirtualFilePointer", "com.intellij.openapi.vfs.VirtualFile")
@@ -181,7 +181,7 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
 
   private fun isSafeCall(callee: PsiMethod): Boolean {
     if (JavaMethodContractUtil.isPure(callee)) return true
-    // Not marked as pure because it's unclear whether side-effects from 'compute' are acceptable
+    // Not marked as pure because it's unclear whether side effects from 'compute' are acceptable
     if (callee.name == "getValue" && callee.containingClass?.qualifiedName == "com.intellij.openapi.util.NotNullLazyValue") return true
     // Not marked as pure because can reorder items for LinkedHashMap, but it's safe here
     if (callee.name == "get" && callee.containingClass?.qualifiedName == CommonClassNames.JAVA_UTIL_MAP) return true
@@ -350,7 +350,7 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
       return listOf(Leak(DevKitBundle.message("extension.point.analyzer.reason.uast.no.source.psi", text), null))
     }
     val leaks = mutableListOf<Leak>()
-    ReferencesSearch.search(sourcePsi, sourcePsi.useScope).forEach(Processor<PsiReference> { psiReference ->
+    ReferencesSearch.search(sourcePsi, sourcePsi.useScope).forEach(Processor { psiReference ->
       val ref = psiReference.element.toUElement()
       if (ref != null) {
         leaks.addAll(findObjectLeaks(ref, text))
@@ -391,10 +391,15 @@ class AnalyzeEPUsageIgnoreSafeClassesAction : AnAction() {
 private fun analyze(elementAtCaret: PsiElement, file: PsiFile, editor: Editor, ignoreSafeClasses: Boolean) {
   val target = elementAtCaret.getUastParentOfType<UField>()
   if (target != null) {
-    val psiClass = (target.javaPsi as? PsiField)?.containingClass
+    val psiField = target.javaPsi as? PsiField
+    val psiClass = psiField?.containingClass
     var epName: String? = null
     if (psiClass != null) {
       epName = ContainerUtil.getOnlyItem(ExtensionPointLocator(psiClass).findDirectCandidates())?.epName
+    }
+    if (!isEPField(psiField, null)) {
+      HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("extension.point.analyzer.not.extension.point.name"))
+      return
     }
     analyzeEPFieldUsages(target, file, editor, epName, ignoreSafeClasses)
   }
@@ -410,19 +415,26 @@ private fun analyze(elementAtCaret: PsiElement, file: PsiFile, editor: Editor, i
   }
 }
 
-private fun isEPField(field: PsiField?): Boolean {
-  val fieldType = (field?.type as? PsiClassReferenceType)?.rawType() ?: return false
-  return fieldType.canonicalText == ExtensionPointName::class.java.name ||
-         fieldType.canonicalText == ProjectExtensionPointName::class.java.name ||
-         fieldType.canonicalText == LanguageExtension::class.java.name
+private fun isEPField(field: PsiField?, epClass: PsiClass?): Boolean {
+  val referenceType = field?.type as? PsiClassReferenceType ?: return false
+  val parameters = referenceType.parameters
+  if (!referenceType.isRaw && parameters.size != 1) {
+    return false
+  }
+
+  val fieldRawType = referenceType.rawType()
+  if (fieldRawType.canonicalText == ExtensionPointName::class.java.name ||
+      fieldRawType.canonicalText == ProjectExtensionPointName::class.java.name ||
+      fieldRawType.canonicalText == LanguageExtension::class.java.name) {
+    return parameters.size != 1 ||
+           epClass == null ||
+           epClass == (parameters[0] as? PsiClassReferenceType)?.resolve()
+  }
+  return false
 }
 
 private fun analyzeEPFieldUsages(target: UField, file: PsiFile, editor: Editor, epName: String?, ignoreSafeClasses: Boolean) {
   val sourcePsi = target.sourcePsi ?: return
-  if (!isEPField(target.javaPsi as? PsiField)) {
-    HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("extension.point.analyzer.not.extension.point.name"))
-    return
-  }
 
   val context = LeakSearchContext(file.project, epName, ignoreSafeClasses)
   val task = object : Task.Backgroundable(file.project, DevKitBundle.message("extension.point.analyzer.analyze.title")) {
@@ -475,7 +487,7 @@ private fun analyzeEPTagUsages(xmlTag: XmlTag, file: PsiFile, editor: Editor, ig
     }
   }
 
-  val epField = effectiveClass.fields.find { isEPField(it) } ?: run {
+  val epField = findEPField(effectiveClass, effectiveClass) ?: run {
     HintManager.getInstance().showErrorHint(editor,
                                             DevKitBundle.message("extension.point.analyzer.analyze.xml.no.extension.point.name.field"))
     return
@@ -509,7 +521,7 @@ private fun batchAnalyzeEPTagUsages(xmlTag: XmlTag, file: PsiFile, editor: Edito
           }
 
           val effectiveClass = extensionPoint.effectiveClass ?: return@runReadAction
-          val epField = effectiveClass.fields.find { isEPField(it) }
+          val epField = findEPField(effectiveClass, effectiveClass)
           if (epField == null) {
             allUnsafeUsages.add(EPElementUsage(effectiveClass, DevKitBundle.message("extension.point.analyzer.reason.no.ep.field")))
             return@runReadAction
@@ -532,6 +544,23 @@ private fun batchAnalyzeEPTagUsages(xmlTag: XmlTag, file: PsiFile, editor: Edito
     }
   }
   ProgressManager.getInstance().run(task)
+}
+
+private fun findEPField(effectiveClass: PsiClass, epClass: PsiClass): PsiField? {
+  val fields = effectiveClass.fields
+  val epField = fields.find { isEPField(it, epClass) }
+  if (epField != null) {
+    return epField
+  }
+
+  effectiveClass.innerClasses.find {
+    val nestedField = findEPField(it, epClass)
+    if (nestedField != null) {
+      return nestedField
+    }
+    return@find false
+  }
+  return null
 }
 
 private fun isInPluginModule(element: PsiElement): Boolean {
