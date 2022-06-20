@@ -153,3 +153,5 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
         }
     }
 }
+
+fun <T: Any> FineGrainedEntityCache<Unit, T>.get() = get(Unit)

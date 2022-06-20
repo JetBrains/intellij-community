@@ -1,12 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.util.caching
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 
 abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value: Any>(protected val project: Project): WorkspaceModelChangeListener {
     protected abstract val entityClass: Class<Entity>
@@ -34,4 +37,11 @@ abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value: An
             entitiesChanged(outdatedEntities)
         }
     }
+}
+
+abstract class ModuleEntityChangeListener(project: Project) : WorkspaceEntityChangeListener<ModuleEntity, Module>(project) {
+    override val entityClass: Class<ModuleEntity>
+        get() = ModuleEntity::class.java
+
+    override fun map(storage: EntityStorage, entity: ModuleEntity): Module? = storage.findModuleByEntity(entity)
 }

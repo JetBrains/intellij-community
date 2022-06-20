@@ -3,25 +3,16 @@ package org.jetbrains.kotlin.idea.project
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
-import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
 import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.jvm.isJvm
 
 class ModulePlatformCache(project: Project): FineGrainedEntityCache<Module, TargetPlatform>(project, cleanOnLowMemory = false) {
-    @Volatile
-    private var allModulesSupportJvm: Boolean? = null
-
     override fun subscribe() {
         val busConnection = project.messageBus.connect(this)
         WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener(project))
@@ -39,37 +30,9 @@ class ModulePlatformCache(project: Project): FineGrainedEntityCache<Module, Targ
             ?: DefaultIdeTargetPlatformKindProvider.defaultPlatform
     }
 
-    override fun dispose() {
-        super.dispose()
-        allModulesSupportJvm = null
-    }
-
-    fun allModulesSupportJvm(): Boolean {
-        return allModulesSupportJvm ?: run {
-            val value = ModuleManager.getInstance(project).modules.all { module ->
-                ProgressManager.checkCanceled()
-                module.platform.isJvm()
-            }
-            allModulesSupportJvm = value
-            value
-        }
-    }
-
-    private fun resetAllModulesSupportJvm() {
-        allModulesSupportJvm = null
-    }
-
-    internal class ModelChangeListener(project: Project) : WorkspaceEntityChangeListener<ModuleEntity, Module>(project) {
-        override val entityClass: Class<ModuleEntity>
-            get() = ModuleEntity::class.java
-
-        override fun map(storage: EntityStorage, entity: ModuleEntity): Module? = storage.findModuleByEntity(entity)
-
+    internal class ModelChangeListener(project: Project) : ModuleEntityChangeListener(project) {
         override fun entitiesChanged(outdated: List<Module>) {
             val platformCache = getInstance(project)
-
-            // Any change of modules might affect `allModulesSupportJvm`
-            platformCache.resetAllModulesSupportJvm()
 
             platformCache.invalidateKeys(outdated)
         }
