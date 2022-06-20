@@ -5,11 +5,9 @@ package org.jetbrains.kotlin.idea.fir.uast
 import org.jetbrains.kotlin.test.KotlinRoot
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.LegacyUastIdentifiersTestBase
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolute
 
 abstract class AbstractFirLegacyUastIdentifiersTest : AbstractFirUastIdentifiersTest(), LegacyUastIdentifiersTestBase {
-    @OptIn(ExperimentalPathApi::class)
     private val whitelist : Set<String> = setOf(
         // TODO: Also failed with FE1.0 UAST
         "uast-kotlin/tests/testData/DestructuringDeclaration.kt",

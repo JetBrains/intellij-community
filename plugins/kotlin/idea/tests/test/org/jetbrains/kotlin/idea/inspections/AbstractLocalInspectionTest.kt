@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -24,7 +24,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Files
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.createFile
+import kotlin.io.path.div
 
 
 abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -270,7 +272,6 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
     }
 
-    @OptIn(ExperimentalPathApi::class)
     private fun createAfterFileIfItDoesNotExist(canonicalPathToExpectedFile: String) {
         val path = Path(testDataPath) / canonicalPathToExpectedFile
 

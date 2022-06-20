@@ -4,11 +4,9 @@ package org.jetbrains.uast.test.kotlin.comparison
 
 import org.jetbrains.kotlin.test.KotlinRoot
 import org.jetbrains.uast.test.common.kotlin.LegacyUastIdentifiersTestBase
-import kotlin.io.path.ExperimentalPathApi
 
 abstract class AbstractFE1LegacyUastIdentifiersTest : AbstractFE1UastIdentifiersTest(), LegacyUastIdentifiersTestBase {
     // TODO: better not to see exceptions from FE1.0 UAST
-    @OptIn(ExperimentalPathApi::class)
     private val whitelist : Set<String> = setOf(
         "uast/uast-kotlin/tests/testData/DestructuringDeclaration.kt",
         "uast/uast-kotlin/tests/testData/LambdaReturn.kt",

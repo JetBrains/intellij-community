@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradle.configuration
 
@@ -7,7 +7,10 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import java.util.*
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 @IntellijInternalApi
 class GradlePropertiesFileFacade(private val baseDir: String) {
@@ -34,7 +37,6 @@ class GradlePropertiesFileFacade(private val baseDir: String) {
         addProperty(KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING, true.toString())
     }
 
-    @OptIn(ExperimentalPathApi::class)
     private fun addProperty(key: String, value: String) {
         val projectPropertiesPath = Path(baseDir, GRADLE_PROPERTIES_FILE_NAME)
 

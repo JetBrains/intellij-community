@@ -63,7 +63,7 @@ dependencies {
 }
 ```
 
-To make sure, that you will not get problem with Kotlin Duration and Kotlin Path API, add the following
+To make sure, that you will not get problem with Kotlin Duration, add the following
 
 ```
 compileTestKotlin {
@@ -73,7 +73,6 @@ compileTestKotlin {
   kotlinOptions {
     jvmTarget = JavaVersion.VERSION_11.toString()
     freeCompilerArgs += [
-      "-Xopt-in=kotlin.io.path.ExperimentalPathApi",
       "-Xopt-in=kotlin.time.ExperimentalTime"
     ]
   }
