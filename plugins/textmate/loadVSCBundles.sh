@@ -72,6 +72,7 @@ cp -r "LICENSE.md" "$ROOT/lib/bundles/twig"
 cp -r "package.json" "$ROOT/lib/bundles/twig"
 cp -r "README.md" "$ROOT/lib/bundles/twig"
 cp -r "src" "$ROOT/lib/bundles/twig"
+cp -r "src/snippets" "$ROOT/lib/bundles/twig" # TODO: remove after updating to the next version
 
 cd ..
 
