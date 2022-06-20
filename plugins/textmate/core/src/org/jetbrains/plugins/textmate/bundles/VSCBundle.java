@@ -144,6 +144,7 @@ public class VSCBundle extends Bundle {
         settings.setEntry(HIGHLIGHTING_PAIRS_KEY, loadBrackets((Map)json, "brackets"));
         settings.setEntry(SMART_TYPING_PAIRS_KEY, loadBrackets((Map)json, "surroundingPairs"));
         settings.setEntry(SHELL_VARIABLES_KEY, array(loadComments((Map)json)));
+        settings.setEntry(INDENTATION_RULES, dict(loadIndentationRules((Map)json)));
       }
       return settings;
     }
@@ -186,6 +187,25 @@ public class VSCBundle extends Bundle {
       }
     }
     return variables;
+  }
+
+  private static Plist loadIndentationRules(Map json) {
+    Plist patterns = new Plist();
+    Object rules = json.get("indentationRules");
+    if (rules instanceof Map) {
+      loadIndentationPattern(patterns, rules, INCREASE_INDENT_PATTERN, "increaseIndentPattern");
+      loadIndentationPattern(patterns, rules, DECREASE_INDENT_PATTERN, "decreaseIndentPattern");
+      loadIndentationPattern(patterns, rules, INDENT_NEXT_LINE_PATTERN, "indentNextLinePattern");
+      loadIndentationPattern(patterns, rules, UNINDENTED_LINE_PATTERN, "unIndentedLinePattern");
+    }
+    return patterns;
+  }
+
+  private static void loadIndentationPattern(Plist patterns, Object rules, String name, String key) {
+    Object value = ((Map<?, ?>)rules).get(key);
+    if (value instanceof String) {
+      patterns.setEntry(name, string((String)value));
+    }
   }
 
   private static PListValue variable(String name, String value) {

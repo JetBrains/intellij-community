@@ -1,19 +1,22 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.TestUtil;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
+import org.jetbrains.plugins.textmate.bundles.VSCBundle;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
+import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
+import org.jetbrains.plugins.textmate.plist.PlistValueType;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class PreferencesTest {
   @Test
@@ -80,6 +83,23 @@ public class PreferencesTest {
     Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
     assertNotNull(smartTypingPairs);
     assertEquals(0, smartTypingPairs.size());
+  }
+
+  @Test
+  public void loadIndentationRules() throws Exception {
+    final Bundle bundle = TestUtil.getBundle(TestUtil.PHP_VSC);
+    assertTrue(bundle instanceof VSCBundle);
+    bundle.getGrammarFiles();
+    final Optional<File> languageConfiguration = bundle.getPreferenceFiles().stream().findFirst();
+    assertTrue(languageConfiguration.isPresent());
+    final Optional<Map.Entry<String, Plist>> preferences =
+      bundle.loadPreferenceFile(languageConfiguration.get(),new CompositePlistReader()).stream().findFirst();
+    assertTrue(preferences.isPresent());
+    final Plist list = preferences.get().getValue();
+    final PListValue pattern =
+      list.getPlistValue(Constants.INDENTATION_RULES)
+        .getPlist().getPlistValue(Constants.INCREASE_INDENT_PATTERN);
+    assertEquals(PlistValueType.STRING, pattern.getType());
   }
 
   @NotNull
