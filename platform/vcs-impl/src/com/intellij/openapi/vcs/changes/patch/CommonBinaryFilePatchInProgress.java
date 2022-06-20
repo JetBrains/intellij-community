@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -45,12 +44,6 @@ public abstract class CommonBinaryFilePatchInProgress<T extends FilePatch> exten
 
   @NotNull
   protected abstract Change createChange(Project project);
-
-  @NotNull
-  protected FilePath getFilePath() {
-    return FilePatchStatus.ADDED.equals(myStatus) ? VcsUtil.getFilePath(myIoCurrentBase, false)
-                                                  : detectNewFilePathForMovedOrModified();
-  }
 
   @NotNull
   @Override
