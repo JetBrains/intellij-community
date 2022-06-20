@@ -541,6 +541,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
     finally {
       action.finish();
+      myUsageView = null;
     }
 
     int count = writableUsageInfos.length;
