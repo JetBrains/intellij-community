@@ -30,6 +30,6 @@ fun setUpIndex(project: Project, root: VirtualFile, logProvider: VcsLogProvider,
 }
 
 class FailingErrorHandler : VcsLogErrorHandler {
-  override fun handleError(source: Any?, throwable: Throwable) = HeavyPlatformTestCase.fail(throwable.message)
+  override fun handleError(source: VcsLogErrorHandler.Source, throwable: Throwable) = HeavyPlatformTestCase.fail(throwable.message)
   override fun displayMessage(message: String) = HeavyPlatformTestCase.fail(message)
 }

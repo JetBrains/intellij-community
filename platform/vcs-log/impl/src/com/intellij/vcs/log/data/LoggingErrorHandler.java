@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class LoggingErrorHandler implements VcsLogErrorHandler {
   private final @NotNull Logger myLogger;
@@ -15,7 +14,7 @@ public class LoggingErrorHandler implements VcsLogErrorHandler {
   }
 
   @Override
-  public void handleError(@Nullable Object source, @NotNull Throwable throwable) {
+  public void handleError(@NotNull VcsLogErrorHandler.Source source, @NotNull Throwable throwable) {
     myLogger.error(throwable);
   }
 

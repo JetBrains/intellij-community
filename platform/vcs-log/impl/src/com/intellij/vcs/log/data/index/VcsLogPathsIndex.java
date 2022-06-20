@@ -56,7 +56,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
           new ChangeKindListKeyDescriptor(), storageLockContext, errorHandler, disposableParent);
 
     myPathsIndexer = (PathsIndexer)myIndexer;
-    myPathsIndexer.setFatalErrorConsumer(e -> errorHandler.handleError(this, e));
+    myPathsIndexer.setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
   }
 
   @NotNull
