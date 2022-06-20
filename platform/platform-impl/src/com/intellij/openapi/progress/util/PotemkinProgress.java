@@ -38,7 +38,10 @@ import java.util.function.Consumer;
 public final class PotemkinProgress extends ProgressWindow implements PingProgress {
   private final Application myApp = ApplicationManager.getApplication();
   private final EventStealer myEventStealer;
+  private final PerformanceWatcher myWatcher = PerformanceWatcher.getInstanceOrNull();
   private long myLastUiUpdate = System.currentTimeMillis();
+  private long myLastInteraction = myLastUiUpdate;
+  private long myLastWatcherPing = myLastUiUpdate;
 
   public PotemkinProgress(@NotNull @NlsContexts.ProgressTitle String title,
                           @Nullable Project project,
@@ -74,20 +77,17 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     return Objects.requireNonNull(super.getDialog());
   }
 
-  private long myLastInteraction;
-
   @Override
   public void interact() {
     if (!myApp.isDispatchThread()) return;
-
     long now = System.currentTimeMillis();
     if (now == myLastInteraction) return;
-
     myLastInteraction = now;
-
+    if (myWatcher != null && now - myLastWatcherPing > myWatcher.getUnresponsiveInterval() / 2) {
+      myLastWatcherPing = now;
+      myWatcher.edtEventStarted();
+    }
     if (getDialog().getPanel().isShowing()) {
-      PerformanceWatcher watcher = PerformanceWatcher.getInstanceOrNull();
-      if (watcher != null) watcher.edtEventStarted();
       myEventStealer.dispatchEvents(0);
     }
     updateUI(now);
@@ -111,36 +111,19 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   }
 
   private void updateUI(long now) {
-    if (myApp.isUnitTestMode()) {
-      return;
-    }
+    if (myApp.isUnitTestMode()) return;
 
     JRootPane rootPane = getDialog().getPanel().getRootPane();
-    if (rootPane == null) {
-      rootPane = considerShowingDialog(now);
-    }
-
-    if (rootPane != null && timeToPaint(now)) {
-      paintProgress();
-    }
-  }
-
-  @Nullable
-  private JRootPane considerShowingDialog(long now) {
-    if (now - myLastUiUpdate > myDelayInMillis && myApp.isActive()) {
+    if (rootPane == null && now - myLastUiUpdate > myDelayInMillis && myApp.isActive()) {
       getDialog().getRepaintRunnable().run();
       showDialog();
-      return getDialog().getPanel().getRootPane();
+      rootPane = getDialog().getPanel().getRootPane();
     }
-    return null;
-  }
 
-  private boolean timeToPaint(long now) {
-    if (now - myLastUiUpdate <= ProgressDialog.UPDATE_INTERVAL) {
-      return false;
+    if (rootPane != null && now - myLastUiUpdate > ProgressDialog.UPDATE_INTERVAL) {
+      myLastUiUpdate = now;
+      paintProgress();
     }
-    myLastUiUpdate = now;
-    return true;
   }
 
   private void progressFinished() {
