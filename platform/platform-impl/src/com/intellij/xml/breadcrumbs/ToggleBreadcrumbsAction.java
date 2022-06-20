@@ -3,6 +3,7 @@ package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -37,6 +38,11 @@ abstract class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware
     super.update(event);
     boolean enabled = isEnabled(event);
     event.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   boolean isEnabled(AnActionEvent event) {
