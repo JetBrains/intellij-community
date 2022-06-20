@@ -90,7 +90,7 @@ class RecentPlacesFeatures : ElementFeatureProvider {
 
     private fun FileViewProvider.tryFindElementAt(offset: Int): PsiElement? =
       try {
-        if (getPsi(baseLanguage)?.isValid == true)
+        if (virtualFile.isValid && getPsi(baseLanguage)?.isValid == true)
           findElementAt(offset)
         else null
       } catch (t: Throwable) {
