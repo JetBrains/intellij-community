@@ -62,7 +62,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.awt.RelativePoint;
@@ -74,7 +73,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.event.AncestorEvent;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.MouseAdapter;
@@ -214,19 +212,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       updatePredefinedFiltersLater();
       ApplicationManager.getApplication().getMessageBus().connect(this)
         .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-          @Override
-          public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-            updatePredefinedFiltersLater();
-          }
-
-          @Override
-          public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-            updatePredefinedFiltersLater();
-          }
-        });
-      addAncestorListener(new AncestorListenerAdapter() {
         @Override
-        public void ancestorAdded(AncestorEvent event) {
+        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+          updatePredefinedFiltersLater();
+        }
+
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
           updatePredefinedFiltersLater();
         }
       });
@@ -521,7 +513,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @Override
   public void dispose() {
     myState = myState.dispose();
-    Arrays.stream(getAncestorListeners()).forEach(l -> removeAncestorListener(l));
     Editor editor = getEditor();
     if (editor != null) {
       cancelAllFlushRequests();
