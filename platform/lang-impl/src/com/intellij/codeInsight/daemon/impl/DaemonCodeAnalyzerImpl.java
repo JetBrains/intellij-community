@@ -265,6 +265,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (ApplicationManager.getApplication().isDispatchThread()) {
       throw new IllegalStateException("Must not run highlighting from under EDT");
     }
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      throw new IllegalStateException("Must run highlighting outside read action, external annotators do not support checkCanceled");
+    }
     assertMyFile(psiFile.getProject(), psiFile);
 
     GlobalInspectionContextBase.assertUnderDaemonProgress();
