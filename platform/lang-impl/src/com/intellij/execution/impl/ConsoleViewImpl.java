@@ -476,9 +476,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editor.getScrollPane().getVerticalScrollBar().addMouseListener(mouseListener);
     editor.getScrollPane().getVerticalScrollBar().addMouseMotionListener(mouseListener);
     editor.getScrollingModel().addVisibleAreaListener(e -> {
-      // There is a possible case that the console text is populated while the console is not shown (e.g. we're debugging and
+      // There is a possible case that the console text is populated while the console is not shown (e.g., we're debugging and
       // 'Debugger' tab is active while 'Console' is not). It's also possible that newly added text contains long lines that
-      // are soft wrapped. We want to update viewport position then when the console becomes visible.
+      // are soft-wrapped. We want to update viewport position then when the console becomes visible.
       Rectangle oldR = e.getOldRectangle();
 
       if (oldR != null && oldR.height <= 0 && e.getNewRectangle().height > 0 && isStickingToEnd(editor)) {
@@ -493,13 +493,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     JScrollBar scrollBar = editor.getScrollPane().getVerticalScrollBar();
     int scrollBarPosition = useImmediatePosition ? scrollBar.getValue() :
                             editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
-    boolean vscrollAtBottom = scrollBarPosition == scrollBar.getMaximum() - scrollBar.getVisibleAmount();
+    boolean vScrollAtBottom = scrollBarPosition == scrollBar.getMaximum() - scrollBar.getVisibleAmount();
     boolean stickingToEnd = isStickingToEnd(editor);
 
-    if (!vscrollAtBottom && stickingToEnd) {
+    if (!vScrollAtBottom && stickingToEnd) {
       myCancelStickToEnd = true;
     } 
-    else if (vscrollAtBottom && !stickingToEnd) {
+    else if (vScrollAtBottom && !stickingToEnd) {
       scrollToEnd(editor);
     }
   }
@@ -1028,7 +1028,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         (which basically does only one thing, gets a folding displayed).
         We do not want to process that empty string, but also we do not want to wait for another line
         which will create and display the folding - we'd see an unfolded stacktrace until another text came and flushed it.
-        So therefore the condition, the last line(empty string) should still flush, but not be processed by
+        Thus, the condition: the last line(empty string) should still flush, but not be processed by
         com.intellij.execution.ConsoleFolding.
          */
         ConsoleFolding next = line < endLine ? foldingForLine(extensions, line, document) : null;
@@ -1510,7 +1510,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private class FlushRunnable implements Runnable {
     // Does request of this class was myFlushAlarm.addRequest()-ed but not yet executed
     private final AtomicBoolean requested = new AtomicBoolean();
-    private final boolean adHoc; // true if requests of this class should not be merged (i.e they can be requested multiple times)
+    private final boolean adHoc; // true if requests of this class should not be merged (i.e., they can be requested multiple times)
 
     private FlushRunnable(boolean adHoc) {
       this.adHoc = adHoc;
