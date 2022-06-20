@@ -119,7 +119,11 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     ) {
         super.postProcess(module, mavenProject, changes, modifiableModelsProvider)
         module.project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)?.let { version ->
-            KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(module.project, version.rawVersion)
+            KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
+                module.project,
+                version.rawVersion,
+                isDelegatedToExtBuild = MavenRunner.getInstance(module.project).settings.isDelegateBuildToMaven
+            )
 
             module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
         }
