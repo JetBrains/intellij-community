@@ -21,7 +21,6 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.designSurface.tools.PasteTool;
-import com.intellij.designer.model.IComponentCopyProvider;
 import com.intellij.designer.model.IComponentDeletionParticipant;
 import com.intellij.designer.model.IGroupDeleteComponent;
 import com.intellij.designer.model.RadComponent;
@@ -199,13 +198,6 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
     if (selection.isEmpty()) {
       return false;
     }
-
-    RadComponent rootComponent = myDesigner.getRootComponent();
-    if (rootComponent instanceof IComponentCopyProvider) {
-      IComponentCopyProvider copyProvider = (IComponentCopyProvider)rootComponent;
-      return copyProvider.isCopyEnabled(selection);
-    }
-
     return true;
   }
 
@@ -220,16 +212,8 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
       root.setAttribute("target", myDesigner.getPlatformTarget());
 
       List<RadComponent> components = RadComponent.getPureSelection(getArea(dataContext).getSelection());
-      RadComponent rootComponent = myDesigner.getRootComponent();
-
-      if (rootComponent instanceof IComponentCopyProvider) {
-        IComponentCopyProvider copyProvider = (IComponentCopyProvider)rootComponent;
-        copyProvider.copyTo(root, components);
-      }
-      else {
-        for (RadComponent component : components) {
-          component.copyTo(root);
-        }
+      for (RadComponent component : components) {
+        component.copyTo(root);
       }
 
       SerializedComponentData data = new SerializedComponentData(new XMLOutputter().outputString(root));
