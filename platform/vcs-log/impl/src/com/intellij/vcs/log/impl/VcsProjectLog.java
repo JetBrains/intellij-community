@@ -359,7 +359,7 @@ public final class VcsProjectLog implements Disposable {
       if (myValue == null) {
         LOG.debug("Creating Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders));
         VcsLogManager value = new VcsLogManager(myProject, myUiProperties, logProviders, false,
-                                                t -> myErrorHandler.recreateOnError(t));
+                                                (s, t) -> myErrorHandler.recreateOnError(s, t));
         myValue = value;
         ApplicationManager.getApplication().invokeAndWait(() -> {
           myProject.getMessageBus().syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);

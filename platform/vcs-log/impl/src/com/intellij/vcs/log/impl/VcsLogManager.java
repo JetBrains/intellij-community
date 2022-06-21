@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -45,7 +45,7 @@ public class VcsLogManager implements Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final VcsLogTabsProperties myUiProperties;
-  @Nullable private final Consumer<? super Throwable> myRecreateMainLogHandler;
+  @Nullable private final PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogColorManagerImpl myColorManager;
@@ -62,7 +62,7 @@ public class VcsLogManager implements Disposable {
                        @NotNull VcsLogTabsProperties uiProperties,
                        @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                        boolean scheduleRefreshImmediately,
-                       @Nullable Consumer<? super Throwable> recreateHandler) {
+                       @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
@@ -295,7 +295,7 @@ public class VcsLogManager implements Disposable {
     public void handleError(@Nullable Source source, @NotNull Throwable throwable) {
       if (myIsBroken.compareAndSet(false, true)) {
         if (myRecreateMainLogHandler != null) {
-          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(throwable));
+          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(source, throwable));
         }
         else {
           LOG.error(throwable);
