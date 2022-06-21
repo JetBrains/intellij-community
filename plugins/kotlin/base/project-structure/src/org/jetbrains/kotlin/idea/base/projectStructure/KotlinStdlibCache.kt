@@ -10,9 +10,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
@@ -290,7 +288,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             }
 
             override fun checkKeyValidity(key: IdeaModuleInfo) {
-                key.safeAs<ModuleProductionSourceInfo>()?.module?.checkValidity()
+                key.safeAs<ModuleSourceInfo>()?.module?.checkValidity()
             }
 
             override fun changed(event: VersionedStorageChange) {

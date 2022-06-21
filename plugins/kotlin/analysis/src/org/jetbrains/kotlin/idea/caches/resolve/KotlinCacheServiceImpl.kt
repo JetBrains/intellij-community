@@ -98,7 +98,8 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                 val settings = file.moduleInfo.platformSettings(file.platform)
                 CachedValueProvider.Result(
                     getFacadeToAnalyzeFile(file, settings),
-                    PsiModificationTracker.MODIFICATION_COUNT
+                    PsiModificationTracker.MODIFICATION_COUNT,
+                    ProjectRootModificationTracker.getInstance(project),
                 )
             }
         }
@@ -344,7 +345,10 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                 syntheticFiles = files,
                 reuseDataFrom = reuseDataFrom,
                 moduleFilter = moduleFilter,
-                dependencies = listOf(dependencyTrackerForSyntheticFileCache),
+                dependencies = listOf(
+                    dependencyTrackerForSyntheticFileCache,
+                    ProjectRootModificationTracker.getInstance(project)
+                ),
                 invalidateOnOOCB = true,
                 allModules = allModules
             )
