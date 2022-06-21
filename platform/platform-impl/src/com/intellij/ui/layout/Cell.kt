@@ -328,6 +328,7 @@ abstract class Cell : BaseBuilder {
     return component(comment = comment)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   open fun radioButton(@RadioButton text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, getter())
     return component(comment = comment).withSelectedBinding(PropertyBinding(getter, setter))
