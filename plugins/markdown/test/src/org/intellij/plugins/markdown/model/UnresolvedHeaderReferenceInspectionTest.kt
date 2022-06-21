@@ -15,6 +15,8 @@ class UnresolvedHeaderReferenceInspectionTest: BasePlatformTestCase() {
 
   fun `test headers in project are unresolved`() = doTest()
 
+  fun `test anchors in web links are ignored`() = doTest()
+
   override fun setUp() {
     super.setUp()
     myFixture.copyDirectoryToProject("", "")
