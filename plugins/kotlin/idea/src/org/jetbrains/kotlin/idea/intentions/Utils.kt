@@ -369,7 +369,11 @@ fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
                 else -> false
             }
         }
-        is KtQualifiedExpression -> this.callExpression?.calleeExpression?.text in ENUM_STATIC_METHODS
+        is KtQualifiedExpression -> {
+            var target: KtQualifiedExpression = this
+            while (target.callExpression == null) target = target.parent as? KtQualifiedExpression ?: break
+            target.callExpression?.calleeExpression?.text in ENUM_STATIC_METHODS
+        }
         is KtCallExpression -> this.calleeExpression?.text in ENUM_STATIC_METHODS
         is KtCallableReferenceExpression -> this.callableReference.text in ENUM_STATIC_METHODS
         else -> false
