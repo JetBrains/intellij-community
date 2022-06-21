@@ -99,6 +99,17 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private NavBarItem myContextObject;
   private boolean myDisposed = false;
   private RelativePoint myLocationCache;
+  private SelectionIndexes menuPopupSelection = null;
+
+  private static class SelectionIndexes {
+    private final int myBarIndex;
+    private final int[] myNodePopupIndexes;
+
+    SelectionIndexes(int barIndex, int[] nodePopupIndexes) {
+      myBarIndex = barIndex;
+      myNodePopupIndexes = nodePopupIndexes;
+    }
+  }
 
   public NavBarPanel(@NotNull Project project, boolean docked) {
     super(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -438,6 +449,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   void installPopupHandler(@NotNull JComponent component, int index) {
+    NavBarPanel navBarPanel = this;
     component.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
@@ -456,7 +468,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
           }
         };
         ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.NAVIGATION_BAR_POPUP, actionGroup);
-        popupMenu.setTargetComponent(component);
+        popupMenu.setTargetComponent(navBarPanel);
         JPopupMenu menu = popupMenu.getComponent();
         menu.addPopupMenuListener(new PopupMenuListenerAdapter() {
           @Override
@@ -466,7 +478,21 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
             }
           }
         });
-        menu.show(comp, x, y);
+
+        Point itemPoint = new Point(component.getX() + x, component.getY() + y);
+        boolean isPopupActive = myNodePopup != null && myNodePopup.getComponent().isShowing();
+        if (isPopupActive) {
+          int[] selectedIndices = myNodePopup.getList().getSelectedIndices();
+          menuPopupSelection = new SelectionIndexes(myNodePopup.getItemIndex(), selectedIndices);
+        }
+        else {
+          Component updatedItem = navBarPanel.getComponentAt(itemPoint);
+          menuPopupSelection = new SelectionIndexes((updatedItem == null) ? -1 : getItems().indexOf(updatedItem), null);
+        }
+
+        menu.show(isPopupActive ? myNodePopup.getComponent() : navBarPanel,
+                  itemPoint.x,
+                  itemPoint.y);
       }
     });
   }
@@ -707,7 +733,34 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @Override
   @Nullable
   public Object getData(@NotNull String dataId) {
-    return getDataImpl(dataId, this, () -> getSelection());
+    Object barObject = null;
+    List<Object> popupObjects = null;
+    if (menuPopupSelection != null) {
+      barObject = myModel.getElement(menuPopupSelection.myBarIndex);
+      if (barObject != null && menuPopupSelection.myNodePopupIndexes != null) {
+        popupObjects = new ArrayList<>();
+        List<Object> childObjects = myModel.getChildren(barObject);
+        for (int index: menuPopupSelection.myNodePopupIndexes) {
+          if (index < 0 || index >= childObjects.size()) continue;
+          popupObjects.add(childObjects.get(index));
+        }
+      }
+    }
+
+    if (barObject == null) {
+      return getDataImpl(dataId, this, this::getSelection);
+    }
+
+    if (popupObjects == null) {
+      final Object obj = barObject;
+      return getDataImpl(dataId, this, () -> JBIterable.of(obj));
+    }
+    else if (!popupObjects.isEmpty()) {
+      final List<Object> objects = popupObjects;
+      return getDataImpl(dataId, this, () -> JBIterable.from(objects));
+    }
+
+    return getDataImpl(dataId, this, this::getSelection);
   }
 
   @NotNull
