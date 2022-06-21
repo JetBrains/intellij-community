@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.util.NlsContexts.Button
 import com.intellij.openapi.util.NlsContexts.Tooltip
 
-internal object NonCancellableTaskCancellation : TaskCancellation
+internal object NonCancellableTaskCancellation : TaskCancellation.NonCancellable
 
 internal val defaultCancellable: TaskCancellation.Cancellable = CancellableTaskCancellation(null, null)
 

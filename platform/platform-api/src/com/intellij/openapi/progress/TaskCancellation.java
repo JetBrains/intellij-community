@@ -29,8 +29,12 @@ public interface TaskCancellation {
    * @return a cancellation instance, which means that the cancel button should not be displayed in the UI
    */
   @Contract(pure = true)
-  static @NotNull TaskCancellation nonCancellable() {
+  static @NotNull NonCancellable nonCancellable() {
     return ApplicationManager.getApplication().getService(TaskSupport.class).taskCancellationNonCancellableInternal();
+  }
+
+  @NonExtendable
+  interface NonCancellable extends TaskCancellation {
   }
 
   /**
