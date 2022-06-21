@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.core.util.FrameworkAvailabilityChecker
-import org.jetbrains.kotlin.idea.core.util.isFrameworkAvailable
+import org.jetbrains.kotlin.idea.base.codeInsight.FrameworkAvailabilityChecker
+import org.jetbrains.kotlin.idea.base.codeInsight.isFrameworkAvailable
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.util.string.joinWithEscape
 import org.jetbrains.kotlin.name.FqName

@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -127,7 +126,7 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
                         JunitKotlinTestFrameworkProvider.getJavaTestEntity(fromContext.sourceElement, checkMethod = true)
                     }
                 },
-                KotlinBundle.message("progress.text.detect.test.framework"),
+                KotlinJUnitBundle.message("progress.text.detect.test.framework"),
                 true,
                 context.project
             ) ?: return super.onFirstRun(fromContext, context, performRunnable)

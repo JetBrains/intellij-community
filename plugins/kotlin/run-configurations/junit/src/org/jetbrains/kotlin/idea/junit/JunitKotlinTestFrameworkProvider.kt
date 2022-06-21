@@ -4,17 +4,16 @@ package org.jetbrains.kotlin.idea.junit
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.junit.JUnitConfigurationProducer
-import com.intellij.execution.junit.JUnitUtil
 import com.intellij.execution.junit.JUnitUtil.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.idea.core.util.FrameworkAvailabilityChecker
-import org.jetbrains.kotlin.idea.core.util.isFrameworkAvailable
+import org.jetbrains.kotlin.idea.base.analysis.KotlinSafeAnalysisWrapper
+import org.jetbrains.kotlin.idea.base.codeInsight.FrameworkAvailabilityChecker
+import org.jetbrains.kotlin.idea.base.codeInsight.isFrameworkAvailable
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
-import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 
 object JunitKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
     override val canRunJvmTests: Boolean
@@ -29,11 +28,19 @@ object JunitKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
     }
 
     override fun isTestJavaClass(testClass: PsiClass): Boolean {
-        return testClass.actionUnderSafeAnalyzeBlock({ JUnitUtil.isTestClass(testClass, false, true) }, { false })
+        return KotlinSafeAnalysisWrapper.runSafely(
+            context = testClass,
+            body = { isTestClass(testClass, false, true) },
+            fallback = { false }
+        )
     }
 
     override fun isTestJavaMethod(testMethod: PsiMethod): Boolean {
-        return testMethod.actionUnderSafeAnalyzeBlock({ JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(testMethod), false) }, { false })
+        return KotlinSafeAnalysisWrapper.runSafely(
+            context = testMethod,
+            body = { isTestMethod(PsiLocation.fromPsiElement(testMethod), false) },
+            fallback = { false }
+        )
     }
 
     override fun isTestFrameworkAvailable(element: PsiElement): Boolean {

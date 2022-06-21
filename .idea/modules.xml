@@ -1115,7 +1115,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/old/kotlin.j2k.old.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/old/kotlin.j2k.old.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/old/tests/kotlin.j2k.old.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/old/tests/kotlin.j2k.old.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/services/kotlin.j2k.services.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/services/kotlin.j2k.services.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/junit/kotlin.junit.iml" filepath="$PROJECT_DIR$/plugins/kotlin/junit/kotlin.junit.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm/kotlin.jvm.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm/kotlin.jvm.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/base/util/kotlin.jvm-debugger.base.util.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/base/util/kotlin.jvm-debugger.base.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/core/kotlin.jvm-debugger.core.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/core/kotlin.jvm-debugger.core.iml" />
@@ -1153,6 +1152,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refIndex/kotlin.refIndex.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refIndex/kotlin.refIndex.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refIndex/tests/kotlin.refIndex.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refIndex/tests/kotlin.refIndex.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/repl/kotlin.repl.iml" filepath="$PROJECT_DIR$/plugins/kotlin/repl/kotlin.repl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/run-configurations/junit/kotlin.run-configurations.junit.iml" filepath="$PROJECT_DIR$/plugins/kotlin/run-configurations/junit/kotlin.run-configurations.junit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/run-configurations/junit-fe10/kotlin.run-configurations.junit-fe10.iml" filepath="$PROJECT_DIR$/plugins/kotlin/run-configurations/junit-fe10/kotlin.run-configurations.junit-fe10.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting/kotlin.scripting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting/kotlin.scripting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting-support/kotlin.scripting-support.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting-support/kotlin.scripting-support.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/spellchecker/kotlin.spellchecker.iml" filepath="$PROJECT_DIR$/plugins/kotlin/spellchecker/kotlin.spellchecker.iml" />

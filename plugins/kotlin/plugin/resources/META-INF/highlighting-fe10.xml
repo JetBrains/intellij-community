@@ -19,6 +19,9 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy"
             serviceImplementation="org.jetbrains.kotlin.idea.decompiler.navigation.KotlinDeclarationNavigationPolicyImpl"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.base.analysis.KotlinSafeAnalysisWrapper"
+            serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.Fe10KotlinSafeAnalysisWrapper"/>
 
     <syntaxHighlighter factoryClass="org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinSyntaxHighlighterProviderForDecompiledBuiltIns"/>
 

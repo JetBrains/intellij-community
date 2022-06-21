@@ -88,7 +88,8 @@
     <orderEntry type="module" module-name="kotlin.j2k.services" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.i18n" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.maven" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.junit" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.junit" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.junit-fe10" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.ml-completion" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />

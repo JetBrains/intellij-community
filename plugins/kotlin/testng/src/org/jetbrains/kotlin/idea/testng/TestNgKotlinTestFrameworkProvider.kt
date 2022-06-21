@@ -10,8 +10,8 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiClassUtil
 import com.theoryinpractice.testng.configuration.TestNGConfigurationProducer
 import com.theoryinpractice.testng.util.TestNGUtil
-import org.jetbrains.kotlin.idea.core.util.FrameworkAvailabilityChecker
-import org.jetbrains.kotlin.idea.core.util.isFrameworkAvailable
+import org.jetbrains.kotlin.idea.base.codeInsight.FrameworkAvailabilityChecker
+import org.jetbrains.kotlin.idea.base.codeInsight.isFrameworkAvailable
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
 
 object TestNgKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {

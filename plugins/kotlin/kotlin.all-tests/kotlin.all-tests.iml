@@ -101,7 +101,8 @@
     <orderEntry type="module" module-name="kotlin.refIndex.tests" />
     <orderEntry type="module" module-name="kotlin.coverage" />
     <orderEntry type="module" module-name="kotlin.testng" />
-    <orderEntry type="module" module-name="kotlin.junit" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.junit" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.junit-fe10" />
     <orderEntry type="module" module-name="kotlin.grazie" />
     <orderEntry type="module" module-name="kotlin.ml-completion" />
     <orderEntry type="module" module-name="kotlin.groovy" />
