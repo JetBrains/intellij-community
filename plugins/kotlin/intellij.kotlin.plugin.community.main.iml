@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="kotlin.base.indices" exported="" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" exported="" />
     <orderEntry type="module" module-name="kotlin.base.psi" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.kdoc" exported="" />
     <orderEntry type="module" module-name="kotlin.base.platforms" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" exported="" />

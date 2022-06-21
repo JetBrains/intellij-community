@@ -63,6 +63,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.compiler-configuration",
     "kotlin.base.plugin",
     "kotlin.base.psi",
+    "kotlin.base.kdoc",
     "kotlin.base.platforms",
     "kotlin.base.facet",
     "kotlin.base.project-structure",
