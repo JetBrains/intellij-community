@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
+import org.jetbrains.kotlin.idea.intentions.singleLambdaArgumentExpression
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -61,6 +62,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.calls.context.ContextDependency
+import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstructor
 import org.jetbrains.kotlin.resolve.calls.util.getParentCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -291,13 +293,12 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
             }
         }
 
-        val receiverFromDiagnostic = if (callTypeAndReceiver.callType == CallType.DELEGATE) getReceiverTypeFromDiagnostic() else null
         result.addAll(
             indicesHelper.getCallableTopLevelExtensions(
                 callTypeAndReceiver,
                 expression,
                 bindingContext,
-                receiverFromDiagnostic
+                findReceiverForDelegate(expression, callTypeAndReceiver.callType)
             ) { it == name }
         )
 
@@ -309,6 +310,30 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
             val importPath = ImportPath(importableFqName, isAllUnder = false)
             !importPath.isImported(defaultImports, excludedImports) || importableFqName in importedFqNamesAsAlias
         }
+    }
+
+    private fun findReceiverForDelegate(expression: KtExpression, callType: CallType<*>): KotlinType? {
+        if (callType != CallType.DELEGATE) return null
+
+        val receiverTypeFromDiagnostic = getReceiverTypeFromDiagnostic()
+        if (receiverTypeFromDiagnostic?.constructor is TypeVariableTypeConstructor) {
+            if (receiverTypeFromDiagnostic == expression.getCallableDescriptor()?.returnType) {
+                // the issue is that the whole lambda expression cannot be resolved
+                // but it's possible to analyze the last expression independently and try guessing the receiver
+                return tryFindReceiverFromLambda(expression)
+            }
+        }
+
+        return receiverTypeFromDiagnostic
+    }
+
+    private fun tryFindReceiverFromLambda(expression: KtExpression): KotlinType? {
+        if (expression !is KtCallExpression) return null
+        val lambdaExpression = expression.singleLambdaArgumentExpression() ?: return null
+
+        val lastStatement = KtPsiUtil.getLastStatementInABlock(lambdaExpression.bodyExpression) ?: return null
+        val bindingContext = lastStatement.analyze(bodyResolveMode = BodyResolveMode.PARTIAL)
+        return bindingContext.getType(lastStatement)
     }
 
     private fun getImportedFqNamesAsAlias(ktFile: KtFile) =

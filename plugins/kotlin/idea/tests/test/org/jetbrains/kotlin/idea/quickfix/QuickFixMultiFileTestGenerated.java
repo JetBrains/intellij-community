@@ -433,6 +433,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/importFunctionWithDefinitelyNotNullType.before.Main.kt");
             }
 
+            @TestMetadata("importGetValueExtensionForDelegateInsideRun.before.Main.kt")
+            public void testImportGetValueExtensionForDelegateInsideRun() throws Exception {
+                runTest("testData/quickfix/autoImports/importGetValueExtensionForDelegateInsideRun.before.Main.kt");
+            }
+
             @TestMetadata("importGetValueExtensionForDelegateWithLambda.before.Main.kt")
             public void testImportGetValueExtensionForDelegateWithLambda() throws Exception {
                 runTest("testData/quickfix/autoImports/importGetValueExtensionForDelegateWithLambda.before.Main.kt");
