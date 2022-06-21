@@ -37,7 +37,7 @@ interface CombinedDiffBlock<ID: CombinedBlockId> : Disposable {
   val body: JComponent
   val component: JComponent
 
-  fun updateBlockContent(newContent: JComponent) {}
+  fun updateBlockContent(newContent: CombinedDiffBlockContent) {}
 }
 
 interface CombinedDiffGlobalBlockHeaderProvider {
@@ -67,13 +67,22 @@ class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBloc
     with(content.blockId as CombinedPathBlockId) { CombinedSimpleDiffBlock(this, content.viewer.component, withBorder) }
 }
 
-private class CombinedSimpleDiffHeader(blockId: CombinedPathBlockId, withBorder: Boolean) : BorderLayoutPanel() {
+private class CombinedSimpleDiffHeader(blockId: CombinedPathBlockId, withBorder: Boolean, withPathOnly: Boolean) : BorderLayoutPanel() {
   init {
     if (withBorder) {
       border = IdeBorderFactory.createBorder(SideBorder.TOP)
     }
 
-    addToCenter(buildToolbar(blockId).component)
+    addToCenter(if (withPathOnly) buildPathComponent(blockId) else buildToolbar(blockId).component)
+  }
+
+  private fun buildPathComponent(blockId: CombinedPathBlockId): JComponent {
+    background = UIUtil.getListBackground()
+    return OpaquePanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(3), 0))
+      .apply {
+        border = JBEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
+        add(createTextComponent(blockId.path))
+      }
   }
 
   private fun buildToolbar(blockId: CombinedPathBlockId): ActionToolbar {
@@ -114,14 +123,7 @@ private class CombinedSimpleDiffHeader(blockId: CombinedPathBlockId, withBorder:
     override fun actionPerformed(e: AnActionEvent) {}
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-      val textComponent = SimpleColoredComponent().append(path.name)
-        .apply {
-          val parentPath = path.parentPath?.let(FilePath::getPresentableUrl)?.let(FileUtil::getLocationRelativeToUserHome)
-          if (parentPath != null) {
-            append(FontUtil.spaceAndThinSpace() + parentPath, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-          }
-          icon = FileTypeRegistry.getInstance().getFileTypeByFileName(path.name).icon
-        }
+      val textComponent = createTextComponent(path)
       val component = OpaquePanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(3), 0))
         .apply {
           add(checkBox)
@@ -129,6 +131,19 @@ private class CombinedSimpleDiffHeader(blockId: CombinedPathBlockId, withBorder:
         }
 
       return component
+    }
+  }
+
+  companion object {
+    private fun createTextComponent(path: FilePath): JComponent {
+      return SimpleColoredComponent().append(path.name)
+        .apply {
+          val parentPath = path.parentPath?.let(FilePath::getPresentableUrl)?.let(FileUtil::getLocationRelativeToUserHome)
+          if (parentPath != null) {
+            append(FontUtil.spaceAndThinSpace() + parentPath, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+          }
+          icon = FileTypeRegistry.getInstance().getFileTypeByFileName(path.name).icon
+        }
     }
   }
 }
@@ -139,8 +154,11 @@ private class CombinedSimpleDiffBlock(override val id: CombinedPathBlockId, init
   JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)),
   CombinedDiffBlock<CombinedPathBlockId>, CombinedDiffGlobalBlockHeaderProvider {
 
-  override val header = CombinedSimpleDiffHeader(id, notFirstBlock)
-  override val globalHeader = if (notFirstBlock) CombinedSimpleDiffHeader(id, false) else header
+  private val pathOnlyHeader = CombinedSimpleDiffHeader(id, notFirstBlock, true)
+  private val headerWithToolbar = CombinedSimpleDiffHeader(id, notFirstBlock, false)
+
+  override val header = Wrapper(pathOnlyHeader)
+  override val globalHeader = if (notFirstBlock) CombinedSimpleDiffHeader(id, false, false) else headerWithToolbar
   override val body = Wrapper(initialContent)
 
   init {
@@ -150,8 +168,10 @@ private class CombinedSimpleDiffBlock(override val id: CombinedPathBlockId, init
     add(body)
   }
 
-  override fun updateBlockContent(newContent: JComponent) {
-    body.setContent(newContent)
+  override fun updateBlockContent(newContent: CombinedDiffBlockContent) {
+    val viewer = newContent.viewer
+    body.setContent(viewer.component)
+    header.setContent(if (viewer is CombinedLazyDiffViewer) pathOnlyHeader else headerWithToolbar)
   }
 
   override val component = this

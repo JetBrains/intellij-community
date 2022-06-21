@@ -93,7 +93,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     val newViewer = newContent.viewer
     diffViewers.remove(block.id)?.also(Disposer::dispose)
     diffViewers[block.id] = newViewer
-    block.updateBlockContent(newViewer.component)
+    block.updateBlockContent(newContent)
     newViewer.init()
   }
 
