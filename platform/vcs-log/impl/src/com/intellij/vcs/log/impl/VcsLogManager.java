@@ -293,13 +293,13 @@ public class VcsLogManager implements Disposable {
     private final @NotNull AtomicBoolean myIsBroken = new AtomicBoolean(false);
 
     @Override
-    public void consume(@Nullable Object source, @NotNull Throwable e) {
+    public void handleError(@Nullable Object source, @NotNull Throwable throwable) {
       if (myIsBroken.compareAndSet(false, true)) {
         if (myRecreateMainLogHandler != null) {
-          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(e));
+          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(throwable));
         }
         else {
-          LOG.error(e);
+          LOG.error(throwable);
         }
 
         if (source instanceof VcsLogStorage) {
@@ -307,15 +307,15 @@ public class VcsLogManager implements Disposable {
         }
       }
       else {
-        int errorHashCode = ThrowableInterner.computeTraceHashCode(e);
+        int errorHashCode = ThrowableInterner.computeTraceHashCode(throwable);
         if (myErrors.add(errorHashCode)) {
-          LOG.debug("Vcs Log storage is broken and is being recreated", e);
+          LOG.debug("Vcs Log storage is broken and is being recreated", throwable);
         }
       }
     }
 
     @Override
-    public void displayFatalErrorMessage(@Nls @NotNull String message) {
+    public void displayMessage(@Nls @NotNull String message) {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
     }
   }

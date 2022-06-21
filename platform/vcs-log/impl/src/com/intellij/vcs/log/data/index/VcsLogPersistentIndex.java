@@ -139,7 +139,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                            });
     }
     catch (IOException e) {
-      myErrorHandler.consume(this, e);
+      myErrorHandler.handleError(this, e);
     }
     return null;
   }
@@ -203,7 +203,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       myIndexStorage.commits.put(index);
     }
     catch (IOException e) {
-      myErrorHandler.consume(this, e);
+      myErrorHandler.handleError(this, e);
     }
   }
 
@@ -221,7 +221,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       }
     }
     catch (StorageException e) {
-      myErrorHandler.consume(this, e);
+      myErrorHandler.handleError(this, e);
     }
   }
 
@@ -236,7 +236,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       return myIndexStorage == null || myIndexStorage.commits.contains(commit);
     }
     catch (IOException e) {
-      myErrorHandler.consume(this, e);
+      myErrorHandler.handleError(this, e);
     }
     return false;
   }
