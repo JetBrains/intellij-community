@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dev.psiViewer;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,6 +33,11 @@ public class PsiViewerAction extends DumbAwareAction {
     if (enabled && isForContext() && e.getData(CommonDataKeys.EDITOR) == null) {
       e.getPresentation().setEnabled(false);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected boolean isForContext() {

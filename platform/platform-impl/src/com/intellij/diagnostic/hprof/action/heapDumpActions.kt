@@ -19,6 +19,7 @@ import com.intellij.diagnostic.hprof.action.HeapDumpSnapshotRunnable.AnalysisOpt
 import com.intellij.diagnostic.hprof.action.HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START
 import com.intellij.diagnostic.report.HeapReportProperties
 import com.intellij.diagnostic.report.MemoryReportReason
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -30,11 +31,19 @@ class InternalUserInvokedFullAnalysisAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     HeapDumpSnapshotRunnable(MemoryReportReason.InternalUserInvoked, IMMEDIATE).run()
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
 class InternalNonuserInvokedHeapDumpSnapshotAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     HeapDumpSnapshotRunnable(MemoryReportReason.InternalUserInvoked, SCHEDULE_ON_NEXT_START).run()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
 
@@ -46,5 +55,9 @@ class AnalyzeReportAction : DumbAwareAction() {
     val files = fileChooser.choose(e.project, null)
     if (files.isEmpty()) return
     AnalysisRunnable(files[0].toNioPath(), HeapReportProperties(MemoryReportReason.InternalUserInvoked, ""), false).run()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
