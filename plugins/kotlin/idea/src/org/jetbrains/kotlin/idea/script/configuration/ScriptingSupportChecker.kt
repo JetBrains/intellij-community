@@ -2,20 +2,18 @@
 package org.jetbrains.kotlin.idea.script.configuration
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
-import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
 import java.util.function.Function
 import javax.swing.JComponent
@@ -27,7 +25,7 @@ class ScriptingSupportChecker: EditorNotificationProvider {
         }
 
         // warning panel is hidden
-        if (file.scriptingSupportLimitationWarning == true) {
+        if (!KotlinScriptingSettings.getInstance(project).showSupportWarning) {
             return EditorNotificationProvider.CONST_NULL
         }
 
@@ -77,7 +75,7 @@ private fun EditorNotificationPanel.addHideAction(
     createActionLabel(
         KotlinBundle.message("kotlin.script.in.project.sources.hide"),
         Runnable {
-            file.scriptingSupportLimitationWarning = true
+            KotlinScriptingSettings.getInstance(project).showSupportWarning = false
             val fileEditorManager = FileEditorManager.getInstance(project)
             fileEditorManager.getSelectedEditor(file)?.let { editor ->
                 fileEditorManager.removeTopComponent(editor, this)
@@ -89,5 +87,3 @@ private fun EditorNotificationPanel.addHideAction(
 
 private fun VirtualFile.supportedScriptExtensions() =
     name.endsWith(".main.kts") || name.endsWith(".space.kts") || name.endsWith(".gradle.kts")
-
-private var VirtualFile.scriptingSupportLimitationWarning: Boolean? by UserDataProperty(Key.create("SCRIPTING_SUPPORT_LIMITATION"))
