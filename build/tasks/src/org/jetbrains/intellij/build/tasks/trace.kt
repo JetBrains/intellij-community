@@ -12,7 +12,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Supplier
 
-internal val tracer: Tracer by lazy(LazyThreadSafetyMode.NONE) { GlobalOpenTelemetry.getTracer("build-script") }
+internal val tracer: Tracer by lazy { GlobalOpenTelemetry.getTracer("build-script") }
 
 fun <T> createTask(spanBuilder: SpanBuilder, task: Supplier<T>): ForkJoinTask<T> {
   val context = Context.current()

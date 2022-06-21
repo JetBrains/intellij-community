@@ -67,8 +67,11 @@ internal class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   override fun loadState(state: ToolWindowLayoutStorageManagerState) {
     this.state = state
 
-    if (if (isNewUi) state.v2.isEmpty() else state.v1.isEmpty()) {
+    val list = if (isNewUi) state.v2 else state.v1
+    if (list.isEmpty()) {
       loadDefaultLayout(isNewUi)
+    } else {
+      setLayout(convertDescriptorListToLayout(list))
     }
   }
 

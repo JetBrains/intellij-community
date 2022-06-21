@@ -89,12 +89,13 @@ public class InstalledPluginsTableModel {
                   (descriptor, pair) -> {
                   });
 
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     List<IdeaPluginDescriptorImpl> impls = descriptors.stream()
-      .filter(IdeaPluginDescriptorImpl.class::isInstance)
-      .map(IdeaPluginDescriptorImpl.class::cast)
+      .map(descriptor -> descriptor instanceof IdeaPluginDescriptorImpl ?
+                         (IdeaPluginDescriptorImpl)descriptor :
+                         findByPluginId(descriptor.getPluginId(), pluginIdMap))
       .collect(Collectors.toCollection(ArrayList::new));
 
-    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     List<IdeaPluginDescriptorImpl> descriptorsToUpdate = action.isEnable() ?
                                                          getDependenciesToEnable(impls, tempEnabled, pluginIdMap) :
                                                          getDependentsToDisable(impls, tempEnabled, pluginIdMap);
@@ -114,6 +115,12 @@ public class InstalledPluginsTableModel {
                   action,
                   this::handleBeforeChangeEnableState);
     updatePluginDependencies(pluginIdMap);
+  }
+
+  private static @NotNull IdeaPluginDescriptorImpl findByPluginId(@NotNull PluginId pluginId,
+                                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
+    return Objects.requireNonNull(pluginIdMap.get(pluginId),
+                                  "'" + pluginId + "' not found");
   }
 
   private static void setNewEnabled(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,

@@ -239,7 +239,7 @@ public final class EnvironmentUtil {
     }
 
     public final @NotNull Map<String, String> readShellEnv(@Nullable Path file, @Nullable Map<String, String> additionalEnvironment) throws IOException {
-     String reader;
+      String reader;
 
       if (SystemInfoRt.isMac) {
         reader = PathManager.findBinFileWithException(MacOS_LOADER_BINARY).toAbsolutePath().toString();
@@ -248,7 +248,8 @@ public final class EnvironmentUtil {
         reader = SHELL_ENV_COMMAND + "' '" + ENV_ZERO_ARGUMENT;
       }
 
-      Path envDataFile = Files.createTempFile("ij-shell-env-data.", ".tmp");
+      Path envDataFileDir = Files.createTempDirectory("ij-env-tmp-dir");
+      Path envDataFile = envDataFileDir.resolve("ij-shell-env-data.tmp");
 
       StringBuilder readerCmd = new StringBuilder();
       if (file != null) {
@@ -272,7 +273,13 @@ public final class EnvironmentUtil {
       }
 
       LOG.info("loading shell env: " + String.join(" ", command));
-      return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment, envDataFile).getValue();
+      try {
+        return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment, envDataFile).getValue();
+      }
+      finally {
+        deleteTempFile(envDataFile);
+        deleteTempFile(envDataFileDir);
+      }
     }
 
     /**
@@ -360,7 +367,6 @@ public final class EnvironmentUtil {
         return new AbstractMap.SimpleImmutableEntry<>(log, parseEnv(envData));
       }
       finally {
-        deleteTempFile(envDataFile);
         deleteTempFile(logFile);
       }
     }

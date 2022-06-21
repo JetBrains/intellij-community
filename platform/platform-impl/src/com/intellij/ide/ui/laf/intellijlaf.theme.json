@@ -251,7 +251,8 @@
     "Editor": {
       "background": "grey09",
       "foreground": "infoPanelForeground",
-      "shortcutForeground": "#4274A6"
+      "shortcutForeground": "#4274A6",
+      "SearchField.background" : "contentBackground"
     },
 
     "EditorPane": {

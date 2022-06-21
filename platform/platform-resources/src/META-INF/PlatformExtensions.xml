@@ -208,8 +208,8 @@
                         serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl"/>
     <search.optionContributor implementation="com.intellij.ide.ui.search.PluginSearchableOptionContributor"/>
 
-    <applicationService serviceInterface="com.intellij.ide.ui.search.SearchEverywhereTabsCustomization"
-                        serviceImplementation="com.intellij.ide.ui.search.DefaultSearchEverywhereTabsCustomization"/>
+    <applicationService serviceInterface="com.intellij.ide.actions.searcheverywhere.TabsCustomizationStrategy"
+                        serviceImplementation="com.intellij.ide.actions.searcheverywhere.ContributorDefinedTabsCustomizationStrategy"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
 
@@ -930,7 +930,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
-    
+
     <intentionAction>
       <className>com.intellij.openapi.editor.actions.lists.JoinLinesIntention</className>
       <bundleName>messages.LangBundle</bundleName>
@@ -1305,7 +1305,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <advancedSetting id="temporary.configurations.limit" default="5" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="confirm.rerun.with.termination" default="true" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="start.run.configurations.pinned" default="false" groupKey="group.advanced.settings.run"/>
-    <advancedSetting id="se.enable.text.search" default="false" groupKey="group.advanced.settings.se"/>
+    <advancedSetting id="se.text.search" default="false" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.open.readme.md.on.startup" default="true" groupKey="group.advanced.settings.startup"/>

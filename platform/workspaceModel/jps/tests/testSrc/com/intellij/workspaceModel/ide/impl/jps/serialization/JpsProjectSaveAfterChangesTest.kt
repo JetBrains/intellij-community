@@ -163,10 +163,10 @@ class JpsProjectSaveAfterChangesTest {
         is EntityChange.Replaced -> listOf(change.oldEntity, change.newEntity)
       }
     }.map { it.entitySource }}
-    val writer = JpsFileContentWriterImpl(projectData.projectDir)
+    val writer = JpsFileContentWriterImpl(projectData.configLocation)
     projectData.serializers.saveEntities(builder.toStorage(), changedSources, writer)
     writer.writeFiles()
-    projectData.serializers.checkConsistency(projectData.projectDirUrl, builder.toStorage(), virtualFileManager)
+    projectData.serializers.checkConsistency(projectData.configLocation, builder.toStorage(), virtualFileManager)
 
     val expectedDir = FileUtil.createTempDirectory("jpsProjectTest", "expected")
     FileUtil.copyDir(projectData.originalProjectDir, expectedDir)

@@ -55,21 +55,8 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
       presentation.isEnabledAndVisible = true
     }
 
-    val repo = GitRepositoryManager.getInstance(project).repositories.isNotEmpty()
 
-    presentation.icon = if (repo) {
-      AllIcons.Actions.More.toSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
-    }
-    else {
-      AllIcons.Vcs.BranchNode
-    }
-
-    presentation.text = if (repo) {
-      ""
-    }
-    else {
-      GitBundle.message("action.Vcs.Toolbar.ShowMoreActions.text") + " "
-    }
+    presentation.icon = AllIcons.Actions.More.toSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
   }
 
   class MyGitRepositoryListener(val project: Project) : VcsRepositoryMappingListener {

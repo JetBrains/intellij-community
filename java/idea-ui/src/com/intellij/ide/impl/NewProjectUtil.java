@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,22 +65,22 @@ public final class NewProjectUtil {
     Runnable warmUp = () -> ProjectManager.getInstance().getDefaultProject();  // warm-up components
     boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(warmUp, title, true, null);
 
-    StructuredIdeActivity activity = null;
+    long time = 0;
+    WizardContext context = wizard.getWizardContext();
     if (isNewWizard()) {
-      WizardContext context = wizard.getWizardContext();
-      activity = NewProjectWizardCollector.logStarted(context.getProject());
+      time = System.nanoTime();
       NewProjectWizardCollector.logOpen(context);
     }
     if (proceed && wizard.showAndGet()) {
       createFromWizard(wizard);
-      if (isNewWizard() && activity != null) {
-        NewProjectWizardCollector.logFinished(activity, true);
+      if (isNewWizard()) {
+        NewProjectWizardCollector.logFinish(context, true, TimeoutUtil.getDurationMillis(time));
       }
       return;
     }
 
-    if (isNewWizard() && activity != null) {
-      NewProjectWizardCollector.logFinished(activity, false);
+    if (isNewWizard()) {
+      NewProjectWizardCollector.logFinish(context, false, TimeoutUtil.getDurationMillis(time));
     }
   }
 

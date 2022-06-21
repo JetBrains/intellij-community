@@ -3,7 +3,9 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.codeVision.*
+import com.intellij.codeInsight.codeVision.CodeVisionState.Companion.READY_EMPTY
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
+import com.intellij.codeInsight.hints.Result.Companion.SUCCESS_EMPTY
 import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
@@ -19,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.ShortNameType
@@ -49,27 +52,33 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
   }
 
-  override fun computeForEditor(editor: Editor, uiData: Unit): List<Pair<TextRange, CodeVisionEntry>> {
+  override fun preparePreview(editor: Editor, file: PsiFile) {
+    addPreviewInfo(editor)
+  }
+
+  override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     return runReadAction {
-      val project = editor.project ?: return@runReadAction emptyList()
+      val project = editor.project ?: return@runReadAction READY_EMPTY
       val document = editor.document
-      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction emptyList()
+      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction CodeVisionState.NotReady
       val language = file.language
 
-      val aspect = getAspect(file, editor) ?: return@runReadAction emptyList()
+      val aspectResult = getAspect(file, editor)
+      if (aspectResult.isSuccess.not()) return@runReadAction CodeVisionState.NotReady
+      val aspect = aspectResult.result ?: return@runReadAction READY_EMPTY
 
       val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
 
       try {
         val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
-                                    ?: return@runReadAction emptyList()
+                                    ?: return@runReadAction READY_EMPTY
         val traverser = SyntaxTraverser.psiTraverser(file)
         for (element in traverser.preOrderDfsTraversal()) {
           if (visionLanguageContext.isAccepted(element)) {
             val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
             val length = editor.document.textLength
             val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
-            val codeAuthorInfo = getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
+            val codeAuthorInfo = PREVIEW_INFO_KEY.get(editor) ?: getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
             val text = codeAuthorInfo.getText()
             val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
             val clickHandler = CodeAuthorClickHandler(element, language)
@@ -83,7 +92,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
         e.printStackTrace()
         throw e
       }
-      return@runReadAction lenses
+      return@runReadAction CodeVisionState.Ready(lenses)
     }
   }
 
@@ -180,21 +189,25 @@ private fun getCodeAuthorInfo(project: Project, range: TextRange, editor: Editor
   )
 }
 
-fun getAspect(file: PsiFile, editor: Editor): LineAnnotationAspect? {
-  if (hasPreviewInfo(file)) return LineAnnotationAspectAdapter.NULL_ASPECT
-  val virtualFile = file.virtualFile ?: return null
-  val annotation = getAnnotation(file.project, virtualFile, editor) ?: return null
-  return annotation.aspects.find { it.id == LineAnnotationAspect.AUTHOR }
+private fun getAspect(file: PsiFile, editor: Editor): Result<LineAnnotationAspect?> {
+  if (hasPreviewInfo(editor)) return Result.Success(LineAnnotationAspectAdapter.NULL_ASPECT)
+  val virtualFile = file.virtualFile ?: return SUCCESS_EMPTY
+  val annotationResult = getAnnotation(file.project, virtualFile, editor)
+  if (annotationResult.isSuccess.not()) return Result.Failure()
+
+  return Result.Success(annotationResult.result?.aspects?.find { it.id == LineAnnotationAspect.AUTHOR })
 }
 
 private val VCS_CODE_AUTHOR_ANNOTATION = Key.create<FileAnnotation>("Vcs.CodeAuthor.Annotation")
 
-private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): FileAnnotation? {
-  editor.getUserData(VCS_CODE_AUTHOR_ANNOTATION)?.let { return it }
+private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): Result<FileAnnotation?> {
+  editor.getUserData(VCS_CODE_AUTHOR_ANNOTATION)?.let { return Result.Success(it) }
 
-  val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return null
-  val provider = vcs.annotationProvider as? CacheableAnnotationProvider ?: return null
-  val annotation = provider.getFromCache(file) ?: return null
+  val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return SUCCESS_EMPTY
+  val provider = vcs.annotationProvider as? CacheableAnnotationProvider ?: return SUCCESS_EMPTY
+  val isFileInVcs = AbstractVcs.fileInVcsByFileStatus(project, file)
+  if (!isFileInVcs) return SUCCESS_EMPTY
+  val annotation = provider.getFromCache(file) ?: return Result.Failure()
 
   val annotationDisposable = Disposable {
     unregisterAnnotation(file, annotation)
@@ -214,7 +227,7 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
     EditorUtil.disposeWithEditor(editor, annotationDisposable)
   }
 
-  return annotation
+  return Result.Success(annotation)
 }
 
 private fun registerAnnotation(file: VirtualFile, annotation: FileAnnotation) =
@@ -236,3 +249,20 @@ private fun VcsCodeAuthorInfo.getText(): String {
     else -> mainAuthorText
   }
 }
+
+private sealed class Result<out T>(val isSuccess: Boolean, val result: T?){
+
+  companion object{
+    val SUCCESS_EMPTY = Success(null)
+  }
+  class Success<T>(result: T) : Result<T>(true, result)
+  class Failure<T> : Result<T>(false, null)
+}
+
+private val PREVIEW_INFO_KEY = Key.create<VcsCodeAuthorInfo>("preview.author.info")
+
+private fun addPreviewInfo(editor: Editor) {
+  editor.putUserData(PREVIEW_INFO_KEY, VcsCodeAuthorInfo("John Smith", 2, false))
+}
+
+private fun hasPreviewInfo(editor: Editor) = PREVIEW_INFO_KEY.get(editor) != null

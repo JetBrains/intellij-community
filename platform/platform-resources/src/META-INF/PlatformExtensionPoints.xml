@@ -97,6 +97,10 @@
     <extensionPoint name="gitRepositoryInitializer"
                     interface="com.intellij.openapi.GitRepositoryInitializer"
                     dynamic="true"/>
+    <extensionPoint name="gitSilentFileAdder"
+                    interface="com.intellij.openapi.GitSilentFileAdderProvider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
 
     <extensionPoint name="undoProvider" interface="com.intellij.openapi.command.impl.UndoProvider" dynamic="true"/>
     <extensionPoint name="projectUndoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"

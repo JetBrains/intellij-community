@@ -128,7 +128,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("git.configuration", 9)
+    private val GROUP = EventLogGroup("git.configuration", 10)
 
     private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
     private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -189,26 +189,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       if (remote.urls.any { it.contains("bitbucket") }) return "bitbucket_custom"
 
       return null
-    }
-
-    private val IS_FULL_REFRESH_FIELD = EventFields.Boolean("is_full_refresh")
-    private val STATUS_REFRESH = GROUP.registerIdeActivity(activityName = "status.refresh",
-                                                           startEventAdditionalFields = arrayOf(IS_FULL_REFRESH_FIELD))
-    private val UNTRACKED_REFRESH = GROUP.registerIdeActivity(activityName = "untracked.refresh",
-                                                              startEventAdditionalFields = arrayOf(IS_FULL_REFRESH_FIELD))
-
-    @JvmStatic
-    fun logStatusRefresh(project: Project, everythingDirty: Boolean): StructuredIdeActivity {
-      return STATUS_REFRESH.started(project) {
-        listOf(IS_FULL_REFRESH_FIELD.with(everythingDirty))
-      }
-    }
-
-    @JvmStatic
-    fun logUntrackedRefresh(project: Project, everythingDirty: Boolean): StructuredIdeActivity {
-      return UNTRACKED_REFRESH.started(project) {
-        listOf(IS_FULL_REFRESH_FIELD.with(everythingDirty))
-      }
     }
   }
 }

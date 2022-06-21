@@ -93,7 +93,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
       }
       if (!moduleProfile.isEnabled()) return;
 
-      if (MavenProjectImporter.isImportToTreeStructureEnabled()) {
+      if (MavenProjectImporter.isImportToTreeStructureEnabled(project)) {
         moduleProfile.setOutputRelativeToContentRoot(false);
       } else {
         moduleProfile.setOutputRelativeToContentRoot(true);

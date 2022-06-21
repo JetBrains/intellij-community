@@ -11,10 +11,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.SyncBundle;
-import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.server.MavenArtifactResolveResult;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -105,8 +105,13 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
     }
 
     try {
-      List<MavenArtifact> annotationProcessors = embedder.resolveTransitively(externalArtifacts, mavenProject.getRemoteRepositories());
-      mavenProject.addAnnotationProcessors(annotationProcessors);
+      MavenArtifactResolveResult annotationProcessors = embedder
+        .resolveArtifactTransitively(externalArtifacts, mavenProject.getRemoteRepositories());
+      if (annotationProcessors.problem != null) {
+        MavenResolveResultProcessor.notifySyncForProblem(project, annotationProcessors.problem);
+      } else {
+        mavenProject.addAnnotationProcessors(annotationProcessors.mavenResolvedArtifacts);
+      }
     }
     catch (Exception e) {
       String message = e.getMessage() != null ? e.getMessage() : ExceptionUtil.getThrowableText(e);

@@ -170,7 +170,7 @@ def _fallback_excepthook(exctype, value, tb):
     try:
         debugger = get_global_debugger()
         if debugger and debugger.break_on_uncaught_exceptions:
-            thread = threading.currentThread()
+            thread = threading.current_thread()
             additional_info = getattr(thread, 'additional_info', None)
             if not thread or additional_info is None:
                 return

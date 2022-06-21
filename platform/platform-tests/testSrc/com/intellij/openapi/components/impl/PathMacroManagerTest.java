@@ -62,7 +62,7 @@ public class PathMacroManagerTest {
 
   private MockModule createModule(@NotNull String basePath) {
     MockProject project = createProject(basePath);
-    return new MockModule(project) {
+    return new MockModule(project, project) {
       @Override
       public @NotNull Path getModuleNioFile() {
         return Paths.get(project.getBasePath()).resolve("module/module.iml");

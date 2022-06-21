@@ -116,7 +116,8 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
                        currentPsiClass.equals(psiClass)
                        ? annotationValue(currentPsiClass, TestFrameworkConstants.TEST_METADATA_ANNOTATION_QUALIFIED_NAME)
                        : null;
-        testDataPath = annotationValue(currentPsiClass, TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME);
+        String localTestDataPath = annotationValue(currentPsiClass, TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME);
+        testDataPath = localTestDataPath != null ? localTestDataPath : testDataPath;
         PsiClass containingClass = currentPsiClass.getContainingClass();
         currentPsiClass = containingClass;
       }

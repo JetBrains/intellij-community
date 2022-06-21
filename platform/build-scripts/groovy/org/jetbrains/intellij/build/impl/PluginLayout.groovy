@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
+import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
@@ -130,6 +131,38 @@ final class PluginLayout extends BaseLayout {
         return null
       }
     }, ""))
+  }
+
+  void mergeServiceFiles() {
+    patchers.add(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
+      @Override
+      void accept(ModuleOutputPatcher patcher, BuildContext context) {
+        MultiMap<String, Pair<String, Path>> discoveredServiceFiles = MultiMap.createLinkedSet()
+
+        moduleJars.get(mainJarName).each { String moduleName ->
+          Path path = context.findFileInModuleSources(moduleName, "META-INF/services")
+          if (path == null) return
+
+          Files.list(path).each { Path serviceFile ->
+            if (!Files.isRegularFile(serviceFile)) return
+            discoveredServiceFiles.putValue(serviceFile.fileName.toString(), Pair.create(moduleName, serviceFile))
+          }
+        }
+
+        discoveredServiceFiles.entrySet().each { Map.Entry<String, Collection<Pair<String, Path>>> entry ->
+          String serviceFileName = entry.key
+          Collection<Pair<String, Path>> serviceFiles = entry.value
+
+          if (serviceFiles.size() <= 1) return
+          String content = serviceFiles.collect { Files.readString(it.second) }.join("\n")
+
+          context.messages.info("Merging service file " + serviceFileName + " (" + serviceFiles.collect { it.first }.join(", ") + ")")
+          patcher.patchModuleOutput(serviceFiles.first().first, // first one wins
+                                    "META-INF/services/$serviceFileName",
+                                    content)
+        }
+      }
+    })
   }
 
   @CompileStatic
@@ -367,6 +400,14 @@ final class PluginLayout extends BaseLayout {
      */
     void filterScrambleClasspath(BiPredicate<BuildContext, Path> filter) {
       layout.scrambleClasspathFilter = filter
+    }
+
+    /**
+     * Concatenates `META-INF/services` files with the same name from different modules together.
+     * By default the first service file silently wins.
+     */
+    void mergeServiceFiles() {
+      layout.mergeServiceFiles()
     }
   }
 

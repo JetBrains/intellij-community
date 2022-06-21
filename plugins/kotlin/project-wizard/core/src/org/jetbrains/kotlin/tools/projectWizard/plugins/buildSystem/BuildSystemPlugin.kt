@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem
 
-
+import com.intellij.openapi.util.text.StringUtil
 import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -59,14 +59,12 @@ abstract class BuildSystemPlugin(context: Context) : Plugin(context) {
                     ValidationResult.ValidationError(
                         KotlinNewProjectWizardBundle.message(
                             "plugin.buildsystem.setting.type.error.wrong.project.kind",
-                            projectKind.shortName.capitalize(),
+                            StringUtil.capitalize(projectKind.shortName),
                             buildSystemType.fullText
                         )
                     )
                 }
             }
-
-            tooltipText = KotlinNewProjectWizardBundle.message("plugin.buildsystem.setting.type.tooltip")
         }
 
         val buildSystemData by property<List<BuildSystemData>>(emptyList())
@@ -195,7 +193,7 @@ enum class BuildSystemType(
 
     companion object {
         val ALL_GRADLE = setOf(GradleKotlinDsl, GradleGroovyDsl)
-        val ALL_BY_PRIORITY = setOf(GradleKotlinDsl, GradleGroovyDsl, Maven, Jps)
+        val ALL_BY_PRIORITY = setOf(GradleKotlinDsl, GradleGroovyDsl)
     }
 }
 
@@ -227,7 +225,6 @@ fun BuildSystemType.getDefaultPluginRepositories(): List<DefaultRepository> = wh
     BuildSystemType.Maven -> listOf(DefaultRepository.MAVEN_CENTRAL)
     BuildSystemType.Jps -> emptyList()
 }
-
 
 val Reader.buildSystemType: BuildSystemType
     get() = BuildSystemPlugin.type.settingValue

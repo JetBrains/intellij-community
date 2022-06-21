@@ -112,7 +112,10 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
 
   private val diffRequestProducer: DiffRequestChainProducer =
-    object : GHPRDiffRequestChainProducer(project, dataProvider, dataContext.avatarIconsProvider, dataContext.securityService.currentUser) {
+    object : GHPRDiffRequestChainProducer(project,
+                                          dataProvider, dataContext.avatarIconsProvider,
+                                          dataContext.repositoryDataService,
+                                          dataContext.securityService.currentUser) {
 
       private val viewedStateSupport = GHPRViewedStateDiffSupportImpl(repository, dataProvider.viewedStateData)
 

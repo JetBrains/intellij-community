@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.codereview.comment.ReviewUIUtil
-import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.diff.util.Side
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -14,23 +13,26 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 
 class GHPRDiffEditorReviewComponentsFactoryImpl
 internal constructor(private val project: Project,
                      private val reviewDataProvider: GHPRReviewDataProvider,
-                     private val detailsDataProvider: GHPRDetailsDataProvider,
-                     private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
                      private val avatarIconsProvider: GHAvatarIconsProvider,
+                     private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
+                     private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
                      private val currentUser: GHUser)
   : GHPRDiffEditorReviewComponentsFactory {
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent =
-    GHPRReviewThreadComponent.create(project, thread, reviewDataProvider, detailsDataProvider, avatarIconsProvider, currentUser).apply {
+    GHPRReviewThreadComponent.create(project, thread,
+                                     reviewDataProvider, avatarIconsProvider,
+                                     suggestedChangeHelper,
+                                     currentUser).apply {
       border = JBUI.Borders.empty(8, 8)
     }.let { ReviewUIUtil.createEditorInlayPanel(it) }
 

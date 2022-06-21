@@ -100,7 +100,7 @@ public final class CompileDriver {
       startup(scope, false, false, withModalProgress, callback, null);
     }
     else {
-      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
+      SwingUtilities.invokeLater(() -> callback.finished(true, 0, 0, DummyCompileContext.create(myProject)));
     }
   }
 
@@ -445,7 +445,7 @@ public final class CompileDriver {
       final ProgressIndicator indicator = compileContext.getProgressIndicator();
       if (indicator.isCanceled() || myProject.isDisposed()) {
         if (callback != null) {
-          callback.finished(true, 0, 0, compileContext);
+          SwingUtilities.invokeLater(() -> callback.finished(true, 0, 0, compileContext));
         }
         return;
       }

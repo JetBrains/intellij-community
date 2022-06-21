@@ -5,6 +5,8 @@ target/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
+.idea/jarRepositories.xml
+.idea/compiler.xml
 .idea/libraries/
 *.iws
 *.iml
@@ -31,3 +33,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Mac OS ###
+.DS_Store

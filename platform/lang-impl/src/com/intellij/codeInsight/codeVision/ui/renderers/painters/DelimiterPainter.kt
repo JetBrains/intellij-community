@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.codeVision.ui.renderers.painters
 
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.ui.JBUI
@@ -20,7 +21,7 @@ class DelimiterPainter : ICodeVisionGraphicPainter {
   }
 
   override fun size(editor: Editor, state: RangeCodeVisionModel.InlayState): Dimension {
-    val width = CodeVisionTheme.lensFontSize(editor)
+    val width = service<CodeVisionThemeInfoProvider>().lensFontSize(editor)
     return Dimension(JBUI.scale(width.toInt()), editor.lineHeight)
   }
 }

@@ -96,7 +96,7 @@ public final class GitFileUtils {
                                                           @NotNull Collection<? extends VirtualFile> addedFiles) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository == null) {
-      LOG.error("Repository not found for root " + root.getPresentableUrl());
+      LOG.warn("Repository not found for root " + root.getPresentableUrl());
       return;
     }
     repository.getUntrackedFilesHolder().remove(ContainerUtil.map(addedFiles, VcsUtil::getFilePath));
@@ -106,7 +106,7 @@ public final class GitFileUtils {
                                                           @NotNull Collection<VirtualFile> addedFiles) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository == null) {
-      LOG.error("Repository not found for root " + root.getPresentableUrl());
+      LOG.warn("Repository not found for root " + root.getPresentableUrl());
       return;
     }
     repository.getIgnoredFilesHolder().removeIgnoredFiles(ContainerUtil.mapNotNull(addedFiles, VcsUtil::getFilePath));
@@ -116,7 +116,7 @@ public final class GitFileUtils {
                                                              @NotNull Collection<? extends VirtualFile> removedFiles) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository == null) {
-      LOG.error("Repository not found for root " + root.getPresentableUrl());
+      LOG.warn("Repository not found for root " + root.getPresentableUrl());
       return;
     }
     repository.getUntrackedFilesHolder().add(ContainerUtil.map(removedFiles, VcsUtil::getFilePath));
@@ -126,7 +126,7 @@ public final class GitFileUtils {
                                                             @NotNull Collection<? extends FilePath> resetFiles) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository == null) {
-      LOG.error("Repository not found for root " + root.getPresentableUrl());
+      LOG.warn("Repository not found for root " + root.getPresentableUrl());
       return;
     }
     repository.getUntrackedFilesHolder().markPossiblyUntracked(resetFiles);

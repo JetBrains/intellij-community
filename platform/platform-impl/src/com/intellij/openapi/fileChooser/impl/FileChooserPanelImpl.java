@@ -116,17 +116,29 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     myPath = new ComboBox<>(Stream.of(recentPaths).map(PathWrapper::new).toArray(PathWrapper[]::new));
     myPath.setVisible(myShowPathBar);
     myPath.setEditable(true);
-    myPath.addFocusListener(new FocusAdapter() {
+    var pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
+    pathEditor.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
         myPathBarActive = true;
       }
     });
-    var pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
     var finder = new LocalFsFinder(false).withBaseDir(null);
     FileLookup.LookupFilter filter =
       f -> myDescriptor.isFileVisible(new CoreLocalVirtualFile(FS, ((LocalFsFinder.IoFile)f).getFile()), myShowHiddenFiles);
     new FileTextFieldImpl(pathEditor, finder, filter, FileChooserFactoryImpl.getMacroMap(), this);
+    pathEditor.getActionMap().put(JTextField.notifyAction, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (myPath.isPopupVisible()) {
+          myPath.setPopupVisible(false);
+        }
+        var path = typedPath();
+        if (path != null) {
+          load(path, null, 0);
+        }
+      }
+    });
 
     myModel = new SortedListModel<>(FsItem.COMPARATOR);
     myList = new JBList<>(myModel);
@@ -222,6 +234,20 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
   }
 
+  private @Nullable Path typedPath() {
+    var object = myPath.getEditor().getItem();
+    if (object instanceof PathWrapper) {
+      return ((PathWrapper)object).path;
+    }
+    if (object instanceof String && !((String)object).isBlank()) {
+      var path = findByPath(FileUtil.expandUserHome(((String)object).trim()));
+      if (path != null && path.isAbsolute()) {
+        return path;
+      }
+    }
+    return null;
+  }
+
   private void openItemAtIndex(int idx, InputEvent e) {
     FsItem item = myModel.get(idx);
     if (item.directory) {
@@ -242,17 +268,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   @NotNull List<@NotNull Path> chosenPaths() {
     if (myShowPathBar && myPathBarActive) {
-      var object = myPath.getEditor().getItem();
-      if (object instanceof PathWrapper) {
-        return List.of(((PathWrapper)object).path);
-      }
-      if (object instanceof String && !((String)object).isBlank()) {
-        var path = findByPath(FileUtil.expandUserHome(((String)object).trim()));
-        if (path != null && path.isAbsolute()) {
-          return List.of(path);
-        }
-      }
-      return List.of();
+      var path = typedPath();
+      return path != null ? List.of(path) : List.of();
     }
     else {
       var items = myList.getSelectedValuesList();
@@ -550,9 +567,14 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
           name = name.substring(0, name.length() - 1);
         }
         if (SystemInfo.isWindows) {
-          var store = Files.getFileStore(root).name();
-          if (!store.isBlank()) {
-            name += " [" + store + ']';
+          try {
+            var store = Files.getFileStore(root).name();
+            if (!store.isBlank()) {
+              name += " [" + store + ']';
+            }
+          }
+          catch (IOException e) {
+            LOG.debug(e);
           }
         }
         var item = new FsItem(root, name, true, true, myDescriptor.isFileSelectable(virtualFile), AllIcons.Nodes.Folder);

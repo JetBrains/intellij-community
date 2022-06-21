@@ -8,40 +8,39 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vcs.LocalFilePath
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.SimpleContentRevision
-import git4idea.GitContentRevision
-import git4idea.GitRevisionNumber
+import com.intellij.vcsUtil.VcsImplUtil
+import git4idea.GitUtil
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.checkin.GitCommitOptions
 import git4idea.index.GitIndexUtil
-import git4idea.repo.GitRepositoryManager
+import git4idea.repo.GitRepository
+import git4idea.util.GitFileUtils
+import org.jetbrains.plugins.github.util.GithubUtil
 import java.nio.charset.Charset
 import java.nio.file.Path
-import kotlin.io.path.isExecutable
 
 class GHSuggestedChangeApplier(
   private val project: Project,
-  private val suggestedChange: String,
-  private val suggestedChangeInfo: GHSuggestedChangeInfo,
+  private val repository: GitRepository,
+  private val suggestedChange: GHSuggestedChange
 ) {
-  private val projectDir = project.guessProjectDir()!!
+  private val virtualBaseDir = repository.root
 
   fun applySuggestedChange(): ApplyPatchStatus {
-    val suggestedChangePatch = createSuggestedChangePatch(suggestedChange, suggestedChangeInfo)
-    val patchApplier = PatchApplier(project, projectDir, listOf(suggestedChangePatch), null, null)
+    val suggestedChangePatch = createSuggestedChangePatch(suggestedChange)
+    val patchApplier = PatchApplier(project, virtualBaseDir, listOf(suggestedChangePatch), null, null)
 
     return patchApplier.execute(true, false)
   }
 
-  private fun createSuggestedChangePatchHunk(suggestedChangeContent: List<String>, suggestedChangeInfo: GHSuggestedChangeInfo): PatchHunk {
-    val suggestedChangePatchHunk = PatchHunk(suggestedChangeInfo.startLine, suggestedChangeInfo.endLine,
-                                             suggestedChangeInfo.startLine, suggestedChangeInfo.startLine + suggestedChangeContent.size - 1)
+  private fun createSuggestedChangePatchHunk(suggestedChange: GHSuggestedChange): PatchHunk {
+    val suggestedChangeContent = suggestedChange.cutSuggestedChangeContent()
+    val suggestedChangePatchHunk = PatchHunk(suggestedChange.startLine, suggestedChange.endLine,
+                                             suggestedChange.startLine, suggestedChange.startLine + suggestedChangeContent.size - 1)
 
-    val changedLines = suggestedChangeInfo.cutChangedContent()
-    changedLines.forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.REMOVE, it)) }
+    suggestedChange.cutContextContent().forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.CONTEXT, it)) }
+    suggestedChange.cutChangedContent().forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.REMOVE, it)) }
     suggestedChangeContent.forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.ADD, it)) }
 
     return suggestedChangePatchHunk
@@ -49,9 +48,9 @@ class GHSuggestedChangeApplier(
 
   fun commitSuggestedChanges(commitMessage: String): ApplyPatchStatus {
     // Apply patch
-    val suggestedChangePatch = createSuggestedChangePatch(suggestedChange, suggestedChangeInfo)
-    val patchApplier = PatchApplier(project, projectDir, listOf(suggestedChangePatch), null, null)
-    val patchStatus = patchApplier.execute(true, true)
+    val suggestedChangePatch = createSuggestedChangePatch(suggestedChange)
+    val patchApplier = PatchApplier(project, virtualBaseDir, listOf(suggestedChangePatch), null, null)
+    val patchStatus = patchApplier.execute(true, false)
     if (patchStatus == ApplyPatchStatus.ALREADY_APPLIED) {
       return patchStatus
     }
@@ -60,49 +59,43 @@ class GHSuggestedChangeApplier(
     val beforeLocalFilePath = createLocalFilePath(suggestedChangePatch.beforeName)
     val afterLocalFilePath = createLocalFilePath(suggestedChangePatch.afterName)
 
-    val beforeRevision = GitContentRevision.createRevision(beforeLocalFilePath, GitRevisionNumber.HEAD, project)
-    val appliedPatch = GenericPatchApplier.apply(beforeRevision.content, suggestedChangePatch.hunks)
+    val bytes = GitFileUtils.getFileContent(project, virtualBaseDir, GitUtil.HEAD, suggestedChangePatch.beforeName)
+    val revisionContent = VcsImplUtil.loadTextFromBytes(project, bytes, beforeLocalFilePath)
+    val appliedPatch = GenericPatchApplier.apply(revisionContent, suggestedChangePatch.hunks)
     if (appliedPatch == null || appliedPatch.status != ApplyPatchStatus.SUCCESS) {
       return appliedPatch?.status ?: ApplyPatchStatus.FAILURE
     }
 
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(projectDir) ?: return ApplyPatchStatus.FAILURE
     val virtualFile = beforeLocalFilePath.virtualFile ?: return ApplyPatchStatus.FAILURE
     val fileContent = GitCheckinEnvironment.convertDocumentContentToBytesWithBOM(repository, appliedPatch.patchedText, virtualFile)
-    val isExecutable = Path.of(beforeLocalFilePath.path).isExecutable()
-    val hash = GitIndexUtil.write(repository, beforeLocalFilePath, fileContent, isExecutable)
-    val suggestedChangeRevision = SimpleContentRevision(appliedPatch.patchedText, afterLocalFilePath, hash.asString())
+    val stagedFile = GitIndexUtil.listStaged(repository, beforeLocalFilePath) ?: return ApplyPatchStatus.FAILURE
+    GitIndexUtil.write(repository, beforeLocalFilePath, fileContent, stagedFile.isExecutable)
 
     // Commit suggested change
-    val changes = ChangeListManager.getInstance(project).defaultChangeList.changes.map {
-      GitCheckinEnvironment.ChangedPath(it.beforeRevision?.file, it.afterRevision?.file)
+    val suggestedChangedPath = GitCheckinEnvironment.ChangedPath(beforeLocalFilePath, afterLocalFilePath)
+    val commitMessageFile = GitCheckinEnvironment.createCommitMessageFile(project, virtualBaseDir, commitMessage)
+    val exceptions = GitCheckinEnvironment.commitUsingIndex(project, repository,
+                                                            listOf(suggestedChangedPath), setOf(suggestedChangedPath),
+                                                            commitMessageFile, GitCommitOptions())
+
+    if (exceptions.isNotEmpty()) {
+      val messages = exceptions.flatMap { it.messages.toList() }.toTypedArray()
+      GithubUtil.LOG.error("Failed to commit suggested change", *messages)
+      return ApplyPatchStatus.FAILURE
     }
-    val suggestedChangedPath = GitCheckinEnvironment.ChangedPath(beforeRevision.file, suggestedChangeRevision.file)
-    val commitMessageFile = GitCheckinEnvironment.createCommitMessageFile(project, projectDir, commitMessage)
-    GitCheckinEnvironment.commitUsingIndex(project, repository,
-                                           listOf(suggestedChangedPath), changes.toSet(),
-                                           commitMessageFile, GitCommitOptions())
 
     return ApplyPatchStatus.SUCCESS
   }
 
-  private fun createSuggestedChangePatch(suggestedChange: String, suggestedChangeInfo: GHSuggestedChangeInfo): TextFilePatch {
-    val suggestedChangeContent = getSuggestedChangeContent(suggestedChange)
-    val suggestedChangePatchHunk = createSuggestedChangePatchHunk(suggestedChangeContent, suggestedChangeInfo)
+  private fun createSuggestedChangePatch(suggestedChange: GHSuggestedChange): TextFilePatch {
+    val suggestedChangePatchHunk = createSuggestedChangePatchHunk(suggestedChange)
 
     return TextFilePatch(Charset.defaultCharset()).apply {
-      beforeName = suggestedChangeInfo.filePath
-      afterName = suggestedChangeInfo.filePath
+      beforeName = suggestedChange.filePath
+      afterName = suggestedChange.filePath
       addHunk(suggestedChangePatchHunk)
     }
   }
 
-  private fun createLocalFilePath(filename: String): LocalFilePath = LocalFilePath(Path.of(projectDir.path, filename), false)
-
-  private fun getSuggestedChangeContent(comment: String): List<String> {
-    return comment.lines()
-      .dropWhile { !it.startsWith("```suggestion") }
-      .drop(1)
-      .takeWhile { !it.startsWith("```") }
-  }
+  private fun createLocalFilePath(filename: String): LocalFilePath = LocalFilePath(Path.of(virtualBaseDir.path, filename), false)
 }

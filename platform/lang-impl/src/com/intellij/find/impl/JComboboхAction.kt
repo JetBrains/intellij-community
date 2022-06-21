@@ -46,6 +46,7 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
     init {
       setEditor(BasicComboBoxEditor())
       maximumRowCount = 12
+      prototypeDisplayValue = emptyText
       isOpaque = false
       insertItemAt(emptyText, 0)
       selectedItem = FindSettings.getInstance().fileMask ?: emptyText
@@ -77,7 +78,7 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
       }
     }
 
-    override fun getPreferredSize() = Dimension(super.getPreferredSize().width,
+    override fun getPreferredSize() = Dimension(JBUI.scale(120),
                                                 ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE.height + insets.top + insets.bottom - JBUI.scale(
                                                   1))
 

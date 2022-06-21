@@ -104,6 +104,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "lib/annotations.jar"                                   : "1.6",
     // JAR contains class files for Java 1.8 and 11 (several modules packed into it)
     "lib/util.jar!/com/intellij/serialization/"             : "1.8",
+    "lib/util_rt.jar"                                       : "1.6",
     "lib/external-system-rt.jar"                            : "1.6",
     "plugins/coverage/lib/coverage_rt.jar"                  : "1.6",
     "plugins/javaFX/lib/rt/sceneBuilderBridge.jar"          : "11",

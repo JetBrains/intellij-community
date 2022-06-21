@@ -10,11 +10,24 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public abstract class GraphAlgorithms {
   public static GraphAlgorithms getInstance() {
     return ApplicationManager.getApplication().getService(GraphAlgorithms.class);
   }
+
+  public abstract <Node> @NotNull Collection<Node> findNodesWhichBelongToAnyPathBetweenTwoNodes(
+    @NotNull Graph<Node> graph,
+    @NotNull Node start,
+    @NotNull Node finish
+  );
+
+  public abstract <Node> @NotNull Collection<Node> findNodeNeighbourhood(
+    @NotNull Graph<Node> graph,
+    @NotNull Node node,
+    int levelBound
+  );
 
   @Nullable
   public abstract <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish);
@@ -25,6 +38,11 @@ public abstract class GraphAlgorithms {
 
   @NotNull
   public abstract <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node);
+
+  public abstract <Node> void iterateOverAllSimpleCycles(
+    @NotNull Graph<Node> graph,
+    @NotNull Consumer<List<Node>> cycleConsumer
+  );
 
   @NotNull
   public abstract <Node> List<List<Node>> removePathsWithCycles(@NotNull List<? extends List<Node>> paths);
@@ -41,8 +59,9 @@ public abstract class GraphAlgorithms {
   /**
    * Adds start node and all its outs to given set recursively.
    * Nodes which are already in set aren't processed.
-   *  @param start node to start from
-   * @param set set to be populated
+   *
+   * @param start node to start from
+   * @param set   set to be populated
    */
   public abstract <Node> void collectOutsRecursively(@NotNull Graph<Node> graph, Node start, Set<? super Node> set);
 }

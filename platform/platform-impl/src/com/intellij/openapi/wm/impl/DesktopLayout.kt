@@ -140,11 +140,13 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
       return null
     }
 
-    val state = Element(tagName)
+    var state: Element? = null
     for (info in getSortedList()) {
-      serialize(info)?.let {
-        state.addContent(it)
+      val child = serialize(info) ?: continue
+      if (state == null) {
+        state = Element(tagName)
       }
+      state.addContent(child)
     }
     return state
   }

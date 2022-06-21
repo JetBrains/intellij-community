@@ -48,6 +48,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       FIX_TRACKED_NOT_ON_BRANCH,
       INIT_ERROR,
       INIT_FAILED,
+      INIT_STAGE_FAILED,
       LOCAL_CHANGES_NOT_RESTORED,
       MERGE_ABORT_FAILED,
       MERGE_ABORT_SUCCESS,
@@ -147,6 +148,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val FIX_TRACKED_NOT_ON_BRANCH = "git.fix.tracked.not.on.branch"
     const val INIT_ERROR = "git.init.error"
     const val INIT_FAILED = "git.init.failed"
+    const val INIT_STAGE_FAILED = "git.init.stage.failed"
     const val LOCAL_CHANGES_NOT_RESTORED = "git.local.changes.not.restored"
     const val MERGE_ABORT_FAILED = "git.merge.abort.failed"
     const val MERGE_ABORT_SUCCESS ="git.merge.abort.success"

@@ -1403,6 +1403,11 @@ public abstract class KotlinEvaluateExpressionWithIRFragmentCompilerTestGenerate
                 runTest("testData/evaluation/multipleBreakpoints/inlineStackTrace.kt");
             }
 
+            @TestMetadata("inlineStackTraceWithApply.kt")
+            public void testInlineStackTraceWithApply() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/inlineStackTraceWithApply.kt");
+            }
+
             @TestMetadata("inlineStackTraceWithNestedLambdas.kt")
             public void testInlineStackTraceWithNestedLambdas() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/inlineStackTraceWithNestedLambdas.kt");

@@ -38,6 +38,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -206,6 +207,11 @@ public class VcsUtil {
   @NotNull
   public static FilePath getFilePath(@NotNull File file) {
     return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+  }
+
+  @NotNull
+  public static FilePath getFilePath(@NotNull Path path, boolean isDirectory) {
+    return VcsContextFactory.SERVICE.getInstance().createFilePath(path, isDirectory);
   }
 
   @NotNull
@@ -535,10 +541,17 @@ public class VcsUtil {
       }
       else if (FileUtil.pathsEqual(mapping.getDirectory(), newMapping.getDirectory())) {
         if (!StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
-          LOG.warn("Substituting existing mapping [" + mapping.getDirectory() + "] -> [" + mapping.getVcs() + "] with [" + mapping.getVcs() + "]");
+          if (mapping.getVcs().equals(newMapping.getVcs())) {
+            LOG.debug(String.format("Substituting existing mapping with identical [%s] -> [%s]",
+                                    mapping.getDirectory(), mapping.getVcs()));
+          }
+          else {
+            LOG.warn(String.format("Substituting existing mapping [%s] -> [%s] with [%s]",
+                                   mapping.getDirectory(), mapping.getVcs(), newMapping.getVcs()));
+          }
         }
         else {
-          LOG.debug("Removing [" + mapping.getDirectory() + "] -> <None> mapping");
+          LOG.debug(String.format("Removing [%s] -> <None> mapping", mapping.getDirectory()));
         }
         iterator.remove();
       }

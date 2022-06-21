@@ -4,12 +4,15 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -86,4 +89,17 @@ private fun isRowLabel(label: JLabel): Boolean {
 
 private fun JComponent.setMinimumWidth(width: Int) {
   minimumSize = minimumSize.apply { this.width = width }
+}
+
+fun DialogPanel.withVisualPadding(topField: Boolean = false): DialogPanel {
+  if (Experiments.getInstance().isFeatureEnabled("new.project.wizard")) {
+    val top = if (topField) 20 else 15
+    border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 20, 20, 20))
+  }
+  else {
+    val top = if (topField) 15 else 5
+    border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 5, 0, 5))
+  }
+
+  return this
 }

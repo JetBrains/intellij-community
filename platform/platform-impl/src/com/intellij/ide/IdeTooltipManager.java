@@ -705,7 +705,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
           JLayeredPane lp = layeredPane;
           if (lp == null) {
             JRootPane rootPane = UIUtil.getRootPane(this);
-            if (rootPane != null) {
+            if (rootPane != null && rootPane.getSize().width > 0) {
               lp = rootPane.getLayeredPane();
             }
           }

@@ -2,7 +2,14 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
+import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.chain
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
@@ -18,7 +25,9 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
 
     override val name = "IntelliJ"
 
-    override fun createStep(parent: KotlinNewProjectWizard.Step) = object : AbstractNewProjectWizardStep(parent) {
+    override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
+
+    class Step(private val parent: KotlinNewProjectWizard.Step) : AbstractNewProjectWizardStep(parent) {
         private val sdkProperty = propertyGraph.property<Sdk?>(null)
         private val addSampleCodeProperty = propertyGraph.property(false)
 
@@ -48,5 +57,14 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 buildSystemType = BuildSystemType.Jps,
                 addSampleCode = addSampleCode
             )
+    }
+
+    private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+        override fun setupAssets(project: Project) {
+            outputDirectory = "$path/$name"
+            if (gitData?.git == true) {
+                addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
+            }
+        }
     }
 }

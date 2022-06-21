@@ -91,4 +91,9 @@ public class GitInit extends DumbAwareAction {
     manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, GitVcs.NAME));
     VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(root);
   }
+
+  public static void configureVcsMappings(@NotNull Project project, @NotNull VirtualFile root) {
+    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+    manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), root.getPath(), GitVcs.NAME));
+  }
 }

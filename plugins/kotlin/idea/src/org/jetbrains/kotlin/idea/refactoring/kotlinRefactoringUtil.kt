@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring
 
@@ -1013,7 +1013,6 @@ fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?)
 fun checkSuperMethodsWithPopup(
     declaration: KtNamedDeclaration,
     deepestSuperMethods: List<PsiElement>,
-    actionStringPrefixKey: String,
     editor: Editor,
     action: (List<PsiElement>) -> Unit
 ) {
@@ -1045,10 +1044,10 @@ fun checkSuperMethodsWithPopup(
         else -> kindIndex
     }
 
-    val renameBase = KotlinBundle.message("$actionStringPrefixKey.base.0", superKindIndex + (if (deepestSuperMethods.size > 1) 10 else 0))
-    val renameCurrent = KotlinBundle.message("$actionStringPrefixKey.only.current.0", kindIndex)
+    val renameBase = KotlinBundle.message("rename.base.0", superKindIndex + (if (deepestSuperMethods.size > 1) 10 else 0))
+    val renameCurrent = KotlinBundle.message("rename.only.current.0", kindIndex)
     val title = KotlinBundle.message(
-        "$actionStringPrefixKey.declaration.title.0.implements.1.2.of.3",
+        "rename.declaration.title.0.implements.1.2.of.3",
         declaration.name ?: "",
         if (isAbstract) 1 else 2,
         ElementDescriptionUtil.getElementDescription(superMethod, UsageViewTypeLocation.INSTANCE),

@@ -211,7 +211,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         else {
           // log4j, jdom and trove4j needed for running on branch 202 and older
           final List<String> jars = List.of("log4j.jar", "jdom.jar", "trove4j.jar",
-                         "openapi.jar", "util.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar");
+                         "openapi.jar", "util.jar", "util_rt.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar");
           for (String path : jars) {
             params.getClassPath().add(ideaJdkHome + FileUtil.toSystemDependentName("/lib/" + path));
           }

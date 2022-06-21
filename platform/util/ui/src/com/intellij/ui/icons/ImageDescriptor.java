@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -14,19 +14,13 @@ public final class ImageDescriptor {
   public final @NotNull String path;
   public final float scale; // initial scale factor
   public final boolean isSvg;
-  public final boolean original; // path is not altered
 
   public ImageDescriptor(@NotNull String path, float scale, boolean isSvg, boolean isDark) {
-    this(path, scale, isSvg, isDark, false);
-  }
-
-  public ImageDescriptor(@NotNull String path, float scale, boolean isSvg, boolean isDark, boolean original) {
     assert !path.isEmpty();
 
     this.path = path;
     this.scale = scale;
     this.isSvg = isSvg;
-    this.original = original;
     this.isDark = isDark;
   }
 

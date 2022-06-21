@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -21,9 +21,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
-import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.OverrideText;
 import org.jetbrains.idea.devkit.navigation.DevkitRelatedLineMarkerProviderBase;
@@ -46,16 +46,16 @@ import java.util.Collections;
  *
  * @see MessageBundleReferenceContributor
  */
-public final class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProviderBase {
+final class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProviderBase {
+
   @Override
   public String getName() {
     return DevKitBundle.message("line.marker.related.property.description");
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
-    return DevkitIcons.Gutter.Properties;
+  public @NotNull Icon getIcon() {
+    return DevKitIcons.Gutter.Properties;
   }
 
   @Override
@@ -99,7 +99,7 @@ public final class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMark
     if (query.findFirst() == null) return;
 
     result.add(
-      NavigationGutterIconBuilder.create(DevkitIcons.Gutter.Properties,
+      NavigationGutterIconBuilder.create(DevKitIcons.Gutter.Properties,
                                          e -> Collections.singletonList(((PsiElement)e)),
                                          e -> Collections.singletonList(new GotoRelatedItem((PsiElement)e)))
         .setTargets(NotNullLazyValue.createValue(() -> {

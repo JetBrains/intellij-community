@@ -25,19 +25,6 @@ import javax.swing.event.DocumentEvent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
 
-fun DialogPanel.withVisualPadding(topField: Boolean = false): DialogPanel {
-  if (Experiments.getInstance().isFeatureEnabled("new.project.wizard")) {
-    val top = if (topField) 20 else 15
-    border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 20, 20, 20))
-  }
-  else {
-    val top = if (topField) 15 else 5
-    border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 5, 0, 5))
-  }
-
-  return this
-}
-
 internal fun gridConstraint(col: Int, row: Int): GridBagConstraints {
   return GridBagConstraints().apply {
     fill = GridBagConstraints.BOTH

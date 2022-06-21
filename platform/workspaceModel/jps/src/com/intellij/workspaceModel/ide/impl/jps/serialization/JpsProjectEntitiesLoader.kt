@@ -34,7 +34,7 @@ object JpsProjectEntitiesLoader {
                   externalStoragePath: Path, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager,
                   fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
                   externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
-    val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
+    val reader = CachingJpsFileContentReader(configLocation)
     val data = createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, true, virtualFileManager,
                                                 externalStorageConfigurationManager = externalStorageConfigurationManager,
                                                 fileInDirectorySourceNames = fileInDirectorySourceNames)
@@ -54,7 +54,7 @@ object JpsProjectEntitiesLoader {
                           builder: WorkspaceEntityStorageBuilder,
                           errorReporter: ErrorReporter,
                           virtualFileManager: VirtualFileUrlManager) {
-    val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
+    val reader = CachingJpsFileContentReader(configLocation)
     val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), null, source,
                                                                              virtualFileManager)
     serializer.loadEntities(builder, reader, errorReporter, virtualFileManager)

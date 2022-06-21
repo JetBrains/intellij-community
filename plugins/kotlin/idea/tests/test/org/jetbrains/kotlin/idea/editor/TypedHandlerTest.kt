@@ -929,6 +929,23 @@ class TypedHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
         doTypeTest('\'', "val c = <caret>", "val c = ''")
     }
 
+    fun testDontInsertExtraRBraceWithGTSymbolInTheMiddleOnTyping() {
+        doTypeTest(
+            ")",
+            "fun foo() { if (1 > 2<caret>) {} }",
+            "fun foo() { if (1 > 2)<caret> {} }",
+        )
+    }
+
+    fun testDontInsertExtraRBraceWithLTSymbolInTheMiddleOnTyping() {
+        doTypeTest(
+            ")",
+            "fun foo() { if (1 < 2<caret>) {} }",
+            "fun foo() { if (1 < 2)<caret> {} }",
+        )
+    }
+
+
     private val enableSmartEnter: (CodeStyleSettings) -> Unit
         get() = {
             val indentOptions = it.getLanguageIndentOptions(KotlinLanguage.INSTANCE)

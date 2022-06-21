@@ -3,7 +3,11 @@ package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.codeVision.CodeVisionHost
+import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
+import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
+import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.concurrency.JobLauncher
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
@@ -15,10 +19,13 @@ import com.intellij.openapi.rd.createLifetime
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Processor
 import com.jetbrains.rd.util.reactive.adviseUntil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
+import java.util.stream.Collectors
+import kotlin.streams.toList
 
 /**
  * Prepares data for [com.intellij.codeInsight.codeVision.CodeVisionHost].
@@ -37,7 +44,16 @@ class CodeVisionPass(
     fun collectData(editor: Editor, file: PsiFile, providers: List<DaemonBoundCodeVisionProvider>) : CodeVisionData {
       val providerIdToLenses = ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>()
       collect(EmptyProgressIndicator(), editor, file, providerIdToLenses, providers)
-      return CodeVisionData(providerIdToLenses)
+      val allProviders = CodeVisionProviderFactory.createAllProviders(file.project)
+      val dataForAllProviders = HashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>()
+      val modificationStamp = file.modificationStamp
+      for (provider in allProviders) {
+        if (provider !is CodeVisionProviderAdapter) continue
+        val providerId = provider.id
+        dataForAllProviders[providerId] = providerIdToLenses[providerId]
+                                          ?: DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(emptyList(), modificationStamp)
+      }
+      return CodeVisionData(dataForAllProviders)
     }
 
     private fun collect(progress: ProgressIndicator,
@@ -54,18 +70,16 @@ class CodeVisionPass(
       })
     }
 
-    private fun updateProviders(project: Project,
-                                editor: Editor,
-                                providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
+    internal fun updateProviders(project: Project,
+                                 editor: Editor,
+                                 providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
       val codeVisionHost = CodeVisionHost.getInstance(project)
-      for (providerId in providerIdToLenses.keys) {
-        codeVisionHost.invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(editor, providerIdToLenses.keys))
-      }
+      codeVisionHost.invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(editor, providerIdToLenses.keys))
     }
 
     internal fun saveToCache(project: Project,
-                            editor: Editor,
-                            providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
+                             editor: Editor,
+                             providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
       val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
       for ((providerId, results) in providerIdToLenses) {
         cacheService.storeVisionDataForEditor(editor, providerId, results)
@@ -77,7 +91,11 @@ class CodeVisionPass(
   private val currentIndicator = ProgressManager.getGlobalProgressIndicator()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    collect(progress, editor, myFile, providerIdToLenses, DaemonBoundCodeVisionProvider.extensionPoint.extensionList)
+    val settings = CodeVisionSettings.instance()
+    val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensions()
+      .filter {  settings.isProviderEnabled(it.groupId) }
+      .collect(Collectors.toList())
+    collect(progress, editor, myFile, providerIdToLenses, providers)
   }
 
   override fun doApplyInformationToEditor() {

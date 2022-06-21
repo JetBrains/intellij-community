@@ -27,13 +27,18 @@ final class CommunityStandaloneJpsBuilder {
     new LayoutBuilder(buildContext).process(targetDir, projectStructureMapping, copyFiles) {
       zip(getZipName(buildNumber)) {
         jar("util.jar") {
-          module("intellij.platform.util.rt")
           module("intellij.platform.util")
           module("intellij.platform.util.classLoader")
           module("intellij.platform.util.text.matching")
           module("intellij.platform.util.base")
           module("intellij.platform.util.xmlDom")
           module("intellij.platform.tracing.rt")
+          module("intellij.platform.util.diff")
+          module("intellij.platform.util.rt.java8")
+        }
+
+        jar("util_rt.jar") {
+          module("intellij.platform.util.rt")
         }
 
         jar("jps-launcher.jar") {

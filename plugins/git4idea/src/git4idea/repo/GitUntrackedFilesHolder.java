@@ -25,7 +25,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
-import git4idea.GitStatisticsCollector;
+import git4idea.GitRefreshUsageCollector;
 import git4idea.index.GitIndexStatusUtilKt;
 import git4idea.index.LightFileStatus.StatusRecord;
 import git4idea.status.GitRefreshListener;
@@ -243,7 +243,7 @@ public class GitUntrackedFilesHolder implements Disposable {
     BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).progressStarted();
     try {
       boolean everythingDirty = dirtyFiles == null || dirtyFiles.contains(VcsUtil.getFilePath(myRoot));
-      StructuredIdeActivity activity = GitStatisticsCollector.logUntrackedRefresh(myProject, everythingDirty);
+      StructuredIdeActivity activity = GitRefreshUsageCollector.logUntrackedRefresh(myProject, everythingDirty);
       RefreshResult result = refreshFiles(dirtyFiles);
       activity.finished();
 

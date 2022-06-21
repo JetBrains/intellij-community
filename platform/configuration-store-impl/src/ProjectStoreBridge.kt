@@ -17,6 +17,7 @@ import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
@@ -67,7 +68,7 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
   override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     return if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
-      ModulePathMacroManager.createInstance(Supplier { filePath }).replacePathMap
+      ModulePathMacroManager.createInstance(project::getProjectFilePath, Supplier { filePath }).replacePathMap
     }
     else {
       ProjectPathMacroManager.getInstance(project).replacePathMap
@@ -125,7 +126,7 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
 }
 
 internal class StorageJpsConfigurationReader(private val project: Project,
-                                             private val baseDirUrl: String) : JpsFileContentReaderWithCache {
+                                             private val configLocation: JpsProjectConfigLocation) : JpsFileContentReaderWithCache {
   @Volatile
   private var fileContentCachingReader: CachingJpsFileContentReader? = null
 
@@ -159,7 +160,7 @@ internal class StorageJpsConfigurationReader(private val project: Project,
   }
 
   private fun getCachingReader(): CachingJpsFileContentReader {
-    val reader = fileContentCachingReader ?: CachingJpsFileContentReader(baseDirUrl)
+    val reader = fileContentCachingReader ?: CachingJpsFileContentReader(configLocation)
     if (fileContentCachingReader == null) {
       fileContentCachingReader = reader
     }

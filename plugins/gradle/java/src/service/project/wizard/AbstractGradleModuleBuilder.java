@@ -8,6 +8,8 @@ import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.GitSilentFileAdder;
+import com.intellij.openapi.GitSilentFileAdderProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -255,7 +257,14 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   }
 
   private void createWrapper(@NotNull Project project, @NotNull Runnable callback) {
-    GradleExecutionUtil.ensureInstalledWrapper(project, rootProjectPath, gradleVersion, callback);
+    GitSilentFileAdder vcsFileAdder = GitSilentFileAdderProvider.create(project);
+    vcsFileAdder.markFileForAdding(rootProjectPath.resolve("gradle"), true);
+    vcsFileAdder.markFileForAdding(rootProjectPath.resolve("gradlew"), false);
+    vcsFileAdder.markFileForAdding(rootProjectPath.resolve("gradlew.bat"), false);
+    GradleExecutionUtil.ensureInstalledWrapper(project, rootProjectPath, gradleVersion, () -> {
+      vcsFileAdder.finish();
+      callback.run();
+    });
   }
 
   public void configureBuildScript(@NotNull Consumer<GradleBuildScriptBuilder<?>> configure) {

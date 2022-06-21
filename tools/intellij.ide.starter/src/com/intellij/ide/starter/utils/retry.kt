@@ -13,10 +13,10 @@ suspend fun <T> withRetryAsync(retries: Long = 3, messageOnFailure: String = "",
   }.retry(
     retries = retries,
     predicate = {
-      it.printStackTrace()
-
       if (messageOnFailure.isNotBlank())
         logError(messageOnFailure)
+
+      it.printStackTrace()
 
       logError("Retrying in 10 sec ...")
       delay(Duration.seconds(10))

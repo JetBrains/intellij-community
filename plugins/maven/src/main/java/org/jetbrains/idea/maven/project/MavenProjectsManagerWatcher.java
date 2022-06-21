@@ -210,7 +210,7 @@ public class MavenProjectsManagerWatcher {
     @Override
     public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
       if (Registry.is("maven.modules.do.not.ignore.on.delete")) return;
-      if (MavenProjectImporter.isImportToTreeStructureEnabled()) return;
+      if (MavenProjectImporter.isImportToTreeStructureEnabled(project)) return;
 
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
       MavenProject mavenProject = projectsManager.findProject(module);

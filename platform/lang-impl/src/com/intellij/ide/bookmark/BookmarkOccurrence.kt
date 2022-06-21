@@ -51,7 +51,8 @@ class BookmarkOccurrence internal constructor(
 
   companion object {
     private fun manager(project: Project) = BookmarksManager.getInstance(project) as? BookmarksManagerImpl
-    private val cyclic
+
+    val cyclic
       get() = Registry.`is`("ide.bookmark.occurrence.cyclic.iteration.allowed", false)
 
     fun firstFileBookmark(project: Project) = first(project) { it.bookmark is FileBookmark }

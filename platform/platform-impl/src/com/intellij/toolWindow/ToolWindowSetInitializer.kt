@@ -26,13 +26,13 @@ import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.AtomicReference
@@ -87,7 +87,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
   private val initFuture: CompletableFuture<Ref<List<RegisterToolWindowTask>?>>
   private val pendingLayout = AtomicReference<DesktopLayout?>()
 
-  private val pendingTasks = ContainerUtil.createLockFreeCopyOnWriteList<Runnable>()
+  private val pendingTasks = ConcurrentLinkedQueue<Runnable>()
 
   init {
     val app = ApplicationManager.getApplication()
@@ -146,7 +146,9 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
           ref.set(null)
           createAndLayoutToolWindows(manager, tasks ?: return@thenAcceptAsync, toolWindowPane)
 
-          pendingTasks.forEach(Runnable::run)
+          while (true) {
+            (pendingTasks.poll() ?: break).run()
+          }
         },
         Executor { command ->
           if (EDT.isCurrentThreadEdt()) {

@@ -16,7 +16,7 @@ open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
   open var workingDirectory by string()
 
   @get:OptionTag("INCLUDE_PROVIDED_SCOPE")
-  var isIncludeProvidedScope by property(false)
+  open var isIncludeProvidedScope by property(false)
 
   @get:OptionTag("PASS_PARENT_ENVS")
   var isPassParentEnv by property(true)

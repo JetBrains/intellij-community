@@ -222,8 +222,6 @@ def console_exec(thread_id, frame_id, expression, dbg):
         # because it contains globals and locals in the right precedence.
         # See: https://stackoverflow.com/questions/15866398/why-is-a-python-generator-confusing-its-scope-with-global-in-an-execd-script.
         Exec(code, updated_globals, updated_globals)
-    except SystemExit:
-        raise
     except:
         interpreter.showtraceback()
         exception_occurred = True

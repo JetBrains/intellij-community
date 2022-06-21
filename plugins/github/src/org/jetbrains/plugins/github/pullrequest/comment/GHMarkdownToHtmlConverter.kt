@@ -17,17 +17,16 @@ import java.net.URI
 class GHMarkdownToHtmlConverter(private val project: Project?) {
   @NlsSafe
   fun convertMarkdown(@NlsSafe markdownText: String): String {
-
     val text = markdownText.replace("\r", "") // TODO: fix bug with CRLF line endings from markdown library
     val flavourDescriptor = GithubFlavourDescriptor(CodeBlockHtmlSyntaxHighlighter(project))
+
     return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)
   }
 
   @NlsSafe
-  fun convertMarkdownWithSuggestedChange(@NlsSafe markdownText: String, suggestedChangeInfo: GHSuggestedChangeInfo): String {
-
-    val text = markdownText.replace("\r", "") // TODO: fix bug with CRLF line endings from markdown library
-    val htmlSyntaxHighlighter = GHSuggestionHtmlSyntaxHighlighter(project, suggestedChangeInfo)
+  fun convertMarkdownWithSuggestedChange(suggestedChange: GHSuggestedChange): String {
+    val text = suggestedChange.commentBody.replace("\r", "") // TODO: fix bug with CRLF line endings from markdown library
+    val htmlSyntaxHighlighter = GHSuggestionHtmlSyntaxHighlighter(project, suggestedChange)
     val flavourDescriptor = GithubFlavourDescriptor(htmlSyntaxHighlighter)
 
     return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)

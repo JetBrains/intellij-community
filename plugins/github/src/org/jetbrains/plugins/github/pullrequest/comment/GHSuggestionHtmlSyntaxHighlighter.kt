@@ -20,7 +20,7 @@ import org.jetbrains.annotations.VisibleForTesting
 
 class GHSuggestionHtmlSyntaxHighlighter(
   private val project: Project?,
-  private val suggestedChangeInfo: GHSuggestedChangeInfo,
+  private val suggestedChangeInfo: GHSuggestedChange,
 ) : HtmlSyntaxHighlighter {
   override fun color(language: String?, rawContent: String): HtmlChunk {
     val name = PathUtil.getFileName(suggestedChangeInfo.filePath)

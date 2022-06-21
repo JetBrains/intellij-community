@@ -1892,6 +1892,12 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitSnippetAttributeList(PsiSnippetAttributeList attributeList) {
+    if (myType1 == JavaDocElementType.DOC_SNIPPET_ATTRIBUTE && myType2 == JavaDocElementType.DOC_SNIPPET_ATTRIBUTE) {
+      createSpaceInCode(true);
+    }
+  }
 
   public static Spacing getSpacing(Block node, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
     return new JavaSpacePropertyProcessor(node, settings, javaSettings).myResult;

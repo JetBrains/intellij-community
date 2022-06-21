@@ -272,6 +272,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
     for (UIThemeBasedLookAndFeelInfo laf : UiThemeProviderListManager.getInstance().getLaFs()) {
       UITheme theme = laf.getTheme();
+      if (theme.isUnloaded()) continue;
       String path = theme.getEditorScheme();
       if (path != null) {
         mySchemeManager.loadBundledScheme(path, theme, null);

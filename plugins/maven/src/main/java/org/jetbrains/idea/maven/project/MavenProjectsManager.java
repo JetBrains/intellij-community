@@ -409,6 +409,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       public void createModuleForAggregatorsChanged() {
         scheduleImportSettings();
       }
+
+      @Override
+      public void updateAllProjectStructure() {
+        scheduleAllProjectImport();
+      }
     });
   }
 
@@ -1133,6 +1138,21 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       }
     }));
     return result;
+  }
+
+  private void scheduleAllProjectImport() {
+    runWhenFullyOpen(() -> myImportingQueue.queue(new Update(this) {
+      @Override
+      public void run() {
+        synchronized (myImportingDataLock) {
+          for (MavenProject project : getProjectsTree().getProjects()) {
+            myProjectsToImport.put(project, MavenProjectChanges.ALL);
+          }
+        }
+        importProjects();
+        fireProjectImportCompleted();
+      }
+    }));
   }
 
   @TestOnly

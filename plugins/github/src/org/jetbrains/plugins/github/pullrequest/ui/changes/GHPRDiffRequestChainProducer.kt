@@ -33,6 +33,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThr
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import org.jetbrains.plugins.github.util.GHToolbarLabelAction
@@ -42,6 +43,7 @@ open class GHPRDiffRequestChainProducer(
   private val project: Project,
   private val dataProvider: GHPRDataProvider,
   private val avatarIconsProvider: GHAvatarIconsProvider,
+  private val repositoryDataService: GHPRRepositoryDataService,
   private val currentUser: GHUser
 ) : DiffRequestChainProducer {
 
@@ -110,7 +112,11 @@ open class GHPRDiffRequestChainProducer(
   private fun getReviewSupport(changesProvider: GHPRChangesProvider, change: Change): GHPRDiffReviewSupport? {
     val diffData = changesProvider.findChangeDiffData(change) ?: return null
 
-    return GHPRDiffReviewSupportImpl(project, dataProvider.reviewData, dataProvider.detailsData, diffData, avatarIconsProvider, currentUser)
+    return GHPRDiffReviewSupportImpl(project,
+                                     dataProvider.reviewData, dataProvider.detailsData, avatarIconsProvider,
+                                     repositoryDataService,
+                                     diffData,
+                                     currentUser)
   }
 
   private fun getDiffComputer(changesProvider: GHPRChangesProvider, change: Change): DiffUserDataKeysEx.DiffComputer? {

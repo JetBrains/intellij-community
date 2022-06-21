@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
 import java.io.BufferedOutputStream
@@ -18,11 +18,11 @@ class RollingFileHandler @JvmOverloads constructor(
   val append: Boolean,
   val onRotate: Runnable? = null
 ) : StreamHandler() {
-  private lateinit var meter: MeteredOutputStream
+  @Volatile private lateinit var meter: MeteredOutputStream
 
   private class MeteredOutputStream(
     private val delegate: OutputStream,
-    var written: Long,
+    @Volatile var written: Long,
   ) : OutputStream() {
     override fun write(b: Int) {
       delegate.write(b)
@@ -54,6 +54,7 @@ class RollingFileHandler @JvmOverloads constructor(
   }
 
   private fun open(append: Boolean) {
+    Files.createDirectories(logPath.parent)
     val fout = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
     val bout = BufferedOutputStream(fout)
     meter = MeteredOutputStream(bout, if (append) Files.size(logPath) else 0)
@@ -65,15 +66,20 @@ class RollingFileHandler @JvmOverloads constructor(
     super.publish(record)
     flush()
     if (limit > 0 && meter.written >= limit) {
-      rotate()
+      synchronized(this) {
+        if (meter.written >= limit) {
+          rotate()
+        }
+      }
     }
   }
+
 
   private fun rotate() {
     onRotate?.run()
     try {
       Files.deleteIfExists(logPathWithIndex(count))
-      for (i in 1 until count) {
+      for (i in count-1 downTo 1) {
         val path = logPathWithIndex(i)
         if (Files.exists(path)) {
           Files.move(path, logPathWithIndex(i+1), StandardCopyOption.ATOMIC_MOVE)

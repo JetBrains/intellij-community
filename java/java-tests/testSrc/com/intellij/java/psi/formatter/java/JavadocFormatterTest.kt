@@ -1818,4 +1818,24 @@ public class Test {
         """.trimIndent()
     )
   }
+
+  fun testSnippetHasSpacesBetweenSnippetAttributes() {
+    doTextTest(
+      """
+        /** 
+          * {@snippet class = ExternalSnippets region = join2}
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+      """
+        /**
+         * {@snippet class = ExternalSnippets region = join2}
+         */
+        public class Main {
+        }
+        """.trimIndent()
+    )
+  }
 }

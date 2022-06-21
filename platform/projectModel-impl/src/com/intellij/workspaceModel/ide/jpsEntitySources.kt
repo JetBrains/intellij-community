@@ -17,6 +17,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -26,16 +27,27 @@ sealed class JpsProjectConfigLocation {
   val baseDirectoryUrlString: String
     get() = baseDirectoryUrl.url
 
+  /**
+   * Same as [Project.getProjectFilePath]
+   */
+  abstract val projectFilePath: String
+
   abstract val baseDirectoryUrl: VirtualFileUrl
 
   data class DirectoryBased(val projectDir: VirtualFileUrl, val ideaFolder: VirtualFileUrl) : JpsProjectConfigLocation() {
     override val baseDirectoryUrl: VirtualFileUrl
       get() = projectDir
+
+    override val projectFilePath: String
+      get() = JpsPathUtil.urlToPath(ideaFolder.append("misc.xml").url)
   }
 
   data class FileBased(val iprFile: VirtualFileUrl, val iprFileParent: VirtualFileUrl) : JpsProjectConfigLocation() {
     override val baseDirectoryUrl: VirtualFileUrl
       get() = iprFileParent
+
+    override val projectFilePath: String
+      get() = JpsPathUtil.urlToPath(iprFile.url)
   }
 }
 

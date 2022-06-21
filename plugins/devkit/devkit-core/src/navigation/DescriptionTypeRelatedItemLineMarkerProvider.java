@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -13,9 +13,9 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
-import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
 import org.jetbrains.idea.devkit.inspections.InspectionDescriptionInfo;
@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
+final class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
   private static final NotNullFunction<PsiFile, Collection<? extends PsiElement>> CONVERTER =
     psiFile -> ContainerUtil.createMaybeSingletonList(psiFile);
 
@@ -35,10 +35,10 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
 
   private final Option myDescriptionOption = new Option("devkit.description",
                                                         DevKitBundle.message("gutter.related.option.description"),
-                                                        DevkitIcons.Gutter.DescriptionFile);
+                                                        DevKitIcons.Gutter.DescriptionFile);
   private final Option myBeforeAfterOption = new Option("devkit.beforeAfter",
                                                         DevKitBundle.message("gutter.related.option.before.after.templates"),
-                                                        DevkitIcons.Gutter.Diff);
+                                                        DevKitIcons.Gutter.Diff);
 
   @Override
   public Option @NotNull [] getOptions() {
@@ -105,7 +105,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
                                                    PsiFile descriptionFile,
                                                    Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
-      .create(DevkitIcons.Gutter.DescriptionFile, CONVERTER, RELATED_ITEM_PROVIDER)
+      .create(DevKitIcons.Gutter.DescriptionFile, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTarget(descriptionFile)
       .setTooltipText(DevKitBundle.message("gutter.related.navigation.popup.description.tooltip"))
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
@@ -130,7 +130,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
 
     //noinspection DialogTitleCapitalization
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
-      .create(DevkitIcons.Gutter.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
+      .create(DevKitIcons.Gutter.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTargets(templateFiles)
       .setPopupTitle(DevKitBundle.message("gutter.related.navigation.popup.template.title"))
       .setTooltipText(DevKitBundle.message("gutter.related.navigation.popup.template.tooltip"))

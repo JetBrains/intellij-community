@@ -34,6 +34,10 @@ interface CodeVisionProvider<T> {
    */
   @JvmDefault
   fun isAvailableFor(project: Project) = true
+
+  @JvmDefault
+  fun preparePreview(editor: Editor, file: PsiFile) {
+  }
   
   /**
    * Computes some data on UI thread, before the background thread invocation
@@ -52,9 +56,17 @@ interface CodeVisionProvider<T> {
    *
    * Note that this method is not executed under read action.
    */
-  fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>>
+  @Deprecated("Use computeCodeVision instead", ReplaceWith("computeCodeVision"))
+  fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
 
   /**
+   * Should return text ranges and applicable hints for them, invoked on background thread.
+   *
+   * Note that this method is not executed under read action.
+   */
+  fun computeCodeVision(editor: Editor, uiData: T): CodeVisionState = CodeVisionState.Ready(computeForEditor(editor, uiData))
+
+    /**
    * Handle click on a lens at given range
    * [java.awt.event.MouseEvent] accessible with [codeVisionEntryMouseEventKey] data key from [CodeVisionEntry]
    */

@@ -126,6 +126,8 @@ final class PlatformModules {
 
   private static final String UTIL_JAR = "util.jar"
 
+  private static final String UTIL_RT_JAR = "util_rt.jar"
+
   public static final Map<String, PackMode> CUSTOM_PACK_MODE = Map.of(
     // jna uses native lib
     "jna", PackMode.STANDALONE_MERGED,
@@ -203,12 +205,16 @@ final class PlatformModules {
       layout.moduleExcludes.putValues(entry.key, entry.value)
     }
 
+    jar(UTIL_RT_JAR, List.of(
+      "intellij.platform.util.rt",
+      ), productLayout, layout)
+
+
     jar(UTIL_JAR, List.of(
       "intellij.platform.util.rt.java8",
       "intellij.platform.util.zip",
       "intellij.platform.util.classLoader",
       "intellij.platform.bootstrap",
-      "intellij.platform.util.rt",
       "intellij.platform.util",
       "intellij.platform.util.text.matching",
       "intellij.platform.util.base",
@@ -217,7 +223,7 @@ final class PlatformModules {
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",
       "intellij.platform.boot",
-    ), productLayout, layout)
+      ), productLayout, layout)
 
     jar("externalProcess-rt.jar", List.of(
       "intellij.platform.externalProcessAuthHelper.rt"
@@ -231,7 +237,7 @@ final class PlatformModules {
       "intellij.platform.ide.util.io",
       "intellij.platform.ide.util.io.impl",
       "intellij.platform.ide.util.netty",
-    ), productLayout, layout)
+      ), productLayout, layout)
 
     jar(BaseLayout.APP_JAR, List.of(
       "intellij.relaxng",
@@ -295,7 +301,7 @@ final class PlatformModules {
     layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
       "JDOM",
       "Trove4j",
-    ))
+      ))
 
     for (ProjectLibraryData item in additionalProjectLevelLibraries) {
       String name = item.libraryName
@@ -330,20 +336,19 @@ final class PlatformModules {
     }
 
     Files.newInputStream(file).withCloseable {
-      NodeList contentList = DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder()
-        .parse(it, file.toString()).getDocumentElement().getElementsByTagName("content")
+      NodeList contentList = DocumentBuilderFactory.newDefaultInstance()
+        .newDocumentBuilder()
+        .parse(it, file.toString())
+        .getDocumentElement()
+        .getElementsByTagName("content")
       if (contentList.length != 0) {
         NodeList modules = ((Element)contentList.item(0)).getElementsByTagName("module")
         Set<String> result = new LinkedHashSet<>(modules.length)
         for (int i = 0; i < modules.length; i++) {
-          String rawName = ((Element)modules.item(i))
-            .getAttribute("name")
-
-          int index = rawName.indexOf('/')
-          String name = index == -1 ? rawName : rawName.substring(0, index)
-          result.add(name)
+          Element element = (Element)modules.item(i)
+          result.add(element.getAttribute("name"))
         }
-        return Collections.unmodifiableSet(result)
+        return Set.copyOf(result)
       }
       return Set.<String> of()
     }

@@ -558,7 +558,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     NewProjectWizardCollector.logGeneratorSelected(myContext, builder.getClass());
-    NewProjectWizardCollector.logScreen(myContext, 1);
+    myContext.setScreen(1);
 
     showCard(card);
 

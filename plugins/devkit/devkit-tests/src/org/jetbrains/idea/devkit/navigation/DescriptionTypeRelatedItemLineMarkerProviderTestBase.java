@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -7,8 +7,8 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
-import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitIcons;
 
 public abstract class DescriptionTypeRelatedItemLineMarkerProviderTestBase extends JavaCodeInsightFixtureTestCase {
   @Override
@@ -22,6 +22,6 @@ public abstract class DescriptionTypeRelatedItemLineMarkerProviderTestBase exten
   protected void doTestInspectionDescription(@NotNull String inspectionFile, @NotNull String descriptionFile) {
     myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
     GutterMark gutter = myFixture.findGutter(inspectionFile);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "Description", DevkitIcons.Gutter.DescriptionFile, descriptionFile);
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "Description", DevKitIcons.Gutter.DescriptionFile, descriptionFile);
   }
 }

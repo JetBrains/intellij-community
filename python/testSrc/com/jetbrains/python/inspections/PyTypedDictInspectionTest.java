@@ -289,6 +289,22 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                  "    {'a': 1}.get(param)");
   }
 
+  // PY-43689
+  public void testNoWarningOnTypesUsingForwardReferences() {
+    doTestByText("from typing import TypedDict\n" +
+                 "class MyDict(TypedDict):\n" +
+                 "    sub: 'SubDict'\n" +
+                 "class SubDict(TypedDict):\n" +
+                 "    foo: str");
+  }
+
+  // PY-43689
+  public void testNoWarningOnUnionTypesUsingBinaryOrOperator() {
+    doTestByText("from typing import TypedDict\n" +
+                 "class A(TypedDict):\n" +
+                 "    a: int | str");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
