@@ -8,12 +8,17 @@ import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
 import org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbol.Companion.isDeclaration
+import org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbol.Companion.isShortLink
 
 internal class LinkLabelSymbolReferenceProvider: PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
     if (element !is MarkdownLinkLabel || element.isDeclaration) {
+      return emptyList()
+    }
+    if (element.isShortLink && !Registry.`is`("markdown.validate.short.links")) {
       return emptyList()
     }
     val rangeInElement = TextRange(0, element.textLength)

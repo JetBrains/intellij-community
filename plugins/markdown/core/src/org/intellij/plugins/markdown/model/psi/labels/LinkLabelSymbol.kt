@@ -17,6 +17,7 @@ import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDefinition
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownShortReferenceLink
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbolWithUsages
 import org.jetbrains.annotations.ApiStatus
 
@@ -82,5 +83,8 @@ data class LinkLabelSymbol(
 
     val MarkdownLinkLabel.isDeclaration: Boolean
       get() = parentOfType<MarkdownLinkDefinition>() != null
+
+    val MarkdownLinkLabel.isShortLink: Boolean
+      get() = parentOfType<MarkdownShortReferenceLink>() != null
   }
 }

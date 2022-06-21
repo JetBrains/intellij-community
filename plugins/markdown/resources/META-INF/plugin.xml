@@ -384,6 +384,10 @@ Includes the following features:</p>
                  defaultValue="false"
                  description="Enables experimental support for inferring header level"/>
 
+    <registryKey key="markdown.validate.short.links"
+                 defaultValue="false"
+                 description="Enables validation for short style links by checking existing labeled link definitions in the current file."/>
+
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
   </extensions>
