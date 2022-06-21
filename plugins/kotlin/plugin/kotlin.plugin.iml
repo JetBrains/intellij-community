@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="kotlin.base.resources" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.statistics" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.plugin" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis-api-providers" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" scope="PROVIDED" />
