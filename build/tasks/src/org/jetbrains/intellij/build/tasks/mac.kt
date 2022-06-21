@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.tasks
 
 import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.tracer
 import java.nio.file.Files
@@ -28,11 +29,11 @@ fun buildMacZip(targetFile: Path,
       val fs = targetFile.fileSystem
       val patterns = executableFilePatterns.map { fs.getPathMatcher("glob:$it") }
 
-      val entryCustomizer: EntryCustomizer = { entry, file, relativeFile ->
+      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativePath ->
         when {
-          patterns.any { it.matches(relativeFile) } -> entry.unixMode = executableFileUnixMode
+          patterns.any { it.matches(Path.of(relativePath)) } -> entry.unixMode = executableFileUnixMode
           PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file) -> {
-            errorsConsumer("Executable permissions of $relativeFile won't be set in $targetFile. " +
+            errorsConsumer("Executable permissions of $relativePath won't be set in $targetFile. " +
                            "Please make sure that executable file patterns are updated.")
           }
         }
@@ -44,10 +45,9 @@ fun buildMacZip(targetFile: Path,
 
           zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson.encodeToByteArray())
 
-          val fileFilter: (Path, Path) -> Boolean = { sourceFile, relativeFile ->
-            val path = relativeFile.toString()
-            if (path.endsWith(".txt") && !path.contains('/')) {
-              zipOutStream.entry("$zipRoot/Resources/$relativeFile", sourceFile)
+          val fileFilter: (Path, String) -> Boolean = { sourceFile, relativePath ->
+            if (relativePath.endsWith(".txt") && !relativePath.contains('/')) {
+              zipOutStream.entry("$zipRoot/Resources/${relativePath}", sourceFile)
               false
             }
             else {
