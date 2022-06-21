@@ -15,16 +15,6 @@ import static com.intellij.openapi.util.NlsContexts.Tooltip;
 @NonExtendable
 public interface TaskCancellation {
 
-  @NonExtendable
-  interface Cancellable extends TaskCancellation {
-
-    @Contract(value = "_ -> new", pure = true)
-    @NotNull Cancellable withButtonText(@Button @NotNull String buttonText);
-
-    @Contract(value = "_ -> new", pure = true)
-    @NotNull Cancellable withTooltipText(@Tooltip @NotNull String tooltipText);
-  }
-
   /**
    * @return a cancellation instance, which means that the cancel button should not be displayed in the UI
    */
@@ -47,5 +37,15 @@ public interface TaskCancellation {
   @Contract(pure = true)
   static @NotNull Cancellable cancellable() {
     return ApplicationManager.getApplication().getService(TaskSupport.class).taskCancellationCancellableInternal();
+  }
+
+  @NonExtendable
+  interface Cancellable extends TaskCancellation {
+
+    @Contract(value = "_ -> new", pure = true)
+    @NotNull Cancellable withButtonText(@Button @NotNull String buttonText);
+
+    @Contract(value = "_ -> new", pure = true)
+    @NotNull Cancellable withTooltipText(@Tooltip @NotNull String tooltipText);
   }
 }
