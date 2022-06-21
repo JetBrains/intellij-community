@@ -2,6 +2,7 @@
 package com.intellij.ui
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
@@ -82,5 +83,9 @@ class DumpFocusableComponentHierarchyAction : AnAction(), DumbAware {
     }
 
     return dump.joinToString("\n")
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
