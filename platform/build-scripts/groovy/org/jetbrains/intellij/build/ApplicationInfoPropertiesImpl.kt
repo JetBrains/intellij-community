@@ -107,6 +107,8 @@ class ApplicationInfoPropertiesImpl(
     patchesUrl = root.getChild("update-urls")?.getAttributeValue("patches")
   }
 
+  override val releaseVersionForLicensing: String
+    get() = "${majorVersion}${minorVersionMainPart}00"
   override val upperCaseProductName: String
     get() = shortProductName.uppercase()
   override val fullVersion: String

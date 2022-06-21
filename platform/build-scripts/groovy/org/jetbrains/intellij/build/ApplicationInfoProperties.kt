@@ -18,6 +18,7 @@ interface ApplicationInfoProperties {
   val productCode: String
   val productName: String
   val majorReleaseDate: String
+  val releaseVersionForLicensing: String
   val edition: String?
   val motto: String?
   val companyName: String

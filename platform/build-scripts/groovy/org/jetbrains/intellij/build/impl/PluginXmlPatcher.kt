@@ -68,7 +68,7 @@ fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
   val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlFile, defaultPluginVersion, context)
   val sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber)
   @Suppress("TestOnlyProblems") val content = try {
-    plugin.pluginXmlPatcher.apply(
+    plugin.pluginXmlPatcher(
       // using input stream allows us to support BOM
       doPatchPluginXml(document = Files.newInputStream(pluginXmlFile).use { XMLParser().parse(XMLIOSource(it)) },
                        pluginModuleName = plugin.mainModule,
@@ -79,7 +79,8 @@ fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
                        toPublish = pluginsToPublish.contains(plugin),
                        retainProductDescriptorForBundledPlugin = plugin.retainProductDescriptorForBundledPlugin,
                        isEap = context.applicationInfo.isEAP,
-                       productName = context.applicationInfo.productName)
+                       productName = context.applicationInfo.productName),
+      context,
     )
   }
   catch (e: Throwable) {
@@ -134,7 +135,7 @@ fun doPatchPluginXml(document: Document,
   return document.toXML()
 }
 
-private fun getOrCreateTopElement(rootElement: Element, tagName: String, anchors: List<String>): Element {
+fun getOrCreateTopElement(rootElement: Element, tagName: String, anchors: List<String>): Element {
   rootElement.getChild(tagName)?.let {
     return it
   }

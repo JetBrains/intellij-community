@@ -25,7 +25,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
     override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext) = ideBuildVersion
   }
 
-  var pluginXmlPatcher: UnaryOperator<String> = UnaryOperator.identity()
+  var pluginXmlPatcher: (String, BuildContext) -> String = { s, _ -> s }
   var directoryNameSetExplicitly: Boolean = false
   @JvmField
   internal var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
@@ -282,7 +282,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
     }
 
     fun withPluginXmlPatcher(pluginXmlPatcher: UnaryOperator<String>) {
-      layout.pluginXmlPatcher = pluginXmlPatcher
+      layout.pluginXmlPatcher = { text, _ -> pluginXmlPatcher.apply(text) }
     }
 
     @Deprecated(message = "localizable resources are always put to the module JAR, so there is no need to call this method anymore")

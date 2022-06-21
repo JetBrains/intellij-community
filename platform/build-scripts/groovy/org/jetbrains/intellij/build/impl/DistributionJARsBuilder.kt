@@ -807,7 +807,6 @@ private fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
   val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
   val scrambleTasks = ArrayList<ForkJoinTask<*>>()
 
-  val releaseVersion = "${context.applicationInfo.majorVersion}${context.applicationInfo.minorVersionMainPart}00"
   val tasks = plugins.map { plugin ->
     val isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
     if (!isHelpPlugin) {
@@ -815,7 +814,7 @@ private fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
       patchPluginXml(moduleOutputPatcher = moduleOutputPatcher,
                      plugin = plugin,
                      releaseDate = context.applicationInfo.majorReleaseDate,
-                     releaseVersion = releaseVersion,
+                     releaseVersion = context.applicationInfo.releaseVersionForLicensing,
                      pluginsToPublish = state.pluginsToPublish,
                      context = context)
     }
