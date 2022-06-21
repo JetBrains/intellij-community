@@ -6257,6 +6257,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/convertLambdaToReference/fqNameForReceiver.kt");
             }
 
+            @TestMetadata("fullyQualifiedConstructorCall.kt")
+            public void testFullyQualifiedConstructorCall() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/fullyQualifiedConstructorCall.kt");
+            }
+
+            @TestMetadata("fullyQualifiedFunctionCall.kt")
+            public void testFullyQualifiedFunctionCall() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/fullyQualifiedFunctionCall.kt");
+            }
+
             @TestMetadata("generic.kt")
             public void testGeneric() throws Exception {
                 runTest("testData/intentions/convertLambdaToReference/generic.kt");

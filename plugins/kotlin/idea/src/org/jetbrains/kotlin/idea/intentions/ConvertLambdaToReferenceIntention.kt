@@ -17,12 +17,13 @@ import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
-import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -79,6 +80,9 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             else -> return false
         }
         val context = callableExpression.safeAnalyzeNonSourceRootCode()
+
+        if (explicitReceiver?.isReferenceToPackage(context) == true) return false
+
         val calleeDescriptor =
             calleeReferenceExpression.getResolvedCall(context)?.resultingDescriptor as? CallableMemberDescriptor ?: return false
 
@@ -105,13 +109,6 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             if (dispatchReceiverParameter != null && extensionReceiverParameter != null) return false
             dispatchReceiverParameter != null || extensionReceiverParameter != null
         }
-        val explicitReceiverDescriptor = (explicitReceiver as? KtNameReferenceExpression)?.let { context[REFERENCE_TARGET, it] }
-
-        if (!descriptorHasReceiver &&
-            explicitReceiver != null &&
-            explicitReceiverDescriptor !is JavaClassDescriptor &&
-            calleeDescriptor !is ClassConstructorDescriptor
-        ) return false
         val noBoundReferences = !languageVersionSettings.supportsFeature(LanguageFeature.BoundCallableReferences)
         if (noBoundReferences && descriptorHasReceiver && explicitReceiver == null) return false
 
@@ -147,6 +144,8 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
                 it.getResolvedCall(context)?.resultingDescriptor in lambdaValueParameterDescriptors
             }
         ) return false
+
+        val explicitReceiverDescriptor = (explicitReceiver as? KtNameReferenceExpression)?.let { context[REFERENCE_TARGET, it] }
         val lambdaParameterAsExplicitReceiver = when (noBoundReferences) {
             true -> explicitReceiver != null
             false -> explicitReceiverDescriptor != null && explicitReceiverDescriptor == lambdaValueParameterDescriptors.firstOrNull()
@@ -178,6 +177,12 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             }
         }
         return true
+    }
+
+    private fun KtExpression.isReferenceToPackage(context: BindingContext): Boolean {
+        val selectorOrThis = (this as? KtQualifiedExpression)?.selectorExpression ?: this
+        val descriptors = selectorOrThis.mainReference?.resolveToDescriptors(context) ?: return false
+        return descriptors.any { it is PackageViewDescriptor }
     }
 
     override fun isApplicableTo(element: KtLambdaExpression): Boolean {
