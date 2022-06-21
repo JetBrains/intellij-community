@@ -41,7 +41,7 @@ public class EnvironmentRestorer {
    * So this method will restore the original variables values and remove all extra ones.
    * <p/>
    * Real case: some environment variables are overridden for IDE process in the way described above
-   * by {@code plugins/remote-dev-server/build/resources/linux/scripts/launcher.sh}
+   * by {@code remote-dev/remote-dev-server-plugin/build/resources/linux/scripts/launcher.sh}
    *
    * @param envs modifiable environment. The overridden variables values will be restored right in it.
    */
