@@ -11,7 +11,10 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.LicensingFacade
-import com.intellij.ui.components.*
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.util.ui.JBEmptyBorder
@@ -180,15 +183,17 @@ class KotlinRejectersFeedbackDialog(
         label(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.description"))
       }.bottomGap(BottomGap.MEDIUM)
 
+
       row {
-        val firstQuestionLabel = JBLabel(
-          KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.title")).apply {
+        label(
+          KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.title")).applyToComponent {
           font = JBFont.h4()
         }
+      }.bottomGap(BottomGap.NONE)
+      row {
         checkBox(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.1.label"))
           .bindSelected(checkBoxUsuallyDeactivatePluginsProperty)
-          .label(firstQuestionLabel, LabelPosition.TOP)
-      }.topGap(TopGap.MEDIUM)
+      }
       row {
         checkBox(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.2.label"))
           .bindSelected(checkBoxSlowsDownIDEProperty)
@@ -228,16 +233,17 @@ class KotlinRejectersFeedbackDialog(
       }.bottomGap(BottomGap.MEDIUM)
 
 
+      row {
+        label(
+          KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.title")).applyToComponent {
+          font = JBFont.h4()
+        }
+      }.bottomGap(BottomGap.NONE)
       buttonsGroup {
         row {
-          val secondQuestionLabel = JBLabel(
-            KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.title")).apply {
-            font = JBFont.h4()
-          }
           radioButton(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.1.label"),
                       KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.1.label"))
-            .label(secondQuestionLabel, LabelPosition.TOP)
-        }.topGap(TopGap.MEDIUM)
+        }
         row {
           radioButton(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.2.label"),
                       KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.2.label"))
@@ -250,15 +256,15 @@ class KotlinRejectersFeedbackDialog(
 
 
       row {
-        val textareaLabel = JBLabel(
-          KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.textarea.label")).apply {
+        label(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.textarea.label")).applyToComponent {
           font = JBFont.h4()
         }
+      }.bottomGap(BottomGap.NONE)
+      row {
         textArea()
           .bindText(textAreaDetailExplainProperty)
           .rows(textAreaRowSize)
           .columns(textAreaOverallFeedbackColumnSize)
-          .label(textareaLabel, LabelPosition.TOP)
           .applyToComponent {
             wrapStyleWord = true
             lineWrap = true
@@ -276,11 +282,12 @@ class KotlinRejectersFeedbackDialog(
               }
             })
           }
-      }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.SMALL)
+      }.bottomGap(BottomGap.MEDIUM)
 
       row {
         checkBox(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.checkbox.email"))
-          .bindSelected(checkBoxEmailProperty).applyToComponent {
+          .bindSelected(checkBoxEmailProperty)
+          .applyToComponent {
             checkBoxEmail = this
           }
       }.topGap(TopGap.MEDIUM)
