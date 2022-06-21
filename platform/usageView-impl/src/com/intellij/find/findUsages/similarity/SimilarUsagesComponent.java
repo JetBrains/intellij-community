@@ -4,7 +4,10 @@ package com.intellij.find.findUsages.similarity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.*;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -27,10 +30,6 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
   public SimilarUsagesComponent(@NotNull UsageInfo originalUsage, @NotNull Disposable parent) {
     myOriginalUsage = originalUsage;
     setLayout(new VerticalLayout(0));
-    TitlePanel titlePanel = new TitlePanel();
-    titlePanel.getLabel().setHorizontalAlignment(SwingConstants.LEFT);
-    titlePanel.setText(UsageViewBundle.message("similar.usages.tab.title"));
-    add(titlePanel);
     setBackground(UIUtil.getTextFieldBackground());
     Disposer.register(parent, this);
   }

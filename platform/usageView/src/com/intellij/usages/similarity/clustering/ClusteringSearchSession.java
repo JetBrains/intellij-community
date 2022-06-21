@@ -65,7 +65,7 @@ public class ClusteringSearchSession {
 
   @RequiresBackgroundThread
   @RequiresReadLock
-  public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull ProgressIndicator indicator, Set<Usage> selectedUsages) {
+  public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull ProgressIndicator indicator, @NotNull Set<Usage> selectedUsages) {
     //create new ArrayList from clusters to avoid concurrent modification and do all the needed sorting and filtering in non-blocking way
     return new ArrayList<>(getClusters()).stream()
       .map(cluster -> new UsageCluster(cluster.getOnlySelectedUsages(selectedUsages)))
