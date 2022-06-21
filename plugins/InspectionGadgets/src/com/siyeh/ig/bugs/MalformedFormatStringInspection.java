@@ -171,11 +171,11 @@ public class MalformedFormatStringInspection extends BaseInspection {
         }
       }
       if (validators.length != argumentCount) {
-        PsiElement anchor = expression instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement() :
-                            expression instanceof PsiNewExpression ? ((PsiNewExpression)expression).getClassReference() :
-                            null;
-        if (anchor != null) {
-          registerError(anchor, validators, Integer.valueOf(argumentCount));
+        if (expression instanceof PsiMethodCallExpression) {
+          registerMethodCallError((PsiMethodCallExpression)expression, validators, Integer.valueOf(argumentCount));
+        }
+        else if (expression instanceof PsiNewExpression) {
+          registerNewExpressionError((PsiNewExpression)expression, validators, Integer.valueOf(argumentCount));
         }
         return;
       }
