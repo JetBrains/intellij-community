@@ -1,6 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplacePutWithAssignment", "ReplaceGetOrSet")
-
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.use
@@ -190,7 +188,7 @@ private fun getLocalArtifactRepositoryRoot(global: JpsGlobal): Path {
 }
 
 /**
- * Build a list with modules that the IDE will provide for plugins.
+ * Building a list of modules that the IDE will provide for plugins.
  */
 private fun buildProvidedModuleList(targetFile: Path, state: DistributionBuilderState, context: BuildContext) {
   context.executeStep(spanBuilder("build provided module list"), BuildOptions.PROVIDED_MODULES_LIST_STEP) {
@@ -222,7 +220,7 @@ private fun patchIdeaPropertiesFile(buildContext: BuildContext): Path {
   val temp = builder.toString()
   builder.setLength(0)
   val map = LinkedHashMap<String, String>(1)
-  map.put("settings_dir", settingsDir)
+  map["settings_dir"] = settingsDir
   builder.append(BuildUtils.replaceAll(temp, map, "@@"))
   if (buildContext.applicationInfo.isEAP) {
     builder.append(
@@ -495,13 +493,13 @@ fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLi
       for (root in module.getSourceRoots(JavaSourceRootType.SOURCE)) {
         if (root.file.absoluteFile.exists()) {
           val sourceFiles = filterSourceFilesOnly(root.file.name, context) { FileUtil.copyDirContent(root.file.absoluteFile, it.toFile()) }
-          zipFileMap.put(sourceFiles, root.properties.packagePrefix.replace(".", "/"))
+          zipFileMap[sourceFiles] = root.properties.packagePrefix.replace(".", "/")
         }
       }
       for (root in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
         if (root.file.absoluteFile.exists()) {
           val sourceFiles = filterSourceFilesOnly(root.file.name, context) { FileUtil.copyDirContent(root.file.absoluteFile, it.toFile()) }
-          zipFileMap.put(sourceFiles, root.properties.relativeOutputPath)
+          zipFileMap[sourceFiles] = root.properties.relativeOutputPath
         }
       }
     }
@@ -516,7 +514,7 @@ fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLi
           val sourceFiles = filterSourceFilesOnly(file.name, context) { tempDir ->
             Decompressor.Zip(file).filter(Predicate { isSourceFile(it) }).extract(tempDir)
           }
-          zipFileMap.put(sourceFiles, "")
+          zipFileMap[sourceFiles] = ""
         }
         else {
           context.messages.debug("  skipped root $file: file doesn\'t exist")
@@ -601,9 +599,9 @@ private fun compileModulesForDistribution(pluginsToPublish: Set<PluginLayout>, c
   CompilationTasks.create(context).compileModules(toCompile)
 
   if (context.shouldBuildDistributions()) {
-    val providedModulesFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
+    val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
     val state = compilePlatformAndPluginModules(pluginsToPublish, context)
-    buildProvidedModuleList(targetFile = providedModulesFile, state = state, context = context)
+    buildProvidedModuleList(targetFile = providedModuleFile, state = state, context = context)
     if (!productProperties.productLayout.buildAllCompatiblePlugins) {
       return state
     }
@@ -613,7 +611,7 @@ private fun compileModulesForDistribution(pluginsToPublish: Set<PluginLayout>, c
     }
     else {
       return compilePlatformAndPluginModules(
-        pluginsToPublish = pluginsToPublish + collectCompatiblePluginsToPublish(providedModulesFile, context),
+        pluginsToPublish = pluginsToPublish + collectCompatiblePluginsToPublish(providedModuleFile, context),
         context = context
       )
     }
@@ -663,6 +661,7 @@ fun buildDistributions(context: BuildContext) {
       if (context.shouldBuildDistributions()) {
         layoutShared(context)
         val distDirs = buildOsSpecificDistributions(context)
+        @Suppress("SpellCheckingInspection")
         if (java.lang.Boolean.getBoolean("intellij.build.toolbox.litegen")) {
           @Suppress("SENSELESS_COMPARISON")
           if (context.buildNumber == null) {

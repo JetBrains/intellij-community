@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.createTask
 import com.intellij.diagnostic.telemetry.use
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SystemProperties
@@ -82,7 +81,7 @@ class MacDistributionBuilder(private val context: BuildContext,
   }
 
   private fun doCopyExtraFiles(macDistDir: Path, arch: JvmArchitecture?, copyDistFiles: Boolean) {
-    //noinspection SpellCheckingInspection
+    @Suppress("SpellCheckingInspection")
     val platformProperties = mutableListOf(
       "\n#---------------------------------------------------------------------",
       "# macOS-specific system properties",
@@ -374,9 +373,8 @@ private fun propertiesToXml(properties: List<String>, moreProperties: Map<String
   return buff.toString().trim()
 }
 
-private fun getExecutableFilePatterns(customizer: MacDistributionCustomizer): List<String> {
-  //noinspection SpellCheckingInspection
-  return listOf(
+private fun getExecutableFilePatterns(customizer: MacDistributionCustomizer): List<String> =
+  listOf(
     "bin/*.sh",
     "bin/*.py",
     "bin/fsnotifier",
@@ -385,11 +383,9 @@ private fun getExecutableFilePatterns(customizer: MacDistributionCustomizer): Li
     "bin/repair",
     "MacOS/*"
   ) + customizer.extraExecutables
-}
 
-internal fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String {
-  return "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
-}
+internal fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String =
+  "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
 
 internal fun generateMacProductJson(builtinModule: BuiltinModulesFileData?, context: BuildContext, javaExecutablePath: String?): String {
   val executable = context.productProperties.baseFileName
@@ -409,14 +405,14 @@ internal fun generateMacProductJson(builtinModule: BuiltinModulesFileData?, cont
 }
 
 private fun buildMacZip(targetFile: Path,
-                zipRoot: String,
-                productJson: String,
-                allDist: Path,
-                macDist: Path,
-                extraFiles: Collection<Map.Entry<Path, String>>,
-                executableFilePatterns: List<String>,
-                compressionLevel: Int,
-                errorsConsumer: (String) -> Unit) {
+                        zipRoot: String,
+                        productJson: String,
+                        allDist: Path,
+                        macDist: Path,
+                        extraFiles: Collection<Map.Entry<Path, String>>,
+                        executableFilePatterns: List<String>,
+                        compressionLevel: Int,
+                        errorsConsumer: (String) -> Unit) {
   spanBuilder("build zip archive for macOS")
     .setAttribute("file", targetFile.toString())
     .setAttribute("zipRoot", zipRoot)
@@ -428,7 +424,7 @@ private fun buildMacZip(targetFile: Path,
       val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativeFile ->
         when {
           patterns.any { it.matches(Path.of(relativeFile)) } -> entry.unixMode = executableFileUnixMode
-          SystemInfo.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions (file) -> {
+          SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions (file) -> {
             errorsConsumer("Executable permissions of $relativeFile won't be set in $targetFile. " +
                            "Please make sure that executable file patterns are updated.")
           }

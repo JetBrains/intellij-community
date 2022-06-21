@@ -1,6 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package org.jetbrains.intellij.build.tasks
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -23,10 +21,9 @@ import java.util.zip.ZipEntry
 import kotlin.io.path.inputStream
 import kotlin.io.path.readText
 
-// 0100000
-private const val fileFlag = 32768
-// 0755
-const val executableFileUnixMode = fileFlag or 493
+private const val fileFlag = 32768  // 0100000
+
+const val executableFileUnixMode = fileFlag or 493  // 0755
 
 fun packInternalUtilities(outFile: Path, files: List<Path>) {
   writeNewZip(outFile, compress = true) { writer ->
@@ -42,25 +39,23 @@ fun packInternalUtilities(outFile: Path, files: List<Path>) {
   }
 }
 
-private fun failIfContentNotEqualOrFalse(file1: Path, file2: Path, message: String): Boolean {
-  if (IOUtils.contentEquals(file1.inputStream(), file2.inputStream()))
+fun filterFileIfAlreadyInZip(relativePath: String, file: Path, zipFiles: MutableMap<String, Path>): Boolean {
+  val found = zipFiles.put(relativePath, file) ?: return true
+
+  if (IOUtils.contentEquals(file.inputStream(), found.inputStream())) {
     return false
-
-  val file1Text = file1.readText()
-  val file2Text = file2.readText()
-  if (!file1Text.take(1024).all { it == '\t' || it == '\n' || it == '\r' || it.code in 32..126 } ||
-      !file2Text.take(1024).all { it == '\t' || it == '\n' || it == '\r' || it.code in 32..126 })
-    error(message)
-  throw FileComparisonFailure(message, file1Text, file2Text, file1.toString(), file2.toString())
-}
-
-fun filterFileIfAlreadyInZip(relativeFile: String, file: Path, zipFiles: MutableMap<String, Path>): Boolean {
-  val found = zipFiles.put(relativeFile, file)
-  if (found == null) {
-    return true
   }
 
-  return failIfContentNotEqualOrFalse(found, file, "Two files $found and $file with the target path $relativeFile have different content")
+  val file1Text = file.readText()
+  val file2Text = found.readText()
+  val isAsciiText: (Char) -> Boolean = { it == '\t' || it == '\n' || it == '\r' || it.code in 32..126 }
+  val message = "Two files '${found}' and '${file}' with the same target path '${relativePath}' have different content"
+  if (file1Text.take(1024).all(isAsciiText) && file2Text.take(1024).all(isAsciiText)) {
+    throw FileComparisonFailure(message, file1Text, file2Text, file.toString(), found.toString())
+  }
+  else {
+    error(message)
+  }
 }
 
 fun consumeDataByPrefix(file: Path, prefixWithEndingSlash: String, consumer: BiConsumer<String, ByteArray>) {
@@ -103,7 +98,7 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
         val entry = ZipArchiveEntryAssertName(prefix + FileUtilRt.toSystemIndependentName(startDir.relativize(file).toString()))
         entry.method = ZipEntry.STORED
         entry.lastModifiedTime = zeroTime
-        entry.unixMode = Files.readAttributes(file, "unix:mode", LinkOption.NOFOLLOW_LINKS).get("mode") as Int
+        entry.unixMode = Files.readAttributes(file, "unix:mode", LinkOption.NOFOLLOW_LINKS)["mode"] as Int
         val data = (prefix + startDir.relativize(Files.readSymbolicLink(file))).toByteArray()
         entry.size = data.size.toLong()
         putArchiveEntry(entry)
@@ -176,7 +171,7 @@ fun assertRelativePathIsCorrectForPackaging(relativeName: String) {
       throw IllegalArgumentException("path component '$component' must not end with space, it fails under Windows: $relativeName")
     }
 
-    // WINDOWS is most restrictive
+    // Windows is the most restrictive
     if (!PathUtilRt.isValidFileName(component, PathUtilRt.Platform.WINDOWS, true, null)) {
       throw IllegalArgumentException("path component '$component' is not valid for Windows: $relativeName")
     }
