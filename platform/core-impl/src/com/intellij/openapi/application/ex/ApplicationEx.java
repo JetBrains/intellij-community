@@ -111,7 +111,8 @@ public interface ApplicationEx extends Application {
   void restart(boolean exitConfirmed, boolean elevate);
 
   /**
-   * Runs modal process. For internal use only, see {@link Task}
+   * Runs modal process. For internal use only, see {@link Task}.
+   * Consider also {@code ProgressManager.getInstance().runProcessWithProgressSynchronously}
    */
   @ApiStatus.Internal
   default boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
@@ -123,7 +124,8 @@ public interface ApplicationEx extends Application {
 
   /**
    * Runs modal or non-modal process.
-   * For internal use only, see {@link Task}
+   * For internal use only, see {@link Task}.
+   * Consider also {@code ProgressManager.getInstance().runProcessWithProgressSynchronously}
    */
   @ApiStatus.Internal
   boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
