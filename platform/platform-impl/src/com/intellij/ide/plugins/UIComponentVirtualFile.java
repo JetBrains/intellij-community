@@ -22,6 +22,11 @@ public abstract class UIComponentVirtualFile extends LightVirtualFile implements
     putUserData(FileEditorManagerImpl.FORBID_PREVIEW_TAB, true);
   }
 
+  @Override
+  public @NotNull String getPath() {
+    return getName();
+  }
+
   public abstract @NotNull Content createContent(@NotNull UIComponentFileEditor editor);
 
   public interface Content {
