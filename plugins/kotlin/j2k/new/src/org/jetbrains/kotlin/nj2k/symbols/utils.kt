@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.findDeepestSuperMethodsNoWrapping
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.isObjectOrCompanionObject
@@ -32,8 +32,8 @@ fun JKSymbol.getDisplayFqName(): String {
 fun JKSymbol.deepestFqName(): String {
     fun Any.deepestFqNameForTarget(): String? =
         when (this) {
-            is PsiMethod -> (findDeepestSuperMethods().firstOrNull() ?: this).getKotlinFqName()?.asString()
-            is KtNamedFunction -> findDeepestSuperMethodsNoWrapping(this).firstOrNull()?.getKotlinFqName()?.asString()
+            is PsiMethod -> (findDeepestSuperMethods().firstOrNull() ?: this).kotlinFqName?.asString()
+            is KtNamedFunction -> findDeepestSuperMethodsNoWrapping(this).firstOrNull()?.kotlinFqName?.asString()
             is JKMethod -> psi<PsiElement>()?.deepestFqNameForTarget()
             else -> null
         }

@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
@@ -139,7 +139,7 @@ class JavaToJKTreeBuilder constructor(
             kotlinOrigin?.fqName ?: FqName(qualifiedName.orEmpty())
 
         val name =
-            target.safeAs<KtLightElement<*, *>>()?.kotlinOrigin?.getKotlinFqName()?.asString()
+            target.safeAs<KtLightElement<*, *>>()?.kotlinOrigin?.kotlinFqName?.asString()
                 ?: target.safeAs<KtLightClass>()?.containingFile?.safeAs<KtFile>()?.packageFqName?.asString()?.let { "$it.*" }
                 ?: target.safeAs<KtLightClassForFacade>()?.facadeClassFqName?.parent()?.asString()?.let { "$it.*" }
                 ?: target.safeAs<KtLightClassForDecompiledDeclaration>()?.fqName()?.parent()?.asString()?.let { "$it.*" }
@@ -397,7 +397,7 @@ class JavaToJKTreeBuilder constructor(
                             }
                         }
                         is KtProperty, is KtPropertyAccessor, is KtParameter -> {
-                            origin.getKotlinFqName()?.also { importStorage.addImport(it) }
+                            origin.kotlinFqName?.also { importStorage.addImport(it) }
                             val property =
                                 if (origin is KtPropertyAccessor) origin.parent as KtProperty
                                 else origin as KtNamedDeclaration

@@ -14,7 +14,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
@@ -71,7 +71,7 @@ class JavaToKotlinInlineHandler : AbstractCrossLanguageInlineHandler() {
 
         val unwrappedElement = unwrapElement(unwrappedUsage, referenced)
         val replacementStrategy = referenced.findUsageReplacementStrategy(withValidation = false) ?: kotlin.run {
-            LOG.error("Can't find strategy for ${unwrappedElement::class} (${unwrappedElement.getKotlinFqName()}) => ${unwrappedElement.text}")
+            LOG.error("Can't find strategy for ${unwrappedElement::class} (${unwrappedElement.kotlinFqName}) => ${unwrappedElement.text}")
             return
         }
 

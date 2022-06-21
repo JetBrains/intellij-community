@@ -10,7 +10,7 @@ import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
@@ -33,7 +33,7 @@ fun JKClassSymbol.asType(nullability: Nullability = Nullability.Default): JKClas
 
 val PsiType.isKotlinFunctionalType: Boolean
     get() {
-        val fqName = safeAs<PsiClassType>()?.resolve()?.getKotlinFqName() ?: return false
+        val fqName = safeAs<PsiClassType>()?.resolve()?.kotlinFqName ?: return false
         return functionalTypeRegex.matches(fqName.asString())
     }
 

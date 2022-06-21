@@ -6,7 +6,7 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -35,7 +35,7 @@ interface JKMemberDataCameFromJava<J : PsiMember, K : KtDeclaration> : JKMemberD
     val javaElement: J
 
     override val fqName
-        get() = javaElement.getKotlinFqName()
+        get() = javaElement.kotlinFqName
 }
 
 

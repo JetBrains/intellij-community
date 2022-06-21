@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -28,7 +28,7 @@ abstract class AbstractHLImplementationSearcherTest : KotlinLightCodeInsightFixt
     @OptIn(ExperimentalStdlibApi::class)
     private fun render(declarations: List<PsiElement>): String = buildList {
         for (declaration in declarations) {
-          val name = declaration.getKotlinFqName() ?: declaration.declarationName()
+          val name = declaration.kotlinFqName ?: declaration.declarationName()
           add(declaration::class.simpleName!! + ": " + name)
         }
     }.sorted().joinToString(separator = "\n")

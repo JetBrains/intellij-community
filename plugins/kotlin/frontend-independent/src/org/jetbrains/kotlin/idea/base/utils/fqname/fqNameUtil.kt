@@ -19,6 +19,10 @@ import org.jetbrains.kotlin.types.KotlinType
 /**
  * Returns FqName for given declaration (either Java or Kotlin)
  */
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.kotlinFqName' instead",
+    ReplaceWith("this.kotlinFqName", imports = ["org.jetbrains.kotlin.idea.base.psi.kotlinFqName"])
+)
 fun PsiElement.getKotlinFqName(): FqName? = when (val element = namedUnwrappedElement) {
     is PsiPackage -> FqName(element.qualifiedName)
     is PsiClass -> element.qualifiedName?.let(::FqName)

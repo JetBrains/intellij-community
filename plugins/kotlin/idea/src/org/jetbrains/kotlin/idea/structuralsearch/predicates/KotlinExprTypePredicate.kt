@@ -15,7 +15,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
 import com.intellij.util.castSafelyTo
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.search.allScope
@@ -172,21 +172,21 @@ class KotlinExprTypePredicate(
             // Kotlin indexes
             when {
                 fq -> if (KotlinFullClassNameIndex.get(className, project, scope).any {
-                        it.getKotlinFqName() == type.fqName
-                    }) return true
+                    it.kotlinFqName == type.fqName
+                  }) return true
                 else -> if (KotlinClassShortNameIndex.get(className, project, scope).any {
-                        it.getKotlinFqName() == type.fqName
-                    }) return true
+                    it.kotlinFqName == type.fqName
+                  }) return true
             }
 
             // Java indexes
             when {
                 fq -> if (JavaFullClassNameIndex.getInstance()[className, project, scope].any {
-                        it.getKotlinFqName() == type.fqName
-                    }) return true
+                    it.kotlinFqName == type.fqName
+                  }) return true
                 else -> if (JavaShortClassNameIndex.getInstance()[className, project, scope].any {
-                        it.getKotlinFqName() == type.fqName
-                    }) return true
+                    it.kotlinFqName == type.fqName
+                  }) return true
             }
 
             return false

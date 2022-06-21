@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
@@ -98,9 +98,9 @@ class AllClassesCompletion(
         }
     }
 
-    private fun isNotToBeUsed(javaClass: PsiClass): Boolean {
-        if (includeJavaClassesNotToBeUsed) return false
-        val fqName = javaClass.getKotlinFqName()
-        return fqName?.isJavaClassNotToBeUsedInKotlin() == true
-    }
+  private fun isNotToBeUsed(javaClass: PsiClass): Boolean {
+    if (includeJavaClassesNotToBeUsed) return false
+    val fqName = javaClass.kotlinFqName
+    return fqName?.isJavaClassNotToBeUsedInKotlin() == true
+  }
 }

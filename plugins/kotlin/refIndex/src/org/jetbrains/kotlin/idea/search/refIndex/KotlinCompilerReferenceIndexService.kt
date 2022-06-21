@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.asJava.syntheticAccessors
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerWorkspaceSettings
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
@@ -309,7 +309,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
             setOf(hierarchyElement)
         }
 
-        val kotlinInitialValues = initialElements.asSequence().mapNotNull(PsiElement::getKotlinFqName).flatMap { fqName ->
+        val kotlinInitialValues = initialElements.asSequence().mapNotNull { it.kotlinFqName }.flatMap { fqName ->
             fqName.computeDirectSubtypes(
                 withSelf = isFromLibrary,
                 selfAction = FqNameWrapper.Companion::createFromFqName,
@@ -466,11 +466,11 @@ private fun extractFqNames(element: PsiElement): List<FqName>? {
 }
 
 private fun extractFqName(element: PsiElement): FqName? = when (element) {
-    is KtClassOrObject, is PsiClass -> element.getKotlinFqName()
+    is KtClassOrObject, is PsiClass -> element.kotlinFqName
     is KtConstructor<*> -> element.getContainingClassOrObject().fqName
     is KtNamedFunction -> element.fqName
     is KtProperty -> element.fqName
-    is PsiField -> element.getKotlinFqName()
+    is PsiField -> element.kotlinFqName
     else -> null
 }
 
@@ -488,9 +488,9 @@ internal val KtParameter.asComponentFunctionName: String?
     }
 
 private fun extractFqNamesFromPsiMethod(psiMethod: PsiMethod): List<FqName>? {
-    if (psiMethod.isConstructor) return psiMethod.containingClass?.getKotlinFqName()?.let(::listOf)
+    if (psiMethod.isConstructor) return psiMethod.containingClass?.kotlinFqName?.let(::listOf)
 
-    val fqName = psiMethod.getKotlinFqName() ?: return null
+    val fqName = psiMethod.kotlinFqName ?: return null
     val listOfFqName = listOf(fqName)
     val propertyAssessors = psiMethod.syntheticAccessors.ifEmpty { return listOfFqName }
 

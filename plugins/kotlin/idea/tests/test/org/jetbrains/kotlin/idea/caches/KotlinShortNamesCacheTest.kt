@@ -13,7 +13,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
@@ -92,7 +92,7 @@ class KotlinShortNamesCacheTest : KotlinLightCodeInsightFixtureTestCase() {
     fun PsiMember.fqName() = PsiUtil.getMemberQualifiedName(this)
 
     fun methodArrayDebugToString(a: Array<PsiMethod>) =
-        a.map { "${(it as KtLightMethod).getKotlinFqName()} static=${it.hasModifierProperty(PsiModifier.STATIC)}" }.joinToString("\n")
+        a.map { "${(it as KtLightMethod).kotlinFqName} static=${it.hasModifierProperty(PsiModifier.STATIC)}" }.joinToString("\n")
 
     fun accessorArrayDebugToString(a: Array<PsiMethod>) = a.map {
         "${(it as KtLightMethod).fqName()} property=${(it.lightMemberOrigin

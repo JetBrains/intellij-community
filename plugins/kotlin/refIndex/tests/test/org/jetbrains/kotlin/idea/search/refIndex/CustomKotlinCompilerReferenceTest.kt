@@ -13,9 +13,9 @@ import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.highlighter.markers.OVERRIDDEN_FUNCTION
 import org.jetbrains.kotlin.idea.highlighter.markers.SUBCLASSED_CLASS
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -311,7 +311,7 @@ class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase() {
 
     private fun findClassSubtypes(className: String, deep: Boolean) = ClassInheritorsSearch.search(myFixture.findClass(className), deep)
         .findAll()
-        .map { it.getKotlinFqName().toString() }
+        .map { it.kotlinFqName.toString() }
         .sorted()
 
     fun testNonPresentedClass(): Unit = doTestNonPresentedClass(7)

@@ -16,12 +16,11 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.Range
 import com.sun.jdi.Location
 import com.sun.jdi.Method
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import com.sun.jdi.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineNumber
@@ -183,7 +182,7 @@ private fun isInlineFunctionFromLibrary(positionManager: PositionManager, locati
 
     tailrec fun getDeclarationName(element: PsiElement?): FqName? {
         val declaration = element?.getNonStrictParentOfType<KtDeclaration>() ?: return null
-        declaration.getKotlinFqName()?.let { return it }
+        declaration.kotlinFqName?.let { return it }
         return getDeclarationName(declaration.parent)
     }
 

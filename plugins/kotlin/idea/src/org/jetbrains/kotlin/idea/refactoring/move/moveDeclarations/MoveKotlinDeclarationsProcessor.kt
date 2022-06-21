@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.deleteSingle
@@ -221,7 +221,7 @@ class MoveKotlinDeclarationsProcessor(
                         } else null
                     }
 
-                val name = lightElement.getKotlinFqName()?.quoteIfNeeded()?.asString()
+              val name = lightElement.kotlinFqName?.quoteIfNeeded()?.asString()
                 if (name != null) {
                     fun searchForKotlinNameUsages(results: ArrayList<UsageInfo>) {
                         TextOccurrencesUtil.findNonCodeUsages(

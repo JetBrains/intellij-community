@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.diagnostics.PsiDiagnosticUtils
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.hasType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInProjectSource
@@ -86,7 +86,7 @@ class ExpressionsOfTypeProcessor(
         fun logPresentation(element: PsiElement): String? {
             return runReadAction {
                 if (element !is KtDeclaration && element !is PsiMember) return@runReadAction element.text
-                val fqName = element.getKotlinFqName()?.asString()
+                val fqName = element.kotlinFqName?.asString()
                     ?: (element as? KtNamedDeclaration)?.name
                 when (element) {
                     is PsiMethod -> fqName + element.parameterList.text

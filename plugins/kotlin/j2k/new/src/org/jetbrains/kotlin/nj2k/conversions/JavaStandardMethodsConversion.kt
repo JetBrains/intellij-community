@@ -6,7 +6,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.psi
@@ -31,7 +31,7 @@ class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : Recursive
                     declaration.psi<PsiMethod>()
                         ?.findSuperMethods()
                         ?.any { superMethod ->
-                            superMethod.containingClass?.getKotlinFqName()?.asString() != "java.lang.Object"
+                            superMethod.containingClass?.kotlinFqName?.asString() != "java.lang.Object"
                         } == true
                 if (directlyImplementsCloneable && hasCloneableInSuperClasses) {
                     val directCloneableSupertype = element.inheritance.implements.find {

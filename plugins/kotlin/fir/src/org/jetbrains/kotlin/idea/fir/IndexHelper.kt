@@ -12,7 +12,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.isSyntheticKotlinClass
@@ -116,7 +116,7 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
             // Skip Kotlin classes
             if (psiClass is KtLightClass ||
                 psiClass.isSyntheticKotlinClass() ||
-                psiClass.getKotlinFqName()?.isJavaClassNotToBeUsedInKotlin() == true
+                psiClass.kotlinFqName?.isJavaClassNotToBeUsedInKotlin() == true
             )
                 return@processClassesByNames true
 

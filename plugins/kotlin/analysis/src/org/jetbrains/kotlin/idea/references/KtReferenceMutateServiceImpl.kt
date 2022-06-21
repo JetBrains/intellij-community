@@ -14,9 +14,9 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
@@ -53,8 +53,8 @@ class KtReferenceMutateServiceImpl : KtReferenceMutateService {
         element: PsiElement,
         shorteningMode: KtSimpleNameReference.ShorteningMode
     ): PsiElement {
-        return element.getKotlinFqName()?.let { fqName -> bindToFqName(simpleNameReference, fqName, shorteningMode, element) }
-            ?: simpleNameReference.expression
+      return element.kotlinFqName?.let { fqName -> bindToFqName(simpleNameReference, fqName, shorteningMode, element) }
+             ?: simpleNameReference.expression
     }
 
     override fun bindToFqName(
