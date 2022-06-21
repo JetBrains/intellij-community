@@ -144,6 +144,7 @@ public class VSCBundle extends Bundle {
   @NotNull
   @Override
   public Collection<File> getPreferenceFiles() {
+    loadExtensions();
     //noinspection SSBasedInspection
     return configToScopes.keySet().stream().map(config -> new File(bundleFile, config)).collect(Collectors.toList());
   }

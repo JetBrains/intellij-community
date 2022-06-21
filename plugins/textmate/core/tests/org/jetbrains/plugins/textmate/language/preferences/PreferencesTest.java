@@ -1,15 +1,11 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.TestUtil;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
-import org.jetbrains.plugins.textmate.bundles.VSCBundle;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
-import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
-import org.jetbrains.plugins.textmate.plist.PlistValueType;
 import org.junit.Test;
 
 import java.io.File;
@@ -87,19 +83,10 @@ public class PreferencesTest {
 
   @Test
   public void loadIndentationRules() throws Exception {
-    final Bundle bundle = TestUtil.getBundle(TestUtil.PHP_VSC);
-    assertTrue(bundle instanceof VSCBundle);
-    bundle.getGrammarFiles();
-    final Optional<File> languageConfiguration = bundle.getPreferenceFiles().stream().findFirst();
-    assertTrue(languageConfiguration.isPresent());
-    final Optional<Map.Entry<String, Plist>> preferences =
-      bundle.loadPreferenceFile(languageConfiguration.get(),new CompositePlistReader()).stream().findFirst();
-    assertTrue(preferences.isPresent());
-    final Plist list = preferences.get().getValue();
-    final PListValue pattern =
-      list.getPlistValue(Constants.INDENTATION_RULES)
-        .getPlist().getPlistValue(Constants.INCREASE_INDENT_PATTERN);
-    assertEquals(PlistValueType.STRING, pattern.getType());
+    PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PHP_VSC);
+    Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("source.php")));
+    assertFalse(preferences.getIndentationRules().isEmpty());
+    assertNotNull(preferences.getIndentationRules().getIncreaseIndentPattern());
   }
 
   @NotNull
@@ -121,10 +108,12 @@ public class PreferencesTest {
   private static Preferences mergeAll(@NotNull List<Preferences> preferences) {
     Set<TextMateBracePair> highlightingPairs = new HashSet<>();
     Set<TextMateBracePair> smartTypingParis = new HashSet<>();
+    IndentationRules indentationRules = IndentationRules.empty();
 
     for (Preferences preference : preferences) {
       final Set<TextMateBracePair> localHighlightingPairs = preference.getHighlightingPairs();
       final Set<TextMateBracePair> localSmartTypingPairs = preference.getSmartTypingPairs();
+      indentationRules = indentationRules.updateWith(preference.getIndentationRules());
       if (localHighlightingPairs != null) {
         highlightingPairs.addAll(localHighlightingPairs);
       }
@@ -132,7 +121,7 @@ public class PreferencesTest {
         smartTypingParis.addAll(localSmartTypingPairs);
       }
     }
-    return new Preferences("", highlightingPairs, smartTypingParis);
+    return new Preferences("", highlightingPairs, smartTypingParis, indentationRules);
   }
 
   private static Set<TextMateBracePair> newHashSet(TextMateBracePair... pairs) {

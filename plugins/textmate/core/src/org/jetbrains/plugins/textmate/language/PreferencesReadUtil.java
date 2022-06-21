@@ -4,10 +4,12 @@ import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
+import org.jetbrains.plugins.textmate.language.preferences.IndentationRules;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateSnippet;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
+import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 import java.io.File;
 import java.util.*;
@@ -97,5 +99,26 @@ public final class PreferencesReadUtil {
     return snippetFile.getName().endsWith("." + Constants.SUBLIME_SNIPPET_EXTENSION)
            ? null //not supported yet
            : loadTextMateSnippet(plist, snippetFile.getAbsolutePath(), interner);
+  }
+
+  @Nullable
+  private static RegexFacade getPattern(@NotNull String name, @NotNull Plist from) {
+    final PListValue value = from.getPlistValue(name);
+    if (value == null) return null;
+    final String pattern = value.getString();
+    return RegexFacade.regex(pattern);
+  }
+
+  @NotNull
+  public static IndentationRules loadIndentationRules(@NotNull Plist plist) {
+    final PListValue rulesValue = plist.getPlistValue(Constants.INDENTATION_RULES);
+    if (rulesValue == null) return IndentationRules.empty();
+    final Plist rules = rulesValue.getPlist();
+    return new IndentationRules(
+      getPattern(Constants.INCREASE_INDENT_PATTERN, rules),
+      getPattern(Constants.DECREASE_INDENT_PATTERN, rules),
+      getPattern(Constants.INDENT_NEXT_LINE_PATTERN, rules),
+      getPattern(Constants.UNINDENTED_LINE_PATTERN, rules)
+    );
   }
 }

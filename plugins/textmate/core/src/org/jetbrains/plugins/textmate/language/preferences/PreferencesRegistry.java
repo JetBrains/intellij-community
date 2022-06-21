@@ -36,10 +36,11 @@ public final class PreferencesRegistry {
   public void fillFromPList(@NotNull CharSequence scopeName, @NotNull Plist plist) {
     final Set<TextMateBracePair> highlightingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.HIGHLIGHTING_PAIRS_KEY));
     final Set<TextMateBracePair> smartTypingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY));
+    final IndentationRules indentationRules = PreferencesReadUtil.loadIndentationRules(plist);
     fillHighlightingBraces(highlightingPairs);
     fillSmartTypingBraces(smartTypingPairs);
-    if (highlightingPairs != null || smartTypingPairs != null) {
-      myPreferences.add(new Preferences(scopeName, highlightingPairs, smartTypingPairs));
+    if (highlightingPairs != null || smartTypingPairs != null || !indentationRules.isEmpty()) {
+      myPreferences.add(new Preferences(scopeName, highlightingPairs, smartTypingPairs, indentationRules));
     }
   }
 
