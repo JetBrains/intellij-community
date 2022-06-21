@@ -140,16 +140,10 @@ class MLSorter : CompletionFinalSorter() {
       val features = elementFeatureProvider.calculateFeatures(calculatedElementFeatures)
       lookupFeatures.putAll(features)
     }
-    val additionalContextFeatures = mutableMapOf<String, String>()
-    for (contextFeatureProvider in AdditionalContextFeatureProvider.forLanguage(lookupStorage.language)) {
-      val features = contextFeatureProvider.calculateFeatures(lookupStorage.contextFactors)
-      additionalContextFeatures.putAll(features)
-    }
-
-    val contextFactors = lookupStorage.contextFactors + additionalContextFeatures
     val commonSessionFactors = SessionFactorsUtils.updateSessionFactors(lookupStorage, items)
     val meaningfulRelevance = meaningfulRelevanceExtractor.meaningfulFeatures()
-    val features = RankingFeatures(lookupStorage.userFactors, contextFactors, commonSessionFactors, lookupFeatures, meaningfulRelevance)
+    val features = RankingFeatures(lookupStorage.userFactors, lookupStorage.contextFactors, commonSessionFactors, lookupFeatures,
+                                   meaningfulRelevance)
 
     val tracker = ModelTimeTracker()
     for ((i, element) in items.withIndex()) {

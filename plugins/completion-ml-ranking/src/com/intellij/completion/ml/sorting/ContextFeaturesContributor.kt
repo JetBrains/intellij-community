@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
 import com.intellij.codeInsight.completion.CompletionContributor
@@ -50,6 +50,9 @@ class ContextFeaturesContributor : CompletionContributor(), DumbAware {
 
       val timeSpent = System.nanoTime() - start
       storage.performanceTracker.contextFeaturesCalculated(providerName, TimeUnit.NANOSECONDS.toMillis(timeSpent))
+    }
+    for (contextFeatureProvider in AdditionalContextFeatureProvider.forLanguage(storage.language)) {
+      contextFeatures.putAll(contextFeatureProvider.calculateFeatures(contextFeatures))
     }
     storage.initContextFactors(contextFeatures, environment)
   }

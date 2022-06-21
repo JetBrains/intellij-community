@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting;
 
+import com.intellij.codeInsight.completion.ml.MLFeatureValue;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,5 +20,5 @@ public interface AdditionalContextFeatureProvider {
   }
 
   @NotNull
-  Map<String, String> calculateFeatures(@NotNull Map<String, String> contextFeatures);
+  Map<String, MLFeatureValue> calculateFeatures(@NotNull Map<String, MLFeatureValue> contextFeatures);
 }
