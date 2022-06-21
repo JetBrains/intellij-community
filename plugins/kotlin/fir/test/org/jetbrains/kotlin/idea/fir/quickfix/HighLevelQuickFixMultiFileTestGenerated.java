@@ -197,6 +197,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/importFunctionWithDefinitelyNotNullType.before.Main.kt");
         }
 
+        @TestMetadata("importGetValueExtensionForDelegateInsideRun.before.Main.kt")
+        public void testImportGetValueExtensionForDelegateInsideRun() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/importGetValueExtensionForDelegateInsideRun.before.Main.kt");
+        }
+
         @TestMetadata("importGetValueExtensionForDelegateWithLambda.before.Main.kt")
         public void testImportGetValueExtensionForDelegateWithLambda() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/importGetValueExtensionForDelegateWithLambda.before.Main.kt");
