@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
@@ -215,6 +216,8 @@ class KotlinCompletionContributor : CompletionContributor() {
     private fun shouldSuppressCompletion(parameters: CompletionParameters, prefixMatcher: PrefixMatcher): Boolean {
         val position = parameters.position
         val invocationCount = parameters.invocationCount
+
+        if (prefixMatcher is CamelHumpMatcher && prefixMatcher.isTypoTolerant) return true
 
         // no completion inside number literals
         if (AFTER_NUMBER_LITERAL.accepts(position)) return true
