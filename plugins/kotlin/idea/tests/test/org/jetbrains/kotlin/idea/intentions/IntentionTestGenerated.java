@@ -6507,6 +6507,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/convertLambdaToReference/simple.kt");
             }
 
+            @TestMetadata("super.kt")
+            public void testSuper() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/super.kt");
+            }
+
             @TestMetadata("suspendFun.kt")
             public void testSuspendFun() throws Exception {
                 runTest("testData/intentions/convertLambdaToReference/suspendFun.kt");

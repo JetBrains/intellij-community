@@ -81,7 +81,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
         }
         val context = callableExpression.safeAnalyzeNonSourceRootCode()
 
-        if (explicitReceiver?.isReferenceToPackage(context) == true) return false
+        if (explicitReceiver is KtSuperExpression || explicitReceiver?.isReferenceToPackage(context) == true) return false
 
         val calleeDescriptor =
             calleeReferenceExpression.getResolvedCall(context)?.resultingDescriptor as? CallableMemberDescriptor ?: return false
