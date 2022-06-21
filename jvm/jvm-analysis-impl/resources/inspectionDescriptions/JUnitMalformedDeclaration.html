@@ -7,9 +7,7 @@ The following problems are reported by this inspection:
   <li>Static inner classes annotated with <code>@Nested</code></li>
   <li>Parameterized tests that are defined without a source</li>
   <li>Parameterized tests with a <code>@MethodSource</code> that has an unknown, non-static or no-arg target</li>
-  <li>
-    Parameterized tests with a <code>@ValueSource</code> or <code>@EnumSource</code> which types cannot be converted to method parameters
-  </li>
+  <li>Mismatched types between parameterized test method parameter and the specified <code>@ValueSource</code> or <code>@EnumSource</code> values</li>
   <li>Tests that are annotated by more than one of <code>@Test</code>, <code>@ParameterizedTest</code> or <code>@RepeatedTest</code></li>
   <li><code>setup()</code> or <code>tearDown()</code> methods that are not public, whose return type is not void or take arguments</li>
   <li><code>suite()</code> methods that are private, take arguments or are not static</li>
