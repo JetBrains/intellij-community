@@ -8,7 +8,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term.Qualifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term.QueryPart
 
-internal data class GHPRListSearchState(val searchQuery: String? = null,
+internal data class GHPRListSearchValue(val searchQuery: String? = null,
                                         val state: State? = null,
                                         val assignee: String? = null,
                                         val reviewState: ReviewState? = null,
@@ -62,8 +62,8 @@ internal data class GHPRListSearchState(val searchQuery: String? = null,
   }
 
   companion object {
-    val DEFAULT = GHPRListSearchState(state = State.OPEN)
-    val EMPTY = GHPRListSearchState()
+    val DEFAULT = GHPRListSearchValue(state = State.OPEN)
+    val EMPTY = GHPRListSearchValue()
   }
 
   enum class State {

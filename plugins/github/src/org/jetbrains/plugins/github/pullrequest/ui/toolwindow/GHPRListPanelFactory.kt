@@ -57,7 +57,7 @@ internal class GHPRListPanelFactory(private val project: Project,
 
     val actionManager = ActionManager.getInstance()
 
-    val searchState = MutableStateFlow(GHPRListSearchState.DEFAULT)
+    val searchState = MutableStateFlow(GHPRListSearchValue.DEFAULT)
     scope.launch {
       searchState.collectLatest {
         listLoader.searchQuery = it.toQuery()
@@ -66,7 +66,7 @@ internal class GHPRListPanelFactory(private val project: Project,
 
     ListEmptyTextController(scope, listLoader, searchState, list.emptyText, disposable)
 
-    val searchPanel = GHPRSearchPanelFactory(searchState, repositoryDataService).create(scope, avatarIconsProvider)
+    val searchPanel = GHPRSearchPanelFactory(repositoryDataService, searchState).create(scope, avatarIconsProvider)
 
     val outdatedStatePanel = JPanel(FlowLayout(FlowLayout.LEFT, JBUIScale.scale(5), 0)).apply {
       background = UIUtil.getPanelBackground()
@@ -147,7 +147,7 @@ internal class GHPRListPanelFactory(private val project: Project,
 
   private class ListEmptyTextController(scope: CoroutineScope,
                                         private val listLoader: GHListLoader<*>,
-                                        private val searchState: MutableStateFlow<GHPRListSearchState>,
+                                        private val searchState: MutableStateFlow<GHPRListSearchValue>,
                                         private val emptyText: StatusText,
                                         listenersDisposable: Disposable) {
     init {
@@ -165,11 +165,11 @@ internal class GHPRListPanelFactory(private val project: Project,
 
 
       val search = searchState.value
-      if (search == GHPRListSearchState.DEFAULT) {
+      if (search == GHPRListSearchValue.DEFAULT) {
         emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
           .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters"),
                                SimpleTextAttributes.LINK_ATTRIBUTES) {
-            searchState.update { GHPRListSearchState.EMPTY }
+            searchState.update { GHPRListSearchValue.EMPTY }
           }
       }
       else if (search.isEmpty) {
@@ -178,9 +178,9 @@ internal class GHPRListPanelFactory(private val project: Project,
       else {
         emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
           .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters.to.default",
-                                                    GHPRListSearchState.DEFAULT.toQuery().toString()),
+                                                    GHPRListSearchValue.DEFAULT.toQuery().toString()),
                                SimpleTextAttributes.LINK_ATTRIBUTES) {
-            searchState.update { GHPRListSearchState.DEFAULT }
+            searchState.update { GHPRListSearchValue.DEFAULT }
           }
       }
     }
