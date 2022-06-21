@@ -3,6 +3,7 @@
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -47,5 +48,10 @@ public class AddGroupAction extends AnAction {
     ArrayList<GroupItem> newGroups = new ArrayList<>(groups);
     newGroups.add(groupToBeAdded);
     palette.setGroups(newGroups);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }
