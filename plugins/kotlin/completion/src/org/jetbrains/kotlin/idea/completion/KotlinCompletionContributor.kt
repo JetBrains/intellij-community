@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns.elementType
 import com.intellij.patterns.PsiJavaPatterns.psiElement
@@ -220,6 +221,18 @@ class KotlinCompletionContributor : CompletionContributor() {
 
         // no completion auto-popup after integer and dot
         if (invocationCount == 0 && prefixMatcher.prefix.isEmpty() && AFTER_INTEGER_LITERAL_AND_DOT.accepts(position)) return true
+
+        if (invocationCount == 0 && Registry.`is`("kotlin.disable.auto.completion.inside.expression", false)) {
+            val originalPosition = parameters.originalPosition
+            val originalExpression = originalPosition?.getNonStrictParentOfType<KtNameReferenceExpression>()
+            val expression = position.getNonStrictParentOfType<KtNameReferenceExpression>()
+
+            if (expression != null && originalExpression != null &&
+                !expression.getReferencedName().startsWith(originalExpression.getReferencedName())
+            ) {
+                return true
+            }
+        }
 
         return false
     }

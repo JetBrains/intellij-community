@@ -183,6 +183,11 @@
             description="Enable new Java to Kotlin converter"
             defaultValue="true"
             restartRequired="false"/>
+    <registryKey
+            key="kotlin.disable.auto.completion.inside.expression"
+            description="Disables auto-completion inside expressions"
+            defaultValue="false"
+            restartRequired="false"/>
     <iconMapper mappingFile="KotlinIconMappings.json"/>
   </extensions>
 
