@@ -36,6 +36,7 @@ class CloneableProjectsService {
 
     ApplicationManager.getApplication().executeOnPooledThread {
       ProgressManager.getInstance().runProcess(Runnable {
+        val activity = VcsCloneCollector.cloneStarted()
         val cloneStatus: CloneStatus = try {
           cloneTask.run(progressIndicator)
         }
@@ -46,6 +47,7 @@ class CloneableProjectsService {
           logger<CloneableProjectsService>().error(exception)
           CloneStatus.FAILURE
         }
+        VcsCloneCollector.cloneFinished(activity, cloneStatus)
 
         when (cloneStatus) {
           CloneStatus.SUCCESS -> onSuccess(cloneableProject)
@@ -184,19 +186,24 @@ class CloneableProjectsService {
 
   interface CloneProjectListener {
     @JvmDefault
-    fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {}
+    fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
+    }
 
     @JvmDefault
-    fun onCloneRemoved() {}
+    fun onCloneRemoved() {
+    }
 
     @JvmDefault
-    fun onCloneSuccess() {}
+    fun onCloneSuccess() {
+    }
 
     @JvmDefault
-    fun onCloneFailed() {}
+    fun onCloneFailed() {
+    }
 
     @JvmDefault
-    fun onCloneCanceled() {}
+    fun onCloneCanceled() {
+    }
   }
 
   companion object {
