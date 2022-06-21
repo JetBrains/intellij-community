@@ -8,8 +8,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class PsiAnnotationSearchUtil {
 
@@ -20,7 +22,13 @@ public class PsiAnnotationSearchUtil {
 
   @Nullable
   public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, String @NotNull ... annotationFQNs) {
-    return Stream.of(annotationFQNs).map(psiModifierListOwner::getAnnotation).filter(Objects::nonNull).findAny().orElse(null);
+    for (String annotationFQN : annotationFQNs) {
+      PsiAnnotation annotation = psiModifierListOwner.getAnnotation(annotationFQN);
+      if (annotation != null) {
+        return annotation;
+      }
+    }
+    return null;
   }
 
   public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String annotationFQN) {
