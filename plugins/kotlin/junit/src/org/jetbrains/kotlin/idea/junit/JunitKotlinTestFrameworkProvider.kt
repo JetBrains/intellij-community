@@ -6,15 +6,13 @@ import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.junit.JUnitConfigurationProducer
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.execution.junit.JUnitUtil.*
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.util.ParameterizedCachedValue
-import com.intellij.psi.util.ParameterizedCachedValueProvider
-import org.jetbrains.kotlin.idea.core.util.AvailabilityProvider
-import org.jetbrains.kotlin.idea.core.util.isClassAvailableInModule
+import org.jetbrains.kotlin.idea.core.util.FrameworkAvailabilityChecker
+import org.jetbrains.kotlin.idea.core.util.isFrameworkAvailable
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 
@@ -39,24 +37,15 @@ object JunitKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
     }
 
     override fun isTestFrameworkAvailable(element: PsiElement): Boolean {
-        val b = element.isClassAvailableInModule(
-            JUNIT_AVAILABLE_KEY,
-            JUNIT_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE,
-            JUNIT_AVAILABLE_PROVIDER_WITH_TEST_SCOPE
-        ) ?: false
-        return b
+        return isFrameworkAvailable<JUnitAvailabilityChecker>(element)
     }
 }
 
+@Service(Service.Level.PROJECT)
+internal class JUnitAvailabilityChecker(project: Project) : FrameworkAvailabilityChecker(project) {
+    override val fqNames: Set<String> = setOf(TEST_CASE_CLASS, TEST_ANNOTATION, CUSTOM_TESTABLE_ANNOTATION)
 
-private val JUNIT_AVAILABLE_KEY = Key<ParameterizedCachedValue<Boolean, Module>>("JUNIT_AVAILABLE")
-private val JUNIT_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE: ParameterizedCachedValueProvider<Boolean, Module> = JUnitAvailabilityProvider(includeTests = false)
-private val JUNIT_AVAILABLE_PROVIDER_WITH_TEST_SCOPE = JUnitAvailabilityProvider(true)
-
-private class JUnitAvailabilityProvider(includeTests: Boolean) : AvailabilityProvider(
-    includeTests,
-    fqNames = setOf(TEST_CASE_CLASS, TEST_ANNOTATION, CUSTOM_TESTABLE_ANNOTATION),
-    javaClassLookup = true,
-    aliasLookup = false,
-    kotlinFullClassLookup = false
-)
+    override val javaClassLookup: Boolean = true
+    override val aliasLookup: Boolean = false
+    override val kotlinFullClassLookup: Boolean = false
+}

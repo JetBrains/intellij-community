@@ -2,18 +2,16 @@
 package org.jetbrains.kotlin.idea.testng
 
 import com.intellij.execution.actions.ConfigurationFromContext
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.util.ParameterizedCachedValue
-import com.intellij.psi.util.ParameterizedCachedValueProvider
 import com.intellij.psi.util.PsiClassUtil
 import com.theoryinpractice.testng.configuration.TestNGConfigurationProducer
 import com.theoryinpractice.testng.util.TestNGUtil
-import org.jetbrains.kotlin.idea.core.util.AvailabilityProvider
-import org.jetbrains.kotlin.idea.core.util.isClassAvailableInModule
+import org.jetbrains.kotlin.idea.core.util.FrameworkAvailabilityChecker
+import org.jetbrains.kotlin.idea.core.util.isFrameworkAvailable
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
 
 object TestNgKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
@@ -36,22 +34,16 @@ object TestNgKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
         return TestNGUtil.hasTest(testMethod)
     }
 
-    override fun isTestFrameworkAvailable(element: PsiElement): Boolean =
-        element.isClassAvailableInModule(
-            TESTNG_AVAILABLE_KEY,
-            TESTNG_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE,
-            TESTNG_AVAILABLE_PROVIDER_WITH_TEST_SCOPE
-        ) ?: false
+    override fun isTestFrameworkAvailable(element: PsiElement): Boolean {
+        return isFrameworkAvailable<TestNGAvailabilityChecker>(element)
+    }
 }
 
-private val TESTNG_AVAILABLE_KEY = Key<ParameterizedCachedValue<Boolean, Module>>("TESTNG_AVAILABLE")
-private val TESTNG_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE: ParameterizedCachedValueProvider<Boolean, Module> = TestNGAvailabilityProvider(includeTests = false)
-private val TESTNG_AVAILABLE_PROVIDER_WITH_TEST_SCOPE = TestNGAvailabilityProvider(true)
+@Service(Service.Level.PROJECT)
+class TestNGAvailabilityChecker(project: Project) : FrameworkAvailabilityChecker(project) {
+    override val fqNames: Set<String> = setOf(TestNGUtil.TEST_ANNOTATION_FQN)
 
-private class TestNGAvailabilityProvider(includeTests: Boolean) : AvailabilityProvider(
-    includeTests,
-    fqNames = setOf(TestNGUtil.TEST_ANNOTATION_FQN),
-    javaClassLookup = true,
-    aliasLookup = false,
-    kotlinFullClassLookup = false
-)
+    override val javaClassLookup: Boolean = true
+    override val aliasLookup: Boolean = false
+    override val kotlinFullClassLookup: Boolean = false
+}

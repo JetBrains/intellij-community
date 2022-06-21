@@ -2,15 +2,13 @@
 
 package org.jetbrains.kotlin.idea.platform
 
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.Key
-import com.intellij.psi.util.ParameterizedCachedValue
-import com.intellij.psi.util.ParameterizedCachedValueProvider
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.core.util.AvailabilityProvider
-import org.jetbrains.kotlin.idea.core.util.isClassAvailableInModule
+import org.jetbrains.kotlin.idea.core.util.FrameworkAvailabilityChecker
+import org.jetbrains.kotlin.idea.core.util.isFrameworkAvailable
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.util.string.joinWithEscape
 import org.jetbrains.kotlin.name.FqName
@@ -33,19 +31,15 @@ import javax.swing.Icon
 
 private val TEST_FQ_NAME = FqName("kotlin.test.Test")
 private val IGNORE_FQ_NAME = FqName("kotlin.test.Ignore")
-private val GENERIC_KOTLIN_TEST_AVAILABLE_KEY = Key<ParameterizedCachedValue<Boolean, Module>>("GENERIC_KOTLIN_TEST_AVAILABLE")
-private val GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE: ParameterizedCachedValueProvider<Boolean, Module> = GenericKotlinTestAvailabilityProvider(includeTests = false)
-private val GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITH_TEST_SCOPE = GenericKotlinTestAvailabilityProvider(true)
 
-private class GenericKotlinTestAvailabilityProvider(includeTests: Boolean) : AvailabilityProvider(
-    includeTests,
-    fqNames = setOf(TEST_FQ_NAME.asString()),
-    javaClassLookup = true,
-    // `kotlin.test.Test` could be a typealias
-    aliasLookup = true,
-    // `kotlin.test.Test` could be expected/actual annotation class
-    kotlinFullClassLookup = true
-)
+@Service(Service.Level.PROJECT)
+internal class KotlinTestAvailabilityChecker(project: Project) : FrameworkAvailabilityChecker(project) {
+    override val fqNames = setOf(TEST_FQ_NAME.asString())
+
+    override val javaClassLookup = true
+    override val aliasLookup = true // `kotlin.test.Test` might be a typealias
+    override val kotlinFullClassLookup = true // `kotlin.test.Test` might be an expected/actual annotation class
+}
 
 fun getGenericTestIcon(
     declaration: KtNamedDeclaration,
@@ -54,12 +48,9 @@ fun getGenericTestIcon(
 ): Icon? {
     val locations = initialLocations()?.toMutableList() ?: return null
 
-    // fast check if `kotlin.test.Test` is available in a module scope
-    declaration.isClassAvailableInModule(
-        GENERIC_KOTLIN_TEST_AVAILABLE_KEY,
-        GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE,
-        GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITH_TEST_SCOPE
-    )?.takeUnless { it }?.let { return null }
+    if (!isFrameworkAvailable<KotlinTestAvailabilityChecker>(declaration)) {
+        return null
+    }
 
     val clazz = when (declaration) {
         is KtClassOrObject -> declaration
