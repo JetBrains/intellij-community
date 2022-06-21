@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
@@ -25,7 +26,7 @@ public interface TaskCancellation {
   }
 
   /**
-   * @return an object, which means that the "Cancel" button should not be displayed in the UI
+   * @return a cancellation instance, which means that the cancel button should not be displayed in the UI
    */
   @Contract(pure = true)
   static @NotNull TaskCancellation nonCancellable() {
@@ -33,8 +34,11 @@ public interface TaskCancellation {
   }
 
   /**
-   * @return an object, which means that the "Cancel" button should be displayed in the UI,
-   * with optionally customized button text and/or tooltip text
+   * The returned instance can optionally be customized with button text and/or tooltip text.
+   * If {@link Cancellable#withButtonText the button text} is not specified,
+   * then {@link CommonBundle#getCancelButtonText the default text} is used.
+   *
+   * @return a cancellation instance, which means that the cancel button should be displayed in the UI
    */
   @Contract(pure = true)
   static @NotNull Cancellable cancellable() {

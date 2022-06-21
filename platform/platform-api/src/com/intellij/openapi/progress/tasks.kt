@@ -64,7 +64,7 @@ suspend fun <T> withModalProgressIndicator(
  * The action receives [ProgressSink] in the coroutine context, progress sink updates are reflected in the UI during the action.
  * The indicator is not shown immediately to avoid flickering,
  * i.e. the user won't see anything if the [action] completes within the given timeout.
- * Switches to [org.jetbrains.kotlin.idea.core.util.EDT] are allowed inside the action,
+ * Switches to [com.intellij.openapi.application.EDT] are allowed inside the action,
  * as they are automatically scheduled with the correct modality, which is the newly entered one.
  *
  * @param owner in which frame the progress should be shown
