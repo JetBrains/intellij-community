@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -189,14 +188,12 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
   @Override
   public String getExternalName() {
-    return ReadAction.compute(() -> {
-      WritableRefEntity owner = getOwner();
-      if (owner == null) {
-        LOG.error("No parent class for: " + getName());
-        return null;
-      }
-      return owner.getExternalName() + " " + getName();
-    });
+    WritableRefEntity owner = getOwner();
+    if (owner == null) {
+      LOG.error("No parent class for: " + getName());
+      return null;
+    }
+    return owner.getExternalName() + " " + getName();
   }
 
   @Nullable
