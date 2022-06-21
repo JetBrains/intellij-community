@@ -32,8 +32,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialTask;
@@ -215,7 +215,11 @@ public abstract class AbstractLayoutCodeProcessor {
 
   public void run() {
     if (myFile != null) {
-      runProcessFile(myFile);
+      PsiUtilCore.ensureValid(myFile);
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(myFile);
+      if (virtualFile != null) {
+        runProcessFile(virtualFile);
+      }
       return;
     }
 
@@ -268,10 +272,8 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
 
-  private void runProcessFile(@NotNull final PsiFile file) {
-    PsiUtilCore.ensureValid(file);
-
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+  private void runProcessFile(@NotNull final VirtualFile file) {
+    Document document = FileDocumentManager.getInstance().getDocument(file);
 
     if (document == null) {
       return;
@@ -357,7 +359,10 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   public void runWithoutProgress() throws IncorrectOperationException {
-    new ProcessingTask(new EmptyProgressIndicator()).performFileProcessing(myFile);
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(myFile);
+    if (virtualFile != null) {
+      new ProcessingTask(new EmptyProgressIndicator()).performFileProcessing(virtualFile);
+    }
   }
 
   public boolean processFilesUnderProgress(@NotNull ProgressIndicator indicator) {
@@ -425,7 +430,10 @@ public abstract class AbstractLayoutCodeProcessor {
 
         if (shouldProcessFile(file)) {
           updateIndicatorText(ApplicationBundle.message("bulk.reformat.process.progress.text"), getPresentablePath(myProject, file));
-          DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> performFileProcessing(file));
+          VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
+          if (virtualFile != null) {
+            DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> performFileProcessing(virtualFile));
+          }
         }
       }
 
@@ -436,7 +444,7 @@ public abstract class AbstractLayoutCodeProcessor {
       return ReadAction.compute(() -> file.isWritable() && canBeFormatted(file) && acceptedByFilters(file));
     }
 
-    private void performFileProcessing(@NotNull PsiFile file) {
+    private void performFileProcessing(@NotNull VirtualFile file) {
       // Using the same groupId for several file-processing actions allows undoing [format + optimize imports + rearrange code + cleanup code] in one shot.
       // Using the same groupId for *all* processed files makes this a single undoable action for all processed files.
       // See docs for #setProcessAllFilesAsSingleUndoRedoCommand(boolean)
@@ -444,10 +452,19 @@ public abstract class AbstractLayoutCodeProcessor {
                        ? AbstractLayoutCodeProcessor.this.toString()
                        : AbstractLayoutCodeProcessor.this.toString() + file.hashCode();
       for (AbstractLayoutCodeProcessor processor : myProcessors) {
-        FutureTask<Boolean> writeTask = processor.needsReadActionToPrepareTask() ?
-                                        ReadAction.nonBlocking(() -> processor.prepareTask(file, myProcessChangedTextOnly))
-                                          .executeSynchronously() :
-                                        processor.prepareTask(file, myProcessChangedTextOnly);
+        FutureTask<Boolean> writeTask;
+        if (processor.needsReadActionToPrepareTask()) {
+          writeTask = ReadAction.nonBlocking(() -> {
+              PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+              return psiFile != null ? processor.prepareTask(psiFile, myProcessChangedTextOnly) : null;
+            })
+            .executeSynchronously();
+        }
+        else {
+          PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(file));
+          writeTask = psiFile != null ? processor.prepareTask(psiFile, myProcessChangedTextOnly) : null;
+        }
+        if (writeTask == null) continue;
 
         ProgressIndicatorProvider.checkCanceled();
 
@@ -463,7 +480,7 @@ public abstract class AbstractLayoutCodeProcessor {
       }
     }
 
-    private void checkStop(FutureTask<Boolean> task, PsiFile file) {
+    private void checkStop(FutureTask<Boolean> task, @NotNull VirtualFile file) {
       try {
         if (!task.get() || task.isCancelled()) {
           myStopFormatting = true;
