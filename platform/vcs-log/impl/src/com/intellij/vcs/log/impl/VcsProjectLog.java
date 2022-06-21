@@ -77,7 +77,7 @@ public final class VcsProjectLog implements Disposable {
     VcsLogProjectTabsProperties uiProperties = myProject.getService(VcsLogProjectTabsProperties.class);
     myUiProperties = uiProperties;
     myTabsManager = new VcsLogTabsManager(project, uiProperties, this);
-    myErrorHandler = new VcsProjectLogErrorHandler(myProject, this);
+    myErrorHandler = new VcsProjectLogErrorHandler(this);
 
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1);
     myProject.getMessageBus().connect(myDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
@@ -163,7 +163,7 @@ public final class VcsProjectLog implements Disposable {
   }
 
   @CalledInAny
-  void disposeLog(boolean recreate) {
+  private void disposeLog(boolean recreate) {
     disposeLog(recreate, EmptyRunnable.getInstance());
   }
 
