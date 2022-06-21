@@ -102,7 +102,7 @@ public final class ListSelection<T> {
   }
 
   /**
-   * @return true if selection was performed explicitly (ex: via multiple selection in JTree)
+   * Pass true if selection was performed explicitly (ex: via multiple selection in JTree)
    * <p>
    * Ex: see {@link com.intellij.openapi.vcs.changes.ui.VcsTreeModelData#getListSelectionOrAll(JTree)},
    * that might implicitly expand empty or single selection.

@@ -251,7 +251,7 @@ public final class GitFileUtils {
    * @param project          the project
    * @param root             the vcs root
    * @param revisionOrBranch the revision to find path in or branch
-   * @return the content of file if file is found, null if the file is missing in the revision
+   * @return the content of file if file is found
    * @throws VcsException if there is a problem with running git
    */
   public static byte @NotNull [] getFileContent(@NotNull Project project,
