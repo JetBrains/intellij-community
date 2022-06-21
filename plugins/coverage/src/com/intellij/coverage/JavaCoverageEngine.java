@@ -341,6 +341,9 @@ public class JavaCoverageEngine extends CoverageEngine {
       final Project project = module.getProject();
       if (suite.isModuleChecked(module)) return false;
       suite.checkModule(module);
+      LOG.debug("Going to ask to rebuild project. Module output was [" + outputpath + "] for url [" + compilerModuleExtension.getCompilerOutputUrl() + "]\n" +
+                "Test output was [" + testOutputpath + "] for url [" + compilerModuleExtension.getCompilerOutputUrlForTests() + "] and  suite.isTrackTestFolders() is " + suite.isTrackTestFolders(),
+                new Throwable("trace"));
       final Runnable runnable = () -> {
         final int choice = Messages.showOkCancelDialog(project,
                                                        JavaCoverageBundle.message("project.class.files.are.out.of.date"),
