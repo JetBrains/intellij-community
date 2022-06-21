@@ -15,12 +15,12 @@ public class LoggingErrorHandler implements VcsLogErrorHandler {
   }
 
   @Override
-  public void consume(@Nullable Object source, @NotNull Throwable throwable) {
+  public void handleError(@Nullable Object source, @NotNull Throwable throwable) {
     myLogger.error(throwable);
   }
 
   @Override
-  public void displayFatalErrorMessage(@Nls @NotNull String message) {
+  public void displayMessage(@Nls @NotNull String message) {
     myLogger.error(message);
   }
 }

@@ -53,7 +53,7 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
           val exception = RuntimeException("Index is corrupted")
           thisLogger().error(exception.message, exception, Attachment("VcsLogIndexDiagnosticReport.txt", diffReport))
           index.markCorrupted()
-          errorHandler.consume(this, exception)
+          errorHandler.handleError(this, exception)
         }
       }
     }, thisLogger()::error, EmptyProgressIndicator())

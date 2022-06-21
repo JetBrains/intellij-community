@@ -104,8 +104,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       // so use memory storage (probably leading to out of memory at some point) + no index
 
       LOG.error("Could not delete caches at " + PersistentUtil.LOG_CACHE);
-      myErrorHandler.displayFatalErrorMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE,
-                                                                   ApplicationNamesInfo.getInstance().getFullProductName()));
+      myErrorHandler.displayMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE,
+                                                         ApplicationNamesInfo.getInstance().getFullProductName()));
       myStorage = new InMemoryStorage();
       myIndex = new EmptyIndex();
     }
