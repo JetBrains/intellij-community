@@ -58,39 +58,51 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
   }
 
   override fun paintComponent(g: Graphics) {
-    background?.let {
-      if (isOpaque) {
-        g.color = it
-        g.fillRect(0, 0, width, height)
+    val g2 = g.create() as Graphics2D
+
+    try  {
+      background?.let {
+        if (isOpaque) {
+          g2.color = it
+          g2.fillRect(0, 0, width, height)
+        }
+      }
+
+      if (selectionColor == null || background == selectionColor) {
+        return
+      }
+
+      // Paint selection
+      g2.color = selectionColor
+      GraphicsUtil.setupAAPainting(g2)
+      var rectX = selectionInsets.left
+      val rectY = selectionInsets.top
+      var rectWidth = width - rectX - selectionInsets.right
+      val rectHeight = height - rectY - selectionInsets.bottom
+
+      if (selectionArc == 0 || selectionArcCorners == SelectionArcCorners.ALL) {
+        g2.fillRoundRect(rectX, rectY, rectWidth, rectHeight, selectionArc, selectionArc)
+      } else {
+        g2.clipRect(rectX, rectY, rectWidth, rectHeight)
+        when (selectionArcCorners) {
+          SelectionArcCorners.LEFT -> {
+            rectWidth += selectionArc
+          }
+
+          SelectionArcCorners.RIGHT -> {
+            rectX -= selectionArc
+            rectWidth += selectionArc
+          }
+
+          else -> {
+            throw RuntimeException("No implementation for $selectionArcCorners")
+          }
+        }
+        g2.fillRoundRect(rectX, rectY, rectWidth, rectHeight, selectionArc, selectionArc)
       }
     }
-
-    if (selectionColor == null || background == selectionColor) {
-      return
+    finally {
+      g2.dispose()
     }
-
-    // Paint selection
-    g.color = selectionColor
-    val config = GraphicsUtil.setupAAPainting(g)
-    val rectX = selectionInsets.left
-    val rectY = selectionInsets.top
-    val rectWidth = width - rectX - selectionInsets.right
-    val rectHeight = height - rectY - selectionInsets.bottom
-    g.fillRoundRect(rectX, rectY, rectWidth, rectHeight, selectionArc, selectionArc)
-
-    if (selectionArc != 0) {
-      when (selectionArcCorners) {
-        SelectionArcCorners.LEFT -> {
-          g.fillRect(rectX + rectWidth - selectionArc, rectY, selectionArc, rectHeight)
-        }
-
-        SelectionArcCorners.RIGHT -> {
-          g.fillRect(rectX, rectY, selectionArc, rectHeight)
-        }
-
-        SelectionArcCorners.ALL -> {}
-      }
-    }
-    config.restore()
   }
 }

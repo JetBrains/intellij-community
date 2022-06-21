@@ -788,7 +788,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       myScopeSelectionToolbar.getComponent().setOpaque(false);
       myScopeDetailsPanel.setOpaque(false);
       UIUtil.setOpaqueRecursively(myScopeDetailsPanel, false);
-      myUsagePreviewTitle.setBorder(JBUI.Borders.empty(10, 20, 6, 0));
       myResultsPreviewTable.setBackground(background);
       previewPanel.setBackground(background);
       scopesPanel.setBorder(JBUI.Borders.empty(4, 20));
@@ -808,9 +807,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 0, 0, 1, 0),
         JBUI.Borders.empty(1, 0, 2, 0)));
       scopesPanel.setBorder(JBUI.Borders.empty(3, 5));
-      myUsagePreviewTitle.setBorder(JBUI.Borders.empty(3, 8, 4, 8));
       bottomPanel.setBorder(JBUI.Borders.empty(5));
     }
+    PopupUtil.applyPreviewTitleInsets(myUsagePreviewTitle);
     scrollPane.setBorder(JBUI.Borders.empty());
     add(header.panel, "growx, pushx, wrap");
 

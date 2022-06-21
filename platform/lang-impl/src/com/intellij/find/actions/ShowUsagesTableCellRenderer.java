@@ -81,10 +81,11 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     UsageNode usageNode = (UsageNode)value;
     Usage usage = usageNode == null ? null : usageNode.getUsage();
 
-    Color fileBgColor = getBackgroundColor(isSelected, usage);
+    Color fileBgColor = getBackgroundColor(false, usage);
     Color selectionBg = UIUtil.getListSelectionBackground(true);
     Color selectionFg = UIUtil.getListSelectionForeground(true);
-    Color rowBackground = isSelected ? selectionBg : fileBgColor == null ? list.getBackground() : fileBgColor;
+    Color rowBackground =  fileBgColor == null ? list.getBackground() : fileBgColor;
+    Color rowSelectionBackground = isSelected ? selectionBg : null;
     Color rowForeground = isSelected ? selectionFg : list.getForeground();
 
     if (usageNode == null || usageNode instanceof ShowUsagesAction.StringNode) {
@@ -95,14 +96,14 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       else {
         textChunks.append(((ShowUsagesAction.StringNode)value).getString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
-      return textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
+      return textComponentSpanningWholeRow(textChunks, rowBackground, rowSelectionBackground, rowForeground, column, list);
     }
     if (usage == ((ShowUsagesTable)list).MORE_USAGES_SEPARATOR) {
       SimpleColoredComponent textChunks = new SimpleColoredComponent();
       textChunks.append("...<");
       textChunks.append(FindBundle.message("show.usages.more.usages.label"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       textChunks.append(">...");
-      return textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
+      return textComponentSpanningWholeRow(textChunks, rowBackground, rowSelectionBackground, rowForeground, column, list);
     }
     if (usage == ((ShowUsagesTable)list).USAGES_OUTSIDE_SCOPE_SEPARATOR) {
       String message = UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScope);
@@ -110,13 +111,13 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       textChunks.append("...<");
       textChunks.append(message, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       textChunks.append(">...");
-      return textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
+      return textComponentSpanningWholeRow(textChunks, rowBackground, rowSelectionBackground, rowForeground, column, list);
     }
     if (usage == ((ShowUsagesTable)list).USAGES_FILTERED_OUT_SEPARATOR) {
       ShowUsagesAction.FilteredOutUsagesNode filtered = (ShowUsagesAction.FilteredOutUsagesNode)usageNode;
       SimpleColoredComponent textChunks = new SimpleColoredComponent();
       textChunks.append(filtered.getString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-      JComponent component = textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
+      JComponent component = textComponentSpanningWholeRow(textChunks, rowBackground, rowSelectionBackground, rowForeground, column, list);
       component.setToolTipText(filtered.getTooltip());
       return component;
     }
@@ -142,13 +143,12 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     boolean isOriginUsage = myOriginUsageCheck.test(usage);
     if (isOriginUsage) {
       rowBackground = slightlyDifferentColor(rowBackground);
-      if (fileBgColor != null) {
-        fileBgColor = slightlyDifferentColor(fileBgColor);
-      }
+      rowSelectionBackground = slightlyDifferentColor(rowSelectionBackground);
+      fileBgColor = slightlyDifferentColor(fileBgColor);
       selectionBg = slightlyDifferentColor(selectionBg);
     }
     panel.setForeground(rowForeground);
-    applyBackground(panel, column, rowBackground);
+    applyBackground(panel, column, rowBackground, rowSelectionBackground);
 
     UsagePresentation presentation = usage.getPresentation();
     TextChunk[] text = presentation.getText();
@@ -217,8 +217,11 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     return panel;
   }
 
-  @NotNull
-  private static Color slightlyDifferentColor(@NotNull Color back) {
+  private static Color slightlyDifferentColor(Color back) {
+    if (back == null) {
+      return null;
+    }
+
     return EditorColorsManager.getInstance().isDarkEditor() ?
            ColorUtil.brighter(back, 3) : // dunno, under the dark theme the "brighter,1" doesn't look bright enough so we use 3
            ColorUtil.hackBrightness(back, 1, 1 / 1.05f); // Olga insisted on very-pale almost invisible gray. oh well
@@ -240,6 +243,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
   private static JComponent textComponentSpanningWholeRow(
     @NotNull SimpleColoredComponent chunks,
     Color rowBackground,
+    Color rowSelectionBackground,
     Color rowForeground,
     final int column,
     @NotNull final JTable table
@@ -247,7 +251,9 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     final SimpleColoredComponent component = new SimpleColoredComponent() {
       @Override
       protected void doPaint(Graphics2D g) {
-        int offset = column > 0 && ExperimentalUI.isNewUI() ? -JBUI.CurrentTheme.Popup.Selection.innerInsets().left : 0;
+        int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
+        Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+        int offset = column > 0 && ExperimentalUI.isNewUI() ? -innerInsets.left - leftRightInset : 0;
         int i = 0;
         final TableColumnModel columnModel = table.getColumnModel();
         while (i < column) {
@@ -286,7 +292,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     }
 
     SelectablePanel result = SelectablePanel.wrap(component);
-    applyBackground(result, column, rowBackground);
+    applyBackground(result, column, rowBackground, rowSelectionBackground);
 
     return result;
   }
@@ -335,23 +341,28 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.FILE_GROUP_COL", renderer.getAccessibleContext().getAccessibleName()));
   }
 
-  private static void applyBackground(SelectablePanel panel, int column, Color rowBackground) {
+  private static void applyBackground(SelectablePanel panel, int column, Color rowBackground, Color rowSelectionBackground) {
     if (ExperimentalUI.isNewUI()) {
+      int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
       Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
       switch (column) {
         case CURRENT_ASTERISK_COL: {
           panel.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
           panel.setSelectionArcCorners(SelectablePanel.SelectionArcCorners.LEFT);
+          //noinspection UseDPIAwareInsets
+          panel.setSelectionInsets(new Insets(0, leftRightInset, 0, 0));
           //noinspection UseDPIAwareBorders
-          panel.setBorder(new EmptyBorder(innerInsets.top, innerInsets.left, innerInsets.bottom, 0));
+          panel.setBorder(new EmptyBorder(innerInsets.top, leftRightInset + innerInsets.left, innerInsets.bottom, 0));
           break;
         }
 
         case USAGE_TEXT_COL: {
           panel.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
           panel.setSelectionArcCorners(SelectablePanel.SelectionArcCorners.RIGHT);
+          //noinspection UseDPIAwareInsets
+          panel.setSelectionInsets(new Insets(0, 0, 0, leftRightInset));
           //noinspection UseDPIAwareBorders
-          panel.setBorder(new EmptyBorder(innerInsets.top, 0, innerInsets.bottom, innerInsets.right));
+          panel.setBorder(new EmptyBorder(innerInsets.top, 0, innerInsets.bottom, innerInsets.right + leftRightInset));
           break;
         }
 
@@ -360,11 +371,12 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
           panel.setBorder(new EmptyBorder(innerInsets.top, 0, innerInsets.bottom, 0));
         }
       }
-      panel.setSelectionColor(rowBackground);
+      panel.setBackground(rowBackground);
+      panel.setSelectionColor(rowSelectionBackground);
     }
     else {
       panel.setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
-      panel.setBackground(rowBackground);
+      panel.setBackground(rowSelectionBackground);
     }
   }
 }
