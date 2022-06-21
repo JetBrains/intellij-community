@@ -11,6 +11,7 @@ import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 import com.intellij.util.Processor
@@ -143,28 +144,34 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     def class2 = myFixture.addClass("class AlphaBravoCharlie{}")
 
     def ui = createTestUI([
-            ChooseByNameTest.createClassContributor(project, testRootDisposable),
-            GotoActionTest.createActionContributor(project, testRootDisposable),
-            new TopHitSEContributor(project, null, null)
+      ChooseByNameTest.createClassContributor(project, testRootDisposable),
+      GotoActionTest.createActionContributor(project, testRootDisposable),
+      new TopHitSEContributor(project, null, null)
     ])
 
     def actions = ["ia1": action1, "ia2": action2]
     def actionManager = ActionManager.getInstance()
     def abbreviationManager = AbbreviationManager.getInstance()
-    actions.each {actionManager.registerAction(it.key, it.value)}
+    actions.each { actionManager.registerAction(it.key, it.value) }
     try {
       def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "bravo")
       def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "bravo")
+
+      // filter out occasional matches in IDE actions
+      def testElements = [action1, action2, matchedAction1, matchedAction2, class1, class2] as Set
+
       def future = ui.findElementsForPattern("bravo")
-      assert waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
+      def bravoResult = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)
+      assert bravoResult.findAll { it in testElements } == [class1, matchedAction1, class2, matchedAction2]
 
       abbreviationManager.register("bravo", "ia2")
       future = ui.findElementsForPattern("bravo")
-      assert waitForFuture(future, SEARCH_TIMEOUT) == [action2, class1, matchedAction1, class2]
+      bravoResult = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)
+      assert bravoResult.findAll { it in testElements } == [action2, class1, matchedAction1, class2]
     }
     finally {
-      actions.each {actionManager.unregisterAction(it.key)}
-      abbreviationManager.removeAllAbbreviations("ia2" )
+      actions.each { actionManager.unregisterAction(it.key) }
+      abbreviationManager.removeAllAbbreviations("ia2")
     }
   }
 
