@@ -48,8 +48,9 @@ class DependencyAnalyzerViewImpl(
 ) : DependencyAnalyzerView {
 
   private val iconsProvider = ExternalSystemIconProvider.getExtension(systemId)
-  private val contributor = DependencyAnalyzerExtension.EP_NAME.extensionList
-    .firstNotNullOf { it.createContributor(project, systemId, parentDisposable) }
+  private val contributor = DependencyAnalyzerExtension.getExtension(systemId)
+    .createContributor(project, parentDisposable)
+
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("DependencyAnalyzerView.backgroundExecutor", 1)
 
   private val dependencyLoadingOperation = AnonymousParallelOperationTrace("DA: Dependency loading")

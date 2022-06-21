@@ -12,38 +12,30 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class UIComponentVirtualFile extends LightVirtualFile implements VirtualFileWithoutContent {
-  private final Content myUi;
+public abstract class UIComponentVirtualFile extends LightVirtualFile implements VirtualFileWithoutContent {
 
-  public UIComponentVirtualFile(@NotNull String name, Content ui) {
+  private final @Nullable Icon myIcon;
+
+  public UIComponentVirtualFile(@NotNull String name, @Nullable Icon icon) {
     super(name);
-    myUi = ui;
+    myIcon = icon;
     putUserData(FileEditorManagerImpl.FORBID_PREVIEW_TAB, true);
   }
 
-  public Content getUi() {
-    return myUi;
-  }
+  public abstract @NotNull Content createContent(@NotNull UIComponentFileEditor editor);
 
   public interface Content {
-    @NotNull
-    JComponent createComponent();
+
+    @NotNull JComponent createComponent();
 
     @Nullable JComponent getPreferredFocusedComponent();
-
-    default @Nullable Icon getIcon() {
-      return null;
-    }
   }
 
   static class UIComponentVirtualFileIconProvider implements FileIconProvider {
     @Override
     public @Nullable Icon getIcon(@NotNull VirtualFile file, int flags, @Nullable Project project) {
       if (file instanceof UIComponentVirtualFile) {
-        return ((UIComponentVirtualFile)file).myUi.getIcon();
+        return ((UIComponentVirtualFile)file).myIcon;
       }
       return null;
     }

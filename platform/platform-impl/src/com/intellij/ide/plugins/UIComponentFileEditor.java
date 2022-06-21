@@ -16,24 +16,26 @@ import java.beans.PropertyChangeListener;
  * @author Konstantin Bulenkov
  */
 public class UIComponentFileEditor extends UserDataHolderBase implements FileEditor {
-  private final UIComponentVirtualFile myFile;
-  private JComponent myComponent;
+  private final @NotNull UIComponentVirtualFile myFile;
+  private final @NotNull UIComponentVirtualFile.Content myUi;
+  private @Nullable JComponent myComponent;
 
   public UIComponentFileEditor(@NotNull UIComponentVirtualFile file) {
     myFile = file;
+    myUi = file.createContent(this);
   }
 
   @Override
   public @NotNull JComponent getComponent() {
     if (myComponent == null) {
-      myComponent = myFile.getUi().createComponent();
+      myComponent = myUi.createComponent();
     }
     return myComponent;
   }
 
   @Override
   public @Nullable JComponent getPreferredFocusedComponent() {
-    return myFile.getUi().getPreferredFocusedComponent();
+    return myUi.getPreferredFocusedComponent();
   }
 
   @Override

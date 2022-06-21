@@ -225,7 +225,7 @@ fun Component.addKeyListener(parentDisposable: Disposable? = null, listener: Key
 }
 
 @Internal
-fun Disposable.whenDisposed(listener: () -> Unit) {
+fun Disposable.whenDisposed(listener: () -> Unit): Disposable = apply {
   Disposer.register(this, Disposable { listener() })
 }
 

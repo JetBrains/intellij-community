@@ -7,6 +7,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.UIComponentFileEditor;
 import com.intellij.ide.plugins.UIComponentVirtualFile;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ShowPluginManagerAction extends AnAction implements DumbAware {
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -43,25 +45,35 @@ public class ShowPluginManagerAction extends AnAction implements DumbAware {
   }
 
   private static void showPluginsInEditor(@NotNull Project project) {
-    UIComponentVirtualFile file = new UIComponentVirtualFile("Plugins", new UIComponentVirtualFile.Content() {
-      PluginManagerConfigurable configurable;
-
-      @Override
-      public @NotNull JComponent createComponent() {
-        configurable = new PluginManagerConfigurable();
-        return PluginsTabFactory.createPluginsPanel(configurable);
-      }
-
-      @Override
-      public @Nullable JComponent getPreferredFocusedComponent() {
-        return configurable.getPreferredFocusedComponent();
-      }
-
-      @Override
-      public Icon getIcon() {
-        return AllIcons.Nodes.Plugin;
-      }
-    });
+    var file = new PluginVirtualFile();
     FileEditorManager.getInstance(project).openFile(file, true);
+  }
+
+  private static class PluginVirtualFile extends UIComponentVirtualFile {
+
+    PluginVirtualFile() {
+      super("Plugins", AllIcons.Nodes.Plugin);
+    }
+
+    @Override
+    public @NotNull Content createContent(@NotNull UIComponentFileEditor editor) {
+      return new ShowPluginManagerAction.Content();
+    }
+  }
+
+  private static class Content implements UIComponentVirtualFile.Content {
+
+    PluginManagerConfigurable configurable;
+
+    @Override
+    public @NotNull JComponent createComponent() {
+      configurable = new PluginManagerConfigurable();
+      return PluginsTabFactory.createPluginsPanel(configurable);
+    }
+
+    @Override
+    public @Nullable JComponent getPreferredFocusedComponent() {
+      return configurable.getPreferredFocusedComponent();
+    }
   }
 }

@@ -9,10 +9,12 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenDependencyAnalyzerExtension : DependencyAnalyzerExtension {
-  override fun createContributor(project: Project, systemId: ProjectSystemId, parentDisposable: Disposable): DependencyAnalyzerContributor? {
-    if (systemId == MavenUtil.SYSTEM_ID) {
-      return MavenDependencyAnalyzerContributor(project)
-    }
-    return null
+
+  override fun isApplicable(systemId: ProjectSystemId): Boolean {
+    return systemId == MavenUtil.SYSTEM_ID
+  }
+
+  override fun createContributor(project: Project, parentDisposable: Disposable): DependencyAnalyzerContributor {
+    return MavenDependencyAnalyzerContributor(project)
   }
 }
