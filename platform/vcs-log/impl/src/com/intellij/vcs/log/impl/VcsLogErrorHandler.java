@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface FatalErrorHandler {
+public interface VcsLogErrorHandler {
   void consume(@Nullable Object source, @NotNull Throwable throwable);
 
   void displayFatalErrorMessage(@Nls @NotNull String message);

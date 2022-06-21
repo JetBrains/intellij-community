@@ -68,8 +68,7 @@ public class VcsLogManager implements Disposable {
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
 
-    MyFatalErrorsHandler fatalErrorsHandler = new MyFatalErrorsHandler();
-    myLogData = new VcsLogData(myProject, logProviders, fatalErrorsHandler, this);
+    myLogData = new VcsLogData(myProject, logProviders, new MyErrorHandler(), this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
@@ -289,7 +288,7 @@ public class VcsLogManager implements Disposable {
     return myDisposed;
   }
 
-  private class MyFatalErrorsHandler implements FatalErrorHandler {
+  private class MyErrorHandler implements VcsLogErrorHandler {
     private final @NotNull IntSet myErrors = IntSets.synchronize(new IntOpenHashSet());
     private final @NotNull AtomicBoolean myIsBroken = new AtomicBoolean(false);
 

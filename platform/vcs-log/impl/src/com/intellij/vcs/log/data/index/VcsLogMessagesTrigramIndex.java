@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -8,7 +8,7 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
@@ -23,10 +23,10 @@ public final class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Voi
 
   public VcsLogMessagesTrigramIndex(@NotNull StorageId storageId,
                                     @Nullable StorageLockContext storageLockContext,
-                                    @NotNull FatalErrorHandler fatalErrorHandler,
+                                    @NotNull VcsLogErrorHandler errorHandler,
                                     @NotNull Disposable disposableParent) throws IOException {
     super(storageId, TRIGRAMS, new TrigramMessageIndexer(), VoidDataExternalizer.INSTANCE,
-          storageLockContext, fatalErrorHandler, disposableParent);
+          storageLockContext, errorHandler, disposableParent);
   }
 
   @Nullable
