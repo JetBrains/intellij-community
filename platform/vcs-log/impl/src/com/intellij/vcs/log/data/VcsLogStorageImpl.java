@@ -246,7 +246,9 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
 
     @Override
-    public boolean isEqual(CommitId val1, CommitId val2) {
+    public boolean isEqual(@Nullable CommitId val1, @Nullable CommitId val2) {
+      if (val1 == val2) return true;
+      if (val1 == null || val2 == null) return false;
       return val1.getHash().equals(val2.getHash()) &&
              myRootsReversed.getInt(val1.getRoot()) == myRootsReversed.getInt(val2.getRoot());
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.Disposable
@@ -167,7 +167,7 @@ class VcsUserKeyDescriptor(private val userRegistry: VcsUserRegistry) : KeyDescr
     return value.hashCode()
   }
 
-  override fun isEqual(val1: VcsUser, val2: VcsUser): Boolean {
+  override fun isEqual(val1: VcsUser?, val2: VcsUser?): Boolean {
     return val1 == val2
   }
 }
