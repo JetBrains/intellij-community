@@ -242,7 +242,7 @@ The plugin supports Kotlin 1.7 and lower.
     <module name="kotlin.jvm-debugger.sequence"/>
     <module name="kotlin.run-configurations.junit"/>
     <module name="kotlin.run-configurations.junit-fe10"/>
-    <module name="kotlin.testng"/>
+    <module name="kotlin.run-configurations.testng"/>
     <module name="kotlin.coverage"/>
     <module name="kotlin.i18n"/>
     <module name="kotlin.git"/>

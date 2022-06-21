@@ -121,7 +121,7 @@ final class KotlinPluginBuilder {
     "kotlin.grazie",
     "kotlin.run-configurations.junit",
     "kotlin.run-configurations.junit-fe10",
-    "kotlin.testng",
+    "kotlin.run-configurations.testng",
     "kotlin.formatter",
     "kotlin.repl",
     "kotlin.git",

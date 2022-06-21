@@ -85,7 +85,7 @@
     <orderEntry type="module" module-name="kotlin.refIndex" exported="" />
     <orderEntry type="module" module-name="kotlin.coverage" exported="" />
     <orderEntry type="module" module-name="kotlin.git" exported="" />
-    <orderEntry type="module" module-name="kotlin.testng" exported="" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.testng" exported="" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit" exported="" />
     <orderEntry type="module" module-name="kotlin.grazie" exported="" />
     <orderEntry type="module" module-name="kotlin.ml-completion" exported="" />

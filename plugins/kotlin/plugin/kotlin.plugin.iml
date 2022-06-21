@@ -97,7 +97,7 @@
     <orderEntry type="module" module-name="kotlin.repl" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.scripting" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.spellchecker" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.testng" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.testng" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.features-trainer" scope="PROVIDED" />
