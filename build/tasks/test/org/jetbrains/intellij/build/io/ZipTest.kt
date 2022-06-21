@@ -238,9 +238,7 @@ class ZipTest {
 
     val zipFile = tempDir.resolve("file.zip")
     writeNewFile(zipFile) { outFileChannel ->
-      ZipArchiveOutputStream(outFileChannel).use { out ->
-        out.dir(dir, "", entryCustomizer = { _, _, _ -> })
-      }
+      ZipArchiveOutputStream(outFileChannel).use { out -> out.dir(dir, "") }
     }
   }
 

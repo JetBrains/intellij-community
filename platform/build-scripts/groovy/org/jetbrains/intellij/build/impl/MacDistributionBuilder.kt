@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
@@ -18,7 +19,10 @@ import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
 import org.jetbrains.intellij.build.io.writeNewFile
-import org.jetbrains.intellij.build.tasks.*
+import org.jetbrains.intellij.build.tasks.NoDuplicateZipArchiveOutputStream
+import org.jetbrains.intellij.build.tasks.dir
+import org.jetbrains.intellij.build.tasks.entry
+import org.jetbrains.intellij.build.tasks.executableFileUnixMode
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -421,9 +425,9 @@ private fun buildMacZip(targetFile: Path,
       val fs = targetFile.fileSystem
       val patterns = executableFilePatterns.map { fs.getPathMatcher("glob:$it") }
 
-      val entryCustomizer: EntryCustomizer = { entry, file, relativeFile ->
+      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativeFile ->
         when {
-          patterns.any { it.matches(relativeFile) } -> entry.unixMode = executableFileUnixMode
+          patterns.any { it.matches(Path.of(relativeFile)) } -> entry.unixMode = executableFileUnixMode
           SystemInfo.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions (file) -> {
             errorsConsumer("Executable permissions of $relativeFile won't be set in $targetFile. " +
                            "Please make sure that executable file patterns are updated.")
@@ -437,10 +441,9 @@ private fun buildMacZip(targetFile: Path,
 
           zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson.encodeToByteArray())
 
-          val fileFilter: (Path, Path) -> Boolean = { sourceFile, relativeFile ->
-            val path = relativeFile.toString()
-            if (path.endsWith(".txt") && !path.contains('/')) {
-              zipOutStream.entry("$zipRoot/Resources/${FileUtilRt.toSystemIndependentName(path)}", sourceFile)
+          val fileFilter: (Path, String) -> Boolean = { sourceFile, relativePath ->
+            if (relativePath.endsWith(".txt") && !relativePath.contains('/')) {
+              zipOutStream.entry("$zipRoot/Resources/${FileUtilRt.toSystemIndependentName(relativePath)}", sourceFile)
               false
             }
             else {

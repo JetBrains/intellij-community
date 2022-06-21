@@ -71,12 +71,10 @@ fun consumeDataByPrefix(file: Path, prefixWithEndingSlash: String, consumer: BiC
   }
 }
 
-typealias EntryCustomizer = (entry: ZipArchiveEntry, file: Path, relativeFile: Path) -> Unit
-
 fun ZipArchiveOutputStream.dir(startDir: Path,
-                                        prefix: String,
-                                        fileFilter: ((sourceFile: Path, relativeFile: Path) -> Boolean)? = null,
-                                        entryCustomizer: EntryCustomizer) {
+                               prefix: String,
+                               fileFilter: ((sourceFile: Path, relativePath: String) -> Boolean)? = null,
+                               entryCustomizer: ((entry: ZipArchiveEntry, sourceFile: Path, relativePath: String) -> Unit)? = null) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
   val tempList = ArrayList<Path>()
@@ -115,14 +113,14 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
       else {
         assert(attributes.isRegularFile)
 
-        val relativeFile = startDir.relativize(file)
-        if (fileFilter != null && !fileFilter(file, relativeFile)) {
+        val relativePath = FileUtilRt.toSystemIndependentName(startDir.relativize(file).toString())
+        if (fileFilter != null && !fileFilter(file, relativePath)) {
           continue
         }
 
-        val entry = ZipArchiveEntryAssertName(prefix + FileUtilRt.toSystemIndependentName(relativeFile.toString()))
+        val entry = ZipArchiveEntryAssertName(prefix + relativePath)
         entry.size = attributes.size()
-        entryCustomizer(entry, file, relativeFile)
+        entryCustomizer?.invoke(entry, file, relativePath)
         writeFileEntry(file, entry, this)
       }
     }

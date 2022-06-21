@@ -18,6 +18,7 @@ import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import kotlinx.collections.immutable.toImmutableSet
 import org.apache.commons.compress.archivers.zip.Zip64Mode
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
@@ -1032,7 +1033,6 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
   val dependenciesFile = copyDependenciesFile(context)
   crossPlatformZip(
     macX64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.x64 }.outDir,
-    macAarch64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir,
     linuxX64DistDir = distDirs.first { it.os == OsFamily.LINUX && it.arch == JvmArchitecture.x64 }.outDir,
     winX64DistDir = distDirs.first { it.os == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir,
     targetFile = targetFile,
@@ -1086,7 +1086,6 @@ internal fun getLinuxFrameClass(context: BuildContext): String {
 }
 
 private fun crossPlatformZip(macX64DistDir: Path,
-                             macAarch64DistDir: Path,
                              linuxX64DistDir: Path,
                              winX64DistDir: Path,
                              targetFile: Path,
@@ -1165,67 +1164,42 @@ private fun crossPlatformZip(macX64DistDir: Path,
       }
 
       val extraExecutablesSet = java.util.Set.copyOf(macExtraExecutables + linuxExtraExecutables)
-      val entryCustomizer: EntryCustomizer = { entry, _, relativeFile ->
-        if (extraExecutablesSet.contains(relativeFile.toString())) {
+      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, _, relativePath ->
+        if (extraExecutablesSet.contains(relativePath)) {
           entry.unixMode = executableFileUnixMode
         }
       }
 
-      out.dir(startDir = distAllDir, prefix = "", fileFilter = { _, relativeFile ->
-        relativeFile.toString() != "bin/idea.properties"
-      }, entryCustomizer = entryCustomizer)
+      val commonFilter: (String) -> Boolean = { relPath ->
+        !relPath.startsWith("bin/fsnotifier") &&
+        !relPath.startsWith("bin/repair") &&
+        !relPath.startsWith("bin/restart") &&
+        !relPath.startsWith("bin/printenv") &&
+        !(relPath.startsWith("bin/") && (relPath.endsWith(".sh") || relPath.endsWith(".vmoptions")) && relPath.count { it == '/' } == 1) &&
+        relPath != "bin/idea.properties" &&
+        !relPath.startsWith("help/")
+      }
 
       val zipFiles = LinkedHashMap<String, Path>()
-      out.dir(startDir = macX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
-        val p = relativeFile.toString().replace('\\', '/')
-        !p.startsWith("bin/fsnotifier") &&
-        !p.startsWith("bin/repair") &&
-        !p.startsWith("bin/restarter") &&
-        !p.startsWith("bin/printenv") &&
-        p != "bin/idea.properties" &&
-        !(p.startsWith("bin/") && (p.endsWith(".sh") || p.endsWith(".vmoptions"))) &&
-        // do not copy common files, error if they are different
-        filterFileIfAlreadyInZip(p, macX64DistDir.resolve(p), zipFiles)
+
+      out.dir(distAllDir, "", fileFilter = { _, relPath -> relPath != "bin/idea.properties" }, entryCustomizer = entryCustomizer)
+
+      out.dir(macX64DistDir, "", fileFilter = { _, relPath ->
+        commonFilter.invoke(relPath) &&
+        filterFileIfAlreadyInZip(relPath, macX64DistDir.resolve(relPath), zipFiles)
       }, entryCustomizer = entryCustomizer)
 
-      out.dir(startDir = macAarch64DistDir, prefix = "", fileFilter = { _, relativeFile ->
-        val p = relativeFile.toString().replace('\\', '/')
-        !p.startsWith("bin/fsnotifier") &&
-        !p.startsWith("bin/repair") &&
-        !p.startsWith("bin/restarter") &&
-        !p.startsWith("bin/printenv") &&
-        p != "bin/idea.properties" &&
-        !(p.startsWith("bin/") && (p.endsWith(".sh") || p.endsWith(".vmoptions"))) &&
-        // do not copy common files, error if they are different
-        filterFileIfAlreadyInZip(p, macAarch64DistDir.resolve(p), zipFiles)
-      }, entryCustomizer = entryCustomizer)
-
-      out.dir(startDir = linuxX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
-        val p = relativeFile.toString().replace('\\', '/')
-        !p.startsWith("bin/fsnotifier") &&
-        !p.startsWith("bin/repair") &&
-        !p.startsWith("bin/printenv") &&
-        !p.startsWith("help/") &&
-        p != "bin/idea.properties" &&
-        !(p.startsWith("bin/") && listOf(".sh", ".vmoptions", ".py").any { p.endsWith(it) } && p.count { it == '/' } == 1) &&
-        // do not copy common files, error if they are different
-        filterFileIfAlreadyInZip(p, linuxX64DistDir.resolve(p), zipFiles)
+      out.dir(linuxX64DistDir, "", fileFilter = { _, relPath ->
+        commonFilter.invoke(relPath) &&
+        filterFileIfAlreadyInZip(relPath, linuxX64DistDir.resolve(relPath), zipFiles)
       }, entryCustomizer = entryCustomizer)
 
       val winExcludes = distFiles.mapTo(HashSet(distFiles.size)) { "${it.value}/${it.key.fileName}" }
-      out.dir(startDir = winX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
-        val p = relativeFile.toString().replace('\\', '/')
-        !p.startsWith("bin/fsnotifier") &&
-        !p.startsWith("bin/repair") &&
-        !p.startsWith("bin/printenv") &&
-        !p.startsWith("help/") &&
-        p != "bin/idea.properties" &&
-        p != "build.txt" &&
-        !(p.startsWith("bin/") && p.endsWith(".exe.vmoptions")) &&
-        !(p.startsWith("bin/$executableName") && p.endsWith(".exe")) &&
-        !winExcludes.contains(p) &&
-        // do not copy common files, error if they are different
-        filterFileIfAlreadyInZip(p, winX64DistDir.resolve(p), zipFiles)
+      out.dir(winX64DistDir, "", fileFilter = { _, relPath ->
+        commonFilter.invoke(relPath) &&
+        !(relPath.startsWith("bin/${executableName}") && relPath.endsWith(".exe")) &&
+        !winExcludes.contains(relPath) &&
+        filterFileIfAlreadyInZip(relPath, winX64DistDir.resolve(relPath), zipFiles)
       }, entryCustomizer = entryCustomizer)
     }
   }
