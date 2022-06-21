@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -41,9 +42,6 @@ import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJavaFile {
@@ -537,10 +535,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (virtualFile == null) virtualFile = getViewProvider().getVirtualFile();
 
     String sourceLevel = null;
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(virtualFile.getInputStream(), StandardCharsets.UTF_8))) {
-      String line = reader.readLine();
-      if (line != null && line.startsWith("#!")) {
-        List<String> params = ParametersListUtil.parse(line);
+    try {
+      CharSequence contents = getViewProvider().getContents();
+      int lineBound = Strings.indexOf(contents, "\n");
+      CharSequence line = lineBound > 0 ? contents.subSequence(0, lineBound) : contents;
+      if (Strings.startsWith(line, 0,"#!")) {
+        List<String> params = ParametersListUtil.parse(line.toString());
         int srcIdx = params.indexOf("--source");
         if (srcIdx > 0 && srcIdx + 1 < params.size()) {
           sourceLevel = params.get(srcIdx + 1);
