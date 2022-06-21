@@ -6,3 +6,5 @@ interface T : A
 open class Y : X()
 
 class Z : Y(), T
+
+interface W : Y(), T
