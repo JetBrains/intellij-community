@@ -1,0 +1,6 @@
+<idea-plugin>
+<extensions defaultExtensionNs="com.intellij.properties">
+  <implicitPropertyUsageProvider
+    implementation="com.intellij.execution.junit2.inspection.JunitImplicitPropertyUsageProvider"/>
+</extensions>
+</idea-plugin>
