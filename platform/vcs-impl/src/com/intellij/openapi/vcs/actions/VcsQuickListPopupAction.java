@@ -87,6 +87,11 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
       }
       return actions.toList().toArray(EMPTY_ARRAY);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   public final static class VcsNameSeparator extends ActionGroup implements DumbAware {
@@ -101,6 +106,11 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
       else {
         return EMPTY_ARRAY;
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
@@ -121,6 +131,11 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
         e.getPresentation().setVisible(false);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   public static class NonVcsAware extends DefaultActionGroup implements DumbAware {
@@ -128,6 +143,11 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       e.getPresentation().setVisible(project != null && !isUnderVcs(project));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }
