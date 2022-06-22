@@ -25,9 +25,9 @@
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
   <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="intellij.groovy.duplicates.xml">com.intellij.modules.ultimate</depends>
+  <depends optional="true" config-file="duplicates-groovy.xml">com.intellij.modules.ultimate</depends>
   <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="intellij.groovy.duplicatesDetection.xml">com.intellij.modules.duplicatesDetector</depends>
+  <depends optional="true" config-file="duplicates-detection-groovy.xml">com.intellij.modules.duplicatesDetector</depends>
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="groovy-structural-search.xml">com.intellij.modules.structuralsearch</depends>
   <depends optional="true" config-file="spock-support.xml">JUnit</depends>
