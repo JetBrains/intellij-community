@@ -17,6 +17,7 @@ package com.intellij.unscramble;
 
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -49,5 +50,10 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent event) {
     event.getPresentation().setEnabled(event.getProject() != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

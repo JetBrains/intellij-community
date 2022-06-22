@@ -19,6 +19,7 @@
  */
 package com.intellij.tools;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,6 +46,11 @@ import java.util.Set;
 @SuppressWarnings("HardCodedStringLiteral")
 public class ScanSourceCommentsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ScanSourceCommentsAction.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
