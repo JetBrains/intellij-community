@@ -3,6 +3,9 @@ package com.intellij.testFramework;
 
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 public class LoggedErrorProcessor {
   private static LoggedErrorProcessor ourInstance = new LoggedErrorProcessor();
@@ -27,6 +30,26 @@ public class LoggedErrorProcessor {
     finally  {
       setNewInstance(oldInstance);
     }
+  }
+
+  /**
+   * Runs {@code runnable} and return the exception which was logged from it. Report failures if no errors or more than one error were logged.
+   */
+  public static @NotNull Throwable executeAndReturnLoggedError(@NotNull Runnable runnable) {
+    AtomicReference<Throwable> error = new AtomicReference<>();
+    executeWith(new LoggedErrorProcessor() {
+      @Override
+      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
+        Assert.assertNotNull("Unexpected error without Throwable: " + message, t);
+        if (!error.compareAndSet(null, t)) {
+          Assert.fail("Multiple errors were reported: " + error.get().getMessage() + " and " + t.getMessage());
+        }
+        return false;
+      }
+    }, () -> runnable.run());
+    Throwable result = error.get();
+    Assert.assertNotNull("No errors were logged", result);
+    return result;
   }
 
   /**

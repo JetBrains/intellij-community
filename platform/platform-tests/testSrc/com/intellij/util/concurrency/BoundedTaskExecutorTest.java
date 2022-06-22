@@ -14,7 +14,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -461,15 +460,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testErrorsThrownInFiredAndForgottenTaskMustBeLogged() {
     ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(),AppExecutorUtil.getAppExecutorService(), 1);
-    List<Throwable> errors = Collections.synchronizedList(new ArrayList<>());
-    LoggedErrorProcessor processor = new LoggedErrorProcessor() {
-      @Override
-      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
-        errors.add(t);
-        return false;
-      }
-    };
-    LoggedErrorProcessor.executeWith(processor, () -> {
+    Throwable error = LoggedErrorProcessor.executeAndReturnLoggedError(() -> {
       try {
         AtomicBoolean executed = new AtomicBoolean();
         executor.execute(() -> {
@@ -482,12 +473,12 @@ public class BoundedTaskExecutorTest extends TestCase {
         });
         while (!executed.get()) {}
         TimeoutUtil.sleep(100); // that tiny moment between throwing new Error() and catching it in BoundedTaskExecutor.wrapAndExecute()
-        assertTrue(errors.toString(), errors.stream().anyMatch(t -> ("error " + getName()).equals(t.getMessage())));
       }
       finally {
         executor.shutdownNow();
       }
     });
+    assertEquals("error " + getName(), error.getMessage());
   }
 
   public void testSeveralWaitAllTasksExecutedDontCauseDeadlock() throws Throwable {

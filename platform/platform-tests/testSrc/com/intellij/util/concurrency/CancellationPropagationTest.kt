@@ -366,17 +366,11 @@ class CancellationPropagationTest {
           }
         }
       }
-      val expectedThrowableProcessor = object : LoggedErrorProcessor() {
-        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
-          assertNotNull(t, "Unexpected error: $message")
-          assertInstanceOf(throwable::class.java, t)
-          return false
-        }
-      }
-      LoggedErrorProcessor.executeWith(expectedThrowableProcessor, ThrowableRunnable {
+      val error = LoggedErrorProcessor.executeAndReturnLoggedError(Runnable {
         val future = service.scheduleWithFixedDelay(runnable, 10, 10, TimeUnit.NANOSECONDS)
         waitAssertCompletedWith(future, throwable::class)
       })
+      assertInstanceOf(throwable::class.java, error)
     }
     rootJob.join()
     val ce = assertThrows<CancellationException> {
