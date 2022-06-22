@@ -14,70 +14,40 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.createNameForChangeList
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import java.awt.Component
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
-import javax.swing.*
-import javax.swing.border.CompoundBorder
+import java.awt.Dimension
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPanel
 
-abstract class NewEditChangelistPanel(protected val myProject: Project) : JPanel(GridBagLayout()) {
+abstract class NewEditChangelistPanel(protected val myProject: Project) : Wrapper() {
   private val nameTextField: EditorTextField
+  private val nameComponent: ComponentWithTextFieldWrapper
   @JvmField
   protected val descriptionTextArea: EditorTextField
-  private val additionalControlsPanel: JPanel
+  private val additionalControlsPanel: JPanel = JPanel(null)
   val makeActiveCheckBox: JCheckBox
-  private val consumers: MutableList<Consumer<LocalChangeList>> = ArrayList()
+  private val consumers: MutableList<Consumer<LocalChangeList>> = mutableListOf()
 
   init {
-    val gb = GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                JBUI.insets(1), 0, 0)
-    val nameLabel = JLabel(VcsBundle.message("edit.changelist.name"))
-    add(nameLabel, gb)
-    ++gb.gridx
-    gb.fill = GridBagConstraints.HORIZONTAL
-    gb.weightx = 1.0
-    val componentWithTextField = createComponentWithTextField(myProject)
-    nameTextField = componentWithTextField.editorTextField
+    nameComponent = createComponentWithTextField(myProject)
+    nameTextField = nameComponent.editorTextField
     nameTextField.setOneLineMode(true)
     val generateUniqueName = createNameForChangeList(myProject, VcsBundle.message("changes.new.changelist"))
     nameTextField.text = generateUniqueName
     nameTextField.selectAll()
-    add(componentWithTextField.myComponent, gb)
-    nameLabel.labelFor = nameTextField
-    ++gb.gridy
-    gb.gridx = 0
-    gb.weightx = 0.0
-    gb.fill = GridBagConstraints.NONE
-    gb.anchor = GridBagConstraints.NORTHWEST
-    val commentLabel = JLabel(VcsBundle.message("edit.changelist.description"))
-    UIUtil.addInsets(commentLabel, JBUI.insetsRight(4))
-    add(commentLabel, gb)
-    ++gb.gridx
-    gb.weightx = 1.0
-    gb.weighty = 1.0
-    gb.fill = GridBagConstraints.BOTH
-    gb.insets = JBUI.insetsTop(2)
     descriptionTextArea = createEditorField(myProject, 4)
     descriptionTextArea.setOneLineMode(false)
-    add(descriptionTextArea, gb)
-    commentLabel.labelFor = descriptionTextArea
-    gb.insets = JBUI.insetsTop(0)
-    ++gb.gridy
-    gb.gridx = 0
-    gb.gridwidth = 2
-    gb.weighty = 0.0
-    additionalControlsPanel = JPanel()
-    val layout = BoxLayout(additionalControlsPanel, BoxLayout.X_AXIS)
-    additionalControlsPanel.layout = layout
     makeActiveCheckBox = JCheckBox(VcsBundle.message("new.changelist.make.active.checkbox"))
-    makeActiveCheckBox.border = JBUI.Borders.emptyRight(4)
     additionalControlsPanel.add(makeActiveCheckBox)
-    add(additionalControlsPanel, gb)
   }
 
   open fun init(initial: LocalChangeList?) {
@@ -92,11 +62,46 @@ abstract class NewEditChangelistPanel(protected val myProject: Project) : JPanel
       }
     })
     nameChangedImpl(myProject, initial)
+    setContent(buildMainPanel())
+    validate()
+    repaint()
   }
+
+  private fun buildMainPanel() = panel {
+    row(VcsBundle.message("edit.changelist.name")) {
+      cell(nameComponent.myComponent)
+        .resizableColumn()
+        .horizontalAlign(HorizontalAlign.FILL)
+        .applyToComponent {
+          putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(3))
+        }
+    }.bottomGap(BottomGap.SMALL)
+
+    row {
+      label(VcsBundle.message("edit.changelist.description"))
+        .verticalAlign(VerticalAlign.TOP)
+        .gap(RightGap.SMALL)
+
+      cell(descriptionTextArea)
+        .resizableColumn()
+        .horizontalAlign(HorizontalAlign.FILL)
+        .verticalAlign(VerticalAlign.FILL)
+    }.resizableRow()
+      .layout(RowLayout.PARENT_GRID)
+      .bottomGap(BottomGap.SMALL)
+
+    row {
+      additionalControlsPanel.components.forEach {
+        cell(it as JComponent)
+      }
+    }
+  }
+
+
 
   protected open fun nameChangedImpl(project: Project?, initial: LocalChangeList?) {
     val name = changeListName
-    if (name == null || name.isBlank()) {
+    if (name.isBlank()) {
       nameChanged(VcsBundle.message("new.changelist.empty.name.error"))
     }
     else if ((initial == null || name != initial.name) && ChangeListManager.getInstance(
@@ -138,7 +143,7 @@ abstract class NewEditChangelistPanel(protected val myProject: Project) : JPanel
     }
   }
 
-  protected abstract class ComponentWithTextFieldWrapper(val myComponent: Component) {
+  protected abstract class ComponentWithTextFieldWrapper(val myComponent: JComponent) {
     abstract val editorTextField: EditorTextField
   }
 
