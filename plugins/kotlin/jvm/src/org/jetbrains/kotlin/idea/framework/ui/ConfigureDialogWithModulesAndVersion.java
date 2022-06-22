@@ -32,6 +32,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
@@ -153,7 +154,7 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
     }
 
     @NotNull
-        public static Collection<String> loadVersions(String minimumVersion) throws Exception {
+        public static Collection<String> loadVersions(String minimumVersion) throws IOException {
         List<String> versions = new ArrayList<>();
 
         IdeKotlinVersion kotlinCompilerVersion = KotlinPluginLayout.getStandaloneCompilerVersion();
