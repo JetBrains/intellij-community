@@ -29,7 +29,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
       AtomicInteger max = new AtomicInteger();
       AtomicInteger executed = new AtomicInteger();
       int N = 10000;
-      ScheduledFuture[] futures = new ScheduledFuture[N];
+      ScheduledFuture<?>[] futures = new ScheduledFuture[N];
       for (int i = 0; i < N; i++) {
         futures[i] = executor.schedule(() -> {
           int r = running.incrementAndGet();
@@ -43,7 +43,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
           }
         }, i%10, TimeUnit.MILLISECONDS);
       }
-      for (ScheduledFuture future : futures) {
+      for (ScheduledFuture<?> future : futures) {
         future.get();
       }
       assertEquals(0, executor.shutdownNow().size());
@@ -55,7 +55,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
 
   @NotNull
   private BoundedScheduledExecutorService createBoundedScheduledExecutor(@NotNull ExecutorService backendExecutor, int maxTasks) {
-    return new BoundedScheduledExecutorService(getName(), backendExecutor, maxTasks);
+    return new BoundedScheduledExecutorService("Running "+getName(), backendExecutor, maxTasks);
   }
 
   public void testSubmitsAreReallyBound() throws InterruptedException, ExecutionException {
@@ -67,7 +67,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
       AtomicInteger max = new AtomicInteger();
       AtomicInteger executed = new AtomicInteger();
       int N = 10000;
-      Future[] futures = new Future[N];
+      Future<?>[] futures = new Future[N];
       for (int i = 0; i < N; i++) {
         futures[i] = executor.submit(() -> {
           int r = running.incrementAndGet();
@@ -81,7 +81,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
           }
         });
       }
-      for (Future future : futures) {
+      for (Future<?> future : futures) {
         future.get();
       }
       assertEquals(0, executor.shutdownNow().size());
@@ -144,7 +144,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
 
       try {
         int N = numberOfFuturesComputer.applyAsInt(maxSimultaneousTasks);
-        Future[] futures = new Future[N];
+        Future<?>[] futures = new Future[N];
         Random random = new Random();
         for (int i = 0; i < N; i++) {
           final int finalI = i;
@@ -174,7 +174,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
           };
           futures[i] = executorScheduler.fun(executor, runnable, i);
         }
-        for (Future future : futures) {
+        for (Future<?> future : futures) {
           future.get();
         }
       }
@@ -193,7 +193,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
     StringBuffer log = new StringBuffer(N*4);
     StringBuilder expected = new StringBuilder(N * 4);
 
-    Future[] futures = new Future[N];
+    Future<?>[] futures = new Future[N];
     for (int i = 0; i < N; i++) {
       final int finalI = i;
       //noinspection StringConcatenationInsideStringBufferAppend
@@ -216,7 +216,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);
 
-    Future[] futures = new Future[N];
+    Future<?>[] futures = new Future[N];
     for (int i = 0; i < N; i++) {
       futures[i] = executor.schedule(() -> log.append(" "), 10, TimeUnit.SECONDS);
     }
@@ -251,7 +251,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);
 
-    Future[] futures = new Future[N];
+    Future<?>[] futures = new Future[N];
     for (int i = 0; i < N; i++) {
       futures[i] = executor.schedule(() -> log.append(" "), 10, TimeUnit.SECONDS);
     }
@@ -285,7 +285,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
       int N = 100000;
       StringBuffer log = new StringBuffer(N*4);
 
-      Future[] futures = new Future[N];
+      Future<?>[] futures = new Future[N];
       for (int i = 0; i < N; i++) {
         futures[i] = executor.submit(() -> log.append(" "));
       }
@@ -294,9 +294,9 @@ public class BoundedScheduledExecutorTest extends TestCase {
 
       String logs = log.toString();
       assertEquals(N, logs.length());
-      for (Future future : futures) {
+      for (Future<?> future : futures) {
         assertTrue(future.isDone());
-        assertTrue(!future.isCancelled());
+        assertFalse(future.isCancelled());
       }
     }
   }
