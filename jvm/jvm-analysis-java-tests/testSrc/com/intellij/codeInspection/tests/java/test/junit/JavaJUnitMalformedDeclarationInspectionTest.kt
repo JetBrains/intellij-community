@@ -37,7 +37,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     myFixture.testHighlighting(ULanguage.JAVA, """
       class A {
         @org.junit.jupiter.api.Nested
-        static class <warning descr="Only non-static nested classes can serve as '@Nested' test classes.">B</warning> { }
+        static class <warning descr="Only non-static nested classes can serve as '@Nested' test classes">B</warning> { }
       }
     """.trimIndent())
   }

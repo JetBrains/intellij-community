@@ -52,7 +52,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.Nested
-        class <warning descr="Only non-static nested classes can serve as '@Nested' test classes.">B</warning> { }
+        class <warning descr="Only non-static nested classes can serve as '@Nested' test classes">B</warning> { }
       }
     """.trimIndent())
   }
@@ -1085,5 +1085,30 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           }
       }
     """.trimIndent(), "Fix 'suite' method signature")
+  }
+
+  /* Suspending test function */
+  fun `test malformed suspending test JUnit 3 function`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class JUnit3Test : junit.framework.TestCase() {
+          suspend fun <warning descr="Method 'testFoo' should not be a suspending function">testFoo</warning>() { }
+      }    
+    """.trimIndent())
+  }
+  fun `test malformed suspending test JUnit 4 function`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class JUnit4Test {
+          @org.junit.Test
+          suspend fun <warning descr="Method 'testFoo' annotated with '@Test' should not be a suspending function">testFoo</warning>() { }
+      }    
+    """.trimIndent())
+  }
+  fun `test malformed suspending test JUnit 5 function`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class JUnit5Test {
+          @org.junit.jupiter.api.Test
+          suspend fun <warning descr="Method 'testFoo' annotated with '@Test' should not be a suspending function">testFoo</warning>() { }
+      }    
+    """.trimIndent())
   }
 }

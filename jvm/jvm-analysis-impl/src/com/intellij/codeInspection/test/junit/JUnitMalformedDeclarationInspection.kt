@@ -11,6 +11,7 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.test.junit.references.MethodSourceReference
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
+import com.intellij.lang.Language
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
@@ -240,6 +241,14 @@ private class JUnitMalformedSignatureVisitor(
     param.javaPsi?.castSafelyTo<PsiParameter>()?.let { AnnotationUtil.isAnnotated(it, ignorableAnnotations, 0) } == true
   }
 
+  private fun checkSuspendFunction(method: UMethod): Boolean {
+    return if (method.lang == Language.findLanguageByID("kotlin") && method.javaPsi.modifierList.text.contains("suspend")) {
+      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.suspend.function.descriptor")
+      holder.registerUProblem(method, message)
+      true
+    } else false
+  }
+
   private fun checkJUnit3Test(method: UMethod) {
     val sourcePsi = method.sourcePsi ?: return
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
@@ -248,8 +257,9 @@ private class JUnitMalformedSignatureVisitor(
     if (!TestUtils.isJUnit3TestMethod(javaMethod.javaPsi)) return
     val containingClass = method.javaPsi.containingClass ?: return
     if (AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY)) return
-    val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.method.no.arg.void.descriptor", "public", "non-static")
+    if (checkSuspendFunction(method)) return
     if (PsiType.VOID != method.returnType || method.visibility != UastVisibility.PUBLIC || javaMethod.isStatic || !method.isNoArg()) {
+      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.method.no.arg.void.descriptor", "public", "non-static")
       return holder.registerUProblem(method, message, MethodSignatureQuickfix(method.name, false, newVisibility = JvmModifier.PUBLIC))
     }
   }
@@ -258,6 +268,7 @@ private class JUnitMalformedSignatureVisitor(
     if ("setUp" != method.name && "tearDown" != method.name) return
     if (!InheritanceUtil.isInheritor(method.javaPsi.containingClass, JUNIT_FRAMEWORK_TEST_CASE)) return
     val sourcePsi = method.sourcePsi ?: return
+    if (checkSuspendFunction(method)) return
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
     val javaMethod = alternatives.firstOrNull { it.isStatic } ?: alternatives.firstOrNull() ?: return
     if (PsiType.VOID != method.returnType || method.visibility == UastVisibility.PRIVATE || javaMethod.isStatic || !method.isNoArg()) {
@@ -273,6 +284,7 @@ private class JUnitMalformedSignatureVisitor(
     if ("suite" != method.name) return
     if (!InheritanceUtil.isInheritor(method.javaPsi.containingClass, JUNIT_FRAMEWORK_TEST_CASE)) return
     val sourcePsi = method.sourcePsi ?: return
+    if (checkSuspendFunction(method)) return
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
     val javaMethod = alternatives.firstOrNull { it.isStatic } ?: alternatives.firstOrNull() ?: return
     if (method.visibility == UastVisibility.PRIVATE || !javaMethod.isStatic || !method.isNoArg()) {
@@ -796,6 +808,13 @@ private class JUnitMalformedSignatureVisitor(
       val problems = modifierProblems(
         visibility, element.visibility, elementIsStatic, javaPsi.containingClass?.let { cls -> TestUtils.testInstancePerClass(cls) } == true
       )
+      if (element.lang == Language.findLanguageByID("kotlin") && element.javaPsi.modifierList.text.contains("suspend")) {
+        val message = JvmAnalysisBundle.message(
+          "jvm.inspections.junit.malformed.annotated.suspend.function.descriptor",
+          annotation.substringAfterLast('.')
+        )
+        return holder.registerUProblem(element, message)
+      }
       if (params != null && params.size != element.uastParameters.size) {
         if (shouldBeVoidType == true && element.returnType != PsiType.VOID) {
           return holder.methodParameterTypeProblem(element, visibility, annotation, problems, PsiType.VOID.name, params)

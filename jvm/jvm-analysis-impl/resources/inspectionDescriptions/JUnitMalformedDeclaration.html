@@ -39,6 +39,9 @@ The following problems are reported by this inspection:
   </li>
 </ul>
 
+Note that in Kotlin, suspending functions do have arguments and a non-void return type. Therefore, they also will not be executed by the
+JUnit test runner. This inspection will also report about this problem.
+
 <p><b>Malformed <code>@Before</code> method example (Java):</b></p>
 <pre><code>@Before private int foo(int arg) { ... } </code></pre>
 <p>After the quick-fix is applied:</p>
