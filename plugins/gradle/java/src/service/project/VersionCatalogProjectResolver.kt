@@ -6,7 +6,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -14,6 +13,7 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.util.castSafelyTo
 import com.intellij.util.io.exists
 import org.gradle.tooling.model.idea.IdeaProject
+import org.jetbrains.plugins.gradle.model.data.VersionCatalogTomlFilesModel
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
@@ -40,20 +40,16 @@ class VersionCatalogProjectResolver : AbstractProjectResolverExtension() {
       if (defaultLibsFile.exists()) {
         val libsValue = mapping["libs"]
         if (libsValue == null) {
-          mapping["libs"] = defaultLibsFile
+          mapping["libs"] = defaultLibsFile.toString()
         }
       }
-      psiFile.putUserData(VERSION_CATALOGS, mapping)
+      ideProject.createChild(VersionCatalogTomlFilesModel.KEY, VersionCatalogTomlFilesModel(mapping))
     }
     super.populateProjectExtraModels(gradleProject, ideProject)
   }
 
-  private fun getGradleSettingsFile(ideProject: DataNode<ProjectData>) : Path {
+  private fun getGradleSettingsFile(ideProject: DataNode<ProjectData>): Path {
     return Path.of(ideProject.data.linkedExternalProjectPath).resolve(GradleConstants.SETTINGS_FILE_NAME)
-  }
-
-  companion object {
-    val VERSION_CATALOGS = Key.create<Map<String, Path>>("gradle version catalogs")
   }
 }
 
@@ -63,7 +59,7 @@ class VersionCatalogProjectResolver : AbstractProjectResolverExtension() {
  */
 private class GradleStructureTracker(val projectRoot: Path) : GroovyRecursiveElementVisitor() {
 
-  val catalogMapping: MutableMap<String, Path> = mutableMapOf()
+  val catalogMapping: MutableMap<String, String> = mutableMapOf()
 
   override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
     val method = methodCallExpression.resolveMethod() ?: return super.visitMethodCallExpression(methodCallExpression)
@@ -77,7 +73,7 @@ private class GradleStructureTracker(val projectRoot: Path) : GroovyRecursiveEle
       }
       val file = resolveDependencyNotation(methodCallExpression.expressionArguments.singleOrNull(), projectRoot)
       if (file != null) {
-        catalogMapping[name] = file
+        catalogMapping[name] = file.toString()
       }
     }
     super.visitMethodCallExpression(methodCallExpression)
