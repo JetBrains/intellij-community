@@ -253,6 +253,7 @@ class MacDistributionBuilder(private val context: BuildContext,
         Pair("vm_options", optionsToXml(launcherVmOptions)),
         Pair("vm_properties", propertiesToXml(launcherProperties, mapOf("idea.executable" to context.productProperties.baseFileName))),
         Pair("class_path", classPath),
+        Pair("main_class_name", context.productProperties.mainClassName.replace('.', '/')),
         Pair("url_schemes", urlSchemesString),
         Pair("architectures", "<key>LSArchitecturePriority</key>\n    <array>\n" +
                               macCustomizer.architectures.joinToString(separator = "\n") { "      <string>$it</string>\n" } +

@@ -42,6 +42,17 @@ abstract class ProductProperties {
   lateinit var applicationInfoModule: String
 
   /**
+   * Enables fast activation of a running IDE instance from the launcher
+   * (at the moment, it is only implemented in the native Windows one).
+   */
+  var fastInstanceActivation = true
+
+  /**
+   * An entry point into application's Java code, usually [com.intellij.idea.Main].
+   */
+  var mainClassName = "com.intellij.idea.Main"
+
+  /**
    * Paths to directories containing images specified by 'logo/@url' and 'icon/@ico' attributes in ApplicationInfo.xml file
    * <br>
    * todo[nik] get rid of this and make sure that these resources are located in {@link #applicationInfoModule} instead

@@ -20,7 +20,6 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
 import org.jetbrains.intellij.build.io.transformFile
-import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -201,6 +200,7 @@ internal class WindowsDistributionBuilder(
         Pair("ide_jvm_args", additionalJvmArguments.joinToString(separator = " ")),
         Pair("class_path", classPath),
         Pair("base_name", baseName),
+        Pair("main_class_name", context.productProperties.mainClassName),
       )
     )
 
@@ -272,6 +272,8 @@ internal class WindowsDistributionBuilder(
         IDS_VM_OPTIONS=${vmOptions.joinToString(separator = " ")}
         IDS_CLASSPATH_LIBS=${classPath}
         IDS_BOOTCLASSPATH_LIBS=${bootClassPath}
+        IDS_INSTANCE_ACTIVATION=${context.productProperties.fastInstanceActivation}
+        IDS_MAIN_CLASS=${context.productProperties.mainClassName.replace('.', '/')}
         """.trimIndent().trim())
 
       val communityHome = context.paths.communityHome

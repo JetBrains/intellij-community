@@ -108,5 +108,5 @@ IF "%VM_OPTIONS_FILE%%USER_VM_OPTIONS_FILE%" == "" (
   "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@base_name@@.hprof" ^
   %IDE_PROPERTIES_PROPERTY% ^
   @@ide_jvm_args@@ ^
-  com.intellij.idea.Main ^
+  @@main_class_name@@ ^
   %*
