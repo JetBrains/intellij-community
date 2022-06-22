@@ -742,9 +742,14 @@
       </group>
     </group>
 
-    <group id="NewToolbarActionsWithoutRight">
-      <reference ref="LeftToolbarSideGroup"/>
-      <group id="RightToolbarSideGroupNoRunWidget">
+    <group id="NewToolbarActionsXamarin">
+      <group id="LeftToolbarSideGroupXamarin">
+        <reference id="Back"/>
+        <reference id="Forward"/>
+        <reference id="SegmentedVcsControlAction"/>
+        <reference id="SearchEverywhereNewToolbarAction"/>
+      </group>
+      <group id="RightToolbarSideGroupXamarin">
         <reference id="ToolbarRunGroup"/>
         <!-- 6px -->
         <reference id="SettingsEntryPoint"/>

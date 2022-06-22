@@ -739,8 +739,8 @@ public final class ActionsTreeUtil {
   }
 
   @Nls
-  public static String getExperimentalToolbarWithoutRunWidget() {
-    return KeyMapBundle.message("experimental.toolbar.without.run.widget.title");
+  public static String getExperimentalToolbarXamarin() {
+    return KeyMapBundle.message("experimental.toolbar.xamarin.title");
   }
 
   @Nls

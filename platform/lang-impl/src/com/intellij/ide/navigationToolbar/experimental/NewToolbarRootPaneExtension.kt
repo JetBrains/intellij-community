@@ -28,7 +28,9 @@ import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Graphics
 import java.util.concurrent.CompletableFuture
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 @FunctionalInterface
 fun interface ExperimentalToolbarStateListener {
@@ -112,8 +114,14 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
 
     val children = toolbarGroup.getChildren(null)
 
-    val leftGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.LeftToolbarSideGroup.text")) }
-    val rightGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text")) }
+    val leftGroup = children.firstOrNull {
+      it.templateText.equals(ActionsBundle.message("group.LeftToolbarSideGroup.text")) || it.templateText.equals(
+        ActionsBundle.message("group.LeftToolbarSideGroupXamarin.text"))
+    }
+    val rightGroup = children.firstOrNull {
+      it.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text")) || it.templateText.equals(
+        ActionsBundle.message("group.RightToolbarSideGroupXamarin.text"))
+    }
     val restGroup = DefaultActionGroup(children.filter { it != leftGroup && it != rightGroup })
 
     val map = mutableMapOf<String, ActionGroup?>()
@@ -133,7 +141,7 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
   }
   else {
-    IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_WITHOUT_RIGHT_PART
+    IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN
   }
 
   private class MyActionToolbarImpl(place: String,
