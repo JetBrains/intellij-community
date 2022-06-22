@@ -115,8 +115,8 @@ private suspend fun ProgressIndicatorEx.updateFromSink(stateFlow: Flow<ProgressS
     if (state.fraction >= 0.0) {
       // first fraction update makes the indicator determinate
       isIndeterminate = false
+      fraction = state.fraction
     }
-    fraction = state.fraction
   }
   error("collect call must be cancelled")
 }
