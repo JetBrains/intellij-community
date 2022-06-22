@@ -43,7 +43,7 @@
     <registryKey key="ide.images.show.grid.only.when.zoom.factor.equal.or.more.than" defaultValue="3" description="Hide grid if zoom factor is less than value"/>
     <registryKey key="ide.images.show.grid.after.every.x.pixels" defaultValue="1" description="Pixels between grid lines"/>
     <registryKey key="ide.images.change.background.action.enabled" defaultValue="false" description="Show action for changing background in the editor toolbar"/>
-    <iconMapper mappingFile="MavenIconMappings.json"/>
+    <iconMapper mappingFile="ImagesIconMappings.json"/>
   </extensions>
 
   <actions>
