@@ -20,7 +20,11 @@ class IdeaJUnit4ExampleTests {
   @Test
   fun openProjectExampleTest() {
     val context = testContextFactory
-      .initializeTestRunner(testName.toPrintableWithClass(this::class), TestCases.IJ.GradleJitPackSimple)
+      .initializeTestRunner(testName.toPrintableWithClass(this::class), TestCases.IC.GradleJitPackSimple)
+      .apply {
+        // TODO: gradle commands plugin isn't published yet on marketplace. TBD
+        pluginConfigurator.setupPluginFromPluginManager("com.jetbrains.performancePlugin.gradle", ide.build)
+      }
       .prepareProjectCleanImport()
       .disableAutoImport()
 

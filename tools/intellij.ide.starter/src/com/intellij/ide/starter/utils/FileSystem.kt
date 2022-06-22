@@ -90,6 +90,7 @@ object FileSystem {
     //project archive may be empty
     Files.createDirectories(targetDir)
     val name = archive.fileName.toString()
+
     try {
       when {
         name.endsWith(".zip") || name.endsWith(".ijx") -> unpackZip(archive, targetDir)
@@ -101,12 +102,14 @@ object FileSystem {
       if (e.message?.contains("No space left on device") == true) {
         val paths by di.instance<GlobalPaths>()
         paths.getDiskUsageDiagnostics()
+
         throw IOException(buildString {
           appendLine("No space left while extracting $archive to $targetDir")
           appendLine(Files.getFileStore(targetDir).getDiskInfo())
           appendLine(paths.getDiskUsageDiagnostics())
         })
       }
+
       throw e
     }
   }
@@ -169,11 +172,12 @@ object FileSystem {
     return output.count
   }
 
-  fun Path.getFileOrDirectoryPresentableSize(): String  {
+  fun Path.getFileOrDirectoryPresentableSize(): String {
     val size: Long
-    if(this.toFile().isFile){
+    if (this.toFile().isFile) {
       size = this.toFile().length()
-    } else{
+    }
+    else {
       size = Files.walk(this).mapToLong { p: Path ->
         if (p.toFile().isFile) {
           p.toFile().length()

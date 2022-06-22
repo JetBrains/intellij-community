@@ -14,6 +14,8 @@ import kotlin.io.path.isRegularFile
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
+// TODO: consider using https://github.com/oshi/oshi for acquiring process info
+
 /**
  * TeamCity may not kill processes started during the build (TW-69045).
  * They stay alive and consume resources after tests.

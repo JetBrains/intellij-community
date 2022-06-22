@@ -8,6 +8,7 @@ import com.intellij.ide.starter.models.IdeProduct
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.path.IDEDataPaths
+import com.intellij.ide.starter.plugins.PluginInstalledState
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.logOutput
 import org.kodein.di.direct
@@ -50,6 +51,15 @@ interface TestContainer<T> : Closeable {
     return di.direct.factory<IdeInfo, IdeInstallator>().invoke(ideInfo).install(ideInfo)
   }
 
+  fun installPerformanceTestingPluginIfMissing(context: IDETestContext, ide: InstalledIDE) {
+    val performancePluginId = "com.jetbrains.performancePlugin"
+
+    context.pluginConfigurator.apply {
+      if (getPluginInstalledState(performancePluginId) != PluginInstalledState.INSTALLED)
+        setupPluginFromPluginManager(performancePluginId, ideBuild = ide.build)
+    }
+  }
+
   /** Starting point to run your test */
   fun initializeTestRunner(testName: String, testCase: TestCase): IDETestContext {
     check(allContexts.none { it.testName == testName }) { "Test $testName is already initialized. Use another name." }
@@ -88,6 +98,9 @@ interface TestContainer<T> : Closeable {
           overrideDirectories(paths)
         }
     }
-    return setupHooks.fold(baseContext.updateGeneralSettings()) { acc, hook -> acc.hook() }
+
+    return setupHooks
+      .fold(baseContext.updateGeneralSettings()) { acc, hook -> acc.hook() }
+      .apply { installPerformanceTestingPluginIfMissing(this, ide) }
   }
 }

@@ -41,7 +41,7 @@ class ReportPublisherTest {
     val ideTestContext = IDETestContext(
       ideDataPaths,
       installedIDE,
-      TestCases.IJ.GradleJitPackSimple,
+      TestCases.IC.GradleJitPackSimple,
       "Test method",
       null,
       patchVMOptions = patchVMOptions,

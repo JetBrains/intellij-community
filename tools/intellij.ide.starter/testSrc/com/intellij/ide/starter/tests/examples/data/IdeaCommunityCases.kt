@@ -5,7 +5,7 @@ import com.intellij.ide.starter.models.IdeProduct
 import com.intellij.ide.starter.project.ProjectInfo
 import kotlin.io.path.div
 
-object IdeaCases : TestCaseTemplate(IdeProduct.IU) {
+object IdeaCommunityCases : TestCaseTemplate(IdeProduct.IC) {
 
   val GradleJitPackSimple = getTemplate().withProject(
     ProjectInfo(

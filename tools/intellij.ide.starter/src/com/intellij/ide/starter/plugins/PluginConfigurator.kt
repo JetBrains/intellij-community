@@ -36,6 +36,8 @@ open class PluginConfigurator(val testContext: IDETestContext) {
     ideBuild: String,
     channel: String? = null,
   ) = apply {
+    logOutput("Setting up plugin: $pluginId ...")
+
     val fileName = pluginId.replace(".", "-") + ".zip"
     val downloadedPlugin = di.direct.instance<GlobalPaths>().getCacheDirectoryFor("plugins") / testContext.ide.build / fileName
     if (!downloadedPlugin.toFile().exists()) {
@@ -53,6 +55,8 @@ open class PluginConfigurator(val testContext: IDETestContext) {
     }
 
     FileSystem.unpack(downloadedPlugin, testContext.paths.pluginsDir)
+
+    logOutput("Plugin $pluginId setup finished")
   }
 
   fun disablePlugins(vararg pluginIds: String) = disablePlugins(pluginIds.toSet())
