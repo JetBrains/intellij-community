@@ -552,7 +552,7 @@ private inline fun filterSourceFilesOnly(name: String, context: BuildContext, co
 
 private fun buildAdditionalArtifacts(projectStructureMapping: ProjectStructureMapping, context: BuildContext) {
   val productProperties = context.productProperties
-  if (productProperties.generateLibrariesLicensesTable &&
+  if (productProperties.generateLibraryLicensesTable &&
       !context.options.buildStepsToSkip.contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
     val artifactNamePrefix = productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     val artifactDir = context.paths.artifactDir

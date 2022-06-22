@@ -1,6 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.createTask
@@ -165,9 +163,9 @@ internal class WindowsDistributionBuilder(
     val vmOptionsFileName = "${baseName}64.exe"
 
     val classPathJars = context.bootClassPathJarNames
-    var classPath = "SET \"CLASS_PATH=%IDE_HOME%\\lib\\${classPathJars.get(0)}\""
+    var classPath = "SET \"CLASS_PATH=%IDE_HOME%\\lib\\${classPathJars[0]}\""
     for (i in 1 until  classPathJars.size) {
-      classPath += "\nSET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\${classPathJars.get(i)}\""
+      classPath += "\nSET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\${classPathJars[i]}\""
     }
 
     var additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS)
@@ -232,6 +230,7 @@ internal class WindowsDistributionBuilder(
       .enumerate()
       .forEach { file ->
         transformFile(file) { target ->
+          @Suppress("BlockingMethodInNonBlockingContext")
           Files.writeString(target, toDosLineEndings(Files.readString(file)))
         }
       }
@@ -261,14 +260,14 @@ internal class WindowsDistributionBuilder(
       Files.writeString(launcherPropertiesPath, """
         IDS_JDK_ONLY=${context.productProperties.toolsJarRequired}
         IDS_JDK_ENV_VAR=${envVarBaseName}_JDK
-        IDS_APP_TITLE=$productName Launcher
+        IDS_APP_TITLE=${productName} Launcher
         IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${context.applicationInfo.shortCompanyName}\\\\${context.systemSelector}
         IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${executableBaseName}_%p.log
         IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${executableBaseName}.hprof
         IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
         IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
         IDS_VM_OPTIONS_ENV_VAR=${envVarBaseName}_VM_OPTIONS
-        IDS_ERROR_LAUNCHING_APP=Error launching $productName
+        IDS_ERROR_LAUNCHING_APP=Error launching ${productName}
         IDS_VM_OPTIONS=${vmOptions.joinToString(separator = " ")}
         IDS_CLASSPATH_LIBS=${classPath}
         IDS_BOOTCLASSPATH_LIBS=${bootClassPath}
