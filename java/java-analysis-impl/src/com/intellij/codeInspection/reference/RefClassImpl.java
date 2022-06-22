@@ -66,13 +66,15 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       parent = UDeclarationKt.getContainingDeclaration(parent);
     }
     final RefManagerImpl manager = getRefManager();
+    boolean utilityClass = true;
     final UClass[] innerClasses = uClass.getInnerClasses();
     for (UClass innerClass : innerClasses) {
       final PsiElement psi = innerClass.getSourcePsi();
       if (psi != null) {
-        final RefElement refInnerClass = manager.getReference(psi);
+        final RefClass refInnerClass = (RefClass)manager.getReference(psi);
         if (refInnerClass !=  null) {
           addChild(refInnerClass);
+          if (!refInnerClass.isStatic()) utilityClass = false;
         }
       }
     }
@@ -117,11 +119,14 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     UMethod[] uMethods = uClass.getMethods();
     UField[] uFields = uClass.getFields();
 
-    boolean utilityClass = uMethods.length > 0 || uFields.length > 0;
-
+    boolean memberSeen = false;
     for (UField uField : uFields) {
       final RefField field = ObjectUtils.tryCast(getRefManager().getReference(uField.getSourcePsi()), RefField.class);
-      if (field != null) addChild(field);
+      if (field != null) {
+        memberSeen = true;
+        addChild(field);
+        if (!uField.isStatic() || uField instanceof UEnumConstant) utilityClass = false;
+      }
     }
     RefMethod varargConstructor = null;
     boolean constructorSeen = false;
@@ -148,21 +153,17 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
           }
         }
         else {
-          if (!uMethod.isStatic()) {
-            utilityClass = false;
-          }
-        }
-      }
-    }
-    if (!isInterface()) {
-      for (int i = 0; i < uFields.length && utilityClass; i++) {
-        if (!uFields[i].isStatic()) {
-          utilityClass = false;
+          memberSeen = true;
+          if (!uMethod.isStatic()) utilityClass = false;
         }
       }
     }
 
-    if (!utilityClass) {
+    if (!memberSeen || uClass.isInterface() || psiClass.isRecord() || psiClass instanceof PsiAnonymousClass) {
+      utilityClass = false;
+    }
+    if (!utilityClass && psiClass.getLanguage().isKindOf("kotlin")) {
+      // Kotlin companion object is singleton
       utilityClass = ClassUtils.isSingleton(psiClass);
     }
 
@@ -625,6 +626,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   private static boolean isKindOfJvmLanguage(@NotNull Language language) {
-    return Language.findInstance(JvmMetaLanguage.class).getMatchingLanguages().stream().anyMatch(language::is);
+    return ContainerUtil.exists(Language.findInstance(JvmMetaLanguage.class).getMatchingLanguages(), language::is);
   }
 }
