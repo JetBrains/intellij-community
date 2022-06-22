@@ -73,19 +73,6 @@ open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor)
       apiUsageProcessor.processReference(node, resolved, null)
       return true
     }
-    if (resolved == null) {
-      /*
-       * KT-30522 UAST for Kotlin: reference to annotation parameter resolves to null.
-       */
-      val psiReferences = node.sourcePsi?.references.orEmpty()
-      for (psiReference in psiReferences) {
-        val target = psiReference.resolve()?.toUElement()?.javaPsi as? PsiAnnotationMethod
-        if (target != null) {
-          apiUsageProcessor.processReference(node, target, null)
-          return true
-        }
-      }
-    }
     return true
   }
 
