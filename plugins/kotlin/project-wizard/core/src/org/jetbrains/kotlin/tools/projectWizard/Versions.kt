@@ -11,13 +11,13 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 object Versions {
     val KOTLIN = version("1.5.0") // used as fallback version
     val GRADLE = version("7.4.2")
-    val KTOR = version("2.0.1")
+    val KTOR = version("2.0.2")
     val JUNIT = version("4.13.2")
     val JUNIT5 = version("5.8.2")
-    val JETBRAINS_COMPOSE = version("1.1.0")
+    val JETBRAINS_COMPOSE = version("1.1.1")
 
     val KOTLIN_VERSION_FOR_COMPOSE = version("1.6.10")
-    val GRADLE_VERSION_FOR_COMPOSE = version("7.3.3")
+    val GRADLE_VERSION_FOR_COMPOSE = version("7.4.2")
 
     object COMPOSE {
         val ANDROID_ACTIVITY_COMPOSE = version("1.4.0")
@@ -36,15 +36,15 @@ object Versions {
     }
 
     object JS_WRAPPERS {
-        val KOTLIN_REACT = wrapperVersion("18.0.0")
+        val KOTLIN_REACT = wrapperVersion("18.2.0")
         val KOTLIN_REACT_DOM = KOTLIN_REACT
-        val KOTLIN_EMOTION = wrapperVersion("11.9.0")
+        val KOTLIN_EMOTION = wrapperVersion("11.9.3")
         val KOTLIN_REACT_ROUTER_DOM = wrapperVersion("6.3.0")
         val KOTLIN_REDUX = wrapperVersion("4.1.2")
         val KOTLIN_REACT_REDUX = wrapperVersion("7.2.6")
 
         private fun wrapperVersion(version: String): Version =
-            version("$version-pre.332-kotlin-1.6.21")
+            version("$version-pre.346")
     }
 
     object GRADLE_PLUGINS {
