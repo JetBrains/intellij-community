@@ -24,6 +24,7 @@ object VmOptionsGenerator {
     "-ea",
     "-Dsun.io.useCanonCaches=false",
     "-Dsun.java2d.metal=true",
+    "-Djbr.catch.SIGABRT=true",
     "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
     "-Djdk.attach.allowAttachSelf=true",
     "-Djdk.module.illegalAccess.silent=true",
