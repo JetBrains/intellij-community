@@ -77,9 +77,9 @@ internal class FileTestFixtureImpl(
 
   private fun createFixtureRoot(relativePath: String): VirtualFile {
     val fileSystem = LocalFileSystem.getInstance()
-    val systemPath = Path.of(PathManager.getSystemPath()).getAbsoluteNioPath("..")
+    val systemPath = Path.of(PathManager.getSystemPath())
     val systemDirectory = fileSystem.findOrCreateDirectory(systemPath)
-    val fixtureRoot = "testData/$relativePath"
+    val fixtureRoot = "FileTestFixture/$relativePath"
     VfsRootAccess.allowRootAccess(testRootDisposable, systemDirectory.path + "/$fixtureRoot")
     return runWriteActionAndGet {
       systemDirectory.findOrCreateDirectory(fixtureRoot)
