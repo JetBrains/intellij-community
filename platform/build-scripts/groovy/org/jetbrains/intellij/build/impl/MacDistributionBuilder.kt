@@ -334,8 +334,14 @@ private fun buildForArch(builtinModule: BuiltinModulesFileData?,
       context
     ) {
       val jreArchive = jreManager.findArchive(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
-      MacDmgBuilder.signAndBuildDmg(builtinModule, context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
-                                    jreArchive, suffix, notarize)
+      signAndBuildDmg(builtinModule = builtinModule,
+                      context = context,
+                      customizer = customizer,
+                      macHostProperties = context.proprietaryBuildTools.macHostProperties,
+                      macZip = macZip,
+                      jreArchivePath = jreArchive,
+                      suffix = suffix,
+                      notarize = notarize)
     })
   }
 
@@ -345,8 +351,14 @@ private fun buildForArch(builtinModule: BuiltinModulesFileData?,
       spanBuilder("build DMG without JRE").setAttribute("arch", archStr), "${BuildOptions.MAC_ARTIFACTS_STEP}_no_jre_$archStr",
       context
     ) {
-      MacDmgBuilder.signAndBuildDmg(builtinModule, context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
-                                    null, "-no-jdk$suffix", notarize)
+      signAndBuildDmg(builtinModule = builtinModule,
+                      context = context,
+                      customizer = customizer,
+                      macHostProperties = context.proprietaryBuildTools.macHostProperties,
+                      macZip = macZip,
+                      jreArchivePath = null,
+                      suffix = "-no-jdk$suffix",
+                      notarize = notarize)
     })
   }
   return tasks.filterNotNull()

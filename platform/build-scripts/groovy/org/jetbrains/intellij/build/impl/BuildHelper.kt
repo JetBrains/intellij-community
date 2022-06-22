@@ -5,8 +5,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.createTask
 import com.intellij.diagnostic.telemetry.useWithScope
-import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.JavaModuleOptions
+import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.readXmlAsModel
 import io.opentelemetry.api.trace.Span
@@ -31,7 +31,7 @@ import kotlin.io.path.copyTo
 
 val DEFAULT_TIMEOUT = TimeUnit.MINUTES.toMillis(10L)
 
-fun span(spanBuilder: SpanBuilder, task: Runnable) {
+internal fun span(spanBuilder: SpanBuilder, task: Runnable) {
   spanBuilder.useWithScope {
     task.run()
   }
