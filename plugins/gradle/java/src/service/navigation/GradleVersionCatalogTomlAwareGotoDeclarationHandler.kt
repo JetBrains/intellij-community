@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.navigation
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiClass
@@ -13,7 +14,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.tail
-import org.jetbrains.plugins.gradle.service.project.VersionCatalogProjectResolver
+import org.jetbrains.plugins.gradle.model.data.VersionCatalogTomlFilesModel
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -50,14 +51,9 @@ private fun findTomlFile(project: Project, name: String): TomlFile? {
   val projectData = ProjectDataManager.getInstance().getExternalProjectsData(project,
                                                                              GradleConstants.SYSTEM_ID).mapNotNull { it.externalProjectStructure }
   for (projectDatum in projectData) {
-    val settings = Path.of(projectDatum.data.linkedExternalProjectPath).resolve(GradleConstants.SETTINGS_FILE_NAME).let {
-      VfsUtil.findFile(it, false)
-    }?.let { PsiManager.getInstance(project).findFile(it) }?.getUserData(VersionCatalogProjectResolver.VERSION_CATALOGS)
-    if (settings == null) {
-      continue
-    }
-    val toml = settings[name] ?: continue
-    return VfsUtil.findFile(toml, false)?.let { PsiManager.getInstance(project).findFile(it) }?.castSafelyTo<TomlFile>() ?: continue
+    val tomlRegistry = ExternalSystemApiUtil.find(projectDatum, VersionCatalogTomlFilesModel.KEY)?.data?.tomlFileRegistry ?: continue
+    val toml = tomlRegistry[name] ?: continue
+    return VfsUtil.findFile(Path.of(toml), false)?.let { PsiManager.getInstance(project).findFile(it) }?.castSafelyTo<TomlFile>() ?: continue
   }
   return null
 }

@@ -25,6 +25,10 @@ class GradleSettingScriptBuilder {
     lines.add("includeBuild '$name'")
   }
 
+  fun raw(content: String) {
+    lines.addAll(content.split('\n'))
+  }
+
   fun generate(): String {
     val joiner = StringJoiner("\n")
     if (projectName != null) {
