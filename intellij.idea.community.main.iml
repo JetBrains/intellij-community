@@ -188,5 +188,6 @@
     <orderEntry type="module" module-name="intellij.evaluationPlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.gitlab" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.warmup" scope="RUNTIME" />
   </component>
 </module>
