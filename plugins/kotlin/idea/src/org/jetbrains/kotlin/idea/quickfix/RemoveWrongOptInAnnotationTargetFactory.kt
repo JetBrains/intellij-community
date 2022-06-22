@@ -36,8 +36,12 @@ object RemoveWrongOptInAnnotationTargetFactory : KotlinIntentionActionsFactory()
                 WRONG_TARGETS.any { name -> it.text?.contains(name) == true }
             }
 
-            forbiddenArguments.forEach {
-                argumentList.removeArgument(it)
+            if (forbiddenArguments.size == argumentList.arguments.size) {
+                annotationEntry.delete()
+            } else {
+                forbiddenArguments.forEach {
+                    argumentList.removeArgument(it)
+                }
             }
         }
 
