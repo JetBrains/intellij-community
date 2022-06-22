@@ -75,7 +75,7 @@ interface TestContainer<T> : Closeable {
     logOutput("Using IDE paths for $testName: $paths")
     logOutput("IDE to run for $testName: $ide")
 
-    val projectHome = testCase.projectInfo?.resolveProjectHome()
+    val projectHome = testCase.projectInfo?.downloadAndUnpackProject()
     val context = IDETestContext(paths, ide, testCase, testName, projectHome, patchVMOptions = { this }, ciServer = ciServer)
     allContexts += context
 

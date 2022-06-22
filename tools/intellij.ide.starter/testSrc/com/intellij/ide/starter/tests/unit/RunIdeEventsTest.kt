@@ -48,7 +48,7 @@ class RunIdeEventsTest {
     val testName = object {}.javaClass.enclosingMethod.name.hyphenateTestName()
     val paths = IDEDataPaths.createPaths(testName, testDirectory, useInMemoryFs = false)
 
-    val projectHome = testCase.projectInfo?.resolveProjectHome()
+    val projectHome = testCase.projectInfo?.downloadAndUnpackProject()
     val context = IDETestContext(paths = paths,
                                  ide = ide,
                                  testCase = testCase,

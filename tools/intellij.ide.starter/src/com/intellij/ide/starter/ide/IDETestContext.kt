@@ -348,6 +348,11 @@ data class IDETestContext(
     )
   }
 
+  fun removeAndUnpackProject(): IDETestContext {
+    testCase.markNotReusable().projectInfo?.downloadAndUnpackProject()
+    return this
+  }
+
   fun setProviderMemoryOnlyOnLinux(): IDETestContext {
     if (SystemInfo.isLinux) {
       val optionsConfig = paths.configDir.resolve("options")

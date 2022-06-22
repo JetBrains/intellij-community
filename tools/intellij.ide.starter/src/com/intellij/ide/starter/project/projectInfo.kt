@@ -13,7 +13,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 interface ProjectInfoSpec {
-  fun resolveProjectHome(): Path?
+  fun downloadAndUnpackProject(): Path?
 }
 
 data class ProjectInfo(
@@ -38,7 +38,7 @@ data class ProjectInfo(
     }
   }
 
-  override fun resolveProjectHome(): Path? {
+  override fun downloadAndUnpackProject(): Path? {
     if (testProjectImage == null && testProjectDir == null && testProjectURL == null) {
       return null
     }
