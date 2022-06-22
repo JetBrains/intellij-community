@@ -21,16 +21,19 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.fir.fe10.binding.KtSymbolBasedBindingContext
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.resolve.BindingContext
 import java.lang.ref.WeakReference
 
-interface FE10BindingContext {
+interface Fe10WrapperContext {
     val builtIns: KotlinBuiltIns
     val ktAnalysisSessionFacade: KtAnalysisSessionFe10BindingHolder
     val moduleDescriptor: ModuleDescriptor
+    val bindingContext: BindingContext
 
     // This property used to disable some logic used locally for debug purposes
     val enableLogging: Boolean get() = false
@@ -50,7 +53,7 @@ interface FE10BindingContext {
     fun <R> incorrectImplementation(block: () -> R) = block()
 }
 
-fun KtSymbol.toDeclarationDescriptor(context: FE10BindingContext): DeclarationDescriptor =
+fun KtSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDescriptor =
     when (this) {
         is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(this, context)
         is KtFunctionLikeSymbol -> toDeclarationDescriptor(context)
@@ -64,7 +67,7 @@ fun KtSymbol.toDeclarationDescriptor(context: FE10BindingContext): DeclarationDe
         else -> context.implementationPlanned()
     }
 
-fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: FE10BindingContext): KtSymbolBasedFunctionLikeDescriptor =
+fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedFunctionLikeDescriptor =
     when (this) {
         is KtFunctionSymbol -> KtSymbolBasedFunctionDescriptor(this, context)
         is KtAnonymousFunctionSymbol -> KtSymbolBasedAnonymousFunctionDescriptor(this, context)
@@ -76,12 +79,12 @@ fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: FE10BindingContext): K
         else -> error("Unexpected kind of KtFunctionLikeSymbol: ${this.javaClass}")
     }
 
-inline fun <R> FE10BindingContext.withAnalysisSession(f: KtAnalysisSession.() -> R): R = f(ktAnalysisSessionFacade.analysisSession)
+inline fun <R> Fe10WrapperContext.withAnalysisSession(f: KtAnalysisSession.() -> R): R = f(ktAnalysisSessionFacade.analysisSession)
 
-class FE10BindingContextImpl(
+class Fe10WrapperContextImpl(
     val project: Project,
     val ktElement: KtElement
-) : FE10BindingContext {
+) : Fe10WrapperContext {
     private val token: KtLifetimeToken = KtLifetimeTokenForKtSymbolBasedWrappers(project)
 
     private val module: KtModule = ktElement.getKtModule(project)
@@ -92,6 +95,8 @@ class FE10BindingContextImpl(
 
     override val builtIns: KotlinBuiltIns
         get() = incorrectImplementation { DefaultBuiltIns.Instance }
+
+    override val bindingContext: BindingContext = KtSymbolBasedBindingContext(this)
 
     override fun noImplementation(additionalInfo: String): Nothing =
         error("This method should not be called for wrappers. $additionalInfo")
@@ -146,7 +151,7 @@ internal class FirWeakReference<out T : FirElement>(firElement: T, private val t
 }
 
 private class KtSymbolBasedModuleDescriptorImpl(
-    val context: FE10BindingContext,
+    val context: Fe10WrapperContext,
     val module: KtModule,
 ) : ModuleDescriptor {
     override val builtIns: KotlinBuiltIns

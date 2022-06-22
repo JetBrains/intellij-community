@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.realPsi
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
-import org.jetbrains.kotlin.idea.fir.fe10.FE10BindingContext
+import org.jetbrains.kotlin.idea.fir.fe10.Fe10WrapperContext
 import org.jetbrains.kotlin.idea.fir.fe10.FirWeakReference
 import org.jetbrains.kotlin.idea.fir.fe10.toDeclarationDescriptor
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal sealed class Fe10WrapperCall<F : FirQualifiedAccessExpression>(
     val firAccessExpression: FirWeakReference<F>,
-    val context: FE10BindingContext
+    val context: Fe10WrapperContext
 ) : Call {
     override fun getExplicitReceiver(): Receiver? = firAccessExpression.withFir { it.explicitReceiver.toExpressionReceiverValue(context) }
 
@@ -35,7 +35,7 @@ internal sealed class Fe10WrapperCall<F : FirQualifiedAccessExpression>(
 internal class FunctionFe10WrapperCall(
     private val ktCall: KtCallExpression,
     firCall: FirWeakReference<FirFunctionCall>,
-    context: FE10BindingContext
+    context: Fe10WrapperContext
 ) : Fe10WrapperCall<FirFunctionCall>(firCall, context) {
     override fun getCallOperationNode(): ASTNode = ktCall.node
 
@@ -62,7 +62,7 @@ internal class FunctionFe10WrapperCall(
 internal class VariableFe10WrapperCall(
     private val referenceExpression: KtNameReferenceExpression,
     propertyCall: FirWeakReference<FirPropertyAccessExpression>,
-    context: FE10BindingContext
+    context: Fe10WrapperContext
 ) : Fe10WrapperCall<FirPropertyAccessExpression>(propertyCall, context) {
     override fun getCallOperationNode(): ASTNode? = referenceExpression.parent.safeAs<KtQualifiedExpression>()?.operationTokenNode
 
@@ -80,7 +80,7 @@ internal class VariableFe10WrapperCall(
 }
 
 @OptIn(SymbolInternals::class)
-internal fun FirExpression?.toExpressionReceiverValue(context: FE10BindingContext): ReceiverValue? {
+internal fun FirExpression?.toExpressionReceiverValue(context: Fe10WrapperContext): ReceiverValue? {
     if (this == null) return null
 
     if (this is FirThisReceiverExpression) {

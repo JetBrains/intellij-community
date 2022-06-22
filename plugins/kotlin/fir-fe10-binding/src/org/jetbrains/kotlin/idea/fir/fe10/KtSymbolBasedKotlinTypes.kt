@@ -95,16 +95,16 @@ internal class MemberScopeForKtSymbolBasedDescriptors(lazyDebugInfo: () -> Strin
     ): Collection<DeclarationDescriptor> = noImplementation()
 }
 
-fun KtType.getDescriptorsAnnotations(context: FE10BindingContext): Annotations =
+fun KtType.getDescriptorsAnnotations(context: Fe10WrapperContext): Annotations =
     Annotations.create(annotations.map { KtSymbolBasedAnnotationDescriptor(it, context) })
 
-fun KtTypeArgument.toTypeProjection(context: FE10BindingContext): TypeProjection =
+fun KtTypeArgument.toTypeProjection(context: Fe10WrapperContext): TypeProjection =
     when (this) {
         is KtStarProjectionTypeArgument -> StarProjectionForAbsentTypeParameter(context.builtIns)
         is KtTypeArgumentWithVariance -> TypeProjectionImpl(variance, type.toKotlinType(context))
     }
 
-fun KtType.toKotlinType(context: FE10BindingContext, annotations: Annotations = getDescriptorsAnnotations(context)): UnwrappedType {
+fun KtType.toKotlinType(context: Fe10WrapperContext, annotations: Annotations = getDescriptorsAnnotations(context)): UnwrappedType {
     val typeConstructor: TypeConstructor = when (this) {
         is KtTypeParameterType -> KtSymbolBasedTypeParameterDescriptor(this.symbol, context).typeConstructor
         is KtNonErrorClassType -> when (val classLikeSymbol = classSymbol) {

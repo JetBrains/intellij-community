@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.fir.fe10.binding
 import com.google.common.collect.ImmutableMap
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.fir.fe10.FE10BindingContext
+import org.jetbrains.kotlin.idea.fir.fe10.Fe10WrapperContext
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
 import org.jetbrains.kotlin.idea.fir.fe10.withAnalysisSession
 import org.jetbrains.kotlin.psi.KtExpression
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.util.slicedMap.ReadOnlySlice
 import org.jetbrains.kotlin.util.slicedMap.WritableSlice
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class KtSymbolBasedBindingContext(val context: FE10BindingContext) : BindingContext {
+class KtSymbolBasedBindingContext(val context: Fe10WrapperContext) : BindingContext {
     private val LOG = Logger.getInstance(KtSymbolBasedBindingContext::class.java)
 
     private val getterBySlice: MutableMap<ReadOnlySlice<*, *>, (Nothing) -> Any?> = hashMapOf()

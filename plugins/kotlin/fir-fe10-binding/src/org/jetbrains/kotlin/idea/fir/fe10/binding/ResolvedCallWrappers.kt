@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.fir.resolvedSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.FirTypeProjectionWithVariance
-import org.jetbrains.kotlin.idea.fir.fe10.FE10BindingContext
+import org.jetbrains.kotlin.idea.fir.fe10.Fe10WrapperContext
 import org.jetbrains.kotlin.idea.fir.fe10.FirWeakReference
 import org.jetbrains.kotlin.idea.fir.fe10.toDeclarationDescriptor
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.types.KotlinType
 internal abstract class Fe10WrapperResolvedCall<C: Fe10WrapperCall<F>, F: FirQualifiedAccessExpression>(
     private val call: C,
 ) : ResolvedCall<CallableDescriptor> {
-    protected val context: FE10BindingContext get() = call.context
+    protected val context: Fe10WrapperContext get() = call.context
     protected val firAccessExpression: FirWeakReference<F> get() = call.firAccessExpression
 
     override fun getCall(): Call = call
