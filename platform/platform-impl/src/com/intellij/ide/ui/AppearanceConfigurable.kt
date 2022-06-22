@@ -356,7 +356,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       groupRowsRange(message("group.window.options")) {
         twoColumnsRow(
           { checkBox(cdShowToolWindowBars) },
-          { checkBox(cdShowToolWindowNumbers) }
+          {
+            checkBox(cdWidescreenToolWindowLayout)
+              .gap(RightGap.SMALL)
+            contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+          }
         )
         twoColumnsRow(
           { checkBox(cdLeftToolWindowLayout) },
@@ -364,9 +368,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         )
         twoColumnsRow(
           {
-            checkBox(cdWidescreenToolWindowLayout)
-              .gap(RightGap.SMALL)
-            contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+            checkBox(cdShowToolWindowNumbers).visible(!ExperimentalUI.isNewUI())
           })
       }
 
