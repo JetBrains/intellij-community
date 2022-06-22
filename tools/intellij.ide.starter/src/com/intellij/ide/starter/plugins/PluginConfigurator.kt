@@ -113,7 +113,7 @@ open class PluginConfigurator(val testContext: IDETestContext) {
     return PluginInstalledState.NOT_INSTALLED
   }
 
-  fun ensurePluginIsInstalled(pluginId: String): PluginConfigurator {
+  fun assertPluginIsInstalled(pluginId: String): PluginConfigurator {
     when (getPluginInstalledState(pluginId)) {
       PluginInstalledState.DISABLED -> error("Plugin '$pluginId' must not be listed in the disabled plugins file ${disabledPluginsPath}")
       PluginInstalledState.NOT_INSTALLED -> error("Plugin '$pluginId' must be installed")
