@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.ui.actions;
 
 import com.intellij.execution.ui.layout.Grid;
 import com.intellij.execution.ui.layout.Tab;
 import com.intellij.execution.ui.layout.ViewContext;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.content.Content;
@@ -28,22 +15,25 @@ import org.jetbrains.annotations.Nullable;
 public abstract class BaseViewAction extends DumbAwareAction {
 
   @Override
-  public final void update(@NotNull final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public final void update(final @NotNull AnActionEvent e) {
     ViewContext context = getViewFacade(e);
     Content[] content = getContent(e);
 
-    if (context != null && content != null) {
-      if (containsInvalidContent(content)) {
-        e.getPresentation().setEnabled(false);
-      } else {
-        update(e, context, content);
-      }
-    } else {
-      e.getPresentation().setEnabled(false);
+    if (context != null && content != null &&
+        !containsInvalidContent(content)) {
+      update(e, context, content);
+    }
+    else {
+      setEnabled(e, false);
     }
   }
 
-  private boolean containsInvalidContent(Content[] content) {
+  private static boolean containsInvalidContent(Content[] content) {
     for (Content each : content) {
       if (!each.isValid()) {
         return true;
@@ -54,11 +44,10 @@ public abstract class BaseViewAction extends DumbAwareAction {
   }
 
   protected void update(AnActionEvent e, ViewContext context, Content[] content) {
-
   }
 
   @Override
-  public final void actionPerformed(@NotNull final AnActionEvent e) {
+  public final void actionPerformed(final @NotNull AnActionEvent e) {
     actionPerformed(e, getViewFacade(e), getContent(e));
   }
 
@@ -66,17 +55,15 @@ public abstract class BaseViewAction extends DumbAwareAction {
   protected abstract void actionPerformed(AnActionEvent e, ViewContext context, Content[] content);
 
 
-  @Nullable
-  private ViewContext getViewFacade(final AnActionEvent e) {
+  private static @Nullable ViewContext getViewFacade(@NotNull AnActionEvent e) {
     return e.getData(ViewContext.CONTEXT_KEY);
   }
 
-  private Content @Nullable [] getContent(final AnActionEvent e) {
+  private static Content @Nullable [] getContent(@NotNull AnActionEvent e) {
     return e.getData(ViewContext.CONTENT_KEY);
   }
 
-  @Nullable
-  protected static Tab getTabFor(final ViewContext context, final Content[] content) {
+  protected static @Nullable Tab getTabFor(final ViewContext context, final Content[] content) {
     Grid grid = context.findGridFor(content[0]);
     return context.getTabFor(grid);
   }

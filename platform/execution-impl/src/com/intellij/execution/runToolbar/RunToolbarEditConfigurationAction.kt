@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowManager
 
-class RunToolbarEditConfigurationAction : DumbAwareAction() {
+internal class RunToolbarEditConfigurationAction : DumbAwareAction() {
   companion object {
     const val ACTION_ID = "RunToolbarEditConfigurationAction"
   }
@@ -20,10 +20,12 @@ class RunToolbarEditConfigurationAction : DumbAwareAction() {
   }
 }
 
-class RunToolbarShowToolWindowTab : DumbAwareAction() {
+internal class RunToolbarShowToolWindowTab : DumbAwareAction() {
   companion object {
     const val ACTION_ID = "RunToolbarShowToolWindowTab"
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible =
@@ -51,7 +53,8 @@ class RunToolbarShowToolWindowTab : DumbAwareAction() {
 }
 
 
-class RunToolbarRemoveSlotAction : DumbAwareAction() {
+internal class RunToolbarRemoveSlotAction : DumbAwareAction() {
+
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { project ->
       e.id()?.let {
@@ -72,7 +75,8 @@ class RunToolbarRemoveSlotAction : DumbAwareAction() {
   }
 }
 
-class RunToolbarMoveToTopAction : DumbAwareAction() {
+internal class RunToolbarMoveToTopAction : DumbAwareAction() {
+
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { project ->
       val manager = RunToolbarSlotManager.getInstance(project)
