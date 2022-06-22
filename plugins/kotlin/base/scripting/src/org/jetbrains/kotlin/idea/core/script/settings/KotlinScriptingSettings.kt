@@ -39,7 +39,9 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
             )
         }
 
-        definitionsRootElement.setAttribute(SUPPORT_WARNING_ATTR, showSupportWarning.toString())
+        if (!showSupportWarning) { // only non-default value should be stored to avoid unnecessary files under .idea/ dir
+            definitionsRootElement.setAttribute(SUPPORT_WARNING_ATTR, "false")
+        }
 
         if (scriptDefinitions.isEmpty()) {
             return definitionsRootElement
