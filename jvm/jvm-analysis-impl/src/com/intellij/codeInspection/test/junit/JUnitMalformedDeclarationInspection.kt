@@ -31,7 +31,6 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.isAncestor
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.castSafelyTo
-import com.intellij.util.containers.stream
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.uast.*
@@ -490,7 +489,7 @@ private class JUnitMalformedSignatureVisitor(
   private fun classHasParameterResolverField(aClass: PsiClass?): Boolean {
     if (aClass == null) return false
     if (aClass.isInterface) return false
-    return aClass.fields.stream().anyMatch { field ->
+    return aClass.fields.any { field ->
       AnnotationUtil.isAnnotated(field, ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION, 0) &&
       field.type.isInheritorOf(ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
     }
