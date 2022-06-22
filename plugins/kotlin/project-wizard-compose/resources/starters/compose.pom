@@ -9,8 +9,8 @@
     <kotlin.target>11</kotlin.target>
     <gradle.version>7.4.2</gradle.version>
     <kotlin.version>1.6.10</kotlin.version>
-    <compose.version>1.1.0</compose.version>
-    <agp.version>4.2.2</agp.version>
+    <compose.version>1.1.1</compose.version>
+    <agp.version>7.0.4</agp.version>
   </properties>
 
   <dependencyManagement>
