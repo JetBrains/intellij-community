@@ -1,10 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
+import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.plugins.groovy.util.ExpressionTest
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 
 abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), ExpressionTest {
@@ -50,6 +53,18 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
         assertTrue(newIndex != -1, "Element '$candidate' must be in the lookup")
         startIndex = newIndex + 1
       }
+    }
+  }
+
+  fun testGotoDefinition(expression: String, checker: (PsiElement) -> Unit) {
+    checkCaret(expression)
+    val file = findOrCreateFile("build.gradle", expression)
+    runInEdtAndWait {
+      codeInsightFixture.configureFromExistingVirtualFile(file)
+      val elementAtCaret = codeInsightFixture.elementAtCaret
+      assertNotNull(elementAtCaret)
+      val elem = GotoDeclarationAction.findTargetElement(project, codeInsightFixture.editor, codeInsightFixture.caretOffset)
+      checker(elem!!)
     }
   }
 
