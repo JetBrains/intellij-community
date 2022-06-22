@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.actions.StopAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.diagnostic.Logger
 import javax.swing.Icon
 
-class RunToolbarMainMultipleStopAction : StopAction(), RTBarAction {
+internal class RunToolbarMainMultipleStopAction : StopAction(),
+                                                  RTBarAction {
+
   companion object {
     private val LOG = Logger.getInstance(RunToolbarMainMultipleStopAction::class.java)
   }
@@ -18,13 +21,16 @@ class RunToolbarMainMultipleStopAction : StopAction(), RTBarAction {
     return state == RunToolbarMainSlotState.INFO
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.presentation.isEnabled && e.presentation.isVisible
+    val presentation = e.presentation
+    presentation.isEnabledAndVisible = presentation.isEnabled && presentation.isVisible
 
     if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
-        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+        presentation.isEnabledAndVisible = presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
       }
     }
 
