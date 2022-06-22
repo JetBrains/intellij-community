@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.problems.Problem
 import com.intellij.psi.PsiElement
@@ -27,8 +26,8 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 import org.jetbrains.kotlin.diagnostics.rendering.parameters
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightErrors
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
+import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightErrors
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
@@ -39,9 +38,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
-import java.util.*
 
-abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
+abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
     private var afterAnalysisVisitor: Array<AfterAnalysisHighlightingVisitor>? = null
 
     override fun suitableForFile(file: PsiFile) = file is KtFile
@@ -70,7 +68,7 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
                 LOG.warn(e)
             }
         } finally {
-          afterAnalysisVisitor = null
+            afterAnalysisVisitor = null
         }
 
         return true
@@ -137,9 +135,7 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
         cleanUpCalculatingAnnotations(highlightInfoByTextRange)
         if (!shouldHighlightErrors) return
 
-        if (!Registry.`is`("kotlin.ultra.light.classes.error.on.old.backend", false)) {
-            annotateDuplicateJvmSignature(file, holder, bindingContext.diagnostics)
-        }
+        annotateDuplicateJvmSignature(file, holder, bindingContext.diagnostics)
 
         for (diagnostic in bindingContext.diagnostics) {
             val psiElement = diagnostic.psiElement
