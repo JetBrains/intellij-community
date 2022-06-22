@@ -2,12 +2,9 @@
 
 package org.intellij.lang.xpath.xslt.run;
 
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,10 +25,7 @@ public class XsltConfigurationProducer extends LazyRunConfigurationProducer<Xslt
     if (file == null) {
       return false;
     }
-    final Project project = file.getProject();
-    final RunnerAndConfigurationSettings settings =
-      RunManager.getInstance(project).createConfiguration(file.getName(), getConfigurationFactory());
-    ((XsltRunConfiguration)settings.getConfiguration()).initFromFile(file);
+    configuration.initFromFile(file);
     return true;
   }
 
