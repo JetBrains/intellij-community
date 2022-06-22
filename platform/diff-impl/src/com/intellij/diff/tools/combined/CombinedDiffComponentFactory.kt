@@ -73,8 +73,6 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
   protected abstract fun createGoToChangeAction(): AnAction?
 
-  protected abstract val requestsComparator: Comparator<CombinedDiffModel.RequestData>
-
   private inner class ModelListener : CombinedDiffModelListener {
     override fun onProgressBar(visible: Boolean) {
       runInEdt { if (visible) mainUi.startProgress() else mainUi.stopProgress() }
@@ -174,7 +172,6 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
               val allRequests = model.requests
                 .asSequence()
                 .map { CombinedDiffModel.RequestData(it.key, it.value) }
-                .sortedWith(requestsComparator)
 
               model.preloadRequests(indicator, allRequests.take(visibleBlockCount).toList())
 
