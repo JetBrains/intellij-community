@@ -21,9 +21,9 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
-import java.awt.Dimension
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -31,6 +31,7 @@ import javax.swing.JPanel
 abstract class NewEditChangelistPanel(protected val myProject: Project) : Wrapper() {
   private val nameTextField: EditorTextField
   private val nameComponent: ComponentWithTextFieldWrapper
+
   @JvmField
   protected val descriptionTextArea: EditorTextField
   private val additionalControlsPanel: JPanel = JPanel(null)
@@ -98,7 +99,6 @@ abstract class NewEditChangelistPanel(protected val myProject: Project) : Wrappe
   }
 
 
-
   protected open fun nameChangedImpl(project: Project?, initial: LocalChangeList?) {
     val name = changeListName
     if (name.isBlank()) {
@@ -161,8 +161,11 @@ abstract class NewEditChangelistPanel(protected val myProject: Project) : Wrappe
       val editorField = EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.language, project, editorFeatures)
       if (defaultLines > 1) {
         editorField.addSettingsProvider { editor: EditorEx ->
-          editor.contentComponent.border = CompoundBorder(editor.contentComponent.border, JBUI.Borders.empty(2, 5))
+          editor.contentComponent.border = JBUI.Borders.empty(3, 5)
         }
+        // set the min and pref sizes for the editor field to stop the internal sizing logic and rely on parent component layout
+        editorField.minimumSize = JBDimension(200, 1)
+        editorField.preferredSize = JBDimension(200, 1)
       }
       return editorField
     }
