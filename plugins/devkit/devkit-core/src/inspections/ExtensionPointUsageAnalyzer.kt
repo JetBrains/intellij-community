@@ -451,7 +451,7 @@ private fun analyzeEPFieldUsages(target: UField, file: PsiFile, editor: Editor, 
         }
         else {
           val usages = context.unsafeUsages.map { EPElementUsage(it.second.targetElement ?: it.first.element, it.second.reason) }
-          showEPElementUsages(file.project, EPUsageTarget(target.sourcePsi as PsiField), usages)
+          showEPElementUsages(file.project, EPUsageTarget(target.sourcePsi as PsiNamedElement), usages)
         }
       })
     }
@@ -610,7 +610,7 @@ private class EPElementUsage(private val psiElement: PsiElement, @Nls private va
   override fun isValid(): Boolean = psiElement.isValid
 }
 
-private class EPUsageTarget(private val field: PsiField) : UsageTarget {
+private class EPUsageTarget(private val field: PsiNamedElement) : UsageTarget {
   override fun getFiles(): Array<VirtualFile>? {
     return field.containingFile?.virtualFile?.let { arrayOf(it) }
   }
@@ -621,7 +621,7 @@ private class EPUsageTarget(private val field: PsiField) : UsageTarget {
       override fun getIcon(unused: Boolean): Icon? = field.getIcon(0)
 
       override fun getPresentableText(): String {
-        return "${field.containingClass?.qualifiedName}.${field.name}"
+        return getQualifiedName()
       }
     }
   }
@@ -631,7 +631,15 @@ private class EPUsageTarget(private val field: PsiField) : UsageTarget {
   }
 
   override fun getName(): String {
-    return "${field.containingClass?.qualifiedName}.${field.name}"
+    return getQualifiedName()
+  }
+
+  private fun getQualifiedName(): String {
+    if (field is PsiMember) {
+      return "${field.containingClass?.qualifiedName}.${(field as PsiNamedElement).name}"
+    }
+    val file = field.containingFile
+    return "${file.name}.${field.name}"
   }
 
   override fun findUsages() {
