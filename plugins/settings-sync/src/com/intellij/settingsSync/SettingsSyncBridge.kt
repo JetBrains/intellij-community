@@ -23,7 +23,7 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
 
   private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent>()
 
-  private val queue = MergingUpdateQueue("SettingsSyncBridge", 1000, true, null, parentDisposable, null,
+  private val queue = MergingUpdateQueue("SettingsSyncBridge", 1000, false, null, parentDisposable, null,
                                          Alarm.ThreadToUse.POOLED_THREAD).apply {
     setRestartTimerOnAdd(true)
   }
@@ -38,17 +38,17 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
   @RequiresBackgroundThread
   fun initialize(initMode: InitMode) {
     settingsLog.initialize()
-    // activate the stream provider at this point to correctly process the event from the server (e.g. to synchronize the access to xmls)
-    ideMediator.activateStreamProvider()
 
-    applyInitialChanges(initMode)
-
-    // todo copy existing settings again here
-    // because local events could happen between activating the stream provider above and starting processing events here
+    // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
     SettingsSyncEvents.getInstance().addSettingsChangedListener { event ->
       pendingEvents.add(event)
       queue.queue(updateObject)
     }
+    ideMediator.activateStreamProvider()
+
+    applyInitialChanges(initMode)
+
+    queue.activate()
   }
 
   private fun applyInitialChanges(initMode: InitMode) {
