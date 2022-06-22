@@ -15,7 +15,7 @@ import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 
-object ToolboxLiteGen {
+internal object ToolboxLiteGen {
   private fun downloadToolboxLiteGen(communityRoot: BuildDependenciesCommunityRoot?, liteGenVersion: String): Path {
     val liteGenUri = URI("https://repo.labs.intellij.net/toolbox/lite-gen/lite-gen-$liteGenVersion.zip")
     val zip = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, liteGenUri)

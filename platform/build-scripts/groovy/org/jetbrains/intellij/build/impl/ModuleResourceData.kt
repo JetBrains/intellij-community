@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 /**
  * Describes additional resources which should be included into a plugin or the platform distribution. This isn't related to files from
  * 'resources roots' of a module, such files are automatically included into the plugin JAR files.
  */
-data class ModuleResourceData(
+internal data class ModuleResourceData(
   /** Name of the module resources will be taken from */
   val moduleName: String,
 

@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -161,10 +163,10 @@ class CompilationContextImpl private constructor(model: JpsModel,
 
   override fun findRequiredModule(name: String): JpsModule {
     val module = findModule(name)
-    if (module == null) {
-      messages.error("Cannot find required module \'$name\' in the project")
+    check(module != null) {
+      "Cannot find required module \'$name\' in the project"
     }
-    return module!!
+    return module
   }
 
   override fun findModule(name: String): JpsModule? {
@@ -176,27 +178,25 @@ class CompilationContextImpl private constructor(model: JpsModel,
     else {
       actualName = name
     }
-    return nameToModule[actualName]
+    return nameToModule.get(actualName)
   }
 
-  override fun getOldModuleName(newName: String): String? {
-    return newToOldModuleName[newName]
-  }
+  override fun getOldModuleName(newName: String) = newToOldModuleName.get(newName)
 
   override fun getModuleOutputDir(module: JpsModule): Path {
     val url = JpsJavaExtensionService.getInstance().getOutputUrl(module, false)
-    if (url == null) {
-      messages.error("Output directory for \'" + module.name + "\' isn\'t set")
+    check(url != null) {
+      "Output directory for ${module.name} isn\'t set"
     }
     return Path.of(JpsPathUtil.urlToPath(url))
   }
 
   override fun getModuleTestsOutputPath(module: JpsModule): String {
     val outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(module, true)
-    if (outputDirectory == null) {
-      messages.warning("Output directory for \'" + module.name + "\' isn\'t set")
+    check(outputDirectory != null) {
+      "Output directory for ${module.name} isn\'t set"
     }
-    return outputDirectory?.absolutePath!!
+    return outputDirectory.absolutePath
   }
 
   override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
@@ -263,7 +263,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
       // but this is the only place which is called in most build scripts
       BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
       val messages = BuildMessagesImpl.create()
-      if (listOf("platform/build-scripts", "bin/idea.properties", "build.txt").any { !Files.exists(communityHome.communityRoot.resolve(it)) }) {
+      if (sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").any { !Files.exists(communityHome.communityRoot.resolve(it)) }) {
         messages.error("communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources")
       }
       printEnvironmentDebugInfo()
@@ -399,8 +399,8 @@ private fun readModulesFromReleaseFile(model: JpsModel, sdkName: String, sdkHome
 
 private fun loadModuleRenamingHistory(projectHome: Path, messages: BuildMessages): Map<String, String> {
   val modulesXml = projectHome.resolve(".idea/modules.xml")
-  if (!Files.exists(modulesXml)) {
-    messages.error("Incorrect project home: $modulesXml doesn\'t exist")
+  check(Files.exists(modulesXml)) {
+    "Incorrect project home: $modulesXml doesn\'t exist"
   }
   return Files.newInputStream(modulesXml).use { readXmlAsModel(it) }.children("component")
            .find { it.getAttributeValue("name") == "ModuleRenamingHistory" }
