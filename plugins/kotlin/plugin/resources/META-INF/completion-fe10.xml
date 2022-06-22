@@ -2,7 +2,7 @@
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.completionExtension"
-            interface="org.jetbrains.kotlin.idea.completion.KotlinCompletionExtension"/>
+            interface="org.jetbrains.kotlin.idea.completion.KotlinCompletionExtension" dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>

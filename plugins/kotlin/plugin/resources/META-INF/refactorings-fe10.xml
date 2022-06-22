@@ -2,7 +2,8 @@
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.additionalExtractableAnalyser"
-            interface="org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AdditionalExtractableAnalyser"/>
+            interface="org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AdditionalExtractableAnalyser"
+            dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.foreignUsagesRenameProcessor"
             interface="org.jetbrains.kotlin.idea.refactoring.rename.ForeignUsagesRenameProcessor"

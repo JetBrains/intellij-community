@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="scratchFileLanguageProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.scratchFileLanguageProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.kotlin.idea.scratch.ScratchFileLanguageProvider"/>
     </extensionPoint>
 
@@ -11,11 +11,13 @@
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scripting.idea.settings.provider"
             interface="org.jetbrains.kotlin.idea.script.configuration.ScriptingSupportSpecificSettingsProvider"
+            dynamic="true"
             area="IDEA_PROJECT"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptAdditionalIdeaDependenciesProvider"
             interface="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider"
-            area="IDEA_PROJECT"/>
+            area="IDEA_PROJECT"
+            dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptDefinitionsProvider"
             interface="kotlin.script.experimental.intellij.ScriptDefinitionsProvider"
@@ -37,7 +39,7 @@
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scripting.idea.listener"
             interface="org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener"
-            area="IDEA_PROJECT"/>
+            area="IDEA_PROJECT" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

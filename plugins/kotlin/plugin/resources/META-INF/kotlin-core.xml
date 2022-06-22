@@ -7,18 +7,17 @@
             interface="org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter"
             dynamic="true"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.updater"
-            beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.pluginUpdateVerifier"
-            interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier"/>
+            interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier" 
+            dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.projectConfigurator"
             interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.newFileHook"
-            interface="org.jetbrains.kotlin.idea.actions.NewKotlinFileHook"/>
+            interface="org.jetbrains.kotlin.idea.actions.NewKotlinFileHook" 
+            dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.facetValidatorCreator"
             interface="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinFacetValidatorCreator"/>
