@@ -189,6 +189,9 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   private fun pushToCloud(settingsSnapshot: SettingsSnapshot): SettingsSyncPushResult {
+    if (remoteCommunicator.checkServerState() is ServerState.UpdateNeeded) {
+      return SettingsSyncPushResult.Rejected
+    }
     return remoteCommunicator.push(settingsSnapshot)
   }
 
