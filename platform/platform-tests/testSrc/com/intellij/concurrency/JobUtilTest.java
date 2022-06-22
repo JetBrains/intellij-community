@@ -55,13 +55,7 @@ import static com.intellij.util.TestTimeOut.setTimeout;
 
 public class JobUtilTest extends LightPlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
-  private TestTimeOut t;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    t = setTimeout(2, TimeUnit.MINUTES);
-  }
+  private final TestTimeOut t = setTimeout(2, TimeUnit.MINUTES);
 
   public void testUnbalancedTaskJobUtilPerformance() {
     List<Integer> things = new ArrayList<>(Collections.nCopies(10_000, null));
@@ -279,34 +273,28 @@ public class JobUtilTest extends LightPlatformTestCase {
   }
 
   public void testRecursiveCancel() {
-    final List<String> list = Collections.nCopies(100, "");
-    final List<Integer> ilist = Collections.nCopies(100, 0);
+    List<Integer> list = IntStream.range(0, 100).boxed().collect(Collectors.toList());
     for (int i = 0; i<10 && !t.timedOut(i); i++) {
       COUNT.set(0);
       boolean[] success = new boolean[1];
-      logElapsed(()-> {
-        try {
-          success[0] = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, __ -> {
-            boolean nestedSuccess = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(ilist, null, ___ -> {
+      logElapsed(()->
+        assertThrows(MyException.class, () ->
+          success[0] = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, ind -> {
+            boolean nestedSuccess = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, ___ -> {
               if (busySleepAndIncrement(1) == 1000) {
                 LOG.debug("PCE");
                 throw new MyException();
               }
               return true;
             });
+            LOG.debug("nestedSuccess: " + nestedSuccess+"; index:"+ind);
             return true;
-          });
-          fail("exception must have been thrown");
-        }
-        catch (MyException ignored) {
-        }
-      });
-      //assertEquals(list.size()*list.size(), COUNT.get());
+          })));
       assertFalse(success[0]);
     }
   }
 
-  public void testSaturation() throws InterruptedException, TimeoutException, ExecutionException {
+  public void testSaturation() throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     List<Job<?>> jobs = new ArrayList<>();
     for (int i = 0; i<100 && !t.timedOut(i); i++) {
@@ -480,8 +468,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     });
   }
 
-  public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinished()
-    throws InterruptedException, ExecutionException, TimeoutException {
+  public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinished() throws Exception {
     Random random = new Random();
     for (int i = 0; i<100 && !t.timedOut(i); i++) {
       final AtomicBoolean finished = new AtomicBoolean();
@@ -632,7 +619,7 @@ public class JobUtilTest extends LightPlatformTestCase {
           // check that invokeConcurrentlyUnderProgress() gets canceled immediately
           Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
             // to ensure lengthy task executes in thread other that the one which called invokeConcurrentlyUnderProgress()
-            // otherwise (when the thread doing sleep(COARSENESS) is the same which did invokeConcurrentlyUnderProgress) it means that FJP stole the task, started executing it in the waiting thread and we can't do anything
+            // otherwise (when the thread doing sleep(COARSENESS) is the same which did invokeConcurrentlyUnderProgress) it means that FJP stole the task, started executing it in the waiting thread, and we can't do anything
             mainThread.set(Thread.currentThread());
             try {
               ProgressManager.getInstance().runProcess(() -> {
