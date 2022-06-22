@@ -8101,9 +8101,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/experimental/experimentalUnused.kt");
         }
 
+        @TestMetadata("forbiddenRetentionSource.kt")
+        public void testForbiddenRetentionSource() throws Exception {
+            runTest("testData/quickfix/experimental/forbiddenRetentionSource.kt");
+        }
+
         @TestMetadata("forbiddenTargetsExpression.kt")
         public void testForbiddenTargetsExpression() throws Exception {
             runTest("testData/quickfix/experimental/forbiddenTargetsExpression.kt");
+        }
+
+        @TestMetadata("forbiddenTargetsExpression2.kt")
+        public void testForbiddenTargetsExpression2() throws Exception {
+            runTest("testData/quickfix/experimental/forbiddenTargetsExpression2.kt");
         }
 
         @TestMetadata("forbiddenTargetsInAnnotation.kt")
