@@ -40,36 +40,36 @@ import java.util.List;
 /**
  * @author peter
  */
-public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement, GrReferenceElement> {
+public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement<?>, GrReferenceElement<?>> {
   private final GrReferenceElement<?> ref;
 
-  public GroovyAddImportAction(@NotNull GrReferenceElement ref) {
+  public GroovyAddImportAction(@NotNull GrReferenceElement<?> ref) {
     super(ref, ref);
     this.ref = ref;
   }
 
   @Override
-  protected String getReferenceName(@NotNull GrReferenceElement reference) {
+  protected String getReferenceName(@NotNull GrReferenceElement<?> reference) {
     return reference.getReferenceName();
   }
 
   @Override
-  protected PsiElement getReferenceNameElement(@NotNull GrReferenceElement reference) {
+  protected PsiElement getReferenceNameElement(@NotNull GrReferenceElement<?> reference) {
     return reference.getReferenceNameElement();
   }
 
   @Override
-  protected boolean hasTypeParameters(@NotNull GrReferenceElement reference) {
+  protected boolean hasTypeParameters(@NotNull GrReferenceElement<?> reference) {
     return reference.getTypeArguments().length > 0;
   }
 
   @Override
-  protected String getQualifiedName(@NotNull GrReferenceElement reference) {
-    return reference.getCanonicalText();
+  protected String getQualifiedName(@NotNull GrReferenceElement<?> referenceElement) {
+    return referenceElement.getCanonicalText();
   }
 
   @Override
-  protected boolean isQualified(@NotNull GrReferenceElement reference) {
+  protected boolean isQualified(@NotNull GrReferenceElement<?> reference) {
     return reference.getQualifier() != null;
   }
 
@@ -90,8 +90,8 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
   }
 
   @Override
-  protected @NotNull Collection<PsiClass> filterByContext(@NotNull Collection<PsiClass> candidates, @NotNull GrReferenceElement ref) {
-    PsiElement typeElement = ref.getParent();
+  protected @NotNull Collection<PsiClass> filterByContext(@NotNull Collection<PsiClass> candidates, @NotNull GrReferenceElement<?> referenceElement) {
+    PsiElement typeElement = referenceElement.getParent();
     if (typeElement instanceof GrTypeElement) {
       PsiElement decl = typeElement.getParent();
       if (decl instanceof GrVariableDeclaration) {
@@ -111,19 +111,19 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
       }
     }
 
-    return super.filterByContext(candidates, ref);
+    return super.filterByContext(candidates, referenceElement);
   }
 
   @Override
-  protected String getRequiredMemberName(@NotNull GrReferenceElement reference) {
-    if (reference.getParent() instanceof GrReferenceElement) {
-      return ((GrReferenceElement<?>)reference.getParent()).getReferenceName();
+  protected String getRequiredMemberName(@NotNull GrReferenceElement<?> referenceElement) {
+    if (referenceElement.getParent() instanceof GrReferenceElement) {
+      return ((GrReferenceElement<?>)referenceElement.getParent()).getReferenceName();
     }
-    return super.getRequiredMemberName(reference);
+    return super.getRequiredMemberName(referenceElement);
   }
 
   @Override
-  protected boolean isAccessible(@NotNull PsiMember member, @NotNull GrReferenceElement reference) {
+  protected boolean isAccessible(@NotNull PsiMember member, @NotNull GrReferenceElement<?> referenceElement) {
     return true;
   }
 

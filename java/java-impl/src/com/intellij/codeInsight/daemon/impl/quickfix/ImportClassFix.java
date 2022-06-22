@@ -59,8 +59,8 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected String getQualifiedName(@NotNull PsiJavaCodeReferenceElement reference) {
-    return reference.getQualifiedName();
+  protected String getQualifiedName(@NotNull PsiJavaCodeReferenceElement referenceElement) {
+    return referenceElement.getQualifiedName();
   }
 
   @Override
@@ -93,13 +93,13 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected String getRequiredMemberName(@NotNull PsiJavaCodeReferenceElement reference) {
-    PsiElement parent = reference.getParent();
+  protected String getRequiredMemberName(@NotNull PsiJavaCodeReferenceElement referenceElement) {
+    PsiElement parent = referenceElement.getParent();
     if (parent instanceof PsiJavaCodeReferenceElement) {
       return ((PsiJavaCodeReferenceElement)parent).getReferenceName();
     }
 
-    return super.getRequiredMemberName(reference);
+    return super.getRequiredMemberName(referenceElement);
   }
 
   @Override
@@ -123,12 +123,12 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected @NotNull Collection<PsiClass> filterByContext(@NotNull Collection<PsiClass> candidates, @NotNull PsiJavaCodeReferenceElement ref) {
-    if (ref instanceof PsiReferenceExpression) {
+  protected @NotNull Collection<PsiClass> filterByContext(@NotNull Collection<PsiClass> candidates, @NotNull PsiJavaCodeReferenceElement referenceElement) {
+    if (referenceElement instanceof PsiReferenceExpression) {
       return Collections.emptyList();
     }
 
-    PsiElement typeElement = ref.getParent();
+    PsiElement typeElement = referenceElement.getParent();
     if (typeElement instanceof PsiTypeElement) {
       PsiElement var = typeElement.getParent();
       if (var instanceof PsiVariable) {
@@ -145,11 +145,11 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
       }
     }
 
-    return super.filterByContext(candidates, ref);
+    return super.filterByContext(candidates, referenceElement);
   }
 
   @Override
-  protected boolean isAccessible(@NotNull PsiMember member, @NotNull PsiJavaCodeReferenceElement reference) {
-    return PsiUtil.isAccessible(member, reference, null);
+  protected boolean isAccessible(@NotNull PsiMember member, @NotNull PsiJavaCodeReferenceElement referenceElement) {
+    return PsiUtil.isAccessible(member, referenceElement, null);
   }
 }
