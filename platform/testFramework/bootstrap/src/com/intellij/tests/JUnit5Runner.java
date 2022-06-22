@@ -96,18 +96,18 @@ public class JUnit5Runner {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  static class TCExecutionListener implements TestExecutionListener {
+  public static class TCExecutionListener implements TestExecutionListener {
     private final PrintStream myPrintStream;
     private TestPlan myTestPlan;
     private long myCurrentTestStart = 0;
     private int myFinishCount = 0;
     
-    TCExecutionListener() {
+    public TCExecutionListener() {
       myPrintStream = System.out;
       myPrintStream.println("##teamcity[enteredTheMatrix]");
     }
     
-    boolean smthExecuted() {
+    public boolean smthExecuted() {
       return myCurrentTestStart > 0;
     }
   
