@@ -99,7 +99,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private final UsageViewPresentation myPresentation;
   private final UsageTarget[] myTargets;
-  protected UsageGroupingRule[] myGroupingRules;
+  private UsageGroupingRule[] myGroupingRules;
   private final UsageFilteringRuleState myFilteringRulesState = UsageFilteringRuleStateService.createFilteringRuleState();
   private final Factory<? extends UsageSearcher> myUsageSearcherFactory;
   private final Project myProject;
@@ -145,10 +145,10 @@ public class UsageViewImpl implements UsageViewEx {
   private Splitter myPreviewSplitter; // accessed in EDT only
   private volatile ProgressIndicator associatedProgress; // the progress that current find usages is running under
 
-  // true if usages tree is currently expanding or collapsing
-  // (either at the end of find usages thanks to the 'expand usages after find' setting or
+  // true if usages tree is currently expanding or collapsing,
+  // either at the end of find usages thanks to the 'expand usages after find' setting, or
   // because the user pressed 'expand all' or 'collapse all' button. During this, some ugly hacks applied
-  // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer())
+  // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer()
   private boolean myExpandingCollapsing;
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
   @Nullable private Action myRerunAction;
@@ -538,9 +538,10 @@ public class UsageViewImpl implements UsageViewEx {
 
     //first grouping changes by parent node
     Map<Node, List<NodeChange>> groupByParent = nodeChanges.stream().collect(Collectors.groupingBy(NodeChange::getParentNode));
-    for (Node parentNode : groupByParent.keySet()) {
+    for (Map.Entry<Node, List<NodeChange>> entry : groupByParent.entrySet()) {
+      Node parentNode = entry.getKey();
       synchronized (parentNode) {
-        List<NodeChange> changes = groupByParent.get(parentNode);
+        List<NodeChange> changes = entry.getValue();
         List<NodeChange> addedToThisNode = new ArrayList<>();
         //removing node
         for (NodeChange change : changes) {
@@ -564,7 +565,6 @@ public class UsageViewImpl implements UsageViewEx {
         }
 
         //adding children nodes in batch
-
         if (!addedToThisNode.isEmpty()) {
           for (NodeChange change : addedToThisNode) {
             Node childNode = change.childNode;
@@ -2220,7 +2220,7 @@ public class UsageViewImpl implements UsageViewEx {
     return USAGE_INFO_LIST_KEY.getData(DataManager.getInstance().getDataContext(myRootPanel));
   }
 
-  public @NotNull Set<@NotNull GroupNode> selectedGroupNodes() {
+  @NotNull Set<@NotNull GroupNode> selectedGroupNodes() {
     return selectedNodes().stream().filter(node -> node instanceof GroupNode).map(node -> (GroupNode)node)
       .collect(Collectors.toCollection(HashSet::new));
   }

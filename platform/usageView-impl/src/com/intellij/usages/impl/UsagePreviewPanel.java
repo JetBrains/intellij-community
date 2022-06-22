@@ -118,7 +118,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
   }
 
-  private void resetEditor(@NotNull final List<? extends UsageInfo> infos) {
+  private void resetEditor(@NotNull List<? extends UsageInfo> infos) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiElement psiElement = infos.get(0).getElement();
     if (psiElement == null) return;
@@ -131,7 +131,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       if (psiFile == null) return;
     }
 
-    final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+    Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (document == null) return;
     if (myEditor == null || document != myEditor.getDocument()) {
       releaseEditor();
@@ -179,9 +179,9 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
   private static final Key<Boolean> IN_PREVIEW_USAGE_FLAG = Key.create("IN_PREVIEW_USAGE_FLAG");
 
-  public static void highlight(@NotNull final List<? extends UsageInfo> infos,
-                               @NotNull final Editor editor,
-                               @NotNull final Project project,
+  public static void highlight(@NotNull List<? extends UsageInfo> infos,
+                               @NotNull Editor editor,
+                               @NotNull Project project,
                                boolean highlightOnlyNameElements,
                                int highlightLayer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -220,7 +220,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
           textRange = nameElement.getTextRange();
         }
       }
-      // highlight injected element in host document textrange
+      // highlight injected element in host document text range
       textRange = InjectedLanguageManager.getInstance(project).injectedToHost(psiElement, textRange);
 
       RangeHighlighter highlighter = markupModel.addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES,
@@ -364,7 +364,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   @Nullable
-  public String getCannotPreviewMessage(@NotNull final List<? extends UsageInfo> infos) {
+  public String getCannotPreviewMessage(@NotNull List<? extends UsageInfo> infos) {
     return cannotPreviewMessage(infos);
   }
 
@@ -395,7 +395,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   public void updateLayoutLater(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     UsageViewImpl usageViewImpl = ObjectUtils.tryCast(usageView, UsageViewImpl.class);
     if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() && usageViewImpl != null) {
-      final Set<@NotNull GroupNode> selectedGroupNodes = usageViewImpl.selectedGroupNodes();
+      Set<@NotNull GroupNode> selectedGroupNodes = usageViewImpl.selectedGroupNodes();
       if (isOnlyGroupNodesSelected(infos, selectedGroupNodes)) {
         showMostCommonUsagePatterns(usageViewImpl, selectedGroupNodes);
       }
@@ -403,12 +403,13 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
         updateLayoutLater(infos);
       }
       myPreviousSelectedGroupNodes = selectedGroupNodes;
-    } else {
+    }
+    else {
       updateLayoutLater(infos);
     }
   }
 
-  private void showMostCommonUsagePatterns(@NotNull UsageViewImpl usageViewImpl, @NotNull Set<@NotNull GroupNode> selectedGroupNodes) {
+  private void showMostCommonUsagePatterns(@NotNull UsageViewImpl usageViewImpl, @NotNull Set<? extends @NotNull GroupNode> selectedGroupNodes) {
     if (!myPreviousSelectedGroupNodes.equals(selectedGroupNodes)) {
       releaseEditor();
       disposeMostCommonUsageComponent();
@@ -480,7 +481,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
 
     @Override
-    public RelativePoint recalculateLocation(final @NotNull Balloon balloon) {
+    public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
       int startOffset = myRange.getStartOffset();
       int endOffset = myRange.getEndOffset();
 
@@ -494,7 +495,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
           public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
             if (insideVisibleArea(myEditor, myRange)) {
               showBalloon(myProject, myEditor, myRange, myFindModel);
-              final VisibleAreaListener visibleAreaListener = this;
+              VisibleAreaListener visibleAreaListener = this;
               myEditor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
             }
           }
