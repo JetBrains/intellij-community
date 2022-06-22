@@ -2,11 +2,9 @@
 package com.intellij.execution.services;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
-@ApiStatus.Experimental
 public interface ServiceViewManager {
   static ServiceViewManager getInstance(Project project) {
     return project.getService(ServiceViewManager.class);

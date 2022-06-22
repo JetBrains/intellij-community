@@ -46,7 +46,7 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
       triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(warningQuickFix)
       }
-      restoreIfModifiedOrMovedIncorrectly(warningPossibleArea)
+      restoreIfModifiedOrMovedIncorrectly(warningPossibleArea, sample)
       test {
         actions(it)
       }

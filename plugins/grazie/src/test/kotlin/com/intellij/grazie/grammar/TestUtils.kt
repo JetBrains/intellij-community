@@ -11,6 +11,6 @@ fun assertIsEmpty(collection: Collection<*>) {
 
 internal fun TextProblem.assertTypoIs(range: IntRange, fixes: List<String> = emptyList()) {
   assertEquals(range, highlightRanges[0].startOffset until highlightRanges.last().endOffset)
-  assertTrue { corrections.containsAll(fixes) }
+  assertTrue { suggestions.map { it.changes[0].replacement.toString() }.containsAll(fixes) }
 }
 

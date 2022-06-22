@@ -26,4 +26,6 @@ class TrailingCommaIntention : SelfTargetingIntention<KtElement>(
         val actionNumber = 1.takeIf { element.containingKtFile.kotlinCustomSettings.ALLOW_TRAILING_COMMA } ?: 0
         setTextGetter(KotlinBundle.lazyMessage("intention.trailing.comma.custom.text", actionNumber))
     }
+
+    override fun startInWriteAction(): Boolean = false
 }

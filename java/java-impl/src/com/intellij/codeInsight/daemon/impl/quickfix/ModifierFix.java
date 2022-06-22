@@ -43,6 +43,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
                      boolean shouldHave,
                      boolean showContainingClass) {
     super(ObjectUtils.tryCast(modifierList.getParent(), PsiModifierListOwner.class));
+    LOG.assertTrue(modifierList.getContainingFile().getVirtualFile() != null);
     myModifier = modifier;
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;

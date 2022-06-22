@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper
 import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
 import org.jetbrains.idea.maven.project.*
@@ -26,15 +27,21 @@ class MavenProjectImporterToWorkspaceModel(
   private val createdModulesList = ArrayList<Module>()
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
+    val activity = MavenImportStats.startApplyingModelsActivity(project)
     val startTime = System.currentTimeMillis()
-    val postTasks = ArrayList<MavenProjectsProcessorTask>()
-    if (projectsToImportHaveChanges()) {
-      val builder = WorkspaceEntityStorageBuilder.create()
-      importModules(builder)
-      scheduleRefreshResolvedArtifacts(postTasks)
+    try {
+      val postTasks = ArrayList<MavenProjectsProcessorTask>()
+      if (projectsToImportHaveChanges()) {
+        val builder = WorkspaceEntityStorageBuilder.create()
+        importModules(builder)
+        scheduleRefreshResolvedArtifacts(postTasks)
+      }
+      return postTasks
     }
-    LOG.info("[maven import] applying models to workspace model took ${System.currentTimeMillis() - startTime}ms")
-    return postTasks
+    finally {
+      activity.finished()
+      LOG.info("[maven import] applying models to workspace model took ${System.currentTimeMillis() - startTime}ms")
+    }
   }
 
   private fun importModules(builder: WorkspaceEntityStorageBuilder) {

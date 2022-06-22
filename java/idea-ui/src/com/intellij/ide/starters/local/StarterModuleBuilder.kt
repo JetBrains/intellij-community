@@ -173,7 +173,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   protected abstract fun getProjectTypes(): List<StarterProjectType>
   protected abstract fun getLanguages(): List<StarterLanguage>
   protected abstract fun getStarterPack(): StarterPack
-  protected abstract fun getTestFrameworks(): List<StarterTestRunner>
+  protected open fun getTestFrameworks(): List<StarterTestRunner> = emptyList()
   protected abstract fun getAssets(starter: Starter): List<GeneratorAsset>
   protected open fun isExampleCodeProvided(): Boolean = false
   protected open fun getMinJavaVersion(): JavaVersion? = LanguageLevel.JDK_1_8.toJavaVersion()

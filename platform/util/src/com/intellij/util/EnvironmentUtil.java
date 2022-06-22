@@ -108,13 +108,18 @@ public final class EnvironmentUtil {
     ourEnvGetter.set(envFuture);
     Boolean result = Boolean.TRUE;
     try {
-      Map<String, String> env = getShellEnv();
+      Map<String, String> env = getShellEnv(Long.getLong("ij.load.shell.env.timeout", DEFAULT_SHELL_ENV_READING_TIMEOUT_MILLIS));
       setCharsetVar(env);
       envFuture.complete(Collections.unmodifiableMap(env));
     }
     catch (Throwable t) {
       result = Boolean.FALSE;
       LOG.warn("can't get shell environment", t);
+      if (t instanceof ExceptionWithAttachments) {
+        for (Attachment attachment : ((ExceptionWithAttachments)t).getAttachments()) {
+          LOG.warn(attachment.getPath() + ":\n" + attachment.getDisplayText());
+        }
+      }
     }
     finally {
       activity.end();
@@ -214,8 +219,8 @@ public final class EnvironmentUtil {
   public static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
   private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
 
-  private static @NotNull Map<String, String> getShellEnv() throws IOException {
-    return new ShellEnvReader().readShellEnv(null, null);
+  private static @NotNull Map<String, String> getShellEnv(long timeoutMillis) throws IOException {
+    return new ShellEnvReader(timeoutMillis).readShellEnv(null, null);
   }
 
   public static class ShellEnvReader {
@@ -357,12 +362,7 @@ public final class EnvironmentUtil {
         final String envData = new String(Files.readAllBytes(envDataFile), Charset.defaultCharset());
         final String log = new String(Files.readAllBytes(logFile), Charset.defaultCharset());
         if (exitCode != 0 || envData.isEmpty()) {
-          EnvironmentReaderException ex =  new EnvironmentReaderException("command " + command +
-                                               "\n\texit code: " + exitCode +
-                                               "\n\tOS: " + SystemInfoRt.OS_NAME,
-                                               envData, log);
-          LOG.error(ex);
-          throw ex;
+          throw new EnvironmentReaderException("command " + command + ", exit code: " + exitCode, envData, log);
         }
         return new AbstractMap.SimpleImmutableEntry<>(log, parseEnv(envData));
       }
@@ -572,7 +572,7 @@ public final class EnvironmentUtil {
 
   @TestOnly
   static Map<String, String> testLoader() throws IOException {
-    return getShellEnv();
+    return getShellEnv(DEFAULT_SHELL_ENV_READING_TIMEOUT_MILLIS);
   }
 
   @TestOnly
@@ -588,9 +588,9 @@ public final class EnvironmentUtil {
   private static class EnvironmentReaderException extends IOException implements ExceptionWithAttachments {
     private final Attachment[] myAttachments;
 
-    private EnvironmentReaderException(String message, String stdout, String stderr) {
+    private EnvironmentReaderException(String message, String data, String log) {
       super(message);
-      myAttachments = new Attachment[]{new Attachment("EnvReaderStdout.txt", stdout), new Attachment("EnvReaderStderr.txt", stderr)};
+      myAttachments = new Attachment[]{new Attachment("EnvReaderData.txt", data), new Attachment("EnvReaderLog.txt", log)};
     }
 
     @Override

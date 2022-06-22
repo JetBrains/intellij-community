@@ -161,6 +161,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   public void copyFrom(CustomActionsSchema result) {
     idToActionGroup.clear();
     actions.clear();
+    Set<String> ids = new HashSet<>(iconCustomizations.keySet());
     iconCustomizations.clear();
 
     for (ActionUrl actionUrl : result.actions) {
@@ -169,6 +170,9 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     actions.sort(ActionUrlComparator.INSTANCE);
 
     iconCustomizations.putAll(result.iconCustomizations);
+    ids.forEach(id -> {
+      iconCustomizations.putIfAbsent(id, null);
+    });
   }
 
   public boolean isModified(CustomActionsSchema schema) {

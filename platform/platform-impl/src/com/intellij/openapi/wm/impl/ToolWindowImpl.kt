@@ -454,6 +454,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
 
     stripeTitle = value
+    contentUi?.update()
 
     if (windowInfoDuringInit == null) {
       EDT.assertIsEdt()

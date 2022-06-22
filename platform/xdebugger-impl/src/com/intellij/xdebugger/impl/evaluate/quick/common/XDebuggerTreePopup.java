@@ -40,6 +40,8 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
@@ -85,12 +87,28 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
     toolbarActions.add(new EnableSetValueMode());
     toolbarActions.add(new SetValue());
-    toolbarActions.add(new DisableSetValueMode());
+    toolbarActions.add(new CancelSetValue());
     toolbarActions.addAll(getCustomizedActionGroup(XDebuggerActions.WATCHES_INLINE_POPUP_GROUP));
     return toolbarActions;
   }
 
-  private TreeModelListener createTreeListener(final Tree tree) {
+  private FocusListener createTreeFocusListener() {
+    return new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        if (mySetValueModeEnabled) {
+          disableSetValueMode();
+        }
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        // do nothing
+      }
+    };
+  }
+
+  private TreeModelListener createTreeModelListener(final Tree tree) {
     return new TreeModelAdapter() {
       @Override
       public void treeStructureChanged(TreeModelEvent e) {
@@ -104,7 +122,10 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
       myPopup.cancel();
     }
 
-    tree.getModel().addTreeModelListener(createTreeListener(tree));
+    tree.getModel().addTreeModelListener(createTreeModelListener(tree));
+    FocusListener focusListener = createTreeFocusListener();
+    tree.addFocusListener(focusListener);
+
     JComponent popupContent = createPopupContent(tree);
 
     setContent(popupContent, getToolbarActions(), ACTION_PLACE, tree);
@@ -119,10 +140,6 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
       .setCancelOnOtherWindowOpen(true)
       .setCancelKeyEnabled(false)
       .setKeyEventHandler(event -> {
-        if (mySetValueModeEnabled &&
-            (event.getKeyCode() == KeyEvent.VK_ENTER || event.getKeyCode() == KeyEvent.VK_ESCAPE)) {
-          disableSetValueMode();
-        }
         if (!mySetValueModeEnabled && event.getKeyCode() == KeyEvent.VK_F2) {
           enableSetValueMode();
         }
@@ -144,6 +161,7 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
       .addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
+          tree.removeFocusListener(focusListener);
           if (myHideRunnable != null) {
             myHideRunnable.run();
           }
@@ -210,7 +228,7 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
   @Override
   protected boolean shouldBeVisible(AnAction action) {
     boolean isSetValueModeAction = action instanceof XDebuggerTreePopup.SetValue ||
-                                   action instanceof XDebuggerTreePopup.DisableSetValueMode;
+                                   action instanceof XDebuggerTreePopup.CancelSetValue;
     return isSetValueModeAction && mySetValueModeEnabled || !isSetValueModeAction && !mySetValueModeEnabled;
   }
 
@@ -245,7 +263,6 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
     final Window popupWindow = SwingUtilities.windowForComponent(popup.getContent());
     if (popupWindow == null) return;
     final Dimension size = tree.getPreferredSize();
-    final Point location = popupWindow.getLocation();
     int hMargin = JBUI.scale(30);
     int vMargin = JBUI.scale(30);
     int width = Math.max(size.width, toolbar.getPreferredSize().width) + hMargin;
@@ -254,33 +271,26 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
     Rectangle screenRectangle = ScreenUtil.getScreenRectangle(toolbar);
     int maxWidth = screenRectangle.width / 2;
     int maxHeight = screenRectangle.height / 2;
-    final Rectangle targetBounds = new Rectangle(location.x,
-                                                 location.y,
-                                                 Math.min(width, maxWidth),
-                                                 Math.min(height, maxHeight));
+    int newWidth = Math.min(width, maxWidth);
+    int newHeight = Math.min(height, maxHeight);
 
     if (!canShrink) {
-      targetBounds.width = Math.max(targetBounds.width, popupWindow.getWidth());
-      targetBounds.height = Math.max(targetBounds.height, popupWindow.getHeight());
+      newWidth = Math.max(newWidth, popupWindow.getWidth());
+      newHeight = Math.max(newHeight, popupWindow.getHeight());
     }
-    ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
-    if (targetBounds.width != popupWindow.getWidth() || targetBounds.height != popupWindow.getHeight()) {
-      popupWindow.setBounds(targetBounds);
-      popupWindow.validate();
-      popupWindow.repaint();
-    }
+
+    updatePopupBounds(popupWindow, newWidth, newHeight);
   }
 
-  private class DisableSetValueMode extends AnAction {
+  private class CancelSetValue extends AnAction {
 
-    private DisableSetValueMode() {
+    private CancelSetValue() {
       super(XDebuggerBundle.message("xdebugger.cancel.set.action.title"));
       setShortcutSet(CommonShortcuts.ESCAPE);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      disableSetValueMode();
       Component focusedComponent = IdeFocusManager.findInstance().getFocusOwner();
       KeyEvent event =
         new KeyEvent(focusedComponent, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED);
@@ -318,7 +328,6 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      disableSetValueMode();
       Component focusedComponent = IdeFocusManager.findInstance().getFocusOwner();
       KeyEvent event =
         new KeyEvent(focusedComponent, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_ENTER, '\n');

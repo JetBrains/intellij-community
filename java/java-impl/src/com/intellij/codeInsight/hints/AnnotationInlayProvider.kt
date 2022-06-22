@@ -168,8 +168,12 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
   override val key: SettingsKey<Settings>
     get() = ourKey
 
-  override fun getProperty(key: String): String {
-    return JavaBundle.message(key)
+  override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
+    when (case.id) {
+      "inferred.annotations" -> return JavaBundle.message("inlay.annotation.hints.inferred.annotations")
+      "external.annotations" -> return JavaBundle.message("inlay.annotation.hints.external.annotations")
+    }
+    return null
   }
 
   override val previewText: String? = null

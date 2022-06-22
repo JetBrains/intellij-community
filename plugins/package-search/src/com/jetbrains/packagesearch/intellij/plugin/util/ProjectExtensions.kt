@@ -14,7 +14,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.Function
 import com.intellij.util.messages.Topic
 import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService
@@ -22,7 +24,7 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService
+import com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.UiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
@@ -49,6 +51,15 @@ internal val packageVersionNormalizer
 
 internal val Project.packageSearchProjectCachesService
     get() = service<PackageSearchProjectCachesService>()
+
+internal val Project.toolWindowManagerFlow
+    get() = messageBusFlow(ToolWindowManagerListener.TOPIC) {
+        object : ToolWindowManagerListener {
+            override fun toolWindowShown(toolWindow: ToolWindow) {
+                trySend(toolWindow)
+            }
+        }
+    }
 
 @OptIn(ExperimentalTypeInference::class)
 internal fun <L : Any, K> Project.messageBusFlow(
@@ -107,7 +118,7 @@ internal val Project.moduleChangesSignalFlow
     get() = merge(ModuleChangesSignalProvider.listenToModuleChanges(this), FlowModuleChangesSignalProvider.listenToModuleChanges(this))
 
 internal val Project.lifecycleScope: CoroutineScope
-    get() = service<ProjectLifecycleHolderService>()
+    get() = service<PackageSearchLifecycleScope>()
 
 internal val Project.uiStateModifier: UiStateModifier
     get() = service<UiCommandsService>()

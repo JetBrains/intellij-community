@@ -2,14 +2,15 @@ package training.featuresSuggester.listeners
 
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction
 import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.AnActionResult
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actions.*
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import training.featuresSuggester.SuggestingUtils
 import training.featuresSuggester.SuggestingUtils.asString
 import training.featuresSuggester.SuggestingUtils.getSelection
@@ -20,10 +21,10 @@ import training.featuresSuggester.settings.FeatureSuggesterSettings
 class EditorActionsListener : AnActionListener {
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
     FeatureSuggesterSettings.instance().updateWorkingDays()
-    val project = event.getData(CommonDataKeys.PROJECT) ?: return
-    if (!SuggestingUtils.isActionsProcessingEnabled(project) || !action.isSupportedAction()) return
-    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-    val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
+    if (!action.isSupportedAction()) return
+    val (project, editor, psiFile) = getCachedEventData(event)
+    if (project == null || editor == null || psiFile == null) return
+    if (!SuggestingUtils.isActionsProcessingEnabled(project)) return
     when (action) {
       is CopyAction -> {
         val copiedText = CopyPasteManager.getInstance().contents?.asString() ?: return
@@ -122,10 +123,10 @@ class EditorActionsListener : AnActionListener {
   }
 
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-    val project = event.getData(CommonDataKeys.PROJECT) ?: return
-    if (!SuggestingUtils.isActionsProcessingEnabled(project) || !action.isSupportedAction()) return
-    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-    val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
+    if (!action.isSupportedAction()) return
+    val (project, editor, psiFile) = getCachedEventData(event)
+    if (project == null || editor == null || psiFile == null) return
+    if (!SuggestingUtils.isActionsProcessingEnabled(project)) return
     when (action) {
       is CopyAction -> {
         val selectedText = editor.getSelectedText() ?: return
@@ -219,6 +220,21 @@ class EditorActionsListener : AnActionListener {
           )
         )
       }
+    }
+  }
+
+  private fun getCachedEventData(event: AnActionEvent): Triple<Project?, Editor?, PsiFile?> {
+    val originalContext = event.dataContext
+    val context = if (!ApplicationManager.getApplication().isUnitTestMode) {
+      DataContext { dataId -> Utils.getRawDataIfCached(originalContext, dataId) }
+    }
+    else originalContext
+    return context.let {
+      Triple(
+        CommonDataKeys.PROJECT.getData(it),
+        CommonDataKeys.EDITOR.getData(it),
+        CommonDataKeys.PSI_FILE.getData(it)
+      )
     }
   }
 

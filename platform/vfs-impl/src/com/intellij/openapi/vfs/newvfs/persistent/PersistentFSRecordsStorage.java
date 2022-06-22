@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ResizeableMappedFile;
@@ -10,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.function.IntBinaryOperator;
 
 public final class PersistentFSRecordsStorage {
   private static final int PARENT_OFFSET = 0;
@@ -280,9 +278,8 @@ public final class PersistentFSRecordsStorage {
     return myFile.isDirty();
   }
 
-  boolean processAllNames(@NotNull IntBinaryOperator operator) throws IOException {
-    return read(() -> {
-      ProgressManager.checkCanceled();
+  void processAllNames(@NotNull NameFlagsProcessor operator) throws IOException {
+    read(() -> {
       myFile.force();
       return myFile.readChannel(ch -> {
         ByteBuffer buffer = ByteBuffer.allocateDirect(RECORD_SIZE * 1024);
@@ -290,13 +287,11 @@ public final class PersistentFSRecordsStorage {
         try {
           int id = 1, limit, offset;
           while ((limit = ch.read(buffer)) >= RECORD_SIZE) {
-            ProgressManager.checkCanceled();
             offset = id == 1 ? RECORD_SIZE : 0; // skip header
             for (; offset < limit; offset += RECORD_SIZE) {
-              int nameId = buffer.getInt(offset + 4); // name offset is 4
-              if (nameId != 0 && operator.applyAsInt(nameId, id) != 0) {
-                return false;
-              }
+              int nameId = buffer.getInt(offset + NAME_OFFSET);
+              int flags = buffer.getInt(offset + FLAGS_OFFSET);
+              operator.process(id, nameId, flags);
               id ++;
             }
             buffer.position(0);
@@ -307,5 +302,9 @@ public final class PersistentFSRecordsStorage {
         return true;
       });
     });
+  }
+
+  interface NameFlagsProcessor {
+    void process(int fileId, int nameId, int flags);
   }
 }

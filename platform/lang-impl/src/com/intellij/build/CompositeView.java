@@ -79,7 +79,7 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
       new UiNotifyConnector.Once(view.getComponent(), new Activatable() {
         @Override
         public void showNotify() {
-          IdeFocusManager.getGlobalInstance().requestFocus(view.getPreferredFocusableComponent(), true);
+          view.getPreferredFocusableComponent().requestFocusInWindow();
         }
       });
     }

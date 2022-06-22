@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyze
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.*
 import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.ui.asSequence
 import com.intellij.openapi.observable.util.whenTreeChanged
 import com.intellij.openapi.util.NlsSafe
@@ -17,6 +18,7 @@ import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.components.JBList
 import com.intellij.ui.treeStructure.SimpleTree
+import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JList
 import javax.swing.JTree
@@ -77,7 +79,7 @@ internal abstract class AbstractDependencyList(
           model.asSequence()
             .find { it.data == dependency?.data }
         },
-        { it?.variances?.firstOrNull() }
+        { it?.dependency }
       )
     )
   }
@@ -111,7 +113,7 @@ internal abstract class AbstractDependencyTree(
           .map { it.userObject as DependencyGroup }
           .find { it.data == dependency?.data && dependency.parent in it.parents }
       },
-      { it?.variances?.firstOrNull() }
+      { it?.dependency }
     ))
   }
 }
@@ -122,6 +124,7 @@ internal class DependencyList(
   dataProvider: DataProvider
 ) : AbstractDependencyList(model, dataProvider) {
   init {
+    ListUiUtil.Selection.installSelectionOnRightClick(this)
     PopupHandler.installPopupMenu(this, "ExternalSystem.DependencyAnalyzer.DependencyListGroup", DependencyAnalyzerView.ACTION_PLACE)
     setCellRenderer(DependencyListRenderer(showGroupIdProperty))
   }
@@ -206,12 +209,24 @@ private class UsagesTreeRenderer(private val showGroupIdProperty: ObservableProp
 }
 
 internal class DependencyGroup(val variances: List<Dependency>) {
-  val data by lazy { variances.first().data }
+  val dependency by lazy { variances.find { !it.isOmitted } ?: variances.first() }
+  val data by lazy { dependency.data }
   val scopes by lazy { variances.map { it.scope }.toSet() }
   val parents by lazy { variances.map { it.parent }.toSet() }
-  val warnings by lazy { variances.flatMap { it.status }.filterIsInstance<Dependency.Status.Warning>() }
-  val isOmitted by lazy { variances.flatMap { it.status }.filterIsInstance<Dependency.Status.Omitted>().isNotEmpty() }
-  val hasWarnings by lazy { warnings.isNotEmpty() }
+  val warnings by lazy { variances.flatMap { it.warnings } }
+  val isOmitted by lazy { variances.all { it.isOmitted } }
+  val hasWarnings by lazy { variances.any { it.hasWarnings } }
 
-  override fun toString() = "s${scopes.size} v${variances.size} $data"
+  override fun toString() = data.toString()
+
+  companion object {
+    internal val Dependency.isOmitted: Boolean
+      get() = status.any { it is Dependency.Status.Omitted }
+
+    internal val Dependency.warnings: List<Dependency.Status.Warning>
+      get() = status.filterIsInstance<Dependency.Status.Warning>()
+
+    internal val Dependency.hasWarnings: Boolean
+      get() = warnings.isNotEmpty()
+  }
 }

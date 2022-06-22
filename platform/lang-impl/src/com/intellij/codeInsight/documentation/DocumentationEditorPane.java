@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.addDocumentationPaneDefaultCssRules;
+import static com.intellij.util.ui.ExtendableHTMLViewFactory.*;
 
 @Internal
 public abstract class DocumentationEditorPane extends JEditorPane {
@@ -72,9 +73,7 @@ public abstract class DocumentationEditorPane extends JEditorPane {
     }
     setBackground(BACKGROUND_COLOR);
     HTMLEditorKit editorKit = new HTMLEditorKitBuilder()
-      .withViewFactoryExtensions(DocumentationHtmlUtil.getHiDPIImagesExtension(this),
-                                 ExtendableHTMLViewFactory.Extensions.icons(iconResolver::apply),
-                                 DocumentationHtmlUtil.getModuleIconsExtension())
+      .replaceViewFactoryExtensions(DocumentationHtmlUtil.getIconsExtension(iconResolver), Extensions.BASE64_IMAGES)
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
     addDocumentationPaneDefaultCssRules(editorKit);
 

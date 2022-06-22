@@ -403,30 +403,6 @@ final class CompilationContextImpl implements CompilationContext {
     }
 
     boolean isRegularFile = Files.isRegularFile(file)
-    if (isRegularFile) {
-      //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
-      long fileSize = Files.size(file)
-      if (fileSize > 1_000_000) {
-        long producedSize = totalSizeOfProducedArtifacts.addAndGet(fileSize)
-        boolean willBePublishedWhenBuildFinishes = FileUtil.isAncestor(paths.artifactDir.toString(), file.toString(), true)
-
-        long oneGb = 1024L * 1024 * 1024
-        long requiredAdditionalSpace = oneGb * 6
-        long requiredSpaceForArtifacts = oneGb * 9
-        long availableSpace = Files.getFileStore(file).getUsableSpace()
-        //heuristics: a build publishes at most 9Gb of artifacts and requires some additional space for compiled classes, dependencies, temp files, etc.
-        // So we'll publish an artifact earlier only if there will be enough space for its copy.
-        def skipPublishing = willBePublishedWhenBuildFinishes && availableSpace < (requiredSpaceForArtifacts - producedSize) + requiredAdditionalSpace + fileSize
-        messages.debug("Checking free space before publishing $file (${Formats.formatFileSize(fileSize)}): ")
-        messages.debug(" total produced: ${Formats.formatFileSize(producedSize)}")
-        messages.debug(" available space: ${Formats.formatFileSize(availableSpace)}")
-        messages.debug(" ${skipPublishing ? "will be" : "won't be"} skipped")
-        if (skipPublishing) {
-          messages.info("Artifact $file won't be published early to avoid caching on agent (workaround for TW-54541)")
-          return
-        }
-      }
-    }
 
     String targetDirectoryPath = ""
     if (file.parent.startsWith(paths.artifactDir)) {

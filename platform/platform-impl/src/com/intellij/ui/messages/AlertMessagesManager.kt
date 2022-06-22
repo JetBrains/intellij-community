@@ -43,7 +43,7 @@ internal class AlertMessagesManager {
   companion object {
     @JvmStatic
     fun isEnabled(): Boolean =
-      Registry.`is`("ide.message.dialogs.as.swing.alert", true)
+      ApplicationManager.getApplication() != null && Registry.`is`("ide.message.dialogs.as.swing.alert", true)
 
     @JvmStatic
     fun instance(): AlertMessagesManager =

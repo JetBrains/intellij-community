@@ -53,6 +53,7 @@ final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
 
   static final Key<Boolean> SUPPRESS_SUBMENU_IMPL = Key.create("SUPPRESS_SUBMENU_IMPL");
+  private static final String NESTED_WA_REASON_PREFIX = "nested write-action requested by ";
 
   static final Executor ourBeforePerformedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Exclusive)", 1);
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
@@ -334,13 +335,8 @@ final class ActionUpdater {
     ourExecutor.execute(() -> {
       Ref<Computable<Void>> applyRunnableRef = Ref.create();
       try (AccessToken ignored = ClientId.withClientId(clientId)) {
-        ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
         BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () -> {
-          if (ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
-            applicationEx,
-            () -> cancelPromise(promise, myInEDTActionOperation == null ? "write-action requested" :
-                                         "nested write-action requested by " + myInEDTActionOperation),
-            () -> applicationEx.tryRunReadAction(() -> applyRunnableRef.set(computable.compute()))) &&
+          if (tryRunReadActionAndCancelBeforeWrite(promise, () -> applyRunnableRef.set(computable.compute())) &&
               !applyRunnableRef.isNull() && !promise.isDone()) {
             computeOnEdt(applyRunnableRef.get());
           }
@@ -363,6 +359,16 @@ final class ActionUpdater {
       }
     });
     return promise;
+  }
+
+  boolean tryRunReadActionAndCancelBeforeWrite(@NotNull CancellablePromise<?> promise, @NotNull Runnable runnable) {
+    if (promise.isDone()) return false;
+    ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+    return ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
+      applicationEx,
+      () -> cancelPromise(promise, myInEDTActionOperation == null ? "write-action requested" :
+                                   NESTED_WA_REASON_PREFIX + myInEDTActionOperation),
+      () -> applicationEx.tryRunReadAction(runnable));
   }
 
   static void cancelAllUpdates(@NotNull String reason) {
@@ -690,9 +696,10 @@ final class ActionUpdater {
       String message = "'" + place + "' update cancelled: " + reason;
       LOG.debug(message, message.contains("fast-track") || message.contains("all updates") ? null : new ProcessCanceledException());
     }
-    boolean nestedWA = reason instanceof String && ((String)reason).startsWith("nested write-action");
+    boolean nestedWA = reason instanceof String && ((String)reason).startsWith(NESTED_WA_REASON_PREFIX);
     if (nestedWA) {
-      LOG.error(new AssertionError("An action must not request write-action during actions update. " +
+      LOG.error(new AssertionError(((String)reason).substring(NESTED_WA_REASON_PREFIX.length()) + " requests write-action. " +
+                                   "An action must not request write-action during actions update. " +
                                    "See CustomComponentAction.createCustomComponent javadoc, if caused by a custom component."));
     }
     if (!nestedWA && promise instanceof AsyncPromise) {

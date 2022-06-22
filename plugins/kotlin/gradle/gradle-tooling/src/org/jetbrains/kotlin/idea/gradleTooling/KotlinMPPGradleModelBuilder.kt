@@ -8,7 +8,7 @@ import org.gradle.api.Project
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO_KOTLIN_NATIVE_HOME
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CACHE_MAPPER_BRANCHING
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheMapperImpl
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinSourceSetProtoBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinTargetBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetReflection
@@ -41,11 +41,9 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         try {
             val projectTargets = project.getTargets() ?: return null
             val modelBuilderContext = builderContext ?: return null
-            val masterCompilerArgumentsCacheMapper = modelBuilderContext.getData(CACHE_MAPPER_BRANCHING)
-            val detachableCompilerArgumentsCacheMapper = masterCompilerArgumentsCacheMapper.branchOffDetachable()
+            val argsMapper = CompilerArgumentsCacheMapperImpl()
 
-            val importingContext =
-                MultiplatformModelImportingContextImpl(project, detachableCompilerArgumentsCacheMapper, modelBuilderContext)
+            val importingContext = MultiplatformModelImportingContextImpl(project, argsMapper, modelBuilderContext)
 
             val sourceSets = buildSourceSets(importingContext) ?: return null
             importingContext.initializeSourceSets(sourceSets)
@@ -68,7 +66,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 ),
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
-                partialCacheAware = detachableCompilerArgumentsCacheMapper.detachCacheAware()
+                cacheAware = argsMapper
             ).apply {
                 kotlinImportingDiagnostics += collectDiagnostics(importingContext)
             }

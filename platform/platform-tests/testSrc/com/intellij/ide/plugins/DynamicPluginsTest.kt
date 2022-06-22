@@ -324,7 +324,7 @@ class DynamicPluginsTest {
       .randomId("com.intellij.foo")
       .packagePrefix("com.intellij.foo")
 
-    val barBuilder = PluginBuilder()
+    val bar = PluginBuilder()
       .randomId("com.intellij.bar")
       .packagePrefix("com.intellij.bar")
       .module(
@@ -334,7 +334,7 @@ class DynamicPluginsTest {
           .pluginDependency(foo.id)
       )
 
-    val bazBuilder = PluginBuilder()
+    val baz = PluginBuilder()
       .randomId("com.intellij.baz")
       .packagePrefix("com.intellij.baz")
       .module(
@@ -342,15 +342,16 @@ class DynamicPluginsTest {
         PluginBuilder()
           .packagePrefix("com.intellij.baz.foo")
           .pluginDependency(foo.id)
+          .pluginDependency(bar.id)
           .dependency("intellij.bar.foo")
       )
 
-    loadPluginWithText(barBuilder).use {
-      loadPluginWithText(bazBuilder).use {
+    loadPluginWithText(foo).use {
+      loadPluginWithText(baz).use {
         assertThat(findEnabledModuleByName("intellij.bar.foo")).isNull()
         assertThat(findEnabledModuleByName("intellij.baz.foo")).isNull()
 
-        loadPluginWithText(foo).use {
+        loadPluginWithText(bar).use {
           assertThat(findEnabledModuleByName("intellij.bar.foo")?.pluginClassLoader).isNotNull()
           assertThat(findEnabledModuleByName("intellij.baz.foo")?.pluginClassLoader).isNotNull()
         }

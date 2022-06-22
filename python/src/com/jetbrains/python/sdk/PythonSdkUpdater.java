@@ -9,10 +9,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -87,6 +84,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   public void runActivity(@NotNull Project project) {
     Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) return;
+    if (application.isHeadlessEnvironment()) return; // see PythonHeadlessSdkUpdater
     if (project.isDisposed()) return;
 
     for (Sdk sdk : getPythonSdks(project)) {
@@ -348,6 +346,13 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       ourUnderRefresh.add(key);
     }
     ProgressManager.getInstance().run(new PyUpdateSdkTask(project, key, new PyUpdateSdkRequestData()));
+  }
+
+  static boolean isUpdateScheduled(@NotNull Sdk sdk) {
+    final String key = PythonSdkType.getSdkKey(sdk);
+    synchronized (ourLock) {
+      return ourUnderRefresh.contains(key) || ourToBeRefreshed.containsKey(key);
+    }
   }
 
   private static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, @NotNull PyUpdateSdkRequestData requestData) {
@@ -671,14 +676,21 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    * Returns unique Python SDKs for the open modules of the project.
    */
   @NotNull
-  private static Set<Sdk> getPythonSdks(@NotNull Project project) {
+  static Set<Sdk> getPythonSdks(@NotNull Project project) {
     final Set<Sdk> pythonSdks = new LinkedHashSet<>();
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-      if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
-        pythonSdks.add(sdk);
+
+    ReadAction.run(
+      () ->
+      {
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+          if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
+            pythonSdks.add(sdk);
+          }
+        }
       }
-    }
+    );
+
     return pythonSdks;
   }
 

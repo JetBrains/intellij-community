@@ -35,11 +35,6 @@ import java.util.List;
  */
 public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreakpointProperties> {
   public static final ExtensionPointName<XBreakpointType> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.xdebugger.breakpointType");
-  // Android Studio:
-  // Change default suspend policy to thread only (IntelliJ has SuspendPolicy.ALL) to
-  // just suspend that single thread rather than all threads.
-  // This reduces the incidence of a deadlock happening on ART.
-  public static final SuspendPolicy DEFAULT_SUSPEND_POLICY = SuspendPolicy.THREAD;
   private final @NonNls @NotNull String myId;
   private final @Nls @NotNull String myTitle;
   private final boolean mySuspendThreadSupported;
@@ -76,7 +71,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   public SuspendPolicy getDefaultSuspendPolicy() {
-    return DEFAULT_SUSPEND_POLICY;
+    return SuspendPolicy.ALL;
   }
 
   public enum StandardPanels {SUSPEND_POLICY, ACTIONS, DEPENDENCY}
@@ -189,7 +184,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   @NotNull 
   public Comparator<B> getBreakpointComparator() {
-    return (b, b1) -> Long.compare(b1.getTimeStamp(), b.getTimeStamp());
+    return (b, b1) -> (int)(b1.getTimeStamp() - b.getTimeStamp());
     //return XDebuggerUtil.getInstance().getDefaultBreakpointComparator(this);
   }
 

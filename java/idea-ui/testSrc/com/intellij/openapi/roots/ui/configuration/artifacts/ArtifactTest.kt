@@ -30,6 +30,7 @@ class ArtifactTest : HeavyPlatformTestCase() {
                                                               project,
                                                               ArtifactEditorSettings(),
                                                               object : ArtifactListener {})
+      disposeOnTearDown(Disposable { context.disposeUIResources() })
       val configurable = ArtifactConfigurable(artifact,
                                               context, Runnable { })
       configurable.displayName = "X"

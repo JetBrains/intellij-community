@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
@@ -57,13 +57,15 @@ public abstract class JavaTestFramework implements TestFramework {
    * Return {@code true} iff {@link #getMarkerClassFQName()} can be found in the resolve scope of {@code clazz} 
    */
   protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
+    String markerClassFQName = getMarkerClassFQName();
+    if (markerClassFQName == null) return true;
     return CachedValuesManager.<ConcurrentMap<String, PsiClass>>getCachedValue(clazz, () -> {
       var project = clazz.getProject();
       return new CachedValueProvider.Result<>(
         ConcurrentFactoryMap.createMap(
           markerInterfaceName -> JavaPsiFacade.getInstance(project).findClass(markerInterfaceName, clazz.getResolveScope())),
         ProjectRootManager.getInstance(project));
-    }).get(getMarkerClassFQName()) != null;
+    }).get(markerClassFQName) != null;
   }
   
   @Override

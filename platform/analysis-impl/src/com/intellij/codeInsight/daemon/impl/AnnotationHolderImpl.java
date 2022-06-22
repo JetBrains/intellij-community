@@ -41,6 +41,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   @Deprecated
   public AnnotationHolderImpl(@NotNull AnnotationSession session) {
     this(session, false);
+    PluginException.reportDeprecatedUsage("AnnotationHolderImpl(AnnotationSession)", "Please use the AnnotationHolder passed to Annotator.annotate() instead");
   }
 
   /**
@@ -190,7 +191,15 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
                                       "and thus can cause unexpected behaviour (e.g. annoying blinking), " +
                                       "is deprecated and will be removed soon. " +
                                       "Please use `newAnnotation().create()` instead"), callerClass == null ? getClass() : callerClass);
+    // temporary fix, CLion guys promised to fix their annotator eventually
+    if ("com.jetbrains.cidr.lang.daemon.OCAnnotator".equals(callerClass == null ? null : callerClass.getName())) {
+      //todo
+      //LOG.warnInProduction(pluginException);
       LOG.warn(pluginException);
+    }
+    else {
+      LOG.warnInProduction(pluginException);
+    }
     return annotation;
   }
 

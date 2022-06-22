@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 
-@ApiStatus.Experimental
 public interface ServiceViewDescriptor {
   @NotNull
   ItemPresentation getPresentation();

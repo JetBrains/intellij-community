@@ -194,8 +194,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         if (item.description != null) {
           addDescription(item.description)
         }
-        item.component.border = JBUI.Borders.empty()
-        rightPanel.add(item.component)
+        if (!(item.component is JPanel) || item.component.componentCount > 0) {
+          item.component.border = JBUI.Borders.empty()
+          rightPanel.add(item.component)
+        }
         if (treeNode.isLeaf) {
           addPreview(item.getCasePreview(null) ?: item.previewText, item, null)
         }

@@ -7,6 +7,8 @@ import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionTheme
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
@@ -35,6 +37,7 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
 
   companion object {
     val map = HashMap<Editor, CodeVisionSelectionController>()
+    val logger = logger<CodeVisionSelectionController>()
 
     fun install(editor: EditorImpl, projectModel: ProjectCodeVisionModel) {
       var controller = map[editor]
@@ -113,9 +116,11 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
 
     entry.putUserData(codeVisionEntryMouseEventKey, mouseEvent)
     if (SwingUtilities.isLeftMouseButton(mouseEvent)) {
+      logger.trace { "entryPressHandler :: isLeftMouseButton" }
       rangeLensesModel.handleLensClick(entry)
     }
     else if (SwingUtilities.isRightMouseButton(mouseEvent)) {
+      logger.trace { "entryPressHandler :: isRightMouseButton" }
       rangeLensesModel.handleLensRightClick()
     }
   }

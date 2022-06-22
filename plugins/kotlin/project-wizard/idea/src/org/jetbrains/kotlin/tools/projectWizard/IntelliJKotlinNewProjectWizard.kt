@@ -25,6 +25,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
 
     override val name = "IntelliJ"
 
+    override val ordinal: Int = 100
+
     override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
     class Step(private val parent: KotlinNewProjectWizard.Step) : AbstractNewProjectWizardStep(parent) {
@@ -45,6 +47,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                     checkBox(message("label.project.wizard.new.project.add.sample.code"))
                         .bindSelected(addSampleCodeProperty)
                 }.topGap(TopGap.SMALL)
+
+                kmpWizardLink(context)
             }
         }
 

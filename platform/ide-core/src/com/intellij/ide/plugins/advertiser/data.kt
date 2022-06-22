@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import java.util.concurrent.TimeUnit
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeUnit
 @Serializable
 data class PluginData(
   val pluginIdString: String = "",
-  private val nullablePluginName: String? = null,
+  @NlsSafe val nullablePluginName: String? = null,
   val isBundled: Boolean = false,
   val isFromCustomRepository: Boolean = false,
 ) : Comparable<PluginData> {
@@ -65,6 +66,9 @@ data class PluginFeatureMap(
   constructor(map: Map<String, MutableSet<PluginData>>) : this(convertMap(map))
 
   fun update(newFeatureMap: Map<String, Set<PluginData>>) {
+    // this also removes extension features that are no longer present in the marketplace
+    featureMap.clear()
+
     for ((id, plugins) in newFeatureMap) {
       featureMap.computeIfAbsent(id) { PluginDataSet() }.dataSet.addAll(plugins)
     }

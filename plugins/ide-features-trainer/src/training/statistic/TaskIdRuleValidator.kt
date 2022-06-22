@@ -30,13 +30,13 @@ private class TaskIdRuleValidator : CustomValidationRule() {
   }
 
   private fun KLesson.getTaskCount(): Int {
-    val context = ExtractTaskCountContext()
+    val context = ExtractTaskCountContext(this)
     lessonContent(context)
     return context.taskCount
   }
 }
 
-private class ExtractTaskCountContext : LessonContext() {
+private class ExtractTaskCountContext(override val lesson: KLesson) : LessonContext() {
   var taskCount = 0
 
   override fun task(taskContent: TaskContext.() -> Unit) {

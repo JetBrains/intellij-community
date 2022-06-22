@@ -178,6 +178,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testRecord() { doTest(); }
   public void testRecordWithComponent() { doTest(); }
   public void testRecordWithComponentNoBody() { doTest(); }
+  public void testClassBeforeRecord() { doTest(); }
   public void testVarargMethod() { doTest(); }
   public void testVarargMethod2() { doTest(); }
   public void testVarargMethod3() { doTest(); }

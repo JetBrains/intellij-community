@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -14,7 +14,9 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.List;
 
@@ -48,9 +50,22 @@ class LinkComboBox extends ActionLink {
     }
   }
 
-  @Override
-  public int getDisplayedMnemonicIndex() {
-    return -1;
+  /**
+   * Sets a label for this component.  If the specified label has a displayed mnemonic,
+   * it will call the {@code #doClick} method when the mnemonic is activated.
+   *
+   * @param label the label referring to this component
+   * @see JLabel#setLabelFor
+   */
+  public void setLabel(@NotNull JLabel label) {
+    label.setLabelFor(this);
+
+    label.getActionMap().put("release" /* BasicLabelUI.Actions.RELEASE */, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        doClick();
+      }
+    });
   }
 
   public String getSelectedItem() {

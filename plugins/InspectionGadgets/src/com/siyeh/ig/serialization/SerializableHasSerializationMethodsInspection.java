@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,22 +30,24 @@ public class SerializableHasSerializationMethodsInspection extends SerializableI
 
   public boolean ignoreClassWithoutFields = false;
 
+  public SerializableHasSerializationMethodsInspection() {
+    superClassString = "java.io.Externalizable,java.awt.Component";
+    parseString(superClassString, superClassList);
+  }
+
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
     final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();
     if (!hasReadObject && !hasWriteObject) {
-      return InspectionGadgetsBundle.message(
-        "serializable.has.serialization.methods.problem.descriptor");
+      return InspectionGadgetsBundle.message("serializable.has.serialization.methods.problem.descriptor");
     }
     else if (hasReadObject) {
-      return InspectionGadgetsBundle.message(
-        "serializable.has.serialization.methods.problem.descriptor1");
+      return InspectionGadgetsBundle.message("serializable.has.serialization.methods.problem.descriptor1");
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "serializable.has.serialization.methods.problem.descriptor2");
+      return InspectionGadgetsBundle.message("serializable.has.serialization.methods.problem.descriptor2");
     }
   }
 

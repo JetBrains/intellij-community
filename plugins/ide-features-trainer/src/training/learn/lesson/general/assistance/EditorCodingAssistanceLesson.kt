@@ -29,7 +29,7 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
     prepareSample(sample)
 
     actionTask("GotoNextError") {
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       LessonsBundle.message("editor.coding.assistance.goto.next.error", action(it))
     }
 

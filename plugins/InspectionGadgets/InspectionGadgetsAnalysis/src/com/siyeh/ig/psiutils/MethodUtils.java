@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -289,7 +289,11 @@ public final class MethodUtils {
 
   /**
    * Returns true if the method or constructor is trivial, i.e. does nothing of consequence. This is true when the method is empty, but
-   * also when it is a constructor which only calls super, contains empty statements or "if (false)" statements.
+   * also when it is a constructor which only calls super, contains empty statements, "if (false)" statements or only returns a constant.
+   *
+   * @parameter method  the method to check
+   * @parameter considerTrivialPredicate  predicate to consider further statements as trivial.
+   * For example, a predicate which returns {@code true} on {@link PsiThrowStatement}s could be used here.
    */
   public static boolean isTrivial(PsiMethod method, @Nullable Predicate<PsiStatement> considerTrivialPredicate) {
     if (method.hasModifierProperty(PsiModifier.NATIVE)) {
@@ -322,8 +326,8 @@ public final class MethodUtils {
       if (statement instanceof PsiReturnStatement) {
         final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
         final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
-        if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
-          return true;
+        if (returnValue != null && !(returnValue instanceof PsiLiteralExpression)) {
+          return false;
         }
       }
       else if (statement instanceof PsiIfStatement) {

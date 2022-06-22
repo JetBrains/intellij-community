@@ -6,9 +6,11 @@ import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
@@ -292,13 +294,33 @@ object GitLessonsUtil {
                                                            @Nls suggestionWithIcon: String,
                                                            @Nls suggestionWithoutIcon: String,
                                                            actionClass: KClass<T>) {
-    if (UISettings.getInstance().run { showNavigationBar || showMainToolbar }) {
+    val ui = UISettings.getInstance()
+    if (ui.showMainToolbar && checkActionShownInToolbar(actionClass, "MainToolBar")
+        || !ui.showMainToolbar && ui.showNavigationBar && checkActionShownInToolbar(actionClass, "NavBarToolBar")
+    ) {
       text("$introduction $suggestionWithIcon")
-      triggerAndFullHighlight { usePulsation = true }.component { ui: ActionButton ->
-        actionClass.isInstance(ui.action)
+      triggerAndFullHighlight { usePulsation = true }.component { button: ActionButton ->
+        actionClass.isInstance(button.action)
       }
     }
     else text("$introduction $suggestionWithoutIcon")
+  }
+
+  private fun checkActionShownInToolbar(actionClass: KClass<*>, toolbarName: String): Boolean {
+    return CustomActionsSchema.getInstance()
+      .getCorrectedAction(toolbarName)
+      ?.checkContainsActionRecursively(actionClass) == true
+  }
+
+  private fun AnAction.checkContainsActionRecursively(actionClass: KClass<*>): Boolean {
+    if (this !is ActionGroup) {
+      return actionClass.isInstance(this)
+    }
+    for (child in getChildren(null)) {
+      val contains = child.checkContainsActionRecursively(actionClass)
+      if (contains) return true
+    }
+    return false
   }
 
   fun loadIllustration(illustrationName: String): Icon {

@@ -927,6 +927,11 @@
       <reference ref="$Paste"/>
     </group>
 
+    <group id="TextViewerEditorPopupMenu">
+      <reference ref="BasicEditorPopupMenu"/>
+      <reference ref="CompareClipboardWithSelection"/>
+    </group>
+
     <group id="ConsoleEditorPopupMenu">
       <reference ref="CutCopyPasteGroup"/>
       <separator/>

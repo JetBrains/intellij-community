@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JavadocDeclarationInspection extends LocalInspectionTool {
+  public static final String SHORT_NAME = "JavadocDeclaration";
 
   public String ADDITIONAL_TAGS = "";
   public boolean IGNORE_THROWS_DUPLICATE = true;

@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.Divider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
@@ -45,18 +43,19 @@ public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
   private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ContainerUtil.newConcurrentSet();
 
-  public static @NotNull PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
-                                                                          @NotNull ProblemsHolder holder,
-                                                                          boolean isOnTheFly,
-                                                                          @NotNull LocalInspectionToolSession session,
-                                                                          @NotNull List<? extends PsiElement> elements) {
+  public static boolean createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
+                                                     @NotNull ProblemsHolder holder,
+                                                     boolean isOnTheFly,
+                                                     @NotNull LocalInspectionToolSession session,
+                                                     @NotNull List<? extends PsiElement> elements) {
     PsiElementVisitor visitor = createVisitor(tool, holder, isOnTheFly, session);
     // if inspection returned empty visitor then it should be skipped
-    if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
-      tool.inspectionStarted(session, isOnTheFly);
-      acceptElements(elements, visitor);
-    }
-    return visitor;
+    if (visitor == PsiElementVisitor.EMPTY_VISITOR) return false;
+
+    tool.inspectionStarted(session, isOnTheFly);
+    acceptElements(elements, visitor);
+    tool.inspectionFinished(session, holder);
+    return true;
   }
 
   @NotNull
@@ -241,6 +240,7 @@ public final class InspectionEngine {
                                                                                                    @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<>();
     withSession(file, restrictRange, restrictRange, isOnTheFly, session -> {
+      InspectListener publisher = file.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
       List<LocalInspectionToolWrapper> filtered = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds);
       Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {
         ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(file.getProject()), file, isOnTheFly){
@@ -277,9 +277,16 @@ public final class InspectionEngine {
           }
         };
         LocalInspectionTool tool = toolWrapper.getTool();
-        createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
 
-        tool.inspectionFinished(session, holder);
+        long inspectionStartTime = System.currentTimeMillis();
+        boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
+        long inspectionDuration = System.currentTimeMillis() - inspectionStartTime;
+
+        boolean needToReportStatsToQodana = (inspectionWasRun && !isOnTheFly);
+        if (needToReportStatsToQodana) {
+          publisher.inspectionFinished(inspectionDuration, Thread.currentThread().getId(), holder.getResultCount(), toolWrapper,
+                                       InspectListener.InspectionKind.LOCAL, file, file.getProject());
+        }
 
         if (holder.hasResults()) {
           List<ProblemDescriptor> descriptors = ContainerUtil.filter(holder.getResults(), descriptor -> {

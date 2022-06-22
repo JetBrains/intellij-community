@@ -10,6 +10,7 @@ import kotlin.time.Duration
 
 object Git {
   val branch by lazy { getShortBranchName() }
+  val localBranch by lazy { getLocalGitBranch() }
 
   @Throws(IOException::class, InterruptedException::class)
   private fun getLocalGitBranch(): String {

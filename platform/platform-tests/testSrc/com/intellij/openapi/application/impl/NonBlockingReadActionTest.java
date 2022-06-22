@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -553,6 +553,31 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       parents.forEach(Disposer::dispose);
 
       futures.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
+    }
+  }
+
+  public void test_executeSynchronously_doesNot_return_null_with_not_nullable_callable() {
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 10);
+
+    for (int i = 0; i < 50; i++) {
+      List<Disposable> disposables = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
+      List<Future<?>> futuresList = new ArrayList<>();
+      for (Disposable disposable : disposables) {
+        futuresList.add(executor.submit(() -> {
+          try {
+            Boolean value = ReadAction.nonBlocking(() -> {
+              return Boolean.TRUE;
+            }).expireWith(disposable).executeSynchronously();
+            assertNotNull(value);
+          }
+          catch (ProcessCanceledException e) {
+            //valid outcome
+          }
+        }));
+      }
+      disposables.forEach(Disposer::dispose);
+
+      futuresList.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
     }
   }
 }

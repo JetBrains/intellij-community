@@ -36,7 +36,6 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
@@ -130,7 +129,6 @@ class InspectionRunner {
       };
       visitElements(init, outside, false, finalPriorityRange, TOMB_STONE, afterOutside, foundInjected, injectedContexts,
                     toolWrappers, empty());
-      reportStatsToQodana(init);
       boolean isWholeFileInspectionsPass = !toolWrappers.isEmpty() && toolWrappers.get(0).getTool().runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
         // do not save stats for batch process, there could be too many files
@@ -192,20 +190,6 @@ class InspectionRunner {
         return Arrays.equals(((VirtualFileWindow)v1).getDocumentWindow().getHostRanges(), ((VirtualFileWindow)v2).getDocumentWindow().getHostRanges());
       }
     });
-  }
-
-  private void reportStatsToQodana(@NotNull List<? extends InspectionContext> contexts) {
-    if (!myIsOnTheFly) {
-      Project project = myPsiFile.getProject();
-      InspectListener publisher = project.getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
-      for (InspectionContext context : contexts) {
-        LocalInspectionToolWrapper toolWrapper = context.tool;
-        InspectionProblemHolder holder = context.holder;
-        long durationMs = TimeUnit.NANOSECONDS.toMillis(holder.finishTimeStamp - holder.initTimeStamp);
-        int problemCount = context.holder.getResultCount();
-        publisher.inspectionFinished(durationMs, 0, problemCount, toolWrapper, InspectListener.InspectionKind.LOCAL, myPsiFile, project);
-      }
-    }
   }
 
   private void registerSuppressedElements(@NotNull PsiElement element, @NotNull String id, @Nullable String alternativeID) {

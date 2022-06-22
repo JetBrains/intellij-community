@@ -2,14 +2,12 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
-import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
-import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
@@ -80,24 +78,35 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
     myImportModuleGroupsRequired = importModuleGroupsRequired;
     myDummyModule = dummyModule;
 
-    myDiff = ((IdeModifiableModelsProviderImpl)modelsProvider).getActualStorageBuilder();
+    if (modelsProvider instanceof IdeModifiableModelsProviderImpl) {
+      IdeModifiableModelsProviderImpl impl = (IdeModifiableModelsProviderImpl)modelsProvider;
+      myDiff = impl.getActualStorageBuilder();
+    } else {
+      myDiff = null;
+    }
+    
     myIdeModifiableModelsProvider = modelsProvider;
   }
 
   @Override
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
+    StructuredIdeActivity activity = MavenImportStats.startApplyingModelsActivity(myProject);
     long startTime = System.currentTimeMillis();
-    if (MavenUtil.newModelEnabled(myProject)) {
-      myModelsProvider = new ModifiableModelsProviderProxyImpl(myProject, myDiff);
+    try {
+      if (MavenUtil.newModelEnabled(myProject) && myDiff != null) {
+        myModelsProvider = new ModifiableModelsProviderProxyImpl(myProject, myDiff);
+      }
+      else {
+        myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
+      }
+      myModuleModel = myModelsProvider.getModuleModelProxy();
+      return importProjectOldWay();
     }
-    else {
-      myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
+    finally {
+      activity.finished();
+      LOG.info("[maven import] applying models took " + (System.currentTimeMillis() - startTime) + "ms");
     }
-    myModuleModel = myModelsProvider.getModuleModelProxy();
-    List<MavenProjectsProcessorTask> tasks = importProjectOldWay();
-    LOG.info("[maven import] applying models took " + (System.currentTimeMillis() - startTime) + "ms");
-    return tasks;
   }
 
   @Nullable
@@ -158,7 +167,13 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
       });
 
       if (!importers.isEmpty()) {
-        IdeModifiableModelsProvider provider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
+        IdeModifiableModelsProvider provider;
+        if (myIdeModifiableModelsProvider instanceof IdeUIModifiableModelsProvider) {
+          provider = myIdeModifiableModelsProvider; // commit does nothing for this provider, so it should be reused
+        } else {
+          provider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
+        }
+
         try {
           List<MavenModuleImporter> toRun = new ArrayList<>(importers.size());
           for (MavenModuleImporter importer : importers) {

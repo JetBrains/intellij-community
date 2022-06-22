@@ -178,11 +178,18 @@
 
     <action id="Gradle.RefreshDependencies" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectDependenciesAction"/>
 
-    <action id="Gradle.DependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerAction">
+    <action id="Gradle.ViewDependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.ViewDependencyAnalyzerAction"/>
+    <action id="Gradle.ToolbarDependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.ToolbarDependencyAnalyzerAction"/>
+    <action id="Gradle.ProjectViewDependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.ProjectViewDependencyAnalyzerAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="UML.Group"/>
     </action>
-
+    <action id="Gradle.DependencyAnalyzer.OpenConfig" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerOpenConfigAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+    </action>
     <action id="Gradle.DependencyAnalyzer.GoTo" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerGoToAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
     </action>
@@ -201,7 +208,7 @@
     <group id="Gradle.View.ActionsToolbar.CenterPanel">
       <separator/>
       <reference id="Gradle.OpenProjectCompositeConfiguration"/>
-      <reference id="Gradle.DependencyAnalyzer"/>
+      <reference id="Gradle.ToolbarDependencyAnalyzer"/>
       <separator/>
       <add-to-group group-id="ExternalSystemView.ActionsToolbar.CenterPanel" anchor="last"/>
     </group>
@@ -210,21 +217,21 @@
       <separator/>
       <reference id="Gradle.OpenProjectCompositeConfiguration"/>
       <reference id="Gradle.RefreshDependencies"/>
-      <reference id="Gradle.DependencyAnalyzer"/>
+      <reference id="Gradle.ViewDependencyAnalyzer"/>
       <separator/>
       <add-to-group group-id="ExternalSystemView.ProjectMenu" anchor="last"/>
     </group>
 
     <group id="Gradle.View.ModuleMenu">
       <separator/>
-      <reference id="Gradle.DependencyAnalyzer"/>
+      <reference id="Gradle.ViewDependencyAnalyzer"/>
       <separator/>
       <add-to-group group-id="ExternalSystemView.ModuleMenu" anchor="last"/>
     </group>
 
     <group id="Gradle.View.DependencyMenu">
       <separator/>
-      <reference id="Gradle.DependencyAnalyzer"/>
+      <reference id="Gradle.ViewDependencyAnalyzer"/>
       <separator/>
       <add-to-group group-id="ExternalSystemView.DependencyMenu" anchor="last"/>
     </group>

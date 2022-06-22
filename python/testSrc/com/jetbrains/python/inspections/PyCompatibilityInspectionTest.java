@@ -61,6 +61,11 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-42200
+  public void testParenthesizedWithItems() {
+    doTest(LanguageLevel.getLatest());
+  }
+
   public void testPrintStatement() {
     doTest();
   }

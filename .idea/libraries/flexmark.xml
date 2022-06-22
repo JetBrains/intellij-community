@@ -2,9 +2,10 @@
   <library name="flexmark" type="repository">
     <properties maven-id="com.vladsch.flexmark:flexmark-all:0.62.2">
       <exclude>
+        <dependency maven-id="org.jetbrains:annotations" />
+        <dependency maven-id="org.jsoup:jsoup" />
         <dependency maven-id="commons-logging:commons-logging" />
         <dependency maven-id="com.ibm.icu:icu4j" />
-        <dependency maven-id="org.jetbrains:annotations" />
       </exclude>
     </properties>
     <CLASSES>
@@ -42,7 +43,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.62.2/flexmark-ext-yaml-front-matter-0.62.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.62.2/flexmark-ext-youtube-embedded-0.62.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-html2md-converter/0.62.2/flexmark-html2md-converter-0.62.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.11.3/jsoup-1.11.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-jira-converter/0.62.2/flexmark-jira-converter-0.62.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-pdf-converter/0.62.2/flexmark-pdf-converter-0.62.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-core/1.0.0/openhtmltopdf-core-1.0.0.jar!/" />
@@ -100,7 +100,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.62.2/flexmark-ext-yaml-front-matter-0.62.2-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.62.2/flexmark-ext-youtube-embedded-0.62.2-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-html2md-converter/0.62.2/flexmark-html2md-converter-0.62.2-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.11.3/jsoup-1.11.3-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-jira-converter/0.62.2/flexmark-jira-converter-0.62.2-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-pdf-converter/0.62.2/flexmark-pdf-converter-0.62.2-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-core/1.0.0/openhtmltopdf-core-1.0.0-javadoc.jar!/" />
@@ -158,7 +157,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.62.2/flexmark-ext-yaml-front-matter-0.62.2-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.62.2/flexmark-ext-youtube-embedded-0.62.2-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-html2md-converter/0.62.2/flexmark-html2md-converter-0.62.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.11.3/jsoup-1.11.3-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-jira-converter/0.62.2/flexmark-jira-converter-0.62.2-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-pdf-converter/0.62.2/flexmark-pdf-converter-0.62.2-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/openhtmltopdf/openhtmltopdf-core/1.0.0/openhtmltopdf-core-1.0.0-sources.jar!/" />

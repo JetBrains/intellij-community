@@ -5,8 +5,10 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import java.util.*
 
@@ -34,11 +36,18 @@ class ExternalSystemSettingsCollector : ProjectUsagesCollector() {
       }
     }
 
+    val mavenModules = ModuleManager.getInstance(project).modules.count {
+      ExternalSystemModulePropertyManager.getInstance(it).isMavenized()
+    }
+    if (mavenModules > 0) {
+      usages.add(MODULES_COUNT.metric(mavenModules, "Maven"))
+    }
+
     return usages
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.tools.state", 3)
+    private val GROUP = EventLogGroup("build.tools.state", 4)
     private val AUTO_RELOAD_TYPE = GROUP.registerEvent("autoReloadType",
                                                        EventFields.Enum("value",
                                                                         ExternalSystemProjectTrackerSettings.AutoReloadType::class.java) {

@@ -41,6 +41,7 @@ public class SingleIntegerFieldOptionsPanel extends InspectionOptionsPanel {
                                           final InspectionProfileEntry owner,
                                           @NonNls final String property,
                                           int integerFieldColumns) {
+        super(owner);
         final JLabel label = new JLabel(labelString);
         final JFormattedTextField valueField = createIntegerFieldTrackingValue(owner, property, integerFieldColumns);
         addRow(label, valueField);

@@ -8,19 +8,19 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.UnknownModuleType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
 
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.codeInsight.documentation.DocumentationComponent.SECTION_COLOR;
 
@@ -30,21 +30,12 @@ public final class DocumentationHtmlUtil {
   private DocumentationHtmlUtil() {
   }
 
-  //TODO: extract to common extensions
-  public static ExtendableHTMLViewFactory.Extension getHiDPIImagesExtension(@NotNull JComponent component) {
-    return (element, view) -> {
-      if (view instanceof ImageView) {
-        // we have to work with raw image, apply scaling manually
-        return new DocumentationScalingImageView(element, () -> {
-          return ScaleContext.create(component);
-        });
-      }
-      return null;
-    };
-  }
-
-  public static ExtendableHTMLViewFactory.Extension getModuleIconsExtension() {
+  public static ExtendableHTMLViewFactory.Extension getIconsExtension(@NotNull Function<@NotNull String, @Nullable Icon> iconResolver) {
     return ExtendableHTMLViewFactory.Extensions.icons(key -> {
+      Icon resolved = iconResolver.apply(key);
+      if (resolved != null) {
+        return resolved;
+      }
       ModuleType<?> moduleType = ModuleTypeManager.getInstance().findByID(key);
       return moduleType instanceof UnknownModuleType
              ? null

@@ -902,7 +902,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
   }
 
-  @NotNull
   private HighlightingSession queuePassesCreation(@NotNull Collection<? extends FileEditor> fileEditors, int @NotNull [] passesToIgnore) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (fileEditors.isEmpty()) {
@@ -930,6 +929,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
       EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
       session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress);
+    }
+    if (session == null) {
+      stopProcess(true, "Couldn't create session for "+fileEditors);
+      return null;
     }
     Map<Document, List<FileEditor>> preferredFileEditorMap = createPreferredFileEditorMap(fileEditors);
 
@@ -981,7 +984,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         LOG.error(e);
       }
     }, null);
-    assert session != null;
     return session;
   }
 

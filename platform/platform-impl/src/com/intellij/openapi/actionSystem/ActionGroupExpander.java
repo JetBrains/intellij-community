@@ -22,6 +22,7 @@ public interface ActionGroupExpander {
   boolean allowsFastUpdate(@Nullable Project project, @NotNull String place);
 
   @NotNull CancellablePromise<List<AnAction>> expandActionGroupAsync(@Nullable Project project,
+                                                                     @NotNull DataContext context,
                                                                      @NotNull String place,
                                                                      @NotNull ActionGroup group,
                                                                      boolean hideDisabled,

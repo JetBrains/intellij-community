@@ -43,8 +43,8 @@ val CHECK_DIRECTORY = validationTextErrorFor { text ->
       }
     }.getOrElse { exception ->
       when (exception) {
-        is InvalidPathException -> UIBundle.message("label.project.wizard.new.project.directory.not.writable.error", exception.message)
-        is IOException -> UIBundle.message("label.project.wizard.new.project.directory.not.writable.error", exception.message)
+        is InvalidPathException -> exception.message
+        is IOException -> exception.message
         else -> throw exception
       }
     }
@@ -90,7 +90,7 @@ val CHECK_FREE_MODULE_NAME = validationTextErrorFor<Project?> { project, name ->
 val CHECK_FREE_MODULE_PATH = validationPathErrorFor<Project?> { project, path ->
   project?.getModules()
     ?.find { m -> m.rootManager.contentRoots.map { it.toNioPath() }.any { it == path } }
-    ?.let { UIBundle.message("label.project.wizard.new.module.name.exists.error", it.name) }
+    ?.let { UIBundle.message("label.project.wizard.new.module.directory.already.taken.error", it.name) }
 }
 
 val CHECK_FREE_PROJECT_PATH = validationPathErrorFor { path ->

@@ -116,9 +116,13 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       else if (aClass.isEnum()) {
         GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.ENUM, true, CODE, context);
       }
+      else if (aClass.isRecord()) {
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.RECORD, true, CODE, context);
+      }
       else {
         GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.INTERFACE, false, CODE, context);
         GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.ENUM, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.RECORD, false, CODE, context);
         GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.CLASS, true, CODE, context);
       }
       super.visitClass(aClass);

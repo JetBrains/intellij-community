@@ -34,7 +34,7 @@ import com.intellij.structuralsearch.Scopes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.GridBagConstraintHolder;
+import com.intellij.util.ui.GridBagConstraintBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +109,7 @@ public class ScopePanel extends JPanel {
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
     final GridBagLayout layout = new GridBagLayout();
-    final GridBagConstraintHolder constraint = new GridBagConstraintHolder();
+    final GridBagConstraintBuilder constraint = new GridBagConstraintBuilder();
     setLayout(layout);
 
     add(myToolbar, constraint.get());

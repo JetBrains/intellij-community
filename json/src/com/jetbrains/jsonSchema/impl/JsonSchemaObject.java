@@ -3,16 +3,20 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
+import com.jetbrains.jsonSchema.JsonDependencyModificationTracker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
@@ -23,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -54,8 +57,6 @@ public final class JsonSchemaObject {
   @Nullable private final VirtualFile myRawFile;
   @Nullable private Map<String, JsonSchemaObject> myDefinitionsMap;
   @NotNull public static final JsonSchemaObject NULL_OBJ = new JsonSchemaObject("$_NULL_$");
-  @NotNull private final ConcurrentMap<String, JsonSchemaObject> myComputedRefs = new ConcurrentHashMap<>();
-  @NotNull private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
   @NotNull private Map<String, JsonSchemaObject> myProperties;
 
   @Nullable private PatternProperties myPatternProperties;
@@ -130,6 +131,8 @@ public final class JsonSchemaObject {
   @Nullable private Map<String, Map<String, String>> myEnumMetadata;
 
   private boolean myForceCaseInsensitive = false;
+
+  private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   public boolean isValidByExclusion() {
     return myIsValidByExclusion;
@@ -1132,13 +1135,10 @@ public final class JsonSchemaObject {
   public JsonSchemaObject resolveRefSchema(@NotNull JsonSchemaService service) {
     final String ref = getRef();
     assert !StringUtil.isEmptyOrSpaces(ref);
-    JsonSchemaObject schemaObject = myComputedRefs.getOrDefault(ref, NULL_OBJ);
+    ConcurrentMap<String, JsonSchemaObject> refsStorage = getComputedRefsStorage(service.getProject());
+    JsonSchemaObject schemaObject = refsStorage.getOrDefault(ref, NULL_OBJ);
     if (schemaObject == NULL_OBJ) {
       JsonSchemaObject value = fetchSchemaFromRefDefinition(ref, this, service, isRefRecursive());
-      if (!mySubscribed.get()) {
-        service.getProject().getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_DEPS_CHANGED, () -> myComputedRefs.clear());
-        mySubscribed.set(true);
-      }
       if (!JsonFileResolver.isHttpPath(ref)) {
         service.registerReference(ref);
       }
@@ -1152,10 +1152,17 @@ public final class JsonSchemaObject {
       if (value != null && value != NULL_OBJ && !Objects.equals(value.myFileUrl, myFileUrl)) {
         value.setBackReference(this);
       }
-      myComputedRefs.put(ref, value == null ? NULL_OBJ : value);
+      refsStorage.put(ref, value == null ? NULL_OBJ : value);
       return value;
     }
     return schemaObject;
+  }
+
+  private ConcurrentMap<String, JsonSchemaObject> getComputedRefsStorage(@NotNull Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(
+      myUserDataHolder,
+      () -> CachedValueProvider.Result.create(new ConcurrentHashMap<String, JsonSchemaObject>(), JsonDependencyModificationTracker.forProject(project))
+    );
   }
 
   @Nullable

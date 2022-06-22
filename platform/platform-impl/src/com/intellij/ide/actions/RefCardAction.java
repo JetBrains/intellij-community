@@ -2,11 +2,11 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
@@ -17,9 +17,9 @@ import java.io.File;
 /**
  * @author Vladimir Kondratyev
  */
-public class RefCardAction extends AnAction implements DumbAware {
-  @NonNls private static final String REF_CARD_PATH = PathManager.getHomePath() + "/help/" + (SystemInfo.isMac
-                                                                                      ? "ReferenceCardForMac.pdf" : "ReferenceCard.pdf");
+public class RefCardAction extends DumbAwareAction implements UpdateInBackground {
+  private static final @NonNls String REF_CARD_PATH =
+    PathManager.getHomePath() + "/help/" + (SystemInfo.isMac ? "ReferenceCardForMac.pdf" : "ReferenceCard.pdf");
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -49,8 +49,7 @@ public class RefCardAction extends AnAction implements DumbAware {
     return SystemInfo.isMac ? appInfo.getMacKeymapUrl() : appInfo.getWinKeymapUrl();
   }
 
-  @NotNull
-  private static File getRefCardFile() {
+  private static @NotNull File getRefCardFile() {
     return new File(FileUtil.toSystemDependentName(REF_CARD_PATH));
   }
 }

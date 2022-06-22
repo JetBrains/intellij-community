@@ -1,15 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.codeInspection.*;
+import com.intellij.lang.jvm.actions.AnnotationAttributeRequest;
+import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequestKt;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -24,6 +25,8 @@ import org.jetbrains.uast.UParameter;
 
 import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.lang.jvm.actions.AnnotationRequestsKt.annotationRequest;
 
 public class SerializableCtorInspection extends DevKitUastInspectionBase {
 
@@ -83,14 +86,17 @@ public class SerializableCtorInspection extends DevKitUastInspectionBase {
   }
 
   private static LocalQuickFix[] createFixes(@NotNull UClass aClass, ProblemsHolder holder, UMethod constructor) {
-    return JavaLanguage.INSTANCE.is(aClass.getLang()) ?
-           new LocalQuickFix[]{
-             new AddAnnotationPsiFix(PROPERTY_MAPPING_ANNOTATION, constructor.getJavaPsi(),
-                                     createExpectedAnnotationAttributes(holder.getProject(), aClass, constructor))}
-                                                      : LocalQuickFix.EMPTY_ARRAY;
+    return IntentionWrapper.wrapToQuickFixes(
+        JvmElementActionFactories.createAddAnnotationActions(
+          constructor.getJavaPsi(),
+          annotationRequest(PROPERTY_MAPPING_ANNOTATION, createExpectedAnnotationAttributes(holder.getProject(), aClass, constructor))),
+        Objects.requireNonNull(aClass.getSourcePsi()).getContainingFile())
+      .toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  private static PsiNameValuePair @NotNull [] createExpectedAnnotationAttributes(Project project, UClass aClass, UMethod constructor) {
+  private static AnnotationAttributeRequest @NotNull [] createExpectedAnnotationAttributes(Project project,
+                                                                                           UClass aClass,
+                                                                                           UMethod constructor) {
     @NonNls StringBuilder builder = new StringBuilder("@PropertyMapping({");
     List<UParameter> parameters = constructor.getUastParameters();
     for (int i = 0; i < parameters.size(); i++) {
@@ -105,8 +111,9 @@ public class SerializableCtorInspection extends DevKitUastInspectionBase {
       builder.append('"').append(name).append('"');
     }
     builder.append("})");
+
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(project)
       .createAnnotationFromText(builder.toString(), aClass.getSourcePsi());
-    return annotation.getParameterList().getAttributes();
+    return AnnotationAttributeValueRequestKt.attributeRequests(annotation).toArray(AnnotationAttributeRequest[]::new);
   }
 }

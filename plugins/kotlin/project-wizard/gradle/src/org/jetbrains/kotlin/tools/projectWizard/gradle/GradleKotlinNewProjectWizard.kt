@@ -24,13 +24,17 @@ import com.intellij.ui.dsl.builder.bindSelected
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
+import org.jetbrains.kotlin.tools.projectWizard.kmpWizardLink
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleGroovyDsl
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleKotlinDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
+import java.io.File
 
 internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
     override val name = "Gradle"
+
+    override val ordinal: Int = 300
 
     override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
@@ -52,6 +56,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                     checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
                         .bindSelected(addSampleCodeProperty)
                 }.topGap(TopGap.SMALL)
+
+                kmpWizardLink(context)
             }
         }
 
@@ -88,6 +94,15 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             addAssets(StandardAssetsProvider().getGradlewAssets())
             if (gitData?.git == true) {
                 addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+            }
+        }
+
+        override fun setupProject(project: Project) {
+            super.setupProject(project)
+
+            val gradlewFile = File(outputDirectory, "gradlew")
+            if (gradlewFile.exists()) {
+                gradlewFile.setExecutable(true, false)
             }
         }
     }

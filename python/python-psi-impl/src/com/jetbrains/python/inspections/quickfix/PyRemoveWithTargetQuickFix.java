@@ -40,7 +40,6 @@ public class PyRemoveWithTargetQuickFix implements LocalQuickFix {
     final PyExpression withTarget = withItem.getTarget();
     if (withTarget != element) return;
     final PyExpression withExpr = withItem.getExpression();
-    if (withExpr == null) return;
     withItem.deleteChildRange(withExpr.getNextSibling(), withItem.getLastChild());
   }
 }

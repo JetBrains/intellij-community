@@ -1217,4 +1217,26 @@ public class PyFormatterTest extends PyTestCase {
     getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
     doTest();
   }
+
+  // PY-42200
+  public void testParenthesizedWithItems() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testHangingClosingBracketInParenthesizedWithItems() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-42200
+  public void testParenthesizedWithItemsHangingIndentProcessedSimilarlyToCollectionsInStatementHeaders() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testParenthesizedWithItemsWrapping() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
+    doTest();
+  }
 }

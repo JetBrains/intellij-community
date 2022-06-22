@@ -27,13 +27,14 @@ import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.nio.file.Path
 
-
 class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent), NewProjectWizardBaseData {
   override val nameProperty = propertyGraph.lazyProperty(::suggestName)
   override val pathProperty = propertyGraph.lazyProperty(::suggestLocation)
 
   override var name by nameProperty
   override var path by pathProperty
+
+  internal var bottomGap: Boolean = true
 
   private fun suggestLocation(): String {
     val location = context.projectFileDirectory
@@ -96,7 +97,8 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
           .gap(RightGap.SMALL)
         installNameGenerators(getBuilderId(), nameProperty)
       }.bottomGap(BottomGap.SMALL)
-      row(UIBundle.message("label.project.wizard.new.project.location")) {
+
+      val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
         val commentProperty = pathProperty.joinCanonicalPath(nameProperty)
           .transform { getPathComment(it) }
         val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
@@ -108,7 +110,11 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
           .textValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
           .comment(commentProperty.get(), 100)
           .apply { commentProperty.afterChange { comment?.text = it } }
-      }.bottomGap(BottomGap.SMALL)
+      }
+
+      if (bottomGap) {
+        locationRow.bottomGap(BottomGap.SMALL)
+      }
 
       onApply {
         context.projectName = name
@@ -144,4 +150,8 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
   init {
     data.putUserData(NewProjectWizardBaseData.KEY, this)
   }
+}
+
+fun newProjectWizardBaseStepWithoutGap(parent: NewProjectWizardStep): NewProjectWizardBaseStep {
+  return NewProjectWizardBaseStep(parent).apply { bottomGap = false }
 }

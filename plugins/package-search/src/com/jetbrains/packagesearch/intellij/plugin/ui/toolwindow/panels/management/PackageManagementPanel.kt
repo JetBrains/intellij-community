@@ -22,17 +22,13 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.newCoroutineContext
 import java.awt.Dimension
 import javax.swing.BorderFactory
 import javax.swing.JScrollPane
@@ -40,10 +36,7 @@ import javax.swing.JScrollPane
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackageManagementPanel(
     val project: Project,
-) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), CoroutineScope by project.lifecycleScope {
-
-    override val coroutineContext =
-        project.lifecycleScope.newCoroutineContext(SupervisorJob() + CoroutineName("PackageManagementPanel"))
+) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")) {
 
     private val operationFactory = PackageSearchOperationFactory()
     private val operationExecutor = NotifyingOperationExecutor(project)
@@ -114,16 +107,16 @@ internal class PackageManagementPanel(
             .flowOn(Dispatchers.Default)
             .onEach { modulesTree.display(it) }
             .flowOn(Dispatchers.EDT)
-            .launchIn(this)
+            .launchIn(project.lifecycleScope)
 
         packagesListPanel.selectedPackageStateFlow
             .filterNotNull()
             .onEach { PackageSearchEventsLogger.logPackageSelected(it is UiPackageModel.Installed) }
-            .launchIn(this)
+            .launchIn(project.lifecycleScope)
 
         modulesTree.targetModulesFlow
             .onEach { PackageSearchEventsLogger.logTargetModuleSelected(it) }
-            .launchIn(this)
+            .launchIn(project.lifecycleScope)
 
         combine(
             knownRepositoriesInTargetModulesFlow,
@@ -137,12 +130,12 @@ internal class PackageManagementPanel(
                 knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
                 targetModules = targetModules,
                 onlyStable = onlyStable,
-                invokeLaterScope = this
+                invokeLaterScope = project.lifecycleScope
             )
         }.flowOn(Dispatchers.Default)
             .onEach { packageDetailsPanel.display(it) }
             .flowOn(Dispatchers.EDT)
-            .launchIn(this)
+            .launchIn(project.lifecycleScope)
     }
 
     private fun updatePackageDetailsVisible(becomeVisible: Boolean) {

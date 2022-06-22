@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -41,7 +42,7 @@ import java.util.*;
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public final class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
   private static final Logger LOG = Logger.getInstance(LibraryDataService.class);
-  public static final @NotNull NotNullFunction<String, File> PATH_TO_FILE = path -> new File(path);
+  public static final @NotNull NotNullFunction<String, File> PATH_TO_FILE = File::new;
 
   @Override
   public @NotNull Key<LibraryData> getTargetDataKey() {
@@ -86,6 +87,15 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     registerPaths(toImport.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryName);
   }
 
+  private static void refreshVfsFiles(Collection<File> files) {
+    VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
+    for (File file : files) {
+      Path path = file.toPath();
+      // search for jar file first otherwise lib root won't be found!
+      virtualFileManager.refreshAndFindFileByNioPath(path);
+    }
+  }
+
   public @NotNull Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
     Map<OrderRootType, Collection<File>> result = new HashMap<>();
     for (LibraryPathType pathType: LibraryPathType.values()) {
@@ -97,7 +107,9 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       if (paths.isEmpty()) {
         continue;
       }
-      result.put(orderRootType, ContainerUtil.map(paths, PATH_TO_FILE));
+      List<File> files = ContainerUtil.map(paths, PATH_TO_FILE);
+      refreshVfsFiles(files);
+      result.put(orderRootType, files);
     }
     return result;
   }

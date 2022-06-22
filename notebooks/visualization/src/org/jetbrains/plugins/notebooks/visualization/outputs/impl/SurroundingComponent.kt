@@ -3,6 +3,7 @@ package org.jetbrains.plugins.notebooks.visualization.outputs.impl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.IdeBorderFactory
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentWrapper
+import org.jetbrains.plugins.notebooks.visualization.outputs.getEditorBackground
 import org.jetbrains.plugins.notebooks.visualization.ui.registerEditorSizeWatcher
 import org.jetbrains.plugins.notebooks.visualization.ui.textEditingAreaWidth
 import java.awt.BorderLayout
@@ -21,7 +22,8 @@ internal class SurroundingComponent private constructor(private val innerCompone
 
   override fun updateUI() {
     super.updateUI()
-    isOpaque = false
+    isOpaque = true
+    background = getEditorBackground()
   }
 
   override fun getPreferredSize(): Dimension = super.getPreferredSize().also {

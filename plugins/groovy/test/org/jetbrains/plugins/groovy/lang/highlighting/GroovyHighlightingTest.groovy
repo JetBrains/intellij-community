@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.siyeh.ig.junit.AbstractTestClassNamingConvention
@@ -2191,5 +2191,11 @@ new File('').withWriter('utf-8') {
     writer -> writer.write(output)
 }
 '''
+  }
+
+  void 'test IDEA-291580'() {
+    testHighlighting """
+<error>class Foo extends Foo</error> {} 
+"""
   }
 }

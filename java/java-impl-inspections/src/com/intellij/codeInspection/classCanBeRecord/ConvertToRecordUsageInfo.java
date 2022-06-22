@@ -40,7 +40,7 @@ class RenameMethodUsageInfo extends UsageInfo implements ConvertToRecordUsageInf
 }
 
 /**
- * Encapsulates the method or the field which will be weakened its visibility as the record introduces public accessors.
+ * Encapsulates the method or the field which becomes more accessible.
  */
 class BrokenEncapsulationUsageInfo extends UsageInfo implements ConvertToRecordUsageInfo {
   final String myErrMsg;

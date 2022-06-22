@@ -8,7 +8,7 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsColle
 
 class ProjectImportCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("project.import", 4)
+    val GROUP = EventLogGroup("project.import", 5)
 
     @JvmField
     val TASK_CLASS = EventFields.Class("task_class")

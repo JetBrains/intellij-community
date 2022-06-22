@@ -8,6 +8,7 @@ import com.intellij.grazie.icons.GrazieIcons
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.spellchecker.SpellCheckerSeveritiesProvider
+import java.util.function.Supplier
 import javax.swing.Icon
 
 class TextProblemSeverities: SeveritiesProvider() {
@@ -30,25 +31,43 @@ class TextProblemSeverities: SeveritiesProvider() {
   }
 
   companion object {
-    private fun createStyleSeverity(name: String, value: Int): HighlightSeverity {
+    private fun createStyleSeverity(name: String,
+                                    displayName: Supplier<String>,
+                                    displayNameCapitalized: Supplier<String>,
+                                    value: Int): HighlightSeverity {
       return HighlightSeverity(
         name,
         SpellCheckerSeveritiesProvider.TYPO.myVal - value,
-        GrazieBundle.messagePointer("style.problem.severity.name"),
-        GrazieBundle.messagePointer("style.problem.severity.name.capitalized"),
+        displayName,
+        displayNameCapitalized,
         @Suppress("InvalidBundleOrProperty")
         GrazieBundle.messagePointer("style.problem.severity.count")
       )
     }
 
     @JvmField
-    val STYLE_ERROR = createStyleSeverity("STYLE_ERROR", 1)
+    val STYLE_ERROR = createStyleSeverity(
+      "STYLE_ERROR",
+      GrazieBundle.messagePointer("style.error.severity.name"),
+      GrazieBundle.messagePointer("style.error.severity.name.capitalized"),
+      1
+    )
 
     @JvmField
-    val STYLE_WARNING = createStyleSeverity("STYLE_WARNING", 2)
+    val STYLE_WARNING = createStyleSeverity(
+      "STYLE_WARNING",
+      GrazieBundle.messagePointer("style.warning.severity.name"),
+      GrazieBundle.messagePointer("style.warning.severity.name.capitalized"),
+      2
+    )
 
     @JvmField
-    val STYLE_SUGGESTION = createStyleSeverity("STYLE_SUGGESTION", 3)
+    val STYLE_SUGGESTION = createStyleSeverity(
+      "STYLE_SUGGESTION",
+      GrazieBundle.messagePointer("style.suggestion.severity.name"),
+      GrazieBundle.messagePointer("style.suggestion.severity.name.capitalized"),
+      3
+    )
 
     @JvmField
     val GRAMMAR_ERROR = HighlightSeverity(

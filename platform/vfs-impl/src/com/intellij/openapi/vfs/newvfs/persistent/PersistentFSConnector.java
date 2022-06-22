@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.*;
@@ -154,7 +155,8 @@ final class PersistentFSConnector {
       if (initial) {
         markDirty = true;
       }
-      IntList freeRecords = scanFreeRecords(records);
+      IntList freeRecords = new IntArrayList();
+      loadFreeRecordsAndInvertedNameIndex(records, freeRecords);
       return Pair.create(new PersistentFSConnection(persistentFSPaths,
                                                     records,
                                                     names,
@@ -217,18 +219,19 @@ final class PersistentFSConnector {
     }
   }
 
-  private static IntList scanFreeRecords(PersistentFSRecordsStorage records) throws IOException {
-    final IntList freeRecords = new IntArrayList();
-    final int fileLength = (int)records.length();
-    LOG.assertTrue(fileLength % PersistentFSRecordsStorage.RECORD_SIZE == 0, "invalid file size: " + fileLength);
-
-    int count = fileLength / PersistentFSRecordsStorage.RECORD_SIZE;
-    for (int n = 2; n < count; n++) {
-      if (BitUtil.isSet(records.doGetFlags(n), PersistentFSRecordAccessor.FREE_RECORD_FLAG)) {
-        freeRecords.add(n);
+  private static void loadFreeRecordsAndInvertedNameIndex(@NotNull PersistentFSRecordsStorage records,
+                                                          @NotNull IntList freeFileIds) throws IOException {
+    long start = System.nanoTime();
+    InvertedNameIndex.clear();
+    records.processAllNames((fileId, nameId, flags) -> {
+      if (BitUtil.isSet(flags, PersistentFSRecordAccessor.FREE_RECORD_FLAG)) {
+        freeFileIds.add(fileId);
       }
-    }
-    return freeRecords;
+      else if (nameId != 0) {
+        InvertedNameIndex.updateDataInner(fileId, nameId);
+      }
+    });
+    LOG.info(TimeoutUtil.getDurationMillis(start) + " ms to load free records and inverted name index");
   }
 
   private static int getVersion(PersistentFSRecordsStorage records,

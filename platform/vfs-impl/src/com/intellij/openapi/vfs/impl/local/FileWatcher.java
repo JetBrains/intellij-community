@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.application.options.RegistryManager;
@@ -172,6 +172,7 @@ public final class FileWatcher {
     ApplicationManager.getApplication().invokeLater(
       () -> {
         Notification notification = group.createNotification(title, cause, NotificationType.WARNING);
+        notification.setSuggestionType(true);
         if (listener != null) notification.setListener(listener);
         Notifications.Bus.notify(notification);
       },

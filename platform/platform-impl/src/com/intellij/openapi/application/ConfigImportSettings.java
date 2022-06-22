@@ -11,6 +11,10 @@ import java.util.List;
 
 @ApiStatus.Internal
 public interface ConfigImportSettings {
+  /**
+   * Called after configuration import is finished, even when there was nothing to import from.
+   * In the latter case, {@link ConfigImportHelper#isConfigImported()} returns {@code false}.
+   */
   void importFinished(@NotNull Path newConfigPath, @Nullable String pathSelectorOfOtherIde);
 
   /**

@@ -31,6 +31,18 @@ class ReportingTest : BasePlatformTestCase() {
     assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Incorrect:.*Correct:.*")))
   }
 
+  fun `test unpaired parenthesis tooltip`() {
+    val inspection = GrazieInspection()
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("a.txt", "I have a (new apple here.")
+    val info = assertOneElement(myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id })
+    assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*Incorrect:.*" +
+                                                          "I'm over here, she said" +
+                                                          ".*Correct:.*" +
+                                                          "I'm over here,.*&quot;.*she said" +
+                                                          ".*")))
+  }
+
   fun `test tooltip and description texts in commit annotator`() {
     configureCommit(myFixture, "I have an new apple here.")
     val info = assertOneElement(myFixture.doHighlighting().filter { it.description.contains("vowel") })
@@ -99,8 +111,8 @@ class ReportingTest : BasePlatformTestCase() {
       "first", "second", "last", // first suggestions go in the specified order
       "z fix", "a fix", // then custom fixes, in the specified order
       "mock intention and fix", // if a custom fix overrides an intention, it's raised in the list
-      "Add exception 'S'", // then the built-in general context action
-      "Rule settings 'something'...",
+      "Ignore 'S' in this sentence", // then the built-in general context action
+      "Configure rule 'something'...",
       "mock intention", // normal intentions are at the bottom
     )
   }
@@ -139,8 +151,7 @@ class ReportingTest : BasePlatformTestCase() {
     return object : TextProblem(rule, text, range) {
       override fun getShortMessage() = "this problem"
       override fun getDescriptionTemplate(isOnTheFly: Boolean) = "something"
-      override fun getReplacementRange() = range
-      override fun getCorrections() = corrections
+      override fun getSuggestions() = corrections.map { Suggestion.replace(range, it) }
       override fun getCustomFixes() = customFixes
     }
   }

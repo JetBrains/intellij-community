@@ -83,7 +83,7 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
 
   @Override
   public boolean disableIfNoVisibleChildren() {
-    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).disableIfNoVisibleChildren();
+    return myOrigin instanceof ActionGroup && ((ActionGroup)myOrigin).disableIfNoVisibleChildren();
   }
 
   @Override
@@ -93,6 +93,9 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     Icon icon = wrapped.getPresentation().getIcon();
     if (icon != null) {
       e.getPresentation().setIcon(icon);
+    }
+    if (!(myOrigin instanceof ActionGroup)) {
+      e.getPresentation().setPerformGroup(true);
     }
   }
 

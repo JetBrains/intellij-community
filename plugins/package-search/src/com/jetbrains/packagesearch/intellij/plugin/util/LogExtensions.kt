@@ -4,6 +4,7 @@ package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.openapi.diagnostic.Logger
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
+import kotlinx.coroutines.CancellationException
 
 private val logger = Logger.getInstance("#${PluginEnvironment.PLUGIN_ID}")
 
@@ -20,6 +21,7 @@ fun logError(traceInfo: TraceInfo? = null, contextName: String? = null, throwabl
 }
 
 fun logError(message: String, throwable: Throwable? = null) {
+    if (throwable is CancellationException) return
     logger.error(message, throwable)
 }
 

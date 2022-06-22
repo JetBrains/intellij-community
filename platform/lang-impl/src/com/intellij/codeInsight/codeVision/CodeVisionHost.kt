@@ -40,7 +40,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
 import com.intellij.util.application
@@ -374,6 +373,13 @@ open class CodeVisionHost(val project: Project) {
       if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@associate it.id to null
       it.id to it.precomputeOnUiThread(editor)
     }
+
+    // dropping all lenses if CV disabled
+    if (lifeSettingModel.isEnabled.value.not()) {
+      consumer(emptyList(), providers.map { it.id })
+      return
+    }
+
     executeOnPooledThread(calcLifetime, inTestSyncMode) {
       ProgressManager.checkCanceled()
       var results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
@@ -469,7 +475,7 @@ open class CodeVisionHost(val project: Project) {
     return indicator
   }
 
-  private fun openCodeVisionSettings(groupId: String? = null) {
+  protected open fun openCodeVisionSettings(groupId: String? = null) {
     InlayHintsConfigurable.showSettingsDialogForLanguage(project, Language.ANY) {
       if(groupId == null) return@showSettingsDialogForLanguage it.group == InlayGroup.CODE_VISION_GROUP_NEW
 

@@ -25,6 +25,7 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,6 +73,7 @@ import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.BitUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.animation.AlphaAnimationContext;
@@ -187,6 +189,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
     if (isShowing()) repaint();
   });
+  @NotNull private final EventDispatcher<EditorGutterListener> myEditorGutterListeners = EventDispatcher.create(EditorGutterListener.class);
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -1375,9 +1378,23 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
+  public void addEditorGutterListener(@NotNull EditorGutterListener listener, @NotNull Disposable parentDisposable) {
+    myEditorGutterListeners.addListener(listener, parentDisposable);
+  }
+
+  private void fireTextAnnotationGutterProviderAdded(@NotNull TextAnnotationGutterProvider provider) {
+    myEditorGutterListeners.getMulticaster().textAnnotationAdded(provider);
+  }
+
+  private void fireTextAnnotationGutterProviderRemoved(@NotNull TextAnnotationGutterProvider provider) {
+    myEditorGutterListeners.getMulticaster().textAnnotationRemoved(provider);
+  }
+
+  @Override
   public void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider) {
     myTextAnnotationGutters.add(provider);
     myTextAnnotationGutterSizes.add(0);
+    fireTextAnnotationGutterProviderAdded(provider);
     updateSize();
   }
 
@@ -1386,6 +1403,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myTextAnnotationGutters.add(provider);
     myProviderToListener.put(provider, action);
     myTextAnnotationGutterSizes.add(0);
+    fireTextAnnotationGutterProviderAdded(provider);
     updateSize();
   }
 
@@ -1393,6 +1411,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public List<TextAnnotationGutterProvider> getTextAnnotations() {
     return new ArrayList<>(myTextAnnotationGutters);
+  }
+
+  @Override
+  public @Nullable EditorGutterAction getAction(@NotNull TextAnnotationGutterProvider provider) {
+    return myProviderToListener.get(provider);
   }
 
   private void doPaintFoldingTree(@NotNull Graphics2D g, @NotNull Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
@@ -2179,6 +2202,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         myTextAnnotationGutters.remove(i);
         myTextAnnotationGutterSizes.removeInt(i);
         myProviderToListener.remove(provider);
+        fireTextAnnotationGutterProviderRemoved(provider);
       }
     }
 
@@ -2292,20 +2316,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myLastActionableClick = new ClickInfo(logicalLineAtCursor, info == null ? point : info.iconCenterPosition);
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
-      final List<AnAction> addActions = new ArrayList<>();
-      if (myCanCloseAnnotations) addActions.add(new CloseAnnotationsAction());
-      //if (line >= myEditor.getDocument().getLineCount()) return;
-
-      for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
-        final List<AnAction> list = gutterProvider.getPopupActions(logicalLineAtCursor, myEditor);
-        if (list != null) {
-          for (AnAction action : list) {
-            if (! addActions.contains(action)) {
-              addActions.add(action);
-            }
-          }
-        }
-      }
+      final List<AnAction> addActions = getTextAnnotationPopupActions(logicalLineAtCursor);
       if (!addActions.isEmpty()) {
         e.consume();
         DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(EditorBundle.messagePointer("editor.annotations.action.group.name"));
@@ -2349,6 +2360,25 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         }
       }
     }
+  }
+
+  @Override
+  public @NotNull List<AnAction> getTextAnnotationPopupActions(int logicalLine) {
+    final List<AnAction> addActions = new ArrayList<>();
+    if (myCanCloseAnnotations) addActions.add(new CloseAnnotationsAction());
+    //if (line >= myEditor.getDocument().getLineCount()) return;
+
+    for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
+      final List<AnAction> list = gutterProvider.getPopupActions(logicalLine, myEditor);
+      if (list != null) {
+        for (AnAction action : list) {
+          if (!addActions.contains(action)) {
+            addActions.add(action);
+          }
+        }
+      }
+    }
+    return addActions;
   }
 
   private void addLoadingIconForGutterMark(@NotNull PointInfo info) {

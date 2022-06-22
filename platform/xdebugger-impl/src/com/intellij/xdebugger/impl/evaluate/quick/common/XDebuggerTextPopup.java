@@ -185,7 +185,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     toolbarActions.add(new ShowAsObject());
     toolbarActions.add(new EnableSetValueMode());
     toolbarActions.add(new SetTextValueAction());
-    toolbarActions.add(new DisableSetValueMode());
+    toolbarActions.add(new CancelSetValue());
     return toolbarActions;
   }
 
@@ -221,20 +221,8 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   @Override
   protected boolean shouldBeVisible(AnAction action) {
     boolean isSetValueModeAction = action instanceof XDebuggerTextPopup.SetTextValueAction ||
-                                   action instanceof XDebuggerTextPopup.DisableSetValueMode;
+                                   action instanceof XDebuggerTextPopup.CancelSetValue;
     return isSetValueModeAction && mySetValueModeEnabled || !isSetValueModeAction && !mySetValueModeEnabled;
-  }
-
-  private static void updatePopupBounds(@NotNull Window popupWindow, int newWidth, int newHeight) {
-    final Point location = popupWindow.getLocation();
-    final Rectangle targetBounds = new Rectangle(location.x, location.y, newWidth, newHeight);
-
-    ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
-    if (targetBounds.height != popupWindow.getHeight() || targetBounds.width != popupWindow.getWidth()) {
-      popupWindow.setBounds(targetBounds);
-      popupWindow.validate();
-      popupWindow.repaint();
-    }
   }
 
   private static int getMaxPopupWidth(Rectangle screenRectangle) {
@@ -342,9 +330,9 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     }
   }
 
-  private class DisableSetValueMode extends AnAction {
+  private class CancelSetValue extends AnAction {
 
-    private DisableSetValueMode() {
+    private CancelSetValue() {
       super(XDebuggerBundle.message("xdebugger.cancel.set.action.title"));
       setShortcutSet(CommonShortcuts.ESCAPE);
     }

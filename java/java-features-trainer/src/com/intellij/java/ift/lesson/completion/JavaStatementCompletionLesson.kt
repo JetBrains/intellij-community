@@ -37,7 +37,7 @@ class JavaStatementCompletionLesson
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
     actionTask("EditorCompleteStatement") {
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       JavaLessonsBundle.message("java.statement.completion.complete.for", action(it), code("for"))
     }
     task("EditorCompleteStatement") {

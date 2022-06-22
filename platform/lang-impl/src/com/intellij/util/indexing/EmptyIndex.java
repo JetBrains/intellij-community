@@ -14,32 +14,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.LongSupplier;
 
 final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, Input, Object> {
   private final ReadWriteLock myLock = new ReentrantReadWriteLock();
   private final IndexExtension<Key, Value, Input> myExtension;
-  private final ID<Key, Value> myIndexId;
-  private final LongSupplier myExternalModStampSupplier;
-  private final AtomicLong myModificationStamp = new AtomicLong();
-  private volatile long myPrevExternalModStamp;
 
-  EmptyIndex(@NotNull IndexExtension<Key, Value, Input> extension, @NotNull LongSupplier externalModStamp) {
+  EmptyIndex(@NotNull IndexExtension<Key, Value, Input> extension) {
     myExtension = extension;
-    myIndexId = (ID<Key, Value>)extension.getName();
-    myExternalModStampSupplier = externalModStamp;
-    myPrevExternalModStamp = externalModStamp.getAsLong();
   }
-
-  private void updateModificationStamp() {
-    if (myPrevExternalModStamp == myExternalModStampSupplier.getAsLong()) return;
-    myPrevExternalModStamp = myExternalModStampSupplier.getAsLong();
-    myModificationStamp.incrementAndGet();
-  }
-
 
   @Override
   public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
@@ -67,32 +51,28 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
 
   @Override
   public void setIndexedStateForFileOnCachedData(int fileId, @NotNull Object data) {
-    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
   }
 
   @Override
   public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
-    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
   }
 
   @Override
   public void invalidateIndexedStateForFile(int fileId) {
-    IndexingStamp.setFileIndexedStateOutdated(fileId, myIndexId);
   }
 
   @Override
   public void setUnindexedStateForFile(int fileId) {
-    IndexingStamp.setFileIndexedStateUnindexed(fileId, myIndexId);
   }
 
   @Override
   public @NotNull FileIndexingState getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
-    return IndexingStamp.isFileIndexedStateCurrent(fileId, myIndexId);
+    return FileIndexingState.UP_TO_DATE;
   }
 
   @Override
   public long getModificationStamp() {
-    return myModificationStamp.get();
+    return 0;
   }
 
   @Override
@@ -110,7 +90,6 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
 
   @Override
   public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) {
-    updateModificationStamp();
   }
 
   @Override
@@ -139,7 +118,6 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   @Override
   public @NotNull Computable<Boolean> prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
     return () -> {
-      updateModificationStamp();
       return true;
     };
   }
@@ -150,7 +128,6 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
 
   @Override
   public void clear() throws StorageException {
-    updateModificationStamp();
   }
 
   @Override

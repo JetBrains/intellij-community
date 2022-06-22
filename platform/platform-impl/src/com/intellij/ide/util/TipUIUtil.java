@@ -453,7 +453,7 @@ public final class TipUIUtil {
       );
 
       HTMLEditorKit kit = new HTMLEditorKitBuilder()
-        .withViewFactoryExtensions(getSVGImagesExtension())
+        .replaceViewFactoryExtensions(getSVGImagesExtension())
         .withGapsBetweenParagraphs()
         .build();
 

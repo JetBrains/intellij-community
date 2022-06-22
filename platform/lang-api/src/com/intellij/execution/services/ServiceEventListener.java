@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
 public interface ServiceEventListener {
   Topic<ServiceEventListener> TOPIC =
     Topic.create("services topic", ServiceEventListener.class, Topic.BroadcastDirection.TO_CHILDREN);

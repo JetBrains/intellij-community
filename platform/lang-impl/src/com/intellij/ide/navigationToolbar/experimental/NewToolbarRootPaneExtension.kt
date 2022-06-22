@@ -91,7 +91,7 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
           null
         }
       getToolbarGroup()?.let {
-        CustomizationUtil.installToolbarCustomizationHandler(it, IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, panel, ActionPlaces.MAIN_TOOLBAR)
+        CustomizationUtil.installToolbarCustomizationHandler(it, mainGroupName(), panel, ActionPlaces.MAIN_TOOLBAR)
       }
     }
   }
@@ -115,13 +115,15 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
   }
 
   private fun getToolbarGroup(): ActionGroup? {
-    val mainGroupName = if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) {
-      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
-    }
-    else {
-      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_WITHOUT_RIGHT_PART
-    }
+    val mainGroupName = mainGroupName()
     return CustomActionsSchema.getInstance().getCorrectedAction(mainGroupName) as? ActionGroup
+  }
+
+  private fun mainGroupName() = if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) {
+    IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
+  }
+  else {
+    IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_WITHOUT_RIGHT_PART
   }
 
   private class MyActionToolbarImpl(place: String,
@@ -147,7 +149,7 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     actions.mapValues { (_, actionGroup) ->
       if (actionGroup != null) {
         val toolbar = MyActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, actionGroup, true, false, getToolbarGroup(),
-                                          IdeActions.GROUP_EXPERIMENTAL_TOOLBAR)
+                                          mainGroupName())
         ApplicationManager.getApplication().messageBus.syncPublisher(ActionManagerListener.TOPIC).toolbarCreated(ActionPlaces.MAIN_TOOLBAR,
                                                                                                                  actionGroup, true, toolbar)
         toolbar

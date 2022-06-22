@@ -3,8 +3,10 @@
 
 package com.intellij.execution.process
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
 /**
  * Terminates the Windows process gracefully via sending Ctrl+C event. If it's a batch script, then it will be terminated
@@ -24,28 +26,59 @@ internal fun terminateWinProcessGracefully(processHandler: KillableProcessHandle
                                            terminateGracefully: () -> Boolean = {
                                              processService.sendWinProcessCtrlC(processHandler.process)
                                            }): Boolean {
-  val stdoutMatched: CompletableFuture<Void> = CompletableFuture()
+  val questionFoundOrTerminated: CompletableFuture<Void> = CompletableFuture()
   val processListener = object : ProcessAdapter() {
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
       // Need to match "Terminate batch job (Y/N)?" message, but it's localized. Let's match "?" only.
       if (ProcessOutputType.isStdout(outputType) && "?" in event.text) {
         processHandler.removeProcessListener(this)
-        stdoutMatched.complete(null)
+        questionFoundOrTerminated.complete(null)
       }
+    }
+
+    override fun processTerminated(event: ProcessEvent) {
+      processHandler.removeProcessListener(this)
+      questionFoundOrTerminated.complete(null)
     }
   }
   processHandler.addProcessListener(processListener)
   return terminateGracefully().also {
     if (it) {
-      stdoutMatched.whenComplete { _, _ ->
-        if (isCmdBatchFile(processHandler, processService) && processHandler.process.isAlive) {
-          processHandler.process.destroy()
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isCmdBatchFile(processHandler, processService)) {
+          awaitBatchQuestionAndDestroyInTests(questionFoundOrTerminated, processHandler)
+        }
+        processHandler.removeProcessListener(processListener)
+        return@also
+      }
+      questionFoundOrTerminated.whenComplete { _, _ ->
+        if (!processHandler.isProcessTerminated && isCmdBatchFile(processHandler, processService)) {
+          destroyIfAlive(processHandler)
         }
       }
     }
     else {
       processHandler.removeProcessListener(processListener)
     }
+  }
+}
+
+private fun awaitBatchQuestionAndDestroyInTests(questionFoundOrTerminated: CompletableFuture<Void>,
+                                                processHandler: KillableProcessHandler) {
+  try {
+    questionFoundOrTerminated.get(10, TimeUnit.SECONDS)
+  }
+  catch (_: Exception) {
+    // "Terminate batch job (Y/N)?" message hasn't been printed => the application might still be alive.
+    // Graceful termination is done here. Now the process should be stopped forcibly.
+    return
+  }
+  destroyIfAlive(processHandler)
+}
+
+private fun destroyIfAlive(processHandler: KillableProcessHandler) {
+  if (processHandler.process.isAlive) {
+    processHandler.process.destroy()
   }
 }
 

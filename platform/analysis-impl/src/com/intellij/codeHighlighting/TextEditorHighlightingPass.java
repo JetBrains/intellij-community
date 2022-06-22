@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtilRt;
@@ -91,7 +92,10 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
     if (myDocument.getModificationStamp() != myInitialDocStamp) return false;
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-    return file != null && file.isValid();
+    PsiElement context;
+    return file != null
+           && file.isValid()
+           && ((context = file.getContext()) == null || context == file || context.isValid());
   }
 
   @Override

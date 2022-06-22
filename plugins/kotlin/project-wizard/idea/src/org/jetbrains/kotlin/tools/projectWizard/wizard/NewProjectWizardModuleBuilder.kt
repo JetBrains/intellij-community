@@ -24,7 +24,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.EDT
-import org.jetbrains.kotlin.idea.framework.KotlinTemplatesFactory
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.UiEditorUsageStats
@@ -89,7 +88,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     private var finishButtonClicked: Boolean = false
 
     override fun getModuleType(): ModuleType<*> = NewProjectWizardModuleType()
-    override fun getParentGroup(): String = KotlinTemplatesFactory.KOTLIN_PARENT_GROUP_NAME
+    override fun getParentGroup(): String = "Kotlin Group"
 
     override fun createWizardSteps(
         wizardContext: WizardContext,
@@ -180,7 +179,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
             KotlinPlugin.modules.reference.settingValue
         }
         val projectCreationStats = ProjectCreationStats(
-            KotlinTemplatesFactory.KOTLIN_GROUP_NAME,
+            "Kotlin",
             wizard.projectTemplate!!.id,
             wizard.buildSystemType!!.id,
             modules.map { it.configurator.id },

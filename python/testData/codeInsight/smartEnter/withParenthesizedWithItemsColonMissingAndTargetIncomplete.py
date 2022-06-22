@@ -1,0 +1,1 @@
+with (foo() as <caret>)

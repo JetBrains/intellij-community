@@ -158,9 +158,8 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
   }
 
   private fun createCollapsedData(balloon: Balloon, newLayoutData: BalloonLayoutData): CollapseInfo {
-    val titleEnd = IdeBundle.message(if (newLayoutData.collapseType === BalloonLayoutData.Type.Timeline)
-      "notifications.collapse.balloon.title.timeline"
-    else "notifications.collapse.balloon.title.suggestion")
+    val titleEnd = if (newLayoutData.collapseType === BalloonLayoutData.Type.Timeline) "notifications.collapse.balloon.title.timeline"
+    else "notifications.collapse.balloon.title.suggestion"
 
     val newCollapseInfo = CollapseInfo(titleEnd)
     myCollapsedData[balloon] = newCollapseInfo
@@ -209,7 +208,7 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
     }
   }
 
-  private inner class CollapseInfo(@Nls val titleEnd: String) {
+  private inner class CollapseInfo(val titleEnd: String) {
     var collapsedBalloons = 0
     val titleLabel: LinkLabel<Any>
     val balloon: Balloon
@@ -278,7 +277,8 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
 
     fun addBalloon() {
       collapsedBalloons++
-      titleLabel.text = IdeBundle.message("notifications.collapse.balloon.title", collapsedBalloons, titleEnd)
+      titleLabel.text = IdeBundle.message("notifications.collapse.balloon.title", collapsedBalloons,
+                                          IdeBundle.message(titleEnd, collapsedBalloons))
     }
 
     fun show(pane: JLayeredPane) {

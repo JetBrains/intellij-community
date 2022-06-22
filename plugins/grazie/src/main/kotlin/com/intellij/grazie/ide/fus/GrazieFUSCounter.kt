@@ -23,7 +23,7 @@ internal object GrazieFUSCounter {
     log("typo.found") {
       addData("id", problem.rule.globalId)
       addPluginInfo(getPluginInfo(problem.rule.javaClass))
-      addData("fixes", problem.corrections.size)
+      addData("fixes", problem.suggestions.size)
       addProject(problem.text.containingFile.project)
     }
   }

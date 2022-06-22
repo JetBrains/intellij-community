@@ -31,8 +31,5 @@
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.diff" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
-    <orderEntry type="library" scope="TEST" name="jimfs" level="project" />
-    <orderEntry type="library" scope="TEST" name="HdrHistogram" level="project" />
-    <orderEntry type="library" scope="TEST" name="protobuf" level="project" />
   </component>
 </module>

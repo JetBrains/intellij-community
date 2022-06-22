@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -569,7 +568,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                                                          @NotNull VfsAwareIndexStorageLayout<K, V> layout)
     throws StorageException, IOException {
     if (extension.getName() == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
-      return new EmptyIndex<>(extension, () -> FSRecords.getNamesIndexModCount());
+      return new EmptyIndex<>(extension);
     }
     else if (extension instanceof CustomImplementationFileBasedIndexExtension) {
       @SuppressWarnings("unchecked") UpdatableIndex<K, V, FileContent, ?> index =

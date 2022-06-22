@@ -8,7 +8,6 @@ import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.PerformanceWatcher
-import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
 import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
@@ -1003,27 +1002,21 @@ private fun optionalDependenciesOnPlugin(
   pluginSet: PluginSet,
 ): Set<IdeaPluginDescriptorImpl> {
   // 1. collect optional descriptors
-  val mainToModules = LinkedHashMap<IdeaPluginDescriptorImpl, MutableList<IdeaPluginDescriptorImpl>>()
+  val mainModules = LinkedHashSet<IdeaPluginDescriptorImpl>()
   val modulesToMain = LinkedHashMap<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>()
 
   processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { main, module ->
-    val modules = mainToModules.computeIfAbsent(main) {
-      mutableListOf()
-    }
-    if (modules.any { it === module }) {
-      throw PluginException("Descriptor has already been added: $module", module.pluginId)
-    }
-
     modulesToMain[module] = main
-    modules.add(module)
+    mainModules += main
+    true
   }
 
-  if (mainToModules.isEmpty()) {
+  if (mainModules.isEmpty()) {
     return emptySet()
   }
 
   // 2. sort topologically
-  val sortedModulesToMain = modulesToMain.toSortedMap(PluginSetBuilder(mainToModules.keys.toList())
+  val sortedModulesToMain = modulesToMain.toSortedMap(PluginSetBuilder(mainModules.toList())
                                                         .moduleGraph
                                                         .topologicalComparator)
   // 3. setup classloaders

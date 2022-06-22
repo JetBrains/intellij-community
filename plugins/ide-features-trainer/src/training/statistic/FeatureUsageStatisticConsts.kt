@@ -40,4 +40,6 @@ object FeatureUsageStatisticConsts {
   const val FEEDBACK_OPENED_VIA_NOTIFICATION = "feedback_opened_via_notification"
   const val FEEDBACK_LIKENESS_ANSWER = "feedback_likeness_answer"
   const val FEEDBACK_EXPERIENCED_USER = "feedback_experienced_user"
+  const val PROBLEM = "problem"
+  const val INTERNAL_PROBLEM = "internal_problem"
 }

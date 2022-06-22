@@ -20,7 +20,7 @@ class QuickPopupsLesson(private val sample: LessonSample) :
     task("QuickJavaDoc") {
       text(LessonsBundle.message("quick.popups.show.documentation", action(it)))
       triggerOnQuickDocumentationPopup()
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       test { actions(it) }
     }
 

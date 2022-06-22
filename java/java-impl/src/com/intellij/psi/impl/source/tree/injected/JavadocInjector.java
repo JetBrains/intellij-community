@@ -63,6 +63,10 @@ public class JavadocInjector implements MultiHostInjector {
 
       final String langValueText = stripPossibleLeadingAndTrailingQuotes(langValue);
 
+      if ("java".equalsIgnoreCase(langValueText)) {
+        return JShellLanguage.INSTANCE;
+      }
+
       final Language language = findRegisteredLanguage(langValueText);
       if (language == null) break;
 

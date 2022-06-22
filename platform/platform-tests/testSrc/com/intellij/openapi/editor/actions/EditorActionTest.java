@@ -8,9 +8,11 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.textarea.TextComponentEditorImpl;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.ui.components.JBTextArea;
 
 import java.awt.datatransfer.StringSelection;
 
@@ -380,5 +382,22 @@ public class EditorActionTest extends AbstractEditorTest {
     initText("<selection>line1\nline2\nli<caret></selection>ne3");
     executeAction(IdeActions.ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE);
     checkResultByText("line1<caret>\nline2<caret>\nline3<caret>");
+  }
+
+  public void testTextComponentEditor() {
+    JBTextArea area = new JBTextArea("text \u00df text");
+    TextComponentEditorImpl editor = new TextComponentEditorImpl(getProject(), area);
+
+    area.select(0, 4);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE, editor);
+    assertEquals("TEXT ß text", area.getText());
+    assertEquals(0, area.getSelectionStart());
+    assertEquals(4, area.getSelectionEnd());
+
+    area.select(5, 6);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE, editor);
+    assertEquals("TEXT SS text", area.getText());
+    assertEquals(5, area.getSelectionStart());
+    assertEquals(7, area.getSelectionEnd());
   }
 }

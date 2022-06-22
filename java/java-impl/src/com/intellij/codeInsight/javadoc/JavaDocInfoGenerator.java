@@ -1404,7 +1404,7 @@ public class JavaDocInfoGenerator {
       }
       var tagName = tag.getName();
       if (!ourKnownTags.contains(tagName)) {
-        generateSingleTagSection(buffer, comment, tagName, () -> tagName);
+        generateSingleTagSection(buffer, () -> tagName, tag);
       }
     }
   }
@@ -1685,16 +1685,6 @@ public class JavaDocInfoGenerator {
       appendPlainText(buffer, snippetTag.getText());
       return;
     }
-    buffer.append("Snippet:");
-    PsiSnippetAttributeList attributes = value.getAttributeList();
-    for (PsiSnippetAttribute attribute : attributes.getAttributes()) {
-      buffer.append(BR_TAG);
-      String attributeName = attribute.getName();
-      PsiElement valueElement = attribute.getValue();
-      String attributeValue = valueElement != null ? valueElement.getText() : "";
-      buffer.append(attributeName).append(" = ").append(attributeValue);
-    }
-    buffer.append(BR_TAG);
     PsiSnippetDocTagBody body = value.getBody();
     if (body != null) {
       buffer.append("<pre>");
@@ -1986,7 +1976,10 @@ public class JavaDocInfoGenerator {
                                         PsiDocComment comment,
                                         String tagName,
                                         Supplier<String> computePresentableName) {
-    PsiDocTag tag = comment.findTagByName(tagName);
+    generateSingleTagSection(buffer, computePresentableName, comment.findTagByName(tagName));
+  }
+
+  private void generateSingleTagSection(StringBuilder buffer, Supplier<String> computePresentableName, PsiDocTag tag) {
     if (tag != null) {
       startHeaderSection(buffer, computePresentableName.get()).append("<p>");
       final PsiElement[] elements = Arrays.stream(tag.getChildren())

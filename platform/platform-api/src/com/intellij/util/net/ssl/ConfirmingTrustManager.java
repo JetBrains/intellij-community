@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.Application;
@@ -137,6 +137,9 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       }
       return true;
     }
+
+    LOG.info("Going to ask user about certificate for: " + endPoint.getSubjectDN().toString() +
+             ", issuer: " + endPoint.getIssuerDN().toString());
     boolean accepted = askUser && CertificateManager.showAcceptDialog(() -> {
       // TODO may be another kind of warning, if default trust store is missing
       return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint);

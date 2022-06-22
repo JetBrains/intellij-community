@@ -29,6 +29,8 @@ class FindInFilesLesson(override val sampleFilePath: String)
   : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
+    sdkConfigurationTasks()
+
     prepareRuntimeTask {
       resetFindSettings(project)
     }
