@@ -119,6 +119,7 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
                                      stringType: PsiClassType): GrLightField {
       val newProperty = GrLightField(aClass, property.name, stringType, property.psiElement)
       newProperty.setIcon(AllIcons.FileTypes.Properties)
+      newProperty.originInfo = propertiesFileOriginInfo
       return newProperty
     }
 
@@ -129,5 +130,7 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
       val module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile)
       return GradleExtensionsSettings.getInstance(project).getExtensionsFor(module)
     }
+
+    internal const val propertiesFileOriginInfo : String = "by gradle.properties"
   }
 }

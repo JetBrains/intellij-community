@@ -25,7 +25,7 @@ class GradleCompletionCustomizer : GroovyCompletionCustomizer {
 
   override fun generateCompletionConsumer(file: PsiFile, resultSet: CompletionResultSet): GroovyCompletionConsumer? {
     if (file.name.endsWith(GradleConstants.EXTENSION)) {
-      return AccumulatingGroovyCompletionConsumer(resultSet)
+      return GradleCompletionConsumer(AccumulatingGroovyCompletionConsumer(resultSet))
     }
     else {
       return null
