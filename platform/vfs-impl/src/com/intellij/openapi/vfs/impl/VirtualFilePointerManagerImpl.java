@@ -118,6 +118,11 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     private void fireAfter() {
       myListener.validityChanged(myPointers);
     }
+
+    @Override
+    public String toString() {
+      return myListener + " -> " + Arrays.toString(myPointers);
+    }
   }
 
   @TestOnly
@@ -686,10 +691,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     if (afterElapsedMs > 1000 || collectedEvents.prepareElapsedMs > 1000) {
       LOG.warn("VirtualFilePointerManagerImpl.prepareChange(" + eventsSize + " events): " + collectedEvents.prepareElapsedMs + "ms."
                + "; total pointers: " + numberOfPointers()
-               + "; afterElapsedMs: " + afterElapsedMs + "ms.; eventList.size(): " + collectedEvents.eventList.size() +
-               "; toFirePointers.size(): " + collectedEvents.toFirePointers.size() + "; toUpdateNodes.size(): " + collectedEvents.toUpdateNodes
-                 .size() + "; eventList: " +
-               ContainerUtil.getFirstItems(collectedEvents.eventList, 100));
+               + "; afterElapsedMs: " + afterElapsedMs + "ms.; eventList.size(): " + collectedEvents.eventList.size()
+               + "; toFirePointers.size(): " + collectedEvents.toFirePointers.size() + "; toUpdateNodes.size(): " + collectedEvents.toUpdateNodes.size()
+               + "; eventList: " + ContainerUtil.getFirstItems(collectedEvents.eventList, 100));
     }
   }
 
