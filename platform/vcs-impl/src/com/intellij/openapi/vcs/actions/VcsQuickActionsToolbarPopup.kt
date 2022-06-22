@@ -110,6 +110,10 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
     presentation.text = ActionsBundle.message("action.Vcs.Toolbar.ShowMoreActions.text") + " "
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   companion object {
     private fun showPopup(e: AnActionEvent, popup: ListPopup) {
       val mouseEvent = e.inputEvent
