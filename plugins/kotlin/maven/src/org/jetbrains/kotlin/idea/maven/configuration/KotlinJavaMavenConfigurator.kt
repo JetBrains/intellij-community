@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
+import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.configuration.addStdlibToJavaModuleInfo
@@ -34,7 +35,8 @@ class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, 
     }
 
     override fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: IdeKotlinVersion) {
-        val jvmTargetVersion = if (pom.findProperty("maven.compiler.target") != null) {
+        val mavenCompilerTarget = pom.findProperty("maven.compiler.target")?.value?.text
+        val jvmTargetVersion = if (mavenCompilerTarget != null && mavenCompilerTarget in JvmTarget.values().map {it.description}) {
             "\${maven.compiler.target}"
         } else {
             val sdk = ModuleRootManager.getInstance(module).sdk
