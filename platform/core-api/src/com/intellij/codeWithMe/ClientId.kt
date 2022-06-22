@@ -211,19 +211,14 @@ data class ClientId(val value: String) {
         null
       }
 
-      val oldClientIdValue = service.clientIdValue
-      try {
-        service.clientIdValue = newClientIdValue
+      service.updateClientId(newClientIdValue).use {
         return action()
-      }
-      finally {
-        service.clientIdValue = oldClientIdValue
       }
     }
 
-    class ClientIdAccessToken(private val oldClientIdValue: String?) : AccessToken() {
+    class ClientIdAccessToken(private val disposeToken: AutoCloseable) : AccessToken() {
       override fun finish() {
-        getCachedService()?.clientIdValue = oldClientIdValue
+        disposeToken.close()
       }
     }
 
@@ -252,8 +247,8 @@ data class ClientId(val value: String) {
         null
       }
 
-      service.clientIdValue = newClientIdValue
-      return ClientIdAccessToken(oldClientIdValue)
+      val token = service.updateClientId(newClientIdValue)
+      return ClientIdAccessToken(token)
     }
 
     private var service:ClientIdService? = null
