@@ -712,11 +712,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   @NotNull
   JBIterable<?> getSelection() {
-    int size = myModel.size();
-    if (size == 0) return JBIterable.empty();
-    int index = myModel.getSelectedIndex();
-    int adjusted = index >= 0 && index < size ? index : size - 1;
-    return JBIterable.of(myModel.getRaw(adjusted)).filterMap(myModel::unwrapRaw);
+    Object selectedObject = myModel.getRawSelectedObject();
+    if (selectedObject == null) return JBIterable.empty();
+    return JBIterable.of(selectedObject).filterMap(myModel::unwrapRaw);
   }
 
   @Nullable Object getDataImpl(@NotNull String dataId, @NotNull JComponent source, @NotNull Supplier<? extends JBIterable<?>> selection) {

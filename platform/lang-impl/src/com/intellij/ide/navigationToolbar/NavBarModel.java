@@ -68,6 +68,16 @@ public class NavBarModel {
     return mySelectedIndex;
   }
 
+  @Nullable Object getRawSelectedObject() {
+    List<Object> model = myModel;
+    if (model.isEmpty()) return null;
+    int index = mySelectedIndex;
+    int adjusted = index >= 0 && index < model.size()
+                   ? index
+                   : model.size() - 1;
+    return model.get(adjusted);
+  }
+
   @Nullable
   public Object getSelectedValue() {
     return getElement(mySelectedIndex);
@@ -75,8 +85,9 @@ public class NavBarModel {
 
   @Nullable
   public Object getElement(int index) {
-    if (index != -1 && index < myModel.size()) {
-      return get(index);
+    List<Object> model = myModel;
+    if (index != -1 && index < model.size()) {
+      return get(model, index);
     }
     return null;
   }
@@ -90,8 +101,9 @@ public class NavBarModel {
   }
 
   public int getIndexByModel(int index) {
-    if (index < 0) return myModel.size() + index;
-    if (index >= myModel.size() && myModel.size() > 0) return index % myModel.size();
+    List<Object> model = myModel;
+    if (index < 0) return model.size() + index;
+    if (index >= model.size() && model.size() > 0) return index % model.size();
     return index;
   }
 
@@ -353,16 +365,12 @@ public class NavBarModel {
     return true;
   }
 
-  @NotNull Object getRaw(int i) {
-    return myModel.get(i);
-  }
-
   @Nullable Object unwrapRaw(@NotNull Object o) {
     return TreeAnchorizer.getService().retrieveElement(o);
   }
 
   public @Nullable Object get(int index) {
-    return unwrapRaw(getRaw(index));
+    return get(myModel, index);
   }
 
   private @Nullable Object get(List<Object> model, int index) {
@@ -370,8 +378,9 @@ public class NavBarModel {
   }
 
   public int indexOf(Object value) {
-    for (int i = 0; i < myModel.size(); i++) {
-      Object o = getRaw(i);
+    List<Object> model = myModel;
+    for (int i = 0; i < model.size(); i++) {
+      Object o = model.get(i);
       if (Objects.equals(unwrapRaw(o), value)) {
         return i;
       }
