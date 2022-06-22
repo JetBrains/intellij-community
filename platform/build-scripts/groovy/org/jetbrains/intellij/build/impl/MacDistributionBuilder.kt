@@ -422,11 +422,11 @@ private fun buildMacZip(targetFile: Path,
       val fs = targetFile.fileSystem
       val patterns = executableFilePatterns.map { fs.getPathMatcher("glob:$it") }
 
-      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativeFile ->
+      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativePath ->
         when {
-          patterns.any { it.matches(Path.of(relativeFile)) } -> entry.unixMode = executableFileUnixMode
+          patterns.any { it.matches(Path.of(relativePath)) } -> entry.unixMode = executableFileUnixMode
           SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions (file) -> {
-            errorsConsumer("Executable permissions of $relativeFile won't be set in $targetFile. " +
+            errorsConsumer("Executable permissions of $relativePath won't be set in $targetFile. " +
                            "Please make sure that executable file patterns are updated.")
           }
         }
@@ -440,7 +440,7 @@ private fun buildMacZip(targetFile: Path,
 
           val fileFilter: (Path, String) -> Boolean = { sourceFile, relativePath ->
             if (relativePath.endsWith(".txt") && !relativePath.contains('/')) {
-              zipOutStream.entry("$zipRoot/Resources/${FileUtilRt.toSystemIndependentName(relativePath)}", sourceFile)
+              zipOutStream.entry("$zipRoot/Resources/${relativePath}", sourceFile)
               false
             }
             else {
