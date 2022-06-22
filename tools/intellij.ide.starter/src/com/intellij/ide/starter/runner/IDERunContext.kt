@@ -31,6 +31,8 @@ import kotlin.concurrent.thread
 import kotlin.io.path.*
 import kotlin.streams.toList
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
 interface IDERunCloseContext {
@@ -43,8 +45,8 @@ data class IDERunContext(
   val commandLine: IDECommandLine? = null,
   val commands: Iterable<MarshallableCommand> = listOf(),
   val codeBuilder: (CodeInjector.() -> Unit)? = null,
-  val runTimeout: Duration = Duration.minutes(10),
-  val traceStacksEvery: Duration = Duration.minutes(10),
+  val runTimeout: Duration = 10.minutes,
+  val traceStacksEvery: Duration = 10.minutes,
   val useStartupScript: Boolean = true,
   val closeHandlers: List<IDERunCloseContext.() -> Unit> = listOf(),
   val verboseOutput: Boolean = false,
@@ -211,7 +213,7 @@ data class IDERunContext(
               if (collectNativeThreads) {
                 val fileToStoreNativeThreads = logsDir.resolve("native-thread-dumps.txt")
                 startProfileNativeThreads(javaProcessId.toString())
-                Thread.sleep(Duration.seconds(15).inWholeMilliseconds)
+                Thread.sleep(15.seconds.inWholeMilliseconds)
                 stopProfileNativeThreads(javaProcessId.toString(), fileToStoreNativeThreads.toAbsolutePath().toString())
               }
               val dumpFile = logsDir.resolve("threadDump-before-kill-${System.currentTimeMillis()}" + ".txt")

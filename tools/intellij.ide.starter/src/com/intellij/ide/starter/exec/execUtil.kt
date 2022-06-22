@@ -13,6 +13,8 @@ import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 private fun redirectProcessOutput(
   process: Process,
@@ -81,7 +83,7 @@ private fun ProcessBuilder.actualizeEnvVariables(environmentVariables: Map<Strin
 fun exec(
   presentablePurpose: String,
   workDir: Path?,
-  timeout: Duration = Duration.minutes(10),
+  timeout: Duration = 10.minutes,
   environmentVariables: Map<String, String> = System.getenv(),
   args: List<String>,
   errorDiagnosticFiles: List<Path> = emptyList(),
@@ -156,7 +158,7 @@ fun exec(
     if (!runCatching { process.waitFor(timeout.inWholeSeconds, TimeUnit.SECONDS) }.getOrDefault(false)) {
       stopperThread.apply {
         start()
-        join(Duration.seconds(20).inWholeMilliseconds)
+        join(20.seconds.inWholeMilliseconds)
       }
       throw ExecTimeoutException(args.joinToString(" "), timeout)
     }
@@ -224,7 +226,7 @@ fun executeScript(fileNameToExecute: String, projectDirPath: Path) {
   exec(
     presentablePurpose = "Executing of $fileNameToExecute",
     workDir = projectDirPath,
-    timeout = Duration.minutes(20),
+    timeout = 20.minutes,
     args = listOf(fileNameToExecute),
     stdoutRedirect = stdout,
     stderrRedirect = stderr
@@ -250,7 +252,7 @@ fun execGradlew(pathToProject: Path, args: List<String>) {
     exec(
       presentablePurpose = "chmod gradlew",
       workDir = pathToProject,
-      timeout = Duration.minutes(1),
+      timeout = 1.minutes,
       args = listOf("chmod", "+x", "gradlew"),
       stdoutRedirect = stdout,
       stderrRedirect = stderr
@@ -259,7 +261,7 @@ fun execGradlew(pathToProject: Path, args: List<String>) {
   exec(
     presentablePurpose = "Gradle Format",
     workDir = pathToProject,
-    timeout = Duration.minutes(1),
+    timeout = 1.minutes,
     args = listOf(command) + args,
     stdoutRedirect = stdout,
     stderrRedirect = stderr

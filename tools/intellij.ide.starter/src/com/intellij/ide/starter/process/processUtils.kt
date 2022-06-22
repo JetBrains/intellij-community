@@ -11,7 +11,8 @@ import org.kodein.di.direct
 import org.kodein.di.instance
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * TeamCity may not kill processes started during the build (TW-69045).
@@ -40,7 +41,7 @@ fun dumpListOfProcessesOnMacOS(): List<MacOsProcessMetaInfo> {
   val stdoutRedirect = ExecOutputRedirect.ToString()
   exec("ps",
        di.direct.instance<GlobalPaths>().testsDirectory,
-       timeout = Duration.minutes(1),
+       timeout = 1.minutes,
        args = listOf("ps", "-ax"),
        stdoutRedirect = stdoutRedirect)
   val processLines = stdoutRedirect.read().lines().drop(1).map { it.trim() }.filterNot { it.isBlank() }
@@ -69,7 +70,7 @@ fun dumpListOfProcessesOnLinux(): List<LinuxProcessMetaInfo> {
   val stdoutRedirect = ExecOutputRedirect.ToString()
   exec("ps",
        di.direct.instance<GlobalPaths>().testsDirectory,
-       timeout = Duration.minutes(1),
+       timeout = 1.minutes,
        args = listOf("ps", "-aux"),
        stdoutRedirect = stdoutRedirect)
   val processLines = stdoutRedirect.read().lines().drop(1).map { it.trim() }.filterNot { it.isBlank() }
@@ -106,7 +107,7 @@ private fun killProcessOnUnix(pid: Int) {
   exec(
     "kill-process-$pid",
     di.direct.instance<GlobalPaths>().testsDirectory,
-    timeout = Duration.minutes(1),
+    timeout = 1.minutes,
     args = listOf("kill", "-9", pid.toString()),
     stdoutRedirect = ExecOutputRedirect.ToStdOut("[kill-$pid-out]"),
     stderrRedirect = ExecOutputRedirect.ToStdOut("[kill-$pid-err]")
@@ -130,7 +131,7 @@ fun getJavaProcessId(javaHome: Path, workDir: Path, originalProcessId: Long, ori
   exec(
     "jcmd-run",
     workDir,
-    timeout = Duration.minutes(1),
+    timeout = 1.minutes,
     args = listOf(javaHome.resolve("bin/jcmd").toAbsolutePath().toString()),
     stdoutRedirect = stdout,
     stderrRedirect = stderr
@@ -208,7 +209,7 @@ fun collectJavaThreadDump(
   exec(
     "jstack",
     workDir,
-    timeout = Duration.minutes(1),
+    timeout = 1.minutes,
     args = command,
     stdoutRedirect = ExecOutputRedirect.ToFile(dumpFile.toFile()),
     stderrRedirect = ExecOutputRedirect.ToStdOut("[jstack-err]")
@@ -224,7 +225,7 @@ fun destroyGradleDaemonProcessIfExists() {
   exec(
     "get jps process",
     workDir = null,
-    timeout = Duration.seconds(30),
+    timeout = 30.seconds,
     args = listOf("jps", "-l"),
     stdoutRedirect = stdout
   )

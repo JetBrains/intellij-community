@@ -17,7 +17,7 @@ import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.div
 import kotlin.io.path.isDirectory
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Resolve platform specific android studio installer and return paths
@@ -77,7 +77,7 @@ fun downloadLatestAndroidSdk(javaHome: Path): Path {
          args = listOf(sdkManager.toString(), "--sdk_root=$home", "--licenses"),
          stderrRedirect = ExecOutputRedirect.ToStdOut("[sdkmanager-err]"),
          stdInBytes = "yes\n".repeat(10).toByteArray(), // it asks the confirmation at least two times
-         timeout = Duration.minutes(15)
+         timeout = 15.minutes
     )
 
     //loading SDK
@@ -86,7 +86,7 @@ fun downloadLatestAndroidSdk(javaHome: Path): Path {
          environmentVariables = envVariablesWithJavaHome,
          args = listOf(sdkManager.toString(), "--sdk_root=$home", "--list"),
          stderrRedirect = ExecOutputRedirect.ToStdOut("[sdkmanager-err]"),
-         timeout = Duration.minutes(15)
+         timeout = 15.minutes
     )
 
     //loading SDK
@@ -95,7 +95,7 @@ fun downloadLatestAndroidSdk(javaHome: Path): Path {
          environmentVariables = envVariablesWithJavaHome,
          args = listOf(sdkManager.toString(), "--sdk_root=$home", "--install", "--verbose") + packages,
          stderrRedirect = ExecOutputRedirect.ToStdOut("[sdkmanager-err]"),
-         timeout = Duration.minutes(15)
+         timeout = 15.minutes
     )
     return home
   }
@@ -150,7 +150,7 @@ fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
     val stderr = ExecOutputRedirect.ToString()
     exec(
       "git-clone-android-plugin",
-      workDir = projectHome, timeout = Duration.minutes(10),
+      workDir = projectHome, timeout = 10.minutes,
       args = scriptContent.split(" "),
       stdoutRedirect = stdout,
       stderrRedirect = stderr

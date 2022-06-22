@@ -16,7 +16,8 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.io.path.*
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 fun formatArtifactName(artifactType: String, testName: String): String {
   val testNameFormatted = testName.replace("/", "-").replace(" ", "")
@@ -73,7 +74,7 @@ fun execJavaCmd(javaHome: Path, args: Iterable<String> = listOf()): List<String>
   exec(
     presentablePurpose = prefix,
     workDir = javaHome,
-    timeout = Duration.minutes(1),
+    timeout = 1.minutes,
     args = processArguments,
     stdoutRedirect = stdout,
     stderrRedirect = stderr
@@ -186,7 +187,7 @@ fun takeScreenshot(logsDir: Path) {
   exec(
     presentablePurpose = "take-screenshot",
     workDir = toolsDir,
-    timeout = Duration.seconds(15),
+    timeout = 15.seconds,
     args = mutableListOf(javaPath, "-jar", toolPath.absolutePathString(), screenshotFile.toString()),
     environmentVariables = mapOf("DISPLAY" to ":88"),
     onlyEnrichExistedEnvVariables = true
@@ -210,7 +211,7 @@ fun startProfileNativeThreads(pid: String) {
     exec(
       presentablePurpose = "start-profile",
       workDir = profiler,
-      timeout = Duration.seconds(15),
+      timeout = 15.seconds,
       args = mutableListOf("./profiler.sh", "start", pid)
     )
   }
@@ -220,13 +221,13 @@ private fun givePermissionsToExecutables(profiler: Path) {
   exec(
     presentablePurpose = "give-permissions-to-jattach",
     workDir = profiler.resolve("build"),
-    timeout = Duration.seconds(10),
+    timeout = 10.seconds,
     args = mutableListOf("chmod", "+x", "jattach")
   )
   exec(
     presentablePurpose = "give-permissions-to-profiler",
     workDir = profiler,
-    timeout = Duration.seconds(10),
+    timeout = 10.seconds,
     args = mutableListOf("chmod", "+x", "profiler.sh")
   )
 }
@@ -239,7 +240,7 @@ fun stopProfileNativeThreads(pid: String, fileToStoreInfo: String) {
     exec(
       presentablePurpose = "stop-profile",
       workDir = profiler,
-      timeout = Duration.seconds(15),
+      timeout = 15.seconds,
       args = mutableListOf("./profiler.sh", "stop", pid, "-f", fileToStoreInfo)
     )
   }

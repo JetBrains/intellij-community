@@ -17,7 +17,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.io.path.*
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 
 fun installIDE(unpackDir: File, executableFileName: String): InstalledIDE = when {
@@ -31,7 +32,7 @@ val xvfbRunTool by lazy {
   val toolName = "xvfb-run"
 
   val homePath = Path(System.getProperty("user.home")).toAbsolutePath()
-  exec("xvfb-run", homePath, timeout = Duration.seconds(5), args = listOf("which", toolName),
+  exec("xvfb-run", homePath, timeout = 5.seconds, args = listOf("which", toolName),
        stdoutRedirect = ExecOutputRedirect.ToStdOut("xvfb-run-out"),
        stderrRedirect = ExecOutputRedirect.ToStdOut("xvfb-run-err"))
   toolName
@@ -363,7 +364,7 @@ private fun unpackDmg(dmgFile: File, target: Path): Path {
   try {
     exec(presentablePurpose = "hdiutil",
          workDir = target,
-         timeout = Duration.minutes(10),
+         timeout = 10.minutes,
          stderrRedirect = ExecOutputRedirect.ToStdOut("hdiutil"),
          stdoutRedirect = ExecOutputRedirect.ToStdOut("hdiutil"),
          args = listOf("hdiutil", "attach", "-readonly", "-noautoopen", "-noautofsck", "-nobrowse", "-mountpoint", "$mountDir", "$dmgFile"))
@@ -381,7 +382,7 @@ private fun unpackDmg(dmgFile: File, target: Path): Path {
     exec(
       presentablePurpose = "copy-dmg",
       workDir = target,
-      timeout = Duration.minutes(10),
+      timeout = 10.minutes,
       stderrRedirect = ExecOutputRedirect.ToStdOut("cp"),
       args = listOf("cp", "-R", "$appDir", "$targetAppDir"))
 
@@ -392,7 +393,7 @@ private fun unpackDmg(dmgFile: File, target: Path): Path {
       exec(
         presentablePurpose = "hdiutil",
         workDir = target,
-        timeout = Duration.minutes(10),
+        timeout = 10.minutes,
         stdoutRedirect = ExecOutputRedirect.ToStdOut("hdiutil"),
         stderrRedirect = ExecOutputRedirect.ToStdOut("hdiutil"),
         args = listOf("hdiutil", "detach", "-force", "$mountDir"))
@@ -419,7 +420,7 @@ private fun unpackWin(exeFile: File, targetDir: File) {
   exec(
     presentablePurpose = "unpack-zip",
     workDir = targetDir.toPath(),
-    timeout = Duration.minutes(10),
+    timeout = 10.minutes,
     args = listOf(severZipToolExe.toAbsolutePath().toString(), "x", "-y", "-o$targetDir", exeFile.path)
   )
 }

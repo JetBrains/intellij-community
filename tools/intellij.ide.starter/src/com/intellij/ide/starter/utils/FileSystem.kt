@@ -17,7 +17,7 @@ import java.nio.file.Path
 import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipFile
 import kotlin.io.path.*
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 object FileSystem {
   fun String.cleanPathFromSlashes(replaceWith: String = ""): String = this
@@ -129,7 +129,7 @@ object FileSystem {
         exec(
           presentablePurpose = "extract-tar",
           workDir = targetDir,
-          timeout = Duration.minutes(10),
+          timeout = 10.minutes,
           stderrRedirect = ExecOutputRedirect.ToStdOut("tar"),
           args = listOf("tar", "-z", "-x", "-f", tarFile.toAbsolutePath().toString(), "-C", targetDir.toAbsolutePath().toString())
         )

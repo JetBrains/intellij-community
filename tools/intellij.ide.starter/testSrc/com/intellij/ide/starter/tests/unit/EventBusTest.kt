@@ -15,6 +15,7 @@ import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class EventBusTest {
   private var isEventHappened: AtomicBoolean = AtomicBoolean(false)
@@ -25,7 +26,7 @@ class EventBusTest {
     withClue("Event should $shouldNotMessage be fired") {
       runBlocking {
         try {
-          withTimeout(timeout = Duration.seconds(10)) {
+          withTimeout(timeout = 10.seconds) {
             while (shouldEventBeFired != isEventFiredGetter()) {
               delay(Duration.milliseconds(500))
             }

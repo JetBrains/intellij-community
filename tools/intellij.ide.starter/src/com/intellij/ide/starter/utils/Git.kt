@@ -6,7 +6,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.Path
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 object Git {
   val branch by lazy { getShortBranchName() }
@@ -17,7 +17,7 @@ object Git {
     val stdout = ExecOutputRedirect.ToString()
     exec(
       "git-local-branch-get",
-      workDir = null, timeout = Duration.minutes(1),
+      workDir = null, timeout = 1.minutes,
       args = listOf("git", "rev-parse", "--abbrev-ref", "HEAD"),
       stdoutRedirect = stdout
     )
@@ -43,7 +43,7 @@ object Git {
     try {
       exec(
         "git-repo-root-get",
-        workDir = null, timeout = Duration.minutes(1),
+        workDir = null, timeout = 1.minutes,
         args = listOf("git", "rev-parse", "--show-toplevel", "HEAD"),
         stdoutRedirect = stdout
       )

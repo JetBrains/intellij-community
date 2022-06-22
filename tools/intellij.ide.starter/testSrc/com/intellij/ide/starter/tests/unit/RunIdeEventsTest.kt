@@ -27,7 +27,7 @@ import org.kodein.di.instance
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import java.nio.file.Path
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 
 @ExtendWith(MockitoExtension::class)
@@ -65,7 +65,7 @@ class RunIdeEventsTest {
       context.runIDE(commands = CommandChain())
     }
 
-    runBlocking { delay(Duration.seconds(3)) }
+    runBlocking { delay(3.seconds) }
 
     assertSoftly {
       withClue("During IDE run should be fired 2 events: before ide start and after ide finished") {

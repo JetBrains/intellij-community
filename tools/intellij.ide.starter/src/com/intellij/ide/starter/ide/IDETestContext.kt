@@ -28,6 +28,7 @@ import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 import kotlin.io.path.*
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 data class IDETestContext(
   val paths: IDEDataPaths,
@@ -227,7 +228,7 @@ data class IDETestContext(
     commandLine: IDECommandLine? = null,
     commands: Iterable<MarshallableCommand> = CommandChain(),
     codeBuilder: (CodeInjector.() -> Unit)? = null,
-    runTimeout: Duration = Duration.minutes(10),
+    runTimeout: Duration = 10.minutes,
     useStartupScript: Boolean = true,
     launchName: String = "",
     expectedKill: Boolean = false,
@@ -304,7 +305,7 @@ data class IDETestContext(
     commandLine: IDECommandLine? = null,
     commands: Iterable<MarshallableCommand>,
     codeBuilder: (CodeInjector.() -> Unit)? = null,
-    runTimeout: Duration = Duration.minutes(10),
+    runTimeout: Duration = 10.minutes,
     useStartupScript: Boolean = true,
     launchName: String = "",
     expectedKill: Boolean = false,
@@ -333,7 +334,7 @@ data class IDETestContext(
   fun warmUp(
     patchVMOptions: VMOptions.() -> VMOptions = { this },
     commands: Iterable<MarshallableCommand>,
-    runTimeout: Duration = Duration.minutes(10)
+    runTimeout: Duration = 10.minutes
   ): IDEStartResult {
 
     return runIDE(
