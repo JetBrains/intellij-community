@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.similarity.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -41,6 +42,11 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
     final Ref<PsiFile> featuresDump = new Ref<>();
     calculateFeaturesForUsage(editor, file, project, featuresDump);
     createFileWithFeatures(directory, featuresDump).navigate(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static void calculateFeaturesForUsage(@NotNull Editor editor,
