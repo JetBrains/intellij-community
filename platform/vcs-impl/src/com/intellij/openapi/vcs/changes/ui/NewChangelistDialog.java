@@ -12,8 +12,7 @@ import javax.swing.*;
 
 public class NewChangelistDialog extends DialogWrapper {
 
-  private NewEditChangelistPanel myPanel;
-  private JPanel myTopPanel;
+  private NewEditChangelistPanel myPanel ;
   private final Project myProject;
 
   public NewChangelistDialog(Project project) {
@@ -21,6 +20,7 @@ public class NewChangelistDialog extends DialogWrapper {
     myProject = project;
     setTitle(VcsBundle.message("changes.dialog.newchangelist.title"));
 
+    createUIComponents();
     myPanel.init(null);
     setSize(JBUI.scale(500), JBUI.scale(230));
     init();
@@ -34,7 +34,7 @@ public class NewChangelistDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    return myTopPanel;
+    return myPanel;
   }
 
   public String getName() {
