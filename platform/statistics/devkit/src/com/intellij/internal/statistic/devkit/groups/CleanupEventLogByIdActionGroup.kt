@@ -12,6 +12,10 @@ internal class CleanupEventLogByIdActionGroup : ActionGroup() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
+  override fun update(e: AnActionEvent) {
+    e.presentation.isPopupGroup = getLogProvidersInTestMode().size > 1
+  }
+
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     return getLogProvidersInTestMode()
       .map { logger ->
@@ -20,9 +24,5 @@ internal class CleanupEventLogByIdActionGroup : ActionGroup() {
         com.intellij.internal.statistic.devkit.actions.CleanupEventLogAction(recorder, actionText)
       }
       .toTypedArray()
-  }
-
-  override fun isPopup(): Boolean {
-    return getLogProvidersInTestMode().size > 1
   }
 }

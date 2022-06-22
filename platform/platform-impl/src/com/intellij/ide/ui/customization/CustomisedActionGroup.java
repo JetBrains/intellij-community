@@ -26,7 +26,6 @@ public class CustomisedActionGroup extends ActionGroup {
                                String name) {
     copyFrom(group);
     getTemplatePresentation().setText(shortName);
-    setPopup(group.isPopup());
 
     myGroup = group;
     mySchema = schema;

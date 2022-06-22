@@ -26,19 +26,10 @@ public class SmartPopupActionGroup extends DefaultActionGroup implements DumbAwa
   }
 
   @Override
-  public boolean isPopup() {
-    return false;
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     int size = ActionGroupUtil.getVisibleActions(this, e).take(getChildrenCountThreshold() + 1).size();
     e.getPresentation().setEnabledAndVisible(size > 0);
     e.getPresentation().setPopupGroup(size > getChildrenCountThreshold());
-  }
-
-  @Override
-  public boolean disableIfNoVisibleChildren() {
-    return false; // optimization
+    e.getPresentation().setDisableGroupIfEmpty(false);
   }
 }

@@ -12,15 +12,15 @@ internal class UpdateEventsSchemeActionGroup : ActionGroup() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
+  override fun update(e: AnActionEvent) {
+    e.presentation.isPopupGroup = getLogProvidersInTestMode().size > 1
+  }
+
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     return getLogProvidersInTestMode()
       .map { logger ->
         UpdateEventsSchemeAction(logger.recorderId)
       }
       .toTypedArray()
-  }
-
-  override fun isPopup(): Boolean {
-    return getLogProvidersInTestMode().size > 1
   }
 }
