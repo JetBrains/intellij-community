@@ -21,7 +21,10 @@ import kotlin.time.Duration.Companion.seconds
  * IDEA-256265: shared-indexes tests on Linux suspiciously fail with 137 (killed by OOM)
  */
 fun killOutdatedProcessesOnUnix(commandsToSearch: Iterable<String> = listOf("/perf-startup/")) {
-  if (SystemInfo.isWindows) logOutput("Current system is Windows. No logic for analysis of outdated processes is yet implemented.")
+  if (SystemInfo.isWindows) {
+    logOutput("Current system is Windows. No logic for analysis of outdated processes is yet implemented.")
+    return
+  }
 
   val processes = arrayListOf<ProcessMetaInfo>()
 
