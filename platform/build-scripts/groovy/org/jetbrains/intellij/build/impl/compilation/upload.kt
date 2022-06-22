@@ -7,31 +7,27 @@ import com.github.luben.zstd.Zstd
 import com.github.luben.zstd.ZstdDirectBufferCompressingStreamNoFinalizer
 import com.intellij.diagnostic.telemetry.forkJoinTask
 import com.intellij.diagnostic.telemetry.use
-import com.intellij.util.lang.ByteBufferCleaner
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import okio.BufferedSink
+import okio.*
 import org.jetbrains.intellij.build.MEDIA_TYPE_BINARY
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.httpClient
 import org.jetbrains.intellij.build.useSuccessful
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
@@ -40,7 +36,7 @@ internal val READ_OPERATION = EnumSet.of(StandardOpenOption.READ)
 internal const val MAX_BUFFER_SIZE = 4_000_000
 
 internal fun uploadArchives(reportStatisticValue: (key: String, value: String) -> Unit,
-                            serverUrl: String,
+                            config: CompilationCacheUploadConfiguration,
                             metadataJson: String,
                             httpClient: OkHttpClient,
                             items: List<PackAndUploadItem>,
@@ -50,19 +46,23 @@ internal fun uploadArchives(reportStatisticValue: (key: String, value: String) -
   val reusedCount = AtomicInteger()
   val reusedBytes = AtomicLong()
 
-  val alreadyUploaded = HashSet<String>()
-  val fallbackToHeads = try {
-    val files = spanBuilder("fetch info about already uploaded files").use {
-      getFoundAndMissingFiles(metadataJson, serverUrl, httpClient)
+  var fallbackToHeads = false
+  val alreadyUploaded: Set<String> = try {
+    if (config.checkFiles) {
+      spanBuilder("fetch info about already uploaded files").use {
+        HashSet(getFoundAndMissingFiles(metadataJson, config.serverUrl, httpClient).found)
+      }
     }
-    alreadyUploaded.addAll(files.found)
-    false
+    else {
+      emptySet()
+    }
   }
   catch (e: Throwable) {
     Span.current().recordException(e, Attributes.of(
       AttributeKey.stringKey("message"), "failed to fetch info about already uploaded files, will fallback to HEAD requests"
     ))
-    true
+    fallbackToHeads = true
+    emptySet()
   }
 
   ForkJoinTask.invokeAll(items.mapNotNull { item ->
@@ -73,20 +73,20 @@ internal fun uploadArchives(reportStatisticValue: (key: String, value: String) -
     }
 
     forkJoinTask(spanBuilder("upload archive").setAttribute("name", item.name).setAttribute("hash", item.hash!!)) {
-      // do not use `.zstd` extension - server uses hard-coded `.jar` extension
-      // see https://jetbrains.team/p/iji/repositories/intellij-compile-artifacts/files/d91706d68b22502de56c78cdd6218eab3b395b3f/main-server/batch-files-checker/main.go?tab=source&line=62
-      if (uploadFile(url = "$serverUrl/$uploadPrefix/${item.name}/${item.hash!!}.jar",
-                     file = item.archive,
-                     useHead = fallbackToHeads,
-                     span = Span.current(),
-                     httpClient = httpClient,
-                     bufferPool = bufferPool)) {
+      val isUploaded = uploadFile(url = "${config.serverUrl}/$uploadPrefix/${item.name}/${item.hash!!}.jar",
+                                  file = item.archive,
+                                  useHead = fallbackToHeads,
+                                  span = Span.current(),
+                                  httpClient = httpClient,
+                                  bufferPool = bufferPool)
+      val size = Files.size(item.archive)
+      if (isUploaded) {
         uploadedCount.getAndIncrement()
-        uploadedBytes.getAndAdd(Files.size(item.archive))
+        uploadedBytes.getAndAdd(size)
       }
       else {
         reusedCount.getAndIncrement()
-        reusedBytes.getAndAdd(Files.size(item.archive))
+        reusedBytes.getAndAdd(size)
       }
     }
   })
@@ -151,137 +151,127 @@ private fun uploadFile(url: String,
     }
   }
 
-  val request = Request.Builder()
-    .url(url)
-    .put(object : RequestBody() {
-      override fun contentType() = MEDIA_TYPE_BINARY
-
-      override fun writeTo(sink: BufferedSink) {
-        FileChannel.open(file, READ_OPERATION).use { channel ->
-          val fileSize = channel.size()
-          if (Zstd.compressBound(fileSize) <= MAX_BUFFER_SIZE) {
-            compressSmallFile(channel, fileSize, sink, bufferPool)
-            return
-          }
-
-          val targetBuffer = bufferPool.allocate()
-          object : ZstdDirectBufferCompressingStreamNoFinalizer(targetBuffer, 3) {
-            override fun flushBuffer(toFlush: ByteBuffer): ByteBuffer {
-              toFlush.flip()
-              while (toFlush.hasRemaining()) {
-                sink.write(toFlush)
-              }
-              toFlush.clear()
-              return toFlush
-            }
-
-            override fun close() {
-              try {
-                super.close()
-              }
-              finally {
-                bufferPool.release(targetBuffer)
-              }
-            }
-          }.use { compressor ->
-            val sourceBuffer = bufferPool.allocate()
-            try {
-              var offset = 0L
-              while (offset < fileSize) {
-                val actualBlockSize = (fileSize - offset).toInt()
-                if (sourceBuffer.remaining() > actualBlockSize) {
-                  sourceBuffer.limit(sourceBuffer.position() + actualBlockSize)
-                }
-
-                var readOffset = offset
-                do {
-                  readOffset += channel.read(sourceBuffer, readOffset)
-                }
-                while (sourceBuffer.hasRemaining())
-
-                sourceBuffer.flip()
-                compressor.compress(sourceBuffer)
-
-                sourceBuffer.clear()
-                offset = readOffset
-              }
-            }
-            finally {
-              bufferPool.release(sourceBuffer)
-            }
-          }
-        }
-      }
-    })
-    .build()
-  httpClient.newCall(request).execute().use { response ->
-    if (!response.isSuccessful) {
-      throw RuntimeException("PUT $url failed with ${response.code}: ${response.body.string()}")
-    }
+  val fileSize = Files.size(file)
+  if (Zstd.compressBound(fileSize) <= MAX_BUFFER_SIZE) {
+    compressSmallFile(file = file, fileSize = fileSize, bufferPool = bufferPool, url = url)
   }
+  else {
+    val request = Request.Builder()
+      .url(url)
+      .put(object : RequestBody() {
+        override fun contentType() = MEDIA_TYPE_BINARY
+
+        override fun writeTo(sink: BufferedSink) {
+          compressFile(file = file, output = sink, bufferPool = bufferPool)
+        }
+      })
+      .build()
+
+    httpClient.newCall(request).execute().useSuccessful { }
+  }
+
   return true
 }
 
-private fun compressSmallFile(channel: FileChannel, fileSize: Long, sink: BufferedSink, bufferPool: DirectFixedSizeByteBufferPool) {
-  var readOffset = 0L
-  val sourceBuffer = bufferPool.allocate()
-  var isSourceBufferReleased = false
+private fun compressSmallFile(file: Path, fileSize: Long, bufferPool: DirectFixedSizeByteBufferPool, url: String) {
+  val targetBuffer = bufferPool.allocate()
   try {
-    do {
-      readOffset += channel.read(sourceBuffer, readOffset)
-    }
-    while (readOffset < fileSize)
-    sourceBuffer.flip()
-
-    val targetBuffer = bufferPool.allocate()
+    var readOffset = 0L
+    val sourceBuffer = bufferPool.allocate()
+    var isSourceBufferReleased = false
     try {
+      FileChannel.open(file, READ_OPERATION).use { input ->
+        do {
+          readOffset += input.read(sourceBuffer, readOffset)
+        }
+        while (readOffset < fileSize)
+      }
+      sourceBuffer.flip()
+
       Zstd.compress(targetBuffer, sourceBuffer, 3, false)
       targetBuffer.flip()
 
       bufferPool.release(sourceBuffer)
       isSourceBufferReleased = true
-
-      sink.write(targetBuffer)
     }
     finally {
-      bufferPool.release(targetBuffer)
+      if (!isSourceBufferReleased) {
+        bufferPool.release(sourceBuffer)
+      }
     }
+
+    val compressedSize = targetBuffer.remaining()
+
+    val request = Request.Builder()
+      .url(url)
+      .put(object : RequestBody() {
+        override fun contentLength() = compressedSize.toLong()
+
+        override fun contentType() = MEDIA_TYPE_BINARY
+
+        override fun writeTo(sink: BufferedSink) {
+          targetBuffer.mark()
+          sink.write(targetBuffer)
+          targetBuffer.reset()
+        }
+      })
+      .build()
+
+    httpClient.newCall(request).execute().useSuccessful { }
   }
   finally {
-    if (!isSourceBufferReleased) {
-      bufferPool.release(sourceBuffer)
-    }
+    bufferPool.release(targetBuffer)
   }
 }
 
-
-internal class DirectFixedSizeByteBufferPool(private val size: Int, private val maxPoolSize: Int) : AutoCloseable {
-  private val pool = ConcurrentLinkedQueue<ByteBuffer>()
-
-  private val count = AtomicInteger()
-
-  fun allocate(): ByteBuffer {
-    val result = pool.poll() ?: return ByteBuffer.allocateDirect(size)
-    count.decrementAndGet()
-    return result
-  }
-
-  fun release(buffer: ByteBuffer) {
-    buffer.clear()
-    buffer.order(ByteOrder.BIG_ENDIAN)
-    if (count.incrementAndGet() < maxPoolSize) {
-      pool.add(buffer)
+private fun compressFile(file: Path, output: BufferedSink, bufferPool: DirectFixedSizeByteBufferPool) {
+  val targetBuffer = bufferPool.allocate()
+  object : ZstdDirectBufferCompressingStreamNoFinalizer(targetBuffer, 3) {
+    override fun flushBuffer(toFlush: ByteBuffer): ByteBuffer {
+      toFlush.flip()
+      while (toFlush.hasRemaining()) {
+        output.write(toFlush)
+      }
+      toFlush.clear()
+      return toFlush
     }
-    else {
-      count.decrementAndGet()
-      ByteBufferCleaner.unmapBuffer(buffer)
-    }
-  }
 
-  // pool is not expected to be used during releaseAll call
-  override fun close() {
-    while (true) {
-      ByteBufferCleaner.unmapBuffer(pool.poll() ?: return)
+    override fun close() {
+      try {
+        super.close()
+      }
+      finally {
+        bufferPool.release(targetBuffer)
+      }
+    }
+  }.use { compressor ->
+    val sourceBuffer = bufferPool.allocate()
+    try {
+      var offset = 0L
+      FileChannel.open(file, READ_OPERATION).use { input ->
+        val fileSize = input.size()
+        while (offset < fileSize) {
+          val actualBlockSize = (fileSize - offset).toInt()
+          if (sourceBuffer.remaining() > actualBlockSize) {
+            sourceBuffer.limit(sourceBuffer.position() + actualBlockSize)
+          }
+
+          var readOffset = offset
+          do {
+            readOffset += input.read(sourceBuffer, readOffset)
+          }
+          while (sourceBuffer.hasRemaining())
+
+          sourceBuffer.flip()
+          compressor.compress(sourceBuffer)
+
+          sourceBuffer.clear()
+          offset = readOffset
+        }
+      }
+    }
+    finally {
+      bufferPool.release(sourceBuffer)
     }
   }
 }
@@ -289,5 +279,4 @@ internal class DirectFixedSizeByteBufferPool(private val size: Int, private val 
 @Serializable
 private data class CheckFilesResponse(
   val found: List<String> = emptyList(),
-  val missing: List<String> = emptyList()
 )

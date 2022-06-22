@@ -34,14 +34,54 @@ import java.util.concurrent.*
 import java.util.zip.GZIPOutputStream
 import kotlin.math.min
 
-fun packAndUploadToServer(context: CompilationContext, zipDir: Path) {
-  val items = spanBuilder("pack classes").useWithScope {
-    packCompilationResult(context, zipDir)
+class CompilationCacheUploadConfiguration(
+  serverUrl: String? = null,
+  val checkFiles: Boolean = true,
+  val uploadOnly: Boolean = false,
+  branch: String? = null,
+) {
+  val serverUrl: String = serverUrl ?: normalizeServerUrl()
+  val branch: String = branch ?: System.getProperty(branchPropertyName).also {
+    check(!it.isNullOrBlank()) {
+      "Git branch is not defined. Please set $branchPropertyName system property."
+    }
+  }
+
+  companion object {
+    private const val branchPropertyName = "intellij.build.compiled.classes.branch"
+
+    private fun normalizeServerUrl(): String {
+      val serverUrlPropertyName = "intellij.build.compiled.classes.server.url"
+      var result = System.getProperty(serverUrlPropertyName)?.trimEnd('/')
+      check(!result.isNullOrBlank()) {
+        "Compilation cache archive server url is not defined. Please set $serverUrlPropertyName system property."
+      }
+      if (!result.startsWith("http")) {
+        @Suppress("HttpUrlsUsage")
+        result = (if (result.startsWith("localhost:")) "http://" else "https://") + result
+      }
+      return result
+    }
+  }
+}
+
+fun packAndUploadToServer(context: CompilationContext, zipDir: Path, config: CompilationCacheUploadConfiguration) {
+  val items = if (config.uploadOnly) {
+    Json.decodeFromString<CompilationPartsMetadata>(Files.readString(zipDir.resolve("metadata.json"))).files.map {
+      val item = PackAndUploadItem(output = Path.of(""), name = it.key, archive = zipDir.resolve(it.key + ".jar"))
+      item.hash = it.value
+      item
+    }
+  }
+  else {
+    spanBuilder("pack classes").useWithScope {
+      packCompilationResult(context, zipDir)
+    }
   }
 
   createBufferPool().use { bufferPool ->
-    spanBuilder("upload packed classes").useWithScope {
-      upload(zipDir, context.messages, items, bufferPool)
+    spanBuilder("upload packed classes").use {
+      upload(config = config, zipDir = zipDir, messages = context.messages, items = items, bufferPool = bufferPool)
     }
   }
 }
@@ -133,49 +173,45 @@ private fun isModuleOutputDirEmpty(moduleOutDir: Path): Boolean {
 // TODO: Remove hardcoded constant
 internal const val uploadPrefix = "intellij-compile/v2"
 
-private fun upload(zipsLocation: Path, messages: BuildMessages, items: List<PackAndUploadItem>, bufferPool: DirectFixedSizeByteBufferPool) {
-  val serverUrlPropertyName = "intellij.build.compiled.classes.server.url"
-  val serverUrl = System.getProperty(serverUrlPropertyName)?.trimEnd('/')
-  check(!serverUrl.isNullOrBlank()) {
-    "Compile Parts archive server url is not defined. \nPlease set $serverUrlPropertyName system property."
-  }
-
-  val artifactBranchPropertyName = "intellij.build.compiled.classes.branch"
-  val branch = System.getProperty(artifactBranchPropertyName)
-  check(!branch.isNullOrBlank()) {
-    "Unable to determine current git branch, assuming 'master'. \nPlease set '$artifactBranchPropertyName' system property"
-  }
-
+private fun upload(config: CompilationCacheUploadConfiguration,
+                   zipDir: Path,
+                   messages: BuildMessages,
+                   items: List<PackAndUploadItem>,
+                   bufferPool: DirectFixedSizeByteBufferPool) {
   // prepare metadata for writing into file
   val metadataJson = Json.encodeToString(CompilationPartsMetadata(
-    serverUrl = serverUrl,
-    branch = branch,
+    serverUrl = config.serverUrl,
+    branch = config.branch,
     prefix = uploadPrefix,
     files = items.associateTo(TreeMap()) { item ->
       item.name to item.hash!!
     },
   ))
 
-  spanBuilder("upload archives").setAttribute(AttributeKey.stringArrayKey("items"), items.map(PackAndUploadItem::name)).useWithScope {
+  // save metadata file
+  if (!config.uploadOnly) {
+    val metadataFile = zipDir.resolve("metadata.json")
+    val gzippedMetadataFile = zipDir.resolve("metadata.json.gz")
+    Files.createDirectories(metadataFile.parent)
+    Files.writeString(metadataFile, metadataJson)
+
+    GZIPOutputStream(Files.newOutputStream(gzippedMetadataFile)).use { outputStream ->
+      Files.copy(metadataFile, outputStream)
+    }
+
+    messages.artifactBuilt(metadataFile.toString())
+    messages.artifactBuilt(gzippedMetadataFile.toString())
+  }
+
+  spanBuilder("upload archives").setAttribute(AttributeKey.stringArrayKey("items"),
+                                              items.map(PackAndUploadItem::name)).useWithScope {
     uploadArchives(reportStatisticValue = messages::reportStatisticValue,
-                   serverUrl = serverUrl,
+                   config = config,
                    metadataJson = metadataJson,
                    httpClient = httpClient,
                    items = items,
                    bufferPool = bufferPool)
   }
-
-  // save and publish metadata file
-  val metadataFile = zipsLocation.resolve("metadata.json")
-  Files.createDirectories(metadataFile.parent)
-  Files.writeString(metadataFile, metadataJson)
-  messages.artifactBuilt(metadataFile.toString())
-
-  val gzippedMetadataFile = zipsLocation.resolve("metadata.json.gz")
-  GZIPOutputStream(Files.newOutputStream(gzippedMetadataFile)).use { outputStream ->
-    Files.copy(metadataFile, outputStream)
-  }
-  messages.artifactBuilt(gzippedMetadataFile.toString())
 }
 
 @VisibleForTesting

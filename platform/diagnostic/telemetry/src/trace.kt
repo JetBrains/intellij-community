@@ -7,6 +7,7 @@ import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
 import java.util.concurrent.Callable
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ForkJoinTask
 
 inline fun <T> createTask(spanBuilder: SpanBuilder, crossinline task: () -> T): ForkJoinTask<T> {
@@ -57,10 +58,12 @@ inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {
   return startSpan().use(operation)
 }
 
-@PublishedApi
-internal inline fun <T> Span.use(operation: (Span) -> T): T {
+inline fun <T> Span.use(operation: (Span) -> T): T {
   try {
     return operation(this)
+  }
+  catch (e: CancellationException) {
+    throw e
   }
   catch (e: Throwable) {
     recordException(e)
