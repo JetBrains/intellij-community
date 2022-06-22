@@ -125,22 +125,9 @@ final class ActionUpdater {
     // clone the presentation to avoid partially changing the cached one if update is interrupted
     Presentation presentation = myPresentationFactory.getPresentation(action).clone();
     if (!ActionPlaces.isShortcutPlace(myPlace)) presentation.setEnabledAndVisible(true);
-    boolean wasPopup = action instanceof ActionGroup && ((ActionGroup)action).isPopup(myPlace);
-    presentation.setPopupGroup(action instanceof ActionGroup && (presentation.isPopupGroup() || wasPopup));
     Supplier<Boolean> doUpdate = () -> doUpdate(action, createActionEvent(presentation));
     boolean success = callAction(action, Op.update, doUpdate);
-    if (success) assertActionGroupPopupStateIsNotChanged(action, myPlace, wasPopup, presentation);
     return success ? presentation : null;
-  }
-
-  static void assertActionGroupPopupStateIsNotChanged(@NotNull AnAction action, @NotNull String place,
-                                                      boolean wasPopup, @NotNull Presentation presentation) {
-    if (action instanceof ActionGroup && wasPopup != ((ActionGroup)action).isPopup(place)) {
-      presentation.setPopupGroup(!wasPopup); // keep the old logic for a while
-      String operationName = action.getClass().getSimpleName() + "#" + Op.update + " (" + action.getClass().getName() + ")";
-      LOG.warn("Calling `setPopup()` in " + operationName + ". " +
-               "Please use `event.getPresentation().setPopupGroup()` instead.");
-    }
   }
 
   void applyPresentationChanges() {
@@ -520,8 +507,9 @@ final class ActionUpdater {
     boolean performOnly = isPopup && canBePerformed && (
       Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.SUPPRESS_SUBMENU)) ||
       child instanceof AlwaysPerformingActionGroup);
-    boolean hideEmpty = isPopup && group.hideIfNoVisibleChildren();
-    boolean checkChildren = isPopup && (canBePerformed || hideDisabled || hideEmpty) &&
+    boolean hideEmpty = isPopup && (presentation.isHideGroupIfEmpty() || group.hideIfNoVisibleChildren());
+    boolean disableEmpty = isPopup && (presentation.isDisableGroupIfEmpty() && group.disableIfNoVisibleChildren());
+    boolean checkChildren = isPopup && (canBePerformed || hideDisabled || hideEmpty || disableEmpty) &&
                             !(performOnly || child instanceof AlwaysVisibleActionGroup);
 
     boolean hasEnabled = false, hasVisible = false;
@@ -540,7 +528,7 @@ final class ActionUpdater {
     }
     if (isPopup) {
       presentation.putClientProperty(SUPPRESS_SUBMENU_IMPL, performOnly ? true : null);
-      if (checkChildren && !performOnly && !hasVisible && group.disableIfNoVisibleChildren()) {
+      if (!performOnly && !hasVisible && disableEmpty) {
         presentation.setEnabled(false);
       }
     }

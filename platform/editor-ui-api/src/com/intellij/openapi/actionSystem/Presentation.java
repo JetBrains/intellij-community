@@ -99,9 +99,11 @@ public final class Presentation implements Cloneable {
   private static final int IS_MULTI_CHOICE = 0x4;
   private static final int IS_POPUP_GROUP = 0x10;
   private static final int IS_PERFORM_GROUP = 0x20;
+  private static final int IS_HIDE_GROUP_IF_EMPTY = 0x40;
+  private static final int IS_DISABLE_GROUP_IF_EMPTY = 0x80;
   private static final int IS_TEMPLATE = 0x1000;
 
-  private int myFlags = IS_ENABLED | IS_VISIBLE;
+  private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY;
   private @NotNull Supplier<@ActionDescription String> myDescriptionSupplier = () -> null;
   private @NotNull Supplier<? extends TextWithMnemonic> myTextWithMnemonicSupplier = () -> null;
   private @NotNull SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
@@ -370,6 +372,32 @@ public final class Presentation implements Cloneable {
    */
   public void setPerformGroup(boolean performing) {
     myFlags = BitUtil.set(myFlags, IS_PERFORM_GROUP, performing);
+  }
+
+  /** @see Presentation#setHideGroupIfEmpty(boolean) */
+  public boolean isHideGroupIfEmpty() {
+    return BitUtil.isSet(myFlags, IS_HIDE_GROUP_IF_EMPTY);
+  }
+
+  /**
+   * For an action group presentation sets whether the action group will be hidden if no visible children are present.
+   * The default is {@code false}.
+   */
+  public void setHideGroupIfEmpty(boolean hide) {
+    myFlags = BitUtil.set(myFlags, IS_HIDE_GROUP_IF_EMPTY, hide);
+  }
+
+  /** @see Presentation#setHideGroupIfEmpty(boolean) */
+  public boolean isDisableGroupIfEmpty() {
+    return BitUtil.isSet(myFlags, IS_DISABLE_GROUP_IF_EMPTY);
+  }
+
+  /**
+   * For an action group presentation sets whether the action group will be shown as disabled if no visible children are present.
+   * The default is {@code true}.
+   */
+  public void setDisableGroupIfEmpty(boolean disable) {
+    myFlags = BitUtil.set(myFlags, IS_DISABLE_GROUP_IF_EMPTY, disable);
   }
 
   /**
