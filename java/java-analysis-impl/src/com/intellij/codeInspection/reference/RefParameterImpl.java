@@ -201,7 +201,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     final int idx = fqName.lastIndexOf(' ');
     if (idx > 0) {
       final String method = fqName.substring(0, idx);
-      final RefMethod refMethod = RefMethodImpl.methodFromExternalName(manager, method);
+      final RefJavaElement refMethod = RefMethodImpl.methodFromExternalName(manager, method);
       if (refMethod != null) {
         final UMethod element = ObjectUtils.tryCast(refMethod.getUastElement(), UMethod.class);
         if (element == null) return null;

@@ -420,14 +420,14 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Nullable
-  static RefMethod methodFromExternalName(RefManager manager, String externalName) {
+  static RefJavaElement methodFromExternalName(RefManager manager, String externalName) {
     PsiElement method = RefJavaUtilImpl.returnToPhysical(findPsiMethod(PsiManager.getInstance(manager.getProject()), externalName));
     RefElement reference = manager.getReference(method);
-    if (!(reference instanceof RefMethod) && reference != null) {
+    if (!(reference instanceof RefJavaElement) && reference != null) {
       LOG.error("Expected refMethod but found: " + reference.getClass().getName() + "; for externalName: " +externalName );
       return null;
     }
-    return (RefMethod)reference;
+    return (RefJavaElement)reference;
   }
 
   @Nullable
