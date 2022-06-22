@@ -235,9 +235,13 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
     @Override
     protected void setException(Throwable t) {
-      super.setException(t);
-      if (!(t instanceof ControlFlowException)) {
-        LOG.error(t);
+      try {
+        if (!(t instanceof ControlFlowException)) {
+          LOG.error(t);
+        }
+      }
+      finally {
+        super.setException(t);
       }
     }
 

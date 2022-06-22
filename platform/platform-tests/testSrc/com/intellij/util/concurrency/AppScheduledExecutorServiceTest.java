@@ -3,10 +3,11 @@ package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.Pair;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
 
@@ -18,11 +19,12 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class AppScheduledExecutorServiceTest extends TestCase {
+public class AppScheduledExecutorServiceTest extends LightPlatformTestCase {
   private static final class LogInfo {
     private final int runnable;
     private final Thread currentThread;
@@ -153,6 +155,26 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     }
     catch (Exception ignored) {
     }
+  }
+  
+  public void testExceptionsFromScheduledTasksAreReported() {
+    checkExceptionIsReported(
+      action -> AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(action, 1, 1, TimeUnit.MILLISECONDS)
+    );
+    checkExceptionIsReported(
+      action -> AppExecutorUtil.getAppScheduledExecutorService().schedule(action, 1, TimeUnit.MILLISECONDS)
+    );
+  }
+
+  private static void checkExceptionIsReported(Function<Runnable, ScheduledFuture<?>> runner) {
+    Runnable fail = () -> {
+      throw new RuntimeException("failed");
+    };
+    Throwable error = LoggedErrorProcessor.executeAndReturnLoggedError(() -> {
+      ScheduledFuture<?> future = runner.apply(fail);
+      waitFor(future::isDone);
+    });
+    assertEquals("failed", error.getMessage());
   }
 
   public void testDelayedTasksReusePooledThreadIfExecuteAtDifferentTimes() {
