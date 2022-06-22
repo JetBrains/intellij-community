@@ -179,17 +179,29 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   private fun commit(message: String, dateCreated: Instant) {
-    // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
     try {
+      // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
       val commit = git.commit().setMessage(message).setAllowEmpty(false).call()
 
-      // emulating --author-date since there is no API in JGit to provide this information,
-      // and because the date is 1-second granularity on some OSs
-      git.notesAdd().setMessage("$DATE_PREFIX${dateCreated.toEpochMilli()}").setObjectId(commit).call()
+      recordCreationDate(commit, dateCreated)
     }
     catch (e: EmptyCommitException) {
       LOG.info("No actual changes in the settings")
     }
+  }
+
+  // emulating --author-date since there is no API in JGit to provide this information,
+  // and because the date is 1-second granularity on some OSs
+  private fun recordCreationDate(commit: RevCommit, dateCreated: Instant) {
+    val date = if (dateCreated <= Instant.now()) {
+      dateCreated
+    }
+    else {
+      LOG.error("Date of the snapshot happens in future: $dateCreated")
+      Instant.now()
+    }
+
+    git.notesAdd().setMessage("$DATE_PREFIX${date.toEpochMilli()}").setObjectId(commit).call()
   }
 
   override fun dispose() {
@@ -243,14 +255,14 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   private fun fastForwardMaster(branchOnSamePosition: Ref, targetBranch: Ref): BranchPosition {
-      LOG.info("Advancing master. Its position is equal to ${branchOnSamePosition.short}: ${master.objectId.short}. " +
-               "Fast-forwarding to ${targetBranch.short} ${targetBranch.objectId.short}")
-      val mergeResult = git.merge().include(targetBranch).call()
-      if (mergeResult.mergeStatus != FAST_FORWARD) {
-        LOG.warn("Non-fast-forward result: $mergeResult")
-        // todo check consistency here
-      }
-      return getPosition(master)
+    LOG.info("Advancing master. Its position is equal to ${branchOnSamePosition.short}: ${master.objectId.short}. " +
+             "Fast-forwarding to ${targetBranch.short} ${targetBranch.objectId.short}")
+    val mergeResult = git.merge().include(targetBranch).call()
+    if (mergeResult.mergeStatus != FAST_FORWARD) {
+      LOG.warn("Non-fast-forward result: $mergeResult")
+      // todo check consistency here
+    }
+    return getPosition(master)
   }
 
   override fun advanceMaster(): SettingsLog.Position {
@@ -335,7 +347,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
   private val ObjectId.short get() = this.name.substring(0, 8)
 
-  private data class BranchPosition(override val id: String): SettingsLog.Position {
+  private data class BranchPosition(override val id: String) : SettingsLog.Position {
     override fun toString(): String = id.substring(0, 8)
   }
 
