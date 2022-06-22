@@ -12,9 +12,13 @@ internal fun interface SettingsChangeListener : EventListener {
 internal sealed class SyncSettingsEvent {
   class IdeChange(val snapshot: SettingsSnapshot) : SyncSettingsEvent()
   class CloudChange(val snapshot: SettingsSnapshot) : SyncSettingsEvent()
-  object PushIfNeededRequest : SyncSettingsEvent()
   object MustPushRequest: SyncSettingsEvent()
   object LogCurrentSettings: SyncSettingsEvent()
+
+  /**
+   * Special request to ping the merge and push procedure in case there are settings which weren't pushed yet.
+   */
+  object PingRequest : SyncSettingsEvent()
 }
 
 internal data class SettingsSnapshot(val metaInfo: MetaInfo, val fileStates: Set<FileState>) {

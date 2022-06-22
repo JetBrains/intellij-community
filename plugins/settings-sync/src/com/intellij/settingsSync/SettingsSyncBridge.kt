@@ -62,9 +62,9 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
         applySnapshotFromServer(initMode.cloudEvent.snapshot)
       InitMode.PushToServer ->
         // todo this should be a force push, no reject is expected
-        mergeAndPush(previousIdePosition, previousCloudPosition, pushToCloudRequested = false, mustPushToCloud = true)
+        mergeAndPush(previousIdePosition, previousCloudPosition, mustPushToCloud = true)
       InitMode.JustInit ->
-        mergeAndPush(previousIdePosition, previousCloudPosition, pushToCloudRequested = false, mustPushToCloud = false)
+        mergeAndPush(previousIdePosition, previousCloudPosition, mustPushToCloud = false)
     }
   }
 
@@ -101,7 +101,6 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     val previousIdePosition = settingsLog.getIdePosition()
     val previousCloudPosition = settingsLog.getCloudPosition()
 
-    var pushToCloudRequested = false
     var mustPushToCloud = false
     while (pendingEvents.isNotEmpty()) {
       val event = pendingEvents.removeAt(0)
@@ -114,20 +113,16 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
       else if (event is SyncSettingsEvent.LogCurrentSettings) {
         settingsLog.logExistingSettings()
       }
-      else if (event is SyncSettingsEvent.PushIfNeededRequest) {
-        pushToCloudRequested = true
-      }
       else if (event is SyncSettingsEvent.MustPushRequest) {
         mustPushToCloud = true
       }
     }
 
-    mergeAndPush(previousIdePosition, previousCloudPosition, pushToCloudRequested, mustPushToCloud)
+    mergeAndPush(previousIdePosition, previousCloudPosition, mustPushToCloud)
   }
 
   private fun mergeAndPush(previousIdePosition: SettingsLog.Position,
                            previousCloudPosition: SettingsLog.Position,
-                           pushToCloudRequested: Boolean,
                            mustPushToCloud: Boolean) {
     val newIdePosition = settingsLog.getIdePosition()
     val newCloudPosition = settingsLog.getCloudPosition()
@@ -188,8 +183,8 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
         }
       }
     }
-    else if (pushToCloudRequested) {
-      LOG.info("Requested to push if needed, but there was nothing to push")
+    else {
+      LOG.info("Nothing to push")
     }
   }
 
