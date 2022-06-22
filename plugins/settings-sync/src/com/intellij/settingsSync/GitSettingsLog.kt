@@ -309,7 +309,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
         }
       }
       else {
-        LOG.warn("No note assigned to commit $commit")
+        if (commit.parentCount == 1) { // merge happens locally, so the commit time is accurate enough, no note is needed
+          LOG.warn("No note assigned to commit $commit")
+        }
       }
     }
     catch (e: Throwable) {
