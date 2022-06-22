@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards.archetype
 
-import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.panel
@@ -10,9 +10,10 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 
-class MavenCatalogsConfigurable(private val project: Project) : BoundConfigurable(
+class MavenCatalogsConfigurable(private val project: Project) : BoundSearchableConfigurable(
   MavenWizardBundle.message("maven.configurable.archetype.catalog.title"),
-  helpTopic = "reference.settings.project.maven.archetype.catalogs"
+  "reference.settings.project.maven.archetype.catalogs",
+  "reference.settings.project.maven.archetype.catalogs"
 ) {
 
   override fun createPanel() = panel {
