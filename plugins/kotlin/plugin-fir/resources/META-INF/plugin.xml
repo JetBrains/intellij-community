@@ -27,7 +27,6 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
 
   <depends>com.intellij.modules.idea</depends>
   <depends>com.intellij.modules.java</depends>
-  <depends optional="true" config-file="dep-copyright.xml">com.intellij.copyright</depends>
 
   <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -50,6 +49,10 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
   <content>
     <module name="kotlin.base.analysis-api-providers"/>
     <module name="kotlin.base.fir.analysis-api-providers"/>
+    <module name="kotlin.copyright"/>
+    <module name="kotlin.grazie"/>
+    <module name="kotlin.run-configurations.junit"/>
+    <module name="kotlin.run-configurations.testng"/>
   </content>
 
   <!--  <xi:include href="jvm-common.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
