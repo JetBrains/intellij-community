@@ -6,6 +6,7 @@ import com.intellij.util.io.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
+import java.time.format.DateTimeFormatter
 import java.util.stream.Collectors
 import kotlin.io.path.div
 
@@ -19,7 +20,8 @@ internal object SettingsSnapshotZipSerializer {
     val file = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, null)
     Compressor.Zip(file)
       .use { zip ->
-        zip.addFile("$METAINFO/$TIMESTAMP", snapshot.metaInfo.dateCreated.toEpochMilli().toString().toByteArray())
+        val formattedDate = DateTimeFormatter.ISO_INSTANT.format(snapshot.metaInfo.dateCreated)
+        zip.addFile("$METAINFO/$TIMESTAMP", formattedDate.toByteArray())
 
         for (fileState in snapshot.fileStates) {
           val content = if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
@@ -46,7 +48,7 @@ internal object SettingsSnapshotZipSerializer {
       val timestampFile = path / TIMESTAMP
       if (timestampFile.exists()) {
         val timestamp = timestampFile.readText()
-        val date = Instant.ofEpochMilli(timestamp.toLong())
+        val date = DateTimeFormatter.ISO_INSTANT.parse(timestamp, Instant::from)
         return SettingsSnapshot.MetaInfo(date)
       }
       else {
@@ -54,7 +56,7 @@ internal object SettingsSnapshotZipSerializer {
       }
     }
     catch (e: Throwable) {
-      LOG.error("Couldn't read .metainfo from $SETTINGS_SYNC_SNAPSHOT_ZIP")
+      LOG.error("Couldn't read .metainfo from $SETTINGS_SYNC_SNAPSHOT_ZIP", e)
     }
     return SettingsSnapshot.MetaInfo(Instant.now())
   }
