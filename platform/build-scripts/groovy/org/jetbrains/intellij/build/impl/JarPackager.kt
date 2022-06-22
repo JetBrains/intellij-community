@@ -81,7 +81,6 @@ class JarPackager private constructor(private val context: BuildContext) {
       }
     }
 
-    @JvmStatic
     fun getLibraryName(lib: JpsLibrary): String {
       val name = lib.name
       if (!name.startsWith("#")) {
@@ -101,7 +100,7 @@ class JarPackager private constructor(private val context: BuildContext) {
              moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
              dryRun: Boolean = false,
              context: BuildContext): Collection<DistributionFileEntry> {
-      val copiedFiles = HashMap<Path, JpsLibrary>()
+      val copiedFiles = HashMap<Path, CopiedFor>()
       val packager = JarPackager(context)
       for (data in layout.includedModuleLibraries) {
         val library = context.findRequiredModule(data.moduleName).libraryCollection.libraries
@@ -127,9 +126,11 @@ class JarPackager private constructor(private val context: BuildContext) {
         if (targetFile == null) {
           targetFile = outputDir.resolve(fileName)
         }
-        packager.addLibrary(library = library,
-                            targetFile = targetFile!!,
-                            files = getLibraryFiles(library = library, copiedFiles = copiedFiles, isModuleLevel = true))
+        packager.addLibrary(
+          library = library,
+          targetFile = targetFile!!,
+          files = getLibraryFiles(library = library, copiedFiles = copiedFiles, isModuleLevel = true, targetFile = targetFile)
+        )
       }
 
       val extraLibSources = HashMap<String, MutableList<Source>>()
@@ -210,7 +211,6 @@ class JarPackager private constructor(private val context: BuildContext) {
       return packager.projectStructureMapping
     }
 
-    @JvmStatic
     fun getSearchableOptionsDir(buildContext: BuildContext): Path = buildContext.paths.tempDir.resolve("searchableOptionsResult")
   }
 
@@ -282,7 +282,7 @@ class JarPackager private constructor(private val context: BuildContext) {
   private fun packProjectLibraries(jarToModuleNames: Map<String, List<String>>,
                                    outputDir: Path,
                                    layout: BaseLayout,
-                                   copiedFiles: MutableMap<Path, JpsLibrary>,
+                                   copiedFiles: MutableMap<Path, CopiedFor>,
                                    extraLibSources: MutableMap<String, MutableList<Source>>): MutableMap<JpsLibrary, List<Path>> {
     val toMerge = LinkedHashMap<JpsLibrary, List<Path>>()
     val projectLibs = if (layout.includedProjectLibraries.isEmpty()) {
@@ -297,12 +297,13 @@ class JarPackager private constructor(private val context: BuildContext) {
                     ?: throw IllegalArgumentException("Cannot find library ${libraryData.libraryName} in the project")
       libToMetadata.put(library, libraryData)
       val libName = library.name
-      val files = getLibraryFiles(library = library, copiedFiles = copiedFiles, isModuleLevel = false)
       var packMode = libraryData.packMode
       if (packMode == LibraryPackMode.MERGED && !extraMergeRules.values.any { it(libName) } && !isLibraryMergeable(libName)) {
         packMode = LibraryPackMode.STANDALONE_MERGED
       }
+
       val outPath = libraryData.outPath
+      val files = getLibraryFiles(library = library, copiedFiles = copiedFiles, isModuleLevel = false, targetFile = null)
       if (packMode == LibraryPackMode.MERGED && outPath == null) {
         toMerge.put(library, files)
       }
@@ -366,7 +367,7 @@ class JarPackager private constructor(private val context: BuildContext) {
                              excluded: Collection<String>,
                              layout: BaseLayout,
                              outputDir: Path,
-                             copiedFiles: MutableMap<Path, JpsLibrary>,
+                             copiedFiles: MutableMap<Path, CopiedFor>,
                              extraLibSources: MutableMap<String, MutableList<Source>>) {
     if (libraryDependency.libraryReference.parentReference!!.resolve() !is JpsModule) {
       return
@@ -383,7 +384,8 @@ class JarPackager private constructor(private val context: BuildContext) {
       return
     }
 
-    val files = getLibraryFiles(library = library, copiedFiles = copiedFiles, isModuleLevel = true)
+    val targetFile = outputDir.resolve(targetFilename)
+    val files = getLibraryFiles(library = library, copiedFiles = copiedFiles, isModuleLevel = true, targetFile = targetFile)
     for (i in (files.size - 1) downTo 0) {
       val file = files.get(i)
       val fileName = file.fileName.toString()
@@ -395,7 +397,6 @@ class JarPackager private constructor(private val context: BuildContext) {
 
     if (!files.isEmpty()) {
       val sources = extraLibSources.computeIfAbsent(targetFilename) { mutableListOf() }
-      val targetFile = outputDir.resolve(targetFilename)
       for (file in files) {
         sources.add(ZipSource(file) { size ->
           projectStructureMapping.add(ModuleLibraryFileEntry(targetFile, moduleName, file, size))
@@ -448,18 +449,33 @@ private fun removeVersionFromJar(fileName: String): String {
   return if (matcher.matches()) "${matcher.group(1)}.jar" else fileName
 }
 
-private fun getLibraryFiles(library: JpsLibrary, copiedFiles: MutableMap<Path, JpsLibrary>, isModuleLevel: Boolean): MutableList<Path> {
+private fun getLibraryFiles(library: JpsLibrary,
+                            copiedFiles: MutableMap<Path, CopiedFor>,
+                            isModuleLevel: Boolean,
+                            targetFile: Path?): MutableList<Path> {
   val files = library.getPaths(JpsOrderRootType.COMPILED)
   val libName = library.name
+
+  // allow duplication if packed into the same target file and have the same common prefix
+  files.removeIf {
+    val alreadyCopiedFor = copiedFiles.get(it)
+    if (alreadyCopiedFor == null) {
+      false
+    }
+    else {
+      alreadyCopiedFor.targetFile == targetFile && alreadyCopiedFor.library.name.startsWith("ktor-")
+    }
+  }
+
   for (file in files) {
-    val alreadyCopiedFor = copiedFiles.putIfAbsent(file, library)
+    val alreadyCopiedFor = copiedFiles.putIfAbsent(file, CopiedFor(library, targetFile))
     if (alreadyCopiedFor != null) {
       // check name - we allow to have same named module level library name
-      if (isModuleLevel && alreadyCopiedFor.name == libName) {
+      if (isModuleLevel && alreadyCopiedFor.library.name == libName) {
         continue
       }
 
-      throw IllegalStateException("File $file from $libName is already provided by ${alreadyCopiedFor.name} library")
+      throw IllegalStateException("File $file from $libName is already provided by ${alreadyCopiedFor.library.name} library")
     }
   }
   return files
@@ -533,3 +549,5 @@ private fun addModuleSources(moduleName: String,
   }
   sourceList.add(DirSource(dir = moduleOutputDir, excludes = excludes, sizeConsumer = sizeConsumer))
 }
+
+private data class CopiedFor(val library: JpsLibrary, val targetFile: Path?)

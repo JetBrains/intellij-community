@@ -31,6 +31,11 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     for ((jpsLibrary, jpsModule) in libraries) {
       val libraryName = LibraryLicensesListGenerator.getLibraryName(jpsLibrary)
       if (libraryName !in librariesWithLicenses) {
+        // require licence entry only for a main library (ktor-client), not for sub-libraries
+        if ((libraryName.startsWith("ktor-") || libraryName.startsWith("io.ktor.")) && libraryName != "ktor-client") {
+          continue
+        }
+
         collector.collectAssertionError(AssertionError("""
                   |License isn't specified for '$libraryName' library (used in module '${jpsModule.name}' in ${jpsModule.contentRootsList.urls})
                   |If a library is packaged into IDEA installation information about its license must be added into one of *LibraryLicenses.groovy files

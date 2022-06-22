@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -opt-in=kotlin.RequiresOptIn -opt-in=kotlinx.serialization.ExperimentalSerializationApi" />
+          <option name="additionalArguments" value="-version -opt-in=kotlin.RequiresOptIn -opt-in=kotlinx.serialization.ExperimentalSerializationApi -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi" />
         </compilerSettings>
         <compilerArguments>
           <option name="jvmTarget" value="11" />
