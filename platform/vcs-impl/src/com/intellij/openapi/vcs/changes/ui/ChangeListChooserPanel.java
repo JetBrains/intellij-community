@@ -83,7 +83,7 @@ public final class ChangeListChooserPanel extends JPanel {
       @Override
       public void init(@Nullable LocalChangeList initial) {
         super.init(initial);
-        myDescriptionTextArea.addFocusListener(new FocusAdapter() {
+        descriptionTextArea.addFocusListener(new FocusAdapter() {
           @Override
           public void focusLost(FocusEvent e) {
             super.focusLost(e);

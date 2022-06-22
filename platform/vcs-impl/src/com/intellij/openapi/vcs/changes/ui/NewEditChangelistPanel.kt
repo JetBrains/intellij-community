@@ -1,201 +1,165 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListUtil;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
-import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.createNameForChangeList
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.*
+import com.intellij.util.Consumer
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
+import java.awt.Component
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import javax.swing.*
+import javax.swing.border.CompoundBorder
 
-import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+abstract class NewEditChangelistPanel(protected val myProject: Project) : JPanel(GridBagLayout()) {
+  private val nameTextField: EditorTextField
+  @JvmField
+  protected val descriptionTextArea: EditorTextField
+  private val additionalControlsPanel: JPanel
+  val makeActiveCheckBox: JCheckBox
+  private val consumers: MutableList<Consumer<LocalChangeList>> = ArrayList()
 
-public abstract class NewEditChangelistPanel extends JPanel {
-  protected final EditorTextField myNameTextField;
-  protected final EditorTextField myDescriptionTextArea;
-  private final JPanel myAdditionalControlsPanel;
-  private final JCheckBox myMakeActiveCheckBox;
-
-  private final List<Consumer<LocalChangeList>> myConsumers = new ArrayList<>();
-  protected final Project myProject;
-
-  public NewEditChangelistPanel(final Project project) {
-    super(new GridBagLayout());
-    myProject = project;
-    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                         JBUI.insets(1), 0, 0);
-
-    final JLabel nameLabel = new JLabel(VcsBundle.message("edit.changelist.name"));
-    add(nameLabel, gb);
-    ++gb.gridx;
-    gb.fill = GridBagConstraints.HORIZONTAL;
-    gb.weightx = 1;
-    ComponentWithTextFieldWrapper componentWithTextField = createComponentWithTextField(project);
-    myNameTextField = componentWithTextField.getEditorTextField();
-    myNameTextField.setOneLineMode(true);
-    String generateUniqueName = ChangeListUtil.createNameForChangeList(project, VcsBundle.message("changes.new.changelist"));
-    myNameTextField.setText(generateUniqueName);
-    myNameTextField.selectAll();
-    add(componentWithTextField.myComponent, gb);
-    nameLabel.setLabelFor(myNameTextField);
-
-    ++ gb.gridy;
-    gb.gridx = 0;
-
-    gb.weightx = 0;
-    gb.fill = GridBagConstraints.NONE;
-    gb.anchor = GridBagConstraints.NORTHWEST;
-    final JLabel commentLabel = new JLabel(VcsBundle.message("edit.changelist.description"));
-    UIUtil.addInsets(commentLabel, JBUI.insetsRight(4));
-    add(commentLabel, gb);
-    ++ gb.gridx;
-    gb.weightx = 1;
-    gb.weighty = 1;
-    gb.fill = GridBagConstraints.BOTH;
-    gb.insets = JBUI.insetsTop(2);
-    myDescriptionTextArea = createEditorField(project, 4);
-    myDescriptionTextArea.setOneLineMode(false);
-    add(myDescriptionTextArea, gb);
-    commentLabel.setLabelFor(myDescriptionTextArea);
-    gb.insets = JBUI.insetsTop(0);
-
-    ++ gb.gridy;
-    gb.gridx = 0;
-    gb.gridwidth = 2;
-    gb.weighty = 0;
-    myAdditionalControlsPanel = new JPanel();
-    final BoxLayout layout = new BoxLayout(myAdditionalControlsPanel, BoxLayout.X_AXIS);
-    myAdditionalControlsPanel.setLayout(layout);
-    myMakeActiveCheckBox = new JCheckBox(VcsBundle.message("new.changelist.make.active.checkbox"));
-    myMakeActiveCheckBox.setBorder(JBUI.Borders.emptyRight(4));
-    myAdditionalControlsPanel.add(myMakeActiveCheckBox);
-    add(myAdditionalControlsPanel, gb);
+  init {
+    val gb = GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                JBUI.insets(1), 0, 0)
+    val nameLabel = JLabel(VcsBundle.message("edit.changelist.name"))
+    add(nameLabel, gb)
+    ++gb.gridx
+    gb.fill = GridBagConstraints.HORIZONTAL
+    gb.weightx = 1.0
+    val componentWithTextField = createComponentWithTextField(myProject)
+    nameTextField = componentWithTextField.editorTextField
+    nameTextField.setOneLineMode(true)
+    val generateUniqueName = createNameForChangeList(myProject, VcsBundle.message("changes.new.changelist"))
+    nameTextField.text = generateUniqueName
+    nameTextField.selectAll()
+    add(componentWithTextField.myComponent, gb)
+    nameLabel.labelFor = nameTextField
+    ++gb.gridy
+    gb.gridx = 0
+    gb.weightx = 0.0
+    gb.fill = GridBagConstraints.NONE
+    gb.anchor = GridBagConstraints.NORTHWEST
+    val commentLabel = JLabel(VcsBundle.message("edit.changelist.description"))
+    UIUtil.addInsets(commentLabel, JBUI.insetsRight(4))
+    add(commentLabel, gb)
+    ++gb.gridx
+    gb.weightx = 1.0
+    gb.weighty = 1.0
+    gb.fill = GridBagConstraints.BOTH
+    gb.insets = JBUI.insetsTop(2)
+    descriptionTextArea = createEditorField(myProject, 4)
+    descriptionTextArea.setOneLineMode(false)
+    add(descriptionTextArea, gb)
+    commentLabel.labelFor = descriptionTextArea
+    gb.insets = JBUI.insetsTop(0)
+    ++gb.gridy
+    gb.gridx = 0
+    gb.gridwidth = 2
+    gb.weighty = 0.0
+    additionalControlsPanel = JPanel()
+    val layout = BoxLayout(additionalControlsPanel, BoxLayout.X_AXIS)
+    additionalControlsPanel.layout = layout
+    makeActiveCheckBox = JCheckBox(VcsBundle.message("new.changelist.make.active.checkbox"))
+    makeActiveCheckBox.border = JBUI.Borders.emptyRight(4)
+    additionalControlsPanel.add(makeActiveCheckBox)
+    add(additionalControlsPanel, gb)
   }
 
-  public JCheckBox getMakeActiveCheckBox() {
-    return myMakeActiveCheckBox;
-  }
-
-  public void init(@Nullable LocalChangeList initial) {
-    myMakeActiveCheckBox.setSelected(VcsConfiguration.getInstance(myProject).MAKE_NEW_CHANGELIST_ACTIVE);
-    for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensions(myProject)) {
-      support.installSearch(myNameTextField, myDescriptionTextArea);
-      ContainerUtil.addIfNotNull(myConsumers, support.addControls(myAdditionalControlsPanel, initial));
+  open fun init(initial: LocalChangeList?) {
+    makeActiveCheckBox.isSelected = VcsConfiguration.getInstance(myProject).MAKE_NEW_CHANGELIST_ACTIVE
+    for (support in EditChangelistSupport.EP_NAME.getExtensions(myProject)) {
+      support.installSearch(nameTextField, descriptionTextArea)
+      ContainerUtil.addIfNotNull(consumers, support.addControls(additionalControlsPanel, initial))
     }
-    myNameTextField.getDocument().addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        nameChangedImpl(myProject, initial);
+    nameTextField.document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        nameChangedImpl(myProject, initial)
       }
-    });
-    nameChangedImpl(myProject, initial);
+    })
+    nameChangedImpl(myProject, initial)
   }
 
-  protected void nameChangedImpl(final Project project, final LocalChangeList initial) {
-    String name = getChangeListName();
-    if (name == null || name.trim().length() == 0) {
-      nameChanged(VcsBundle.message("new.changelist.empty.name.error"));
-    } else if ((initial == null || !name.equals(initial.getName())) && ChangeListManager.getInstance(project).findChangeList(name) != null) {
-      nameChanged(VcsBundle.message("new.changelist.duplicate.name.error"));
-    } else {
-      nameChanged(null);
+  protected open fun nameChangedImpl(project: Project?, initial: LocalChangeList?) {
+    val name = changeListName
+    if (name == null || name.isBlank()) {
+      nameChanged(VcsBundle.message("new.changelist.empty.name.error"))
     }
-  }
-
-  public void changelistCreatedOrChanged(@NotNull LocalChangeList list) {
-    for (Consumer<LocalChangeList> consumer : myConsumers) {
-      consumer.consume(list);
-    }
-  }
-
-  public void setChangeListName(String s) {
-    myNameTextField.setText(s);
-  }
-
-  public String getChangeListName() {
-    return myNameTextField.getText();
-  }
-
-  public void setDescription(String s) {
-    myDescriptionTextArea.setText(s);
-  }
-
-  public String getDescription() {
-    return myDescriptionTextArea.getText();
-  }
-
-  public JComponent getContent() {
-    return this;
-  }
-
-  @Override
-  public void requestFocus() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myNameTextField, true));
-  }
-
-  public JComponent getPreferredFocusedComponent() {
-    return myNameTextField;
-  }
-
-  protected abstract void nameChanged(@Nls String errorMessage);
-
-  protected ComponentWithTextFieldWrapper createComponentWithTextField(Project project) {
-    final EditorTextField editorTextField = createEditorField(project, 1);
-    return new ComponentWithTextFieldWrapper(editorTextField) {
-      @NotNull
-      @Override
-      public EditorTextField getEditorTextField() {
-        return editorTextField;
-      }
-    };
-  }
-
-  private static EditorTextField createEditorField(final Project project, final int defaultLines) {
-    final Set<EditorCustomization> editorFeatures = new HashSet<>();
-    ContainerUtil.addIfNotNull(editorFeatures, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
-    if (defaultLines == 1) {
-      editorFeatures.add(HorizontalScrollBarEditorCustomization.DISABLED);
-      editorFeatures.add(OneLineEditorCustomization.ENABLED);
+    else if ((initial == null || name != initial.name) && ChangeListManager.getInstance(
+        project!!).findChangeList(name) != null) {
+      nameChanged(VcsBundle.message("new.changelist.duplicate.name.error"))
     }
     else {
-      editorFeatures.add(SoftWrapsEditorCustomization.ENABLED);
+      nameChanged(null)
     }
-    EditorTextField editorField = EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorFeatures);
-
-    if (defaultLines > 1) {
-      editorField.addSettingsProvider(editor -> editor.getContentComponent()
-        .setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.empty(2, 5))));
-    }
-    return editorField;
   }
 
-  protected abstract static class ComponentWithTextFieldWrapper {
-    @NotNull private final Component myComponent;
+  fun changelistCreatedOrChanged(list: LocalChangeList) {
+    for (consumer in consumers) consumer.consume(list)
+  }
 
-    public ComponentWithTextFieldWrapper(@NotNull Component component) {
-      myComponent = component;
+  var changeListName: String by nameTextField::text
+
+  var description: String?
+    get() = descriptionTextArea.text
+    set(s) {
+      descriptionTextArea.setText(s)
     }
+  val content: JComponent
+    get() = this
 
-    @NotNull
-    abstract EditorTextField getEditorTextField();
+  override fun requestFocus() {
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { IdeFocusManager.getGlobalInstance().requestFocus(nameTextField, true) }
+  }
+
+  val preferredFocusedComponent: JComponent
+    get() = nameTextField
+
+  protected abstract fun nameChanged(errorMessage: @Nls String?)
+  protected open fun createComponentWithTextField(project: Project): ComponentWithTextFieldWrapper {
+    val editorTextField = createEditorField(project, 1)
+    return object : ComponentWithTextFieldWrapper(editorTextField) {
+      override val editorTextField: EditorTextField
+        get() = editorTextField
+    }
+  }
+
+  protected abstract class ComponentWithTextFieldWrapper(val myComponent: Component) {
+    abstract val editorTextField: EditorTextField
+  }
+
+  companion object {
+    private fun createEditorField(project: Project, defaultLines: Int): EditorTextField {
+      val editorFeatures: MutableSet<EditorCustomization> = HashSet()
+      ContainerUtil.addIfNotNull(editorFeatures, SpellCheckingEditorCustomizationProvider.getInstance().enabledCustomization)
+      if (defaultLines == 1) {
+        editorFeatures.add(HorizontalScrollBarEditorCustomization.DISABLED)
+        editorFeatures.add(OneLineEditorCustomization.ENABLED)
+      }
+      else {
+        editorFeatures.add(SoftWrapsEditorCustomization.ENABLED)
+      }
+      val editorField = EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.language, project, editorFeatures)
+      if (defaultLines > 1) {
+        editorField.addSettingsProvider { editor: EditorEx ->
+          editor.contentComponent.border = CompoundBorder(editor.contentComponent.border, JBUI.Borders.empty(2, 5))
+        }
+      }
+      return editorField
+    }
   }
 }
