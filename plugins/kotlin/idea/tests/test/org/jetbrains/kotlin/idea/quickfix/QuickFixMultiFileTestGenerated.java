@@ -1820,39 +1820,9 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
         }
 
-        @TestMetadata("parameter.before.Main.kt")
-        public void testParameter() throws Exception {
-            runTest("testData/quickfix/makePrivateAndOverrideMember/parameter.before.Main.kt");
-        }
-
         @TestMetadata("parameterHasInternal.before.Main.kt")
         public void testParameterHasInternal() throws Exception {
             runTest("testData/quickfix/makePrivateAndOverrideMember/parameterHasInternal.before.Main.kt");
-        }
-
-        @TestMetadata("parameterHasPrivate.before.Main.kt")
-        public void testParameterHasPrivate() throws Exception {
-            runTest("testData/quickfix/makePrivateAndOverrideMember/parameterHasPrivate.before.Main.kt");
-        }
-
-        @TestMetadata("parameterHasProtected.before.Main.kt")
-        public void testParameterHasProtected() throws Exception {
-            runTest("testData/quickfix/makePrivateAndOverrideMember/parameterHasProtected.before.Main.kt");
-        }
-
-        @TestMetadata("parameterHasPublic.before.Main.kt")
-        public void testParameterHasPublic() throws Exception {
-            runTest("testData/quickfix/makePrivateAndOverrideMember/parameterHasPublic.before.Main.kt");
-        }
-
-        @TestMetadata("property.before.Main.kt")
-        public void testProperty() throws Exception {
-            runTest("testData/quickfix/makePrivateAndOverrideMember/property.before.Main.kt");
-        }
-
-        @TestMetadata("setter.before.Main.kt")
-        public void testSetter() throws Exception {
-            runTest("testData/quickfix/makePrivateAndOverrideMember/setter.before.Main.kt");
         }
     }
 
