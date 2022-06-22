@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 
@@ -21,7 +22,7 @@ public class NewChangelistDialog extends DialogWrapper {
     setTitle(VcsBundle.message("changes.dialog.newchangelist.title"));
 
     myPanel.init(null);
-
+    setSize(JBUI.scale(500), JBUI.scale(230));
     init();
   }
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +36,7 @@ public class EditChangelistDialog extends DialogWrapper {
     myPanel.getMakeActiveCheckBox().setSelected(myList.isDefault());
     myPanel.getMakeActiveCheckBox().setEnabled(!myList.isDefault());
     setTitle(VcsBundle.message("changes.dialog.editchangelist.title"));
+    setSize(JBUI.scale(500), JBUI.scale(230));
     init();
   }
 
