@@ -34,11 +34,11 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
   OrderedList(),
   CheckmarkList()
 ) {
-  override fun isPopup(): Boolean = true
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
+  init {
+    templatePresentation.isPopupGroup = true
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   class OrderedList: CreateListImpl(
     text = messagePointer("markdown.create.list.popup.ordered.action.text"),

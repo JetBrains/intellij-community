@@ -70,7 +70,9 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
     SetHeaderLevelImpl.Heading(level = 5),
     SetHeaderLevelImpl.Heading(level = 6)
   ) {
-    override fun isPopup() = true
+    init {
+      templatePresentation.isPopupGroup = true
+    }
 
     override fun displayTextInToolbar() = true
   }
