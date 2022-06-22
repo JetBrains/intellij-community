@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ex.MessagesEx
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -35,6 +34,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.formatter.commitAndUnblockDocument
@@ -49,12 +49,9 @@ import org.jetbrains.kotlin.j2k.FilesResult
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.OldJavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.UserDataProperty
 import java.io.IOException
 import kotlin.io.path.notExists
 import kotlin.system.measureTimeMillis
-
-var VirtualFile.pathBeforeJ2K: String? by UserDataProperty(Key.create("PATH_BEFORE_J2K_CONVERSION"))
 
 class JavaToKotlinAction : AnAction() {
     companion object {
@@ -95,7 +92,7 @@ class JavaToKotlinAction : AnAction() {
                         mapping.setMapping(virtualFile, KotlinFileType.INSTANCE.language)
                     } else {
                         val fileName = uniqueKotlinFileName(virtualFile)
-                        virtualFile.pathBeforeJ2K = virtualFile.path
+                        virtualFile.pathBeforeJavaToKotlinConversion = virtualFile.path
                         virtualFile.rename(this, fileName)
                     }
                     result += virtualFile

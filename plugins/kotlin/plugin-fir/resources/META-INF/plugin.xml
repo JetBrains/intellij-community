@@ -20,7 +20,6 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
   <depends optional="true" config-file="dep-groovy.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="maven-common.xml">org.jetbrains.idea.maven</depends>
   <depends optional="true" config-file="dep-maven.xml">org.jetbrains.idea.maven</depends>
-  <depends optional="true" config-file="dep-git.xml">Git4Idea</depends>
   <depends optional="true" config-file="dep-jvm-decompiler.xml">org.jetbrains.java.decompiler</depends>
 
   <!-- ULTIMATE-PLUGIN-PLACEHOLDER -->
@@ -50,6 +49,7 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <module name="kotlin.base.analysis-api-providers"/>
     <module name="kotlin.base.fir.analysis-api-providers"/>
     <module name="kotlin.copyright"/>
+    <module name="kotlin.git"/>
     <module name="kotlin.grazie"/>
     <module name="kotlin.run-configurations.junit"/>
     <module name="kotlin.run-configurations.testng"/>
