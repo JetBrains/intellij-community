@@ -12,6 +12,9 @@
         "mavenProject.svg": "images/mavenProject.svg",
         "updateFolders.svg": "images/updateFolders.svg"
       },
+      "fileTypes": {
+        "mavenIgnored.svg": "images/mavenIgnored.svg"
+      },
       "toolwindow": {
         "maven.svg": "images/toolWindowMaven.svg"
       }
