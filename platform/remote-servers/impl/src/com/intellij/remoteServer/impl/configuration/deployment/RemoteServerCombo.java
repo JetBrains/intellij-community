@@ -202,6 +202,10 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
       myServerListModel.add(nextAction);
     }
 
+    setSelectedServerItem(newSelection, itemToSelect);
+  }
+
+  protected void setSelectedServerItem(@Nullable RemoteServer<?> newSelection, @Nullable ServerItem itemToSelect) {
     getComboBox().setSelectedItem(itemToSelect);
   }
 
