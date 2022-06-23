@@ -11,16 +11,20 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
+import org.jetbrains.concurrency.*
 import java.nio.file.Path
-import java.nio.file.Paths
 
 /**
  * Reports references to resources bundled with IDE or plugin distribution from users' projects (e.g. libraries which include IDE_HOME/lib/junit.jar). 
@@ -44,19 +48,28 @@ internal class BundledResourceUsageCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  override fun getMetrics(project: Project): MutableSet<MetricEvent> {
-    val usedLibraries = LinkedHashSet<Library>()
-    OrderEnumerator.orderEntries(project).librariesOnly().forEachLibrary { usedLibraries.add(it) }
-    val metrics = LinkedHashSet<MetricEvent>()
-    usedLibraries.forEach { library ->
-      library.getFiles(OrderRootType.CLASSES).mapNotNullTo(metrics) { file -> 
-        convertToMetric(file.path.substringBefore(URLUtil.JAR_SEPARATOR)) 
-      } 
-    }
-    return metrics
+  override fun getMetrics(project: Project, indicator: ProgressIndicator): CancellablePromise<Set<MetricEvent>> {
+    @Suppress("UNCHECKED_CAST")
+    return ReadAction.nonBlocking<Set<VirtualFile>> { collectLibraryFiles(project) }
+        .wrapProgress(indicator)
+        .expireWith(project)
+        .submit(NonUrgentExecutor.getInstance())
+        .thenAsync { files ->
+          runAsync {
+            files.mapNotNullTo(LinkedHashSet()) { convertToMetric(it.path.substringBefore(URLUtil.JAR_SEPARATOR)) }
+          }
+        } as CancellablePromise<Set<MetricEvent>>
   }
 
-  override fun requiresReadAccess(): Boolean = true
+  private fun collectLibraryFiles(project: Project): Set<VirtualFile> {
+    val usedLibraries = LinkedHashSet<Library>()
+    OrderEnumerator.orderEntries(project).librariesOnly().forEachLibrary { usedLibraries.add(it) }
+    val files = LinkedHashSet<VirtualFile>()
+    usedLibraries.flatMapTo(files) { library ->
+      library.getFiles(OrderRootType.CLASSES).asList()
+    }
+    return files
+  }
 
   private val pluginByDirectory by lazy {
     PluginManagerCore.getLoadedPlugins()
