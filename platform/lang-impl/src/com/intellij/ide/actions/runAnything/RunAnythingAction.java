@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -107,10 +107,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   private static void updateShortcut() {
     if (getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID).getShortcuts().length == 0) {
-      if (!ourDoubleCtrlRegistered) {
-        ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
-        ourDoubleCtrlRegistered = true;
-      }
+      registerDblCtrlClick();
     }
     else {
       if (ourDoubleCtrlRegistered) {
@@ -120,12 +117,24 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
   }
 
+  private static void registerDblCtrlClick() {
+    if (!ourDoubleCtrlRegistered) {
+      ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
+      ourDoubleCtrlRegistered = true;
+    }
+  }
+
   private static void initShortcutTracker() {
     updateShortcut();
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
       @Override
       public void activeKeymapChanged(@Nullable Keymap keymap) {
-        updateShortcut();
+        if (keymap == null) {
+          registerDblCtrlClick();
+        }
+        else {
+          updateShortcut();
+        }
       }
 
       @Override
