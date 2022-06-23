@@ -152,8 +152,15 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
 
     def run_process(self, args, input=None, env=None):
         # Remove possible (NAME: None) pairs and make sure that environment content is
-        # encoded (critical for Python 2.x on Windows)
-        env = {six.b(k): six.b(v) for k, v in env.items() if v is not None}
+        # all str (critical for Python 2.x on Windows)
+        def as_str(s):
+            if isinstance(s, str):
+                return s
+            elif six.PY2:
+                return s.encode(encoding='latin-1')
+            else:
+                return s.decode(encoding='latin-1')
+        env = {as_str(k): as_str(v) for k, v in env.items() if v is not None}
         process = subprocess.Popen(args,
                                    env=env,
                                    stdin=subprocess.PIPE,
