@@ -75,8 +75,6 @@ To run tests on the build, apply these setting to the **Run | Edit Configuration
   * Working dir: `<IDEA_HOME>/bin`
   * VM options: 
     * `-ea` 
-    * `-Didea.config.path=../test-config`
-    * `-Didea.system.path=../test-system`
  
 You can find other helpful information at [https://www.jetbrains.com/opensource/idea](https://www.jetbrains.com/opensource/idea).
 The "Contribute Code" section of that site describes how you can contribute to IntelliJ IDEA.
