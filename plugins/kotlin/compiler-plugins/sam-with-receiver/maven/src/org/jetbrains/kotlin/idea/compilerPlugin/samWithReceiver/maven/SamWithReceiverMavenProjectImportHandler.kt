@@ -7,14 +7,14 @@ import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
-import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor
+import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames
 
 class SamWithReceiverMavenProjectImportHandler : AbstractMavenImportHandler() {
     private companion object {
-        val ANNOTATION_PARAMETER_PREFIX = "sam-with-receiver:${SamWithReceiverCommandLineProcessor.ANNOTATION_OPTION.optionName}="
+        val ANNOTATION_PARAMETER_PREFIX = "sam-with-receiver:${SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME}="
     }
 
-    override val compilerPluginId = SamWithReceiverCommandLineProcessor.PLUGIN_ID
+    override val compilerPluginId = SamWithReceiverPluginNames.PLUGIN_ID
     override val pluginName = "samWithReceiver"
     override val mavenPluginArtifactName = "kotlin-maven-sam-with-receiver"
     override val pluginJarFileFromIdea = KotlinArtifacts.instance.samWithReceiverCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
@@ -30,7 +30,7 @@ class SamWithReceiverMavenProjectImportHandler : AbstractMavenImportHandler() {
 
         val annotations = mutableListOf<String>()
 
-        for ((presetName, presetAnnotations) in SamWithReceiverCommandLineProcessor.SUPPORTED_PRESETS) {
+        for ((presetName, presetAnnotations) in SamWithReceiverPluginNames.SUPPORTED_PRESETS) {
             if (presetName in enabledCompilerPlugins) {
                 annotations.addAll(presetAnnotations)
             }
@@ -41,6 +41,6 @@ class SamWithReceiverMavenProjectImportHandler : AbstractMavenImportHandler() {
             text.substring(ANNOTATION_PARAMETER_PREFIX.length)
         })
 
-        return annotations.map { PluginOption(SamWithReceiverCommandLineProcessor.ANNOTATION_OPTION.optionName, it) }
+        return annotations.map { PluginOption(SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME, it) }
     }
 }
