@@ -54,7 +54,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
 
   @Override
   protected boolean hasTypeParameters(@NotNull PsiJavaCodeReferenceElement reference) {
-    final PsiReferenceParameterList refParameters = reference.getParameterList();
+    PsiReferenceParameterList refParameters = reference.getParameterList();
     return refParameters != null && refParameters.getTypeParameterElements().length > 0;
   }
 
@@ -69,7 +69,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected boolean hasUnresolvedImportWhichCanImport(final PsiFile psiFile, final String name) {
+  protected boolean hasUnresolvedImportWhichCanImport(@NotNull PsiFile psiFile, @NotNull String name) {
     if (!(psiFile instanceof PsiJavaFile)) return false;
     PsiImportList importList = ((PsiJavaFile)psiFile).getImportList();
     if (importList == null) return false;

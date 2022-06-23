@@ -173,7 +173,7 @@ public final class CodeInsightUtil {
   }
 
   @Nullable
-  public static Language findJavaOrLikeLanguage(@NotNull final PsiFile file) {
+  private static Language findJavaOrLikeLanguage(@NotNull final PsiFile file) {
     final Set<Language> languages = file.getViewProvider().getLanguages();
     for (final Language language : languages) {
       if (language == JavaLanguage.INSTANCE) return language;
@@ -184,7 +184,7 @@ public final class CodeInsightUtil {
     return null;
   }
 
-  public static <T extends PsiMember & PsiDocCommentOwner> void sortIdenticalShortNamedMembers(T[] members, @NotNull PsiReference context) {
+  public static <T extends PsiMember & PsiDocCommentOwner> void sortIdenticalShortNamedMembers(@NotNull T @NotNull [] members, @NotNull PsiReference context) {
     if (members.length <= 1) return;
 
     PsiElement leaf = context.getElement().getFirstChild(); // the same proximity weighers are used in completion, where the leafness is critical

@@ -79,7 +79,7 @@ abstract class JavaFxImportClassFix extends ImportClassFixBase<XmlTag, JavaFxTag
   }
 
   @Override
-  protected boolean hasUnresolvedImportWhichCanImport(PsiFile psiFile, String name) {
+  protected boolean hasUnresolvedImportWhichCanImport(@NotNull PsiFile psiFile, @NotNull String name) {
     return false;   //todo
   }
 

@@ -74,7 +74,7 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
   }
 
   @Override
-  protected boolean hasUnresolvedImportWhichCanImport(PsiFile psiFile, String name) {
+  protected boolean hasUnresolvedImportWhichCanImport(@NotNull PsiFile psiFile, @NotNull String name) {
     if (!(psiFile instanceof GroovyFile)) return false;
     final GrImportStatement[] importStatements = ((GroovyFile)psiFile).getImportStatements();
     for (GrImportStatement importStatement : importStatements) {
