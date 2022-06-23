@@ -30,6 +30,11 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     List<AnAction> actions = getActions(e.getDataContext());
     if (actions == null) return;
