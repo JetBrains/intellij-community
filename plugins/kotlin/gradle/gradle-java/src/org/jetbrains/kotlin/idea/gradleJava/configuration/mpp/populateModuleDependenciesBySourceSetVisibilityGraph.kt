@@ -1,14 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
+import com.google.common.graph.Graph
 import com.intellij.openapi.externalSystem.model.DataNode
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinAndroidSourceSets
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
+import org.jetbrains.kotlin.idea.gradle.configuration.utils.createSourceSetVisibilityGraph
+import org.jetbrains.kotlin.idea.gradle.configuration.utils.transitiveClosure
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.CompilationWithDependencies
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalDependency
@@ -17,6 +23,7 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesBySourceSetVisibilityGraph(
     context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
+    val sourceSetVisibilityGraph = createSourceSetVisibilityGraph(mppModel).transitiveClosure
     for (sourceSet in sourceSetVisibilityGraph.nodes()) {
         if (shouldDelegateToOtherPlugin(sourceSet)) continue
 
@@ -38,9 +45,11 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
         val directIntransitiveDependencies = getIntransitiveDependencies(sourceSet).toSet()
         val dependenciesFromVisibleSourceSets = getDependenciesFromVisibleSourceSets(settings, visibleSourceSets)
         val dependenciesFromNativePropagation = getPropagatedNativeDependencies(settings, sourceSet)
+        val dependenciesFromPlatformPropagation = getPropagatedPlatformDependencies(sourceSet)
 
         val dependencies = dependenciesPreprocessor(
-            dependenciesFromNativePropagation + dependenciesFromVisibleSourceSets + directDependencies + directIntransitiveDependencies
+            dependenciesFromNativePropagation + dependenciesFromPlatformPropagation
+                    + dependenciesFromVisibleSourceSets + directDependencies + directIntransitiveDependencies
         )
 
         buildDependencies(resolverCtx, sourceSetMap, artifactsMap, fromDataNode, dependencies, ideProject)
@@ -116,12 +125,10 @@ private fun getPropagatedNativeDependencies(compilations: List<CompilationWithDe
                 "ios_arm64", "ios_arm32", "ios_x64",
                 "tvos_arm64", "tvos_x64"
             )
-
         compilations.all { it.konanTarget?.startsWith("android") == true } ->
             compilations.selectFirstAvailableTarget(
                 "android_arm64", "android_arm32", "android_x64", "android_x86"
             )
-
         else -> return emptyList()
     }
 
@@ -149,6 +156,45 @@ private fun Iterable<CompilationWithDependencies>.selectFirstAvailableTarget(
         }
     }
     return first()
+}
+
+
+private fun KotlinMppPopulateModuleDependenciesContext.getPropagatedPlatformDependencies(
+    sourceSet: KotlinSourceSet
+): Set<KotlinDependency> {
+    if (!mppModel.extraFeatures.isHMPPEnabled) {
+        return emptySet()
+    }
+
+    return getPropagatedPlatformDependencies(mppModel, sourceSet)
+}
+
+
+/**
+ * Source sets sharing code between JVM and Android are the only intermediate source sets that
+ * can effectively consume a dependency's platform artifact.
+ * When a library only offers a JVM variant, then Android and JVM consume this variant of the library.
+ *
+ * This will be replaced later on by [KT-43450](https://youtrack.jetbrains.com/issue/KT-43450)
+ *
+ * @return all dependencies being present across given JVM and Android compilations that this [sourceSet] can also participates in.
+ */
+private fun getPropagatedPlatformDependencies(
+    mppModel: KotlinMPPGradleModel,
+    sourceSet: KotlinSourceSet,
+): Set<ExternalDependency> {
+    if (
+        sourceSet.actualPlatforms.platforms.sorted() == listOf(KotlinPlatform.JVM, KotlinPlatform.ANDROID).sorted()
+    ) {
+        return mppModel.targets
+            .filter { target -> target.platform == KotlinPlatform.JVM || target.platform == KotlinPlatform.ANDROID }
+            .flatMap { target -> target.compilations }
+            .filter { compilation -> compilation.dependsOnSourceSet(mppModel, sourceSet) }
+            .map { targetCompilations -> targetCompilations.dependencies.mapNotNull(mppModel.dependencyMap::get).toSet() }
+            .reduceOrNull { acc, dependencies -> acc.intersect(dependencies) }.orEmpty()
+    }
+
+    return emptySet()
 }
 
 inline fun <reified T : Any> DataNode<*>.cast(): DataNode<T> {
