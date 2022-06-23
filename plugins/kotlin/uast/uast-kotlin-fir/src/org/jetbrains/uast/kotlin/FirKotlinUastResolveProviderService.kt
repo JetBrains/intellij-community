@@ -313,7 +313,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             analyzeForUast(ktExpression) {
                 val ktType = when (classOrObject) {
                     is KtEnumEntry ->
-                        classOrObject.getEnumEntrySymbol().containingEnumClassIdIfNonLocal?.let { enumClassId ->
+                        classOrObject.getEnumEntrySymbol().callableIdIfNonLocal?.classId?.let { enumClassId ->
                             buildClassType(enumClassId)
                         }
                     else ->
