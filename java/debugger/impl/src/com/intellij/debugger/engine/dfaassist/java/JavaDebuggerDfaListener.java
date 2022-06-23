@@ -164,6 +164,12 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
         }
       }
     }
+    if (unreachable instanceof PsiCodeBlock) {
+      if (unreachable.getParent() instanceof PsiCatchSection && unreachable.getParent().getParent() instanceof PsiTryStatement &&
+          !allUnreachable.contains(unreachable.getParent().getParent())) {
+        return unreachable.getTextRange();
+      }
+    }
     if (unreachable instanceof PsiStatement) {
       if (ControlFlowUtils.isEmpty(unreachable, false, true)) return null;
       PsiStatement statement = (PsiStatement)unreachable;
