@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.lang.UnsupportedOperationException
 
 typealias LibraryDependencyCandidatesAndSdkInfos = Pair<Set<LibraryDependencyCandidate>, Set<SdkInfo>>
 
@@ -187,6 +186,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
+            // SDK could be changed (esp in tests) out of message bus subscription
             val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
             invalidateEntries({ _, value -> value.sdk.any { it.sdk !in jdks } }, { _, _ -> false })
         }
@@ -226,6 +226,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
+            // SDK could be changed (esp in tests) out of message bus subscription
             val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
             invalidateEntries({_, (_, sdkInfos) -> sdkInfos.any { it.sdk !in jdks }}, { _, _ -> false })
         }
@@ -269,7 +270,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             for (entry in ModuleRootManager.getInstance(module).orderEntries) {
                 if (entry is LibraryOrderEntry) {
                     entry.library?.let { library ->
-                        val modules = getOrPut(library.wrap()) { mutableSetOf() }
+                        val modules = getOrPut(library.wrap()) { hashSetOf() }
                         modules += module
                     }
                 }
@@ -282,6 +283,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun calculate(key: LibraryWrapper): Set<Module> {
+            // it should not happen - keep it as last resort fallback
             val libraryEx = key.library
             val modules = mutableSetOf<Module>()
             for (module in ModuleManager.getInstance(project).modules) {
@@ -319,23 +321,30 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val storageAfter = event.storageAfter
             val moduleChanges = event.getChanges(ModuleEntity::class.java)
             val libraryChanges = event.getChanges(LibraryEntity::class.java)
-            if (moduleChanges.isEmpty() && libraryChanges.isEmpty()) return
+            if (moduleChanges.isEmpty() && libraryChanges.isEmpty()) {
+                return
+            }
 
             val modulesChange = modulesChange(moduleChanges, storageBefore, storageAfter)
             val librariesChange = librariesChange(libraryChanges, storageBefore, storageAfter)
 
-            val oldModulesSet = modulesChange.old.toHashSet()
-            val oldLibrariesSet = librariesChange.old.toHashSet()
+            val modulesFromNewLibs = libraryChanges.mapNotNull { change ->
+                val newEntity = newEntity(change) ?: return@mapNotNull null
+                val referrers = storageAfter.referrers(newEntity.persistentId, ModuleEntity::class.java)
+                referrers.mapNotNull { storageAfter.findModuleByEntity(it) }
+            }.flatMapTo(hashSetOf()) { it }
+
+            val modulesToInvalidate = modulesChange.old.toHashSet() + modulesFromNewLibs
+            val librariesToInvalidate = librariesChange.old.toHashSet()
 
             invalidateEntries(
-                { libraryWrapper, modules -> libraryWrapper.library in oldLibrariesSet || modules.any { it in oldModulesSet } }
+                { libraryWrapper, modules -> libraryWrapper.library in librariesToInvalidate || modules.any { it in modulesToInvalidate } }
             )
 
-            if (modulesChange.new.isNotEmpty()) {
-                val newValues = mutableMapOf<LibraryWrapper, MutableSet<Module>>()
-                modulesChange.new.forEach { newValues.populateLibraries(it) }
-                putAll(newValues)
-            }
+            val newValues = mutableMapOf<LibraryWrapper, MutableSet<Module>>()
+            val modulesToUpdate = modulesChange.new + modulesFromNewLibs
+            modulesToUpdate.forEach { newValues.populateLibraries(it) }
+            putAll(newValues)
         }
 
         private fun <T: WorkspaceEntity> oldEntity(change: EntityChange<T>) =
