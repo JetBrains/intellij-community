@@ -177,6 +177,12 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
       if (unreachable instanceof PsiSwitchLabelStatement) return null;
       if (allUnreachable.contains(statementParent)) return null;
       if (parent instanceof PsiStatement) {
+        if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() == unreachable) {
+          PsiKeyword elseKeyword = ((PsiIfStatement)parent).getElseElement();
+          if (elseKeyword != null) {
+            return TextRange.create(elseKeyword.getTextRange().getStartOffset(), unreachable.getTextRange().getEndOffset());
+          }
+        }
         return statement.getTextRange();
       }
       if (parent instanceof PsiCodeBlock) {
