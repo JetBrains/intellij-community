@@ -4,7 +4,7 @@ public enum Test {
   void test() {
     Integer code = getCode();
     switch (code) {
-      case VALUE.<error descr="Cannot resolve symbol 'value'">value</error>()<EOLError descr="':' expected"></EOLError>
+      case <warning descr="Switch label 'VALUE.value()' is the only reachable in the whole switch">VALUE.<error descr="Cannot resolve symbol 'value'">value</error>()</warning><EOLError descr="':' expected"></EOLError>
     }
     if (code == VALUE.value()) {
       getCode();
