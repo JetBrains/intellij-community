@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
@@ -70,6 +71,12 @@ public abstract class MoveFileHandler {
                               PsiElement[] elementsToMove,
                               UsageInfo[] usages,
                               PsiDirectory targetDirectory) {}
+
+  public abstract List<UsageInfo> findUsages(PsiFile psiFile,
+                                             PsiDirectory newParent,
+                                             boolean searchInComments,
+                                             boolean searchInNonJavaFiles,
+                                             SearchScope searchScope);
 
   /**
    * After a file has been moved, updates the references to the file  so that they point to the new location of the file.

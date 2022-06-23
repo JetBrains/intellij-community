@@ -296,7 +296,7 @@ public final class GroovyMarkerTypes {
     return superMethods;
   }
 
-  private static StringBuilder composeText(PsiElement @NotNull [] elements, final String pattern, StringBuilder result) {
+  private static void composeText(PsiElement @NotNull [] elements, final String pattern, StringBuilder result) {
     Set<String> names = new LinkedHashSet<>();
     for (PsiElement element : elements) {
       String methodName = ((PsiMethod)element).getName();
@@ -311,7 +311,6 @@ public final class GroovyMarkerTypes {
       sep = "<br>";
       result.append(name);
     }
-    return result;
   }
 
   private static class OverridingMethodsUpdater extends BackgroundUpdaterTask {

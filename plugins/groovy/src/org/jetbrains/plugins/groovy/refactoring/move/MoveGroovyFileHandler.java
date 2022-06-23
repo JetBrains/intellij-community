@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -52,13 +53,13 @@ public class MoveGroovyFileHandler extends MoveFileHandler {
   }
 
   @Override
-  public List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
+  public List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles, SearchScope searchScope) {
     final List<UsageInfo> result = new ArrayList<>();
     final PsiPackage newParentPackage = JavaDirectoryService.getInstance().getPackage(newParent);
     final String qualifiedName = newParentPackage == null ? "" : newParentPackage.getQualifiedName();
     for (PsiClass aClass : ((GroovyFile)psiFile).getClasses()) {
       Collections.addAll(result, MoveClassesOrPackagesUtil
-        .findUsages(aClass, searchInComments, searchInNonJavaFiles, StringUtil.getQualifiedName(qualifiedName,
+        .findUsages(aClass, searchScope, searchInComments, searchInNonJavaFiles, StringUtil.getQualifiedName(qualifiedName,
                                                                                                 StringUtil.notNullize(aClass.getName()))));
     }
     return result.isEmpty() ? null : result;
