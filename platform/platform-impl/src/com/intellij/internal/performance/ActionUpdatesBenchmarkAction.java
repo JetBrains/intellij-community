@@ -19,12 +19,12 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,7 +39,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.function.LongSupplier;
 
 @ApiStatus.Internal
@@ -51,11 +50,6 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
 
   private static final long MIN_REPORTED_UPDATE_MILLIS = 5;
   private static final long MIN_REPORTED_NO_CHECK_CANCELED_MILLIS = 20;
-
-  /**
-   * @noinspection StaticNonFinalField
-   */
-  public static Consumer<? super String> ourMissingKeysConsumer;
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -174,7 +168,8 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
     boolean isDumb = DumbService.isDumb(project);
     List<Pair<Integer, String>> results = new ArrayList<>();
-    List<Pair<String, String>> results2 = new ArrayList<>();
+    int[] actionUpdateThreadCounts = new int[ActionUpdateThread.values().length];
+    List<String> oldEdtActionNames = new ArrayList<>();
 
     DataContext rawContext = DataManager.getInstance().getDataContext(component);
 
@@ -219,56 +214,44 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
       String actionIdIfNeeded = nonUniqueClasses.contains(className) ? " (" + id + ")" : "";
       String actionName = className + actionIdIfNeeded;
       ProgressManager.checkCanceled();
+      actionUpdateThreadCounts[updateThread.ordinal()] ++;
+      if (updateThread == ActionUpdateThread.OLD_EDT) {
+        oldEdtActionNames.add(actionName);
+      }
       AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.MAIN_MENU, wrappedContext);
-      runAndMeasure(results, results2, actionName, event, updateThread,
+      runAndMeasure(results, actionName,
                     () -> activityRunner.run(actionName, id, () -> ActionUtil.performDumbAwareUpdate(action, event, true)));
       count++;
       if (!(action instanceof ActionGroup)) continue;
       String childrenActionName = className + ".getChildren(" + (event.getPresentation().isEnabled() ? "+" : "-") + ")" + actionIdIfNeeded;
-      runAndMeasure(results, results2, childrenActionName, event, updateThread,
+      runAndMeasure(results, childrenActionName,
                     () -> activityRunner.run(actionName, id, () -> ((ActionGroup)action).getChildren(event)));
     }
     long elapsedActions = TimeoutUtil.getDurationMillis(startActions);
-    LOG.info(elapsedActions + " ms total to update " + count + " actions");
+    LOG.info(elapsedActions + " ms total to update " + count + " registered actions");
     results.sort(Comparator.comparingInt(o -> -o.first));
     for (Pair<Integer, String> result : results) {
       if (result.first < MIN_REPORTED_UPDATE_MILLIS) break;
       LOG.info(result.first + " ms - " + result.second);
     }
     StringBuilder sb = new StringBuilder();
-    sb.append("---- slow data usage for ").append(results2.size()).append(" actions ---- ");
-    results2.sort(Pair.comparingBySecond());
-    for (Pair<String, String> pair : results2) {
-      sb.append("\n").append(pair.second).append(" - ").append(pair.first);
+    sb.append("---- action-update-thread stats ----\n");
+    sb.append(StringUtil.join(ActionUpdateThread.values(), t -> actionUpdateThreadCounts[t.ordinal()] + ":" + t.name(), ", "));
+    sb.append("... see the list of registered OLD_EDT actions below:");
+    oldEdtActionNames.sort(String::compareTo);
+    for (String name : oldEdtActionNames) {
+      sb.append("\n").append(name);
     }
     LOG.info(sb.toString());
   }
 
   private static void runAndMeasure(@NotNull List<Pair<Integer, String>> results,
-                                    @NotNull List<Pair<String, String>> results2,
                                     @NotNull String actionName,
-                                    @NotNull AnActionEvent event,
-                                    @NotNull ActionUpdateThread updateThread,
                                     @NotNull LongSupplier runnable) {
     ReadAction.run(() -> {
-      HashSet<String> ruleKeys = new HashSet<String>();
-      long elapsed;
-
-      try {
-        ourMissingKeysConsumer = ruleKeys::add;
-        elapsed = runnable.getAsLong();
-      }
-      finally {
-        ourMissingKeysConsumer = null;
-      }
+      long elapsed = runnable.getAsLong();
       if (elapsed > 0) {
         results.add(Pair.create((int)elapsed, actionName));
-      }
-      if (updateThread == ActionUpdateThread.OLD_EDT) {
-        boolean enabled = event.getPresentation().isEnabled();
-        if (!ruleKeys.isEmpty() || enabled) {
-          results2.add(Pair.create(ContainerUtil.sorted(ruleKeys) + " - " + (enabled ? "enabled" : "disabled"), actionName));
-        }
       }
     });
   }
