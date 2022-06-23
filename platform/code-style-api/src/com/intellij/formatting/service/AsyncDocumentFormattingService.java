@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -46,6 +47,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * block EDT. If it succeeds (doesn't return null), further formatting is started using the created runnable on a separate thread.
  */
 public abstract class AsyncDocumentFormattingService extends AbstractDocumentFormattingService {
+  public static final Key<Boolean> FORMAT_DOCUMENT_SYNCHRONOUSLY =
+    Key.create("com.intellij.formatting.service.AsyncDocumentFormattingService.FORMAT_DOCUMENT_SYNCHRONOUSLY");
+
   private final static Logger LOG = Logger.getInstance(AsyncDocumentFormattingService.class);
 
   private final List<AsyncFormattingRequest> myPendingRequests = Collections.synchronizedList(new ArrayList<>());
@@ -60,6 +64,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
                                                 boolean canChangeWhiteSpaceOnly,
                                                 boolean quickFormat) {
     AsyncFormattingRequest currRequest = findPendingRequest(document);
+    boolean forceSync = Boolean.TRUE.equals(document.getUserData(FORMAT_DOCUMENT_SYNCHRONOUSLY));
     if (currRequest != null) {
       if (!((FormattingRequestImpl)currRequest).cancel()) {
         LOG.warn("Pending request can't be cancelled");
@@ -72,7 +77,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     if (formattingTask != null) {
       formattingRequest.setTask(formattingTask);
       myPendingRequests.add(formattingRequest);
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (forceSync || ApplicationManager.getApplication().isHeadlessEnvironment()) {
         runAsyncFormat(formattingRequest, null);
       }
       else {

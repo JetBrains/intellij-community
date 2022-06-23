@@ -5,14 +5,11 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.formatting.virtualFormattingListener
 import com.intellij.lang.LangBundle
-import com.intellij.lang.LanguageFormatting
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.annotations.Nls
 import kotlin.math.abs
 
 
@@ -21,58 +18,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
   fun createAllReports(changes: List<FormattingChange>): Array<ProblemDescriptor>? {
     if (changes.isEmpty()) return null
 
-    // TODO: move to LangBundle.properties
-    // inspection.incorrect.formatting.notification.title=New code style inspection
-    // inspection.incorrect.formatting.notification.contents=It can help you maintain a consistent code style in your codebase in any language
-    // inspection.incorrect.formatting.notification.action.enable=Enable inspection
-    // inspection.incorrect.formatting.notification.action.dont.show=Don’t show again
-
-    // TODO: move to reformat action
-    //if (silentMode && notificationShown.compareAndSet(false, true)) {
-    //  NotificationGroupManager.getInstance()
-    //    .getNotificationGroup("Incorrect Formatting")
-    //    .createNotification(
-    //      LangBundle.message("inspection.incorrect.formatting.notification.title"),
-    //      LangBundle.message("inspection.incorrect.formatting.notification.contents"),
-    //      NotificationType.INFORMATION
-    //    )
-    //    .setImportantSuggestion(false)
-    //    .setSuggestionType(true)
-    //    .addAction(
-    //      createSimpleExpiring(LangBundle.message("inspection.incorrect.formatting.notification.action.enable")) {
-    //        InspectionProjectProfileManager
-    //          .getInstance(file.project)
-    //          .currentProfile
-    //          .modifyToolSettings(INSPECTION_KEY, file) { inspection ->
-    //            inspection.silentMode = false
-    //          }
-    //      }
-    //    )
-    //    .addAction(
-    //      createSimpleExpiring(LangBundle.message("inspection.incorrect.formatting.notification.action.dont.show")) {
-    //        InspectionProjectProfileManager
-    //          .getInstance(file.project)
-    //          .currentProfile
-    //          .modifyToolSettings(INSPECTION_KEY, file) { inspection ->
-    //            inspection.suppressNotification = true
-    //          }
-    //      }
-    //    )
-    //    .notify(file.project)
-    //
-    //  return emptyList()
-    //}
-
     val result = arrayListOf<ProblemDescriptor>()
-
-
-    // CPP-28543: Disable inspection in case of ShiftIndentChanges
-    // They interfere with WhitespaceReplaces
-    //result += shiftIndentDescriptors(changes)
-    if (changes.any { it is ShiftIndentChange }) {
-      return null
-    }
-
 
     val (indentChanges, inLineChanges) = classifyReplaceChanges(changes)
     result += indentChangeDescriptors(indentChanges)
@@ -84,24 +30,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
   }
 
   // Collect all formatting changes for the file
-  fun getChanges(): List<FormattingChange> {
-    if (!LanguageFormatting.INSTANCE.isAutoFormatAllowed(file)) {
-      return emptyList()
-    }
-
-    val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return emptyList()
-    val changeCollector = ChangeCollectingListener(file, document.text)
-
-    try {
-      file.virtualFormattingListener = changeCollector
-      CodeStyleManager.getInstance(file.project).reformat(file, true)
-    }
-    finally {
-      file.virtualFormattingListener = null
-    }
-
-    return changeCollector.getChanges()
-  }
+  fun getChanges(): List<FormattingChange> = FormattingChanges.detectIn(file) ?: emptyList()
 
   fun createGlobalReport() =
     manager.createProblemDescriptor(
@@ -114,15 +43,8 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
     )
 
 
-  // Shift indent changes, added as is
-  private fun CheckingScope.shiftIndentDescriptors(changes: List<FormattingChange>) =
-    changes
-      .filterIsInstance<ShiftIndentChange>()
-      .mapNotNull { it.toProblemDescriptor(manager, isOnTheFly) }
-
-
   // Distinguish between indent changes and others (aka in-line)
-  private fun CheckingScope.classifyReplaceChanges(changes: List<FormattingChange>): Pair<List<ReplaceChange>, List<ReplaceChange>> {
+  private fun classifyReplaceChanges(changes: List<FormattingChange>): Pair<List<ReplaceChange>, List<ReplaceChange>> {
     val replaceChange = changes
       .filterIsInstance<ReplaceChange>()
       .groupBy { it.isIndentChange(document) }
@@ -135,7 +57,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
 
 
   // Start line changes, "indents", grouped by consequent lines
-  fun indentChangeDescriptors(indentChanges: List<ReplaceChange>) =
+  private fun indentChangeDescriptors(indentChanges: List<ReplaceChange>) =
     sequence {
       val currentBlock = arrayListOf<ReplaceChange>()
       indentChanges.forEach { change ->
@@ -150,8 +72,8 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
       yieldAll(createIndentProblemDescriptors(currentBlock))
     }
 
-  fun createIndentProblemDescriptors(changes: ArrayList<ReplaceChange>) =
-    sequence<ProblemDescriptor> {
+  private fun createIndentProblemDescriptors(changes: ArrayList<ReplaceChange>) =
+    sequence {
       val blockFix = ReplaceQuickFix(changes.map { document.createRangeMarker(it.range) to it.replacement })
       changes.forEach {
         yield(
@@ -165,12 +87,12 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
     }
 
   // In-line changes, grouped by line
-  fun inLineChangeDescriptors(inLineChanges: List<ReplaceChange>) =
+  private fun inLineChangeDescriptors(inLineChanges: List<ReplaceChange>) =
     sequence {
       yieldAll(
         inLineChanges
           .groupBy { document.getLineNumber(it.range.startOffset) }
-          .flatMap { (lineNumber, changes) ->
+          .flatMap { (_, changes) ->
             val commonFix = ReplaceQuickFix(changes.map { document.createRangeMarker(it.range) to it.replacement })
             changes.map {
               createProblemDescriptor(
@@ -183,7 +105,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
       )
     }
 
-  fun createProblemDescriptor(range: TextRange, message: String, vararg fixes: LocalQuickFix): ProblemDescriptor {
+  fun createProblemDescriptor(range: TextRange, @Nls message: String, vararg fixes: LocalQuickFix): ProblemDescriptor {
     val element = file.findElementAt(range.startOffset)
     val targetElement = element ?: file
     val targetRange = element
@@ -213,11 +135,5 @@ private fun Document.areRangesAdjacent(first: TextRange, second: TextRange): Boo
 
 private fun TextRange.excludeLeadingLinefeed(document: Document): TextRange {
   val originalText = substring(document.text)
-  if (originalText.startsWith("\n\r") || originalText.startsWith("\r\n")) {
-    return TextRange(startOffset + 2, endOffset)
-  }
-  if (originalText.startsWith("\n") || originalText.startsWith("\r")) {
-    return TextRange(startOffset + 1, endOffset)
-  }
-  return this
+  return if (originalText.startsWith("\n")) TextRange(startOffset + 1, endOffset) else this
 }
