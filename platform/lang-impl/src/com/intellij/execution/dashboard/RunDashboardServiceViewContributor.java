@@ -212,6 +212,7 @@ public final class RunDashboardServiceViewContributor
                                                                         ServiceViewLocatableDescriptor,
                                                                         ServiceViewDnDDescriptor {
     private final RunConfigurationNode myNode;
+    private final RunDashboardComponentWrapper myWrapper = new RunDashboardComponentWrapper();
 
     RunConfigurationServiceViewDescriptor(RunConfigurationNode node) {
       myNode = node;
@@ -227,15 +228,24 @@ public final class RunDashboardServiceViewContributor
     @Override
     public JComponent getContentComponent() {
       Content content = myNode.getContent();
-      if (content == null) return new RunDashboardComponentWrapper(createEmptyContent(), null);
+      if (content == null) {
+        myWrapper.setContent(createEmptyContent());
+        myWrapper.setContentId(null);
+      }
+      else {
+        ContentManager contentManager = content.getManager();
+        if (contentManager == null) return null;
 
-      ContentManager contentManager = content.getManager();
-      if (contentManager == null) return null;
+        myWrapper.setContent(contentManager.getComponent());
+        myWrapper.setContentId(getContentId());
+      }
+      return myWrapper;
+    }
 
+    private Integer getContentId() {
       RunContentDescriptor descriptor = myNode.getDescriptor();
       ProcessHandler handler = descriptor == null ? null : descriptor.getProcessHandler();
-      Integer contentId = handler == null ? null : handler.hashCode();
-      return new RunDashboardComponentWrapper(contentManager.getComponent(), contentId);
+      return handler == null ? null : handler.hashCode();
     }
 
     @NotNull
