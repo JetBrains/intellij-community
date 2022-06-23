@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.QualifierName
@@ -8,6 +9,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term.Qualifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term.QueryPart
 
+@Serializable
 internal data class GHPRListSearchValue(val searchQuery: String? = null,
                                         val state: State? = null,
                                         val assignee: String? = null,

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -57,16 +58,17 @@ internal class GHPRListPanelFactory(private val project: Project,
 
     val actionManager = ActionManager.getInstance()
 
-    val searchState = MutableStateFlow(GHPRListSearchValue.DEFAULT)
+    val searchVm = GHPRSearchPanelViewModel(scope, project.service())
     scope.launch {
-      searchState.collectLatest {
+      searchVm.searchState.collectLatest {
         listLoader.searchQuery = it.toQuery()
       }
     }
 
-    ListEmptyTextController(scope, listLoader, searchState, list.emptyText, disposable)
+    ListEmptyTextController(scope, listLoader, searchVm.searchState, list.emptyText, disposable)
 
-    val searchPanel = GHPRSearchPanelFactory(repositoryDataService, searchState).create(scope, avatarIconsProvider)
+    val searchPanel = GHPRSearchPanelFactory(repositoryDataService, searchVm)
+      .create(scope, avatarIconsProvider)
 
     val outdatedStatePanel = JPanel(FlowLayout(FlowLayout.LEFT, JBUIScale.scale(5), 0)).apply {
       background = UIUtil.getPanelBackground()
