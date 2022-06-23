@@ -9,8 +9,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProviderKt;
-import org.jetbrains.kotlin.platform.IdePlatformKindUtil;
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms;
 import org.jetbrains.kotlin.platform.TargetPlatform;
 
 public class ProjectStructureUtil {
@@ -24,7 +23,10 @@ public class ProjectStructureUtil {
         CachedValue<TargetPlatform> result = module.getUserData(PLATFORM_FOR_MODULE);
         if (result == null) {
             result = CachedValuesManager.getManager(module.getProject()).createCachedValue(() -> {
-                TargetPlatform platform = DefaultIdeTargetPlatformKindProviderKt.orDefault(PlatformKt.getPlatform(module));
+                TargetPlatform platform = PlatformKt.getPlatform(module);
+                if (platform == null) {
+                    platform = JvmPlatforms.INSTANCE.getDefaultJvmPlatform();
+                }
                 return CachedValueProvider.Result.create(platform,
                                                          ProjectRootModificationTracker.getInstance(module.getProject()));
             }, false);

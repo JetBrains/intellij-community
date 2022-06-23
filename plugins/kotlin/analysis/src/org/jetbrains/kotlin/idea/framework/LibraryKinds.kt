@@ -14,10 +14,10 @@ import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.vfilefinder.KnownLibraryKindForIndex
 import org.jetbrains.kotlin.idea.vfilefinder.getLibraryKindForJar
 import org.jetbrains.kotlin.platform.CommonPlatforms
-import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.js.JsPlatforms
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.utils.PathUtil
 import java.util.jar.Attributes
 import java.util.regex.Pattern
@@ -47,7 +47,7 @@ object CommonLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin
 val PersistentLibraryKind<*>?.platform: TargetPlatform
     get() = when (this) {
         is KotlinLibraryKind -> this.compilerPlatform
-        else -> DefaultIdeTargetPlatformKindProvider.defaultPlatform
+        else -> JvmPlatforms.defaultJvmPlatform
     }
 
 fun detectLibraryKind(roots: Array<VirtualFile>): PersistentLibraryKind<*>? {
@@ -70,7 +70,7 @@ fun detectLibraryKind(roots: Array<VirtualFile>): PersistentLibraryKind<*>? {
 
     if (matchingResolution != null) return matchingResolution.libraryKind
 
-    return DefaultIdeTargetPlatformKindProvider.defaultPlatform.idePlatformKind.resolution.libraryKind
+    return JvmPlatforms.defaultJvmPlatform.idePlatformKind.resolution.libraryKind
 }
 
 fun getLibraryJar(roots: Array<VirtualFile>, jarPattern: Pattern): VirtualFile? {

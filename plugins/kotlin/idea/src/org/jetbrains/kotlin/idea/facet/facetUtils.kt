@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
-import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
@@ -40,7 +39,7 @@ var Module.hasExternalSdkConfiguration: Boolean
 private fun getDefaultTargetPlatform(module: Module, rootModel: ModuleRootModel?): TargetPlatform {
     val platformKind = IdePlatformKind.ALL_KINDS.firstOrNull {
         getRuntimeLibraryVersions(module, rootModel, it).isNotEmpty()
-    } ?: DefaultIdeTargetPlatformKindProvider.defaultPlatform.idePlatformKind
+    } ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind
     if (platformKind == JvmIdePlatformKind) {
         var jvmTarget = Kotlin2JvmCompilerArgumentsHolder.getInstance(module.project).settings.jvmTarget?.let { JvmTarget.fromString(it) }
         if (jvmTarget == null) {

@@ -61,7 +61,7 @@ public class TargetPlatformDetector {
             }
         }
 
-        return DefaultIdeTargetPlatformKindProvider.Companion.getDefaultPlatform();
+        return JvmPlatforms.INSTANCE.getDefaultJvmPlatform();
     }
 
     @NotNull
@@ -103,6 +103,6 @@ public class TargetPlatformDetector {
             }
         }
 
-        return DefaultIdeTargetPlatformKindProvider.Companion.getDefaultPlatform();
+        return JvmPlatforms.INSTANCE.getDefaultJvmPlatform();
     }
 }
