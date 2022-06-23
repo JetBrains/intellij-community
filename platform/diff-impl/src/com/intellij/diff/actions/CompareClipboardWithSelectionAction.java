@@ -26,6 +26,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diff.DiffBundle;
@@ -75,6 +76,11 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   protected boolean isAvailable(@NotNull AnActionEvent e) {
     Editor editor = getEditor(e);
     return editor != null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Nullable
