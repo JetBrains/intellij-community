@@ -212,7 +212,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     }
 
     @Override
-    public void setThreadFactory(ThreadFactory threadFactory) {
+    public void setThreadFactory(@NotNull ThreadFactory threadFactory) {
       error();
     }
   }
