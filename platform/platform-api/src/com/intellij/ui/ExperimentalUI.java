@@ -2,8 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
@@ -14,7 +12,6 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.EarlyAccessRegistryManager;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,24 +37,19 @@ public final class ExperimentalUI {
   private static final String KEY = "ide.experimental.ui";
 
   public static boolean isNewUI() {
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY);
+    return false;
   }
 
   public static boolean isNewEditorTabs() {
-    return isEnabled("ide.experimental.ui.editor.tabs");
+    return false;
   }
 
   public static boolean isNewVcsBranchPopup() {
-    return isEnabled("ide.experimental.ui.vcs.branch.popup");
+    return false;
   }
 
   public static boolean isNewToolbar() {
-    return isEnabled("ide.experimental.ui.main.toolbar");
-  }
-
-  private static boolean isEnabled(@NonNls @NotNull String key) {
-    Application app = ApplicationManager.getApplication();
-    return app != null && app.isEAP() && (isNewUI() || EarlyAccessRegistryManager.INSTANCE.getBoolean(key));
+    return false;
   }
 
   @SuppressWarnings("unused")

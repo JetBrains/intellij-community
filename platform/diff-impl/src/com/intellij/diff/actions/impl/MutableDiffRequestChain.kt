@@ -4,7 +4,7 @@ package com.intellij.diff.actions.impl
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffContextEx
 import com.intellij.diff.DiffRequestFactory
-import com.intellij.diff.chains.DiffRequestChainBase
+import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.FileContent
@@ -25,44 +25,33 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import javax.swing.JComponent
 
-class MutableDiffRequestChain : DiffRequestChainBase {
+class MutableDiffRequestChain(
+  var content1: DiffContent,
+  var baseContent: DiffContent?,
+  var content2: DiffContent
+) : UserDataHolderBase(), DiffRequestChain {
+
   private val producer = MyDiffRequestProducer()
   private val requestUserData: MutableMap<Key<*>, Any> = mutableMapOf()
 
-  var content1: DiffContent
-  var content2: DiffContent
-  var baseContent: DiffContent? = null
-
   var windowTitle: String? = null
-  var title1: String? = null
-  var title2: String? = null
-  var baseTitle: String? = null
+  var title1: String? = getTitleFor(content1)
+  var title2: String? = getTitleFor(content2)
+  var baseTitle: String? = baseContent?.let { getTitleFor(it) }
 
   var baseColorMode: ThreeSideDiffColors = ThreeSideDiffColors.LEFT_TO_RIGHT
 
-  constructor(content1: DiffContent, content2: DiffContent) {
-    this.content1 = content1
-    this.content2 = content2
-    title1 = getTitleFor(content1)
-    title2 = getTitleFor(content2)
-  }
-
-  constructor(content1: DiffContent, baseContent: DiffContent?, content2: DiffContent) {
-    this.content1 = content1
-    this.content2 = content2
-    this.baseContent = baseContent
-    title1 = getTitleFor(content1)
-    title2 = getTitleFor(content2)
-    baseTitle = if (baseContent != null) getTitleFor(baseContent) else null
-  }
+  constructor(content1: DiffContent, content2: DiffContent) : this(content1, null, content2)
 
   fun <T : Any> putRequestUserData(key: Key<T>, value: T) {
     requestUserData.put(key, value)
   }
 
   override fun getRequests(): List<DiffRequestProducer> = listOf(producer)
+  override fun getIndex(): Int = 0
 
   private inner class MyDiffRequestProducer : DiffRequestProducer {
     override fun getName(): String {

@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.repository.search" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.dependencyUpdater" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.properties.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />

@@ -308,6 +308,12 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     myFixture.addClass("package org.eclipse.jdt.annotation;public @interface NonNullByDefault {}");
     doTest();
   }
+  public void testEclipseDefaultOptionalOrElse() {
+    myFixture.addClass("package org.eclipse.jdt.annotation;public @interface NonNullByDefault {}");
+    myFixture.addClass("package org.eclipse.jdt.annotation;import java.lang.annotation.*;" +
+                       "@Target({ElementType.TYPE_USE}) public @interface Nullable {}");
+    doTest();
+  }
   public void testClassInsideLambda() { doTest(); }
   public void testMultiDimensionalArrays() {
     setupTypeUseAnnotations("typeUse", myFixture);

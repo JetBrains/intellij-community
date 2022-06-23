@@ -80,6 +80,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
       else {
         if (elements.length == 1) {
           final RegExpClassElement element = elements[0];
+          if (element instanceof RegExpPosixBracketExpression) return;
           if (!(element instanceof RegExpCharRange)) {
             if (!(element instanceof RegExpChar) || !"{}().*+?|$".contains(element.getText())) {
               // [a] -> a

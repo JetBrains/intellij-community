@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,8 +17,13 @@ import java.util.List;
 public final class ListSelection<T> {
   @NotNull private final List<T> myList;
   private final int mySelectedIndex;
+  private final boolean myExplicitSelection;
 
   private ListSelection(@NotNull List<T> list, int selectedIndex) {
+    this(list, selectedIndex, false);
+  }
+
+  private ListSelection(@NotNull List<T> list, int selectedIndex, boolean isExplicit) {
     myList = list;
     if (selectedIndex >= 0 && selectedIndex < list.size()) {
       mySelectedIndex = selectedIndex;
@@ -25,6 +31,7 @@ public final class ListSelection<T> {
     else {
       mySelectedIndex = 0;
     }
+    myExplicitSelection = isExplicit;
   }
 
   @NotNull
@@ -68,7 +75,7 @@ public final class ListSelection<T> {
 
   /**
    * Map all elements in the list and remove elements for which converter returned null.
-   * If selected element was removed, select remaining element before it.
+   * If the selected element was removed, select the last remaining element before it.
    */
   @NotNull
   public <V> ListSelection<V> map(@NotNull NullableFunction<? super T, ? extends V> convertor) {
@@ -79,6 +86,34 @@ public final class ListSelection<T> {
       V out = convertor.fun(myList.get(i));
       if (out != null) result.add(out);
     }
-    return new ListSelection<>(result, newSelectionIndex);
+
+    return new ListSelection<>(result, newSelectionIndex, myExplicitSelection);
+  }
+
+  @NotNull
+  public ListSelection<T> asExplicitSelection() {
+    return withExplicitSelection(true);
+  }
+
+  /**
+   * @return true if selection was performed explicitly (ex: via multiple selection in JTree)
+   * <p>
+   * Ex: see {@link com.intellij.openapi.vcs.changes.ui.VcsTreeModelData#getListSelectionOrAll(JTree)},
+   * that might implicitly expand empty or single selection.
+   */
+  @NotNull
+  public ListSelection<T> withExplicitSelection(boolean value) {
+    return new ListSelection<>(myList, mySelectedIndex, value);
+  }
+
+  @NotNull
+  public List<T> getExplicitSelection() {
+    if (myList.isEmpty()) return Collections.emptyList();
+    if (myExplicitSelection) return myList;
+    return Collections.singletonList(myList.get(mySelectedIndex));
+  }
+
+  public boolean isExplicitSelection() {
+    return myExplicitSelection;
   }
 }

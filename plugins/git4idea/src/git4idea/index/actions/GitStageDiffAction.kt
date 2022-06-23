@@ -23,7 +23,7 @@ class GitStageDiffAction : AnActionExtensionProvider {
   override fun actionPerformed(e: AnActionEvent) {
     val producers = e.getRequiredData(GitStageDataKeys.GIT_STAGE_TREE).statusNodesListSelection(true)
       .map { createTwoSidesDiffRequestProducer(e.project!!, it) }
-    DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers.list, producers.selectedIndex), DiffDialogHints.DEFAULT)
+    DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
   }
 
   companion object {
@@ -49,6 +49,6 @@ class GitStageThreeSideDiffAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val producers = e.getRequiredData(GitStageDataKeys.GIT_STAGE_TREE).statusNodesListSelection(false)
       .map { createThreeSidesDiffRequestProducer(e.project!!, it) }
-    DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers.list, producers.selectedIndex), DiffDialogHints.DEFAULT)
+    DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
   }
 }

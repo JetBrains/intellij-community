@@ -38,8 +38,8 @@ internal suspend fun computePackageUpgrades(
                 .getOrNull() ?: continue
 
             val upgradeVersion = PackageVersionUtils.upgradeCandidateVersionOrNull(normalizedPackageVersion, availableVersions)
-            if (upgradeVersion != null && upgradeVersion.originalVersion is PackageVersion.Named) {
-                val moduleModel = nativeModulesMap.getValue(usageInfo.projectModule)
+            val moduleModel = nativeModulesMap[usageInfo.projectModule]
+            if (upgradeVersion != null && upgradeVersion.originalVersion is PackageVersion.Named && moduleModel != null) {
                 @Suppress("UNCHECKED_CAST") // The if guards us against cast errors
                 updatesByModule.getOrPut(usageInfo.projectModule.nativeModule) { mutableSetOf() } +=
                     PackagesToUpgrade.PackageUpgradeInfo(

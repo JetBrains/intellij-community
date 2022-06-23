@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.find.SearchInBackgroundOption;
@@ -170,19 +170,19 @@ public class UsageViewManagerImpl extends UsageViewManager {
         UsageViewEx usageView = usageViewRef.get();
         int count = usageView == null ? 0 : usageView.getUsagesCount();
         long currentTS = System.nanoTime();
-        long duration = TimeUnit.MILLISECONDS.convert(currentTS - start, TimeUnit.NANOSECONDS);
+        long durationFirstResults = TimeUnit.NANOSECONDS.toMillis(firstItemFoundTS.get() - start);
+        long duration = TimeUnit.NANOSECONDS.toMillis(currentTS - start);
 
         String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
         LOG.debug(notification + " in " + duration + "ms.");
 
-        reportFUS(count, TimeUnit.MILLISECONDS.convert(currentTS - firstItemFoundTS.get(), TimeUnit.NANOSECONDS),
-                  duration, tooManyUsages.get());
+        reportFUS(count, durationFirstResults, duration, tooManyUsages.get());
 
         return new NotificationInfo("Find Usages",
                                     UsageViewBundle.message("notification.title.find.usages.finished"), notification);
       }
 
-      private void reportFUS(int count, long firstResultTS, long duration, boolean tooManyUsages) {
+      private void reportFUS(int count, long durationFirstResults, long duration, boolean tooManyUsages) {
           PsiElement element = SearchForUsagesRunnable.getPsiElement(searchFor);
           if (element != null) {
             Class<? extends PsiElement> targetClass = element.getClass();
@@ -194,7 +194,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
             }
 
             UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language,
-                                                           count, firstResultTS, duration, tooManyUsages,
+                                                           count, durationFirstResults, duration, tooManyUsages,
                                                            CodeNavigateSource.FindToolWindow);
           }
       }

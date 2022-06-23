@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -43,10 +45,9 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final Boolean isEmpty = (Boolean)infos[0];
-    final PsiElement element = (PsiElement)infos[1];
-    final boolean level9OrHigher = PsiUtil.isLanguageLevel9OrHigher(element);
-    return new ArraysAsListWithOneArgumentFix(isEmpty.booleanValue(), level9OrHigher);
+    final boolean isEmpty = (Boolean)infos[0];
+    final boolean level9OrHigher = (Boolean)infos[1];
+    return new ArraysAsListWithOneArgumentFix(isEmpty, level9OrHigher);
   }
 
   private static final class ArraysAsListWithOneArgumentFix extends InspectionGadgetsFix {
@@ -129,6 +130,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length > 1) return;
 
+      boolean isLevel9Plus = PsiUtil.isLanguageLevel9OrHigher(expression);
       boolean empty = false;
       if (arguments.length == 0) {
         empty = true;
@@ -140,6 +142,10 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
             return;
           }
           empty = true;
+        }
+        if (isLevel9Plus && NullabilityUtil.getExpressionNullability(argument, true) != Nullability.NOT_NULL) {
+          // Avoid suggesting List.of with potentially nullable argument
+          isLevel9Plus = false;
         }
       }
       final PsiMethod method = expression.resolveMethod();
@@ -154,7 +160,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
       if (!"java.util.Arrays".equals(className)) {
         return;
       }
-      registerMethodCallError(expression, empty, expression);
+      registerMethodCallError(expression, empty, isLevel9Plus);
     }
   }
 }

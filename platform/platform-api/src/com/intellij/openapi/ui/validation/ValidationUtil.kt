@@ -10,9 +10,9 @@ import java.nio.file.Path
  * Created validation with parameter that produces error if [getMessage] returns non-null value.
  */
 fun <T> validationErrorFor(getMessage: (T) -> @NlsContexts.DialogMessage String?) =
-  DialogValidation.WithParameter<T> {
+  DialogValidation.WithParameter<() -> T> {
     DialogValidation {
-      val message = getMessage(it)
+      val message = getMessage(it())
       if (message != null) {
         ValidationInfo(message)
       }
@@ -29,24 +29,10 @@ fun <T1, T2> validationErrorFor(getMessage: (T1, T2) -> @NlsContexts.DialogMessa
   validationErrorWithTwoParametersFor(getMessage) { validationErrorFor(it) }
 
 /**
- * Created validation with text parameter that produces error if [getMessage] returns non-null value.
- * Note: Text parameter will be trimmed.
- */
-fun validationTextErrorFor(getMessage: (String) -> @NlsContexts.DialogMessage String?) =
-  validationErrorFor<() -> String> { getter -> getMessage(getter().trim()) }
-
-/**
- * Created validation with custom and text parameters that produces error if [getMessage] returns non-null value.
- * Note: Text parameter will be trimmed.
- */
-fun <T> validationTextErrorFor(getMessage: (T, String) -> @NlsContexts.DialogMessage String?) =
-  validationErrorWithTwoParametersFor(getMessage) { validationTextErrorFor(it) }
-
-/**
  * Created validation with [Path] parameter that produces error if [getMessage] returns non-null value.
  */
 fun validationPathErrorFor(getMessage: (Path) -> @NlsContexts.DialogMessage String?) =
-  validationTextErrorFor { text -> getMessage(Path.of(text)) }
+  validationErrorFor<String> { getMessage(Path.of(it)) }
 
 /**
  * Created validation with custom and [Path] parameters that produces error if [getMessage] returns non-null value.
@@ -58,7 +44,7 @@ fun <T> validationPathErrorFor(getMessage: (T, Path) -> @NlsContexts.DialogMessa
  * Created validation with [File] parameter that produces error if [getMessage] returns non-null value.
  */
 fun validationFileErrorFor(getMessage: (File) -> @NlsContexts.DialogMessage String?) =
-  validationTextErrorFor { getMessage(File(it)) }
+  validationPathErrorFor { getMessage(it.toFile()) }
 
 /**
  * Created validation with custom and [File] parameters that produces error if [getMessage] returns non-null value.
@@ -77,20 +63,6 @@ fun <T> validationErrorIf(message: @NlsContexts.DialogMessage String, isNotValid
  */
 fun <T1, T2> validationErrorIf(message: @NlsContexts.DialogMessage String, isNotValid: (T1, T2) -> Boolean) =
   validationErrorFor(createMessageGetter(message, isNotValid))
-
-/**
- * Created validation with text parameter that produces error if [isNotValid] is true.
- * Note: Text parameter will be trimmed.
- */
-fun validationTextErrorIf(message: @NlsContexts.DialogMessage String, isNotValid: (String) -> Boolean) =
-  validationTextErrorFor(createMessageGetter(message, isNotValid))
-
-/**
- * Created validation with custom and text parameters that produces error if [isNotValid] is true.
- * Note: Text parameter will be trimmed.
- */
-fun <T> validationTextErrorIf(message: @NlsContexts.DialogMessage String, isNotValid: (T, String) -> Boolean) =
-  validationTextErrorFor(createMessageGetter(message, isNotValid))
 
 /**
  * Create validation with two parameters from [validationBuilder] with one parameter.

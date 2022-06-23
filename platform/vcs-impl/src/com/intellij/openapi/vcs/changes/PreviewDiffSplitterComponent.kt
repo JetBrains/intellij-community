@@ -13,22 +13,38 @@ class PreviewDiffSplitterComponent(
 
   private var isPreviewVisible = false
 
-  override fun updatePreview(fromModelRefresh: Boolean) =
-    updatePreviewProcessor.run { if (isPreviewVisible) refresh(fromModelRefresh) else clear() }
-
-  override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
-    this.isPreviewVisible = isPreviewVisible
-    if (this.isPreviewVisible == (secondComponent == null)) {
-      updateVisibility()
+  override fun updatePreview(fromModelRefresh: Boolean) {
+    if (isPreviewVisible) {
+      updatePreviewProcessor.refresh(fromModelRefresh)
     }
+    else {
+      updatePreviewProcessor.clear()
+    }
+  }
+
+  override fun openPreview(requestFocus: Boolean): Boolean {
+    setPreviewVisible(true)
+    updatePreview(false)
+    return true
+  }
+
+  override fun closePreview() {
+    setPreviewVisible(false)
     updatePreview(false)
   }
 
-  private fun updateVisibility() {
-    secondComponent = if (isPreviewVisible) updatePreviewProcessor.component else null
-    secondComponent?.let {
-      updateComponentTreeUI(it)
-      it.minimumSize = emptySize()
+  private fun setPreviewVisible(isVisible: Boolean) {
+    if (isPreviewVisible == isVisible) return
+    isPreviewVisible = isVisible
+
+    if (isVisible) {
+      secondComponent = updatePreviewProcessor.component.also {
+        updateComponentTreeUI(it)
+        it.minimumSize = emptySize()
+      }
+    }
+    else {
+      secondComponent = null
     }
 
     validate()

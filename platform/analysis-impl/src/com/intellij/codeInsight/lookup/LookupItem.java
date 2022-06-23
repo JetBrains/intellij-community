@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
@@ -92,8 +92,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
   }
 
   /**
-   * Returns a string which will be inserted to the editor when this item is
-   * choosen.
+   * Returns a string which will be inserted to the editor when this item is chosen.
    */
   @Override
   @NotNull

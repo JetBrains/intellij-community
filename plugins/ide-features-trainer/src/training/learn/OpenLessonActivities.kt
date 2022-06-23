@@ -101,7 +101,9 @@ internal object OpenLessonActivities {
 
       val lessonType = params.lesson.lessonType
       when {
-        lessonType == LessonType.SCRATCH && !params.forceLearningProject -> {
+        lessonType == LessonType.SCRATCH
+        && !params.forceLearningProject
+        && langSupport.isSdkConfigured(projectWhereToStartLesson) -> {
           LOG.debug("${projectWhereToStartLesson.name}: scratch based lesson")
         }
         lessonType == LessonType.USER_PROJECT -> {
@@ -293,7 +295,7 @@ internal object OpenLessonActivities {
     val executor = LessonExecutor(lesson, projectWhereToStartLesson, textEditor?.editor, vf)
     val lessonContext = LessonContextImpl(executor)
     LessonManager.instance.initDslLesson(textEditor?.editor, lesson, executor)
-    lesson.lessonContent(lessonContext)
+    lesson.fullLessonContent(lessonContext)
     executor.startLesson()
   }
 

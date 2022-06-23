@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.gradle.common" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.dependencyUpdater" />
     <orderEntry type="module" module-name="intellij.android.gradle.dsl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>

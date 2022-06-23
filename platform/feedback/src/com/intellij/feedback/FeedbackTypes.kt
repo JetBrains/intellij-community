@@ -12,6 +12,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.util.PlatformUtils
 
 enum class FeedbackTypes {
   PROJECT_CREATION_FEEDBACK {
@@ -24,10 +25,15 @@ enum class FeedbackTypes {
       val projectCreationInfoState = ProjectCreationInfoService.getInstance().state
 
       return isIntellijIdeaEAP() &&
+             checkIdeIsSuitable() &&
              checkIdeVersionIsSuitable() &&
              checkProjectCreationFeedbackNotSent(projectCreationInfoState) &&
              checkProjectCreated(projectCreationInfoState) &&
              checkNotificationNumberNotExceeded(projectCreationInfoState)
+    }
+
+    private fun checkIdeIsSuitable(): Boolean {
+      return PlatformUtils.isIdeaUltimate() || PlatformUtils.isIdeaCommunity()
     }
 
     private fun checkProjectCreationFeedbackNotSent(state: ProjectCreationInfoState): Boolean {

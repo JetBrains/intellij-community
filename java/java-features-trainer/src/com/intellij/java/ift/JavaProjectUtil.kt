@@ -32,10 +32,10 @@ object JavaProjectUtil {
       .executeLookup()
   }
 
-  fun getProjectJdk(project: Project): Sdk? {
+  fun getEffectiveJdk(project: Project): Sdk? {
     val projectJdk = ProjectRootManager.getInstance(project).projectSdk
     val module = ModuleManager.getInstance(project).modules.first()
     val moduleJdk = ModuleRootManager.getInstance(module).sdk
-    return moduleJdk ?: projectJdk
+    return (moduleJdk ?: projectJdk).takeIf { it?.sdkType is JavaSdk }
   }
 }

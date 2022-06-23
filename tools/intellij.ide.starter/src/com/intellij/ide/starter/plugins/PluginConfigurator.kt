@@ -43,7 +43,7 @@ open class PluginConfigurator(val testContext: IDETestContext) {
       val url = buildString {
         append("https://plugins.jetbrains.com/pluginManager/")
         append("?action=download")
-        append("&id=$pluginName")
+        append("&id=${pluginName.replace(" ", "%20")}")
         append("&noStatistic=false")
         append("&build=$ideBuild")
         channel?.let {

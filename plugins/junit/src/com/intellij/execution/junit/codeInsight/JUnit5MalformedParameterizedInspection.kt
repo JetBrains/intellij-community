@@ -233,7 +233,10 @@ private class NullOrEmptySourceChecker(val holder: ProblemsHolder) {
     val size = method.uastParameters.size
     val shortName = psiAnnotation.qualifiedName ?: return
     if (size == 1) {
-      val type = method.uastParameters[0].type
+      var type = method.uastParameters[0].type
+      if (type is PsiClassType) {
+        type = type.rawType()
+      }
       if (type is PsiArrayType ||
           type.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
           type.equalsToText(CommonClassNames.JAVA_UTIL_LIST) ||
@@ -241,7 +244,7 @@ private class NullOrEmptySourceChecker(val holder: ProblemsHolder) {
           type.equalsToText(CommonClassNames.JAVA_UTIL_MAP)) {
         return
       }
-      holder.registerProblem(sourcePsi, 
+      holder.registerProblem(sourcePsi,
                              JUnitBundle.message("junit5.malformed.parameterized.inspection.description.emptysource.cannot.provide.argument",
                                                  StringUtil.getShortName(shortName),
                                                  type.presentableText))

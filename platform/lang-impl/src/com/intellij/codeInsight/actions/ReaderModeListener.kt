@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.colors.ReaderModeStatsCollector
@@ -57,7 +57,9 @@ class ReaderModeSettingsListener : ReaderModeListener {
   }
 
   override fun modeChanged(project: Project) {
-    applyToAllEditors(project)
+    if (!project.isDefault) {
+      applyToAllEditors(project)
+    }
   }
 }
 

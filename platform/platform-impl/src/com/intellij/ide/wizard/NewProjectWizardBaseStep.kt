@@ -87,10 +87,10 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
       row(UIBundle.message("label.project.wizard.new.project.name")) {
         val locationProperty = pathProperty.joinCanonicalPath(nameProperty)
         textField()
-          .bindText(nameProperty)
+          .bindText(nameProperty.trim())
           .columns(COLUMNS_MEDIUM)
           .validationRequestor(AFTER_GRAPH_PROPAGATION(propertyGraph))
-          .textValidation(CHECK_NON_EMPTY, CHECK_MODULE_NAME(context.project))
+          .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_MODULE_NAME(context.project))
           .applyIf(context.isCreatingNewProject) { validation(CHECK_PROJECT_PATH(context.project, locationProperty)) }
           .applyIf(!context.isCreatingNewProject) { validation(CHECK_MODULE_PATH(context.project, locationProperty)) }
           .focused()
@@ -107,7 +107,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
         textFieldWithBrowseButton(title, context.project, fileChooserDescriptor, fileChosen)
           .bindText(pathProperty.toUiPathProperty())
           .horizontalAlign(HorizontalAlign.FILL)
-          .textValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
+          .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
           .comment(commentProperty.get(), 100)
           .apply { commentProperty.afterChange { comment?.text = it } }
       }

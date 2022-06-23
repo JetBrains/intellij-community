@@ -52,7 +52,7 @@ private class DumpFeaturesTrainerText : DumbAwareAction() {
       if (x is KLesson) {
         buffer.append(x.name)
         buffer.append(":\n")
-        x.lessonContent(ApplyTaskLessonContext(buffer, project, dialog.mode, x))
+        x.fullLessonContent(ApplyTaskLessonContext(buffer, project, dialog.mode, x))
         buffer.append('\n')
       }
     }

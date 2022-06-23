@@ -39,7 +39,7 @@ public abstract class GradleDependencyUpdaterTestBase extends GradleImportingTes
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myTestDataDir = PathManagerEx.findFileUnderCommunityHome("plugins/dependency-updater/testData/gradle");
+    myTestDataDir = PathManagerEx.findFileUnderCommunityHome("platform/external-system-api/dependency-updater/testData/gradle");
     assertTrue(myTestDataDir.isDirectory());
     myModifierService = DependencyModifierService.getInstance(myProject);
     Assume.assumeTrue(myLanguageName.equals(GROOVY_LANGUAGE));

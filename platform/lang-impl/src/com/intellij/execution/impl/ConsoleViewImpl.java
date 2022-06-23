@@ -1422,7 +1422,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     int newEndOffset = document.getTextLength() - oldDocLength + offset; // take care of trim document
 
     if (ConsoleTokenUtil.findTokenMarker(getEditor(), getProject(), newEndOffset) == null) {
-      ConsoleTokenUtil.createTokenRangeHighlighter(getEditor(), getProject(), ConsoleViewContentType.USER_INPUT, newStartOffset, newEndOffset, true);
+      ConsoleTokenUtil.createTokenRangeHighlighter(getEditor(), getProject(), ConsoleViewContentType.USER_INPUT, newStartOffset, newEndOffset, !text.equals("\n"));
     }
 
     moveScrollRemoveSelection(editor, newEndOffset);

@@ -2,7 +2,6 @@
 package com.intellij.diff;
 
 import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.editor.ChainDiffVirtualFile;
@@ -23,17 +22,13 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,13 +51,10 @@ public class DiffManagerImpl extends DiffManagerEx {
 
   @Override
   public void showDiff(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints) {
-    List<String> files = ContainerUtil.map(requests.getRequests(), DiffRequestProducer::getName);
-    FileType fileType = determineFileType(files);
-
-    ExternalDiffSettings.ExternalTool diffTool = ExternalDiffSettings.findDiffTool(fileType);
-    if (ExternalDiffTool.isEnabled() && diffTool != null) {
-      ExternalDiffTool.show(project, requests, hints, diffTool);
-      return;
+    if (ExternalDiffTool.isEnabled()) {
+      if (ExternalDiffTool.showIfNeeded(project, requests, hints)) {
+        return;
+      }
     }
 
     showDiffBuiltin(project, requests, hints);
@@ -165,15 +157,5 @@ public class DiffManagerImpl extends DiffManagerEx {
   @RequiresEdt
   public void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequestProducer requestProducer, @NotNull DiffDialogHints hints) {
     new MergeWindow.ForProducer(project, requestProducer, hints).show();
-  }
-
-  private static FileType determineFileType(@NotNull List<String> files) {
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-
-    return files.stream()
-      .filter(filePath -> !FileUtilRt.getExtension(filePath).equals("tmp"))
-      .map(filePath -> fileTypeManager.getFileTypeByFileName(filePath))
-      .findAny()
-      .orElse(FileTypes.UNKNOWN);
   }
 }

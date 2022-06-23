@@ -332,7 +332,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   @Override
   public final boolean isLeaf(Object object) {
     Node node = getNode(object, false);
-    return node == null || node.isLeaf(this::validateChildren);
+    return node == null || node.isModelLeaf(this::validateChildren);
   }
 
   @Override
@@ -420,16 +420,19 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   }
 
   private static final class Node extends DefaultMutableTreeNode implements LeafState.Supplier {
+    /**
+     * {@link DefaultMutableTreeNode#children} is not used, all methods are overridden.
+     */
     @SuppressWarnings("FieldNameHidesFieldInSuperclass")
     private final Reference<List<Node>> children = new Reference<>();
     private LeafState leafState; // NB!: modify in #canReuse only
     private final int hashCode;
 
-    private Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor<?> parent) {
+    Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor<?> parent) {
       this(structure.createDescriptor(element, parent), structure.getLeafState(element), element.hashCode());
     }
 
-    private Node(@NotNull NodeDescriptor descriptor, @NotNull LeafState leafState, int hashCode) {
+    Node(@NotNull NodeDescriptor descriptor, @NotNull LeafState leafState, int hashCode) {
       super(descriptor, leafState != LeafState.ALWAYS);
       this.hashCode = hashCode;
       setLeafState(leafState);
@@ -545,12 +548,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return getChildren().size();
     }
 
-    @Override
-    public boolean isLeaf() {
-      return isLeaf(null);
-    }
-
-    private boolean isLeaf(@Nullable Consumer<? super Node> validator) {
+    boolean isModelLeaf(@Nullable Consumer<? super Node> validator) {
       // root node should not be a leaf node when it is not visible in a tree
       // javax.swing.tree.VariableHeightLayoutCache.TreeStateNode.expand(boolean)
       if (null == getParent()) return false;

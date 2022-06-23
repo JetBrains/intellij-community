@@ -53,6 +53,9 @@ interface LangSupport {
   val sdkConfigurationTasks: LessonContext.(lesson: KLesson) -> Unit
     get() = {}
 
+  /** Check that the project has needed SDK configured */
+  fun isSdkConfigured(project: Project): Boolean
+
   companion object {
     const val EP_NAME = "training.ift.language.extension"
   }

@@ -322,7 +322,6 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       mySpeedSearch.updatePattern(newFilter.trim());
       return;
     }
-    getList().setSelectedIndex(0);
     super.onSpeedSearchPatternChanged();
     ScrollingUtil.ensureSelectionExists(getList());
   }

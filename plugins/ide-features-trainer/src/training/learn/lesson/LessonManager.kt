@@ -47,7 +47,7 @@ class LessonManager {
     val learnPanel = learnPanel ?: error("No learn panel")
     initLesson(null, lesson)
     learnPanel.scrollToNewMessages = false
-    OpenPassedContext(project, lesson).apply(lesson.lessonContent)
+    OpenPassedContext(project, lesson).apply(lesson.fullLessonContent)
     learnPanel.scrollRectToVisible(Rectangle(0, 0, 1, 1))
     learnPanel.makeNextButtonSelected()
     learnPanel.learnToolWindow.showGotItAboutRestart()

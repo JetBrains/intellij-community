@@ -9,15 +9,13 @@ import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 
 abstract class SimpleTreeEditorDiffPreview(
-  diffProcessor: ChangeViewDiffRequestProcessor,
+  protected val changeViewProcessor: ChangeViewDiffRequestProcessor,
   tree: ChangesTree,
   targetComponent: JComponent,
   isOpenEditorDiffPreviewWithSingleClick: Boolean
-) : EditorTabPreview(diffProcessor) {
+) : EditorTabPreview(changeViewProcessor) {
 
   constructor(diffProcessor: ChangeViewDiffRequestProcessor, tree: ChangesTree) : this(diffProcessor, tree, tree, false)
-
-  protected val changeViewProcessor: ChangeViewDiffRequestProcessor get() = diffProcessor as ChangeViewDiffRequestProcessor
 
   init {
     escapeHandler = Runnable {
@@ -32,7 +30,7 @@ abstract class SimpleTreeEditorDiffPreview(
 
   open fun returnFocusToTree() = Unit
 
-  override fun updateAvailability(event: AnActionEvent) {
+  override fun updateDiffAction(event: AnActionEvent) {
     event.presentation.isVisible = event.isFromActionToolbar || event.presentation.isEnabled
   }
 

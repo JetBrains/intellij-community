@@ -20,10 +20,9 @@ internal class CommentProblemFilter : ProblemFilter() {
       if (problem.rule.globalId.startsWith("LanguageTool.") && isAboutIdentifierParts(problem, text)) {
         return true
       }
-    }
-
-    if (domain == DOCUMENTATION) {
-      return isInFirstSentence(problem) && problem.fitsGroup(RuleGroup(RuleGroup.INCOMPLETE_SENTENCE))
+      if (isInFirstSentence(problem) && problem.fitsGroup(RuleGroup(RuleGroup.INCOMPLETE_SENTENCE))) {
+        return true
+      }
     }
 
     if (domain == COMMENTS) {

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
@@ -598,8 +599,8 @@ public class VfsUtilCore {
       if (!SystemInfoRt.isWindows) uri = "/" + uri;
       file = VirtualFileManager.getInstance().findFileByUrl(StandardFileSystems.JAR_PROTOCOL_PREFIX + uri);
     }
-    else if (!SystemInfoRt.isWindows && StringUtil.startsWithChar(uri, '/') ||
-             SystemInfoRt.isWindows && uri.length() >= 2 && Character.isLetter(uri.charAt(0)) && uri.charAt(1) == ':') {
+    else if (SystemInfoRt.isUnix && uri.startsWith("/") ||
+             SystemInfoRt.isWindows && (OSAgnosticPathUtil.isAbsoluteDosPath(uri) || OSAgnosticPathUtil.isUncPath(uri))) {
       file = StandardFileSystems.local().findFileByPath(uri);
     }
 

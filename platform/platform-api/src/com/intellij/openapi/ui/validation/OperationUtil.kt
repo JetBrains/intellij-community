@@ -121,6 +121,12 @@ fun <T, R> DialogValidation.WithParameter<R>.transformParameter(transform: T.() 
   }
 
 /**
+ * Transforms string validation into validation with trimmed string parameter.
+ */
+fun DialogValidation.WithParameter<() -> String>.trimParameter() =
+  transformParameter<() -> String, () -> String> { { invoke().trim() } }
+
+/**
  * Transforms string validation into validation for [JTextComponent].
  */
 fun DialogValidation.WithParameter<() -> String>.forTextComponent() =

@@ -28,10 +28,11 @@ import static com.intellij.grazie.text.TextContent.TextDomain.*;
 import static com.intellij.psi.JavaDocTokenType.*;
 import static com.intellij.psi.impl.source.tree.ElementType.JAVA_PLAIN_COMMENT_BIT_SET;
 import static com.intellij.psi.impl.source.tree.JavaDocElementType.DOC_PARAMETER_REF;
+import static com.intellij.psi.impl.source.tree.JavaDocElementType.DOC_REFERENCE_HOLDER;
 
 public class JavaTextExtractor extends TextExtractor {
   private static final TokenSet EXCLUDED =
-    TokenSet.create(DOC_COMMENT_START, DOC_COMMENT_LEADING_ASTERISKS, DOC_COMMENT_END, DOC_PARAMETER_REF);
+    TokenSet.create(DOC_COMMENT_START, DOC_COMMENT_LEADING_ASTERISKS, DOC_COMMENT_END, DOC_PARAMETER_REF, DOC_REFERENCE_HOLDER);
   private static final TextContentBuilder javadocBuilder = TextContentBuilder.FromPsi
     .withUnknown(e -> e instanceof PsiInlineDocTag && !(e instanceof PsiSnippetDocTag))
     .excluding(e -> EXCLUDED.contains(PsiUtilCore.getElementType(e)))

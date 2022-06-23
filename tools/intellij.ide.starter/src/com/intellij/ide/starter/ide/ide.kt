@@ -208,7 +208,7 @@ private fun downloadAndUnpackJbrIfNeeded(jbrFullVersion: String): Path {
     false -> "x64"
   }
 
-  val localFileName = "jbrsdk-$majorVersion-$os-$arch-b$buildNumber.tar.gz"
+  val localFileName = "jbrsdk_dcevm-$majorVersion-$os-$arch-b$buildNumber.tar.gz"
   val downloadUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/$localFileName"
 
   val jbrCacheDirectory = di.direct.instance<GlobalPaths>().getCacheDirectoryFor("jbr")

@@ -266,7 +266,7 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
     val initial = selectedStarterId == null
 
     val selectedStarter = when (val previouslySelectedStarter = starterContext.starter?.id) {
-      null -> starterPack.starters.firstOrNull()
+      null -> starterPack.starters.find { it.id == starterPack.defaultStarterId } ?: starterPack.starters.firstOrNull()
       else -> starterPack.starters.find { it.id == previouslySelectedStarter }
     }
     if (selectedStarter != null) {

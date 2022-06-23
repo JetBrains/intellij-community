@@ -269,25 +269,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     String title;
     String details;
     boolean isDumb = DumbService.isDumb(myProject);
-    if (status.errorAnalyzingFinished) {
-      if (isDumb) {
-        title = DaemonBundle.message("shallow.analysis.completed");
-        details = DaemonBundle.message("shallow.analysis.completed.details");
-      }
-      else if (getPsiFile() != null
-               && HighlightingSettingsPerFile.getInstance(myProject).getHighlightingSettingForRoot(getPsiFile()) == FileHighlightingSetting.ESSENTIAL) {
-        title = DaemonBundle.message("essential.analysis.completed");
-        details = DaemonBundle.message("essential.analysis.completed.details");
-      }
-      else {
-        title = "";
-        details = "";
-      }
-    }
-    else {
-      title = DaemonBundle.message("performing.code.analysis");
-      details = "";
-    }
 
     List<SeverityStatusItem> statusItems = new ArrayList<>();
     int[] errorCounts = status.errorCounts;
@@ -308,6 +289,26 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
           statusItems.add(next);
         }
       }
+    }
+
+    if (status.errorAnalyzingFinished) {
+      if (isDumb) {
+        title = DaemonBundle.message("shallow.analysis.completed");
+        details = DaemonBundle.message("shallow.analysis.completed.details");
+      }
+      else if (getPsiFile() != null
+               && HighlightingSettingsPerFile.getInstance(myProject).getHighlightingSettingForRoot(getPsiFile()) == FileHighlightingSetting.ESSENTIAL) {
+        title = DaemonBundle.message("essential.analysis.completed");
+        details = DaemonBundle.message("essential.analysis.completed.details");
+      }
+      else {
+        title = statusItems.isEmpty() ? DaemonBundle.message("no.errors.or.warnings.found") : "";
+        details = "";
+      }
+    }
+    else {
+      title = DaemonBundle.message("performing.code.analysis");
+      details = "";
     }
 
     if (!statusItems.isEmpty()) {
@@ -357,7 +358,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     boolean mergeEditor = editor.getUserData(DiffUserDataKeys.MERGE_EDITOR_FLAG) == Boolean.TRUE;
     return editor.getEditorKind() == EditorKind.DIFF && !mergeEditor ? new SimplifiedUIController() : new DefaultUIController();
   }
-  
+
   protected abstract class AbstractUIController implements UIController {
     private final boolean inLibrary;
     private final List<LanguageHighlightLevel> myLevelList;

@@ -367,7 +367,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
 
         ChangeDiffRequestProducer.create(project, it, requestDataKeys)
       }
-      return ChangeDiffRequestChain(producers.list, producers.selectedIndex)
+      return ChangeDiffRequestChain(producers)
     }
   }
 }

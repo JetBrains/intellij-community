@@ -200,7 +200,7 @@ public final class CommandLineProcessor {
   private static CompletableFuture<CliResult> processInternalProtocol(String query) {
     try {
       QueryStringDecoder decoder = new QueryStringDecoder(query);
-      if ("open".equals(decoder.path())) {
+      if ("open".equals(StringUtil.trimEnd(decoder.path(), '/'))) {
         Map<String, List<String>> parameters = decoder.parameters();
         String fileStr = ContainerUtil.getLastItem(parameters.get("file"));
         if (fileStr != null && !fileStr.isBlank()) {

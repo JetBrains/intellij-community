@@ -39,6 +39,8 @@
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
+  <xi:include href="intellij.platform.feedback.xml"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
@@ -154,6 +156,9 @@
   </xi:include>
 
   <xi:include href="/META-INF/ExternalSystem.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/ExternalSystemDependencyUpdater.xml">
     <xi:fallback/>
   </xi:include>
 </idea-plugin>

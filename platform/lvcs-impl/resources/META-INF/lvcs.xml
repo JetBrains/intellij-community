@@ -31,6 +31,10 @@
       <reference id="LocalHistory.PutLabel"/>
       <add-to-group group-id="Vcs.Operations.Popup" anchor="after" relative-to-action="ShowAnnotateOperationsPopupGroup"/>
     </group>
+
+    <action internal="true" id="ValidateLocalHistory" class="com.intellij.history.integration.ValidateHistoryAction">
+      <add-to-group group-id="Internal.VFS"/>
+    </action>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>

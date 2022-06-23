@@ -876,6 +876,7 @@ public final class StartupUtil {
     log.info("OS: " + SystemInfoRt.OS_NAME + " (" + SystemInfoRt.OS_VERSION + ", " + System.getProperty("os.arch") + ")");
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
     log.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.name", "-") + ")");
+    log.info("PID: " + ProcessHandle.current().pid());
 
     if (SystemInfoRt.isXWindow) {
       String wmName = X11UiUtil.getWmName();

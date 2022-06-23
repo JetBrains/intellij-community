@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards.archetype
 
-import com.intellij.openapi.ui.validation.validationTextErrorFor
+import com.intellij.openapi.ui.validation.validationErrorFor
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
@@ -47,7 +47,7 @@ internal fun suggestCatalogNameByLocation(location: String): String {
   }
 }
 
-val CHECK_MAVEN_CATALOG = validationTextErrorFor { location ->
+val CHECK_MAVEN_CATALOG = validationErrorFor<String> { location ->
   if (MavenCatalogManager.isLocal(location)) {
     validateLocalLocation(location)
   }

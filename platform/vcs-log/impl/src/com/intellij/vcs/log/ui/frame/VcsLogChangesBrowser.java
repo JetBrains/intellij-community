@@ -105,11 +105,9 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
     init();
 
-    setEditorDiffPreview(isWithEditorDiffPreview && VcsLogUiUtil.isDiffPreviewInEditor(myProject));
     if (isWithEditorDiffPreview) {
-      EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, () -> {
-        setEditorDiffPreview(VcsLogUiUtil.isDiffPreviewInEditor(myProject));
-      });
+      setEditorDiffPreview();
+      EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::setEditorDiffPreview);
     }
 
     hideViewerBorder();
@@ -401,8 +399,9 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return ChangeDiffRequestProducer.create(project, change, context);
   }
 
-  public void setEditorDiffPreview(boolean isWithEditorDiffPreview) {
+  private void setEditorDiffPreview() {
     EditorDiffPreview preview = myEditorDiffPreview;
+    boolean isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
 
     if (isWithEditorDiffPreview && preview == null) {
       preview = new VcsLogEditorDiffPreview(myProject, this);

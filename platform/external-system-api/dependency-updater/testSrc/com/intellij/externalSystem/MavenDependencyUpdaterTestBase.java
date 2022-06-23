@@ -35,7 +35,7 @@ abstract public class MavenDependencyUpdaterTestBase extends MavenImportingTestC
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myTestDataDir = PathManagerEx.findFileUnderCommunityHome("plugins/dependency-updater/testData/maven");
+    myTestDataDir = PathManagerEx.findFileUnderCommunityHome("platform/external-system-api/dependency-updater/testData/maven");
     assertTrue(myTestDataDir.isDirectory());
     myProjectDataDir = new File(new File(myTestDataDir, "projects"), getTestName(true));
     myExpectedDataDir = new File(new File(myTestDataDir, "expected"), getTestName(true));

@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +34,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private final long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
 
-  @ApiStatus.Internal
-  public RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean forceDocumentStrongReference) {
+  RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean forceDocumentStrongReference) {
     this(forceDocumentStrongReference ? document : ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(document), document),
          document.getTextLength(), start, end, register, false, false);
   }
