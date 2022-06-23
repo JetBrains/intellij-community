@@ -187,6 +187,7 @@ abstract class Row : Cell(), RowBuilder {
    *
    * @param isFullWidth If `true`, the cell occupies the full width of the enclosing component.
    */
+  @Deprecated("Use Kotlin UI DSL Version 2")
   inline fun cell(isVerticalFlow: Boolean = false, isFullWidth: Boolean = false, init: InnerCell.() -> Unit) {
     setCellMode(true, isVerticalFlow, isFullWidth)
     InnerCell(this).init()

@@ -2,7 +2,6 @@
 package com.intellij.ui.layout
 
 import com.intellij.ide.ui.LafManager
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.ProjectRule
 import org.junit.*
 import org.junit.rules.TestName
@@ -53,38 +52,8 @@ abstract class UiDslTest {
   }
 
   @Test
-  fun `align fields`() {
-    doTest { labelRowShouldNotGrow() }
-  }
-
-  @Test
-  fun cell() {
-    doTest { cellPanel() }
-  }
-
-  @Test
   fun `note row in the dialog`() {
     doTest { noteRowInTheDialog() }
-  }
-
-  @Test
-  fun `visual paddings`() {
-    doTest { visualPaddingsPanel() }
-  }
-
-  @Test
-  fun `vertical buttons`() {
-    doTest { withVerticalButtons() }
-  }
-
-  @Test
-  fun `single vertical button`() {
-    doTest { withSingleVerticalButton() }
-  }
-
-  @Test
-  fun `do not add visual paddings for titled border`() {
-    doTest { commentAndPanel() }
   }
 
   @Test
@@ -100,11 +69,6 @@ abstract class UiDslTest {
   @Test
   fun `titled row`() {
     doTest { titledRow() }
-  }
-
-  @Test
-  fun `sample configurable panel`() {
-    doTest { sampleConfigurablePanel() }
   }
 
   @Test
@@ -124,12 +88,6 @@ abstract class UiDslTest {
   @Test
   fun subRowsIndent() {
     doTest { rowWithIndent() }
-  }
-
-  @Test
-  fun `checkbox rows with big components`() {
-    Assume.assumeFalse("ComboBoxes in MacOs LaF have different border insets, that are used to build layout constraints", SystemInfo.isMac)
-    doTest { checkboxRowsWithBigComponents() }
   }
 
   protected abstract fun doTest(panelCreator: () -> JPanel)
