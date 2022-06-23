@@ -32,6 +32,9 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptDiagnosticFixProvider implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptDiagnosticFixProvider"/>
+
+    <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
+            implementation="org.jetbrains.kotlin.idea.gradle.GradleFailedToDownloadSuggestedSolutionsContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -13,8 +13,6 @@ import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.aether.ArtifactKind
-import org.jetbrains.idea.maven.execution.MavenRunner
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
@@ -26,7 +24,6 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyZipUnpacker
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.awt.EventQueue
 import java.io.File
 import java.net.URL
@@ -214,16 +211,10 @@ object KotlinArtifactsDownloader {
         require(artifactId == KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID || artifactId == KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID) {
             "$artifactId should be either $KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID or $KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID"
         }
-        val isGradleProjDelegatedToJps = GradleSettings.getInstance(project).linkedProjectsSettings.any { !it.delegatedBuild }
-        val isMavenProjDelegatedToJps = MavenProjectsManager.getInstance(project).isMavenizedProject &&
-                !MavenRunner.getInstance(project).settings.isDelegateBuildToMaven
-        val suggestions = listOfNotNull(
-            KotlinBasePluginBundle.message("you.can.use.kotlin.compiler.which.is.bundled.into.your.ide"),
-            if (isGradleProjDelegatedToJps) KotlinBasePluginBundle.message("you.can.delegate.to.gradle") else null,
-            if (isMavenProjDelegatedToJps) KotlinBasePluginBundle.message("you.can.delegate.to.maven") else null,
-        )
+        val suggestions = listOf(KotlinBasePluginBundle.message("you.can.use.kotlin.compiler.which.is.bundled.into.your.ide")) +
+                FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor.getAllContributors(project).mapNotNull { it.getSuggestion() }
         val suggestion = if (suggestions.size == 1) {
-            @Suppress("HardCodedStringLiteral")
+            @Suppress("HardCodedStringLiteral") // Suppress because it's false positive
             suggestions.single()
         } else {
             KotlinBasePluginBundle.message("suggested.solutions", suggestions.joinToString("\n") { "- $it" })
