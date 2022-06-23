@@ -4,8 +4,9 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.diagnostic.Logger;
 
 /**
- * @author Konstantin Bulenkov
  * Please use the registry to enable/disable experimental features, see {@code com.intellij.registryKey} extension point
+ *
+ * @author Konstantin Bulenkov
  */
 public final class ExperimentalFeatureImpl extends ExperimentalFeature{
   @Override
