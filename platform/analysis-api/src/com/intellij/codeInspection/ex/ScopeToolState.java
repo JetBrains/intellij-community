@@ -91,33 +91,18 @@ public final class ScopeToolState {
   }
 
   public @Nullable TextAttributesKey getEditorAttributesKey() {
-    final TextAttributesKey forcedKey = getForcedEditorAttributesKey();
-    if (forcedKey != null) return forcedKey;
-    if (myEditorAttributesKey == null) {
-      return null;
+    if (myEditorAttributesKey != null) {
+      return TextAttributesKey.find(myEditorAttributesKey);
     }
-    return TextAttributesKey.find(myEditorAttributesKey);
+    final String externalName = myToolWrapper.getDefaultEditorAttributes();
+    return externalName == null ? null : TextAttributesKey.find(externalName);
   }
 
-  public @Nullable String getEditorAttributesKeyString() {
-    final String forcedKey = getForcedEditorAttributesKeyString();
-    return forcedKey != null ? forcedKey : myEditorAttributesKey;
+  public @Nullable String getEditorAttributesExternalName() {
+    return myEditorAttributesKey;
   }
 
-  public @Nullable TextAttributesKey getForcedEditorAttributesKey() {
-    final String forcedKey = getForcedEditorAttributesKeyString();
-    if (forcedKey == null) {
-      return null;
-    }
-    return TextAttributesKey.find(forcedKey);
-  }
-
-  public @Nullable String getForcedEditorAttributesKeyString() {
-    return myToolWrapper.getForcedEditorAttributesKey();
-  }
-
-  public void setEditorAttributesKey(@Nullable String textAttributesKey) {
-    if (getForcedEditorAttributesKeyString() != null) return;
+  public void setEditorAttributesExternalName(@Nullable String textAttributesKey) {
     myEditorAttributesKey = textAttributesKey;
   }
 
@@ -140,7 +125,7 @@ public final class ScopeToolState {
   public boolean equalTo(@NotNull ScopeToolState state2) {
     if (isEnabled() != state2.isEnabled()) return false;
     if (getLevel() != state2.getLevel()) return false;
-    if (!Objects.equals(getEditorAttributesKeyString(), state2.getEditorAttributesKeyString())) return false;
+    if (!Objects.equals(getEditorAttributesExternalName(), state2.getEditorAttributesExternalName())) return false;
     InspectionToolWrapper<?, ?> toolWrapper = getTool();
     InspectionToolWrapper<?, ?> toolWrapper2 = state2.getTool();
     if (!toolWrapper.isInitialized() && !toolWrapper2.isInitialized()) return true;
