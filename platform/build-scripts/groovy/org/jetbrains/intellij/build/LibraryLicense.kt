@@ -67,7 +67,7 @@ data class LibraryLicense(
 
   companion object {
     private const val APACHE_LICENSE_URL = "https://www.apache.org/licenses/LICENSE-2.0"
-    private val PREDEFINED_LICENSE_URLS = mapOf<String, String>("Apache 2.0" to APACHE_LICENSE_URL)
+    private val PREDEFINED_LICENSE_URLS = mapOf("Apache 2.0" to APACHE_LICENSE_URL)
 
     @JvmStatic
     val JETBRAINS_OWN = "JetBrains"
@@ -141,7 +141,7 @@ data class LibraryLicense(
     require(license == null) { "No need to specify 'license' for Eclipse Public License" }
     require(licenseUrl?.contains("eclipse.org") != true) { "No need to specify default 'licenseUrl' for Eclipse Public License" }
     return copy(
-      license = "Eclipse Public License $v.0",
+      license = "Eclipse Public License ${v}.0",
       licenseUrl = licenseUrl
                    ?: (if (v == 1) "https://www.eclipse.org/org/documents/epl-v10.html" else "https://www.eclipse.org/legal/epl-2.0")
     )
