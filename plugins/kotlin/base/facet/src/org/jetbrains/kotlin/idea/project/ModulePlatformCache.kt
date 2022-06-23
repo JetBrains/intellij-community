@@ -15,9 +15,9 @@ import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 class ModulePlatformCache(project: Project): FineGrainedEntityCache<Module, TargetPlatform>(project, cleanOnLowMemory = false) {
     @Volatile
@@ -41,7 +41,7 @@ class ModulePlatformCache(project: Project): FineGrainedEntityCache<Module, Targ
     override fun calculate(key: Module): TargetPlatform {
         return KotlinFacetSettingsProvider.getInstance(key.project)?.getInitializedSettings(key)?.targetPlatform
             ?: key.project.platform
-            ?: DefaultIdeTargetPlatformKindProvider.defaultPlatform
+            ?: JvmPlatforms.defaultJvmPlatform
     }
 
     override fun dispose() {

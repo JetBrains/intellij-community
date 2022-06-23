@@ -7,8 +7,8 @@ import org.jetbrains.kotlin.analyzer.NonSourceModuleInfoBase
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.idea.caches.project.NotUnderContentRootModuleInfo as OldNotUnderContentRootModuleInfo
 
@@ -31,7 +31,7 @@ object NotUnderContentRootModuleInfo : OldNotUnderContentRootModuleInfo(), IdeaM
     override fun dependencies(): List<IdeaModuleInfo> = listOf(this)
 
     override val platform: TargetPlatform
-        get() = DefaultIdeTargetPlatformKindProvider.defaultPlatform
+        get() = JvmPlatforms.defaultJvmPlatform
 
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = platform.single().findAnalyzerServices()

@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -70,7 +71,7 @@ internal object ScriptingTargetPlatformDetector : TargetPlatformDetector {
             }
         }
 
-        return DefaultIdeTargetPlatformKindProvider.defaultPlatform
+        return JvmPlatforms.defaultJvmPlatform
     }
 
     private fun getScriptSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): ScriptLanguageSettings {

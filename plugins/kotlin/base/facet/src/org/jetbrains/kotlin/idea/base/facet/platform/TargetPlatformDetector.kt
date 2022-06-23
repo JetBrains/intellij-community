@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.platforms.forcedTargetPlatform
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.project.ModulePlatformCache
-import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtElement
@@ -23,7 +22,7 @@ val KtElement.explicitPlatform: TargetPlatform?
     }
 
 val KtElement.platform: TargetPlatform
-    get() = explicitPlatform ?: DefaultIdeTargetPlatformKindProvider.defaultPlatform
+    get() = explicitPlatform ?: JvmPlatforms.defaultJvmPlatform
 
 // FIXME(dsavvinov): this logic is clearly wrong in MPP environment; review and fix
 val Project.platform: TargetPlatform?
@@ -75,5 +74,5 @@ private fun calculateTargetPlatform(file: KtFile): TargetPlatform? {
         }
     }
 
-    return DefaultIdeTargetPlatformKindProvider.Companion.defaultPlatform
+    return JvmPlatforms.defaultJvmPlatform
 }

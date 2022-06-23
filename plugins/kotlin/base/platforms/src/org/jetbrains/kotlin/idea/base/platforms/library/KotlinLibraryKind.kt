@@ -8,10 +8,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.platforms.library.KnownLibraryKindForIndex
 import org.jetbrains.kotlin.idea.base.platforms.library.getLibraryKindForJar
 import org.jetbrains.kotlin.platform.CommonPlatforms
-import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.js.JsPlatforms
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 
 sealed interface KotlinLibraryKind {
@@ -52,7 +52,7 @@ object KotlinNativeLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("
 val PersistentLibraryKind<*>?.platform: TargetPlatform
     get() = when (this) {
         is KotlinLibraryKind -> this.compilerPlatform
-        else -> DefaultIdeTargetPlatformKindProvider.defaultPlatform
+        else -> JvmPlatforms.defaultJvmPlatform
     }
 
 fun detectLibraryKind(roots: Array<VirtualFile>): PersistentLibraryKind<*>? {
@@ -69,7 +69,7 @@ fun detectLibraryKind(roots: Array<VirtualFile>): PersistentLibraryKind<*>? {
     }
 
     val matchingPlatformKind = IdePlatformKindProjectStructure.getLibraryPlatformKind(jarFile)
-        ?: DefaultIdeTargetPlatformKindProvider.defaultPlatform.idePlatformKind
+        ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind
 
     return IdePlatformKindProjectStructure.getLibraryKind(matchingPlatformKind)
 }

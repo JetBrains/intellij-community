@@ -29,8 +29,8 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgu
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsTracker
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.util.merge
 import java.util.*
 
@@ -101,7 +101,7 @@ class LanguageVersionSettingsProvider(private val project: Project) {
         val apiVersion = ApiVersion.createByLanguageVersion(languageVersionForApiVersion)
 
         val additionalSettings = KotlinCompilerSettings.getInstance(project).settings
-        val additionalArguments = DefaultIdeTargetPlatformKindProvider.defaultPlatform
+        val additionalArguments = JvmPlatforms.defaultJvmPlatform
             .createArguments { parseCommandLineArguments(additionalSettings.additionalArgumentsAsList, this) }
 
         val commonFacetSettings = if (useCommonFacetSettings) collectCommonFacetSettings() else null
