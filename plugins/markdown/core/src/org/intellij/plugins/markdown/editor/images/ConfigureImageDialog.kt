@@ -5,7 +5,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -33,7 +35,6 @@ class ConfigureImageDialog(
   init {
     super.init()
     this.title = title
-    isResizable = false
   }
 
   fun show(onOk: ((MarkdownImageData) -> Unit)?) {
@@ -42,42 +43,50 @@ class ConfigureImageDialog(
   }
 
   override fun createCenterPanel(): JComponent = panel {
-    fullRow {
-      label(MarkdownBundle.message("markdown.configure.image.dialog.path.label")).sizeGroup(ALWAYS_VISIBLE_FIRST_COLUMN_LABELS_SIZE_GROUP)
-      textFieldWithBrowseButton(
-        ::pathFieldText,
-        MarkdownBundle.message("markdown.configure.image.dialog.browse.image.title"),
-        project,
-        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-      ).focused()
+    row(MarkdownBundle.message("markdown.configure.image.dialog.path.label")) {
+      textFieldWithBrowseButton(MarkdownBundle.message("markdown.configure.image.dialog.browse.image.title"),
+                                project,
+                                FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      ).horizontalAlign(HorizontalAlign.FILL)
+        .bindText(::pathFieldText)
+        .focused()
     }
-    fullRow {
+    row {
       val widthLabel = label(MarkdownBundle.message("markdown.configure.image.dialog.width.label"))
-        .sizeGroup(ALWAYS_VISIBLE_FIRST_COLUMN_LABELS_SIZE_GROUP)
-      val widthField = textField(::widthFieldText, 8)
+      val widthField = textField()
+        .columns(8)
+        .bindText(::widthFieldText)
       val heightLabel = label(MarkdownBundle.message("markdown.configure.image.dialog.height.label"))
-      val heightField = textField(::heightFieldText, 8)
-      checkBox(
-        MarkdownBundle.message("markdown.configure.image.dialog.convert.to.html.label"),
-        ::shouldConvertToHtml
-      ).withLargeLeftGap().apply {
-        widthLabel.enableIf(selected)
-        widthField.enableIf(selected)
-        heightLabel.enableIf(selected)
-        heightField.enableIf(selected)
+        .gap(RightGap.SMALL)
+      val heightField = textField()
+        .columns(8)
+        .bindText(::heightFieldText)
+      checkBox(MarkdownBundle.message("markdown.configure.image.dialog.convert.to.html.label"))
+        .bindSelected(::shouldConvertToHtml)
+        .apply {
+          widthLabel.enabledIf(selected)
+          widthField.enabledIf(selected)
+          heightLabel.enabledIf(selected)
+          heightField.enabledIf(selected)
+        }
+    }.layout(RowLayout.LABEL_ALIGNED)
+    collapsibleGroup(MarkdownBundle.message("markdown.configure.image.dialog.screen.reader.text.panel.title")) {
+      row(MarkdownBundle.message("markdown.configure.image.dialog.title.label")) {
+        textField()
+          .horizontalAlign(HorizontalAlign.FILL)
+          .bindText(::titleFieldText)
       }
-    }
-    hideableRow(MarkdownBundle.message("markdown.configure.image.dialog.screen.reader.text.panel.title")) {
-      fullRow {
-        label(MarkdownBundle.message("markdown.configure.image.dialog.title.label")).sizeGroup(HIDEABLE_FIRST_COLUMN_LABELS_SIZE_GROUP)
-        textField(::titleFieldText)
-      }
-      fullRow {
+      row {
         label(MarkdownBundle.message("markdown.configure.image.dialog.description.label"))
-          .sizeGroup(HIDEABLE_FIRST_COLUMN_LABELS_SIZE_GROUP)
-        textArea(::descriptionFieldText, rows = 4)
-      }
-    }
+          .verticalAlign(VerticalAlign.TOP)
+        textArea()
+          .horizontalAlign(HorizontalAlign.FILL)
+          .verticalAlign(VerticalAlign.FILL)
+          .bindText(::descriptionFieldText)
+          .rows(4)
+      }.layout(RowLayout.LABEL_ALIGNED)
+        .resizableRow()
+    }.resizableRow()
   }
 
   override fun doOKAction() {
@@ -100,8 +109,5 @@ class ConfigureImageDialog(
 
   companion object {
     private const val DIMENSION_KEY: @NonNls String = "Markdown.Configure.Image.Dialog.DimensionServiceKey"
-
-    private const val ALWAYS_VISIBLE_FIRST_COLUMN_LABELS_SIZE_GROUP = "ALWAYS_VISIBLE_FIRST_COLUMN_LABELS_SIZE_GROUP"
-    private const val HIDEABLE_FIRST_COLUMN_LABELS_SIZE_GROUP = "HIDEABLE_FIRST_COLUMN_LABELS_SIZE_GROUP"
   }
 }

@@ -396,7 +396,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     textArea.font = JBFont.regular()
     textArea.emptyText.setFont(JBFont.regular())
     textArea.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
-    return cell(textArea, JBScrollPane(textArea))
+    return scrollCell(textArea)
   }
 
   override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>?): Cell<ComboBox<T>> {

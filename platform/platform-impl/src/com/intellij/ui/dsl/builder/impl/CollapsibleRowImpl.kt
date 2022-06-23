@@ -12,6 +12,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.border.EmptyBorder
 
@@ -70,13 +71,13 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
       row {
         cell(collapsibleTitledSeparator).horizontalAlign(HorizontalAlign.FILL)
       }
-      expandablePanel = panel {
-        init()
-      }
+      row {
+        expandablePanel = panel(init).verticalAlign(VerticalAlign.FILL)
+      }.resizableRow()
       collapsibleTitledSeparator.onAction {
         expandablePanel.visible(it)
       }
-    }
+    }.verticalAlign(VerticalAlign.FILL)
     applyUiSwitcher(expandablePanel as PanelImpl, CollapsibleRowUiSwitcher(this))
   }
 

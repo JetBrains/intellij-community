@@ -90,6 +90,7 @@ internal fun prepareVisualPaddings(component: JComponent): Gaps {
     customVisualPaddings = when (component) {
       is RawCommandLineEditor -> component.editorField.insets.toGaps()
       is SearchTextField -> component.textEditor.insets.toGaps()
+      is JScrollPane -> Gaps.EMPTY
       else -> null
     }
   }
