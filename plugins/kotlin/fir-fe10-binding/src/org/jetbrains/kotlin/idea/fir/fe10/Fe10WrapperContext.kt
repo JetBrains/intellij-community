@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.fir.fe10.binding.Fe10BindingSpecialConstructionsWrappers
 import org.jetbrains.kotlin.idea.fir.fe10.binding.KtSymbolBasedBindingContext
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -34,6 +35,7 @@ interface Fe10WrapperContext {
     val ktAnalysisSessionFacade: KtAnalysisSessionFe10BindingHolder
     val moduleDescriptor: ModuleDescriptor
     val bindingContext: BindingContext
+    val fe10BindingSpecialConstructionFunctions: Fe10BindingSpecialConstructionsWrappers
 
     // This property used to disable some logic used locally for debug purposes
     val enableLogging: Boolean get() = false
@@ -99,6 +101,8 @@ class Fe10WrapperContextImpl(
         get() = incorrectImplementation { DefaultBuiltIns.Instance }
 
     override val bindingContext: BindingContext = KtSymbolBasedBindingContext(this)
+
+    override val fe10BindingSpecialConstructionFunctions = Fe10BindingSpecialConstructionsWrappers(this)
 
     override fun noImplementation(additionalInfo: String): Nothing =
         error("This method should not be called for wrappers. $additionalInfo")

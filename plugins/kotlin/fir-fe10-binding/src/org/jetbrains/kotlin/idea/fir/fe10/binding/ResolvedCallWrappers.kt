@@ -105,7 +105,7 @@ internal class FunctionFe10WrapperResolvedCall(psiCall: Call, call: KtFunctionCa
             ktParameterToResolvedValueArgument.getOrPut(parameter) { arrayListOf() }.add(argument)
         }
 
-
+        // linkedMap is important -- used in getValueArgumentsByIndex
         val arguments = linkedMapOf<ValueParameterDescriptor, ResolvedValueArgument>()
         for ((parameterIndex, parameter) in ktFunctionSymbol.valueParameters.withIndex()) {
             val argumentsForThisParameter: List<ValueArgument> = ktParameterToResolvedValueArgument[parameter] ?: emptyList()
@@ -114,7 +114,7 @@ internal class FunctionFe10WrapperResolvedCall(psiCall: Call, call: KtFunctionCa
                 1 -> ExpressionValueArgument(argumentsForThisParameter.single())
                 else -> VarargValueArgument(argumentsForThisParameter)
             }
-            arguments[candidateDescriptor.valueParameters[parameterIndex]] = resolvedValueArgument
+            arguments[resultingDescriptor.valueParameters[parameterIndex]] = resolvedValueArgument
         }
         arguments
     }
@@ -137,7 +137,7 @@ internal class FunctionFe10WrapperResolvedCall(psiCall: Call, call: KtFunctionCa
         val parameterIndex = ktFunctionSymbol.valueParameters.indexOf(ktParameter)
         if (parameterIndex == -1) context.errorHandling("$ktParameter not found in $ktFunctionSymbol")
 
-        val parameterDescriptor = candidateDescriptor.valueParameters.getOrNull(parameterIndex) ?: context.errorHandling()
+        val parameterDescriptor = resultingDescriptor.valueParameters.getOrNull(parameterIndex) ?: context.errorHandling()
         val argumentMatch = ArgumentMatchImpl(parameterDescriptor)
         context.incorrectImplementation {
             // I'm not sure, when we should have not success status

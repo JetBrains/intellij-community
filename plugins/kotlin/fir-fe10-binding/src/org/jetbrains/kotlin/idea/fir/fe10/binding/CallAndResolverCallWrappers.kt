@@ -11,12 +11,14 @@ import org.jetbrains.kotlin.idea.fir.fe10.toDeclarationDescriptor
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
 import org.jetbrains.kotlin.idea.fir.fe10.withAnalysisSession
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.CallMaker
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.Receiver
+import org.jetbrains.kotlin.types.expressions.ControlStructureTypingUtils
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
@@ -58,7 +60,7 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
             return CallMaker.makeCall(receiver, callOperationNode, parent)
         }
 
-        if (element is KtSimpleNameExpression) {
+        if (element is KtSimpleNameExpression && element !is KtOperationReferenceExpression) {
             if (parent is KtQualifiedExpression) {
                 val receiver = parent.receiverExpression.toExpressionReceiverValue(context)
                 return CallMaker.makePropertyCall(receiver, parent.operationTokenNode, element)
@@ -73,6 +75,10 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
                 return CallMaker.makeCall(receiver, parent)
             }
             is KtUnaryExpression -> {
+                if (element is KtOperationReferenceExpression && element.getReferencedNameElementType() == KtTokens.EXCLEXCL) {
+                    return ControlStructureTypingUtils.createCallForSpecialConstruction(parent, element, listOf(parent.baseExpression))
+                }
+
                 val receiver = parent.baseExpression?.toExpressionReceiverValue(context) ?: context.errorHandling()
                 return CallMaker.makeCall(receiver, parent)
             }
@@ -118,6 +124,16 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
             is KtVariableAccessCall -> {
                 return VariableFe10WrapperResolvedCall(call, ktCall, diagnostic, context)
             }
+            is KtCheckNotNullCall -> {
+                val kotlinType = context.withAnalysisSession { ktCall.baseExpression.getKtType() }?.toKotlinType(context)
+                return Fe10BindingSpecialConstructionResolvedCall(
+                    call,
+                    kotlinType,
+                    context.fe10BindingSpecialConstructionFunctions.EXCL_EXCL,
+                    context
+                )
+            }
+
             else -> context.implementationPostponed(ktCall.javaClass.canonicalName)
         }
     }
