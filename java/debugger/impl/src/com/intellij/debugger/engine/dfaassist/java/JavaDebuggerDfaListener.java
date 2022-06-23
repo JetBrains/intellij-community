@@ -174,6 +174,16 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
         return statement.getTextRange();
       }
       if (parent instanceof PsiCodeBlock) {
+        if (statement instanceof PsiSwitchLabeledRuleStatement) {
+          PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)statement).getEnclosingSwitchBlock();
+          if (!allUnreachable.contains(block)) {
+            PsiStatement body = ((PsiSwitchLabeledRuleStatement)statement).getBody();
+            if (body != null) {
+              return body.getTextRange();
+            }
+          }
+          return null;
+        }
         PsiStatement prevStatement = ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement), PsiStatement.class);
         if (prevStatement instanceof PsiSwitchLabelStatement) {
           PsiSwitchBlock block = ((PsiSwitchLabelStatement)prevStatement).getEnclosingSwitchBlock();
