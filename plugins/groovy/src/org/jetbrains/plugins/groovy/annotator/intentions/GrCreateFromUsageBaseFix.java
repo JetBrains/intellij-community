@@ -25,6 +25,7 @@ import java.util.List;
  * @author Max Medvedev
  */
 public abstract class GrCreateFromUsageBaseFix extends Intention {
+  @SafeFieldForPreview // all inheritors handle preview
   protected final SmartPsiElementPointer<GrReferenceExpression> myRefExpression;
 
   protected GrCreateFromUsageBaseFix(@NotNull GrReferenceExpression refExpression) {
