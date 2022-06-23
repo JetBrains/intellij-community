@@ -24,12 +24,14 @@
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" exported="" />
     <orderEntry type="module" module-name="kotlin.base.resources" exported="" />
     <orderEntry type="module" module-name="kotlin.base.statistics" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.obsolete-compat" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.plugin" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis-api-providers" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.highlighting" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.obsolete-compat" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" exported="" />
@@ -78,6 +80,7 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" exported="" />
+    <orderEntry type="module" module-name="kotlin.project-wizard-compose" exported="" />
     <orderEntry type="module" module-name="kotlin.repl" exported="" />
     <orderEntry type="module" module-name="kotlin.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" exported="" />
