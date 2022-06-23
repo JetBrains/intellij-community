@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.RawCommandLineEditor
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.UiDslException
@@ -45,6 +46,7 @@ internal enum class DslComponentPropertyInternal {
  */
 private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
   RawCommandLineEditor::class,
+  SearchTextField::class,
   SegmentedButtonComponent::class,
   SegmentedButtonToolbar::class,
   TextFieldWithBrowseButton::class,
@@ -85,8 +87,10 @@ internal fun prepareVisualPaddings(component: JComponent): Gaps {
 
   if (customVisualPaddings == null) {
     // Patch visual paddings for known components
-    if (component is RawCommandLineEditor) {
-      customVisualPaddings = component.editorField.insets.toGaps()
+    customVisualPaddings = when (component) {
+      is RawCommandLineEditor -> component.editorField.insets.toGaps()
+      is SearchTextField -> component.textEditor.insets.toGaps()
+      else -> null
     }
   }
 
