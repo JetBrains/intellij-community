@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.html.embedding
 
+import com.intellij.lang.HtmlScriptContentProvider
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageHtmlScriptContentProvider
 import com.intellij.lang.LanguageUtil
@@ -17,6 +18,9 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.TestOnly
 import java.util.stream.Stream
 
+/**
+ * @see HtmlScriptContentProvider
+ */
 interface HtmlEmbeddedContentSupport {
   @JvmDefault
   fun isEnabled(lexer: BaseHtmlLexer): Boolean = true
@@ -51,7 +55,7 @@ interface HtmlEmbeddedContentSupport {
       if (LanguageUtil.isInjectableLanguage(language))
         LanguageHtmlScriptContentProvider.getScriptContentProvider(language)
           ?.let { provider ->
-            object: HtmlEmbedmentInfo {
+            object: HtmlEmbedmentInfo { // weird debug name
               override fun getElementType(): IElementType?  = provider.scriptElementType
               override fun createHighlightingLexer(): Lexer?  = provider.highlightingLexer
             }
