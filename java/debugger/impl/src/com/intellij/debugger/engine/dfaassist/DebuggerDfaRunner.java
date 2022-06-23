@@ -78,8 +78,16 @@ public class DebuggerDfaRunner {
     // computeHints() could be called several times in case if ReadAction is cancelled
     // So we need to copy the mutable myStartingState. Otherwise, restarted analysis will start from the wrong memory state
     DfaMemoryState memoryState = myStartingState.getMemoryState().createCopy();
+    int startingIndex = myStartingState.getInstruction().getIndex();
     DfaInstructionState startingState = new DfaInstructionState(myStartingState.getInstruction(), memoryState);
-    StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(myFlow, interceptor, true);
+    StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(myFlow, interceptor, true) {
+      @Override
+      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
+        DfaInstructionState[] states = super.acceptInstruction(instructionState);
+        return StreamEx.of(states).filter(state -> state.getInstruction().getIndex() > startingIndex)
+          .toArray(DfaInstructionState.EMPTY_ARRAY);
+      }
+    };
     if (interpreter.interpret(List.of(startingState)) != RunnerResult.OK) return DfaResult.EMPTY;
     return new DfaResult(myBody.getContainingFile(), interceptor.computeHints(),
                          interceptor.unreachableSegments(myAnchor, getAllAnchors()));

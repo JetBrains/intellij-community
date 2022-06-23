@@ -84,9 +84,6 @@ public class JavaDfaAssistProvider implements DfaAssistProvider {
 
   @Override
   public @Nullable PsiElement getCodeBlock(@NotNull PsiElement anchor) {
-    if (anchor instanceof PsiWhileStatement || anchor instanceof PsiDoWhileStatement) {
-      return anchor;
-    }
     if (anchor instanceof PsiSwitchLabelStatementBase) {
       return null; // unsupported yet
     }
@@ -99,17 +96,10 @@ public class JavaDfaAssistProvider implements DfaAssistProvider {
             // We cannot properly restore context if we started from finally, so let's analyze just finally block
             parent instanceof PsiTryStatement && ((PsiTryStatement)parent).getFinallyBlock() == e ||
             parent instanceof PsiBlockStatement &&
-            (parent.getParent() instanceof PsiLoopStatement ||
-             parent.getParent() instanceof PsiSwitchLabeledRuleStatement &&
+            (parent.getParent() instanceof PsiSwitchLabeledRuleStatement &&
              ((PsiSwitchLabeledRuleStatement)parent.getParent()).getEnclosingSwitchBlock() instanceof PsiSwitchExpression)) {
-          if (parent.getParent() instanceof PsiDoWhileStatement) {
-            return parent.getParent();
-          }
           return e;
         }
-      }
-      if (e instanceof PsiDoWhileStatement) {
-        return e;
       }
     }
     return null;

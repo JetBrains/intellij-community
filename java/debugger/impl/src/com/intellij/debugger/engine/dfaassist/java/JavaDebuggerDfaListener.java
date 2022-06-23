@@ -145,59 +145,67 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
     unreachable.removeAll(myReachableExpressions);
     Set<TextRange> result = new HashSet<>();
     for (PsiExpression expression : unreachable) {
-      PsiElement parent = expression.getParent();
-      if (parent instanceof PsiConditionalExpression && myReachableExpressions.contains(parent)) {
-        result.add(expression.getTextRange());
-      }
-      if (parent instanceof PsiPolyadicExpression) {
-        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
-        if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {
-          PsiExpression prev = PsiTreeUtil.getPrevSiblingOfType(expression, PsiExpression.class);
-          if (prev != null && myReachableExpressions.contains(prev)) {
-            PsiJavaToken token = ((PsiPolyadicExpression)parent).getTokenBeforeOperand(expression);
-            if (token != null) {
-              result.add(TextRange.create(token.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset()));
-            }
-          }
-        }
-      }
-      PsiStatement statement = findStatement(expression);
-      if (statement != null && !PsiTreeUtil.isAncestor(statement, startAnchor, false)) {
-        PsiElement statementParent = statement.getParent();
-        PsiExpression anchor = getControlFlowStatementAnchor(statementParent);
-        if (anchor != null &&
-            (PsiTreeUtil.isAncestor(statement, startAnchor, true) ||
-             myReachableExpressions.contains(anchor))) {
-          result.add(statement.getTextRange());
-        }
-        if (statementParent instanceof PsiCodeBlock) {
-          PsiStatement prevStatement = ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement), PsiStatement.class);
-          if (prevStatement instanceof PsiSwitchLabelStatement) {
-            PsiSwitchBlock block = ((PsiSwitchLabelStatement)prevStatement).getEnclosingSwitchBlock();
-            if (block != null && (isAnchorBefore(startAnchor, statement) || myReachableExpressions.contains(block.getExpression()))) {
-              PsiElement last = ((PsiCodeBlock)statementParent).getRBrace();
-              PsiSwitchLabelStatement nextLabel = PsiTreeUtil.getNextSiblingOfType(statement, PsiSwitchLabelStatement.class);
-              if (nextLabel != null) {
-                last = nextLabel;
-              }
-              PsiElement lastStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(last);
-              if (lastStatement != null) {
-                result.add(TextRange.create(statement.getTextRange().getStartOffset(), lastStatement.getTextRange().getEndOffset()));
-              }
-            }
-          }
-          else {
-            PsiElement lastStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(((PsiCodeBlock)statementParent).getRBrace());
-            if (lastStatement != null && prevStatement != null &&
-                (PsiTreeUtil.isAncestor(prevStatement, startAnchor, false) ||
-                 ContainerUtil.exists(myReachableExpressions, ex -> PsiTreeUtil.isAncestor(prevStatement, ex, true)))) {
-              result.add(TextRange.create(statement.getTextRange().getStartOffset(), lastStatement.getTextRange().getEndOffset()));
-            }
+      ContainerUtil.addIfNotNull(result, createRange(startAnchor, expression));
+    }
+    return result;
+  }
+
+  private @Nullable TextRange createRange(@NotNull PsiElement startAnchor, @NotNull PsiExpression expression) {
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiConditionalExpression && myReachableExpressions.contains(parent)) {
+      return expression.getTextRange();
+    }
+    if (parent instanceof PsiPolyadicExpression) {
+      IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+      if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {
+        PsiExpression prev = PsiTreeUtil.getPrevSiblingOfType(expression, PsiExpression.class);
+        if (prev != null && myReachableExpressions.contains(prev)) {
+          PsiJavaToken token = ((PsiPolyadicExpression)parent).getTokenBeforeOperand(expression);
+          if (token != null) {
+            return TextRange.create(token.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset());
           }
         }
       }
     }
-    return result;
+    PsiStatement statement = findStatement(expression);
+    if (statement != null && !PsiTreeUtil.isAncestor(statement, startAnchor, false)) {
+      PsiElement statementParent = statement.getParent();
+      PsiExpression anchor = getControlFlowStatementAnchor(statementParent);
+      if (anchor != null &&
+          (PsiTreeUtil.isAncestor(statement, startAnchor, true) ||
+           myReachableExpressions.contains(anchor))) {
+        return statement.getTextRange();
+      }
+      if (statementParent instanceof PsiCodeBlock) {
+        PsiStatement prevStatement = ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement), PsiStatement.class);
+        if (prevStatement instanceof PsiSwitchLabelStatement) {
+          PsiSwitchBlock block = ((PsiSwitchLabelStatement)prevStatement).getEnclosingSwitchBlock();
+          if (block != null && (isAnchorBefore(startAnchor, statement) || myReachableExpressions.contains(block.getExpression()))) {
+            PsiElement last = ((PsiCodeBlock)statementParent).getRBrace();
+            PsiSwitchLabelStatement nextLabel = PsiTreeUtil.getNextSiblingOfType(statement, PsiSwitchLabelStatement.class);
+            if (nextLabel != null) {
+              last = nextLabel;
+            }
+            PsiElement lastStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(last);
+            if (lastStatement != null) {
+              return TextRange.create(statement.getTextRange().getStartOffset(), lastStatement.getTextRange().getEndOffset());
+            }
+          }
+          return null;
+        }
+        PsiElement lastStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(((PsiCodeBlock)statementParent).getRBrace());
+        if (lastStatement != null && prevStatement != null) {
+          if (PsiTreeUtil.isAncestor(prevStatement, startAnchor, false)) {
+            if (prevStatement instanceof PsiLoopStatement) return null;
+            return TextRange.create(statement.getTextRange().getStartOffset(), lastStatement.getTextRange().getEndOffset());
+          }
+          if (ContainerUtil.exists(myReachableExpressions, ex -> PsiTreeUtil.isAncestor(prevStatement, ex, true))) {
+            return TextRange.create(statement.getTextRange().getStartOffset(), lastStatement.getTextRange().getEndOffset());
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private static boolean isAnchorBefore(@NotNull PsiElement anchor, @NotNull PsiStatement statement) {
