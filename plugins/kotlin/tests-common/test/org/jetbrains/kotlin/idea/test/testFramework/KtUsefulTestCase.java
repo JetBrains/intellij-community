@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test.testFramework;
 
@@ -429,7 +429,7 @@ public abstract class KtUsefulTestCase extends TestCase {
         if (!shouldRunTest()) return;
 
         if (runInDispatchThread()) {
-            TestRunnerUtil.replaceIdeEventQueueSafely();
+            UITestUtil.replaceIdeEventQueueSafely();
             EdtTestUtil.runInEdtAndWait(this::defaultRunBare);
         }
         else {

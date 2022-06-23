@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -100,7 +100,7 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
                                ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
                              }
                              else {
-                               TestApplicationManagerKt.disposeApplicationAndCheckForLeaks();
+                               TestApplicationManager.disposeApplicationAndCheckForLeaks();
                              }
                            },
                            () -> {

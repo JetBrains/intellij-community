@@ -11,6 +11,7 @@ import com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
+import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.ref.GCWatcher
@@ -20,7 +21,6 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
-import java.util.*
 
 class EditorHistoryManagerTest {
   companion object {
@@ -71,7 +71,7 @@ class EditorHistoryManagerTest {
     openProjectPerformTaskCloseProject(dir) { project ->
       val newEditor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, virtualFile), false)!!
       EditorTestUtil.waitForLoading(newEditor)
-      assertThat(Arrays.toString(newEditor.foldingModel.allFoldRegions)).isEqualTo("[FoldRegion +(15:16), placeholder='.']")
+      assertThat(newEditor.foldingModel.allFoldRegions.contentToString()).isEqualTo("[FoldRegion +(15:16), placeholder='.']")
     }
   }
 

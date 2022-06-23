@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -68,7 +68,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
       },
       () -> {
         if (project != null) {
-          TestApplicationManagerKt.waitForProjectLeakingThreads(project);
+          TestApplicationManager.waitForProjectLeakingThreads(project);
         }
       },
       () -> super.tearDown(), // call all disposables' dispose() while the project is still open
@@ -76,7 +76,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
         myProject = null;
         myModule = null;
         if (project != null) {
-          TestApplicationManagerKt.tearDownProjectAndApp(project);
+          TestApplicationManager.tearDownProjectAndApp(project);
         }
       },
       () -> LightPlatformTestCase.checkEditorsReleased(),

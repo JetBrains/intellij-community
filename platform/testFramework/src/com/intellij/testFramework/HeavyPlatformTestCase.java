@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
@@ -460,7 +460,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = myProject;
     if (project != null && !project.isDisposed()) {
-      TestApplicationManagerKt.waitForProjectLeakingThreads(project);
+      TestApplicationManager.waitForProjectLeakingThreads(project);
     }
 
     // don't use method references here to make stack trace reading easier
@@ -469,7 +469,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       () -> disposeRootDisposable(),
       () -> {
         if (project != null) {
-          TestApplicationManagerKt.tearDownProjectAndApp(project);
+          TestApplicationManager.tearDownProjectAndApp(project);
         }
         // must be set to null only after dispose (maybe used by tests during dispose)
         myProject = null;
@@ -579,7 +579,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
+    UITestUtil.replaceIdeEventQueueSafely();
     try {
       wrapTestRunnable(() -> runBareImpl(testRunnable)).run();
     }

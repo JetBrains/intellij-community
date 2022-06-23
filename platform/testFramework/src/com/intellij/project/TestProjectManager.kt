@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.project
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -15,7 +15,7 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerExImpl
 import com.intellij.project.TestProjectManager.Companion.getCreationPlace
 import com.intellij.testFramework.LeakHunter
-import com.intellij.testFramework.publishHeapDump
+import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
 import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
 import org.jetbrains.annotations.ApiStatus

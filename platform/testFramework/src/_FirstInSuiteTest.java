@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.TestAll;
@@ -6,8 +6,8 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.UITestUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import junit.framework.TestCase;
@@ -58,7 +58,7 @@ public class _FirstInSuiteTest extends TestCase {
     // in tests EDT inexplicably shuts down sometimes during the first access,
     // which leads to nasty problems in ApplicationImpl which assumes there is only one EDT.
     // so we try to forcibly terminate EDT here to urge JVM to re-spawn new shiny permanent EDT-1
-    TestRunnerUtil.replaceIdeEventQueueSafely();
+    UITestUtil.replaceIdeEventQueueSafely();
     SwingUtilities.invokeAndWait(() -> System.out.println("EDT is " + Thread.currentThread()));
 
     // force platform JNA load

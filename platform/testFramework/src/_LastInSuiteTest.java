@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
@@ -8,7 +8,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.TestApplicationManagerKt;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.tests.DynamicExtensionPointsTester;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
@@ -66,7 +66,7 @@ public class _LastInSuiteTest extends TestCase {
       return;
     }
 
-    TestApplicationManagerKt.disposeApplicationAndCheckForLeaks();
+    TestApplicationManager.disposeApplicationAndCheckForLeaks();
   }
 
   // should be run as late as possible to give Languages chance to instantiate as many of them as possible

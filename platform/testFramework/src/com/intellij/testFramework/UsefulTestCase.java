@@ -535,7 +535,7 @@ public abstract class UsefulTestCase extends TestCase {
     final ThrowableRunnable<Throwable> wrappedRunnable = wrapTestRunnable(testRunnable);
 
     if (runInDispatchThread()) {
-      TestApplicationManagerKt.replaceIdeEventQueueSafely();
+      UITestUtil.replaceIdeEventQueueSafely();
       EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
     }
     else {

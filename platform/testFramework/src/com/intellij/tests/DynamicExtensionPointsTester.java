@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import com.intellij.ide.impl.ProjectUtil;
@@ -14,7 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.TestApplicationManagerKt;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
@@ -66,7 +66,7 @@ public class DynamicExtensionPointsTester {
     System.gc();
     //noinspection CallToSystemGC
     System.gc();
-    String heapDump = TestApplicationManagerKt.publishHeapDump("dynamicExtension");
+    String heapDump = TestApplicationManager.publishHeapDump("dynamicExtension");
 
     AtomicBoolean failed = new AtomicBoolean(false);
     extensionPointToNonPlatformExtensions.forEach((ep, references) -> {
