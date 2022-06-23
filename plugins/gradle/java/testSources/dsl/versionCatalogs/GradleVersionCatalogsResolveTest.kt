@@ -79,7 +79,29 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
     test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
       testGotoDefinition("libs3.foo.bar.ba<caret>z") {
         assertInstanceOf(GroovyPsiElement::class.java, it)
-        assertTrue(it.parentOfType<GrMethodCall>(true)!!.resolveMethod()!!.name == "library")
+        assertTrue(it.parentOfType<GrMethodCall>(true)!!.argumentList.expressionArguments[0].text == "\"foo.bar.baz\"")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNavigationToLibraryInSettings2(gradleVersion: GradleVersion) {
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+      testGotoDefinition("libs3.foo.nn.m<caret>m") {
+        assertInstanceOf(GroovyPsiElement::class.java, it)
+        assertTrue(it.parentOfType<GrMethodCall>(true)!!.argumentList.expressionArguments[0].text == "\"foo-nn-mm\"")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNavigationWithCapitalLetters(gradleVersion: GradleVersion) {
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+      testGotoDefinition("libs2.getCheck().getCapital().getLe<caret>tter()") {
+        assertInstanceOf(TomlKeyValue::class.java, it)
+        assertTrue((it as TomlKeyValue).key.text == "check-Capital-Letter")
       }
     }
   }
@@ -98,6 +120,7 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
                     }
                     libs3 {
                         library("foo.bar.baz", "org.apache.groovy:groovy:4.0.0")
+                        library("foo-nn-mm", "org.apache.groovy:groovy:4.0.0")
                     }
                 }
             }
@@ -123,6 +146,7 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
         withFile("gradle/my.toml", /* language=TOML */ """
       [libraries]
       aa-bb-cc = { module = "org.apache.groovy:groovy", version = "4.0.0" }
+      check-Capital-Letter = { module = "org.apache.groovy:groovy", version = "4.0.0" }
       """.trimIndent())
       }
   }
