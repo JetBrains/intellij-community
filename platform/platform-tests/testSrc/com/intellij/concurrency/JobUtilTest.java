@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,6 +35,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
@@ -55,6 +57,7 @@ import java.util.stream.IntStream;
 import static com.intellij.util.TestTimeOut.setTimeout;
 
 public class JobUtilTest extends LightPlatformTestCase {
+  private static final Logger LOG = Logger.getInstance(JobUtilTest.class);
   private static final AtomicInteger COUNT = new AtomicInteger();
   private TestTimeOut t;
 
@@ -63,6 +66,8 @@ public class JobUtilTest extends LightPlatformTestCase {
     super.setUp();
     COUNT.set(0);
     t = setTimeout(2, TimeUnit.MINUTES);
+    int parallelism = JobSchedulerImpl.getJobPoolParallelism();
+    Assume.assumeTrue("Too low parallelism: " + parallelism + ", I give up", parallelism >= 4);
   }
 
   public void testUnbalancedTaskJobUtilPerformance() {
@@ -75,16 +80,22 @@ public class JobUtilTest extends LightPlatformTestCase {
     }
     assertEquals(59950, sum);
 
-    long start = System.currentTimeMillis();
-    boolean b = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(things, new ProgressIndicatorBase(), o -> {
-      busySleepAndIncrement(o);
+    long elapsed = TimeoutUtil.measureExecutionTime(() -> assertTrue(JobLauncher.getInstance().invokeConcurrentlyUnderProgress(things, new ProgressIndicatorBase(), o -> {
+      if (o <= 1) {
+        busySleepAndIncrement(o);
+      }
+      else {
+        longSleep(o);
+      }
       return true;
-    });
-    assertTrue(b);
-    long elapsed = System.currentTimeMillis() - start;
+    })));
     long expected = sum / JobSchedulerImpl.getJobPoolParallelism();
     String message = "Elapsed: " + elapsed + "; expected: " + expected + "; parallelism=" + JobSchedulerImpl.getJobPoolParallelism() + "; current cores=" + Runtime.getRuntime().availableProcessors();
     assertTrue(message, elapsed <= 2 * expected);
+  }
+
+  private static void longSleep(int o) {
+    busySleepAndIncrement(o);
   }
 
   private static int busySleepAndIncrement(int ms) {
@@ -229,7 +240,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     COUNT.set(0);
     assertTrue(ex.getMessage().contains("myMsg"));
     List<Object> objects = Collections.nCopies(100_000, null);
-    assertThrows(ex.getClass(), "myMsg", () ->
+    UsefulTestCase.assertThrows(ex.getClass(), "myMsg", () ->
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, __ -> {
         if (COUNT.incrementAndGet() == 10_000) {
           LOG.debug("PCE");
@@ -246,7 +257,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testIndicatorCancelMustEnsuePCE() {
     ProgressIndicator progress = new DaemonProgressIndicator();
-    assertThrows(ProcessCanceledException.class, () ->
+    UsefulTestCase.assertThrows(ProcessCanceledException.class, () ->
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(100_000, null), progress, __ -> {
         if (COUNT.incrementAndGet() == 10_000) {
           progress.cancel();
@@ -280,7 +291,7 @@ public class JobUtilTest extends LightPlatformTestCase {
       COUNT.set(0);
       boolean[] success = new boolean[1];
       logElapsed(()->
-        assertThrows(MyException.class, "myMsg", () ->
+        UsefulTestCase.assertThrows(MyException.class, "myMsg", () ->
           success[0] = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, ind -> {
             boolean nestedSuccess = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, ___ -> {
               if (busySleepAndIncrement(1) == 1000) {
@@ -471,7 +482,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     });
   }
 
-  public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinished() throws Exception {
+  public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinishedStress() throws Exception {
     Random random = new Random();
     for (int i = 0; i<100 && !t.timedOut(i); i++) {
       AtomicBoolean finished = new AtomicBoolean();
@@ -591,13 +602,13 @@ public class JobUtilTest extends LightPlatformTestCase {
           return true;
     })), indicator), null);
     Future<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> indicator.cancel(), 10, TimeUnit.MILLISECONDS);
-    assertThrows(ProcessCanceledException.class, ()-> job.waitForCompletion(10_000));
+    UsefulTestCase.assertThrows(ProcessCanceledException.class, ()-> job.waitForCompletion(10_000));
     assertTrue(job.isDone());
     assertTrue(counter.toString(), counter.get() < N);
     future.get();
   }
 
-  public void testExecuteAllMustBeResponsiveToTheIndicatorCancelWhenWaitsEvenForExtraCoarseGranularTasks() throws Throwable {
+  public void testExecuteAllMustBeResponsiveToTheIndicatorCancelWhenWaitsEvenForExtraCoarseGranularTasksStress() throws Throwable {
     int COARSENESS = 100_000;
     List<Job<?>> jobs = new ArrayList<>();
     // try to repeat until got into the right thread; but not for too long
@@ -667,9 +678,8 @@ public class JobUtilTest extends LightPlatformTestCase {
     }
   }
 
-  public void testInvokeConcurrentlyMustExecuteMultipleTasksConcurrentlyEvenIfOneOfThemIsWildlySlow() {
+  public void testInvokeConcurrentlyMustExecuteMultipleTasksConcurrentlyEvenIfOneOfThemIsWildlySlowStress() {
     int parallelism = JobSchedulerImpl.getJobPoolParallelism();
-    Assume.assumeTrue("Too low parallelism: " + parallelism + ", I give up", parallelism > 1);
     // values higher than this can lead to too coarse tasks in FJP queue which means some of them may contain more than one element which means long-delay task and some shot-delay tasks can be scheduled to one chunk which means some of the tasks will not be stolen for a (relatively)long time.
     // so it's a TODO for ApplierCompleter
     int N = 1 << parallelism;
@@ -682,7 +692,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
       AtomicInteger executed = new AtomicInteger();
       DaemonProgressIndicator progress = new DaemonProgressIndicator();
-      assertThrows(MyException.class, "myMsg", () -> {
+      UsefulTestCase.assertThrows(MyException.class, "myMsg", () -> {
         TestTimeOut deadline = setTimeout(2, TimeUnit.SECONDS);
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(times.clone()), progress, time -> {
           while ((time -= 100) >= 0) {
@@ -690,7 +700,7 @@ public class JobUtilTest extends LightPlatformTestCase {
             TimeoutUtil.sleep(100);
             if (deadline.isTimedOut()) {
               String s = ThreadDumper.dumpThreadsToString();
-              throw new AssertionError("Timed out at " + time + "; threads:\n" + s);
+              throw new AssertionError("Timed out at " + time + "; parallelism:"+parallelism+"; executed:"+executed+"; threads:\n" + s);
             }
           }
 
@@ -704,7 +714,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     }
   }
 
-  public void testJobWaitForTerminationAfterCancelInTheMiddleOfTheExecutionWaitsUntilFinished2() {
+  public void testJobWaitForTerminationAfterCancelInTheMiddleOfTheExecutionWaitsUntilFinished2Stress() {
     List<Integer> ints = IntStream.range(1, 123_271*JobSchedulerImpl.getJobPoolParallelism()/11).boxed().collect(Collectors.toList());
     for (int i=0; i<10 && !t.timedOut(i); i++) {
       AtomicInteger executed = new AtomicInteger();
