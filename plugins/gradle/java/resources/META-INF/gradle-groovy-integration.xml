@@ -23,7 +23,6 @@
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleGroovyFrameworkSupportProvider" />
     <testLocationCustomizer implementation="org.jetbrains.plugins.gradle.execution.test.runner.spock.SpockGradleTestLocationCustomizer"/>
-    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.VersionCatalogProjectResolver"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

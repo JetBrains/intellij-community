@@ -33,8 +33,14 @@ internal fun PsiClass?.isResolvedInGradleScript() = this is GroovyScriptClass &&
 
 internal fun PsiFile?.isGradleScript() = this?.originalFile?.virtualFile?.extension == EXTENSION
 
+private val PsiElement.module get() = containingFile?.originalFile?.virtualFile?.let {
+  ProjectFileIndex.getInstance(project).getModuleForFile(it)
+}
+
 internal fun PsiElement.getLinkedGradleProjectPath() : String? {
-  val virtualFile = containingFile?.originalFile?.virtualFile ?: return null
-  val module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile) ?: return null
   return ExternalSystemApiUtil.getExternalProjectPath(module)
+}
+
+internal fun PsiElement.getRootGradleProjectPath() : String? {
+  return ExternalSystemApiUtil.getExternalRootProjectPath(module)
 }

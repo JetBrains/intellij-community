@@ -93,17 +93,17 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
 
   companion object {
     private fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> = sequence {
-      val externalProjectPath = place.getLinkedGradleProjectPath() ?: return@sequence
+      val externalRootProjectPath = place.getRootGradleProjectPath() ?: return@sequence
       val userHomePropertiesFile = getGradleUserHomePropertiesPath()?.parent?.toString()?.getGradlePropertiesFile(place.project)
       if (userHomePropertiesFile != null) {
         yield(userHomePropertiesFile)
       }
-      val projectRootPropertiesFile = externalProjectPath.getGradlePropertiesFile(place.project)
+      val projectRootPropertiesFile = externalRootProjectPath.getGradlePropertiesFile(place.project)
       if (projectRootPropertiesFile != null) {
         yield(projectRootPropertiesFile)
       }
       val localSettings = GradleLocalSettings.getInstance(place.project)
-      val installationDirectoryPropertiesFile = localSettings.getGradleHome(externalProjectPath)?.getGradlePropertiesFile(place.project)
+      val installationDirectoryPropertiesFile = localSettings.getGradleHome(externalRootProjectPath)?.getGradlePropertiesFile(place.project)
       if (installationDirectoryPropertiesFile != null) {
         yield(installationDirectoryPropertiesFile)
       }
