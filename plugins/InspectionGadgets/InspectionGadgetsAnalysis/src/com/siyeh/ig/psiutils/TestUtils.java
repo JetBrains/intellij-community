@@ -67,17 +67,12 @@ public final class TestUtils {
     return method != null && isJUnitTestMethod(method);
   }
 
-  public static boolean isJUnit4BeforeOrAfterMethod(@NotNull PsiMethod method) {
-    return AnnotationUtil.isAnnotated(method, "org.junit.Before", CHECK_HIERARCHY) ||
-           AnnotationUtil.isAnnotated(method, "org.junit.After", CHECK_HIERARCHY);
-  }
-
   public static boolean isJUnitTestMethod(@Nullable PsiMethod method) {
     if (method == null) return false;
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
     final Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(containingClass);
-    return frameworks.stream().anyMatch(framework -> framework.getName().startsWith("JUnit") && framework.isTestMethod(method, false));
+    return ContainerUtil.exists(frameworks, framework -> framework.getName().startsWith("JUnit") && framework.isTestMethod(method, false));
   }
 
   public static boolean isRunnable(PsiMethod method) {
@@ -203,7 +198,7 @@ public final class TestUtils {
   /**
    * Tries to determine whether exception is expected at given element (e.g. element is a part of method annotated with
    * {@code @Test(expected = ...)} or part of lambda passed to {@code Assertions.assertThrows()}.
-   *
+   * <p>
    * Note that the test is not exhaustive: false positives and false negatives are possible.
    *
    * @param element to check
