@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradle.ui
 
 import com.intellij.notification.*
@@ -10,8 +10,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.PlatformUtils
-import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -62,6 +62,7 @@ private fun createNotification(
         KotlinBundle.htmlMessage("configuration.update.is.resolve.module.per.source.set"),
         NotificationType.WARNING
     ).apply {
+        isSuggestionType = true
         addAction(createUpdateGradleProjectSettingsAction(isResolveModulePerSourceSetSetting))
         addAction(createSuppressNotificationAction(notificationSuppressState))
         isImportant = true
