@@ -27,11 +27,6 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
   }
 
   @Override
-  public boolean forcesShowPreview() {
-    return true;
-  }
-
-  @Override
   public boolean isToSearchInComments(@NotNull PsiElement element) {
     return PyCodeInsightSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FUNCTION;
   }
