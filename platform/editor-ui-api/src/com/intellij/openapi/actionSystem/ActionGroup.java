@@ -116,11 +116,11 @@ public abstract class ActionGroup extends AnAction {
     getTemplatePresentation().setPopupGroup(popup);
   }
 
-  public boolean isSearchable() {
+  public final boolean isSearchable() {
     return mySearchable;
   }
 
-  public void setSearchable(boolean searchable) {
+  public final void setSearchable(boolean searchable) {
     mySearchable = searchable;
   }
 
