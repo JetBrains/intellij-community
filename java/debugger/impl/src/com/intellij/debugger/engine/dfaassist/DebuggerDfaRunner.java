@@ -80,17 +80,21 @@ public class DebuggerDfaRunner {
     DfaMemoryState memoryState = myStartingState.getMemoryState().createCopy();
     int startingIndex = myStartingState.getInstruction().getIndex();
     DfaInstructionState startingState = new DfaInstructionState(myStartingState.getInstruction(), memoryState);
+    BitSet reached = new BitSet();
+    reached.set(0, startingIndex);
     StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(myFlow, interceptor, true) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
+        reached.set(instructionState.getInstruction().getIndex());
         DfaInstructionState[] states = super.acceptInstruction(instructionState);
         return StreamEx.of(states).filter(state -> state.getInstruction().getIndex() > startingIndex)
           .toArray(DfaInstructionState.EMPTY_ARRAY);
       }
     };
     if (interpreter.interpret(List.of(startingState)) != RunnerResult.OK) return DfaResult.EMPTY;
+    Set<PsiElement> unreachable = myFlow.computeUnreachable(reached);
     return new DfaResult(myBody.getContainingFile(), interceptor.computeHints(),
-                         interceptor.unreachableSegments(myAnchor, getAllAnchors()));
+                         interceptor.unreachableSegments(myAnchor, unreachable));
   }
 
   /**

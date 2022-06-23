@@ -4,11 +4,9 @@ package com.intellij.debugger.engine.dfaassist.java;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayStoreProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ClassCastProblem;
-import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -21,12 +19,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
-import one.util.streamex.StreamEx;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +34,6 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
     JavaTokenType.ANDAND, JavaTokenType.OROR, JavaTokenType.XOR, JavaTokenType.AND, JavaTokenType.OR, JavaTokenType.EQEQ, JavaTokenType.NE);
 
   private final Map<PsiElement, DfaHint> myHints = new HashMap<>();
-  private final Set<PsiExpression> myReachableExpressions = new HashSet<>();
 
   private void addHint(@NotNull PsiElement element, @Nullable DfaHint hint) {
     if (hint != null) {
@@ -49,7 +45,6 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
   public void beforeExpressionPush(@NotNull DfaValue value,
                                    @NotNull PsiExpression expression,
                                    @NotNull DfaMemoryState state) {
-    myReachableExpressions.add(expression);
     if (!shouldTrackExpressionValue(expression)) return;
     DfaHint hint = DfaHint.ANY_VALUE;
     DfType dfType = state.getDfType(value);
@@ -139,48 +134,50 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
   }
 
   @Override
-  public @NotNull Collection<TextRange> unreachableSegments(@NotNull PsiElement startAnchor, @NotNull List<DfaAnchor> allAnchors) {
-    Set<PsiExpression> unreachable =
-      StreamEx.of(allAnchors).select(JavaExpressionAnchor.class).map(JavaExpressionAnchor::getExpression).toMutableSet();
-    unreachable.removeAll(myReachableExpressions);
+  public @NotNull Collection<TextRange> unreachableSegments(@NotNull PsiElement startAnchor, @NotNull Set<PsiElement> unreachable) {
     Set<TextRange> result = new HashSet<>();
-    for (PsiExpression expression : unreachable) {
-      ContainerUtil.addIfNotNull(result, createRange(startAnchor, expression));
+    for (PsiElement element : unreachable) {
+      ContainerUtil.addIfNotNull(result, createRange(startAnchor, element, unreachable));
     }
     return result;
   }
 
-  private @Nullable TextRange createRange(@NotNull PsiElement startAnchor, @NotNull PsiExpression expression) {
-    PsiElement parent = expression.getParent();
-    if (parent instanceof PsiConditionalExpression && myReachableExpressions.contains(parent)) {
-      return expression.getTextRange();
-    }
-    if (parent instanceof PsiPolyadicExpression) {
-      IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
-      if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {
-        PsiExpression prev = PsiTreeUtil.getPrevSiblingOfType(expression, PsiExpression.class);
-        if (prev != null && myReachableExpressions.contains(prev)) {
-          PsiJavaToken token = ((PsiPolyadicExpression)parent).getTokenBeforeOperand(expression);
-          if (token != null) {
-            return TextRange.create(token.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset());
+  private static @Nullable TextRange createRange(@NotNull PsiElement startAnchor,
+                                                 @NotNull PsiElement unreachable,
+                                                 @NotNull Set<PsiElement> allUnreachable) {
+    PsiElement parent = unreachable.getParent();
+    if (unreachable instanceof PsiExpression) {
+      PsiExpression expression = (PsiExpression)unreachable;
+      if (parent instanceof PsiConditionalExpression && !allUnreachable.contains(parent)) {
+        return expression.getTextRange();
+      }
+      if (parent instanceof PsiPolyadicExpression) {
+        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+        if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {
+          PsiExpression prev = PsiTreeUtil.getPrevSiblingOfType(expression, PsiExpression.class);
+          if (prev != null && !allUnreachable.contains(prev)) {
+            PsiJavaToken token = ((PsiPolyadicExpression)parent).getTokenBeforeOperand(expression);
+            if (token != null) {
+              return TextRange.create(token.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset());
+            }
           }
         }
       }
     }
-    PsiStatement statement = findStatement(expression);
-    if (statement != null && !PsiTreeUtil.isAncestor(statement, startAnchor, false)) {
+    if (unreachable instanceof PsiStatement) {
+      if (ControlFlowUtils.isEmpty(unreachable, false, true)) return null;
+      PsiStatement statement = (PsiStatement)unreachable;
       PsiElement statementParent = statement.getParent();
-      PsiExpression anchor = getControlFlowStatementAnchor(statementParent);
-      if (anchor != null &&
-          (PsiTreeUtil.isAncestor(statement, startAnchor, true) ||
-           myReachableExpressions.contains(anchor))) {
+      if (unreachable instanceof PsiSwitchLabelStatement) return null;
+      if (allUnreachable.contains(statementParent)) return null;
+      if (parent instanceof PsiStatement) {
         return statement.getTextRange();
       }
-      if (statementParent instanceof PsiCodeBlock) {
+      if (parent instanceof PsiCodeBlock) {
         PsiStatement prevStatement = ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement), PsiStatement.class);
         if (prevStatement instanceof PsiSwitchLabelStatement) {
           PsiSwitchBlock block = ((PsiSwitchLabelStatement)prevStatement).getEnclosingSwitchBlock();
-          if (block != null && (isAnchorBefore(startAnchor, statement) || myReachableExpressions.contains(block.getExpression()))) {
+          if (block != null && !allUnreachable.contains(block)) {
             PsiElement last = ((PsiCodeBlock)statementParent).getRBrace();
             PsiSwitchLabelStatement nextLabel = PsiTreeUtil.getNextSiblingOfType(statement, PsiSwitchLabelStatement.class);
             if (nextLabel != null) {
@@ -193,215 +190,16 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
           }
           return null;
         }
+        if (allUnreachable.contains(prevStatement)) return null;
         PsiElement lastStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(((PsiCodeBlock)statementParent).getRBrace());
         if (lastStatement != null && prevStatement != null) {
-          if (PsiTreeUtil.isAncestor(prevStatement, startAnchor, false)) {
-            if (prevStatement instanceof PsiLoopStatement) return null;
-            return TextRange.create(statement.getTextRange().getStartOffset(), lastStatement.getTextRange().getEndOffset());
+          if (prevStatement instanceof PsiLoopStatement && PsiTreeUtil.isAncestor(prevStatement, startAnchor, false)) {
+            return null;
           }
-          if (ContainerUtil.exists(myReachableExpressions, ex -> PsiTreeUtil.isAncestor(prevStatement, ex, true))) {
-            return TextRange.create(statement.getTextRange().getStartOffset(), lastStatement.getTextRange().getEndOffset());
-          }
+          return TextRange.create(statement.getTextRange().getStartOffset(), lastStatement.getTextRange().getEndOffset());
         }
       }
     }
     return null;
-  }
-
-  private static boolean isAnchorBefore(@NotNull PsiElement anchor, @NotNull PsiStatement statement) {
-    return PsiTreeUtil.isAncestor(statement.getParent(), anchor, true) &&
-           StreamEx.iterate(statement.getPrevSibling(), Objects::nonNull, PsiElement::getPrevSibling)
-             .select(PsiStatement.class).anyMatch(st -> PsiTreeUtil.isAncestor(st, anchor, false));
-  }
-
-  private static @Nullable PsiExpression getControlFlowStatementAnchor(@NotNull PsiElement statement) {
-    if (statement instanceof PsiIfStatement) {
-      return ((PsiIfStatement)statement).getCondition();
-    }
-    if (statement instanceof PsiWhileStatement || statement instanceof PsiForStatement) {
-      return ((PsiConditionalLoopStatement)statement).getCondition();
-    }
-    if (statement instanceof PsiForeachStatement) {
-      return ((PsiForeachStatement)statement).getIteratedValue();
-    }
-    return null;
-  }
-
-  private static @Nullable PsiElement goDown(@Nullable PsiElement element) {
-    if (element == null) return null;
-    if (element instanceof PsiExpression && PsiUtil.isConstantExpression((PsiExpression)element)) return element;
-    if (element instanceof PsiIfStatement) {
-      return ((PsiIfStatement)element).getCondition();
-    }
-    if (element instanceof PsiWhileStatement) {
-      return ((PsiWhileStatement)element).getCondition();
-    }
-    if (element instanceof PsiSwitchBlock) {
-      return ((PsiSwitchBlock)element).getExpression();
-    }
-    if (element instanceof PsiForeachStatement) {
-      return ((PsiForeachStatement)element).getIteratedValue();
-    }
-    if (element instanceof PsiDoWhileStatement) {
-      return ((PsiDoWhileStatement)element).getBody();
-    }
-    if (element instanceof PsiForStatement) {
-      PsiStatement initialization = ((PsiForStatement)element).getInitialization();
-      if (initialization != null) {
-        return initialization;
-      }
-      PsiExpression condition = ((PsiForStatement)element).getCondition();
-      if (condition != null) {
-        return condition;
-      }
-      return ((PsiForStatement)element).getBody();
-    }
-    if (element instanceof PsiSynchronizedStatement) {
-      return ((PsiSynchronizedStatement)element).getLockExpression();
-    }
-    if (element instanceof PsiTryStatement) {
-      PsiResourceList list = ((PsiTryStatement)element).getResourceList();
-      if (list != null) {
-        Iterator<PsiResourceListElement> iterator = list.iterator();
-        if (iterator.hasNext()) {
-          return iterator.next();
-        }
-      }
-      return ((PsiTryStatement)element).getTryBlock();
-    }
-    if (element instanceof PsiBlockStatement) {
-      return ((PsiBlockStatement)element).getCodeBlock();
-    }
-    if (element instanceof PsiDeclarationStatement) {
-      for (PsiElement declaredElement : ((PsiDeclarationStatement)element).getDeclaredElements()) {
-        if (declaredElement instanceof PsiLocalVariable && ((PsiLocalVariable)declaredElement).getInitializer() != null) {
-          return ((PsiLocalVariable)declaredElement).getInitializer();
-        }
-      }
-      return null;
-    }
-    if (element instanceof PsiCodeBlock) {
-      PsiStatement[] statements = ((PsiCodeBlock)element).getStatements();
-      for (PsiStatement statement : statements) {
-        PsiElement statementElement = goDown(statement);
-        if (statementElement != null) {
-          return statementElement;
-        }
-      }
-      return null;
-    }
-    if (element instanceof PsiReturnStatement) {
-      return ((PsiReturnStatement)element).getReturnValue();
-    }
-    if (element instanceof PsiExpressionStatement) {
-      return ((PsiExpressionStatement)element).getExpression();
-    }
-    if (element instanceof PsiYieldStatement) {
-      return ((PsiYieldStatement)element).getExpression();
-    }
-    if (element instanceof PsiAssertStatement) {
-      return ((PsiAssertStatement)element).getAssertCondition();
-    }
-    if (element instanceof PsiResourceExpression) {
-      return ((PsiResourceExpression)element).getExpression();
-    }
-    if (element instanceof PsiResourceVariable) {
-      return ((PsiResourceVariable)element).getInitializer();
-    }
-    if (element instanceof PsiPolyadicExpression) {
-      return ((PsiPolyadicExpression)element).getOperands()[0];
-    }
-    if (element instanceof PsiInstanceOfExpression) {
-      return ((PsiInstanceOfExpression)element).getOperand();
-    }
-    if (element instanceof PsiParenthesizedExpression) {
-      return ((PsiParenthesizedExpression)element).getExpression();
-    }
-    if (element instanceof PsiConditionalExpression) {
-      return ((PsiConditionalExpression)element).getCondition();
-    }
-    if (element instanceof PsiReferenceExpression) {
-      PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
-      return isExpressionQualifier(qualifier) ? qualifier : element;
-    }
-    if (element instanceof PsiMethodCallExpression) {
-      PsiExpression qualifier = ((PsiMethodCallExpression)element).getMethodExpression().getQualifierExpression();
-      if (isExpressionQualifier(qualifier)) return qualifier;
-      PsiExpression[] arguments = ((PsiMethodCallExpression)element).getArgumentList().getExpressions();
-      if (arguments.length > 0) {
-        return arguments[0];
-      }
-      return element;
-    }
-    if (element instanceof PsiLiteralExpression || element instanceof PsiLambdaExpression || element instanceof PsiQualifiedExpression) {
-      return element;
-    }
-    if (element instanceof PsiAssignmentExpression) {
-      return ((PsiAssignmentExpression)element).getLExpression();
-    }
-    if (element instanceof PsiTypeCastExpression) {
-      return ((PsiTypeCastExpression)element).getOperand();
-    }
-    if (element instanceof PsiUnaryExpression) {
-      return ((PsiUnaryExpression)element).getOperand();
-    }
-    if (element instanceof PsiNewExpression) {
-      PsiExpression qualifier = ((PsiNewExpression)element).getQualifier();
-      if (qualifier != null) {
-        return qualifier;
-      }
-      PsiArrayInitializerExpression initializer = ((PsiNewExpression)element).getArrayInitializer();
-      if (initializer != null) {
-        return initializer;
-      }
-      PsiExpression[] dimensions = ((PsiNewExpression)element).getArrayDimensions();
-      if (dimensions.length > 0) {
-        return dimensions[0];
-      }
-      PsiExpressionList args = ((PsiNewExpression)element).getArgumentList();
-      if (args != null && !args.isEmpty()) {
-        return args.getExpressions()[0];
-      }
-      return element;
-    }
-    if (element instanceof PsiArrayInitializerExpression) {
-      PsiExpression[] initializers = ((PsiArrayInitializerExpression)element).getInitializers();
-      if (initializers.length > 0) return initializers[0];
-      return element;
-    }
-    return null;
-  }
-
-  private static boolean isExpressionQualifier(PsiExpression qualifier) {
-    return qualifier != null &&
-           (!(qualifier instanceof PsiReferenceExpression) || !(((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass));
-  }
-
-  private static @Nullable PsiExpression getFirstExpressionInside(@Nullable PsiElement element) {
-    while (true) {
-      PsiElement firstExecuted = goDown(element);
-      if (firstExecuted == null || firstExecuted == element) return (PsiExpression)firstExecuted;
-      element = firstExecuted;
-    }
-  }
-
-  private static @Nullable PsiStatement findStatement(@NotNull PsiExpression anchor) {
-    PsiStatement statement = PsiTreeUtil.getParentOfType(anchor, PsiStatement.class);
-    if (statement == null || getFirstExpressionInside(statement) != anchor) {
-      return null;
-    }
-    PsiElement parent = statement;
-    while (true) {
-      PsiElement grandParent = parent.getParent();
-      if (grandParent instanceof PsiCodeBlock &&
-          grandParent.getParent() instanceof PsiBlockStatement &&
-          PsiTreeUtil.getChildOfType(grandParent, PsiStatement.class) == parent) {
-        parent = grandParent.getParent();
-      }
-      else {
-        break;
-      }
-    }
-    return (PsiStatement)parent;
   }
 }

@@ -18,8 +18,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents code block IR (list of instructions)
@@ -148,6 +147,23 @@ public final class ControlFlow {
 
   public @NotNull DfaValueFactory getFactory() {
     return myFactory;
+  }
+
+  /**
+   * @param reached set of reached instructions
+   * @return elements that were not reached (no instruction between element start and end was reached)
+   */
+  public @NotNull Set<PsiElement> computeUnreachable(@NotNull BitSet reached) {
+    Set<PsiElement> result = new HashSet<>();
+    myElementToStartOffsetMap.forEach((element, start) -> {
+      int end = myElementToEndOffsetMap.getOrDefault(element, -1);
+      if (end == -1) return;
+      int nextReached = reached.nextSetBit(start);
+      if (nextReached == -1 || nextReached >= end) {
+        result.add(element);
+      }
+    });
+    return result;
   }
 
   /**
