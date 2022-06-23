@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
 import com.intellij.openapi.vcs.changes.DiffRequestProcessorWithProducers
@@ -85,6 +86,8 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
   }
 
   open fun returnFocusToTree() = Unit
+
+  override fun isPreviewOnDoubleClickAllowed(): Boolean = Registry.`is`("enable.combined.diff") && super.isPreviewOnDoubleClickAllowed()
 
   protected abstract fun createModel(): CombinedDiffPreviewModel
 
