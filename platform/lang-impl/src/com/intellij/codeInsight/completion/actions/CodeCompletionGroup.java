@@ -51,6 +51,11 @@ public class CodeCompletionGroup extends DefaultActionGroup implements DumbAware
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public boolean disableIfNoVisibleChildren() {
     return false;
   }
