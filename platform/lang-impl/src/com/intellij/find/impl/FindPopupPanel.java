@@ -1473,10 +1473,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       if (model.isReplaceState()) {
         if (myResultsPreviewTable.getRowCount() > 0) {
           Object value = myResultsPreviewTable.getModel().getValueAt(0, 0);
-          if (value instanceof Usage) {
+          if (value instanceof FindPopupItem) {
             try {
               // Just check
-              ReplaceInProjectManager.getInstance(myProject).replaceUsage((Usage)value, model, Collections.emptySet(), true);
+              ReplaceInProjectManager.getInstance(myProject).replaceUsage(((FindPopupItem)value).getUsage(), model, Collections.emptySet(), true);
             }
             catch (FindManager.MalformedReplacementStringException e) {
               return new ValidationInfo(e.getMessage(), myReplaceComponent);
@@ -1591,9 +1591,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     for (int i = rows.length - 1; i >= 0; i--) {
       int row = rows[i];
       Object valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
-      if (valueAt instanceof Usage) {
+      if (valueAt instanceof FindPopupItem) {
         if (result == null) result = new LinkedHashMap<>();
-        result.put(row, (Usage)valueAt);
+        result.put(row, ((FindPopupItem)valueAt).getUsage());
       }
     }
     return result;
