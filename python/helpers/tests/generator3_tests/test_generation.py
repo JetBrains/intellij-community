@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import collections
 import errno
@@ -151,8 +151,9 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         return GeneratorResult(result, skeletons_dir=output_dir)
 
     def run_process(self, args, input=None, env=None):
-        # Remove possible (NAME: None) pairs
-        env = {k: v for k, v in env.items() if v is not None}
+        # Remove possible (NAME: None) pairs and make sure that environment content is
+        # encoded (critical for Python 2.x on Windows)
+        env = {six.b(k): six.b(v) for k, v in env.items() if v is not None}
         process = subprocess.Popen(args,
                                    env=env,
                                    stdin=subprocess.PIPE,
