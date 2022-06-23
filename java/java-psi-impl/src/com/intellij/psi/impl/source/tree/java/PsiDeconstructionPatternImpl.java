@@ -65,6 +65,9 @@ public class PsiDeconstructionPatternImpl extends CompositePsiElement implements
                                      @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
 
+    boolean shouldContinue = getDeconstructionList().processDeclarations(processor, state, lastParent, place);
+    if (!shouldContinue) return false;
+
     PsiPatternVariable variable = getPatternVariable();
     if (variable != lastParent && variable != null) {
       return processor.execute(variable, state);
