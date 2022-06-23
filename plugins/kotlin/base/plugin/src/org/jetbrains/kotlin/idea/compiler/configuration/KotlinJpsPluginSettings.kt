@@ -147,7 +147,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 null -> rawVersion
             }
 
-            if (error != null) {
+            if (error != null && !isDelegatedToExtBuild) {
                 showNotificationUnsupportedJpsPluginVersion(
                     project,
                     KotlinBasePluginBundle.message("notification.title.unsupported.kotlin.jps.plugin.version"),
