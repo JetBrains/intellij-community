@@ -132,12 +132,15 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
-        event.getContent().removePropertyChangeListener(propertyChangeListener);
+        Content content = event.getContent();
+        content.removePropertyChangeListener(propertyChangeListener);
         getCurrentLayout().contentRemoved(event);
         ensureSelectedContentVisible();
         rebuild();
 
-        if (contentManager.isEmpty() && contentManager == window.getContentManager()) {
+        if (contentManager.isEmpty() &&
+            contentManager == window.getContentManager() &&
+            !Content.TEMPORARY_REMOVED_KEY.get(content, false)) {
           boolean removeFromStripe;
           if (window.isToHideOnEmptyContent()) {
             removeFromStripe = true;
