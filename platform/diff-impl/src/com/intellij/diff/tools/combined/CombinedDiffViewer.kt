@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.components.JBScrollPane
@@ -245,16 +246,41 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   internal var iterationState = IterationState.NONE
 
   private fun notifyVisibleBlocksChanged() {
+    val delta = Registry.intValue("combined.diff.visible.viewport.delta")
     val viewRect = scrollPane.viewport.viewRect
-    val (visibleBlocks, hiddenBlocks) = getAllBlocks().partition { it.component.bounds.intersects(viewRect) }
+    val beforeViewport = arrayOfNulls<CombinedDiffBlock<*>>(delta)
+    val afterViewport = arrayOfNulls<CombinedDiffBlock<*>>(delta)
+    val blocksInViewport = arrayListOf<CombinedDiffBlock<*>>()
+    val hiddenBlocks = arrayListOf<CombinedDiffBlock<*>>()
+    var intersectionStarted = false
+
+    for ((index, block) in getAllBlocks().withIndex()) {
+      val viewportIntersected = block.component.bounds.intersects(viewRect)
+
+      if (!intersectionStarted && viewportIntersected) {
+        intersectionStarted = true
+      }
+
+      when {
+        !intersectionStarted -> beforeViewport[index.mod(delta)] = block
+        viewportIntersected -> blocksInViewport.add(block)
+        afterViewport.any(Objects::isNull) -> afterViewport[index.mod(delta)] = block
+        else -> hiddenBlocks.add(block)
+      }
+    }
 
     if (hiddenBlocks.isNotEmpty()) {
       blockListeners.multicaster.blocksHidden(hiddenBlocks)
     }
 
-    if (visibleBlocks.isNotEmpty()) {
-      updateGlobalBlockHeader(visibleBlocks, viewRect)
-      blockListeners.multicaster.blocksVisible(visibleBlocks, context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK))
+    if (blocksInViewport.isNotEmpty()) {
+      updateGlobalBlockHeader(blocksInViewport, viewRect)
+    }
+
+    val totalVisible = beforeViewport.filterNotNull() + blocksInViewport + afterViewport.filterNotNull()
+
+    if (totalVisible.isNotEmpty()) {
+      blockListeners.multicaster.blocksVisible(totalVisible, context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK))
     }
   }
 
