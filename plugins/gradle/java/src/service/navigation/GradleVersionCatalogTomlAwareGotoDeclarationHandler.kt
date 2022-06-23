@@ -66,7 +66,7 @@ private fun PsiMethod.resolveInToml(): PsiElement? {
   containingClasses.reverse()
   val name = containingClasses.first().name?.substringAfter(LIBRARIES_FOR_PREFIX) ?: return null
   val toml = listOf(GroovyPropertyUtils.decapitalize(name), name).firstNotNullOfOrNull { findTomlFile(project, it) }
-             ?: return null // todo: test with capitalized
+             ?: return null
   val tomlVisitor = TomlVersionCatalogVisitor(containingClasses.tail(), this)
   toml.accept(tomlVisitor)
   return tomlVisitor.resolveTarget

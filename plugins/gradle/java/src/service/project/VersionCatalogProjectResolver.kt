@@ -14,7 +14,6 @@ import com.intellij.util.castSafelyTo
 import com.intellij.util.io.exists
 import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.plugins.gradle.model.data.VersionCatalogTomlFilesModel
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
@@ -29,8 +28,8 @@ class VersionCatalogProjectResolver : AbstractProjectResolverExtension() {
     val virtualFile = VfsUtil.findFile(settingsFilePath, false) ?: return super.populateProjectExtraModels(gradleProject, ideProject)
     val projectRoot = Path.of(ideProject.data.linkedExternalProjectPath)
     val project = ProjectUtil.findProject(projectRoot) ?: return super.populateProjectExtraModels(gradleProject, ideProject)
-    DumbService.getInstance(project).runWhenSmart {
-      val psiFile = PsiManager.getInstance(project).findFile(virtualFile).castSafelyTo<GroovyFileBase>() ?: return@runWhenSmart
+    DumbService.getInstance(project).runReadActionInSmartMode {
+      val psiFile = PsiManager.getInstance(project).findFile(virtualFile).castSafelyTo<GroovyFileBase>() ?: return@runReadActionInSmartMode
       val tracker = GradleStructureTracker(projectRoot)
       runReadAction {
         psiFile.accept(tracker)
@@ -62,12 +61,9 @@ private class GradleStructureTracker(val projectRoot: Path) : GroovyRecursiveEle
   val catalogMapping: MutableMap<String, String> = mutableMapOf()
 
   override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
-    val method = methodCallExpression.resolveMethod() ?: return super.visitMethodCallExpression(methodCallExpression)
-    if (method.name == "from" && method.containingClass?.qualifiedName == GradleCommonClassNames.GRADLE_API_VERSION_CATALOG_BUILDER) {
-      val container = methodCallExpression.parentsOfType<GrMethodCallExpression>().find {
-        it.resolveMethod()?.returnType?.equalsToText(GradleCommonClassNames.GRADLE_API_VERSION_CATALOG_BUILDER) == true
-      }
-      val name = container?.resolveMethod()?.name
+    if (methodCallExpression.invokedExpression.text == "from") {
+      val container = methodCallExpression.parentsOfType<GrMethodCallExpression>().find { it.hasClosureArguments() && it.argumentList.expressionArguments.isEmpty() }
+      val name = container?.invokedExpression?.text
       if (container == null || name == null) {
         return super.visitMethodCallExpression(methodCallExpression)
       }
@@ -86,7 +82,7 @@ private class GradleStructureTracker(val projectRoot: Path) : GroovyRecursiveEle
  */
 private fun resolveDependencyNotation(element: PsiElement?, root: Path): Path? {
   element ?: return null
-  if (element is GrMethodCallExpression && element.resolveMethod()?.name == "files") {
+  if (element is GrMethodCallExpression && element.invokedExpression.text == "files") {
     val argument = element.argumentList.expressionArguments.firstOrNull()
     return GroovyConstantExpressionEvaluator.evaluate(argument)?.castSafelyTo<String>()?.let(root::resolve)?.takeIf(Path::exists)
   }
