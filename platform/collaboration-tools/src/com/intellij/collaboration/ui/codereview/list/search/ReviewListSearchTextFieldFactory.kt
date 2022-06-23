@@ -11,7 +11,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.awt.Point
@@ -29,7 +28,7 @@ class ReviewListSearchTextFieldFactory(private val searchState: MutableStateFlow
       searchState.update { text }
     }
     viewScope.launch {
-      searchState.collectLatest {
+      searchState.collect {
         if (searchField.text.nullize() != it) searchField.text = it
       }
     }
