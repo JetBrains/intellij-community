@@ -46,8 +46,8 @@ abstract class ComboBoxWithSeparators<T> : ComboBox<ComboBoxWithSeparators<T>.En
   }
 
   private inner class MyListCellRenderer: ColoredListCellRenderer<ComboBoxWithSeparators<T>.EntryModel<T>>() {
-    private val separator = GroupHeaderSeparator(JBUI.insetsLeft(8)).apply {
-      border = JBUI.Borders.empty()
+    private val separator = GroupHeaderSeparator(JBUI.insets(3, 8, 1, 0)).apply {
+      useComboLineInsets()
     }
     private val separatorPanel = OpaquePanel(BorderLayout()).apply {
       add(separator)
