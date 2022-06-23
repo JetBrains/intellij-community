@@ -181,7 +181,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
                             "will be written to $buildLogFile")
     }
     catch (t: Throwable) {
-      context.messages.warning("Cannot setup additional logging to $buildLogFile.absolutePath: $t.message")
+      context.messages.warning("Cannot setup additional logging to $buildLogFile.absolutePath: ${t.message}")
     }
   }
 
