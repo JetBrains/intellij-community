@@ -58,6 +58,11 @@ public class FindInPathAction extends AnAction implements DumbAware {
     doUpdate(e);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   static void doUpdate(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getData(CommonDataKeys.PROJECT);
