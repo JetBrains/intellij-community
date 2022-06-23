@@ -25,6 +25,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class CodeCompletionGroup extends DefaultActionGroup implements DumbAware {
+  {
+    getTemplatePresentation().setDisableGroupIfEmpty(false);
+  }
 
   @Override
   public void update(@NotNull AnActionEvent event){
@@ -48,15 +51,5 @@ public class CodeCompletionGroup extends DefaultActionGroup implements DumbAware
     }
 
     presentation.setEnabled(true);
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
-  public boolean disableIfNoVisibleChildren() {
-    return false;
   }
 }

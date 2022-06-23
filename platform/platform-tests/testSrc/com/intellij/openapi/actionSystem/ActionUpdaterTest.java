@@ -42,12 +42,8 @@ public class ActionUpdaterTest extends LightPlatformTestCase {
   private static class PopupGroup extends DefaultActionGroup {
     private PopupGroup(AnAction @NotNull ... actions) {
       super(actions);
-      setPopup(true);
-    }
-
-    @Override
-    public boolean hideIfNoVisibleChildren() {
-      return true;
+      getTemplatePresentation().setPopupGroup(true);
+      getTemplatePresentation().setHideGroupIfEmpty(true);
     }
   }
 

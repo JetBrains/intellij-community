@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 
 open class MoreActionGroup @JvmOverloads constructor(
@@ -13,12 +12,6 @@ open class MoreActionGroup @JvmOverloads constructor(
   init {
     templatePresentation.icon = if (horizontal) AllIcons.Actions.More else AllIcons.Actions.MoreHorizontal
     templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+    templatePresentation.isHideGroupIfEmpty = true
   }
-
-  override fun isDumbAware() = true
-
-  override fun hideIfNoVisibleChildren() = true
-
-  override fun getActionUpdateThread(): ActionUpdateThread =
-    if (this::class == MoreActionGroup::class) ActionUpdateThread.BGT else super.getActionUpdateThread()
 }
