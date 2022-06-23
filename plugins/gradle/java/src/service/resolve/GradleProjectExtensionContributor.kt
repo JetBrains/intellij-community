@@ -57,14 +57,12 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
           return
         }
       }
-      if (processMethods) {
+      if (processMethods && shouldAddConfiguration(extension, place)) {
         val extensionMethod = GrLightMethodBuilder(manager, extension.name).apply {
           returnType = type
           containingClass = aClass
-          if (shouldAddConfiguration(extension, place)) {
-            addAndGetParameter("configuration", createType(GROOVY_LANG_CLOSURE, containingFile))
-              .putUserData(DELEGATES_TO_KEY, DelegatesToInfo(type, Closure.DELEGATE_FIRST))
-          }
+          addAndGetParameter("configuration", createType(GROOVY_LANG_CLOSURE, containingFile))
+            .putUserData(DELEGATES_TO_KEY, DelegatesToInfo(type, Closure.DELEGATE_FIRST))
         }
         if (!processor.execute(extensionMethod, state)) {
           return
