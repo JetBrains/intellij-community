@@ -313,10 +313,11 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                 return createSubstringToCharAtProblemDescriptor(call);
               }
             }
+            RemoveRedundantSubstringFix fix = new RemoveRedundantSubstringFix(isLengthOf(args[1], receiver) ? "endsWith" : "startsWith");
             return myManager.createProblemDescriptor(anchor, (TextRange)null,
                                                      InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
-                                                     new RemoveRedundantSubstringFix("startsWith"));
+                                                     fix);
           }
         }
       }
