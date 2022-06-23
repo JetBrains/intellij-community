@@ -42,8 +42,14 @@ inline fun <reified T : Any> service(): T {
          ?: throw RuntimeException("Cannot find service ${serviceClass.name} (classloader=${serviceClass.classLoader}, client=${ClientId.currentOrNull})")
 }
 
+/**
+ * Contrary to [serviceIfCreated], tries to initialize the service if not yet initialized
+ */
 inline fun <reified T : Any> serviceOrNull(): T? = ApplicationManager.getApplication().getService(T::class.java)
 
+/**
+ * Contrary to [serviceOrNull], doesn't try to initialize the service if not yet initialized
+ */
 inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getApplication().getServiceIfCreated(T::class.java)
 
 inline fun <reified T : Any> services(includeLocal: Boolean): List<T> = ApplicationManager.getApplication().getServices(T::class.java, includeLocal)
