@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,4 +42,16 @@ public class PsiPatternGuardImpl extends CompositePsiElement implements PsiPatte
     return "PsiPatternGuard";
   }
 
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    final PsiPattern pattern = getPattern();
+    if (!pattern.processDeclarations(processor, state, null, place)) return false;
+
+    final PsiExpression expression = getGuardingExpression();
+    if (expression == null) return true;
+    return expression.processDeclarations(processor, state, lastParent, place);
+  }
 }
