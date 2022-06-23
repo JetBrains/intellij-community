@@ -4,6 +4,7 @@ package git4idea.actions.branch
 import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import git4idea.GitUtil
@@ -19,6 +20,10 @@ class GitNewBranchAction
     val project = e.project
     val repositories = e.getData(REPOSITORIES_KEY)
     e.presentation.isEnabledAndVisible = project != null && !repositories.isNullOrEmpty()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {

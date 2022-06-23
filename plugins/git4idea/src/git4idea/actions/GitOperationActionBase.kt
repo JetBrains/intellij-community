@@ -2,6 +2,7 @@
 package git4idea.actions
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
@@ -19,6 +20,10 @@ abstract class GitOperationActionBase(
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = !getAffectedRepositories(e.project).isEmpty()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
