@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public class NonEmptyActionGroup extends DefaultActionGroup implements DumbAware {
   public NonEmptyActionGroup() {
     super();
+    getTemplatePresentation().setHideGroupIfEmpty(true);
   }
 
   @Override
@@ -28,10 +29,5 @@ public class NonEmptyActionGroup extends DefaultActionGroup implements DumbAware
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabledAndVisible(getChildrenCount() > 0);
-  }
-
-  @Override
-  public boolean hideIfNoVisibleChildren() {
-    return true;
   }
 }

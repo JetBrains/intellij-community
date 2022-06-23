@@ -48,10 +48,9 @@ internal object BranchesDashboardActions {
   class BranchesTreeActionGroup(private val project: Project, private val tree: FilteringBranchesTree) : ActionGroup(), DumbAware {
 
     init {
-      isPopup = true
+      templatePresentation.isPopupGroup = true
+      templatePresentation.isHideGroupIfEmpty = true
     }
-
-    override fun hideIfNoVisibleChildren() = true
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
       BranchActionsBuilder(project, tree).build()?.getChildren(e) ?: AnAction.EMPTY_ARRAY

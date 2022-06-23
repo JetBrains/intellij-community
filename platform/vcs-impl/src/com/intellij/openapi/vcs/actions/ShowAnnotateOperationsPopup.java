@@ -67,9 +67,8 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
   }
 
   public static class Group extends ActionGroup implements DumbAware {
-    @Override
-    public boolean hideIfNoVisibleChildren() {
-      return true;
+    {
+      getTemplatePresentation().setHideGroupIfEmpty(true);
     }
 
     @Override

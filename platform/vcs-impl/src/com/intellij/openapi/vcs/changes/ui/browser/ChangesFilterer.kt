@@ -298,6 +298,7 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
       isPopup = false
       templatePresentation.text = VcsBundle.message("action.filter.filter.by.text")
       templatePresentation.icon = AllIcons.General.Filter
+      templatePresentation.isDisableGroupIfEmpty = false
     }
 
     override fun update(e: AnActionEvent) {
@@ -325,8 +326,6 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     override fun getActionUpdateThread(): ActionUpdateThread {
       return ActionUpdateThread.EDT
     }
-
-    override fun disableIfNoVisibleChildren(): Boolean = false
   }
 
   private class ToggleFilterAction(val filterer: ChangesFilterer, val filter: Filter)
