@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 
+@ExperimentalGradleToolingApi
 fun KotlinMPPGradleModel.getCompilations(sourceSet: KotlinSourceSet): Set<KotlinCompilation> {
     return targets.flatMap { target -> target.compilations }
         .filter { compilation -> compilationDependsOnSourceSet(compilation, sourceSet) }
         .toSet()
 }
 
+@ExperimentalGradleToolingApi
 fun KotlinMPPGradleModel.compilationDependsOnSourceSet(
     compilation: KotlinCompilation, sourceSet: KotlinSourceSet
 ): Boolean {
