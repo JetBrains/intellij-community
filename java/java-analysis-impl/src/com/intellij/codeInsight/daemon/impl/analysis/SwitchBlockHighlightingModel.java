@@ -475,6 +475,10 @@ public class SwitchBlockHighlightingModel {
         }
         return null;
       }
+      else if (label instanceof PsiPatternGuard) {
+        PsiPattern pattern = ((PsiPatternGuard)label).getPattern();
+        return checkLabelAndSelectorCompatibility(pattern);
+      }
       else if (label instanceof PsiPattern) {
         PsiPattern pattern = (PsiPattern)label;
         PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
@@ -498,7 +502,7 @@ public class SwitchBlockHighlightingModel {
         }
         else if (JavaGenericsUtil.isUncheckedCast(patternType, mySelectorType)) {
           return createError(patternVariable, JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(mySelectorType),
-                                                            JavaHighlightUtil.formatType(patternType)));
+                                                                      JavaHighlightUtil.formatType(patternType)));
         }
         return null;
       }
