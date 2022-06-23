@@ -83,7 +83,7 @@ internal fun KotlinMppPopulateModuleDependenciesContext.getCompilationsWithDepen
 }
 
 internal fun KotlinCompilation.dependsOnSourceSet(mppModel: KotlinMPPGradleModel, sourceSet: KotlinSourceSet): Boolean {
-    return declaredSourceSets.any { containedSourceSet -> containedSourceSet.isOrDependsOnSourceSet(mppModel, sourceSet) }
+    return declaredSourceSets.any { containedSourceSet -> sourceSet.isOrDependsOnSourceSet(mppModel, containedSourceSet) }
 }
 
 internal fun KotlinSourceSet.isOrDependsOnSourceSet(mppModel: KotlinMPPGradleModel, sourceSet: KotlinSourceSet): Boolean {
