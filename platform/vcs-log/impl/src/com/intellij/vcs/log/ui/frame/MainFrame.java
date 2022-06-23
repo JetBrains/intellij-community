@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
@@ -181,7 +181,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   public void setExplanationHtml(@Nullable @NlsContexts.LinkLabel String text) {
-    myNotificationLabel.setText(text);
+    myNotificationLabel.setText(Objects.requireNonNullElse(text, ""));
     myNotificationLabel.setVisible(text != null);
   }
 
