@@ -86,7 +86,7 @@ fun createLibraryInfo(project: Project, library: Library): List<LibraryInfo> =
             // for Native returns 'unspecifiedNativePlatform', thus "approximate"
             library.effectiveKind(project).platform
         } else {
-            DefaultIdeTargetPlatformKindProvider.defaultPlatform
+            JvmPlatforms.defaultJvmPlatform
         }
 
         approximatePlatform.idePlatformKind.resolution.createLibraryInfo(project, library)
@@ -397,7 +397,7 @@ object NotUnderContentRootModuleInfo : IdeaModuleInfo, NonSourceModuleInfoBase {
     override fun dependencies(): List<IdeaModuleInfo> = listOf(this)
 
     override val platform: TargetPlatform
-        get() = DefaultIdeTargetPlatformKindProvider.defaultPlatform
+        get() = JvmPlatforms.defaultJvmPlatform
 
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = platform.single().findAnalyzerServices()

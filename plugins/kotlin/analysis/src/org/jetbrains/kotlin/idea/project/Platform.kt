@@ -123,7 +123,7 @@ fun Project.getLanguageVersionSettings(
     val compilerSettings = KotlinCompilerSettings.getInstance(this).settings
 
     val additionalArguments: CommonCompilerArguments = parseArguments(
-        DefaultIdeTargetPlatformKindProvider.defaultPlatform,
+        JvmPlatforms.defaultJvmPlatform,
         compilerSettings.additionalArgumentsAsList
     )
 
