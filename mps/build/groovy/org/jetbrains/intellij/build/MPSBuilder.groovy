@@ -1,6 +1,7 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 
 import java.nio.file.Path
@@ -13,14 +14,15 @@ class MPSBuilder {
         String home = args[0]
 
         BuildOptions options = new BuildOptions()
-        options.targetOS = ""
+        options.incrementalCompilation = true
+        options.useCompiledClassesFromProjectOutput = false
+        options.targetOs = ""
 
         // Generate statistics metadata
-        ProprietaryBuildTools buildTools = ProprietaryBuildTools.DUMMY
-        buildTools.featureUsageStatisticsProperties = new FeatureUsageStatisticsProperties(
-                "FUS", "https://resources.jetbrains.com/storage/fus/config/v4/FUS/")
-
-        def buildContext = BuildContext.createContext("$home/community", home, new MPSProperties(home), buildTools, options)
+        ProprietaryBuildTools buildTools = new ProprietaryBuildTools(null, null, null, null,
+                new FeatureUsageStatisticsProperties("FUS", "https://resources.jetbrains.com/storage/fus/config/v4/FUS/"),
+                null)
+        def buildContext = BuildContextImpl.create(Path.of("$home/community"), Path.of(home), new MPSProperties(), buildTools, options)
 
         def buildTasks = BuildTasks.create(buildContext)
         buildTasks.compileProjectAndTests(["intellij.platform.jps.build", "intellij.platform.jps.model.tests", "intellij.platform.jps.model.serialization.tests"])

@@ -1,17 +1,19 @@
-Index: platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.groovy
+Index: platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
-diff --git a/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.groovy b/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.groovy
---- a/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.groovy	(revision f1d850713e9eac7b8cc7a27e215da206c9d8a393)
-+++ b/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.groovy	(date 1649330732884)
-@@ -67,7 +67,7 @@
-     def productLayout = context.productProperties.productLayout
-     def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
-                                            context.proprietaryBuildTools.artifactsServer != null
--    CompatibleBuildRange compatibleBuildRange = bundled || plugin.pluginCompatibilityExactVersion ||
-+    CompatibleBuildRange compatibleBuildRange = plugin.pluginCompatibilityExactVersion ||
-                                                 //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
-                                                 includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
-       //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
+diff --git a/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt b/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt
+--- a/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt	(revision 7a36c2274a1ca4f8a2fd516ab254510dc174324a)
++++ b/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt	(date 1654073871836)
+@@ -53,7 +53,7 @@
+                                          context.proprietaryBuildTools.artifactsServer != null
+   val isBundled = !pluginsToPublish.contains(plugin)
+   val compatibleBuildRange = when {
+-    isBundled || plugin.pluginCompatibilityExactVersion || includeInBuiltinCustomRepository -> CompatibleBuildRange.EXACT
++    plugin.pluginCompatibilityExactVersion || includeInBuiltinCustomRepository -> CompatibleBuildRange.EXACT
+     context.applicationInfo.isEAP -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
+     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
+   }
+
+ 

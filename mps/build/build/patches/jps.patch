@@ -1,11 +1,12 @@
-Index: community/platform/configuration-store-impl/src/ProjectStoreBridge.kt
+Index: platform/configuration-store-impl/src/ProjectStoreBridge.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(revision 2ec0ef15de0ba93e381c1a44d072504abf5bc27e)
-+++ community/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(date 1615489881658)
-@@ -195,7 +195,7 @@
+diff --git a/platform/configuration-store-impl/src/ProjectStoreBridge.kt b/platform/configuration-store-impl/src/ProjectStoreBridge.kt
+--- a/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(revision 7a36c2274a1ca4f8a2fd516ab254510dc174324a)
++++ b/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(date 1654073872041)
+@@ -200,7 +200,7 @@
    val fileName = PathUtil.getFileName(filePath)
    val parentPath = PathUtil.getParentPath(filePath)
    val parentFileName = PathUtil.getFileName(parentPath)
@@ -14,15 +15,15 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
      collapsedPath = "\$PROJECT_FILE$"
      splitterClass = StateSplitterEx::class.java
    }
-@@ -220,7 +220,7 @@
-             return providerFactory.getOrCreateStorageSpec(fileName)
+@@ -229,7 +229,7 @@
            }
          }
--        error("$filePath is not under .idea directory and not under external system cache")
-+        error("$filePath is not under .mps directory and not under external system cache")
+         if (StreamProviderFactory.EP_NAME.hasAnyExtensions(project)) {
+-          error("$filePath is not under .idea directory and not under external system cache")
++          error("$filePath is not under .mps directory and not under external system cache")
+         }
        }
      }
-   }
 Index: community/platform/workspaceModel/ide/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
@@ -55,3 +56,4 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
  }
  
  internal fun getInternalFileSource(source: EntitySource) = when (source) {
+ 

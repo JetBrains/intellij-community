@@ -3,19 +3,22 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BaseLayout
-import org.jetbrains.intellij.build.impl.BuildTasksImpl
+import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PlatformLayout
-import org.jetbrains.intellij.build.impl.ProjectLibraryData
 
-import java.nio.file.Paths
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.function.BiConsumer
+
+import static org.jetbrains.intellij.build.impl.DistUtilKt.generateBuildTxt
 
 /**
  * @author victor
  */
 @CompileStatic
 class MPSProperties extends JetBrainsProductProperties {
-    MPSProperties(String home) {
+    MPSProperties() {
         baseFileName = "mps"
         productCode = "MPS"
         customProductCode = productCode
@@ -35,7 +38,7 @@ class MPSProperties extends JetBrainsProductProperties {
                 "intellij.java.execution.impl",
                 "intellij.java.compiler.instrumentationUtil"
         ]
-        productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources", "intellij.xml.dom")
+        productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources", "intellij.java.ide.resources", "intellij.xml.dom")
 
 
         productLayout.withAdditionalPlatformJar("javac2.jar",
@@ -46,25 +49,24 @@ class MPSProperties extends JetBrainsProductProperties {
         productLayout.withAdditionalPlatformJar("util.jar",
                 "intellij.platform.util")
 
-        productLayout.bundledPluginModules += [
-                "intellij.java.plugin",
-                "intellij.java.ide.customization",
-                "intellij.copyright",
-                "intellij.properties",
-                "intellij.properties.resource.bundle.editor",
-                "intellij.terminal",
-                "intellij.emojipicker",
-                "intellij.settingsRepository",
-                "intellij.tasks.core",
-                "intellij.vcs.git",
-                "intellij.vcs.svn",
-                "intellij.vcs.github",
-                "intellij.ant",
-                "intellij.sh",
-                "intellij.vcs.changeReminder",
-                "intellij.markdown",
-                "intellij.grazie"
-        ]
+        productLayout.bundledPluginModules.add("intellij.java.plugin")
+        productLayout.bundledPluginModules.add("intellij.java.ide.customization")
+        productLayout.bundledPluginModules.add("intellij.copyright")
+        productLayout.bundledPluginModules.add("intellij.properties")
+        productLayout.bundledPluginModules.add("intellij.properties.resource.bundle.editor")
+        productLayout.bundledPluginModules.add("intellij.terminal")
+        productLayout.bundledPluginModules.add("intellij.emojipicker")
+        productLayout.bundledPluginModules.add("intellij.settingsRepository")
+        productLayout.bundledPluginModules.add("intellij.tasks.core")
+        productLayout.bundledPluginModules.add("intellij.vcs.git")
+        productLayout.bundledPluginModules.add("intellij.vcs.svn")
+        productLayout.bundledPluginModules.add("intellij.vcs.github")
+        productLayout.bundledPluginModules.add("intellij.ant")
+        productLayout.bundledPluginModules.add("intellij.sh")
+        productLayout.bundledPluginModules.add("intellij.vcs.changeReminder")
+        productLayout.bundledPluginModules.add("intellij.markdown")
+        productLayout.bundledPluginModules.add("intellij.grazie")
+
         productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
         productLayout.buildAllCompatiblePlugins = false
         productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
@@ -72,37 +74,39 @@ class MPSProperties extends JetBrainsProductProperties {
             // This plugins are part of COMMUNITY_REPOSITORY_PLUGINS, but with OS restriction
             // We make OS specific builds later so build both ignoring restriction
             if (pluginLayout.mainModule == "intellij.laf.macos" || pluginLayout.mainModule == "intellij.laf.win10") {
-                pluginLayout.bundlingRestrictions = new PluginBundlingRestrictions(OsFamily.ALL, pluginLayout.bundlingRestrictions.includeInEapOnly)
+                pluginLayout.bundlingRestrictions = new PluginBundlingRestrictions(OsFamily.ALL, JvmArchitecture.ALL, pluginLayout.bundlingRestrictions.includeInEapOnly)
             }
             return pluginLayout
         }).collect() + [
                 JavaPluginLayout.javaPlugin()
         ]).toList()
 
-        productLayout.platformLayoutCustomizer = { PlatformLayout layout, BuildContext context ->
-            layout.customize {
+        var layoutCustomizer = new BiConsumer<PlatformLayout, BuildContext>() {
+            @Override
+            void accept(PlatformLayout layout, BuildContext buildContext) {
                 for (String moduleName : List.of("intellij.java.testFramework", "intellij.platform.testFramework.core")) {
                     if (!productLayout.productApiModules.contains(moduleName)) {
-                        withModule(moduleName, "testFramework.jar")
+                        layout.withModule(moduleName, "testFramework.jar")
                     }
                 }
                 for (String name : BaseIdeaProperties.JAVA_IDE_IMPLEMENTATION_MODULES) {
-                    withModule(name)
+                    layout.withModule(name)
                 }
-                excludeFromModule("intellij.platform.testFramework", "mockito-extensions/**")
+                layout.excludeFromModule("intellij.platform.testFramework", "mockito-extensions/**")
 
-                withModule("intellij.platform.coverage", productLayout.mainJarName)
-                withModule("intellij.java.guiForms.rt")
+                layout.withModule("intellij.platform.coverage", productLayout.mainJarName)
+                layout.withModule("intellij.java.guiForms.rt")
 
-                withModule("intellij.java.rt", "idea_rt.jar", null)
-                withProjectLibrary("Eclipse", ProjectLibraryData.PackMode.MERGED)
-                withProjectLibrary("JUnit4", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-                withProjectLibrary("http-client-3.1", ProjectLibraryData.PackMode.MERGED)
-                withProjectLibrary("pty4j", ProjectLibraryData.PackMode.STANDALONE_MERGED) // for terminal plugin
-                withoutProjectLibrary("Ant")
-                withoutProjectLibrary("Gradle")
+                layout.withModule("intellij.java.rt", "idea_rt.jar")
+                layout.withProjectLibrary("Eclipse", LibraryPackMode.MERGED)
+                layout.withProjectLibrary("JUnit4", LibraryPackMode.STANDALONE_MERGED)
+                layout.withProjectLibrary("http-client-3.1", LibraryPackMode.MERGED)
+                layout.withProjectLibrary("pty4j", LibraryPackMode.STANDALONE_MERGED) // for terminal plugin
+                layout.withoutProjectLibrary("Ant")
+                layout.withoutProjectLibrary("Gradle")
             }
-        } as BiConsumer<PlatformLayout, BuildContext>
+        }
+        productLayout.addPlatformCustomizer(layoutCustomizer)
 
         additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
         modulesToCompileTests = ["intellij.platform.jps.build", "intellij.platform.jps.model.tests", "intellij.platform.jps.model.serialization.tests"]
@@ -113,39 +117,30 @@ class MPSProperties extends JetBrainsProductProperties {
     @Override
     @CompileDynamic
     void copyAdditionalFiles(final BuildContext context, final String targetDirectory) {
-        super.copyAdditionalFiles(context, targetDirectory)
-        context.ant.copy(todir: "$targetDirectory/lib/ant") {
-            fileset(dir: "$context.paths.communityHome/lib/ant")
-        }
+        new FileSet(Path.of("$context.paths.communityHome/lib/ant")).includeAll().copyToDir(Path.of("$targetDirectory/lib/ant"))
 
         // copy binaries
-        context.ant.copy(todir: "$targetDirectory/bin/linux/") {
-            fileset(dir: "$context.paths.communityHome/bin/linux/")
-        }
-        context.ant.copy(todir: "$targetDirectory/bin/mac/") {
-            fileset(dir: "$context.paths.communityHome/bin/mac/", excludes: "*.sh")
-        }
-        context.ant.copy(todir: "$targetDirectory/bin/win/") {
-            fileset(dir: "$context.paths.communityHome/bin/win/")
-        }
+        new FileSet(Path.of("$context.paths.communityHome/bin/linux/")).includeAll().copyToDir(Path.of("$targetDirectory/bin/linux/"))
+        new FileSet(Path.of("$context.paths.communityHome/bin/mac/")).includeAll().copyToDir(Path.of("$targetDirectory/bin/mac/"))
+        new FileSet(Path.of("$context.paths.communityHome/bin/win/")).includeAll().copyToDir(Path.of("$targetDirectory/bin/win/"))
 
         // copy mac executable
-        context.ant.copy(file: "$context.paths.communityHome/platform/build-scripts/resources/mac/Contents/MacOS/executable",
-                tofile: "$targetDirectory/build/resources/mps")
+        Files.createDirectories(Path.of("$targetDirectory/build/resources"))
+        Files.copy(
+                Path.of("$context.paths.communityHome/platform/build-scripts/resources/mac/Contents/MacOS/executable"),
+                Path.of("$targetDirectory/build/resources/mps"),
+                StandardCopyOption.COPY_ATTRIBUTES)
 
         // copy jre version
-        context.ant.copy(file: "$context.paths.communityHome/build/dependencies/gradle.properties",
-                todir: "$targetDirectory/build/dependencies/")
+        new FileSet(Path.of("$context.paths.communityHome/build/dependencies")).include("gradle.properties").copyToDir(Path.of("$targetDirectory/build/dependencies/"))
 
         //for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
-        context.ant.move(file: "$targetDirectory/lib/annotations-java5.jar", tofile: "$targetDirectory/lib/annotations.jar")
+        new File("$targetDirectory/lib/annotations-java5.jar").renameTo(new File("$targetDirectory/lib/annotations.jar"))
 
         // scripts needed for mac signing
-        context.ant.copy(todir: "$targetDirectory/build/tools/mac/scripts/") {
-            fileset(dir: "$context.paths.communityHome/platform/build-scripts/tools/mac/scripts/")
-        }
+        new FileSet(Path.of("$context.paths.communityHome/platform/build-scripts/tools/mac/scripts/")).includeAll().copyToDir(Path.of("$targetDirectory/build/tools/mac/scripts/"))
 
-        BuildTasksImpl.generateBuildTxt(context, Paths.get("$targetDirectory/lib"))
+        generateBuildTxt(context, Path.of("$targetDirectory/lib"))
     }
 
     @Override
