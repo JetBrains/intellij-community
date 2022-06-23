@@ -18,21 +18,9 @@ internal class GHPRListPersistentSearchHistory :
   var history: List<GHPRListSearchValue>
     get() = state.history.toList()
     set(value) {
-      state.history = value.trim(RECENT_SEARCH_FILTERS_LIMIT)
+      state.history = value
       tracker.incModificationCount()
     }
 
   override fun getStateModificationCount(): Long = tracker.modificationCount
-
-  companion object {
-    private const val RECENT_SEARCH_FILTERS_LIMIT = 10
-
-    private fun <E> List<E>.trim(sizeLimit: Int): List<E> {
-      val result = this.toMutableList()
-      while (result.size > sizeLimit) {
-        result.removeFirst()
-      }
-      return result
-    }
-  }
 }

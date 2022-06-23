@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
 import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
@@ -10,13 +11,13 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term.Qualif
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term.QueryPart
 
 @Serializable
-internal data class GHPRListSearchValue(val searchQuery: String? = null,
+internal data class GHPRListSearchValue(override val searchQuery: String? = null,
                                         val state: State? = null,
                                         val assignee: String? = null,
                                         val reviewState: ReviewState? = null,
                                         val author: String? = null,
-                                        val label: String? = null) {
-  val isEmpty = searchQuery == null && state == null && assignee == null && reviewState == null && author == null && label == null
+                                        val label: String? = null) : ReviewListSearchValue {
+  override val isEmpty = searchQuery == null && state == null && assignee == null && reviewState == null && author == null && label == null
 
   fun toQuery(): GHPRSearchQuery? {
     val terms = mutableListOf<Term<*>>()
