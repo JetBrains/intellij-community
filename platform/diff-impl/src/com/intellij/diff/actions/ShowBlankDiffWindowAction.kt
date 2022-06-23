@@ -62,6 +62,10 @@ class ShowBlankDiffWindowAction : DumbAwareAction() {
     isEnabledInModalContext = true
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     val editor = e.getData(CommonDataKeys.EDITOR)
@@ -141,6 +145,10 @@ internal class SwitchToRecentEditorActionGroup : ActionGroup(), DumbAware {
     return BlankDiffWindowUtil.getRecentFiles().map2Array { MySwitchAction(it) }
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   private class MySwitchAction(val content: RecentBlankContent) : BlankSwitchContentActionBase() {
     init {
       templatePresentation.setTextWithMnemonic {
@@ -195,6 +203,10 @@ internal abstract class BlankSwitchContentActionBase : DumbAwareAction() {
     }
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val helper = MutableDiffRequestChain.createHelper(e.dataContext)!!
     val editor = e.getRequiredData(CommonDataKeys.EDITOR)
@@ -243,6 +255,10 @@ internal class BlankToggleThreeSideModeAction : DumbAwareAction() {
       ActionsBundle.message("action.ToggleThreeSideInBlankDiffWindow.text.enable")
     }
     e.presentation.isEnabledAndVisible = true
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
