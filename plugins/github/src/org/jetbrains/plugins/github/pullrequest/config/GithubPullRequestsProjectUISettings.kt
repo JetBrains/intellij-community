@@ -21,7 +21,6 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
 
   class SettingsState : BaseState() {
     var selectedUrlAndAccountId by property<UrlAndAccount?>(null) { it == null }
-    var recentSearchFilters by list<String>()
     var recentNewPullRequestHead by property<RepoCoordinatesHolder?>(null) { it == null }
   }
 
@@ -40,21 +39,6 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
       }
     }
 
-  fun getRecentSearchFilters(): List<String> = state.recentSearchFilters.toList()
-
-  fun addRecentSearchFilter(searchFilter: String) {
-    val addExisting = state.recentSearchFilters.remove(searchFilter)
-    state.recentSearchFilters.add(0, searchFilter)
-
-    if (state.recentSearchFilters.size > RECENT_SEARCH_FILTERS_LIMIT) {
-      state.recentSearchFilters.removeLastOrNull()
-    }
-
-    if (!addExisting) {
-      state.intIncrementModificationCount()
-    }
-  }
-
   var recentNewPullRequestHead: GHRepositoryCoordinates?
     get() = state.recentNewPullRequestHead?.let { GHRepositoryCoordinates(it.server, GHRepositoryPath(it.owner, it.repository)) }
     set(value) {
@@ -70,8 +54,6 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
   companion object {
     @JvmStatic
     fun getInstance(project: Project) = project.service<GithubPullRequestsProjectUISettings>()
-
-    private const val RECENT_SEARCH_FILTERS_LIMIT = 10
 
     class UrlAndAccount private constructor() {
 
