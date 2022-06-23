@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
@@ -113,15 +115,22 @@ public final class TestUtils {
     return method != null && AnnotationUtil.isAnnotated(method, JUnitCommonClassNames.ORG_JUNIT_TEST, CHECK_HIERARCHY);
   }
 
-  public static boolean isAnnotatedTestMethod(@Nullable PsiMethod method) {
+  public static boolean isTestMethod(@Nullable PsiMethod method) {
+    if (method == null) return false;
+    return TestFrameworks.getInstance().isTestMethod(method);
+  }
+
+  /**
+   * @param frameworks to check matching with {@link TestFramework#getName}
+   */
+  public static boolean isExecutableTestMethod(@Nullable PsiMethod method, List<String> frameworks) {
     if (method == null) return false;
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
     final TestFramework testFramework = TestFrameworks.detectFramework(containingClass);
     if (testFramework == null) return false;
     if (testFramework.isTestMethod(method, false)) {
-      @NonNls final String testFrameworkName = testFramework.getName();
-      return testFrameworkName.equals("JUnit4") || testFrameworkName.equals("JUnit5");
+      return ContainerUtil.exists(frameworks, testFramework.getName()::equals);
     }
     return false;
   }

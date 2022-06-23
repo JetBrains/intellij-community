@@ -23,6 +23,14 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspection.test.failed.line.display.name"
                      implementationClass="com.intellij.codeInspection.test.TestFailedLineInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestInProductSource"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.junit.test.case.in.product.source.display.name"
+                     implementationClass="com.intellij.codeInspection.test.TestInProductSourceInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.test.TestInProductSourceInspectionMerger"/>
+
+    <!--JUnit framework-->
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="SuperTearDownInFinally"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
