@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -13,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 @Suppress("DEPRECATION")
-class UseWithIndexInspection : IntentionBasedInspection<KtForExpression>(UseWithIndexIntention::class)
+class UseWithIndexInspection : IntentionBasedInspection<KtForExpression>(UseWithIndexIntention::class), CleanupLocalInspectionTool
 
 class UseWithIndexIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,

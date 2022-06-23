@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
@@ -27,7 +28,7 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.isStandaloneOnlyConstant
 import org.jetbrains.kotlin.resolve.jvm.annotations.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-class MayBeConstantInspection : AbstractKotlinInspection() {
+class MayBeConstantInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     enum class Status {
         NONE,
         MIGHT_BE_CONST,

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -16,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
 
 class NonExhaustiveWhenStatementMigrationInspection :
     AbstractDiagnosticBasedMigrationInspection<KtWhenExpression>(KtWhenExpression::class.java),
-    MigrationFix {
+    MigrationFix, CleanupLocalInspectionTool {
     override fun isApplicable(migrationInfo: MigrationInfo): Boolean =
         migrationInfo.isLanguageVersionUpdate(LanguageVersion.KOTLIN_1_5, LanguageVersion.KOTLIN_1_6)
 

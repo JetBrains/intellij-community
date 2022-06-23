@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.isDynamic
 import org.jetbrains.kotlin.types.typeUtil.isNullableAny
 
-class UnsafeCastFromDynamicInspection : AbstractKotlinInspection() {
+class UnsafeCastFromDynamicInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
         expressionVisitor(fun(expression) {
             val context = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)

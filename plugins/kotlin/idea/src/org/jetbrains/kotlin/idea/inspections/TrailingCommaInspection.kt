@@ -4,10 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -41,7 +38,7 @@ import kotlin.properties.Delegates
 class TrailingCommaInspection(
     @JvmField
     var addCommaWarning: Boolean = false
-) : AbstractKotlinInspection() {
+) : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : TrailingCommaVisitor() {
         override val recursively: Boolean = false
         private var useTrailingComma by Delegates.notNull<Boolean>()

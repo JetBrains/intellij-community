@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
@@ -24,7 +25,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 class ConvertTryFinallyToUseCallInspection : IntentionBasedInspection<KtTryExpression>(
     ConvertTryFinallyToUseCallIntention::class,
     problemText = KotlinBundle.message("convert.try.finally.to.use.before.text")
-) {
+), CleanupLocalInspectionTool {
     override fun inspectionTarget(element: KtTryExpression) = element.tryKeyword ?: element.tryBlock
 }
 

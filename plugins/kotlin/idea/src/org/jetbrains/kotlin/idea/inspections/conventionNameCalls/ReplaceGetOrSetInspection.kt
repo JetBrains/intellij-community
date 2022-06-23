@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections.conventionNameCalls
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -27,9 +28,13 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.isValidOperator
 
+class Foo {
+
+}
+
 class ReplaceGetOrSetInspection : AbstractApplicabilityBasedInspection<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java
-) {
+), CleanupLocalInspectionTool {
     private fun FunctionDescriptor.isExplicitOperator(): Boolean {
         return if (overriddenDescriptors.isEmpty())
             containingDeclaration !is JavaClassDescriptor && isOperator
