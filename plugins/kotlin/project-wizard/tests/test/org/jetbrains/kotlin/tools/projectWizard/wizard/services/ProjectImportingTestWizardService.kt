@@ -36,6 +36,7 @@ class GradleProjectImportingTestWizardService(private val project: Project) : Pr
         AndroidStudioTestUtils.specifyAndroidSdk(path.toFile())
 
         var importingErrorMessage: String? = null
+        var importingErrorDetails: String = ""
 
         ExternalSystemUtil.refreshProjects(
             ImportSpecBuilder(project, buildSystem.externalSystemId() ?: error("Unsupported build system $buildSystem"))
@@ -51,6 +52,9 @@ class GradleProjectImportingTestWizardService(private val project: Project) : Pr
 
                     override fun onFailure(errorMessage: String, errorDetails: String?) {
                         importingErrorMessage = errorMessage
+                        if (errorDetails != null) {
+                            importingErrorDetails = errorDetails
+                        }
                     }
                 }).forceWhenUptodate()
         )
@@ -60,6 +64,7 @@ class GradleProjectImportingTestWizardService(private val project: Project) : Pr
                 ProjectImportingError(
                     reader { KotlinPlugin.version.propertyValue.version.toString() },
                     message,
+                    importingErrorDetails,
                 )
             )
         } ?: UNIT_SUCCESS
