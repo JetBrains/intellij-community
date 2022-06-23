@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.defaultSubstitutors
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
@@ -90,7 +89,7 @@ fun KotlinFacetSettings.initializeIfNeeded(
 private fun getDefaultTargetPlatform(module: Module, rootModel: ModuleRootModel?): TargetPlatform {
     val platformKind = IdePlatformKind.ALL_KINDS.firstOrNull {
         getRuntimeLibraryVersions(module, rootModel, it).isNotEmpty()
-    } ?: DefaultIdeTargetPlatformKindProvider.defaultPlatform.idePlatformKind
+    } ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind
     if (platformKind == JvmIdePlatformKind) {
         var jvmTarget = Kotlin2JvmCompilerArgumentsHolder.getInstance(module.project).settings.jvmTarget?.let { JvmTarget.fromString(it) }
         if (jvmTarget == null) {

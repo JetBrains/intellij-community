@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
 import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
-import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
@@ -27,6 +26,7 @@ import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 class LibraryInfoCache(project: Project): FineGrainedEntityCache<Library, List<LibraryInfo>>(project, cleanOnLowMemory = true) {
     override fun subscribe() {
@@ -78,7 +78,7 @@ class LibraryInfoCache(project: Project): FineGrainedEntityCache<Library, List<L
             return LibraryEffectiveKindProvider.getInstance(project).getEffectiveKind(library).platform
         }
 
-        return DefaultIdeTargetPlatformKindProvider.defaultPlatform
+        return JvmPlatforms.defaultJvmPlatform
     }
 
     internal class ModelChangeListener(project: Project) : WorkspaceEntityChangeListener<LibraryEntity, Library>(project) {
