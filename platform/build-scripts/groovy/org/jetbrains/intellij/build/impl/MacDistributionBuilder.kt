@@ -188,7 +188,7 @@ class MacDistributionBuilder(private val context: BuildContext,
     //todo[nik] improve
     val minor = context.applicationInfo.minorVersion
     val isNotRelease = context.applicationInfo.isEAP && !minor.contains("RC") && !minor.contains("Beta")
-    val version = if (isNotRelease) "EAP $context.fullBuildNumber" else "${context.applicationInfo.majorVersion}.${minor}"
+    val version = if (isNotRelease) "EAP ${context.fullBuildNumber}" else "${context.applicationInfo.majorVersion}.${minor}"
     val isEap = if (isNotRelease) "-EAP" else ""
 
     val properties = Files.readAllLines(ideaPropertiesFile)
