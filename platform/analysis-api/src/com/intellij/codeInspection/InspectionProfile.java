@@ -70,8 +70,7 @@ public interface InspectionProfile extends Comparable {
    */
   default @Nullable TextAttributesKey getEditorAttributes(@NotNull String shortName, @Nullable PsiElement element) {
     final InspectionToolWrapper<?, ?> tool = getInspectionTool(shortName, element);
-    String attributesKey = tool.getForcedEditorAttributesKey();
-    if (attributesKey == null) attributesKey = tool.getEditorAttributesKey();
+    String attributesKey = tool.getDefaultEditorAttributes();
     return attributesKey != null ? TextAttributesKey.find(attributesKey) : null;
   }
 

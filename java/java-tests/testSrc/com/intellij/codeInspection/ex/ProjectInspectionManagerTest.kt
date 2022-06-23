@@ -136,7 +136,7 @@ class ProjectInspectionManagerTest {
       <component name="InspectionProjectProfileManager">
         <profile version="1.0">
           <option name="myName" value="Project Default" />
-          <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" />
+          <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" />
         </profile>
       </component>""".trimIndent())
 
@@ -251,7 +251,7 @@ class ProjectInspectionManagerTest {
         <component name="InspectionProjectProfileManager">
           <profile version="1.0">
             <option name="myName" value="Project Default" />
-            <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" />
+            <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" />
           </profile>
           <version value="1.0" />
         </component>

@@ -695,10 +695,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   public void setEditorAttributesKey(@NotNull String shortName, @Nullable String keyName, String scopeName, @Nullable Project project) {
     final ToolsImpl tools = getTools(shortName, project);
-    if (tools.isForcedEditorAttributesKey(keyName, scopeName)) return;
     final var level = tools.getLevel(scopeName, project);
-    final var severityKey = SeverityRegistrar.getSeverityRegistrar(project).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
-    tools.setEditorAttributesKey(severityKey.toString().equals(keyName) ? null : keyName, scopeName);
+    if (keyName == null) {
+      keyName = SeverityRegistrar.getSeverityRegistrar(project).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey().getExternalName();
+    }
+    String attributes = tools.getDefaultState().getTool().getDefaultEditorAttributes();
+    tools.setEditorAttributesKey(Objects.equals(attributes, keyName) ? null : keyName, scopeName);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
   
@@ -891,7 +893,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   public void setEditorAttributesKey(@NotNull List<? extends HighlightDisplayKey> keys, @Nullable TextAttributesKey attributesKey, String scopeName, Project project) {
     for (HighlightDisplayKey key : keys) {
-      setEditorAttributesKey(key.toString(), attributesKey == null ? null : attributesKey.toString(), scopeName, project);
+      setEditorAttributesKey(key.toString(), attributesKey == null ? null : attributesKey.getExternalName(), scopeName, project);
     }
   }
 
