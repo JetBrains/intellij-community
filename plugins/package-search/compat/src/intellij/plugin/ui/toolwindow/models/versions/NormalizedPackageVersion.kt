@@ -22,7 +22,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.versionTokenPriorityProv
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal sealed class NormalizedPackageVersion<T : PackageVersion>(
+sealed class NormalizedPackageVersion<T : PackageVersion>(
     val originalVersion: T
 ) : Comparable<NormalizedPackageVersion<*>> {
 
@@ -181,18 +181,5 @@ internal sealed class NormalizedPackageVersion<T : PackageVersion>(
         val stabilityMarker: String?
 
         val nonSemanticSuffix: String?
-    }
-
-    companion object {
-
-        suspend fun parseFrom(version: PackageVersion.Named, normalizer: PackageVersionNormalizer): NormalizedPackageVersion<PackageVersion.Named> =
-            normalizer.parse(version)
-
-        suspend fun <T : PackageVersion> parseFrom(version: T, normalizer: PackageVersionNormalizer): NormalizedPackageVersion<*> =
-            when (version) {
-                is PackageVersion.Missing -> Missing
-                is PackageVersion.Named -> parseFrom(version, normalizer)
-                else -> error("Unknown version type: ${version.javaClass.simpleName}")
-            }
     }
 }

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="package-search-version-utils">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/pkgs-version-utils-1.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/pkgs-version-utils-1.0.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

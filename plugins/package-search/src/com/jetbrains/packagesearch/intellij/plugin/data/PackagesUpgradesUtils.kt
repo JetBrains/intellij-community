@@ -49,7 +49,7 @@ internal suspend fun computePackageUpgrades(
             val currentVersion = usageInfo.getResolvedVersionOrFallback()
             if (currentVersion !is PackageVersion.Named) continue
 
-            val normalizedPackageVersion = runCatching { NormalizedPackageVersion.parseFrom(currentVersion, normalizer) }
+            val normalizedPackageVersion = runCatching { normalizer.parse(currentVersion) }
                 .onFailure { logError(throwable = it) { "Unable to normalize version: $currentVersion" } }
                 .getOrNull() ?: continue
 
@@ -77,7 +77,7 @@ internal suspend fun computePackageUpgrades(
     return PackagesToUpgrade(updatesByModule)
 }
 
-internal suspend inline fun computeUpgradeOperationsForSingleModule(
+internal inline fun computeUpgradeOperationsForSingleModule(
     packageModel: PackageModel.Installed,
     targetModule: ModuleModel,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,

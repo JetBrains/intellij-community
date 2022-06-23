@@ -32,7 +32,7 @@ inline fun <reified T, R> T.tryDoing(a: () -> R?): R? = try {
             Logger.getInstance(T::class.java).error("Failed to execute safe operation: ${t.message}", t)
         }
     } catch (t: Throwable) {
-        // IntelliJ IDEA Logger may throw exception that we try to log inside
+        // IntelliJ IDEA Logger may throw an exception that we try to log inside
     }
     null
 }

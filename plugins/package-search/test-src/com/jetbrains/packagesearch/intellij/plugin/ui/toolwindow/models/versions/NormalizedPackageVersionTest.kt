@@ -189,4 +189,4 @@ internal class NormalizedPackageVersionTest {
 }
 
 internal fun NormalizedPackageVersion.Companion.parseFromBlocking(version: PackageVersion.Named, normalizer: PackageVersionNormalizer) =
-    runBlocking { parseFrom(version, normalizer) }
+    runBlocking { normalizer.parse(version) }

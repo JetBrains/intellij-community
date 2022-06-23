@@ -16,7 +16,6 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
 import kotlinx.coroutines.runBlocking
 
@@ -38,6 +37,6 @@ internal object PackageVersionComparator : Comparator<PackageVersion> {
     }
 
     private fun compareNamed(first: PackageVersion.Named, second: PackageVersion.Named): Int {
-        return runBlocking { NormalizedPackageVersion.parseFrom(first, normalizer).compareTo(NormalizedPackageVersion.parseFrom(second, normalizer)) }
+        return runBlocking { normalizer.parse(first).compareTo(normalizer.parse(second)) }
     }
 }

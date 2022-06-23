@@ -17,7 +17,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.util.text.VersionComparatorUtil
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.PackageSearchCompatBundle
 import com.jetbrains.packagesearch.intellij.plugin.util.versionTokenPriorityProvider
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.Nls
@@ -46,7 +46,7 @@ sealed class PackageVersion : Comparable<PackageVersion> {
         override val releasedAt: Long? = null
 
         @Nls
-        override val displayName = PackageSearchBundle.message("packagesearch.ui.missingVersion")
+        override val displayName = PackageSearchCompatBundle.message("packagesearch.ui.missingVersion")
 
         @NonNls
         override fun toString() = "[Missing version]"
@@ -70,14 +70,14 @@ sealed class PackageVersion : Comparable<PackageVersion> {
         @NonNls
         override fun toString() = versionName
 
-        internal fun semanticVersionComponent(): SemVerComponent? {
+        fun semanticVersionComponent(): SemVerComponent? {
             val groupValues = SEMVER_REGEX.find(versionName)?.groupValues ?: return null
             if (groupValues.size <= 1) return null
             val semanticVersion = groupValues[1].takeIf { it.isNotBlank() } ?: return null
             return SemVerComponent(semanticVersion, this)
         }
 
-        internal data class SemVerComponent(val semanticVersion: String, val named: Named)
+        data class SemVerComponent(val semanticVersion: String, val named: Named)
 
         companion object {
 
@@ -87,7 +87,7 @@ sealed class PackageVersion : Comparable<PackageVersion> {
 
     companion object {
 
-        internal fun from(rawVersion: ApiStandardPackage.ApiStandardVersion): PackageVersion {
+        fun from(rawVersion: ApiStandardPackage.ApiStandardVersion): PackageVersion {
             if (rawVersion.version.isBlank()) return Missing
             return Named(versionName = rawVersion.version.trim(), isStable = rawVersion.stable, releasedAt = rawVersion.lastChanged)
         }

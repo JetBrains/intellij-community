@@ -128,38 +128,42 @@ internal class PackageVersionNormalizer(
     private val SEMVER_REGEX = "^((?:\\d{1,5}\\.){0,4}\\d{1,5}(?!\\.?\\d)).*\$".toRegex(option = RegexOption.IGNORE_CASE)
 
     /**
-     * Extracts stability markers. Must be used on the string that follows a valid semver
-     * (see [SEMVER_REGEX]).
+     * Extracts stability markers. Must be used on the string that follows a valid semver (see [SEMVER_REGEX]).
      *
-     * Stability markers are made up by a separator character (one of: . _ - +), then one of the
-     * stability tokens (see the list below), followed by an optional separator (one of: . _ -),
-     * AND [0, 5] numeric digits. After the digits, there must be a word boundary (most
-     * punctuation, except for underscores, qualifies as such).
+     * Stability markers are made up by a separator character (one of: . _ - +), then one of the stability tokens (see the list below), followed by an
+     * optional separator (one of: . _ -), AND [0, 5] numeric digits. After the digits, there must be a word boundary (most punctuation, except for
+     * underscores, qualifies as such).
      *
-     * We only support up to two stability markers (arguably, having two already qualifies for
-     * the [Garbage] tier, but we have well-known libraries out there that do the two-markers
-     * game, now and then, and we need to support those shenanigans).
+     * We only support up to two stability markers (arguably, having two already qualifies for the [Garbage] tier, but we have well-known libraries
+     * out there that do the two-markers game, now and then, and we need to support those shenanigans).
      *
      * ### Stability tokens
      * We support the following stability tokens:
-     *  * `snapshots`*, `snapshot`, `snap`, `s`*
-     *  * `preview`, `eap`, `pre`, `p`*
-     *  * `develop`*, `dev`*
-     *  * `milestone`*, `m`, `build`*
-     *  * `alpha`, `a`
-     *  * `betta` (yes, there are Bettas out there), `beta`, `b`
-     *  * `candidate`*, `rc`
-     *  * `sp`
-     *  * `release`, `final`, `stable`*, `rel`, `r`
+     * * `snapshots`*, `snapshot`, `snap`, `s`*
+     * * `preview`, `eap`, `pre`, `p`*
+     * * `develop`*, `dev`*
+     * * `milestone`*, `m`, `build`*
+     * * `alpha`, `a`
+     * * `betta` (yes, there are Bettas out there), `beta`, `b`
+     * * `candidate`*, `rc`
+     * * `sp`
+     * * `release`, `final`, `stable`*, `rel`, `r`
      *
-     * Tokens denoted by a `*` are considered as meaningless words by [com.intellij.util.text.VersionComparatorUtil]
-     * when comparing without a custom token priority provider, so sorting may be funky when they appear.
+     * Tokens denoted by a `*` are considered as meaningless words by [com.intellij.util.text.VersionComparatorUtil] when comparing without a custom
+     * token priority provider, so sorting may be funky when they appear.
      */
     private val STABILITY_MARKER_REGEX =
         ("^((?:[._\\-+]" +
             "(?:snapshots?|preview|milestone|candidate|release|develop|stable|build|alpha|betta|final|snap|beta|dev|pre|eap|rel|sp|rc|m|r|b|a|p)" +
             "(?:[._\\-]?\\d{1,5})?){1,2})(?:\\b|_)")
             .toRegex(option = RegexOption.IGNORE_CASE)
+
+    suspend fun <T : PackageVersion> parse(version: T): NormalizedPackageVersion<*> =
+        when (version) {
+            is PackageVersion.Missing -> NormalizedPackageVersion.Missing
+            is PackageVersion.Named -> parse(version)
+            else -> error("Unknown version type: ${version.javaClass.simpleName}")
+        }
 
     suspend fun parse(version: PackageVersion.Named): NormalizedPackageVersion<PackageVersion.Named> {
         val cachedValue = versionsCache.get(version)

@@ -19,8 +19,7 @@ package com.jetbrains.packagesearch.intellij.plugin.util
 import com.intellij.util.text.VersionComparatorUtil
 
 /**
- * Used as parameter for the [VersionComparatorUtil.compare] method, to include additional tokens into the
- * comparison.
+ * Used as parameter for the [VersionComparatorUtil.compare] method, to include additional tokens in the comparison.
  *
  * We support the following stability tokens, in addition to the ones supported by [VersionComparatorUtil]:
  * * For snapshot-level: `snapshots`, `s`, `p`, `develop`, `dev`

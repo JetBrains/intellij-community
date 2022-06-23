@@ -128,6 +128,7 @@ final class CommunityRepositoryModules {
       withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
     },
     plugin("intellij.packageSearch") {
+      withModule("intellij.packageSearch.compat")
       withModule("intellij.packageSearch.gradle")
       withModule("intellij.packageSearch.maven")
       withModule("intellij.packageSearch.kotlin")
