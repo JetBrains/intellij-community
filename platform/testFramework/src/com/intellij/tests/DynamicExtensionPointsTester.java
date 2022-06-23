@@ -71,19 +71,20 @@ public class DynamicExtensionPointsTester {
     AtomicBoolean failed = new AtomicBoolean(false);
     extensionPointToNonPlatformExtensions.forEach((ep, references) -> {
       String testName = escape(namer.fun("Dynamic EP unloading " + ep.getName()));
-      System.out.printf("##teamcity[testStarted name='%s']%n", testName);
+      System.out.printf("##teamcity[testStarted name='%s' nodeId='%s' parentNodeId='%s']%n", testName, testName, 
+                        MapSerializerUtil.escapeStr("[engine:junit-vintage]/[runner:_LastInSuiteTest]/[test:testDynamicExtensions(_LastInSuiteTest)]", MapSerializerUtil.STD_ESCAPER));
       System.out.flush();
 
       List<Object> alive = ContainerUtil.mapNotNull(references, WeakReference::get);
       if (!alive.isEmpty()) {
         String aliveExtensions = StringUtil.join(alive, o -> o + " (" + o.getClass() + ")", "\n");
-        System.out.printf("##teamcity[%s name='%s' message='%s']%n", MapSerializerUtil.TEST_FAILED, testName,
+        System.out.printf("##teamcity[%s name='%s' nodeId='%s' message='%s']%n", MapSerializerUtil.TEST_FAILED, testName, testName,
                           escape("Not unloaded extensions:\n" + aliveExtensions + "\n\n" + "See testDynamicExtensions output to find a heapDump"));
         System.out.flush();
         failed.set(true);
       }
       else {
-        System.out.printf("##teamcity[testFinished name='%s']%n", testName);
+        System.out.printf("##teamcity[testFinished name='%s' nodeId='%s']%n", testName, testName);
         System.out.flush();
       }
     });
