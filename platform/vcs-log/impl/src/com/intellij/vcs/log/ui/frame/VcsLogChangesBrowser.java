@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
 import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
@@ -406,7 +407,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     boolean isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
 
     if (isWithEditorDiffPreview && editorDiffPreviewController == null) {
-      myEditorDiffPreviewController = new VcsLogChangesBrowserDiffPreviewController(myProject, this);
+      myEditorDiffPreviewController = new VcsLogChangesBrowserDiffPreviewController();
     }
     else if (!isWithEditorDiffPreview && editorDiffPreviewController != null) {
       editorDiffPreviewController.getActivePreview().closePreview();
@@ -474,6 +475,20 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
   public interface Listener extends EventListener {
     void onModelUpdated();
+  }
+
+  private class VcsLogChangesBrowserDiffPreviewController extends DiffPreviewControllerBase {
+    @NotNull
+    @Override
+    protected DiffPreview getSimplePreview() {
+      return new VcsLogEditorDiffPreview(myProject, VcsLogChangesBrowser.this);
+    }
+
+    @NotNull
+    @Override
+    protected CombinedDiffPreview createCombinedDiffPreview() {
+      return new VcsLogCombinedDiffPreview(VcsLogChangesBrowser.this);
+    }
   }
 
   private static class ParentTag extends ChangesBrowserNode.ValueTag<Hash> {
