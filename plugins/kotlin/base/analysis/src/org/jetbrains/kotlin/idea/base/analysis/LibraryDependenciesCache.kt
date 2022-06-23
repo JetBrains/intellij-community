@@ -281,8 +281,18 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, this)
         }
 
-        override fun calculate(key: LibraryWrapper): Set<Module> =
-            throw UnsupportedOperationException("calculate for $key should not be invoked")
+        override fun calculate(key: LibraryWrapper): Set<Module> {
+            val libraryEx = key.library
+            val modules = mutableSetOf<Module>()
+            for (module in ModuleManager.getInstance(project).modules) {
+                for (entry in ModuleRootManager.getInstance(module).orderEntries) {
+                    if (entry is LibraryOrderEntry && entry.library == libraryEx) {
+                        modules += module
+                    }
+                }
+            }
+            return modules
+        }
 
         override fun checkKeyValidity(key: LibraryWrapper) {
             key.library.checkValidity()
