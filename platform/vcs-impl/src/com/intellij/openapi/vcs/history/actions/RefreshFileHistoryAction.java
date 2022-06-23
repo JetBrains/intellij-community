@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.history.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.VcsInternalDataKeys;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -32,5 +33,10 @@ public class RefreshFileHistoryAction extends RefreshAction implements DumbAware
     }
     e.getPresentation().setVisible(true);
     e.getPresentation().setEnabled(!refresher.isInRefresh());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

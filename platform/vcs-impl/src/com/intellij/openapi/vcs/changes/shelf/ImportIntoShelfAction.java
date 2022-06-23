@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -43,6 +44,11 @@ public class ImportIntoShelfAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     e.getPresentation().setEnabled(project != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

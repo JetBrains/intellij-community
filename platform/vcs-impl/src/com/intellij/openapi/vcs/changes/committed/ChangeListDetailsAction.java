@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -53,6 +54,11 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
 
     e.getPresentation().setEnabled(
       e.getProject() != null && changeLists != null && changeLists.length == 1 && changeLists[0] instanceof CommittedChangeList);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   public static void showDetailsPopup(@NotNull Project project, @NotNull CommittedChangeList changeList) {
