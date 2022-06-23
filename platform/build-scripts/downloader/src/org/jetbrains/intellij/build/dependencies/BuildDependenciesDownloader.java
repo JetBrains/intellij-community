@@ -124,9 +124,8 @@ final public class BuildDependenciesDownloader {
 
   public static synchronized Path downloadFileToCacheLocation(BuildDependenciesCommunityRoot communityRoot, URI uri) {
     cleanUpIfRequired(communityRoot);
-
+    String uriString = uri.toString();
     try {
-      String uriString = uri.toString();
       String lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1);
       String fileName = hashString(uriString).substring(0, 10) + "-" + lastNameFromUri;
       Path targetFile = getDownloadCachePath(communityRoot).resolve(fileName);
@@ -135,7 +134,7 @@ final public class BuildDependenciesDownloader {
       return targetFile;
     }
     catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Cannot download " + uriString, e);
     }
   }
 
