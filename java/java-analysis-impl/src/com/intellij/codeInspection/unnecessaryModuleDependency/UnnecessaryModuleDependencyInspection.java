@@ -45,7 +45,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
         if (descriptions != null) {
           String sourceModuleName = module.getName();
           for (CommonProblemDescriptor description : descriptions) {
-            QuickFix[] fixes = description.getFixes();
+            QuickFix<?>[] fixes = description.getFixes();
             if (fixes != null) {
               Arrays.stream(fixes)
                 .map(fix -> fix instanceof RemoveModuleDependencyFix ? ((RemoveModuleDependencyFix)fix).myDependency : null)
@@ -64,7 +64,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
           if (toModule == null) return;
           String toModuleName = toModule.getName();
           if (!to2FromCandidatePairsToRemove.containsKey(toModuleName)) return;
-          if (PsiModifier.PRIVATE == aClass.getAccessModifier()) return;
+          if (PsiModifier.PRIVATE.equals(aClass.getAccessModifier())) return;
           javaInspectionContext.enqueueClassUsagesProcessor(aClass, reference -> {
             PsiFile containingFile = reference.getElement().getContainingFile();
             if (!(containingFile instanceof PsiClassOwner)) {
@@ -156,7 +156,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
 
   @Nullable
   @Override
-  public QuickFix getQuickFix(String hint) {
+  public RemoveModuleDependencyFix getQuickFix(String hint) {
     return new RemoveModuleDependencyFix(hint);
   }
 
