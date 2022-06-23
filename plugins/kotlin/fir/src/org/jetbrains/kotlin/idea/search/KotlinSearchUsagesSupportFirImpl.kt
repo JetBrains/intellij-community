@@ -323,10 +323,15 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
     }
 
     override fun createConstructorHandle(psiMethod: PsiMethod): KotlinSearchUsagesSupport.ConstructorCallHandle {
-        //TODO FIR: This is the stub. Need to implement
         return object : KotlinSearchUsagesSupport.ConstructorCallHandle {
             override fun referencedTo(element: KtElement): Boolean {
-                return false
+                val callExpression = element.getNonStrictParentOfType<KtCallElement>() ?: return false
+                return withResolvedCall(callExpression) {call ->
+                    when (call) {
+                        is KtDelegatedConstructorCall -> call.symbol.psi == psiMethod
+                        else -> false
+                    }
+                } ?: false
             }
         }
     }
