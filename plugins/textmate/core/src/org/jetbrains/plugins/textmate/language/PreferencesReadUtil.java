@@ -9,7 +9,6 @@ import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateSnippet;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
-import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 import java.io.File;
 import java.util.*;
@@ -102,11 +101,10 @@ public final class PreferencesReadUtil {
   }
 
   @Nullable
-  private static RegexFacade getPattern(@NotNull String name, @NotNull Plist from) {
+  private static String getPattern(@NotNull String name, @NotNull Plist from) {
     final PListValue value = from.getPlistValue(name);
     if (value == null) return null;
-    final String pattern = value.getString();
-    return RegexFacade.regex(pattern);
+    return value.getString();
   }
 
   @NotNull

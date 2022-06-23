@@ -26,7 +26,7 @@
     // Indent if a line ends brackets, "->" or most keywords. Also if prefixed
     // with "||". This should work with most formatting models.
     // The ((?!%).)* is to ensure this doesn't match inside comments.
-    "increaseIndentPattern": "^((?!%).)*([{([]|->|after|begin|case|catch|fun|if|of|try|when|(\\|\\|.*))\\s*$",
+    "increaseIndentPattern": "^((?!%).)*([{(\\[]|->|after|begin|case|catch|fun|if|of|try|when|(\\|\\|.*))\\s*$",
     // Dedent after brackets, end or lone "->". The latter happens in a spec
     // with indented types, typically after "when". Only do this if it's _only_
     // preceded by whitespace.

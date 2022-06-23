@@ -2,28 +2,27 @@ package org.jetbrains.plugins.textmate.language.preferences;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 final public class IndentationRules {
-  @Nullable private final RegexFacade myIncreaseIndentPattern;
-  @Nullable private final RegexFacade myDecreaseIndentPattern;
-  @Nullable private final RegexFacade myIndentNextLinePattern;
-  @Nullable private final RegexFacade myUnIndentedLinePattern;
+  @Nullable private final String myIncreaseIndentPattern;
+  @Nullable private final String myDecreaseIndentPattern;
+  @Nullable private final String myIndentNextLinePattern;
+  @Nullable private final String myUnIndentedLinePattern;
 
-  public IndentationRules(@Nullable RegexFacade increaseIndentPattern,
-                          @Nullable RegexFacade decreaseIndentPattern,
-                          @Nullable RegexFacade indentNextLinePattern,
-                          @Nullable RegexFacade unIndentedLinePattern) {
+  public IndentationRules(@Nullable String increaseIndentPattern,
+                          @Nullable String decreaseIndentPattern,
+                          @Nullable String indentNextLinePattern,
+                          @Nullable String unIndentedLinePattern) {
     myIncreaseIndentPattern = increaseIndentPattern;
     myDecreaseIndentPattern = decreaseIndentPattern;
     myIndentNextLinePattern = indentNextLinePattern;
     myUnIndentedLinePattern = unIndentedLinePattern;
   }
 
-  public @Nullable RegexFacade getIncreaseIndentPattern() { return myIncreaseIndentPattern; }
-  public @Nullable RegexFacade getDecreaseIndentPattern() { return myDecreaseIndentPattern; }
-  public @Nullable RegexFacade getIndentNextLinePattern() { return myIndentNextLinePattern; }
-  public @Nullable RegexFacade getUnIndentedLinePattern() { return myUnIndentedLinePattern; }
+  public @Nullable String getIncreaseIndentPattern() { return myIncreaseIndentPattern; }
+  public @Nullable String getDecreaseIndentPattern() { return myDecreaseIndentPattern; }
+  public @Nullable String getIndentNextLinePattern() { return myIndentNextLinePattern; }
+  public @Nullable String getUnIndentedLinePattern() { return myUnIndentedLinePattern; }
 
   @NotNull
   public static IndentationRules empty() {
@@ -36,12 +35,13 @@ final public class IndentationRules {
       && myIndentNextLinePattern == null && myUnIndentedLinePattern == null;
   }
 
-  @NotNull IndentationRules updateWith(IndentationRules other) {
+  @NotNull
+  public IndentationRules updateWith(IndentationRules other) {
     return new IndentationRules(
-      myIncreaseIndentPattern != null ? myIncreaseIndentPattern : other.myIncreaseIndentPattern,
-      myDecreaseIndentPattern != null ? myDecreaseIndentPattern : other.myDecreaseIndentPattern,
-      myIndentNextLinePattern != null ? myIndentNextLinePattern : other.myIndentNextLinePattern,
-      myUnIndentedLinePattern != null ? myUnIndentedLinePattern : other.myUnIndentedLinePattern
+      other.myIncreaseIndentPattern != null ? other.myIncreaseIndentPattern : myIncreaseIndentPattern,
+      other.myDecreaseIndentPattern != null ? other.myDecreaseIndentPattern : myDecreaseIndentPattern,
+      other.myIndentNextLinePattern != null ? other.myIndentNextLinePattern : myIndentNextLinePattern,
+      other.myUnIndentedLinePattern != null ? other.myUnIndentedLinePattern : myUnIndentedLinePattern
     );
   }
 }
