@@ -6,11 +6,11 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.Nls;
 
 /**
- * @author Konstantin Bulenkov
- * @deprecated Please use the registry to enable/disable experimental features.
  * This extension can only be used for A/B tests (with percentOfUsers not equal to either 0 or 100).
+ * For other experimental features please use the registry to enable/disable them.
+ *
+ * @author Konstantin Bulenkov
  */
-@Deprecated
 public abstract class ExperimentalFeature {
   @Attribute("id")
   public String id;
