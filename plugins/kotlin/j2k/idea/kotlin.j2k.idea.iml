@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.j2k.old" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" />
   </component>
 </module>

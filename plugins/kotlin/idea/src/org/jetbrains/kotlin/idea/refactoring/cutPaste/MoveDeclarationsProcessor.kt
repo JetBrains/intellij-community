@@ -11,10 +11,10 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.suggested.range
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelayedRequests
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsTransferableData.Companion.STUB_RENDERER
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*

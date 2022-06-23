@@ -19,12 +19,12 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.refactoring.suggested.range
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
