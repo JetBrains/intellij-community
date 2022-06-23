@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.analysis.AnalysisScope;
@@ -71,7 +71,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       return null;
     }
     final RefJavaElement element = (RefJavaElement)refEntity;
-    if (!element.isStatic() || element.getAccessModifier() == PsiModifier.PRIVATE) {
+    if (!element.isStatic() || PsiModifier.PRIVATE.equals(element.getAccessModifier())) {
       return null;
     }
     RefClass usageClass = null;
@@ -128,8 +128,12 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       return new ProblemDescriptor[]{createProblemDescriptor(manager, method.getNameIdentifier(), psiClass)};
     }
     else {
+      final RefField refField = (RefField)element;
+      if (refField.isEnumConstant()) {
+        return null;
+      }
       final PsiField field = ObjectUtils.tryCast(element.getPsiElement(), PsiField.class);
-      if (field == null || field instanceof PsiEnumConstant || isSingletonField(field)) {
+      if (field == null || isSingletonField(field)) {
         return null;
       }
       if (ignoreOnConflicts) {

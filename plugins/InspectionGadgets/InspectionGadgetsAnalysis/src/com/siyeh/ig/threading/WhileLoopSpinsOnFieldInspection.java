@@ -43,7 +43,7 @@ import java.util.function.Predicate;
 public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
   private static final CallMatcher THREAD_ON_SPIN_WAIT = CallMatcher.staticCall("java.lang.Thread", "onSpinWait");
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings({"PublicField", "SpellCheckingInspection"})
   public boolean ignoreNonEmtpyLoops = true;
 
   @Override
