@@ -2,6 +2,7 @@
 package git4idea.actions
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAware
@@ -21,4 +22,7 @@ abstract class GitRepositoryStateActionGroup(val repositoryState: Repository.Sta
     }
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }

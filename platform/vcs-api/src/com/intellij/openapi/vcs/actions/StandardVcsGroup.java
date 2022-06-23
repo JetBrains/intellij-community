@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -44,6 +41,11 @@ public abstract class StandardVcsGroup extends DefaultActionGroup implements Dum
       presentation.setVisible(false);
     }
     presentation.setEnabled(presentation.isVisible());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Nullable

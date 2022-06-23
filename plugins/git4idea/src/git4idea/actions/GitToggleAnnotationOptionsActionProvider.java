@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -38,7 +35,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().reloadAnnotationsForVcs(GitVcs.getKey());
   }
 
-  private static class MyGroup extends ActionGroup {
+  private static class MyGroup extends ActionGroup implements ActionUpdateThreadAware.Recursive {
     private final FileAnnotation myAnnotation;
 
     MyGroup(@NotNull FileAnnotation annotation) {

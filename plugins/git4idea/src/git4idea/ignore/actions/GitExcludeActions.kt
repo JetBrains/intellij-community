@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -33,6 +34,10 @@ abstract class DefaultGitExcludeAction(dynamicText: @NotNull Supplier<@Nls Strin
     val enabled = isEnabled(e)
     e.presentation.isVisible = enabled
     e.presentation.isEnabled = enabled
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   protected open fun isEnabled(e: AnActionEvent): Boolean {
