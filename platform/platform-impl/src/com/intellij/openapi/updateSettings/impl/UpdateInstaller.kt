@@ -194,7 +194,7 @@ internal object UpdateInstaller {
 
   private fun getRuntimeSuffix(): String = when {
     SystemInfo.isUnix && !SystemInfo.isMac && !Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr")) -> "-no-jbr"
-    (SystemInfo.isMac || SystemInfo.isLinux) && CpuArch.isArm64() -> "-jbr11-aarch64"
-    else -> "-jbr11"
+    (SystemInfo.isMac || SystemInfo.isLinux) && CpuArch.isArm64() -> "-aarch64"
+    else -> ""
   }
 }
