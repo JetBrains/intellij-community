@@ -38,7 +38,6 @@ done
 readonly AS_BUILD_NUMBER="$(sed "s/SNAPSHOT/__BUILD_NUMBER__/" build.txt)"
 
 declare -ar BUILD_PROPERTIES=(
-  "-Didea.home.path=${PROG_DIR}"
   "-Dintellij.build.output.root=${OUT}"
   "-Dbuild.number=${AS_BUILD_NUMBER}"
   "-Dintellij.build.dev.mode=false"
