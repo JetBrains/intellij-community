@@ -204,17 +204,17 @@ public final class ActionUtil {
     String operationName = group.getClass().getSimpleName() + "#update (" + group.getClass().getName() + ")";
     if (warnPopup) {
       event.getPresentation().setPopupGroup(!wasPopup); // keep the old logic for a while
-      LOG.warn("Calling `setPopup()` in " + operationName + ". " +
+      LOG.error("Calling `setPopup()` in " + operationName + ". " +
                "Please use `event.getPresentation().setPopupGroup()` instead.");
     }
     if (warnHide) {
       event.getPresentation().setHideGroupIfEmpty(!wasHideIfEmpty); // keep the old logic for a while
-      LOG.warn("Changing `hideIfNoVisibleChildren()` result in " + operationName + ". " +
+      LOG.error("Changing `hideIfNoVisibleChildren()` result in " + operationName + ". " +
                "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.");
     }
     if (warnHide) {
       event.getPresentation().setDisableGroupIfEmpty(!wasDisableIfEmpty); // keep the old logic for a while
-      LOG.warn("Changing `disableIfNoVisibleChildren()` result in " + operationName + ". " +
+      LOG.error("Changing `disableIfNoVisibleChildren()` result in " + operationName + ". " +
                "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.");
     }
   }
