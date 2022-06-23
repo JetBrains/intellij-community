@@ -149,8 +149,8 @@ internal abstract class GHPRCombinedDiffPreviewBase(private val dataProvider: GH
                                   filesManager: GHPRFilesManager): DiffPreviewController {
       val diffPreviewHolder =
         object : DiffPreviewControllerBase() {
-          override val combinedPreview = GHPRCombinedDiffPreview(dataProvider, filesManager, producerFactory, tree)
           override val simplePreview = GHPRDiffPreview(dataProvider?.id, filesManager)
+          override fun createCombinedDiffPreview() = GHPRCombinedDiffPreview(dataProvider, filesManager, producerFactory, tree)
         }
 
       tree.apply {

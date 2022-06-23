@@ -10,17 +10,22 @@ interface DiffPreviewController {
 
 abstract class DiffPreviewControllerBase : DiffPreviewController {
 
-  protected abstract val combinedPreview: CombinedDiffPreview
   protected abstract val simplePreview: DiffPreview
+
+  @Suppress("LeakingThis")
+  private val combinedPreview: CombinedDiffPreview? =
+    if (Registry.`is`("enable.combined.diff")) createCombinedDiffPreview() else null
+
+  protected abstract fun createCombinedDiffPreview(): CombinedDiffPreview
 
   override val activePreview get() = chooseActivePreview()
 
   private fun chooseActivePreview(): DiffPreview {
     val combinedDiffLimit = Registry.intValue("combined.diff.files.limit")
-    val combinedDiffEnabled = Registry.`is`("enable.combined.diff")
+    val combinedDiffPreview = combinedPreview
 
-    return if (combinedDiffEnabled && (combinedDiffLimit == -1 || combinedPreview.getFileSize() <= combinedDiffLimit)) {
-      combinedPreview
+    return if (combinedDiffPreview != null && (combinedDiffLimit == -1 || combinedDiffPreview.getFileSize() <= combinedDiffLimit)) {
+      combinedDiffPreview
     }
     else {
       simplePreview

@@ -184,7 +184,7 @@ class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsL
   }
 }
 
-class VcsLogChangesBrowserDiffPreviewController(project: Project, browser: VcsLogChangesBrowser) : DiffPreviewControllerBase() {
-  override val combinedPreview = VcsLogCombinedDiffPreview(browser)
+class VcsLogChangesBrowserDiffPreviewController(project: Project, private val browser: VcsLogChangesBrowser) : DiffPreviewControllerBase() {
   override val simplePreview = VcsLogEditorDiffPreview(project, browser)
+  override fun createCombinedDiffPreview() = VcsLogCombinedDiffPreview(browser)
 }
