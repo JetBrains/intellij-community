@@ -7,7 +7,6 @@
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" exported="" />
     <orderEntry type="module" module-name="kotlin.plugin-fir" exported="" />
     <orderEntry type="module" module-name="kotlin.fir" exported="" />
-    <orderEntry type="module" module-name="kotlin.fir.fir-fe10-binding" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.analysis-api-providers" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.analysis-project-structure" level="project" />
