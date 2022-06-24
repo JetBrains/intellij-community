@@ -51,7 +51,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
   private final Map<PsiTypeCastExpression, TypeConstraint> myRealOperandTypes = new HashMap<>();
-  private final Map<PsiCallExpression, Boolean> myFailingCalls = new HashMap<>();
+  private final Map<ContractFailureProblem, Boolean> myFailingCalls = new HashMap<>();
   private final Map<DfaAnchor, ConstantResult> myConstantExpressions = new HashMap<>();
   private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
@@ -209,7 +209,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   }
 
   StreamEx<PsiCallExpression> alwaysFailingCalls() {
-    return StreamEx.ofKeys(myFailingCalls, v -> v);
+    return StreamEx.ofKeys(myFailingCalls, v -> v).map(ContractFailureProblem::getAnchor).select(PsiCallExpression.class).distinct();
   }
 
   boolean isAlwaysReturnsNotNull(Instruction[] instructions) {
@@ -359,11 +359,12 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
                                Pair.create(((ArrayStoreProblem)problem).getFromType(), ((ArrayStoreProblem)problem).getToType()));
     }
     else if (problem instanceof ContractFailureProblem) {
-      PsiCallExpression call = tryCast(((ContractFailureProblem)problem).getAnchor(), PsiCallExpression.class);
+      ContractFailureProblem contractFailure = (ContractFailureProblem)problem;
+      PsiCallExpression call = tryCast(contractFailure.getAnchor(), PsiCallExpression.class);
       if (call != null) {
-        Boolean isFailing = myFailingCalls.get(call);
+        Boolean isFailing = myFailingCalls.get(problem);
         if (isFailing != null || !hasTrivialFailContract(call)) {
-          myFailingCalls.put(call, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
+          myFailingCalls.put(contractFailure, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
         }
       }
     }
