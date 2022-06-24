@@ -1197,7 +1197,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         });
         if (IdeaPopupMenuUI.isUnderPopup(contents) && IdeaPopupMenuUI.isRoundBorder()) {
           if (SystemInfoRt.isMac) {
-            rootPane.putClientProperty("RoundedCornerRadius", Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()));
+            rootPane.putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()));
 
             JComponent contentPane = (JComponent)((RootPaneContainer)window).getContentPane();
             contentPane.setOpaque(true);
