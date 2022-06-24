@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
+object OptInFixesFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val element = diagnostic.psiElement
         val containingDeclaration: KtDeclaration = element.getParentOfTypesAndPredicate(
@@ -131,7 +131,7 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
         val containingFile = containingDeclaration.containingKtFile
         val module = containingFile.module
         if (module != null) {
-            result.add(LowPriorityMakeModuleExperimentalFix(containingFile, module, annotationFqName))
+            result.add(LowPriorityMakeModuleOptInFix(containingFile, module, annotationFqName))
         }
 
         // Add the file-level annotation `@file:OptIn(...)`
@@ -280,9 +280,9 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
     ) : PropagateOptInAnnotationFix(element, annotationFqName, kind, existingAnnotationEntry),
         HighPriorityAction
 
-    private class LowPriorityMakeModuleExperimentalFix(
+    private class LowPriorityMakeModuleOptInFix(
         file: KtFile,
         module: Module,
         annotationFqName: FqName
-    ) : MakeModuleExperimentalFix(file, module, annotationFqName), LowPriorityAction
+    ) : MakeModuleOptInFix(file, module, annotationFqName), LowPriorityAction
 }

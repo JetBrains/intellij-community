@@ -8035,224 +8035,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/experimental")
-    public static class Experimental extends AbstractQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("annotationInTopLevelProperty.kt")
-        public void testAnnotationInTopLevelProperty() throws Exception {
-            runTest("testData/quickfix/experimental/annotationInTopLevelProperty.kt");
-        }
-
-        @TestMetadata("appendFileAnnotationToAnnotationList.kt")
-        public void testAppendFileAnnotationToAnnotationList() throws Exception {
-            runTest("testData/quickfix/experimental/appendFileAnnotationToAnnotationList.kt");
-        }
-
-        @TestMetadata("appendFileAnnotationToOtherFileAnnotations.kt")
-        public void testAppendFileAnnotationToOtherFileAnnotations() throws Exception {
-            runTest("testData/quickfix/experimental/appendFileAnnotationToOtherFileAnnotations.kt");
-        }
-
-        @TestMetadata("appendFileAnnotationWithAnnotationList.kt")
-        public void testAppendFileAnnotationWithAnnotationList() throws Exception {
-            runTest("testData/quickfix/experimental/appendFileAnnotationWithAnnotationList.kt");
-        }
-
-        @TestMetadata("basicFunction.kt")
-        public void testBasicFunction() throws Exception {
-            runTest("testData/quickfix/experimental/basicFunction.kt");
-        }
-
-        @TestMetadata("basicFunctionContainingClass.kt")
-        public void testBasicFunctionContainingClass() throws Exception {
-            runTest("testData/quickfix/experimental/basicFunctionContainingClass.kt");
-        }
-
-        @TestMetadata("basicFunctionNotApplicable.kt")
-        public void testBasicFunctionNotApplicable() throws Exception {
-            runTest("testData/quickfix/experimental/basicFunctionNotApplicable.kt");
-        }
-
-        @TestMetadata("basicModule.kt")
-        public void testBasicModule() throws Exception {
-            runTest("testData/quickfix/experimental/basicModule.kt");
-        }
-
-        @TestMetadata("basicUseExperimental.kt")
-        public void testBasicUseExperimental() throws Exception {
-            runTest("testData/quickfix/experimental/basicUseExperimental.kt");
-        }
-
-        @TestMetadata("classUseExperimental.kt")
-        public void testClassUseExperimental() throws Exception {
-            runTest("testData/quickfix/experimental/classUseExperimental.kt");
-        }
-
-        @TestMetadata("existingFileAnnotationWithPackage.kt")
-        public void testExistingFileAnnotationWithPackage() throws Exception {
-            runTest("testData/quickfix/experimental/existingFileAnnotationWithPackage.kt");
-        }
-
-        @TestMetadata("experimentalUnused.kt")
-        public void testExperimentalUnused() throws Exception {
-            runTest("testData/quickfix/experimental/experimentalUnused.kt");
-        }
-
-        @TestMetadata("forbiddenRetentionSource.kt")
-        public void testForbiddenRetentionSource() throws Exception {
-            runTest("testData/quickfix/experimental/forbiddenRetentionSource.kt");
-        }
-
-        @TestMetadata("forbiddenTargetsExpression.kt")
-        public void testForbiddenTargetsExpression() throws Exception {
-            runTest("testData/quickfix/experimental/forbiddenTargetsExpression.kt");
-        }
-
-        @TestMetadata("forbiddenTargetsExpression2.kt")
-        public void testForbiddenTargetsExpression2() throws Exception {
-            runTest("testData/quickfix/experimental/forbiddenTargetsExpression2.kt");
-        }
-
-        @TestMetadata("forbiddenTargetsInAnnotation.kt")
-        public void testForbiddenTargetsInAnnotation() throws Exception {
-            runTest("testData/quickfix/experimental/forbiddenTargetsInAnnotation.kt");
-        }
-
-        @TestMetadata("functionInLocalClass.kt")
-        public void testFunctionInLocalClass() throws Exception {
-            runTest("testData/quickfix/experimental/functionInLocalClass.kt");
-        }
-
-        @TestMetadata("getterUseSiteExplicit.kt")
-        public void testGetterUseSiteExplicit() throws Exception {
-            runTest("testData/quickfix/experimental/getterUseSiteExplicit.kt");
-        }
-
-        @TestMetadata("getterUseSiteExplicitRemove.kt")
-        public void testGetterUseSiteExplicitRemove() throws Exception {
-            runTest("testData/quickfix/experimental/getterUseSiteExplicitRemove.kt");
-        }
-
-        @TestMetadata("getterUseSiteImplicit.kt")
-        public void testGetterUseSiteImplicit() throws Exception {
-            runTest("testData/quickfix/experimental/getterUseSiteImplicit.kt");
-        }
-
-        @TestMetadata("getterUseSiteImplicitRemove.kt")
-        public void testGetterUseSiteImplicitRemove() throws Exception {
-            runTest("testData/quickfix/experimental/getterUseSiteImplicitRemove.kt");
-        }
-
-        @TestMetadata("hasOptInAnnotation.kt")
-        public void testHasOptInAnnotation() throws Exception {
-            runTest("testData/quickfix/experimental/hasOptInAnnotation.kt");
-        }
-
-        @TestMetadata("hasOptInAnnotation2.kt")
-        public void testHasOptInAnnotation2() throws Exception {
-            runTest("testData/quickfix/experimental/hasOptInAnnotation2.kt");
-        }
-
-        @TestMetadata("hasOptInAnnotation3.kt")
-        public void testHasOptInAnnotation3() throws Exception {
-            runTest("testData/quickfix/experimental/hasOptInAnnotation3.kt");
-        }
-
-        @TestMetadata("hasOptInAnnotationForClass.kt")
-        public void testHasOptInAnnotationForClass() throws Exception {
-            runTest("testData/quickfix/experimental/hasOptInAnnotationForClass.kt");
-        }
-
-        @TestMetadata("hasOptInAnnotationForClass2.kt")
-        public void testHasOptInAnnotationForClass2() throws Exception {
-            runTest("testData/quickfix/experimental/hasOptInAnnotationForClass2.kt");
-        }
-
-        @TestMetadata("localFunction.kt")
-        public void testLocalFunction() throws Exception {
-            runTest("testData/quickfix/experimental/localFunction.kt");
-        }
-
-        @TestMetadata("localVariableAnnotationNoInitRemove.kt")
-        public void testLocalVariableAnnotationNoInitRemove() throws Exception {
-            runTest("testData/quickfix/experimental/localVariableAnnotationNoInitRemove.kt");
-        }
-
-        @TestMetadata("localVariableAnnotationRemove.kt")
-        public void testLocalVariableAnnotationRemove() throws Exception {
-            runTest("testData/quickfix/experimental/localVariableAnnotationRemove.kt");
-        }
-
-        @TestMetadata("localVariableNoGetterAction.kt")
-        public void testLocalVariableNoGetterAction() throws Exception {
-            runTest("testData/quickfix/experimental/localVariableNoGetterAction.kt");
-        }
-
-        @TestMetadata("nestedClasses.kt")
-        public void testNestedClasses() throws Exception {
-            runTest("testData/quickfix/experimental/nestedClasses.kt");
-        }
-
-        @TestMetadata("newFileAnnotationWithPackage.kt")
-        public void testNewFileAnnotationWithPackage() throws Exception {
-            runTest("testData/quickfix/experimental/newFileAnnotationWithPackage.kt");
-        }
-
-        @TestMetadata("override.kt")
-        public void testOverride() throws Exception {
-            runTest("testData/quickfix/experimental/override.kt");
-        }
-
-        @TestMetadata("propertyInConstructor.kt")
-        public void testPropertyInConstructor() throws Exception {
-            runTest("testData/quickfix/experimental/propertyInConstructor.kt");
-        }
-
-        @TestMetadata("propertyInConstructorAddOptInToClass.kt")
-        public void testPropertyInConstructorAddOptInToClass() throws Exception {
-            runTest("testData/quickfix/experimental/propertyInConstructorAddOptInToClass.kt");
-        }
-
-        @TestMetadata("propertyInConstructorAddOptInToConstructor.kt")
-        public void testPropertyInConstructorAddOptInToConstructor() throws Exception {
-            runTest("testData/quickfix/experimental/propertyInConstructorAddOptInToConstructor.kt");
-        }
-
-        @TestMetadata("switchOn.kt")
-        public void testSwitchOn() throws Exception {
-            runTest("testData/quickfix/experimental/switchOn.kt");
-        }
-
-        @TestMetadata("switchOnWithAnotherMarker.kt")
-        public void testSwitchOnWithAnotherMarker() throws Exception {
-            runTest("testData/quickfix/experimental/switchOnWithAnotherMarker.kt");
-        }
-
-        @TestMetadata("typeAlias.kt")
-        public void testTypeAlias() throws Exception {
-            runTest("testData/quickfix/experimental/typeAlias.kt");
-        }
-
-        @TestMetadata("typeInTopLevelProperty.kt")
-        public void testTypeInTopLevelProperty() throws Exception {
-            runTest("testData/quickfix/experimental/typeInTopLevelProperty.kt");
-        }
-
-        @TestMetadata("valueParameterAnnotationAddExplicitUseSite.kt")
-        public void testValueParameterAnnotationAddExplicitUseSite() throws Exception {
-            runTest("testData/quickfix/experimental/valueParameterAnnotationAddExplicitUseSite.kt");
-        }
-
-        @TestMetadata("valueParameterAnnotationRemove.kt")
-        public void testValueParameterAnnotationRemove() throws Exception {
-            runTest("testData/quickfix/experimental/valueParameterAnnotationRemove.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/expressions")
     public static class Expressions extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -10600,6 +10382,224 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("kotlinDomStarImport.kt")
         public void testKotlinDomStarImport() throws Exception {
             runTest("testData/quickfix/obsoleteKotlinJsPackages/kotlinDomStarImport.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/optIn")
+    public static class OptIn extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotationInTopLevelProperty.kt")
+        public void testAnnotationInTopLevelProperty() throws Exception {
+            runTest("testData/quickfix/optIn/annotationInTopLevelProperty.kt");
+        }
+
+        @TestMetadata("appendFileAnnotationToAnnotationList.kt")
+        public void testAppendFileAnnotationToAnnotationList() throws Exception {
+            runTest("testData/quickfix/optIn/appendFileAnnotationToAnnotationList.kt");
+        }
+
+        @TestMetadata("appendFileAnnotationToOtherFileAnnotations.kt")
+        public void testAppendFileAnnotationToOtherFileAnnotations() throws Exception {
+            runTest("testData/quickfix/optIn/appendFileAnnotationToOtherFileAnnotations.kt");
+        }
+
+        @TestMetadata("appendFileAnnotationWithAnnotationList.kt")
+        public void testAppendFileAnnotationWithAnnotationList() throws Exception {
+            runTest("testData/quickfix/optIn/appendFileAnnotationWithAnnotationList.kt");
+        }
+
+        @TestMetadata("basicFunction.kt")
+        public void testBasicFunction() throws Exception {
+            runTest("testData/quickfix/optIn/basicFunction.kt");
+        }
+
+        @TestMetadata("basicFunctionContainingClass.kt")
+        public void testBasicFunctionContainingClass() throws Exception {
+            runTest("testData/quickfix/optIn/basicFunctionContainingClass.kt");
+        }
+
+        @TestMetadata("basicFunctionNotApplicable.kt")
+        public void testBasicFunctionNotApplicable() throws Exception {
+            runTest("testData/quickfix/optIn/basicFunctionNotApplicable.kt");
+        }
+
+        @TestMetadata("basicModule.kt")
+        public void testBasicModule() throws Exception {
+            runTest("testData/quickfix/optIn/basicModule.kt");
+        }
+
+        @TestMetadata("basicUseOptIn.kt")
+        public void testBasicUseOptIn() throws Exception {
+            runTest("testData/quickfix/optIn/basicUseOptIn.kt");
+        }
+
+        @TestMetadata("classUseOptIn.kt")
+        public void testClassUseOptIn() throws Exception {
+            runTest("testData/quickfix/optIn/classUseOptIn.kt");
+        }
+
+        @TestMetadata("existingFileAnnotationWithPackage.kt")
+        public void testExistingFileAnnotationWithPackage() throws Exception {
+            runTest("testData/quickfix/optIn/existingFileAnnotationWithPackage.kt");
+        }
+
+        @TestMetadata("forbiddenRetentionSource.kt")
+        public void testForbiddenRetentionSource() throws Exception {
+            runTest("testData/quickfix/optIn/forbiddenRetentionSource.kt");
+        }
+
+        @TestMetadata("forbiddenTargetsExpression.kt")
+        public void testForbiddenTargetsExpression() throws Exception {
+            runTest("testData/quickfix/optIn/forbiddenTargetsExpression.kt");
+        }
+
+        @TestMetadata("forbiddenTargetsExpression2.kt")
+        public void testForbiddenTargetsExpression2() throws Exception {
+            runTest("testData/quickfix/optIn/forbiddenTargetsExpression2.kt");
+        }
+
+        @TestMetadata("forbiddenTargetsInAnnotation.kt")
+        public void testForbiddenTargetsInAnnotation() throws Exception {
+            runTest("testData/quickfix/optIn/forbiddenTargetsInAnnotation.kt");
+        }
+
+        @TestMetadata("functionInLocalClass.kt")
+        public void testFunctionInLocalClass() throws Exception {
+            runTest("testData/quickfix/optIn/functionInLocalClass.kt");
+        }
+
+        @TestMetadata("getterUseSiteExplicit.kt")
+        public void testGetterUseSiteExplicit() throws Exception {
+            runTest("testData/quickfix/optIn/getterUseSiteExplicit.kt");
+        }
+
+        @TestMetadata("getterUseSiteExplicitRemove.kt")
+        public void testGetterUseSiteExplicitRemove() throws Exception {
+            runTest("testData/quickfix/optIn/getterUseSiteExplicitRemove.kt");
+        }
+
+        @TestMetadata("getterUseSiteImplicit.kt")
+        public void testGetterUseSiteImplicit() throws Exception {
+            runTest("testData/quickfix/optIn/getterUseSiteImplicit.kt");
+        }
+
+        @TestMetadata("getterUseSiteImplicitRemove.kt")
+        public void testGetterUseSiteImplicitRemove() throws Exception {
+            runTest("testData/quickfix/optIn/getterUseSiteImplicitRemove.kt");
+        }
+
+        @TestMetadata("hasOptInAnnotation.kt")
+        public void testHasOptInAnnotation() throws Exception {
+            runTest("testData/quickfix/optIn/hasOptInAnnotation.kt");
+        }
+
+        @TestMetadata("hasOptInAnnotation2.kt")
+        public void testHasOptInAnnotation2() throws Exception {
+            runTest("testData/quickfix/optIn/hasOptInAnnotation2.kt");
+        }
+
+        @TestMetadata("hasOptInAnnotation3.kt")
+        public void testHasOptInAnnotation3() throws Exception {
+            runTest("testData/quickfix/optIn/hasOptInAnnotation3.kt");
+        }
+
+        @TestMetadata("hasOptInAnnotationForClass.kt")
+        public void testHasOptInAnnotationForClass() throws Exception {
+            runTest("testData/quickfix/optIn/hasOptInAnnotationForClass.kt");
+        }
+
+        @TestMetadata("hasOptInAnnotationForClass2.kt")
+        public void testHasOptInAnnotationForClass2() throws Exception {
+            runTest("testData/quickfix/optIn/hasOptInAnnotationForClass2.kt");
+        }
+
+        @TestMetadata("localFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("testData/quickfix/optIn/localFunction.kt");
+        }
+
+        @TestMetadata("localVariableAnnotationNoInitRemove.kt")
+        public void testLocalVariableAnnotationNoInitRemove() throws Exception {
+            runTest("testData/quickfix/optIn/localVariableAnnotationNoInitRemove.kt");
+        }
+
+        @TestMetadata("localVariableAnnotationRemove.kt")
+        public void testLocalVariableAnnotationRemove() throws Exception {
+            runTest("testData/quickfix/optIn/localVariableAnnotationRemove.kt");
+        }
+
+        @TestMetadata("localVariableNoGetterAction.kt")
+        public void testLocalVariableNoGetterAction() throws Exception {
+            runTest("testData/quickfix/optIn/localVariableNoGetterAction.kt");
+        }
+
+        @TestMetadata("nestedClasses.kt")
+        public void testNestedClasses() throws Exception {
+            runTest("testData/quickfix/optIn/nestedClasses.kt");
+        }
+
+        @TestMetadata("newFileAnnotationWithPackage.kt")
+        public void testNewFileAnnotationWithPackage() throws Exception {
+            runTest("testData/quickfix/optIn/newFileAnnotationWithPackage.kt");
+        }
+
+        @TestMetadata("optInUnused.kt")
+        public void testOptInUnused() throws Exception {
+            runTest("testData/quickfix/optIn/optInUnused.kt");
+        }
+
+        @TestMetadata("override.kt")
+        public void testOverride() throws Exception {
+            runTest("testData/quickfix/optIn/override.kt");
+        }
+
+        @TestMetadata("propertyInConstructor.kt")
+        public void testPropertyInConstructor() throws Exception {
+            runTest("testData/quickfix/optIn/propertyInConstructor.kt");
+        }
+
+        @TestMetadata("propertyInConstructorAddOptInToClass.kt")
+        public void testPropertyInConstructorAddOptInToClass() throws Exception {
+            runTest("testData/quickfix/optIn/propertyInConstructorAddOptInToClass.kt");
+        }
+
+        @TestMetadata("propertyInConstructorAddOptInToConstructor.kt")
+        public void testPropertyInConstructorAddOptInToConstructor() throws Exception {
+            runTest("testData/quickfix/optIn/propertyInConstructorAddOptInToConstructor.kt");
+        }
+
+        @TestMetadata("switchOn.kt")
+        public void testSwitchOn() throws Exception {
+            runTest("testData/quickfix/optIn/switchOn.kt");
+        }
+
+        @TestMetadata("switchOnWithAnotherMarker.kt")
+        public void testSwitchOnWithAnotherMarker() throws Exception {
+            runTest("testData/quickfix/optIn/switchOnWithAnotherMarker.kt");
+        }
+
+        @TestMetadata("typeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest("testData/quickfix/optIn/typeAlias.kt");
+        }
+
+        @TestMetadata("typeInTopLevelProperty.kt")
+        public void testTypeInTopLevelProperty() throws Exception {
+            runTest("testData/quickfix/optIn/typeInTopLevelProperty.kt");
+        }
+
+        @TestMetadata("valueParameterAnnotationAddExplicitUseSite.kt")
+        public void testValueParameterAnnotationAddExplicitUseSite() throws Exception {
+            runTest("testData/quickfix/optIn/valueParameterAnnotationAddExplicitUseSite.kt");
+        }
+
+        @TestMetadata("valueParameterAnnotationRemove.kt")
+        public void testValueParameterAnnotationRemove() throws Exception {
+            runTest("testData/quickfix/optIn/valueParameterAnnotationRemove.kt");
         }
     }
 

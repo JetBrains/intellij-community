@@ -1768,24 +1768,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/experimental")
-    public static class Experimental extends AbstractQuickFixMultiFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-        }
-
-        @TestMetadata("reservedKeywordPackage.test")
-        public void testReservedKeywordPackage() throws Exception {
-            runTest("testData/quickfix/experimental/reservedKeywordPackage.test");
-        }
-
-        @TestMetadata("reservedKeywordPackage2.test")
-        public void testReservedKeywordPackage2() throws Exception {
-            runTest("testData/quickfix/experimental/reservedKeywordPackage2.test");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/increaseVisibility")
     public static class IncreaseVisibility extends AbstractQuickFixMultiFileTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1997,6 +1979,24 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
         @TestMetadata("topLevelDeclarationToSealed.test")
         public void testTopLevelDeclarationToSealed() throws Exception {
             runTest("testData/quickfix/moveToSealedParent/topLevelDeclarationToSealed.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/optIn")
+    public static class OptIn extends AbstractQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("reservedKeywordPackage.test")
+        public void testReservedKeywordPackage() throws Exception {
+            runTest("testData/quickfix/optIn/reservedKeywordPackage.test");
+        }
+
+        @TestMetadata("reservedKeywordPackage2.test")
+        public void testReservedKeywordPackage2() throws Exception {
+            runTest("testData/quickfix/optIn/reservedKeywordPackage2.test");
         }
     }
 

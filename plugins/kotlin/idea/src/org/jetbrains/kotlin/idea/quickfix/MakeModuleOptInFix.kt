@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.facet.getOrCreateConfiguredFacet
-import org.jetbrains.kotlin.idea.quickfix.ExperimentalFixesFactory.annotationExists
+import org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory.annotationExists
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.resolve.checkers.OptInNames
 /**
  * A quick fix that adds an opt-in compiler argument to the current module configuration facet (JPS only).
  */
-open class MakeModuleExperimentalFix(
+open class MakeModuleOptInFix(
     file: KtFile,
     private val module: Module,
     annotationFqName: FqName
@@ -77,7 +77,7 @@ open class MakeModuleExperimentalFix(
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val containingKtFile = diagnostic.psiElement.containingFile as? KtFile ?: return null
             val module = containingKtFile.module ?: return null
-            return MakeModuleExperimentalFix(
+            return MakeModuleOptInFix(
                 containingKtFile,
                 module,
                 OptInNames.REQUIRES_OPT_IN_FQ_NAME.takeIf {

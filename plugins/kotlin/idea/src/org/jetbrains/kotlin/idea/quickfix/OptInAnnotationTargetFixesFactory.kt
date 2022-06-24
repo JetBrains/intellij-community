@@ -20,14 +20,14 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
- * Quick fix factory for forbidden experimental annotation usage.
+ * Quick fix factory for forbidden OptIn annotation usage.
  *
  * Annotations that indicate the opt-in requirement are forbidden in several use sites:
  * getters, value parameters, local variables. This factory generates quick fixes
  * to either remove the annotation or to replace it with an allowed annotation variant
  * (e.g., annotate a property instead of a getter or a value parameter).
  */
-object ExperimentalAnnotationWrongTargetFixesFactory : KotlinIntentionActionsFactory() {
+object OptInAnnotationWrongTargetFixesFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         if (diagnostic.factory != Errors.OPT_IN_MARKER_ON_WRONG_TARGET) return emptyList()
         val annotationEntry = diagnostic.psiElement.safeAs<KtAnnotationEntry>() ?: return emptyList()
