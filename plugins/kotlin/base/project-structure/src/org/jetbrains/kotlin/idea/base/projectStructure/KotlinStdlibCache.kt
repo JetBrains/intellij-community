@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
@@ -12,13 +11,11 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.messages.MessageBusConnection
@@ -129,7 +126,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         }
 
         override fun checkKeyValidity(key: LibraryInfo) {
-            key.library.checkValidity()
+            key.checkValidity()
         }
 
         override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
@@ -196,7 +193,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             }
 
             override fun checkValueValidity(value: StdlibDependency) {
-                value.libraryInfo?.library?.checkValidity()
+                value.libraryInfo?.checkValidity()
             }
 
             override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
@@ -216,7 +213,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             }
 
             override fun checkKeyValidity(key: LibraryInfo) {
-                key.library.checkValidity()
+                key.checkValidity()
             }
 
             override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
@@ -307,14 +304,3 @@ fun LibraryInfo.isKotlinStdlib(project: Project): Boolean =
 
 fun LibraryInfo.isKotlinStdlibDependency(project: Project): Boolean =
     KotlinStdlibCache.getInstance(project).isStdlibDependency(this)
-
-fun Library.checkValidity() {
-    if (this is LibraryEx && isDisposed) {
-        throw AlreadyDisposedException("Library ${name} is already disposed")
-    }
-}
-fun Module.checkValidity() {
-    if (isDisposed) {
-        throw AlreadyDisposedException("Module ${name} is already disposed")
-    }
-}

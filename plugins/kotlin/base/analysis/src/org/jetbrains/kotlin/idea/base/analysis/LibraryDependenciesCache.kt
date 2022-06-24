@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache.LibraryDependencies
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
 import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
 import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
@@ -182,7 +183,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             computeLibrariesAndSdksUsedWith(key)
 
         override fun checkKeyValidity(key: LibraryInfo) {
-            key.library.checkValidity()
+            key.checkValidity()
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
@@ -214,7 +215,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun checkValueValidity(value: LibraryDependencyCandidatesAndSdkInfos) {
-            value.first.forEach { it.libraries.forEach { libraryInfo -> libraryInfo.library.checkValidity() } }
+            value.first.forEach { it.libraries.forEach { libraryInfo -> libraryInfo.checkValidity() } }
         }
 
         override fun jdkRemoved(jdk: Sdk) {
@@ -297,7 +298,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun checkKeyValidity(key: LibraryWrapper) {
-            key.library.checkValidity()
+            key.checkValidity()
         }
 
         override fun checkValueValidity(value: Set<Module>) {

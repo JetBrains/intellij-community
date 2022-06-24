@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.serviceContainer.AlreadyDisposedException
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.ModuleCapability
@@ -35,4 +37,10 @@ interface IdeaModuleInfo : ModuleInfo {
 interface LanguageSettingsOwner {
     val languageVersionSettings: LanguageVersionSettings
     val targetPlatformVersion: TargetPlatformVersion
+}
+
+fun Module.checkValidity() {
+    if (isDisposed) {
+        throw AlreadyDisposedException("Module '${name}' is already disposed")
+    }
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.idea.base.projectStructure.*
@@ -67,8 +68,17 @@ abstract class LibraryInfo(
             ResolutionAnchorAwareLibraryModificationTracker(this)
         }
 
+    internal val isDisposed
+        get() = if (library is LibraryEx) library.isDisposed else false
+
+    fun checkValidity() {
+        if (isDisposed) {
+            throw AlreadyDisposedException("Library '${name}' is already disposed")
+        }
+    }
+
     override fun toString() =
-        "${this::class.simpleName}(libraryName=${library.name}${if (library !is LibraryEx || !library.isDisposed) ", libraryRoots=${getLibraryRoots()})" else ""}"
+        "${this::class.simpleName}(libraryName=${library.name}${if (isDisposed) ", libraryRoots=${getLibraryRoots()})" else ""}"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
