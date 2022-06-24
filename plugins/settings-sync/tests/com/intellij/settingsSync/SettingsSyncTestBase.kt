@@ -27,7 +27,7 @@ internal abstract class SettingsSyncTestBase {
 
   protected lateinit var application: ApplicationImpl
   protected lateinit var configDir: Path
-  protected lateinit var remoteCommunicator: TestRemoteCommunicator
+  protected lateinit var remoteCommunicator: MockRemoteCommunicator
   protected lateinit var updateChecker: SettingsSyncUpdateChecker
   protected lateinit var bridge: SettingsSyncBridge
 
@@ -39,7 +39,7 @@ internal abstract class SettingsSyncTestBase {
     application = ApplicationManager.getApplication() as ApplicationImpl
     val mainDir = tempDirManager.createDir()
     configDir = mainDir.resolve("rootconfig").createDirectories()
-    remoteCommunicator = TestRemoteCommunicator()
+    remoteCommunicator = MockRemoteCommunicator()
   }
 
   @After

@@ -2,7 +2,7 @@ package com.intellij.settingsSync
 
 import java.util.concurrent.CountDownLatch
 
-internal class TestRemoteCommunicator : SettingsSyncRemoteCommunicator {
+internal class MockRemoteCommunicator : SettingsSyncRemoteCommunicator {
   var offline: Boolean = false
   var newVersionOnServer: UpdateResult? = null
   var pushed: SettingsSnapshot? = null
