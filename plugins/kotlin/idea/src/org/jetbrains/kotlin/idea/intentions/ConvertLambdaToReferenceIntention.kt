@@ -105,23 +105,9 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
         if (noBoundReferences && descriptorHasReceiver && explicitReceiver == null) return false
 
         val callableArgumentsCount = (callableExpression as? KtCallExpression)?.valueArguments?.size ?: 0
-        val enableFunctionReferenceWithDefaultValueAsOtherType =
-            languageVersionSettings.supportsFeature(LanguageFeature.FunctionReferenceWithDefaultValueAsOtherType)
-        if (enableFunctionReferenceWithDefaultValueAsOtherType) {
-            if (calleeDescriptor.valueParameters.size != callableArgumentsCount &&
-                (lambdaExpression.parentValueArgument() == null || calleeDescriptor.valueParameters.none { it.declaresDefaultValue() })
-            ) return false
-        } else {
-            if (calleeDescriptor.valueParameters.size != callableArgumentsCount) return false
-            val lambdaMustReturnUnit =
-                if (lambdaParameterType?.isFunctionType == true) lambdaParameterType.getReturnTypeFromFunctionType().isUnit() else false
-            if (lambdaMustReturnUnit) {
-                calleeDescriptor.returnType.let {
-                    // If Unit required, no references to non-Unit callables
-                    if (it == null || !it.isUnit()) return false
-                }
-            }
-        }
+        if (calleeDescriptor.valueParameters.size != callableArgumentsCount &&
+            (lambdaExpression.parentValueArgument() == null || calleeDescriptor.valueParameters.none { it.declaresDefaultValue() })
+        ) return false
 
         val lambdaValueParameterDescriptors = context[FUNCTION, lambdaExpression.functionLiteral]?.valueParameters ?: return false
         if (explicitReceiver != null && explicitReceiver !is KtSimpleNameExpression &&
@@ -154,7 +140,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             if (lambdaValueParameterDescriptors.size < explicitReceiverShift + callableExpression.valueArguments.size) return false
             val resolvedCall = callableExpression.getResolvedCall(context) ?: return false
             resolvedCall.valueArguments.entries.forEach { (valueParameter, resolvedArgument) ->
-                if (resolvedArgument is DefaultValueArgument && enableFunctionReferenceWithDefaultValueAsOtherType) return@forEach
+                if (resolvedArgument is DefaultValueArgument) return@forEach
                 val argument = resolvedArgument.arguments.singleOrNull() ?: return false
                 if (resolvedArgument is VarargValueArgument && argument.getSpreadElement() == null) return false
                 val argumentExpression = argument.getArgumentExpression() as? KtNameReferenceExpression ?: return false
