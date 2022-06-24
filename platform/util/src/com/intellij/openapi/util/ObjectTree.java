@@ -28,7 +28,6 @@ final class ObjectTree {
   // Disposable -> Throwable (for trace) or UNKNOWN_TRACE (if trace unavailable)
   private final Map<Disposable, Throwable> myDisposedObjects = CollectionFactory.createWeakIdentityMap(100, 0.5f); // guarded by treeLock
   private static final Throwable UNKNOWN_TRACE = new Throwable();
-  private final Object treeLock = ObjectUtils.sentinel("ObjectTree.treeLock");
   private final ObjectNode myRootNode = ObjectNode.createRootNode(); // root objects are stored in this node children
   private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<>();
 
@@ -36,7 +35,7 @@ final class ObjectTree {
     if (parent == child) {
       throw new IllegalArgumentException("Cannot register to itself: "+parent);
     }
-    synchronized (treeLock) {
+    synchronized (getTreeLock()) {
       if (isDisposed(parent)) {
         throw new IncorrectOperationException("Sorry but parent: " + parent + " (" + parent.getClass()+") has already been disposed " +
                                               "(see the cause for stacktrace) so the child: "+child+ " (" + child.getClass()+") will never be disposed",
@@ -63,7 +62,7 @@ final class ObjectTree {
   }
 
   boolean tryRegister(@NotNull Disposable parent, @NotNull Disposable child) {
-    synchronized (treeLock) {
+    synchronized (getTreeLock()) {
       if (isDisposed(parent)) {
         return false;
       }
@@ -73,12 +72,12 @@ final class ObjectTree {
   }
 
   Throwable getDisposalTrace(@NotNull Disposable object) {
-    synchronized (treeLock) {
+    synchronized (getTreeLock()) {
       return ObjectUtils.nullizeIfDefaultValue(myDisposedObjects.get(object), UNKNOWN_TRACE);
     }
   }
   boolean isDisposed(@NotNull Disposable object) {
-    synchronized (treeLock) {
+    synchronized (getTreeLock()) {
       return myDisposedObjects.get(object) != null;
     }
   }
@@ -101,7 +100,7 @@ final class ObjectTree {
 
     // first, atomically remove disposables from the tree to avoid "register during dispose" race conditions
     List<Disposable> disposables;
-    synchronized (treeLock) {
+    synchronized (getTreeLock()) {
       disposables = removeFromTreeAction.apply(this, trace);
     }
     // second, call "beforeTreeDispose" in pre-order (some clients are hardcoded to see parents-then-children order in "beforeTreeDispose")
@@ -176,6 +175,10 @@ final class ObjectTree {
     });
   }
 
+  private Object getTreeLock() {
+    return myRootNode;
+  }
+
   private static void handleExceptions(@NotNull List<? extends Throwable> exceptions) {
     if (exceptions.isEmpty()) {
       return;
@@ -198,7 +201,7 @@ final class ObjectTree {
 
   @TestOnly
   void assertNoReferenceKeptInTree(@NotNull Disposable disposable) {
-    synchronized (treeLock) {
+    synchronized (getTreeLock()) {
       for (ObjectNode node : myObject2ParentNode.values()) {
         node.assertNoReferencesKept(disposable);
       }
@@ -206,13 +209,13 @@ final class ObjectTree {
   }
 
   void assertIsEmpty(boolean throwError) {
-    synchronized (treeLock) {
+    synchronized (getTreeLock()) {
       myRootNode.assertNoChildren(throwError);
     }
   }
 
   Throwable getRegistrationTrace(@NotNull Disposable object) {
-    synchronized (treeLock) {
+    synchronized (getTreeLock()) {
       ObjectNode objectNode = getParentNode(object).findChildNode(object);
       return objectNode == null ? null : objectNode.getTrace();
     }
@@ -229,7 +232,7 @@ final class ObjectTree {
   }
 
   void clearDisposedObjectTraces() {
-    synchronized (treeLock) {
+    synchronized (getTreeLock()) {
       myDisposedObjects.clear();
       for (ObjectNode value : myObject2ParentNode.values()) {
         value.clearTrace();
