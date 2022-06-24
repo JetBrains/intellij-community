@@ -89,7 +89,7 @@ kotlin {
         compilations.all {
             kotlinOptions {
                 freeCompilerArgs +=
-                        ["-Xprogressive", "-XXLanguage:+SamConversionForKotlinFunctions", "-Xuse-experimental=kotlin.ExperimentalMultiplatform"]
+                        ["-Xprogressive", "-Xuse-experimental=kotlin.ExperimentalMultiplatform"]
             }
         }
     }

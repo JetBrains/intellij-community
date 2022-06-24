@@ -24,8 +24,5 @@ kotlin {
                 implementation 'org.jetbrains.kotlin:kotlin-stdlib'
             }
         }
-        all {
-            languageSettings.enableLanguageFeature("SamConversionForKotlinFunctions")
-        }
     }
 }

@@ -17,7 +17,7 @@ dependencies {
 }
 compileKotlin {
     kotlinOptions {
-        freeCompilerArgs = ["-XXLanguage:+SamConversionForKotlinFunctions", "-Xinline-classes"]
+        freeCompilerArgs = ["-Xinline-classes"]
         // Free compiler arguments
     }
 }
