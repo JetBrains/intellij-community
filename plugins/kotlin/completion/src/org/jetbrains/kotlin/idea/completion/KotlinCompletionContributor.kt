@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns.elementType
@@ -250,13 +249,5 @@ class KotlinCompletionContributor : CompletionContributor() {
             i++
         }
         return true
-    }
-}
-
-abstract class KotlinCompletionExtension {
-    abstract fun perform(parameters: CompletionParameters, result: CompletionResultSet): Boolean
-
-    companion object {
-        val EP_NAME: ExtensionPointName<KotlinCompletionExtension> = ExtensionPointName.create("org.jetbrains.kotlin.completionExtension")
     }
 }

@@ -42,5 +42,6 @@
     <orderEntry type="module" module-name="kotlin.project-model" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.scripting" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.spellchecker" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.properties" scope="PROVIDED" />
   </component>
 </module>
