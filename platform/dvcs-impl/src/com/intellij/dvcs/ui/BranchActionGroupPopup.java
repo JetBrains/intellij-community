@@ -2,9 +2,9 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -44,7 +44,7 @@ import static com.intellij.icons.AllIcons.General.FitContent;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 
 public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
-  private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
+  private static final Logger LOG = Logger.getInstance(BranchActionGroupPopup.class);
 
   private static final String EXPERIMENTAL_UI_DIMENSION_KEY_SUFFIX = ".ExperimentalUi";
 
@@ -73,7 +73,6 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
           dataContext, preselectActionCondition, true);
     getTitle().setBackground(JBColor.PanelBackground);
     myProject = project;
-    DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
     myKey = buildDimensionKey(dimensionKey);
     if (myKey != null) {
       setDimensionServiceKey(myKey);
@@ -145,7 +144,6 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     super(aParent, aStep, DataContext.EMPTY_CONTEXT, parentValue);
     // don't store children popup userSize;
     myKey = null;
-    DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
   }
 
   private void trackDimensions(@Nullable String dimensionKey) {
@@ -456,12 +454,19 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     public void actionPerformed(@NotNull AnActionEvent e) {
       setExpanded(!myIsExpanded);
       InputEvent event = e.getInputEvent();
-      if (event != null && event.getSource() instanceof JComponent) {
-        DataProvider dataProvider = DataManager.getDataProvider((JComponent)event.getSource());
-        if (dataProvider != null) {
-          Objects.requireNonNull(POPUP_MODEL.getData(dataProvider)).refilter();
+      if (event == null) {
+        return; // Enter - 'KeepingPopupOpenAction' logic should refilter the list
+      }
+
+      Object source = event.getSource();
+      if (source instanceof JList) {
+        ListModel<?> model = ((JList<?>)source).getModel();
+        if (model instanceof ListPopupModel) {
+          ((ListPopupModel<?>)model).refilter();
+          return;
         }
       }
+      LOG.warn("Can't' refilter popup after 'More branches' toggle, event: " + event);
     }
 
     public boolean isExpanded() {
