@@ -50,6 +50,9 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
   <content>
     <module name="kotlin.base.analysis-api-providers"/>
     <module name="kotlin.base.fir.analysis-api-providers"/>
+    <module name="kotlin.gradle.gradle-tooling"/>
+    <module name="kotlin.gradle.gradle-idea"/>
+    <module name="kotlin.gradle.gradle-java"/>
   </content>
 
   <!--  <xi:include href="jvm-common.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
@@ -247,4 +250,6 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
 
 
   </extensions>
+
+
 </idea-plugin>
