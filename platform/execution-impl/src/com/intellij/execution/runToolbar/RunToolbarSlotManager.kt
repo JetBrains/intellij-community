@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.CommonBundle
@@ -281,7 +281,48 @@ class RunToolbarSlotManager(val project: Project) {
 
       if (!isCompoundProcess) {
         if (getMoveNewOnTop(env)) {
-          moveToTop(slot.id)
+          // RIDER-77316: we shouldn't move the main slot to the secondary slot list if this will create a duplicate configuration in the
+          // secondary slots.
+
+          // See the run widget guide for detailed algorithm and Cases explanation:
+          // https://youtrack.jetbrains.com/articles/RIDER-A-1413/New-Toolbar-Run-Widget-Guide
+          val secondarySlotsContainingMainSlotConfig = dataIds
+            .asSequence()
+            .mapNotNull { slotsData[it] }
+            .filter { it.configuration == mainSlotData.configuration }
+            .toList()
+
+          if (secondarySlotsContainingMainSlotConfig.isEmpty()) {
+            // Case 1: there are no slots corresponding to the main one in the secondary slot list. So, move the new slot to the main
+            // position, and move the former main slot to the secondary slot list (effectively creating a new secondary slot).
+            moveToTop(slot.id)
+          } else {
+            // Case 2: there's at least one secondary slot corresponding to the main one.
+
+            fun removeFormerMainSlotAndMoveCurrentToTop() {
+              val formerMain = mainSlotData
+              formerMain.environment = null // deactivate to avoid any UI questions when removing it
+              moveToTop(slot.id)
+              removeSlot(formerMain.id) // delete completely
+            }
+
+            if (mainSlotData.environment != null) {
+              // Case 2.1: the former main slot has an active process, so we'll need to mark one of the corresponding secondary slots as
+              // active instead:
+              val freeSlotCorrespondingToMain = secondarySlotsContainingMainSlotConfig.firstOrNull { it.environment == null }
+              if (freeSlotCorrespondingToMain != null) {
+                // Case 2.1.1: we've found the new free slot to enable the (former) main configuration there.
+                freeSlotCorrespondingToMain.environment = mainSlotData.environment
+                removeFormerMainSlotAndMoveCurrentToTop()
+              } else {
+                // Case 2.1.2: there are no free slots for the former main active configuration to move to. Add a new one then.
+                moveToTop(slot.id)
+              }
+            } else {
+              // Case 2.2: the former main slot is inactive. Let's just remove it after replacement.
+              removeFormerMainSlotAndMoveCurrentToTop()
+            }
+          }
         }
       }
     }
@@ -354,6 +395,10 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
 
+  /**
+   * Make the slot with [id] the main slot, moving the former main slot to the secondary slot list. This function is no-op if the slot with
+   * the passed [id] is already the main one.
+   */
   internal fun moveToTop(id: String) {
     if (mainSlotData.id == id) return
 
