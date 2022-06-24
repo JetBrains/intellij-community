@@ -7,7 +7,7 @@
 <ul><li>Dedicated tool window</li>
 <li>Coding assistance for build files</li>
 <li>Possibility to execute tasks</li></ul>
-To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>.
+To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
   ]]></description>
   <vendor>JetBrains</vendor>
 
