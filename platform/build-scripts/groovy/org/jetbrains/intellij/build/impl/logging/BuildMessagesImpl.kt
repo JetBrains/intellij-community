@@ -98,10 +98,6 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     throw BuildScriptsLoggedError(message, cause)
   }
 
-  override fun compilationError(compilerName: String, message: String) {
-    compilationErrors(compilerName, listOf(message))
-  }
-
   override fun compilationErrors(compilerName: String, messages: List<String>) {
     processMessage(CompilationErrorsLogMessage(compilerName, messages))
   }

@@ -55,7 +55,8 @@ internal class WindowsDistributionBuilder(
     generateBuildTxt(context, targetPath)
     copyDistFiles(context, targetPath)
 
-    Files.writeString(distBinDir.resolve(ideaProperties!!.fileName), StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "\r\n"))
+    Files.writeString(distBinDir.resolve(ideaProperties!!.fileName),
+                      StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "\r\n"))
 
     if (icoFile != null) {
       Files.copy(icoFile, distBinDir.resolve("${context.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)
@@ -123,8 +124,12 @@ internal class WindowsDistributionBuilder(
                           installationArchives = emptyList(),
                           context = context)
 
-      exePath = WinExeInstallerBuilder(context, customizer, jreDir)
-        .buildInstaller(osAndArchSpecificDistPath, productJsonDir, "", context)
+      exePath = buildNsisInstaller(winDistPath = osAndArchSpecificDistPath,
+                                   additionalDirectoryToInclude = productJsonDir,
+                                   suffix = "",
+                                   customizer = customizer,
+                                   jreDir = jreDir,
+                                   context = context)
     }
 
     val zipPath = zipPathTask?.join()
@@ -164,7 +169,7 @@ internal class WindowsDistributionBuilder(
 
     val classPathJars = context.bootClassPathJarNames
     var classPath = "SET \"CLASS_PATH=%IDE_HOME%\\lib\\${classPathJars[0]}\""
-    for (i in 1 until  classPathJars.size) {
+    for (i in 1 until classPathJars.size) {
       classPath += "\nSET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\${classPathJars[i]}\""
     }
 
@@ -177,6 +182,7 @@ internal class WindowsDistributionBuilder(
 
     val winScripts = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/resources/win/scripts")
     val actualScriptNames = Files.newDirectoryStream(winScripts).use { dirStream -> dirStream.map { it.fileName.toString() }.sorted() }
+
     @Suppress("SpellCheckingInspection")
     val expectedScriptNames = listOf("executable-template.bat", "format.bat", "inspect.bat", "ltedit.bat")
     check(actualScriptNames == expectedScriptNames) {
@@ -248,6 +254,7 @@ internal class WindowsDistributionBuilder(
       val executableBaseName = "${context.productProperties.baseFileName}64"
       val launcherPropertiesPath = context.paths.tempDir.resolve("launcher.properties")
       val upperCaseProductName = context.applicationInfo.upperCaseProductName
+
       @Suppress("SpellCheckingInspection")
       val vmOptions = context.getAdditionalJvmArguments(OsFamily.WINDOWS) + listOf("-Dide.native.launcher=true")
       val productName = context.applicationInfo.shortProductName
@@ -267,7 +274,7 @@ internal class WindowsDistributionBuilder(
         IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
         IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
         IDS_VM_OPTIONS_ENV_VAR=${envVarBaseName}_VM_OPTIONS
-        IDS_ERROR_LAUNCHING_APP=Error launching ${productName}
+        IDS_ERROR_LAUNCHING_APP=Error launching $productName
         IDS_VM_OPTIONS=${vmOptions.joinToString(separator = " ")}
         IDS_CLASSPATH_LIBS=${classPath}
         IDS_BOOTCLASSPATH_LIBS=${bootClassPath}

@@ -32,9 +32,6 @@ class MockBuildMessages : BuildMessages {
     throw AssertionFailedError(message)
   }
 
-  override fun compilationError(compilerName: String, message: String) {
-  }
-
   override fun compilationErrors(compilerName: String, messages: List<String>) {
   }
 

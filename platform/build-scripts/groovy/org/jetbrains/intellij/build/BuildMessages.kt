@@ -18,11 +18,6 @@ interface BuildMessages: System.Logger {
 
   fun error(message: String, cause: Throwable)
 
-  /**
-   * @deprecated use {@link #compilationErrors(java.lang.String, java.util.List)} instead; if compilation errors are reported individually they are shown in separate blocks in TeamCity
-   */
-  fun compilationError(compilerName: String, message: String)
-
   fun compilationErrors(compilerName: String, messages: List<String>)
 
   fun progress(message: String)
