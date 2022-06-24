@@ -40,7 +40,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.boolean.literal.argument.display.name" bundle="messages.KotlinBundle"/>
 
@@ -64,7 +64,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.cascade.if.display.name" bundle="messages.KotlinBundle"/>
 
@@ -72,7 +72,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.convert.call.chain.into.sequence.display.name" bundle="messages.KotlinBundle"/>
 

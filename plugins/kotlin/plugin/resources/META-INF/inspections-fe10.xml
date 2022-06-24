@@ -1108,7 +1108,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.object.literal.to.lambda.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1133,7 +1133,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
                      enabledByDefault="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.deprecated.callable.add.replace.with.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1142,7 +1142,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.convert.to.string.template.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1151,7 +1151,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.replace.get.or.set.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1160,7 +1160,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.replace.manual.range.with.indices.calls.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1168,7 +1168,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.if.then.to.elvis.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1176,7 +1176,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.if.then.to.safe.access.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1184,7 +1184,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.fold.initializer.and.if.to.elvis.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1304,7 +1304,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.unsafe.cast.from.dynamic.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1329,7 +1329,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"
                      enabledByDefault="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.package.directory.mismatch.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1364,7 +1364,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      key="inspection.use.with.index.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ConflictingExtensionPropertyInspection"
@@ -1397,7 +1397,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="false"
                      cleanupTool="false"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.destructure.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1600,7 +1600,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.remove.empty.parentheses.from.lambda.call.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1626,7 +1626,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.complex.redundant.let.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1662,7 +1662,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.remove.empty.class.body.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1716,7 +1716,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.convert.two.comparisons.to.range.check.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1833,7 +1833,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      runForWholeFile="true"
                      key="inspection.member.visibility.can.be.private.display.name" bundle="messages.KotlinBundle"/>
@@ -1843,7 +1843,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.nullable.boolean.elvis.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1917,7 +1917,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.lift.return.or.assignment.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1926,7 +1926,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.cascade.if.display.name" bundle="messages.KotlinBundle"/>
 
@@ -2260,7 +2260,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.trailing.comma.display.name" bundle="messages.KotlinBundle"/>
 
@@ -2579,7 +2579,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.convert.call.chain.into.sequence.display.name" bundle="messages.KotlinBundle"/>
 
@@ -2736,7 +2736,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.boolean.literal.argument.display.name" bundle="messages.KotlinBundle"/>
 
@@ -2882,7 +2882,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="INFO"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.redundant.empty.initializer.block.display.name" bundle="messages.KotlinBundle"/>
 
