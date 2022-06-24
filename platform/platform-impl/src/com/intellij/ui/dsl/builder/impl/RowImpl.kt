@@ -232,7 +232,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar> {
-    val actionGroup = DefaultActionGroup(options.map { SegmentedButtonAction(it, property, renderer(it)) })
+    val actionGroup = DefaultActionGroup(options.map { DeprecatedSegmentedButtonAction(it, property, renderer(it)) })
     val toolbar = SegmentedButtonToolbar(actionGroup, parent.spacingConfiguration)
     toolbar.targetComponent = null // any data context is supported, suppress warning
     return cell(toolbar)

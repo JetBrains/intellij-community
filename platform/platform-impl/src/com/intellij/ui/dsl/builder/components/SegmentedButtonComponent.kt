@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.dsl.builder.impl
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.dsl.builder.components
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.Disposable
@@ -13,16 +13,16 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.util.*
+import com.intellij.openapi.observable.util.addMouseListener
+import com.intellij.openapi.observable.util.lockOrSkip
+import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.observable.util.whenKeyReleased
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.SpacingConfiguration
-import com.intellij.ui.dsl.builder.components.SegmentedButtonBorder
-import com.intellij.ui.dsl.builder.components.SegmentedButtonLook
-import com.intellij.ui.dsl.builder.components.getSegmentedButtonBorderPaint
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
@@ -30,7 +30,10 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
-import java.awt.event.*
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JPanel
@@ -118,7 +121,7 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
       if (selectedButton != null) {
         val r = selectedButton.bounds
         JBInsets.addTo(r, JBUI.insets(DarculaUIUtil.LW.unscaled.toInt()))
-        com.intellij.ui.dsl.builder.components.paintBorder(g2, r)
+        paintBorder(g2, r)
       }
     }
     finally {

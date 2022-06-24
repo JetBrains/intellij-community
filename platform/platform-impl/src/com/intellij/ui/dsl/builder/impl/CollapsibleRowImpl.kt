@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Font
 import javax.swing.border.EmptyBorder
 
 @ApiStatus.Internal
@@ -28,17 +29,16 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
 
   override var expanded by collapsibleTitledSeparator::expanded
 
-  override fun setText(@NlsContexts.Separator text: String) {
-    collapsibleTitledSeparator.text = text
+  override fun setTitle(title: String) {
+    collapsibleTitledSeparator.text = title
+  }
+
+  override fun setTitleFont(font: Font) {
+    collapsibleTitledSeparator.titleFont = font
   }
 
   override fun addExpandedListener(action: (Boolean) -> Unit) {
     collapsibleTitledSeparator.expandedProperty.afterChange { action(it) }
-  }
-
-  override fun applyToTitleComponent(task: (CollapsibleTitledSeparator) -> Unit): CollapsibleRowImpl {
-    task(collapsibleTitledSeparator)
-    return this
   }
 
   init {

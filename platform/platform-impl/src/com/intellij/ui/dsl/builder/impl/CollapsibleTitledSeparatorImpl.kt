@@ -7,19 +7,16 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.TitledSeparator
 import com.intellij.util.ui.IndentedIcon
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
-import java.awt.Font
 import java.awt.Insets
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import kotlin.math.max
 
-interface CollapsibleTitledSeparator {
-  fun setTitleFont(font: Font)
-}
-
-// todo make internal
-class CollapsibleTitledSeparatorImpl(@NlsContexts.Separator title: String) : TitledSeparator(title), CollapsibleTitledSeparator {
+// todo move to components package, rename into CollapsibleTitledSeparator, make internal
+@ApiStatus.Internal
+class CollapsibleTitledSeparatorImpl(@NlsContexts.Separator title: String) : TitledSeparator(title) {
   val expandedProperty = AtomicBooleanProperty(true)
   var expanded by expandedProperty
 

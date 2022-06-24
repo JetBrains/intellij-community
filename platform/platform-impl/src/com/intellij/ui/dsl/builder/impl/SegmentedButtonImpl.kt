@@ -17,9 +17,10 @@ import com.intellij.ui.layout.*
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.observable.util.whenItemSelectedFromUi
-import com.intellij.ui.dsl.builder.impl.SegmentedButtonComponent.Companion.bind
-import com.intellij.ui.dsl.builder.impl.SegmentedButtonComponent.Companion.whenItemSelected
-import com.intellij.ui.dsl.builder.impl.SegmentedButtonComponent.Companion.whenItemSelectedFromUi
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.bind
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelectedFromUi
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultComboBoxModel
