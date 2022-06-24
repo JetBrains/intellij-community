@@ -16,7 +16,7 @@ import git4idea.validators.validateName
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
-internal class GitUnstashAsDialog(private val project: Project, val stashInfo: StashInfo) : DialogWrapper(project) {
+internal class GitUnstashAsDialog(private val project: Project, private val stashInfo: StashInfo) : DialogWrapper(project) {
   private val branchTextField = JBTextField()
   private val popStashCheckbox = JBCheckBox(GitBundle.message("unstash.pop.stash")).apply {
     toolTipText = GitBundle.message("unstash.pop.stash.tooltip")
