@@ -3,12 +3,10 @@
 package org.jetbrains.kotlin.idea.platform
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.extensions.ApplicationExtensionDescriptor
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.psi.KtFunction
@@ -29,7 +27,7 @@ abstract class IdePlatformKindTooling {
     abstract fun getTestIcon(
         declaration: KtNamedDeclaration,
         descriptorProvider: () -> DeclarationDescriptor?,
-        includeSlowProviders: Boolean? = null
+        includeSlowProviders: Boolean
     ): Icon?
 
     abstract fun acceptsAsEntryPoint(function: KtFunction): Boolean

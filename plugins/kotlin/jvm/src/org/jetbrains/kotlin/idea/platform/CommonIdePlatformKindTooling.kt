@@ -44,7 +44,7 @@ object CommonIdePlatformKindTooling : IdePlatformKindTooling() {
     override fun getTestIcon(
         declaration: KtNamedDeclaration,
         descriptorProvider: () -> DeclarationDescriptor?,
-        includeSlowProviders: Boolean?
+        includeSlowProviders: Boolean
     ): Icon? {
         val icons = getRelevantToolings(declaration.module?.platform)
             .mapNotNull { it.getTestIcon(declaration, descriptorProvider, includeSlowProviders) }

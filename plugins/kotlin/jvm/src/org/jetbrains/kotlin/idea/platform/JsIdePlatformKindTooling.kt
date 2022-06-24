@@ -43,9 +43,9 @@ class JsIdePlatformKindTooling : IdePlatformKindTooling() {
     override fun getTestIcon(
         declaration: KtNamedDeclaration,
         descriptorProvider: () -> DeclarationDescriptor?,
-        includeSlowProviders: Boolean?
+        includeSlowProviders: Boolean
     ): Icon? {
-        if (includeSlowProviders == false) return null
+        if (!includeSlowProviders) return null
 
         return getGenericTestIcon(declaration, descriptorProvider) {
             val contexts by lazy { computeConfigurationContexts(declaration) }
