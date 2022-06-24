@@ -13,7 +13,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.RuleChain
 import java.nio.file.Path
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 internal val TIMEOUT_UNIT = TimeUnit.SECONDS
@@ -27,7 +26,7 @@ internal abstract class SettingsSyncTestBase {
 
   protected lateinit var application: ApplicationImpl
   protected lateinit var configDir: Path
-  protected lateinit var remoteCommunicator: MockRemoteCommunicator
+  protected lateinit var remoteCommunicator: TestRemoteCommunicator
   protected lateinit var updateChecker: SettingsSyncUpdateChecker
   protected lateinit var bridge: SettingsSyncBridge
 
@@ -39,7 +38,12 @@ internal abstract class SettingsSyncTestBase {
     application = ApplicationManager.getApplication() as ApplicationImpl
     val mainDir = tempDirManager.createDir()
     configDir = mainDir.resolve("rootconfig").createDirectories()
-    remoteCommunicator = MockRemoteCommunicator()
+
+    remoteCommunicator = if (System.getenv("settings.sync.test.cloud") == "real") {
+      TestCloudConfigRemoteCommunicator()
+    } else {
+      MockRemoteCommunicator()
+    }
   }
 
   @After
@@ -58,13 +62,8 @@ internal abstract class SettingsSyncTestBase {
   }
 
   private fun waitForSettingsPush(assertSnapshot: (SettingsSnapshot) -> Unit) {
-    val cdl = CountDownLatch(1)
-    remoteCommunicator.pushedLatch = cdl
-    Assert.assertTrue("Didn't await until changes are pushed", cdl.await(5, TIMEOUT_UNIT))
-
-    val pushedSnap = remoteCommunicator.pushed
+    val pushedSnap = remoteCommunicator.awaitForPush()
     Assert.assertNotNull("Changes were not pushed", pushedSnap)
     assertSnapshot(pushedSnap!!)
   }
-
 }
