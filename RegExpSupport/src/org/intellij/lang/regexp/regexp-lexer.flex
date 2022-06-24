@@ -44,6 +44,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
     private boolean allowOneHexCharEscape;
     private boolean allowMysqlBracketExpressions;
     private boolean allowPcreBackReferences;
+    private boolean allowPcreConditions;
     private int maxOctal = 0777;
     private int minOctalDigits = 1;
     private boolean whitespaceInClass;
@@ -65,6 +66,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
       this.allowTransformationEscapes = capabilities.contains(TRANSFORMATION_ESCAPES);
       this.allowMysqlBracketExpressions = capabilities.contains(MYSQL_BRACKET_EXPRESSIONS);
       this.allowPcreBackReferences = capabilities.contains(PCRE_BACK_REFERENCES);
+      this.allowPcreConditions = capabilities.contains(PCRE_CONDITIONS);
       if (capabilities.contains(MAX_OCTAL_177)) {
         maxOctal = 0177;
       }
@@ -155,6 +157,8 @@ PROP="p" | "P"
 TRANSFORMATION= "l" | "L" | "U" | "E"
 
 HEX_CHAR=[0-9a-fA-F]
+
+PCRE_CONDITION=DEFINE|VERSION>?=\d*[.]?\d{0,2}
 
 /* 999 back references should be enough for everybody */
 BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
@@ -486,6 +490,7 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
 }
 
 <CONDITIONAL2> {
+  {PCRE_CONDITION}  { return allowPcreConditions ? RegExpTT.PCRE_CONDITION : RegExpTT.NAME; }
   {GROUP_NAME}      { return RegExpTT.NAME; }
   [:digit:]+        { return RegExpTT.NUMBER; }
   "')"              { yybegin(YYINITIAL); return RegExpTT.QUOTED_CONDITION_END; }

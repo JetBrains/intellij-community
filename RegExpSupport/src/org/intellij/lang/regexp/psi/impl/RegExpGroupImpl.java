@@ -98,6 +98,10 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
     throw new AssertionError();
   }
 
+  public static boolean isPcreConditionalGroup(ASTNode node) {
+    return node != null && node.findChildByType(RegExpTT.PCRE_CONDITION) != null;
+  }
+
   @Override
   public String getGroupName() {
     final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);

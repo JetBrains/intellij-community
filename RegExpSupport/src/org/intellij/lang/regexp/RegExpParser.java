@@ -456,7 +456,12 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     }
     else {
       if (RegExpTT.GROUP_BEGIN == type) {
-        parseGroupReferenceCondition(builder, RegExpTT.GROUP_END);
+        if (builder.lookAhead(1) == RegExpTT.PCRE_CONDITION) {
+          parsePcreConditionalGroup(builder);
+        }
+        else {
+          parseGroupReferenceCondition(builder, RegExpTT.GROUP_END);
+        }
       }
       else if (RegExpTT.QUOTED_CONDITION_BEGIN == type) {
         parseGroupReferenceCondition(builder, RegExpTT.QUOTED_CONDITION_END);
@@ -500,6 +505,14 @@ public class RegExpParser implements PsiParser, LightPsiParser {
   private void parseGroupEnd(PsiBuilder builder) {
     parsePattern(builder);
     checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group"));
+  }
+
+  private void parsePcreConditionalGroup(PsiBuilder builder) {
+    final PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
+    builder.advanceLexer();
+    parseGroupEnd(builder);
+    marker.done(RegExpElementTypes.GROUP);
   }
 
   private static void parseNamedGroupRef(PsiBuilder builder, PsiBuilder.Marker marker, IElementType type) {

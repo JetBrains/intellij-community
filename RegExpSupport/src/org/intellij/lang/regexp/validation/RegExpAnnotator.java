@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.*;
 import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.impl.RegExpGroupImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -232,7 +233,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   public void visitRegExpGroup(RegExpGroup group) {
     final RegExpPattern pattern = group.getPattern();
     final RegExpBranch[] branches = pattern.getBranches();
-    if (isEmpty(branches) && group.getNode().getLastChildNode().getElementType() == RegExpTT.GROUP_END) {
+    if (!RegExpGroupImpl.isPcreConditionalGroup(group.getNode()) && isEmpty(branches) && group.getNode().getLastChildNode().getElementType() == RegExpTT.GROUP_END) {
       // catches "()" as well as "(|)"
       myHolder.newAnnotation(HighlightSeverity.WARNING, RegExpBundle.message("error.empty.group")).create();
     }

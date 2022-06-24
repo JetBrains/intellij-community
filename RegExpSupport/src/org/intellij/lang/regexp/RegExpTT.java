@@ -168,6 +168,9 @@ public interface RegExpTT {
     /** \g'name' */
     IElementType RUBY_QUOTED_NAMED_GROUP_CALL = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP_CALL");
 
+    /** DEFINE|VERSION[>]=n.m */
+    IElementType PCRE_CONDITION = new RegExpElementType("PCRE_CONDITION");
+
     TokenSet CHARACTERS = TokenSet.create(CHARACTER,
                                           ESC_CTRL_CHARACTER,
                                           ESC_CHARACTER,

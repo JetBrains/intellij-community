@@ -331,6 +331,21 @@ public class RegExpLexerTest extends LexerTestCase {
     doTest("(a)\\g-105", null, lexer);
   }
 
+  public void testPcreConditionDefine() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_CONDITIONS));
+    doTest("(?(DEFINE)(?<Name>\\w+))(?P>Name)", null, lexer);
+  }
+
+  public void testPcreConditionVersion() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_CONDITIONS));
+    doTest("(?(VERSION>=10.7)yes|no)", null, lexer);
+  }
+
+  public void testNoPcreCondition() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("(?(DEFINE)(?<Name>\\w+))(?P>Name)", null, lexer);
+  }
+
   public void testNoNestedCharacterClasses1() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
     doTest("[[\\]]", "CLASS_BEGIN ('[')\n" +
