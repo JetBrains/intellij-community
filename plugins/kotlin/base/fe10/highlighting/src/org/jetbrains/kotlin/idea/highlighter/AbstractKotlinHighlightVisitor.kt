@@ -6,38 +6,28 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
-import com.intellij.codeInsight.problems.ProblemImpl
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.problems.Problem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiRecursiveElementVisitor
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.CommonProcessors
-import org.jetbrains.kotlin.asJava.getJvmSignatureDiagnostics
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 import org.jetbrains.kotlin.diagnostics.rendering.parameters
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightErrors
-import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
-import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 
 abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
     private var afterAnalysisVisitor: Array<AfterAnalysisHighlightingVisitor>? = null
@@ -135,8 +125,6 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
         cleanUpCalculatingAnnotations(highlightInfoByTextRange)
         if (!shouldHighlightErrors) return
 
-        annotateDuplicateJvmSignature(file, holder, bindingContext.diagnostics)
-
         for (diagnostic in bindingContext.diagnostics) {
             val psiElement = diagnostic.psiElement
             if (psiElement !in elements) continue
@@ -154,14 +142,6 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
         }
     }
 
-    private fun annotateDuplicateJvmSignature(file: KtFile, holder: HighlightInfoHolder, otherDiagnostics: Diagnostics) {
-        if (!RootKindFilter.projectSources.matches(file) || !file.platform.isJvm()) return
-
-        val duplicateJvmSignatureAnnotator =
-            DuplicateJvmSignatureAnnotator(file, holder, otherDiagnostics, file.moduleInfo.contentScope)
-        duplicateJvmSignatureAnnotator.visit()
-    }
-
     private fun annotateDiagnostic(
         element: PsiElement,
         holder: HighlightInfoHolder,
@@ -175,7 +155,6 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
         listOf(diagnostic),
         highlightInfoByDiagnostic,
         highlightInfoByTextRange,
-        true,
         calculatingInProgress
     )
 
@@ -193,11 +172,10 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
         diagnostics: List<Diagnostic>,
         highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>? = null,
         highlightInfoByTextRange: MutableMap<TextRange, HighlightInfo>? = null,
-        noFixes: Boolean = false,
         calculatingInProgress: Boolean = false
     ) = annotateDiagnostics(
         element, holder, diagnostics, highlightInfoByDiagnostic, highlightInfoByTextRange, ::shouldSuppressUnusedParameter,
-        noFixes = noFixes,
+        noFixes = true,
         calculatingInProgress = calculatingInProgress
     )
 
@@ -219,39 +197,6 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
     }
 
     protected open fun shouldSuppressUnusedParameter(parameter: KtParameter): Boolean = false
-
-    private inner class DuplicateJvmSignatureAnnotator(
-        private val file: KtFile,
-        private val holder: HighlightInfoHolder,
-        private val otherDiagnostics: Diagnostics,
-        private val moduleScope: GlobalSearchScope
-    ) {
-        fun visit() {
-            file.accept(object : PsiRecursiveElementVisitor() {
-                override fun visitElement(element: PsiElement) {
-                    annotate(element)
-                    super.visitElement(element)
-                }
-            })
-        }
-
-        private fun annotate(element: PsiElement) {
-            if (element !is KtFile && element !is KtDeclaration) return
-
-            val diagnostics = getJvmSignatureDiagnostics(element, otherDiagnostics, moduleScope) ?: return
-
-            val diagnosticsForElement = diagnostics.forElement(element).toSet()
-
-            annotateDiagnostics(element, holder, diagnosticsForElement)
-        }
-    }
-
-    private fun convertToProblems(
-        infos: Collection<HighlightInfo>,
-        file: VirtualFile,
-        hasErrorElement: Boolean = true
-    ): List<Problem> =
-        infos.filter { it.severity == HighlightSeverity.ERROR }.map { ProblemImpl(file, it, hasErrorElement) }
 
     companion object {
         private val LOG = Logger.getInstance(AbstractKotlinHighlightVisitor::class.java)
