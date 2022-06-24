@@ -13,8 +13,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 internal const val SETTINGS_SYNC_SNAPSHOT = "settings.sync.snapshot"
 internal const val SETTINGS_SYNC_SNAPSHOT_ZIP = "$SETTINGS_SYNC_SNAPSHOT.zip"
@@ -49,7 +47,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   }
 
   private val currentVersionOfFiles = mutableMapOf<String, String>() // todo persist this information
-  private val clientVersionContext = VersionContext()
+  private val clientVersionContext = CloudConfigVersionContext()
 
   private fun createConfiguration(): Configuration {
     val userId = SettingsSyncAuthService.getInstance().getUserData()?.id
@@ -223,39 +221,6 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   @Throws(Exception::class)
   fun fetchHistory(): List<FileVersionInfo> {
     return client.getVersions(SETTINGS_SYNC_SNAPSHOT_ZIP)
-  }
-
-  private class VersionContext : HeaderStorage {
-    private val contextVersionMap = mutableMapOf<String, String>()
-    private val lock = ReentrantLock()
-
-    override fun get(path: String): String? {
-      return contextVersionMap[path]
-    }
-
-    override fun store(path: String, value: String) {
-      contextVersionMap[path] = value
-    }
-
-    override fun remove(path: String?) {
-      contextVersionMap.remove(path)
-    }
-
-    fun <T> doWithVersion(version: String?, function: () -> T): T {
-      val path = SETTINGS_SYNC_SNAPSHOT_ZIP
-      return lock.withLock {
-        try {
-          if (version != null) {
-            contextVersionMap[path] = version
-          }
-
-          function()
-        }
-        finally {
-          contextVersionMap.clear()
-        }
-      }
-    }
   }
 
   companion object {
