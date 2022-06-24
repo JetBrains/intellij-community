@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.fir.fe10.Fe10WrapperContext
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
-import org.jetbrains.kotlin.idea.fir.fe10.withAnalysisSession
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTrace

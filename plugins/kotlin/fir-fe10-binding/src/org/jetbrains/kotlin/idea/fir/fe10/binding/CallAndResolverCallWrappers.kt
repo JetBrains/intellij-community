@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.fir.fe10.Fe10WrapperContext
 import org.jetbrains.kotlin.idea.fir.fe10.toDeclarationDescriptor
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
-import org.jetbrains.kotlin.idea.fir.fe10.withAnalysisSession
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*

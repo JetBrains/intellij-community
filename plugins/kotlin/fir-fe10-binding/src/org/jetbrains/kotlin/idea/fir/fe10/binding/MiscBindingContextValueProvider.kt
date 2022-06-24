@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
-import org.jetbrains.kotlin.idea.fir.fe10.withAnalysisSession
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.types.KotlinType

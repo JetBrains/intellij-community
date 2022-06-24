@@ -4,23 +4,18 @@ package org.jetbrains.kotlin.idea.fir.fe10
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.utils.EntityWasGarbageCollectedException
-import org.jetbrains.kotlin.analysis.api.fir.utils.KtAnalysisSessionFe10BindingHolder
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenFactory
-import org.jetbrains.kotlin.analysis.api.lifetime.assertIsValidAndAccessible
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
-import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
-import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
-import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.fir.fe10.binding.Fe10BindingSpecialConstructionsWrappers
 import org.jetbrains.kotlin.idea.fir.fe10.binding.KtSymbolBasedBindingContext
 import org.jetbrains.kotlin.name.FqName
@@ -28,17 +23,17 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.BindingContext
-import java.lang.ref.WeakReference
 
 interface Fe10WrapperContext {
     val builtIns: KotlinBuiltIns
-    val ktAnalysisSessionFacade: KtAnalysisSessionFe10BindingHolder
     val moduleDescriptor: ModuleDescriptor
     val bindingContext: BindingContext
     val fe10BindingSpecialConstructionFunctions: Fe10BindingSpecialConstructionsWrappers
 
     // This property used to disable some logic used locally for debug purposes
     val enableLogging: Boolean get() = false
+
+    fun <R> withAnalysisSession(f: KtAnalysisSession.() -> R): R
 
     /**
      * Legend:
@@ -83,19 +78,19 @@ fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): K
         else -> error("Unexpected kind of KtFunctionLikeSymbol: ${this.javaClass}")
     }
 
-inline fun <R> Fe10WrapperContext.withAnalysisSession(f: KtAnalysisSession.() -> R): R = f(ktAnalysisSessionFacade.analysisSession)
-
 class Fe10WrapperContextImpl(
-    val project: Project,
-    val ktElement: KtElement
+    private val project: Project,
+    private val ktElement: KtElement
 ) : Fe10WrapperContext {
-    private val token: KtLifetimeToken = KtLifetimeTokenForKtSymbolBasedWrappers(project)
+    private val token: KtLifetimeToken = KtLifetimeTokenForKtSymbolBasedWrappers(project, ktElement)
 
     private val module: KtModule = ktElement.getKtModule(project)
 
-    override val ktAnalysisSessionFacade = KtAnalysisSessionFe10BindingHolder.create(module.getFirResolveSession(project), token, ktElement)
+    override fun <R> withAnalysisSession(f: KtAnalysisSession.() -> R): R {
+        return analyze(ktElement, token.factory, f)
+    }
 
-    override val moduleDescriptor: ModuleDescriptor = KtSymbolBasedModuleDescriptorImpl(this, module)
+    override val moduleDescriptor: ModuleDescriptor = KtSymbolBasedModuleDescriptorImpl(this, module, token)
 
     override val builtIns: KotlinBuiltIns
         get() = incorrectImplementation { DefaultBuiltIns.Instance }
@@ -118,51 +113,43 @@ class Fe10WrapperContextImpl(
 
 }
 
-private class KtLifetimeTokenForKtSymbolBasedWrappers(val project: Project) : KtLifetimeToken() {
-    private val modificationTracker = project.createProjectWideOutOfBlockModificationTracker()
-    private val onCreatedTimeStamp = modificationTracker.modificationCount
+// I hope we'll find a way to use project and element later
+@Suppress("unused")
+private class KtLifetimeTokenForKtSymbolBasedWrappers(
+    private val project: Project,
+    private val element: KtElement
+) : KtLifetimeToken() {
 
-    override fun isValid(): Boolean {
-        return true
-    }
-
-    override fun getInvalidationReason(): String {
-        if (onCreatedTimeStamp != modificationTracker.modificationCount) return "PSI has changed since creation"
-        error("Getting invalidation reason for valid validity token")
-    }
+    /**
+     *  This is quite strange code, isn't it?
+     *  Well... Unfortunately in old FE we don't do any checks regarding of the validity of the descriptors.
+     *  Moreover, it was a common practice to ask BindingContext for something and do modification of the PSI at the same time.
+     *  Yes, that is not great at all, and it is unclear what will happen in that case.
+     *  See [org.jetbrains.kotlin.idea.intentions.ConvertSecondaryConstructorToPrimaryIntention.applyTo] as an example.
+     *
+     *  One potential solution will be -- disable Fe10Wrapper for the Intentions/inspections that do this
+     */
+    override fun isValid(): Boolean = true
+    override fun getInvalidationReason(): String = error("Getting invalidation reason for valid validity token")
 
     override fun isAccessible(): Boolean = true
-
     override fun getInaccessibilityReason(): String = error("Getting inaccessibility reason for validity token when it is accessible")
 
-    override val factory = KtLifetimeTokenForKtSymbolBasedWrappersFactory
+    override val factory = KtLifetimeTokenForKtSymbolBasedWrappersFactory(this)
 }
 
-private object KtLifetimeTokenForKtSymbolBasedWrappersFactory : KtLifetimeTokenFactory() {
-    override val identifier= KtLifetimeTokenForKtSymbolBasedWrappers::class
+private class KtLifetimeTokenForKtSymbolBasedWrappersFactory(
+    private val token: KtLifetimeTokenForKtSymbolBasedWrappers
+) : KtLifetimeTokenFactory() {
+    override val identifier = KtLifetimeTokenForKtSymbolBasedWrappers::class
 
-    override fun create(project: Project): KtLifetimeTokenForKtSymbolBasedWrappers =
-        KtLifetimeTokenForKtSymbolBasedWrappers(project)
-}
-
-// This class supposed to be used for non-declaration resolved fir elements, because of that we don't case about FIR phases.
-// TODO: review FIR access -- by common IDEA FIR design access FIR should be under read lock
-internal class FirWeakReference<out T : FirElement>(firElement: T, private val token: KtLifetimeToken) {
-    private val firWeakRef = WeakReference(firElement)
-
-    inline fun <R> withFir(action: (T) -> R): R {
-        return action(getFir())
-    }
-
-    fun getFir(): T {
-        token.assertIsValidAndAccessible()
-        return firWeakRef.get() ?: throw EntityWasGarbageCollectedException("FirElement")
-    }
+    override fun create(project: Project): KtLifetimeTokenForKtSymbolBasedWrappers = token
 }
 
 private class KtSymbolBasedModuleDescriptorImpl(
     val context: Fe10WrapperContext,
     val module: KtModule,
+    val token: KtLifetimeToken
 ) : ModuleDescriptor {
     override val builtIns: KotlinBuiltIns
         get() = context.builtIns
@@ -186,10 +173,10 @@ private class KtSymbolBasedModuleDescriptorImpl(
     override fun <T> getCapability(capability: ModuleCapability<T>): T? = null
 
     override val isValid: Boolean
-        get() = context.ktAnalysisSessionFacade.analysisSession.token.isValid()
+        get() = token.isValid()
 
     override fun assertValid() {
-        assert(context.ktAnalysisSessionFacade.analysisSession.token.isValid())
+        assert(token.isValid())
     }
 
     @OptIn(Frontend10ApiUsage::class)

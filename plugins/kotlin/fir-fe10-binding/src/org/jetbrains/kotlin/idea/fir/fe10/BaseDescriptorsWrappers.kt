@@ -138,7 +138,7 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: Fe10WrapperContex
 
     protected abstract fun getPackageFqNameIfTopLevel(): FqName
 
-    private fun KtSymbol.toSignature(): IdSignature = context.ktAnalysisSessionFacade.toSignature(this)
+    private fun KtSymbol.toSignature(): IdSignature = context.withAnalysisSession { this@toSignature.toSignature() }
 
     override fun equals(other: Any?): Boolean {
         if (other === this) return true
