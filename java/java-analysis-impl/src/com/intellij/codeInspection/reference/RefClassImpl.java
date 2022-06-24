@@ -74,7 +74,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         final RefClass refInnerClass = (RefClass)manager.getReference(psi);
         if (refInnerClass !=  null) {
           addChild(refInnerClass);
-          if (!refInnerClass.isStatic()) utilityClass = false;
+          if (!innerClass.isStatic()) utilityClass = false;
         }
       }
     }
