@@ -6,11 +6,18 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.io.*
-import java.nio.file.*
-import java.util.*
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.executeStep
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.deleteDir
+import org.jetbrains.intellij.build.io.runProcess
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
 
 private fun generateInstallationConfigFileForSilentMode(customizer: WindowsDistributionCustomizer, context: BuildContext) {
@@ -173,7 +180,7 @@ private fun prepareConfigurationFiles(nsiConfDir: Path,
 !define IMAGES_LOCATION "${FileUtilRt.toSystemDependentName(customizer.installerImagesPath!!)}"
 !define PRODUCT_PROPERTIES_FILE "${FileUtilRt.toSystemDependentName("$winDistPath/bin/idea.properties")}"
 !define PRODUCT_VM_OPTIONS_NAME ${productProperties.baseFileName}*.exe.vmoptions
-!define PRODUCT_VM_OPTIONS_FILE "${FileUtilRt.toSystemDependentName("$winDistPath/bin/")}\$\{PRODUCT_VM_OPTIONS_NAME}"
+!define PRODUCT_VM_OPTIONS_FILE "${FileUtilRt.toSystemDependentName("${winDistPath}/bin/")}${'$'}{PRODUCT_VM_OPTIONS_NAME}"
 """)
 
   val extensionsList = getFileAssociations(customizer)
