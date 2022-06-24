@@ -19,10 +19,9 @@ import org.junit.jupiter.params.ParameterizedTest
 
 class GradlePropertiesFileTest : GradleCodeInsightTestCase() {
 
-  //@ParameterizedTest
-  //@AllGradleVersionsSource
-  fun `_test find usages of property`(gradleVersion: GradleVersion) {
-    // todo: check why it is failing
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test find usages of property`(gradleVersion: GradleVersion) {
     test(gradleVersion, PROPERTIES_FIXTURE) {
       runInEdtAndWait {
         val buildscript = findOrCreateFile("build.gradle", "foo")

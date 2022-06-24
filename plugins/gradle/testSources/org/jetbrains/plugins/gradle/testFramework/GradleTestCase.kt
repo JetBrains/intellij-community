@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.externalSystem.util.*
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import org.gradle.util.GradleVersion
 
 abstract class GradleTestCase : GradleBaseTestCase() {
@@ -16,8 +18,12 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   fun findOrCreateFile(relativePath: String, text: String): VirtualFile {
     gradleFixture.fileFixture.snapshot(relativePath)
     return runWriteActionAndGet {
-      gradleFixture.fileFixture.root.findOrCreateFile(relativePath)
-        .also { it.text = text }
+      val file = gradleFixture.fileFixture.root.findOrCreateFile(relativePath)
+      file.text = text
+      FileDocumentManager.getInstance().getDocument(file)?.let {
+        PsiDocumentManager.getInstance(gradleFixture.project).commitDocument(it)
+      }
+      file
     }
   }
 
