@@ -92,7 +92,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
     override fun createCenterPanel(): JComponent {
       return panel {
         statusRow()
-        serverUrlRow(remoteCommunicator)
+        serverUrlRow()
         loginNameRow(userData)
         emailRow(userData)
 
@@ -124,10 +124,10 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
               else IdeBundle.message("plugins.configurable.disabled"))
       }.layout(RowLayout.PARENT_GRID)
 
-    private fun Panel.serverUrlRow(remoteCommunicator: CloudConfigServerCommunicator) =
+    private fun Panel.serverUrlRow() =
       row {
         label(SettingsSyncBundle.message("troubleshooting.dialog.server.url.label"))
-        copyableLabel(remoteCommunicator.url)
+        copyableLabel(CloudConfigServerCommunicator.url)
       }.layout(RowLayout.PARENT_GRID)
 
     private fun Panel.loginNameRow(userData: JBAccountInfoService.JBAData?) =

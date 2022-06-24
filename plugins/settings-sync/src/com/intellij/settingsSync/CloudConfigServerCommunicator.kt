@@ -26,36 +26,10 @@ private const val TIMEOUT = 10000
 internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private val client get() = _client.value
-
-  private val _client = lazy {
-    val conf = createConfiguration()
-    CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, clientVersionContext)
-  }
-
-  internal val url get() = _url.value
-
-  private val _url = lazy {
-    val explicitUrl = System.getProperty(URL_PROPERTY)
-    when {
-      explicitUrl != null -> {
-        LOG.info("Using URL from properties: $explicitUrl")
-        explicitUrl
-      }
-      isRunningFromSources() -> DEFAULT_DEBUG_URL
-      else -> DEFAULT_PRODUCTION_URL
-    }
-  }
+  private val _client = lazy { createCloudConfigClient(clientVersionContext) }
 
   private val currentVersionOfFiles = mutableMapOf<String, String>() // todo persist this information
   private val clientVersionContext = CloudConfigVersionContext()
-
-  private fun createConfiguration(): Configuration {
-    val userId = SettingsSyncAuthService.getInstance().getUserData()?.id
-    if (userId == null) {
-      throw SettingsSyncAuthException("Authentication required")
-    }
-    return Configuration().connectTimeout(TIMEOUT).readTimeout(TIMEOUT).auth(JbaTokenAuthProvider(userId))
-  }
 
   private fun receiveSnapshotFile(): InputStream? {
     return clientVersionContext.doWithVersion(null) {
@@ -224,6 +198,33 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   }
 
   companion object {
+    internal val url get() = _url.value
+
+    private val _url = lazy {
+      val explicitUrl = System.getProperty(URL_PROPERTY)
+      when {
+        explicitUrl != null -> {
+          LOG.info("Using URL from properties: $explicitUrl")
+          explicitUrl
+        }
+        isRunningFromSources() -> DEFAULT_DEBUG_URL
+        else -> DEFAULT_PRODUCTION_URL
+      }
+    }
+
+    internal fun createCloudConfigClient(versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
+      val conf = createConfiguration()
+      return CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, versionContext)
+    }
+
+    private fun createConfiguration(): Configuration {
+      val userId = SettingsSyncAuthService.getInstance().getUserData()?.id
+      if (userId == null) {
+        throw SettingsSyncAuthException("Authentication required")
+      }
+      return Configuration().connectTimeout(TIMEOUT).readTimeout(TIMEOUT).auth(JbaTokenAuthProvider(userId))
+    }
+
     private val LOG = logger<CloudConfigServerCommunicator>()
 
     private val DUMMY_ETAG_STORAGE: ETagStorage = object : ETagStorage {
