@@ -14,6 +14,7 @@
     <orderEntry type="module" module-name="kotlin.base.psi" exported="" />
     <orderEntry type="module" module-name="kotlin.base.plugin" exported="" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.project-model" exported="" />
     <orderEntry type="module" module-name="kotlin.base.platforms" exported="" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" exported="" />
     <orderEntry type="module" module-name="kotlin.base.scripting" exported="" />
@@ -48,7 +49,6 @@
     <orderEntry type="module" module-name="kotlin.grazie" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />
-    <orderEntry type="module" module-name="kotlin.project-model" exported="" />
     <orderEntry type="module" module-name="kotlin.properties" exported="" />
     <orderEntry type="module" module-name="kotlin.spellchecker" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" exported="" />

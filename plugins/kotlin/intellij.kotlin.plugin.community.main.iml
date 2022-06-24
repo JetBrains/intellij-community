@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" exported="" />
     <orderEntry type="module" module-name="kotlin.base.psi" exported="" />
     <orderEntry type="module" module-name="kotlin.base.kdoc" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.project-model" exported="" />
     <orderEntry type="module" module-name="kotlin.base.platforms" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" exported="" />
@@ -104,7 +105,6 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.scripting-support" exported="" />
-    <orderEntry type="module" module-name="kotlin.project-model" exported="" />
     <orderEntry type="module" module-name="kotlin.features-trainer" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />

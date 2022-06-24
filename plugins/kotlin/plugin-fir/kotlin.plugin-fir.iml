@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.psi" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.indices" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.base.project-model" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.platforms" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.scripting" scope="PROVIDED" />
@@ -41,7 +42,6 @@
     <orderEntry type="module" module-name="kotlin.grazie" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm-run-configurations" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.project-model" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.scripting" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.spellchecker" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.properties" scope="PROVIDED" />

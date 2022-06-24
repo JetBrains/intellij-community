@@ -14,7 +14,7 @@
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="kotlin.plugin" />
-    <orderEntry type="module" module-name="kotlin.project-model" />
+    <orderEntry type="module" module-name="kotlin.base.project-model" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
     <orderEntry type="module" module-name="kotlin.tests-common" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension" />

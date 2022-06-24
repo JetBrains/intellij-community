@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.psi" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.kdoc" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.project-model" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.platforms" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.scripting" scope="RUNTIME" />
@@ -62,7 +63,6 @@
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.git" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.project-model" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" scope="RUNTIME" />

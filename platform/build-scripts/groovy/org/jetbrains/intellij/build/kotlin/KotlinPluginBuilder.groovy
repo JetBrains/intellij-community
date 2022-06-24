@@ -64,6 +64,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.plugin",
     "kotlin.base.psi",
     "kotlin.base.kdoc",
+    "kotlin.base.project-model",
     "kotlin.base.platforms",
     "kotlin.base.facet",
     "kotlin.base.project-structure",
@@ -160,7 +161,6 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea-base",
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
-    "kotlin.project-model",
     "kotlin.features-trainer"
   )
 
