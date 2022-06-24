@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 fun <K, V> testMutableMapEntry(<warning>map</warning>: MutableMap<K, V>, <warning>k1</warning>: K, <warning>v</warning>: V) {
 }

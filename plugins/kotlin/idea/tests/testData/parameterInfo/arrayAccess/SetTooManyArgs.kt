@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 class A {
     operator fun get(x: Int) {}

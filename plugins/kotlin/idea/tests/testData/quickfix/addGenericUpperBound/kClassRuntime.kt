@@ -1,6 +1,5 @@
 // "Add 'kotlin.Any' as upper bound for E" "true"
 // WITH_STDLIB
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 import kotlin.reflect.KClass
 
 

@@ -1,5 +1,4 @@
 // SUGGESTED_NAMES: pair, aIntPair
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 // WITH_STDLIB
 // PARAM_TYPES: A?, kotlin.Any?
 // PARAM_TYPES: B, A

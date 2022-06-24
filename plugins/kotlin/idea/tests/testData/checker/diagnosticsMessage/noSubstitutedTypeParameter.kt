@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 val f = listOf("").<error descr="[TYPE_INFERENCE_PARAMETER_CONSTRAINT_ERROR] Type inference failed: fun <T> Iterable<T>.firstOrNull(predicate: (T) -> Boolean): T?
 cannot be applied to

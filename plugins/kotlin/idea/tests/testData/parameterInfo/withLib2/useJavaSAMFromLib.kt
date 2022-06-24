@@ -1,5 +1,4 @@
 // IGNORE_FIR
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 package test
 

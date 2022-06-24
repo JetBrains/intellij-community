@@ -1,6 +1,5 @@
 // !DIAGNOSTICS_NUMBER: 3
 // !DIAGNOSTICS: TYPE_INFERENCE_PARAMETER_CONSTRAINT_ERROR
-// !LANGUAGE: -NewInference
 
 class A<T, R>
 fun <T, R> foo(a: A<T, R>) = a

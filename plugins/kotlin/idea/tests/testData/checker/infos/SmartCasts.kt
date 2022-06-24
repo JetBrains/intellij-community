@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 <info descr="null" tooltip="null">open</info> class A() {
   fun foo() {

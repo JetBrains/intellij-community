@@ -1,6 +1,5 @@
 // FIR_IDENTICAL
 
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 fun foo(s: String) = s.length
 

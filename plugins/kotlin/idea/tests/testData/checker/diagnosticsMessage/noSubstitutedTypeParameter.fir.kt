@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 val f = listOf("").firstOrNull(<error descr="[ARGUMENT_TYPE_MISMATCH] Argument type mismatch: actual type is kotlin/Int but kotlin/Function1<TypeVariable(T), kotlin/Boolean> was expected">1</error>)
 

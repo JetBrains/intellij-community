@@ -1,6 +1,5 @@
 // "Add parameter to function 'doSmthWithChild'" "true"
 // DISABLE-ERRORS
-// COMPILER_ARGUMENTS: -XXLanguage:+NewInference
 
 interface Parent
 interface Child : Parent

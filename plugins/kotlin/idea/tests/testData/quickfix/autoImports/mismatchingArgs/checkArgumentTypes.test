@@ -4,7 +4,6 @@
 // ACTION: Add parameter to function 'foo'
 // ACTION: Create extension function 'X.foo'
 // ACTION: Create member function 'X.foo'
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 package main
 
@@ -31,7 +30,6 @@ fun X.foo(p: String) {
 // ACTION: Add parameter to function 'foo'
 // ACTION: Create extension function 'X.foo'
 // ACTION: Create member function 'X.foo'
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 package main
 
