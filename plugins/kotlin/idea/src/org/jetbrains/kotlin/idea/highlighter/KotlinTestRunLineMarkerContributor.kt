@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.configuration.isGradleModule
-import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService
+import org.jetbrains.kotlin.idea.base.platforms.tooling.tooling
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
 import org.jetbrains.kotlin.idea.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.konan.target.HostManager

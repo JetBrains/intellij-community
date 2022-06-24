@@ -7,7 +7,7 @@
             interface="org.jetbrains.kotlin.platform.IdePlatformKind"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idePlatformKindTooling"
-            interface="org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling"/>
+            interface="org.jetbrains.kotlin.idea.base.platforms.tooling.IdePlatformKindTooling"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idePlatformKindResolution"
             interface="org.jetbrains.kotlin.caches.resolve.IdePlatformKindResolution"/>

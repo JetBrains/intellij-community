@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.lineMarkers.run.AbstractKotlinMainRunLineMarkerContributor
+import org.jetbrains.kotlin.idea.base.platforms.tooling.tooling
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.KtNamedFunction

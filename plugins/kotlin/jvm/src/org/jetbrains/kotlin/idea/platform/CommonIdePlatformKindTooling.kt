@@ -7,10 +7,10 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.tooling.IdePlatformKindTooling
+import org.jetbrains.kotlin.idea.base.platforms.tooling.tooling
 import org.jetbrains.kotlin.idea.framework.CommonStandardLibraryDescription
-import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.platform.isCompatibleWith
-import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.platform.TargetPlatform
