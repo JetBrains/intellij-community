@@ -56,14 +56,9 @@ fun KtSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDe
     when (this) {
         is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(this, context)
         is KtFunctionLikeSymbol -> toDeclarationDescriptor(context)
-        is KtValueParameterSymbol -> {
-            val containingSymbol = context.withAnalysisSession { this@toDeclarationDescriptor.getContainingSymbol() }
-            check(containingSymbol is KtFunctionLikeSymbol) {
-                "Unexpected containing symbol = $containingSymbol"
-            }
-            KtSymbolBasedValueParameterDescriptor(this, context, containingSymbol.toDeclarationDescriptor(context))
-        }
-        else -> context.implementationPlanned()
+        is KtVariableLikeSymbol -> toDeclarationDescriptor(context)
+
+        else -> context.implementationPlanned(this::class.qualifiedName ?: "")
     }
 
 fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedFunctionLikeDescriptor =
@@ -76,6 +71,20 @@ fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): K
             KtSymbolBasedConstructorDescriptor(ktConstructorSymbol, KtSymbolBasedClassDescriptor(ktClassOrObject, context))
         }
         else -> error("Unexpected kind of KtFunctionLikeSymbol: ${this.javaClass}")
+    }
+
+fun KtVariableLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedDeclarationDescriptor =
+    when (this) {
+        is KtValueParameterSymbol -> {
+            val containingSymbol = context.withAnalysisSession { this@toDeclarationDescriptor.getContainingSymbol() }
+            check(containingSymbol is KtFunctionLikeSymbol) {
+                "Unexpected containing symbol = $containingSymbol"
+            }
+            KtSymbolBasedValueParameterDescriptor(this, context, containingSymbol.toDeclarationDescriptor(context))
+        }
+        is KtPropertySymbol -> KtSymbolBasedPropertyDescriptor(this, context)
+        is KtJavaFieldSymbol -> KtSymbolBasedJavaPropertyDescriptor(this, context)
+        else -> context.implementationPlanned(this::class.toString())
     }
 
 class Fe10WrapperContextImpl(

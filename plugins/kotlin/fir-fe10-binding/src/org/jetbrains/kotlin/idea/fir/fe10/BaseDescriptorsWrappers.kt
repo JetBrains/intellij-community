@@ -579,24 +579,24 @@ class KtSymbolBasedValueParameterDescriptor(
 
 }
 
-class KtSymbolBasedPropertyDescriptor(
-    override val ktSymbol: KtPropertySymbol,
+abstract class AbstractKtSymbolBasedPropertyDescriptor(
     context: Fe10WrapperContext
 ) : KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, PropertyDescriptor {
+    abstract override val ktSymbol: KtVariableSymbol
+
     override fun getPackageFqNameIfTopLevel(): FqName = (ktSymbol.callableIdIfNonLocal ?: error("should be top-level")).packageName
     override fun getOriginal(): PropertyDescriptor = context.incorrectImplementation { this }
 
-    override fun getVisibility(): DescriptorVisibility = ktSymbol.visibility.toDescriptorVisibility()
 
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = getExtensionReceiverParameter(ktSymbol)
-
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = getDispatchReceiverParameter(ktSymbol)
 
     override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = implementationPlanned()
 
-    override fun getTypeParameters(): List<TypeParameterDescriptor> = emptyList()
+    override fun getTypeParameters(): List<TypeParameterDescriptor> = getTypeParameters(ktSymbol)
 
     override fun getReturnType(): KotlinType = ktSymbol.returnType.toKotlinType(context)
+
 
     override fun getValueParameters(): List<ValueParameterDescriptor> = emptyList()
     override fun hasStableParameterNames(): Boolean = false
@@ -610,14 +610,9 @@ class KtSymbolBasedPropertyDescriptor(
 
     override fun isVar(): Boolean = !ktSymbol.isVal
 
-    override fun getCompileTimeInitializer(): ConstantValue<*>? {
-        val constantInitializer = ktSymbol.initializer as? KtConstantInitializerValue ?: return null
-        return constantInitializer.constant.toConstantValue()
-    }
+    override fun getAccessors(): List<PropertyAccessorDescriptor> = listOfNotNull(getter, setter)
 
-    override fun cleanCompileTimeInitializerCache() {}
-
-    override fun isConst(): Boolean = ktSymbol.initializer != null
+    override fun cleanCompileTimeInitializerCache() = noImplementation()
 
     override fun isLateInit(): Boolean = implementationPostponed()
 
@@ -646,12 +641,41 @@ class KtSymbolBasedPropertyDescriptor(
 
     override fun isSetterProjectedOut(): Boolean = implementationPostponed()
 
-    override fun getAccessors(): List<PropertyAccessorDescriptor> = listOfNotNull(getter, setter)
-
     override fun getBackingField(): FieldDescriptor = implementationPostponed()
     override fun getDelegateField(): FieldDescriptor = implementationPostponed()
     override val isDelegated: Boolean
         get() = implementationPostponed()
+}
+
+
+class KtSymbolBasedJavaPropertyDescriptor(
+    override val ktSymbol: KtJavaFieldSymbol,
+    context: Fe10WrapperContext
+) : AbstractKtSymbolBasedPropertyDescriptor(context), PropertyDescriptor {
+    override fun getVisibility(): DescriptorVisibility = ktSymbol.visibility.toDescriptorVisibility()
+
+    override fun getCompileTimeInitializer(): ConstantValue<*>? = implementationPlanned()
+    override fun isConst(): Boolean = implementationPlanned()
+
+    override val getter: PropertyGetterDescriptor?
+        get() = null
+
+    override val setter: PropertySetterDescriptor?
+        get() = null
+}
+
+class KtSymbolBasedPropertyDescriptor(
+    override val ktSymbol: KtPropertySymbol,
+    context: Fe10WrapperContext
+) : AbstractKtSymbolBasedPropertyDescriptor(context), PropertyDescriptor {
+    override fun getVisibility(): DescriptorVisibility = ktSymbol.visibility.toDescriptorVisibility()
+
+    override fun getCompileTimeInitializer(): ConstantValue<*>? {
+        val constantInitializer = ktSymbol.initializer as? KtConstantInitializerValue ?: return null
+        return constantInitializer.constant.toConstantValue()
+    }
+
+    override fun isConst(): Boolean = ktSymbol.initializer != null
 
     override val getter: PropertyGetterDescriptor?
         get() = ktSymbol.getter?.let { KtSymbolBasedPropertyGetterDescriptor(it, this) }
