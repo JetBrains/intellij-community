@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+NewInference -XXLanguage:+SamConversionForKotlinFunctions
+// COMPILER_ARGUMENTS: -XXLanguage:+SamConversionForKotlinFunctions
 
 fun usage(r: Runnable) {}
 

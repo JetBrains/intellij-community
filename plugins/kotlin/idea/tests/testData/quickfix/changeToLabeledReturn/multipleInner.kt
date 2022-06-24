@@ -3,7 +3,6 @@
 // ACTION: Introduce local variable
 // ERROR: The integer literal does not conform to the expected type Unit
 // WITH_STDLIB
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 fun foo(f:()->Int){}
 

@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 // PARAM_TYPES: X<kotlin.Any>
 // PARAM_TYPES: kotlin.String, kotlin.Comparable<kotlin.String>, kotlin.CharSequence, java.io.Serializable, kotlin.Any
 // PARAM_DESCRIPTOR: value-parameter x: X<kotlin.Any> defined in foo
