@@ -152,7 +152,7 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(getToolWindow(e) != null);
+    e.getPresentation().setEnabledAndVisible(getToolWindow(e) != null);
   }
 
   @Override

@@ -166,6 +166,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
   @Override
   public void update(@NotNull AnActionEvent e) {
     ToolWindow toolWindow = getToolWindow(e);
+    e.getPresentation().setVisible(toolWindow != null);
     e.getPresentation().setEnabled(toolWindow != null && !myAnchor.isApplied(toolWindow));
   }
 
