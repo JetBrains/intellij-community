@@ -28,12 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class KotlinConfigurationCheckerStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
-        NotificationsConfiguration.getNotificationsConfiguration().register(
-            KotlinConfigurationCheckerService.CONFIGURE_NOTIFICATION_GROUP_ID,
-            NotificationDisplayType.STICKY_BALLOON,
-            true,
-        )
-
         KotlinConfigurationCheckerService.getInstance(project).performProjectPostOpenActions()
     }
 }
