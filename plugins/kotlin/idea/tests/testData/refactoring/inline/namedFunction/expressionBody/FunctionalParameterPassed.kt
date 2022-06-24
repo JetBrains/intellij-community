@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 fun <caret>foo(p1: String, p2: () -> Boolean) = bar(p1, null, p2)
 

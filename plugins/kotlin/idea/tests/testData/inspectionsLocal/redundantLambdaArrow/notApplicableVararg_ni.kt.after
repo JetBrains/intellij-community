@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+NewInference
 // PROBLEM: Redundant lambda arrow
 // WITH_STDLIB
 

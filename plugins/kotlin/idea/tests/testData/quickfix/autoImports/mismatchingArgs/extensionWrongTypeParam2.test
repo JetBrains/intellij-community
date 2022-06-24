@@ -2,7 +2,6 @@
 // "Import" "true"
 // ERROR: Type inference failed: Not enough information to infer parameter T in fun <T> foo(): Unit<br>Please specify it explicitly.<br>
 // ACTION: Create type parameter in function 'shade'
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 /* IGNORE_FIR */
 
 package pack_one
@@ -21,7 +20,6 @@ fun foo() {}
 // "Import" "true"
 // ERROR: Type inference failed: Not enough information to infer parameter T in fun <T> foo(): Unit<br>Please specify it explicitly.<br>
 // ACTION: Create type parameter in function 'shade'
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 /* IGNORE_FIR */
 
 package pack_one

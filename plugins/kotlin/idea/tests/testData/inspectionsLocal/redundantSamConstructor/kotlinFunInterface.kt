@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+NewInference -XXLanguage:+SamConversionForKotlinFunctions -XXLanguage:+FunctionalInterfaceConversion
+// COMPILER_ARGUMENTS: -XXLanguage:+SamConversionForKotlinFunctions -XXLanguage:+FunctionalInterfaceConversion
 
 fun interface KtRunnable {
     fun run()

@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 // PARAM_TYPES: kotlin.String
 // PARAM_DESCRIPTOR: value-parameter p: kotlin.Any defined in foo
 
