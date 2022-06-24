@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.mock.Mock;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -149,7 +150,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
               "  </component>\n");
     FileEditor[] selectedEditors = myManager.getSelectedEditors();
     assertEquals(1, selectedEditors.length);
-    assertEquals(MyFileEditorProvider.NAME, selectedEditors[0].getName());
+    assertEquals(MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, selectedEditors[0].getName());
   }
 
   public void testTrackSelectedEditor() {
@@ -160,11 +161,11 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(2, editors.length);
     assertEquals("Text", myManager.getSelectedEditor(file).getName());
     myManager.setSelectedEditor(file, "mock");
-    assertEquals(MyFileEditorProvider.NAME, myManager.getSelectedEditor(file).getName());
+    assertEquals(MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, myManager.getSelectedEditor(file).getName());
 
     VirtualFile file1 = getFile("/src/2.txt");
     myManager.openFile(file1, true);
-    assertEquals(MyFileEditorProvider.NAME, myManager.getSelectedEditor(file).getName());
+    assertEquals(MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, myManager.getSelectedEditor(file).getName());
   }
 
   public void testWindowClosingRetainsOtherWindows() {
@@ -237,7 +238,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
   public void testOpenInDumbMode() {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyFileEditorProvider(), myFixture.getTestRootDisposable());
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new DumbAwareProvider(), myFixture.getTestRootDisposable());
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(), myFixture.getTestRootDisposable());
     try {
       DumbServiceImpl.getInstance(getProject()).setDumb(true);
       VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
@@ -263,6 +264,63 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals("one", myManager.getSelectedEditor(file).getName());
     myManager.openTextEditor(new OpenFileDescriptor(project, file, 2), true);
     assertEquals("two", myManager.getSelectedEditor(file).getName());
+  }
+
+  public void testHideDefaultEditor() {
+    VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDefaultEditorProvider(
+      "t_default", "default"), myFixture.getTestRootDisposable());
+
+    myManager.openFile(file, false);
+    assertOpenedFileEditorsNames(file, "default");
+    myManager.closeAllFiles();
+
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
+      "t_hide_def_1", "hide_def_1", FileEditorPolicy.HIDE_DEFAULT_EDITOR), myFixture.getTestRootDisposable());
+
+    myManager.openFile(file, false);
+    assertOpenedFileEditorsNames(file, "hide_def_1");
+    myManager.closeAllFiles();
+
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
+      "t_hide_def_2", "hide_def_2", FileEditorPolicy.HIDE_DEFAULT_EDITOR), myFixture.getTestRootDisposable());
+
+    myManager.openFile(file, false);
+    assertOpenedFileEditorsNames(file, "hide_def_1", "hide_def_2");
+    myManager.closeAllFiles();
+
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
+      "t_passive", "passive", FileEditorPolicy.NONE), myFixture.getTestRootDisposable());
+
+    myManager.openFile(file, false);
+    assertOpenedFileEditorsNames(file, "hide_def_1", "hide_def_2", "passive");
+    assertEquals(3, myManager.getAllEditors(file).length);
+  }
+
+  public void testHideOtherEditors() {
+    VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDefaultEditorProvider(
+      "t_default", "default"), myFixture.getTestRootDisposable());
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyFileEditorProvider(
+      "t_passive", "passive", FileEditorPolicy.NONE), myFixture.getTestRootDisposable());
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
+      "t_hide_default", "hide_default", FileEditorPolicy.HIDE_DEFAULT_EDITOR), myFixture.getTestRootDisposable());
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
+      "t_hide_others_1", "hide_others_1", FileEditorPolicy.HIDE_OTHER_EDITORS), myFixture.getTestRootDisposable());
+
+    myManager.openFile(file, false);
+    assertOpenedFileEditorsNames(file, "hide_others_1");
+    myManager.closeAllFiles();
+
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
+      "t_hide_others_2", "hide_others_2", FileEditorPolicy.HIDE_OTHER_EDITORS), myFixture.getTestRootDisposable());
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
+      "t_hide_others_3", "hide_others_3", FileEditorPolicy.HIDE_OTHER_EDITORS), myFixture.getTestRootDisposable());
+
+    myManager.openFile(file, false);
+    assertOpenedFileEditorsNames(file, "hide_others_1", "hide_others_2", "hide_others_3");
   }
 
   public void testDontOpenInActiveSplitter() {
@@ -360,18 +418,47 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(Arrays.asList(fileNames), names);
   }
 
+  private void assertOpenedFileEditorsNames(VirtualFile file, String... allNames) {
+    FileEditor[] editors = myManager.getEditors(file);
+    assertEquals(allNames.length, editors.length);
+
+    List<String> expectedNames = Arrays.asList(allNames);
+    List<String> actualNames = ContainerUtil.map(editors, e -> e.getName());
+    if (!actualNames.containsAll(expectedNames)) {
+      fail("Expected file editors names:\n"+expectedNames+ "\nActual names:\n"+actualNames);
+    }
+  }
+
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getPlatformTestDataPath() + "fileEditorManager";
   }
 
   static class MyFileEditorProvider implements FileEditorProvider {
-    static final String NAME = "MockEditor";
+    static final String DEFAULT_FILE_EDITOR_NAME = "MockEditor";
+
+    private final String myEditorTypeId;
+    private final String myFileEditorName;
+    private final FileEditorPolicy myPolicy;
+
+    MyFileEditorProvider() {
+      this("mock");
+    }
+
+    MyFileEditorProvider(String editorTypeId) {
+      this(editorTypeId, DEFAULT_FILE_EDITOR_NAME, FileEditorPolicy.PLACE_AFTER_DEFAULT_EDITOR);
+    }
+
+    MyFileEditorProvider(String editorTypeId, String fileEditorName, FileEditorPolicy policy) {
+      myEditorTypeId = editorTypeId;
+      myFileEditorName = fileEditorName;
+      myPolicy = policy;
+    }
 
     @NotNull
     @Override
     public String getEditorTypeId() {
-      return "mock";
+      return myEditorTypeId;
     }
 
     @Override
@@ -392,7 +479,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
         @NotNull
         @Override
         public String getName() {
-          return NAME;
+          return myFileEditorName;
         }
 
         @Override
@@ -409,15 +496,23 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     @NotNull
     @Override
     public FileEditorPolicy getPolicy() {
-      return FileEditorPolicy.PLACE_AFTER_DEFAULT_EDITOR;
+      return myPolicy;
     }
   }
 
-  private static class DumbAwareProvider extends MyFileEditorProvider implements DumbAware {
-    @NotNull
-    @Override
-    public String getEditorTypeId() {
-      return "dumbAware";
+  private static class MyDumbAwareProvider extends MyFileEditorProvider implements DumbAware {
+    MyDumbAwareProvider() {
+      super("dumbAware");
+    }
+
+    MyDumbAwareProvider(String editorTypeId, String fileEditorName, FileEditorPolicy policy) {
+      super(editorTypeId, fileEditorName, policy);
+    }
+  }
+
+  private static class MyDefaultEditorProvider extends MyFileEditorProvider implements DefaultPlatformFileEditorProvider {
+    MyDefaultEditorProvider(String editorTypeId, String fileEditorName) {
+      super(editorTypeId, fileEditorName, FileEditorPolicy.NONE);
     }
   }
 
