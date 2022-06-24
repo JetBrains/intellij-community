@@ -370,7 +370,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired) {
-    invokeLater(runnable, ModalityState.defaultModalityState(), expired);
+    invokeLater(runnable, getDefaultModalityState(), expired);
   }
 
   @Override
@@ -522,7 +522,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void invokeAndWait(@NotNull Runnable runnable) throws ProcessCanceledException {
-    invokeAndWait(runnable, ModalityState.defaultModalityState());
+    invokeAndWait(runnable, getDefaultModalityState());
   }
 
   @Override
@@ -872,7 +872,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void invokeLaterOnWriteThread(@NotNull Runnable action) {
-    invokeLaterOnWriteThread(action, ModalityState.defaultModalityState());
+    invokeLaterOnWriteThread(action, getDefaultModalityState());
   }
 
   @Override
