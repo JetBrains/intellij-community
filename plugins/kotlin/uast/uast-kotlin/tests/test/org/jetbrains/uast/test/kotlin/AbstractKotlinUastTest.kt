@@ -55,8 +55,6 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
 
         initializeKotlinEnvironment()
 
-        enableNewTypeInferenceIfNeeded()
-
         val trace = NoScopeRecordCliBindingTrace()
 
         val environment = kotlinCoreEnvironment!!
@@ -70,26 +68,6 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
         ideaProject.baseDir = vfs.findFileByPath(TEST_KOTLIN_MODEL_DIR.canonicalPath)
 
         return vfs.findFileByPath(testFile.canonicalPath)!!
-    }
-
-    private fun enableNewTypeInferenceIfNeeded() {
-        val currentLanguageVersionSettings = compilerConfiguration.languageVersionSettings
-        if (currentLanguageVersionSettings.supportsFeature(LanguageFeature.NewInference)) return
-
-        val extraLanguageFeatures = mutableMapOf<LanguageFeature, LanguageFeature.State>()
-        val extraAnalysisFlags = mutableMapOf<AnalysisFlag<*>, Any?>()
-
-        if (currentLanguageVersionSettings is CompilerTestLanguageVersionSettings) {
-            extraLanguageFeatures += currentLanguageVersionSettings.extraLanguageFeatures
-            extraAnalysisFlags += currentLanguageVersionSettings.analysisFlags
-        }
-
-        compilerConfiguration.languageVersionSettings = CompilerTestLanguageVersionSettings(
-            extraLanguageFeatures + (LanguageFeature.NewInference to LanguageFeature.State.ENABLED),
-            currentLanguageVersionSettings.apiVersion,
-            currentLanguageVersionSettings.languageVersion,
-            extraAnalysisFlags
-        )
     }
 
     private fun initializeKotlinEnvironment() {
