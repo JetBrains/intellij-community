@@ -132,7 +132,7 @@ internal class KtLibrarySourceModuleByModuleInfo(
 
 
 internal class NotUnderContentRootModuleByModuleInfo(
-    moduleInfo: NotUnderContentRootModuleInfo,
+    moduleInfo: IdeaModuleInfo,
     provider: ProjectStructureProviderIdeImpl
 ) : KtModuleByModuleInfoBase(moduleInfo, provider), KtNotUnderContentRootModule {
     override val moduleDescription: String

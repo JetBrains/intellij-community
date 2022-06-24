@@ -34,7 +34,7 @@ internal class ProjectStructureProviderIdeImpl : ProjectStructureProvider() {
         is SdkInfo -> SdkKtModuleByModuleInfo(moduleInfo, this)
         is LibrarySourceInfo -> KtLibrarySourceModuleByModuleInfo(moduleInfo, this)
         is NotUnderContentRootModuleInfo -> NotUnderContentRootModuleByModuleInfo(moduleInfo, this)
-        else -> TODO("Unsupported module info ${moduleInfo::class} $moduleInfo")
+        else -> NotUnderContentRootModuleByModuleInfo(moduleInfo as IdeaModuleInfo, this)
     }
 
     override fun getKtBinaryModules(): Collection<KtBinaryModule> {
