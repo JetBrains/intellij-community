@@ -1176,6 +1176,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/compiler-dependencies/kotlin.util.compiler-dependencies.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/compiler-dependencies/kotlin.util.compiler-dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/project-model-updater/kotlin.util.project-model-updater.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/project-model-updater/kotlin.util.project-model-updater.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/test-generator/kotlin.util.test-generator.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/test-generator/kotlin.util.test-generator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/test-generator-fe10/kotlin.util.test-generator-fe10.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/test-generator-fe10/kotlin.util.test-generator-fe10.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/test-generator-fir/kotlin.util.test-generator-fir.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/test-generator-fir/kotlin.util.test-generator-fir.iml" />
     </modules>
   </component>
 </project>
