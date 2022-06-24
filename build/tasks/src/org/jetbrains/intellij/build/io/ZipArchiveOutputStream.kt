@@ -320,13 +320,6 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     // Offset of start of central directory, relative to start of archive
     buffer.putLong(centralDirectoryOffset)
 
-    // comment length
-    if (withOptimizedMetadataEnabled) {
-      // version
-      buffer.put(INDEX_FORMAT_VERSION)
-      buffer.putInt(optimizedMetadataOffset)
-    }
-
     buffer.putLong(eocdSizePosition, (buffer.position() - 12).toLong())
 
     // Zip64 end of central directory locator
@@ -352,8 +345,17 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     buffer.putInt(0xffffffff.toInt())
     // Offset of start of central directory, relative to start of archive
     buffer.putInt(0xffffffff.toInt())
+
     // comment length
-    buffer.putShort(0)
+    if (withOptimizedMetadataEnabled) {
+      buffer.putShort((Byte.SIZE_BYTES + Integer.BYTES).toShort())
+      // version
+      buffer.put(INDEX_FORMAT_VERSION)
+      buffer.putInt(optimizedMetadataOffset)
+    }
+    else {
+      buffer.putShort(0)
+    }
   }
 
   internal fun getChannelPosition() = channelPosition
