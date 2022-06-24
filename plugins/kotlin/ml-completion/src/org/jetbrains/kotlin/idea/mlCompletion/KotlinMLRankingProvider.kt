@@ -5,10 +5,9 @@ package org.jetbrains.kotlin.idea.mlCompletion
 import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.lang.Language
-import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 
 class KotlinMLRankingProvider : CatBoostJarCompletionModelProvider(
-    KotlinIdeaCompletionBundle.message("kotlin.ml.completion.model"),
+    KotlinMlCompletionBundle.message("kotlin.ml.completion.model"),
     "kotlin_features",
     "kotlin_model"
 ) {
