@@ -239,16 +239,6 @@ public class KotlinTestUtils {
         CompilerConfiguration configuration = new CompilerConfiguration();
         configuration.put(CommonConfigurationKeys.MODULE_NAME, TEST_MODULE_NAME);
 
-        if ("true".equals(System.getProperty("kotlin.ni"))) {
-            // Enable new inference for tests which do not declare their own language version settings
-            CommonConfigurationKeysKt.setLanguageVersionSettings(configuration, new CompilerTestLanguageVersionSettings(
-                    Collections.emptyMap(),
-                    LanguageVersionSettingsImpl.DEFAULT.getApiVersion(),
-                    LanguageVersionSettingsImpl.DEFAULT.getLanguageVersion(),
-                    Collections.emptyMap()
-            ));
-        }
-
         configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, new MessageCollector() {
             @Override
             public void clear() {
