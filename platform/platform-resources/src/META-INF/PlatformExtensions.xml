@@ -1248,7 +1248,7 @@
     <notificationGroup id="Test Sticky Notification" displayType="STICKY_BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Test Notification" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Test Runner" displayType="NONE" bundle="messages.TestRunnerBundle" key="notification.group.test.runner"/>
-    <notificationGroup id="System Messages" displayType="BALLOON"/>
+    <notificationGroup id="System Messages" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.system.messages"/>
     <notificationGroup id="Merge Internal Error" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Diff Changes Loading Error" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="System shortcuts conflicts" displayType="STICKY_BALLOON" bundle="messages.KeyMapBundle" key="notification.group.shortcut.conflicts"/>
