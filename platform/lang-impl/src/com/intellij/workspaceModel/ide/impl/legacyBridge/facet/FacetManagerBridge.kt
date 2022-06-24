@@ -22,8 +22,8 @@ import com.intellij.workspaceModel.ide.toExternalSource
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import org.jetbrains.jps.model.serialization.facet.FacetState
 import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import org.jetbrains.jps.model.serialization.facet.FacetState
 
 class FacetManagerBridge(module: Module) : FacetManagerBase() {
   internal val module = module as ModuleBridge
@@ -149,11 +149,17 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
 
     val configuration = facetType.createDefaultConfiguration()
     val configurationXmlTag = entity.configurationXmlTag
-    if (configurationXmlTag != null) {
-      FacetUtil.loadFacetConfiguration(configuration, JDOMUtil.load(configurationXmlTag))
+    val loadedConfiguration = configurationXmlTag?.let { JDOMUtil.load(it) }
+    if (loadedConfiguration != null) {
+      FacetUtil.loadFacetConfiguration(configuration, loadedConfiguration)
     }
     val facet = facetType.createFacet(moduleBridge, entity.name, configuration, underlyingFacet)
     facet.externalSource = (entity.entitySource as? JpsImportedEntitySource)?.toExternalSource()
+
+    // JDOM facets should be additionally read
+    if (facet is JDOMExternalizable && loadedConfiguration != null) {
+      facet.readExternal(loadedConfiguration)
+    }
     return facet
   }
 

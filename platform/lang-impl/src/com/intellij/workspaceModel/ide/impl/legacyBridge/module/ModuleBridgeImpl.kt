@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.configurationStore.RenameableStateStorageManager
+import com.intellij.facet.FacetManager
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -93,6 +94,10 @@ internal class ModuleBridgeImpl(
 
   override fun callCreateComponents() {
     createComponents(null)
+  }
+
+  override fun initFacets() {
+    FacetManager.getInstance(this).allFacets.forEach { it.initFacet() }
   }
 
   override fun registerComponents(corePlugin: IdeaPluginDescriptor?,
