@@ -17,6 +17,8 @@ class UrlParameterKeys {
     const val buildNumber = "buildNumber"
     const val productCode = "productCode"
     const val remoteId = "remoteId"
+    @Deprecated("Use sourceUrl")
     const val download = "download"
+    const val sourceUrl = "sourceUrl"
   }
 }
