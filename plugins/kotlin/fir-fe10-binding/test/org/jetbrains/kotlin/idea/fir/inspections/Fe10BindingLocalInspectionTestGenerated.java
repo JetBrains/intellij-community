@@ -899,4 +899,47 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/convertNaNEquality")
+    public static class ConvertNaNEquality extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("float.kt")
+        public void testFloat() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertNaNEquality/float.kt");
+        }
+
+        @TestMetadata("importedProperty.kt")
+        public void testImportedProperty() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertNaNEquality/importedProperty.kt");
+        }
+
+        @TestMetadata("inequality.kt")
+        public void testInequality() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertNaNEquality/inequality.kt");
+        }
+
+        @TestMetadata("javaDouble.kt")
+        public void testJavaDouble() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertNaNEquality/javaDouble.kt");
+        }
+
+        @TestMetadata("javaFloatNaN.kt")
+        public void testJavaFloatNaN() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertNaNEquality/javaFloatNaN.kt");
+        }
+
+        @TestMetadata("negative.kt")
+        public void testNegative() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertNaNEquality/negative.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertNaNEquality/simple.kt");
+        }
+    }
 }
