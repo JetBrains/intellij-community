@@ -61,7 +61,19 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private fun receiveSnapshotFile(): InputStream? {
     return clientVersionContext.doWithVersion(null) {
-      client.read(SETTINGS_SYNC_SNAPSHOT_ZIP)
+      val result = client.read(SETTINGS_SYNC_SNAPSHOT_ZIP)
+      rememberLatestVersion()
+      result
+    }
+  }
+
+  private fun rememberLatestVersion() {
+    val actualVersion: String? = clientVersionContext.get(SETTINGS_SYNC_SNAPSHOT_ZIP)
+    if (actualVersion == null) {
+      LOG.warn("Version not stored in the context for $SETTINGS_SYNC_SNAPSHOT_ZIP")
+    }
+    else {
+      currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP] = actualVersion
     }
   }
 
@@ -70,6 +82,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     LOG.info("Sending $SETTINGS_SYNC_SNAPSHOT_ZIP, current version: $currentVersion")
     clientVersionContext.doWithVersion(currentVersion) {
       client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
+      rememberLatestVersion()
     }
   }
 
@@ -212,7 +225,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     return client.getVersions(SETTINGS_SYNC_SNAPSHOT_ZIP)
   }
 
-  private inner class VersionContext : HeaderStorage {
+  private class VersionContext : HeaderStorage {
     private val contextVersionMap = mutableMapOf<String, String>()
     private val lock = ReentrantLock()
 
@@ -236,16 +249,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
             contextVersionMap[path] = version
           }
 
-          val result = function()
-
-          val actualVersion: String? = contextVersionMap[path]
-          if (actualVersion == null) {
-            LOG.warn("Version not stored in the context for $path")
-          }
-          else {
-            currentVersionOfFiles[path] = actualVersion
-          }
-          result
+          function()
         }
         finally {
           contextVersionMap.clear()
