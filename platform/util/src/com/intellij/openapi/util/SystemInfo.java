@@ -105,6 +105,7 @@ public final class SystemInfo {
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
   public static final boolean isMacOSBigSur = isMac && isOsVersionAtLeast("10.16");
   public static final boolean isMacOSMonterey = isMac && isOsVersionAtLeast("12.0");
+  public static final boolean isMacOSVentura = isMac && isOsVersionAtLeast("13.0");
 
   /**
    * Build number is the only more or less stable approach to get comparable win version.
