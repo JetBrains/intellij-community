@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="kotlin.coverage" exported="" />
     <orderEntry type="module" module-name="kotlin.formatter" exported="" />
     <orderEntry type="module" module-name="kotlin.ml-completion" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" exported="" />
     <orderEntry type="module" module-name="kotlin.grazie" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />

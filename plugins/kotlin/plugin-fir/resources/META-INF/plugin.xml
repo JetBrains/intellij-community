@@ -52,6 +52,7 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <module name="kotlin.coverage"/>
     <module name="kotlin.git"/>
     <module name="kotlin.grazie"/>
+    <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.ml-completion"/>
     <module name="kotlin.properties"/>
     <module name="kotlin.run-configurations.junit"/>

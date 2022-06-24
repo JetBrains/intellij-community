@@ -37,6 +37,7 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-fir" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.copyright" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.grazie" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm-run-configurations" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="PROVIDED" />

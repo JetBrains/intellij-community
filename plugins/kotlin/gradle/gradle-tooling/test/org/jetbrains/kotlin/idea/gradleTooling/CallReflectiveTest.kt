@@ -1,17 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("unused")
-
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import junit.framework.TestCase.*
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.*
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 class CallReflectiveTest {
-
     class TestLogger : ReflectionLogger {
         val messages = mutableListOf<String>()
         val exceptions = mutableListOf<Throwable?>()
@@ -26,7 +20,7 @@ class CallReflectiveTest {
 
     @Test
     fun `call get property`() {
-        class Tested(val myProperty: String)
+        class Tested(@Suppress("unused") val myProperty: String)
 
         val instance = Tested("abc")
         assertEquals("abc", instance.callReflectiveGetter("getMyProperty", logger))
@@ -34,7 +28,7 @@ class CallReflectiveTest {
 
     @Test
     fun `call get missing property`() {
-        class Tested(val myProperty: String)
+        class Tested(@Suppress("unused") val myProperty: String)
 
         val instance = Tested("abc")
         assertNull(instance.callReflectiveGetter("getWrongPropertyName", logger))
@@ -43,20 +37,23 @@ class CallReflectiveTest {
 
     @Test
     fun `call property with wrong return type`() {
-        class Tested(val myProperty: String)
+        class Tested(@Suppress("unused") val myProperty: String)
 
         val instance = Tested("abc")
         assertNull(instance.callReflective("getMyProperty", parameters(), returnType<Int>(), logger))
-        assertEquals(1, logger.messages.size, "Expected single issue being reported")
+        assertEquals("Expected single issue being reported", 1, logger.messages.size)
         val message = logger.messages.single()
-        assertTrue("String" in message, "Expected logged message to mention 'String'")
-        assertTrue("Int" in message, "Expected logged message to mention 'Int'")
+        assertTrue("Expected logged message to mention 'String'", "String" in message)
+        assertTrue("Expected logged message to mention 'Int'", "Int" in message)
     }
 
     @Test
     fun `call function`() {
         class Tested {
+            @Suppress("unused")
             fun addTwo(value: Int) = value + 2
+
+            @Suppress("unused")
             fun minus(first: Int, second: Int) = first - second
         }
 
@@ -71,6 +68,7 @@ class CallReflectiveTest {
     @Test
     fun `call function with null value (int) parameter`() {
         class Tested {
+            @Suppress("unused")
             fun orZero(value: Int?): Int = value ?: 0
         }
 
@@ -82,6 +80,7 @@ class CallReflectiveTest {
     @Test
     fun `call function with null value (string) parameter`() {
         class Tested {
+            @Suppress("unused")
             fun orEmpty(value: String?) = value ?: ""
         }
 
