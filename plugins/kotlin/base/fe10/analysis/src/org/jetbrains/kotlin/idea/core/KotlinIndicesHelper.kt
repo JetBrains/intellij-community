@@ -12,17 +12,20 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.forceEnableSamAdapters
 import org.jetbrains.kotlin.idea.core.extension.KotlinIndicesHelperExtension
+import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.search.excludeKotlinSources
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
@@ -64,11 +67,16 @@ class KotlinIndicesHelper(
     private val scopeWithoutKotlin = scope.excludeKotlinSources(project) as GlobalSearchScope
 
     @OptIn(FrontendInternals::class)
-    private val descriptorFilter: (DeclarationDescriptor) -> Boolean = filter@{
-        if (resolutionFacade.frontendService<DeprecationResolver>().isHiddenInResolution(it)) return@filter false
-        if (!visibilityFilter(it)) return@filter false
-        if (applyExcludeSettings && it.isExcludedFromAutoImport(project, file)) return@filter false
-        true
+    private val descriptorFilter: (DeclarationDescriptor) -> Boolean = filter@ { descriptor ->
+        if (resolutionFacade.frontendService<DeprecationResolver>().isHiddenInResolution(descriptor)) return@filter false
+        if (!visibilityFilter(descriptor)) return@filter false
+        if (applyExcludeSettings) {
+            val fqName = descriptor.importableFqName
+            if (fqName != null && fqName.isExcludedFromAutoImport(project, file)) {
+                return@filter false
+            }
+        }
+        return@filter true
     }
 
     fun getTopLevelCallablesByName(name: String): Collection<CallableDescriptor> {

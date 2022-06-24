@@ -52,7 +52,7 @@ private fun DeclarationDescriptorWithVisibility.isVisible(
 
     if (bindingContext == null || resolutionScope == null) return false
 
-    // for extension it makes no sense to check explicit receiver because we need dispatch receiver which is implicit in this case
+    // for extension, it makes no sense to check explicit receiver because we need dispatch receiver which is implicit in this case
     if (receiverExpression != null && !isExtension) {
         val receiverType = bindingContext.getType(receiverExpression) ?: return false
         val explicitReceiver = ExpressionReceiver.create(receiverExpression, receiverType, bindingContext)

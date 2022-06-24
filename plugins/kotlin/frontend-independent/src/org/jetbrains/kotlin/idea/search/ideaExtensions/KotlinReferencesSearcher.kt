@@ -26,6 +26,8 @@ import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.sourcesAndLibraries
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.dataClassComponentMethodName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.expectedDeclarationIfAny
@@ -74,6 +76,16 @@ data class KotlinReferencesSearchOptions(
             return elements.fold(parameters.effectiveSearchScope) { scope, e ->
                 scope.unionSafe(parameters.effectiveSearchScope(e))
             }
+        }
+
+        private fun SearchScope.unionSafe(other: SearchScope): SearchScope {
+            if (this is LocalSearchScope && this.scope.isEmpty()) {
+                return other
+            }
+            if (other is LocalSearchScope && other.scope.isEmpty()) {
+                return this
+            }
+            return this.union(other)
         }
     }
 }

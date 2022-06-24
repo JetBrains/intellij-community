@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.*
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.findTypeAliasByShortName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.getDefaultImports

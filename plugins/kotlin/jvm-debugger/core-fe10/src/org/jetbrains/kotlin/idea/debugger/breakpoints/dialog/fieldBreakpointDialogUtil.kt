@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.debugger.breakpoints.dialog
 import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.psi.KtProperty
 
 fun PsiClass.collectProperties(): Array<DescriptorMemberChooserObject> {

@@ -30,8 +30,8 @@ fun analyzeInlinedFunctions(
         !analyzeOnlyReifiedInlineFunctions, bindingContext
     )
 
-    //We processing another files just to annotate anonymous classes within their inline functions
-    //Bytecode not produced for them cause of filtering via generateClassFilter
+    // We process another files just to annotate anonymous classes within their inline functions
+    // Bytecode not produced for them cause of filtering via generateClassFilter
     val toProcess = LinkedHashSet<KtFile>()
     toProcess.add(file)
 

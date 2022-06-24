@@ -19,6 +19,7 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.refactoring.move.*
@@ -27,7 +28,6 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictC
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.Mover
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
-import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi

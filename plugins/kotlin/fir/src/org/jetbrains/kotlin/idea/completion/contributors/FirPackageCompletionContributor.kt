@@ -4,13 +4,12 @@ package org.jetbrains.kotlin.idea.completion.contributors
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createEmptyWeighingContext
-import org.jetbrains.kotlin.idea.isExcludedFromAutoImport
 
 internal class FirPackageCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -26,9 +25,7 @@ internal class FirPackageCompletionContributor(
         val weighingContext = createEmptyWeighingContext(basicContext.fakeKtFile)
         rootSymbol.getPackageScope()
             .getPackageSymbols(scopeNameFilter)
-            .filterNot { packageName ->
-                packageName.fqName.isExcludedFromAutoImport(project, originalKtFile, originalKtFile.languageVersionSettings)
-            }
+            .filterNot { it.fqName.isExcludedFromAutoImport(project, originalKtFile) }
             .forEach { packageSymbol ->
                 val element = lookupElementFactory.createPackagePartLookupElement(packageSymbol.fqName)
                 with(Weighers) { applyWeighsToLookupElement(weighingContext, element, packageSymbol) }

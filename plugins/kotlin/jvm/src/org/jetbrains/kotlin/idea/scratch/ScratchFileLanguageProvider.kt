@@ -6,11 +6,12 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.messages.Topic
 import org.jetbrains.kotlin.idea.scratch.actions.ScratchCompilationSupport
 import org.jetbrains.kotlin.idea.scratch.output.ScratchOutputHandlerAdapter
-import org.jetbrains.kotlin.idea.syncPublisherWithDisposeCheck
 
 abstract class ScratchFileLanguageProvider {
     fun newScratchFile(project: Project, file: VirtualFile): ScratchFile? {
@@ -26,6 +27,9 @@ abstract class ScratchFileLanguageProvider {
 
         return scratchFile
     }
+
+    private fun <L> Project.syncPublisherWithDisposeCheck(topic: Topic<L>) =
+        if (isDisposed) throw ProcessCanceledException() else messageBus.syncPublisher(topic)
 
     private fun ScratchExecutor.addOutputHandlers() {
         addOutputHandler(object : ScratchOutputHandlerAdapter() {

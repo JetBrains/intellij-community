@@ -1,24 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea
+@file:JvmName("AutoImportUtils")
+
+package org.jetbrains.kotlin.base.analysis
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
-
-private val exclusions =
-    listOf(
-        "kotlin.jvm.internal",
-        "kotlin.coroutines.experimental.intrinsics",
-        "kotlin.coroutines.intrinsics",
-        "kotlin.coroutines.experimental.jvm.internal",
-        "kotlin.coroutines.jvm.internal",
-        "kotlin.reflect.jvm.internal"
-    )
+private val exclusions: List<String> = listOf(
+    "kotlin.jvm.internal",
+    "kotlin.coroutines.experimental.intrinsics",
+    "kotlin.coroutines.intrinsics",
+    "kotlin.coroutines.experimental.jvm.internal",
+    "kotlin.coroutines.jvm.internal",
+    "kotlin.reflect.jvm.internal"
+)
 
 private fun shouldBeHiddenAsInternalImplementationDetail(fqName: String, locationFqName: String) =
     exclusions.any { fqName.startsWith(it) } && (locationFqName.isBlank() || !fqName.startsWith(locationFqName))
@@ -33,9 +35,14 @@ private fun usesOutdatedCoroutinesPackage(fqName: String, languageVersionSetting
     fqName.startsWith("kotlin.coroutines.experimental.") &&
             languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
 
-fun FqName.isExcludedFromAutoImport(project: Project, inFile: KtFile?, languageVersionSettings: LanguageVersionSettings?): Boolean {
+@ApiStatus.Internal
+fun FqName.isExcludedFromAutoImport(
+    project: Project,
+    contextFile: KtFile?,
+    languageVersionSettings: LanguageVersionSettings? = contextFile?.languageVersionSettings
+): Boolean {
     val fqName = this.asString()
     return JavaProjectCodeInsightSettings.getSettings(project).isExcluded(fqName) ||
             (languageVersionSettings != null && usesOutdatedCoroutinesPackage(fqName, languageVersionSettings)) ||
-            shouldBeHiddenAsInternalImplementationDetail(fqName, inFile?.packageFqName?.asString() ?: "")
+            shouldBeHiddenAsInternalImplementationDetail(fqName, contextFile?.packageFqName?.asString() ?: "")
 }

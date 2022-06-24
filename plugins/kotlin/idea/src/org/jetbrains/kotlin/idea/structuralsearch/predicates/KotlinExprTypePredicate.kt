@@ -16,9 +16,9 @@ import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
 import com.intellij.util.castSafelyTo
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
-import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.structuralsearch.resolveKotlinType
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex

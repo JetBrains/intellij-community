@@ -15,7 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject;
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject;
 import org.jetbrains.kotlin.psi.KtProperty;
 
 import javax.swing.*;

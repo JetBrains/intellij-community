@@ -8,8 +8,8 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.search.*
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.search.excludeKotlinSources
-import org.jetbrains.kotlin.idea.search.fileScope
+import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
+import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.util.psiPackage
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration

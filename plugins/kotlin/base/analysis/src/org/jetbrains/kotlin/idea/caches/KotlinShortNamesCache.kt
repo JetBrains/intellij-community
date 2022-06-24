@@ -25,8 +25,8 @@ import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.stubindex.*
-import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
 import org.jetbrains.kotlin.name.FqName
@@ -205,14 +205,15 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
                 filter,
                 KtNamedDeclaration::class.java
             ) { ktNamedDeclaration ->
-                if (ktNamedDeclaration is KtValVarKeywordOwner && (ktNamedDeclaration.isPrivate() || ktNamedDeclaration.hasJvmFieldAnnotation())) {
-                    return@processElements true
+                if (ktNamedDeclaration is KtValVarKeywordOwner) {
+                    if (ktNamedDeclaration.isPrivate() || KotlinPsiHeuristics.hasJvmFieldAnnotation(ktNamedDeclaration)) {
+                        return@processElements true
+                    }
                 }
-                val accessorLightMethods = ktNamedDeclaration.getAccessorLightMethods()
-                val methods: Sequence<PsiMethod> = accessorLightMethods
+                ktNamedDeclaration.getAccessorLightMethods()
                     .asSequence()
                     .filter { it.name == name }
-                methods.all(processor::process)
+                    .all(processor::process)
             }
             if (!allProcessed) {
                 return false
