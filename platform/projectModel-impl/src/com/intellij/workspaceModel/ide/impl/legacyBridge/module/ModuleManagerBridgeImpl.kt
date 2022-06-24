@@ -100,15 +100,23 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     ForkJoinTask.invokeAll(tasks)
     UnloadedModuleDescriptionBridge.createDescriptions(unloadedEntities).associateByTo(unloadedModules) { it.name }
 
+    val modules = HashSet<ModuleBridge>()
     WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
       val moduleMap = builder.mutableModuleMap
       for (task in tasks) {
         val (entity, module) = task.rawResult ?: continue
+        modules += module
         moduleMap.addMapping(entity, module)
         (ModuleRootComponentBridge.getInstance(
           module).getModuleLibraryTable() as ModuleLibraryTableBridgeImpl).registerModuleLibraryInstances(builder)
       }
     }
+    // Facets that are loaded from the cache do not generate "EntityAdded" event and aren't initialized
+    // We initialize the facets manually here (after modules loading).
+    //
+    // Possible issue - if we'll initialize facets here and after that we'll get "EntityAdded" event, the facet will be initialized twice
+    // But 1. That seems impossible as we don't create facets before the modules are loaded 2. I hope that facets initialization is idempotent
+    modules.forEach { module -> module.initFacets() }
   }
 
   override fun unloadNewlyAddedModulesIfPossible(storage: EntityStorage) {
