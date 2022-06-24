@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+FunctionalInterfaceConversion -XXLanguage:+SamConversionPerArgument
+// COMPILER_ARGUMENTS: -XXLanguage:+FunctionalInterfaceConversion
 
 fun test(r1: Runnable, r2: Runnable) {}
 

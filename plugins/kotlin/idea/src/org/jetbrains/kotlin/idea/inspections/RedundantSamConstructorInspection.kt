@@ -132,8 +132,7 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
             if (!resolutionResults.isSuccess) return false
 
             val generatingAdditionalSamCandidateIsDisabled =
-                parentCall.languageVersionSettings.supportsFeature(LanguageFeature.SamConversionPerArgument) ||
-                        parentCall.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitVarargAsArrayAfterSamArgument)
+                parentCall.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitVarargAsArrayAfterSamArgument)
 
             val samAdapterOriginalDescriptor =
                 if (generatingAdditionalSamCandidateIsDisabled && resolutionResults.resultingCall is NewResolvedCallImpl<*>) {
@@ -209,13 +208,7 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
                 arg.toCallExpression()?.takeIf { call -> samConversionIsPossible(arg, call) }
             }
 
-            val haveToConvertAllArguments = !functionCall.languageVersionSettings.supportsFeature(LanguageFeature.SamConversionPerArgument)
-
-            val argumentsThatCanBeConverted = if (haveToConvertAllArguments) {
-                argumentsWithSamConstructors.takeIf { it.values.none(::containsLabeledReturnPreventingConversion) }.orEmpty()
-            } else {
-                argumentsWithSamConstructors.filterValues { !containsLabeledReturnPreventingConversion(it) }
-            }
+            val argumentsThatCanBeConverted = argumentsWithSamConstructors.filterValues { !containsLabeledReturnPreventingConversion(it) }
 
             return when {
                 argumentsThatCanBeConverted.isEmpty() -> emptyList()
