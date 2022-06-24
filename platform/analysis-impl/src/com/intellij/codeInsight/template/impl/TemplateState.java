@@ -411,7 +411,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       getSegments().setSegmentsGreedy(false);
       LOG.assertTrue(myTemplateRange.isValid(),
                      "template key: " + getTemplate().getKey() + "; " +
-                     "template text" + getTemplate().getTemplateText() + "; " +
+                     "template text: " + getTemplate().getTemplateText() + "; " +
                      "variable number: " + getCurrentVariableNumber());
       reformat();
       getSegments().setSegmentsGreedy(true);
