@@ -25,7 +25,6 @@ kotlin {
             }
         }
         all {
-            languageSettings.enableLanguageFeature("SamConversionForKotlinFunctions")
             languageSettings.enableLanguageFeature("InlineClasses")
         }
     }
