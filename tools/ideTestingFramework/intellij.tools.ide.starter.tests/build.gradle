@@ -2,7 +2,8 @@ apply plugin: 'java'
 apply plugin: 'kotlin'
 
 buildscript {
-  ext.kotlin_version = '1.6.10'
+  ext.kotlin_version = '1.7.0'
+  ext.jackson_version = '2.13.3'
 
   repositories {
     maven { url = "https://cache-redirector.jetbrains.com/maven-central" }
@@ -29,16 +30,24 @@ repositories {
   maven { url = "https://www.jetbrains.com/intellij-repository/releases" }
   maven { url = "https://www.jetbrains.com/intellij-repository/snapshots" }
   maven { url = "https://www.jetbrains.com/intellij-repository/nightly" }
+
+  maven { url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public" }
 }
 
 dependencies {
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.2"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-  implementation "org.jetbrains.intellij.deps:gradle-api:7.1.1-sp2"
-  implementation "org.kodein.di:kodein-di-jvm:7.9.0"
+  implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+  implementation "org.jetbrains.intellij.deps:gradle-api:7.4"
+  implementation "org.kodein.di:kodein-di-jvm:7.13.0"
 
+  implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
 
-  implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:222-SNAPSHOT'
-  testImplementation 'com.jetbrains.intellij.tools:ide-starter:222-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-maven-commands:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-gradle-commands:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.dynamicPlugins:dynamic-plugins-performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.tools:ide-starter:LATEST-TRUNK-SNAPSHOT'
 
   testImplementation 'junit:junit:4.13.2'
 
@@ -48,9 +57,13 @@ dependencies {
   testImplementation 'org.junit.vintage:junit-vintage-engine:5.8.1'
   testImplementation 'org.junit.platform:junit-platform-launcher:1.8.2'
 
-  testImplementation 'io.kotest:kotest-assertions-core-jvm:5.3.0'
+  testImplementation 'io.kotest:kotest-assertions-core-jvm:5.3.2'
   testImplementation 'org.mockito:mockito-core:3.12.4'
   testImplementation 'org.mockito:mockito-junit-jupiter:3.12.4'
+}
+
+configurations {
+  testImplementation.exclude(group: 'com.jetbrains.intellij.remoteDev')
 }
 
 compileKotlin {
@@ -61,10 +74,7 @@ compileKotlin {
     jvmTarget = JavaVersion.VERSION_11.toString()
     freeCompilerArgs += [
       "-version",
-      "-Xstrict-java-nullability-assertions",
       "-Xjvm-default=enable",
-      "-Xuse-old-backend",
-      "-Xopt-in=kotlin.io.path.ExperimentalPathApi",
       "-Xopt-in=kotlin.time.ExperimentalTime"
     ]
   }
@@ -78,10 +88,7 @@ compileTestKotlin {
     jvmTarget = JavaVersion.VERSION_11.toString()
     freeCompilerArgs += [
       "-version",
-      "-Xstrict-java-nullability-assertions",
       "-Xjvm-default=enable",
-      "-Xuse-old-backend",
-      "-Xopt-in=kotlin.io.path.ExperimentalPathApi",
       "-Xopt-in=kotlin.time.ExperimentalTime"
     ]
   }
@@ -89,6 +96,18 @@ compileTestKotlin {
 
 
 test {
+  useJUnitPlatform()
+
+  testLogging {
+    events "passed", "skipped", "failed", "standardOut", "standardError"
+  }
+}
+
+task runOnlyExamplesTests(type: Test) {
+  filter {
+    includeTestsMatching "com.intellij.ide.starter.tests.examples.*"
+  }
+
   useJUnitPlatform()
 
   testLogging {

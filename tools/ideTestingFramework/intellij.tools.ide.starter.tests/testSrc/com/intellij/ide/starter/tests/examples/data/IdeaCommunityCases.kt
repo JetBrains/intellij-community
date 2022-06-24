@@ -1,16 +1,23 @@
 package com.intellij.ide.starter.tests.examples.data
 
 import com.intellij.ide.starter.data.TestCaseTemplate
-import com.intellij.ide.starter.models.IdeProduct
+import com.intellij.ide.starter.ide.IdeProductProvider
 import com.intellij.ide.starter.project.ProjectInfo
 import kotlin.io.path.div
 
-object IdeaCases : TestCaseTemplate(IdeProduct.IU) {
+object IdeaCommunityCases : TestCaseTemplate(IdeProductProvider.IC) {
 
   val GradleJitPackSimple = getTemplate().withProject(
     ProjectInfo(
       testProjectURL = "https://github.com/jitpack/gradle-simple/archive/refs/heads/master.zip",
       testProjectImageRelPath = { it / "gradle-simple-master" }
+    )
+  )
+
+  val MavenSimpleApp = getTemplate().withProject(
+    ProjectInfo(
+      testProjectURL = "https://github.com/jenkins-docs/simple-java-maven-app/archive/refs/heads/master.zip",
+      testProjectImageRelPath = { it / "simple-java-maven-app-master" }
     )
   )
 

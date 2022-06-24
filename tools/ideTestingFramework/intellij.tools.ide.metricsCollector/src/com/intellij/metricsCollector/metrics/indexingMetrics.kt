@@ -39,6 +39,7 @@ data class IndexingMetrics(
   val totalScanFilesTime: Long
     get() = jsonIndexDiagnostics.map { TimeUnit.NANOSECONDS.toMillis(it.projectIndexingHistory.times.scanFilesTime.nano) }.sum()
 
+  @Suppress("unused")
   val totalPushPropertiesTime: Long
     get() = jsonIndexDiagnostics.map { TimeUnit.NANOSECONDS.toMillis(it.projectIndexingHistory.times.pushPropertiesTime.nano) }.sum()
 
@@ -149,7 +150,6 @@ data class IndexingMetrics(
     )
   }
 }
-
 fun extractIndexingMetrics(startResult: IDEStartResult): IndexingMetrics {
   val indexDiagnosticDirectory = startResult.context.paths.logsDir / "indexing-diagnostic"
   val indexDiagnosticDirectoryChildren = Files.list(indexDiagnosticDirectory).filter { it.toFile().isDirectory }.use { it.toList() }
