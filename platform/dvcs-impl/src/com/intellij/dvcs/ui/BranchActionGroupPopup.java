@@ -68,7 +68,9 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                                 @NotNull ActionGroup actions,
                                 @Nullable String dimensionKey,
                                 @NotNull DataContext dataContext) {
-    super(title, ActionGroupUtil.forceRecursiveUpdateInBackground(createBranchSpeedSearchActionGroup(actions)), dataContext, preselectActionCondition, true);
+    super(title,
+          ActionGroupUtil.forceRecursiveUpdateInBackground(createBranchSpeedSearchActionGroup(actions)),
+          dataContext, preselectActionCondition, true);
     getTitle().setBackground(JBColor.PanelBackground);
     myProject = project;
     myKey = buildDimensionKey(dimensionKey);
@@ -100,27 +102,25 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     };
     AnAction restoreSizeButton =
       new AnAction(DvcsBundle.messagePointer("action.BranchActionGroupPopup.Anonymous.text.restore.size"), FitContent) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
-        myInternalSizeChanged = true;
-        pack(true, true);
-      }
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
+          myInternalSizeChanged = true;
+          pack(true, true);
+        }
 
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(myUserSizeChanged);
-      }
-    };
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(myUserSizeChanged);
+        }
+      };
     ActionGroup settingsGroup = new ActionGroup(DvcsBundle.message("action.BranchActionGroupPopup.settings.text"), true) {
-      {
-        getTemplatePresentation().setHideGroupIfEmpty(true);
-      }
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return mySettingsActions.toArray(AnAction.EMPTY_ARRAY);
       }
     };
+    settingsGroup.getTemplatePresentation().setHideGroupIfEmpty(true);
     settingsGroup.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
 
     myToolbarActions.add(restoreSizeButton);
@@ -446,8 +446,8 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       myToExpandText = DvcsBundle.message("action.branch.popup.show.n.nodes.more", numberOfHiddenNodes);
       myToCollapseText = hasFavorites ? DvcsBundle.message("action.branch.popup.show.only.favorites")
                                       : DvcsBundle.message("action.branch.popup.show.less");
-      setExpanded(
-        settingName != null ? PropertiesComponent.getInstance(project).getBoolean(settingName, defaultExpandValue) : defaultExpandValue);
+      setExpanded(settingName != null ? PropertiesComponent.getInstance(project).getBoolean(settingName, defaultExpandValue)
+                                      : defaultExpandValue);
     }
 
     @Override
@@ -495,7 +495,9 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     boolean shouldBeShown();
   }
 
-  private static final class HideableActionGroup extends EmptyAction.MyDelegatingActionGroup implements MoreHideableActionGroup, DumbAware, AlwaysVisibleActionGroup {
+  private static final class HideableActionGroup extends EmptyAction.MyDelegatingActionGroup implements MoreHideableActionGroup,
+                                                                                                        DumbAware,
+                                                                                                        AlwaysVisibleActionGroup {
     @NotNull private final MoreAction myMoreAction;
 
     private HideableActionGroup(@NotNull ActionGroup actionGroup, @NotNull MoreAction moreAction) {
