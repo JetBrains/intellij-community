@@ -95,6 +95,38 @@ class X {
 }''', true, false, false, GrDeprecatedAPIUsageInspection)
   }
 
+  void testDeprecated3() {
+    doTestHighlighting('''\
+class TestService {
+
+    @Deprecated
+    static void test() {}
+
+    static void test(String s) {}
+
+    static void main(String[] args) {
+        test("")
+        <warning>test</warning>()
+    }
+}''', true, false, false, GrDeprecatedAPIUsageInspection)
+  }
+
+  void testDeprecated4() {
+    doTestHighlighting('''\
+class TestService {
+
+    static void test() {}
+    
+    @Deprecated
+    static void test(String s) {}
+
+    static void main(String[] args) {
+        <warning>test</warning>("")
+        test()
+    }
+}''', true, false, false, GrDeprecatedAPIUsageInspection)
+  }
+
   void testSuppressedErrorInGroovyDoc() {
     doTestHighlighting('''\
 class Class2 {
