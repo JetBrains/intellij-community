@@ -9,6 +9,7 @@ import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LineNumberConverter
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
@@ -178,6 +179,7 @@ internal class IntentionPreviewModel {
       }
 
       editor.backgroundColor = getEditorBackground()
+      editor.colorsScheme.setColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR, editor.colorsScheme.getColor(EditorColors.LINE_NUMBERS_COLOR))
 
       editor.settings.isUseSoftWraps = true
       editor.scrollingModel.disableAnimation()
