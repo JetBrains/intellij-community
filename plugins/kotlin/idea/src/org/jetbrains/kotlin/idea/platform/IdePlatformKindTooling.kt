@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.platform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.extensions.ApplicationExtensionDescriptor
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.platform.IdePlatformKind
@@ -24,11 +23,7 @@ abstract class IdePlatformKindTooling {
     abstract val libraryKind: PersistentLibraryKind<*>?
     abstract fun getLibraryDescription(project: Project): CustomLibraryDescription?
 
-    abstract fun getTestIcon(
-        declaration: KtNamedDeclaration,
-        descriptorProvider: () -> DeclarationDescriptor?,
-        allowSlowOperations: Boolean
-    ): Icon?
+    abstract fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon?
 
     abstract fun acceptsAsEntryPoint(function: KtFunction): Boolean
 

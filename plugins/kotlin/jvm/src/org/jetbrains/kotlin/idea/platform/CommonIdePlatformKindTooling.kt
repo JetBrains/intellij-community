@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.core.platform.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
@@ -41,13 +40,9 @@ object CommonIdePlatformKindTooling : IdePlatformKindTooling() {
             .filter { platform == null || it.kind.isCompatibleWith(platform) }
     }
 
-    override fun getTestIcon(
-        declaration: KtNamedDeclaration,
-        descriptorProvider: () -> DeclarationDescriptor?,
-        allowSlowOperations: Boolean
-    ): Icon? {
+    override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
         val icons = getRelevantToolings(declaration.module?.platform)
-            .mapNotNull { it.getTestIcon(declaration, descriptorProvider, allowSlowOperations) }
+            .mapNotNull { it.getTestIcon(declaration, allowSlowOperations) }
             .distinct()
 
         return when (icons.size) {

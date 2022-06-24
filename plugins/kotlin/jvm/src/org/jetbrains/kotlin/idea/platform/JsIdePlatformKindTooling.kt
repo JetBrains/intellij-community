@@ -8,8 +8,8 @@ import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.framework.JSLibraryStdDescription
 import org.jetbrains.kotlin.idea.js.KotlinJSRunConfigurationData
 import org.jetbrains.kotlin.idea.js.KotlinJSRunConfigurationDataProvider
@@ -38,14 +38,10 @@ class JsIdePlatformKindTooling : IdePlatformKindTooling() {
     override val libraryKind = KotlinJavaScriptLibraryKind
     override fun getLibraryDescription(project: Project) = JSLibraryStdDescription(project)
 
-    override fun getTestIcon(
-        declaration: KtNamedDeclaration,
-        descriptorProvider: () -> DeclarationDescriptor?,
-        allowSlowOperations: Boolean
-    ): Icon? {
+    override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
         if (!allowSlowOperations) return null
 
-        return getGenericTestIcon(declaration, descriptorProvider) {
+        return getGenericTestIcon(declaration, { declaration.resolveToDescriptorIfAny() }) {
             val contexts by lazy { computeConfigurationContexts(declaration) }
 
             val runConfigData = RunConfigurationProducer

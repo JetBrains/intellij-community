@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescri
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.facet.externalSystemNativeMainRunTasks
@@ -19,6 +18,7 @@ import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.platform.isKotlinTestDeclaration
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFunction
@@ -38,13 +38,9 @@ class NativeIdePlatformKindTooling : IdePlatformKindTooling() {
     override val libraryKind: PersistentLibraryKind<*> = KotlinNativeLibraryKind
     override fun getLibraryDescription(project: Project): CustomLibraryDescription? = null
 
-    override fun getTestIcon(
-        declaration: KtNamedDeclaration,
-        descriptorProvider: () -> DeclarationDescriptor?,
-        allowSlowOperations: Boolean
-    ): Icon? {
+    override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
         if (!allowSlowOperations) return null
-        val descriptor = descriptorProvider() ?: return null
+        val descriptor = declaration.resolveToDescriptorIfAny() ?: return null
         if (!descriptor.isKotlinTestDeclaration()) return null
 
         val moduleName = descriptor.module.stableName?.asString() ?: ""

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.core.platform.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeLibraryDescription
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
@@ -54,17 +54,13 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
         }
     }
 
-    override fun getTestIcon(
-        declaration: KtNamedDeclaration,
-        descriptorProvider: () -> DeclarationDescriptor?,
-        allowSlowOperations: Boolean
-    ): Icon? {
+    override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
         val urls = calculateUrls(declaration, allowSlowOperations)
 
         if (urls != null) {
             return getTestStateIcon(urls, declaration)
         } else if (allowSlowOperations) {
-            return getGenericTestIcon(declaration, descriptorProvider) { emptyList() }
+            return getGenericTestIcon(declaration, { declaration.resolveToDescriptorIfAny() }) { emptyList() }
         }
 
         return null

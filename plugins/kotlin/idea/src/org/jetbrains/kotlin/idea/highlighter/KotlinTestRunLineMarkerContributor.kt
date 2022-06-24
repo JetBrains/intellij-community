@@ -10,7 +10,6 @@ import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService
@@ -104,13 +103,9 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
 
         if (!declaration.isUnderKotlinSourceRootTypes()) return null
 
-        val icon = targetPlatform.idePlatformKind.tooling.getTestIcon(
-            declaration = declaration,
-            descriptorProvider = {
-                declaration.resolveToDescriptorIfAny()
-            },
-            allowSlowOperations = includeSlowProviders
-        )?.takeUnless { declaration.isIgnoredForGradleModule(includeSlowProviders) } ?: return null
+        val icon = targetPlatform.idePlatformKind.tooling.getTestIcon(declaration, includeSlowProviders)
+            ?.takeUnless { declaration.isIgnoredForGradleModule(includeSlowProviders) }
+            ?: return null
 
         return Info(
             icon,
