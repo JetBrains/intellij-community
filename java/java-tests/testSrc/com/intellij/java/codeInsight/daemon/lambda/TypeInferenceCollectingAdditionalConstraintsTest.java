@@ -20,7 +20,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
-public class NewInferenceCollectingAdditionalConstraintsTest extends LightDaemonAnalyzerTestCase {
+public class TypeInferenceCollectingAdditionalConstraintsTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/additionalConstraints";
 
   public void testInferenceFromNestedIn2LambdasCall() {
