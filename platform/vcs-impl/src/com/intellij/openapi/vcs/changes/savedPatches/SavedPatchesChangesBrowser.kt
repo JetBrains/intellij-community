@@ -32,8 +32,7 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
   private var currentPatchObject: SavedPatchesProvider.PatchObject<*>? = null
   private var currentChangesFuture: CompletableFuture<SavedPatchesProvider.LoadingResult>? = null
 
-  var diffPreviewProcessor: SavedPatchesDiffPreview? = null
-    private set
+  private var diffPreviewProcessor: SavedPatchesDiffPreview? = null
   var editorTabPreview: EditorTabPreview? = null
     private set
 

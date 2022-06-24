@@ -16,8 +16,8 @@ import git4idea.index.*
 import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.filePath
 
-abstract class GitStageCompareWithVersionAction(val currentVersion: ContentVersion,
-                                                val compareWithVersion: ContentVersion) : DumbAwareAction() {
+abstract class GitStageCompareWithVersionAction(private val currentVersion: ContentVersion,
+                                                private val compareWithVersion: ContentVersion) : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
