@@ -21,10 +21,7 @@ import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
 import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
@@ -128,7 +125,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     JComponent centerPanel = super.createCenterPanel();
     JScrollPane scrollPane = UIUtil.findComponentOfType(centerPanel, JScrollPane.class);
     if (scrollPane != null) {
-      ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+      ClientProperty.put(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     }
     return centerPanel;
   }
