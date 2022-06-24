@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.intentions.ReplaceWithOrdinaryAssignmentIntention
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.quickfix.ChangeToMutableCollectionFix
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -59,14 +58,14 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             when {
                 ReplaceWithAssignmentFix.isApplicable(binaryExpression, property, context) -> fixes.add(ReplaceWithAssignmentFix())
                 JoinWithInitializerFix.isApplicable(binaryExpression, property) -> fixes.add(JoinWithInitializerFix(operationToken))
-                else -> fixes.add(IntentionWrapper(ReplaceWithOrdinaryAssignmentIntention()))
             }
+            if (fixes.isEmpty()) return
 
-            val typeText = leftDefaultType.toString().takeWhile { it != '<' }.toLowerCase()
+            val typeText = leftDefaultType.toString().takeWhile { it != '<' }.lowercase()
             val operationReference = binaryExpression.operationReference
             holder.registerProblem(
                 operationReference,
-                KotlinBundle.message("0.creates.new.1.under.the.hood", operationReference.text, typeText),
+                KotlinBundle.message("0.on.a.readonly.1.creates.a.new.1.under.the.hood", operationReference.text, typeText),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 *fixes.toTypedArray()
             )

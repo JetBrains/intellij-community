@@ -14879,6 +14879,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/suspiciousCollectionReassignment/mutableSet.kt");
         }
 
+        @TestMetadata("notLocal.kt")
+        public void testNotLocal() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCollectionReassignment/notLocal.kt");
+        }
+
         @TestMetadata("plus.kt")
         public void testPlus() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCollectionReassignment/plus.kt");
