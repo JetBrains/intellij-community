@@ -38,10 +38,11 @@ class CombinedDiffPreviewVirtualFile(sourceId: String) : CombinedDiffVirtualFile
 abstract class CombinedDiffPreview(protected val tree: ChangesTree,
                                    targetComponent: JComponent,
                                    isOpenEditorDiffPreviewWithSingleClick: Boolean,
+                                   needSetupOpenPreviewListeners: Boolean,
                                    parentDisposable: Disposable) :
   EditorTabPreviewBase(tree.project, parentDisposable) {
 
-  constructor(tree: ChangesTree, parentDisposable: Disposable) : this(tree, tree, false, parentDisposable)
+  constructor(tree: ChangesTree, parentDisposable: Disposable) : this(tree, tree, false, false, parentDisposable)
 
   override val previewFile: VirtualFile by lazy { CombinedDiffPreviewVirtualFile(tree.id) }
 
@@ -67,8 +68,10 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
       closePreview()
       returnFocusToTree()
     }
-    installListeners(tree, isOpenEditorDiffPreviewWithSingleClick)
-    installNextDiffActionOn(targetComponent)
+    if (needSetupOpenPreviewListeners) {
+      installListeners(tree, isOpenEditorDiffPreviewWithSingleClick)
+      installNextDiffActionOn(targetComponent)
+    }
     UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
     installCombinedDiffModelListener()
   }
