@@ -84,5 +84,13 @@
                      language="kotlin"
                      key="inspection.convert.na.n.equality.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ConvertPairConstructorToToFunctionInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="INFORMATION"
+                     language="kotlin"
+                     key="inspection.convert.pair.constructor.to.to.function.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>

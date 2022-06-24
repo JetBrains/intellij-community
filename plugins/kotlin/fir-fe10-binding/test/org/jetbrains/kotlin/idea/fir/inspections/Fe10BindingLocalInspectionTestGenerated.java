@@ -942,4 +942,22 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/convertNaNEquality/simple.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/convertPairConstructorToToFunction")
+    public static class ConvertPairConstructorToToFunction extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("invalidArgs.kt")
+        public void testInvalidArgs() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertPairConstructorToToFunction/invalidArgs.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertPairConstructorToToFunction/simple.kt");
+        }
+    }
 }
