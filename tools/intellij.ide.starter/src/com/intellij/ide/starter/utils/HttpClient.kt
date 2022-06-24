@@ -26,16 +26,21 @@ object HttpClient {
     }
   }
 
-  fun download(url: String, outFile: File) = download(url, outFile.toPath())
+  fun download(url: String, outFile: File, retries: Long = 3): Boolean = download(url, outFile.toPath(), retries)
 
-  fun download(url: String, outPath: Path) {
+  /**
+   * Downloading file from [url] to [outPath] with [retries].
+   * @return true - if successful, false - otherwise
+   */
+  fun download(url: String, outPath: Path, retries: Long = 3): Boolean {
     val lock = locks.getOrPut(outPath.toAbsolutePath().toString()) { Semaphore(1) }
     lock.acquire()
 
-    try {
+    return try {
       logOutput("Downloading $url to $outPath")
+      var isSuccessful = false
 
-      withRetry {
+      withRetry(retries = retries) {
         sendRequest(HttpGet(url)) { response ->
           require(response.statusLine.statusCode == 200) { "Failed to download $url: $response" }
 
@@ -43,19 +48,30 @@ object HttpClient {
           outPath.outputStream().buffered(10 * 1024 * 1024).use { stream ->
             response.entity?.writeTo(stream)
           }
+
+          isSuccessful = true
         }
       }
+
+      isSuccessful
     }
     finally {
       lock.release()
     }
   }
 
-  fun downloadIfMissing(url: String, targetFile: Path) {
+  /**
+   * [url] - source to download
+   * [targetFile] - output file
+   * [retries] - how many times retry to download in case of failure
+   * @return true - if successful, false - otherwise
+   */
+  fun downloadIfMissing(url: String, targetFile: Path, retries: Long = 3): Boolean {
     val lock = locks[targetFile.toAbsolutePath().toString()]
     lock?.tryAcquire()
 
     try {
+      // TODO: move this check to appropriate place
       if (url.contains("https://github.com")) {
         if (!targetFile.isFileUpToDate()) {
           targetFile.toFile().delete()
@@ -64,13 +80,13 @@ object HttpClient {
 
       if (targetFile.isRegularFile() && targetFile.fileSize() > 0) {
         logOutput("File $targetFile was already downloaded. Size ${targetFile.fileSize().formatSize()}")
-        return
+        return true
       }
     }
     finally {
       lock?.release()
     }
 
-    download(url, targetFile)
+    return download(url, targetFile, retries)
   }
 }

@@ -237,6 +237,8 @@ object FileSystem {
   fun Path.isUpToDate(): Boolean {
     val lastModified = this.toFile().lastModified()
     val currentTime = System.currentTimeMillis()
+
+    // less then a day ago
     val upToDate = currentTime - lastModified < 24 * 60 * 60 * 1000
     if (upToDate) {
       logOutput("$this is up to date")

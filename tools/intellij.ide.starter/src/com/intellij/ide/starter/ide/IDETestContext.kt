@@ -32,7 +32,7 @@ import kotlin.time.Duration.Companion.minutes
 
 data class IDETestContext(
   val paths: IDEDataPaths,
-  val ide: InstalledIDE,
+  val ide: InstalledIde,
   val testCase: TestCase,
   val testName: String,
   private val _resolvedProjectHome: Path?,

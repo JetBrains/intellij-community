@@ -6,9 +6,9 @@ import com.intellij.ide.starter.system.SystemInfo
 import java.io.File
 import java.nio.file.Path
 
-class AndroidInstaller: IdeInstallator {
+class AndroidInstaller : IdeInstallator {
 
-  override fun install(ideInfo: IdeInfo): Pair<String, InstalledIDE> {
+  override fun install(ideInfo: IdeInfo): Pair<String, InstalledIde> {
 
     val installDir: Path
     val installerFile: File
@@ -17,12 +17,12 @@ class AndroidInstaller: IdeInstallator {
       installDir = it.first
       installerFile = it.second
     }
-    unpackIDEIfNeeded(installerFile, installDir.toFile())
+    IdeArchiveExtractor.unpackIdeIfNeeded(installerFile, installDir.toFile())
     val installationPath = when (!SystemInfo.isMac) {
       true -> installDir.resolve("android-studio")
       false -> installDir
     }
-    val ide = installIDE(installationPath.toFile(), ideInfo.executableFileName)
+    val ide = IdeDistributionFactory.installIDE(installationPath.toFile(), ideInfo.executableFileName)
     return Pair(ide.build, ide)
   }
 }

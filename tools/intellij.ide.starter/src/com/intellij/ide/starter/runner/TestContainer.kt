@@ -47,11 +47,11 @@ interface TestContainer<T> : Closeable {
     useLatestDownloadedIdeBuild = true
   } as T
 
-  fun resolveIDE(ideInfo: IdeInfo): Pair<String, InstalledIDE> {
+  fun resolveIDE(ideInfo: IdeInfo): Pair<String, InstalledIde> {
     return di.direct.factory<IdeInfo, IdeInstallator>().invoke(ideInfo).install(ideInfo)
   }
 
-  fun installPerformanceTestingPluginIfMissing(context: IDETestContext, ide: InstalledIDE) {
+  fun installPerformanceTestingPluginIfMissing(context: IDETestContext, ide: InstalledIde) {
     val performancePluginId = "com.jetbrains.performancePlugin"
 
     context.pluginConfigurator.apply {

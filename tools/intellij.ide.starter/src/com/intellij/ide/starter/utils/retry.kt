@@ -1,29 +1,34 @@
 package com.intellij.ide.starter.utils
 
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.last
-import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
-suspend fun <T> withRetryAsync(retries: Long = 3, messageOnFailure: String = "", retryAction: suspend () -> T): T =
-  flow {
-    emit(retryAction())
-  }.retry(
-    retries = retries,
-    predicate = {
+/** @return T - if successful; null - otherwise */
+suspend fun <T> withRetryAsync(retries: Long = 3, messageOnFailure: String = "", retryAction: suspend () -> T): T? {
+  var value: T? = null
+
+  (1..retries).forEach { failureCount ->
+    try {
+      value = retryAction()
+    }
+    catch (t: Throwable) {
       if (messageOnFailure.isNotBlank())
         logError(messageOnFailure)
 
-      it.printStackTrace()
+      t.printStackTrace()
 
-      logError("Retrying in 10 sec ...")
-      delay(10.seconds)
-      true
+      if (failureCount < retries) {
+        logError("Retrying in 10 sec ...")
+        delay(10.seconds)
+      }
     }
-  ).last()
+  }
 
-fun <T> withRetry(retries: Long = 3, messageOnFailure: String = "", retryAction: () -> T): T = runBlocking {
+  return value
+}
+
+/** @return T - if successful; null - otherwise */
+fun <T> withRetry(retries: Long = 3, messageOnFailure: String = "", retryAction: () -> T): T? = runBlocking {
   withRetryAsync(retries, messageOnFailure) { retryAction() }
 }

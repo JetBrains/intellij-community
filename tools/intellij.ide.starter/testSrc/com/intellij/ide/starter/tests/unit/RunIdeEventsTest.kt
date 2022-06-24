@@ -5,7 +5,7 @@ import com.intellij.ide.starter.bus.StarterListener
 import com.intellij.ide.starter.bus.subscribe
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.IDETestContext
-import com.intellij.ide.starter.ide.InstalledIDE
+import com.intellij.ide.starter.ide.InstalledIde
 import com.intellij.ide.starter.ide.command.CommandChain
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.IDEDataPaths
@@ -40,7 +40,7 @@ class RunIdeEventsTest {
   private lateinit var testCase: TestCase
 
   @Mock
-  private lateinit var ide: InstalledIDE
+  private lateinit var ide: InstalledIde
 
   @Disabled("Rewrite the test to be more stable")
   @Test

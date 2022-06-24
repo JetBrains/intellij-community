@@ -3,7 +3,7 @@ package com.intellij.ide.starter.tests.unit
 import com.intellij.ide.starter.ci.NoCIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.IDETestContext
-import com.intellij.ide.starter.ide.InstalledIDE
+import com.intellij.ide.starter.ide.InstalledIde
 import com.intellij.ide.starter.ide.command.CommandChain
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.models.VMOptions
@@ -25,7 +25,7 @@ class ReportPublisherTest {
   @Mock
   lateinit var ideDataPaths: IDEDataPaths
   @Mock
-  lateinit var installedIDE: InstalledIDE
+  lateinit var installedIDE: InstalledIde
   @Mock
   lateinit var ideStartResult: IDEStartResult
 

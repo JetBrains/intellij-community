@@ -1,8 +1,7 @@
 package com.intellij.ide.starter.models
 
-import com.intellij.ide.starter.ide.InstalledIDE
+import com.intellij.ide.starter.ide.InstalledIde
 import com.intellij.ide.starter.ide.command.MarshallableCommand
-import com.intellij.ide.starter.ide.parseVMOptions
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.system.SystemInfo
 import com.intellij.ide.starter.utils.FileSystem.cleanPathFromSlashes
@@ -11,6 +10,7 @@ import com.intellij.ide.starter.utils.writeJvmArgsFile
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
+import kotlin.io.path.readLines
 import kotlin.io.path.writeLines
 import kotlin.io.path.writeText
 
@@ -27,10 +27,23 @@ fun (VMOptions.() -> VMOptions).andThen(right: VMOptions.() -> VMOptions): VMOpt
 
 
 data class VMOptions(
-  private val ide: InstalledIDE,
+  private val ide: InstalledIde,
   private val data: List<String>,
   val env: Map<String, String>
 ) {
+  companion object {
+    fun readIdeVMOptions(ide: InstalledIde, file: Path): VMOptions {
+      return VMOptions(
+        ide = ide,
+        data = file
+          .readLines()
+          .map { it.trim() }
+          .filter { it.isNotBlank() },
+        env = emptyMap()
+      )
+    }
+  }
+
   override fun toString() = buildString {
     appendLine("VMOptions{")
     appendLine("  env=$env")
@@ -70,7 +83,7 @@ data class VMOptions(
   }
 
   fun diffIntelliJVmOptionFile(theFile: Path): VMOptionsDiff {
-    val loadedOptions = parseVMOptions(this.ide, theFile).data
+    val loadedOptions = readIdeVMOptions(this.ide, theFile).data
     return VMOptionsDiff(originalLines = this.data, actualLines = loadedOptions)
   }
 

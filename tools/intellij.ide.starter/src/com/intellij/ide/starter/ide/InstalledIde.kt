@@ -3,7 +3,7 @@ package com.intellij.ide.starter.ide
 import com.intellij.ide.starter.models.VMOptions
 import java.nio.file.Path
 
-interface InstalledIDE {
+interface InstalledIde {
   val originalVMOptions: VMOptions
 
   val build: String
