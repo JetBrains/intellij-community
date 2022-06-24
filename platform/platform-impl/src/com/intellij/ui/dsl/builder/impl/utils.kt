@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.RawCommandLineEditor
@@ -79,6 +80,7 @@ internal val JComponent.origin: JComponent
   get() {
     return when (this) {
       is TextFieldWithBrowseButton -> textField
+      is ComponentWithBrowseButton<*> -> childComponent
       else -> this
     }
   }
@@ -92,6 +94,7 @@ internal fun prepareVisualPaddings(component: JComponent): Gaps {
       is RawCommandLineEditor -> component.editorField.insets.toGaps()
       is SearchTextField -> component.textEditor.insets.toGaps()
       is JScrollPane -> Gaps.EMPTY
+      is ComponentWithBrowseButton<*> -> component.childComponent.insets.toGaps()
       else -> null
     }
   }
