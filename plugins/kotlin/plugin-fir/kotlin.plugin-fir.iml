@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="kotlin.scripting" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.spellchecker" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.properties" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.coverage" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.ml-completion" scope="PROVIDED" />
   </component>
 </module>

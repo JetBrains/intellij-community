@@ -49,6 +49,7 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <module name="kotlin.base.analysis-api-providers"/>
     <module name="kotlin.base.fir.analysis-api-providers"/>
     <module name="kotlin.copyright"/>
+    <module name="kotlin.coverage"/>
     <module name="kotlin.git"/>
     <module name="kotlin.grazie"/>
     <module name="kotlin.ml-completion"/>
