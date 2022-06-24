@@ -160,7 +160,8 @@ final class ActionUpdater {
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean shallEDT = !(canAsync && shallAsync);
     if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
-      LOG.error("Calling on EDT " + operationName + "(" + (myForcedUpdateThread != null ? "forced-" : "") + updateThread + ")");
+      LOG.error("Calling on EDT " + operationName + " that requires " + updateThread +
+                (myForcedUpdateThread != null ? " (forced)" : ""));
     }
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
