@@ -31,4 +31,12 @@ class RedundantCast {
       default -> new ArrayList<>();
     };
   }
+
+  void castForFunctionalExpression(String s) {
+    (switch (s) {
+      case "a" -> (Runnable)() -> System.out.println("a");
+      case "b" -> (Runnable)() -> System.out.println("b");
+      default -> throw new IllegalArgumentException();
+    }).run();
+  }
 }

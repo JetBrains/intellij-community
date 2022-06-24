@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -736,8 +736,10 @@ public final class RedundantCastUtil {
       visitSwitchBlockSelector(expression);
 
       PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
-      for (PsiExpression resultExpression : PsiUtil.getSwitchResultExpressions(expression)) {
-        addIfNarrowing(resultExpression, expectedTypeByParent);
+      if (expectedTypeByParent != null) {
+        for (PsiExpression resultExpression : PsiUtil.getSwitchResultExpressions(expression)) {
+          addIfNarrowing(resultExpression, expectedTypeByParent);
+        }
       }
 
       super.visitSwitchExpression(expression);
