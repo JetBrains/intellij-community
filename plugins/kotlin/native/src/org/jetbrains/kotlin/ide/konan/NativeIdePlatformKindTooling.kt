@@ -41,9 +41,9 @@ class NativeIdePlatformKindTooling : IdePlatformKindTooling() {
     override fun getTestIcon(
         declaration: KtNamedDeclaration,
         descriptorProvider: () -> DeclarationDescriptor?,
-        includeSlowProviders: Boolean
+        allowSlowOperations: Boolean
     ): Icon? {
-        if (!includeSlowProviders) return null
+        if (!allowSlowOperations) return null
         val descriptor = descriptorProvider() ?: return null
         if (!descriptor.isKotlinTestDeclaration()) return null
 

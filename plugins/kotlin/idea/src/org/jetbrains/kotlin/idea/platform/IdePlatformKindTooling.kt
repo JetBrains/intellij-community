@@ -27,7 +27,7 @@ abstract class IdePlatformKindTooling {
     abstract fun getTestIcon(
         declaration: KtNamedDeclaration,
         descriptorProvider: () -> DeclarationDescriptor?,
-        includeSlowProviders: Boolean
+        allowSlowOperations: Boolean
     ): Icon?
 
     abstract fun acceptsAsEntryPoint(function: KtFunction): Boolean

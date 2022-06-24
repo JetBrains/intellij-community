@@ -109,7 +109,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
             descriptorProvider = {
                 declaration.resolveToDescriptorIfAny()
             },
-            includeSlowProviders = includeSlowProviders
+            allowSlowOperations = includeSlowProviders
         )?.takeUnless { declaration.isIgnoredForGradleModule(includeSlowProviders) } ?: return null
 
         return Info(
