@@ -2,11 +2,14 @@
 package com.intellij.openapi.diff.impl.dir.actions.popup;
 
 import com.intellij.ide.diff.DiffType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAwareAction;
+
 import java.util.Objects;
+
 import org.jetbrains.annotations.NotNull;
 
 public class CancelComparingNewFilesWithEachOtherAction extends DumbAwareAction {
@@ -28,6 +31,11 @@ public class CancelComparingNewFilesWithEachOtherAction extends DumbAwareAction 
     e.getPresentation().setEnabledAndVisible(model != null && model.getSelectedElements().stream().anyMatch(
       it -> isChangedOrEqual(it) && Objects.equals(model.getReplacementName(it), it.getTargetName())
     ));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private static boolean isChangedOrEqual(DirDiffElementImpl element) {
