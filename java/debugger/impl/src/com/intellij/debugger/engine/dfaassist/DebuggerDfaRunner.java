@@ -64,11 +64,6 @@ public class DebuggerDfaRunner {
     myModificationStamp = larva.myStamp;
   }
 
-  @NotNull List<DfaAnchor> getAllAnchors() {
-    return StreamEx.of(myFlow.getInstructions()).select(ExpressionPushingInstruction.class).map(ExpressionPushingInstruction::getDfaAnchor)
-      .toList();
-  }
-
   @NotNull
   public DebuggerDfaRunner.DfaResult computeHints() {
     if (PsiModificationTracker.getInstance(myProject).getModificationCount() != myModificationStamp) {
