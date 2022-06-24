@@ -1097,7 +1097,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-independent/kotlin.fir.frontend-independent.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-independent/kotlin.fir.frontend-independent.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-independent/tests/kotlin.fir.frontend-independent.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-independent/tests/kotlin.fir.frontend-independent.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/formatter/kotlin.formatter.iml" filepath="$PROJECT_DIR$/plugins/kotlin/formatter/kotlin.formatter.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/generators/kotlin.generators.iml" filepath="$PROJECT_DIR$/plugins/kotlin/generators/kotlin.generators.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/git/kotlin.git.iml" filepath="$PROJECT_DIR$/plugins/kotlin/git/kotlin.git.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-idea/kotlin.gradle.gradle-idea.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-idea/kotlin.gradle.gradle-idea.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-java/kotlin.gradle.gradle-java.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-java/kotlin.gradle.gradle-java.iml" />
@@ -1176,6 +1175,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin-compiler-classpath/kotlin.util.compiler-classpath.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin-compiler-classpath/kotlin.util.compiler-classpath.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/compiler-dependencies/kotlin.util.compiler-dependencies.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/compiler-dependencies/kotlin.util.compiler-dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/project-model-updater/kotlin.util.project-model-updater.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/project-model-updater/kotlin.util.project-model-updater.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/test-generator/kotlin.util.test-generator.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/test-generator/kotlin.util.test-generator.iml" />
     </modules>
   </component>
 </project>

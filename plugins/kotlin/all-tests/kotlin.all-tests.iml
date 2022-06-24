@@ -44,6 +44,6 @@
     <orderEntry type="module" module-name="kotlin.test-framework" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.testsFromCompiler" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.generators" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.util.test-generator" scope="RUNTIME" />
   </component>
 </module>
