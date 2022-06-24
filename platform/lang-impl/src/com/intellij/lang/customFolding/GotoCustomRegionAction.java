@@ -65,6 +65,11 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
     presentation.setEnabledAndVisible(isAvailable);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @NotNull
   private static Collection<FoldingDescriptor> getCustomFoldingDescriptors(@NotNull Editor editor, @NotNull Project project) {
     Set<FoldingDescriptor> foldingDescriptors = new HashSet<>();
