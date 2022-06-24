@@ -182,7 +182,7 @@ public class MavenProjectLegacyTreeImporterTest extends MavenMultiVersionImporti
 
     if (SystemInfo.isWindows) {
       // check de-facto behavior (incorrect) to make Windows tests green
-      assertContentRoots(mn("project", "m1.main"), getProjectPath() + "/m1/src/resources", getProjectPath() + "/custom-sources");
+      assertContentRoots(mn("project", "m1.main"), getProjectPath() + "/m1/src/main/resources", getProjectPath() + "/custom-sources");
     }
     else {
       assertContentRoots(mn("project", "m1.main"), getProjectPath() + "/m1/src/main", getProjectPath() + "/custom-sources");
