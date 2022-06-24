@@ -454,8 +454,12 @@ data class IDETestContext(
     return this
   }
 
-  fun updateBuildProcessHeapSize(): IDETestContext {
+  fun setBuildProcessHeapSize(heapSizeValue: String): IDETestContext {
     if (_resolvedProjectHome != null) {
+      val heapSize = when (heapSizeValue.isEmpty()) {
+        true -> "2000"
+        else -> heapSizeValue
+      }
       val ideaDir = resolvedProjectHome.resolve(".idea")
       val compilerXml = ideaDir.resolve("compiler.xml")
       if (compilerXml.toFile().exists()) {
@@ -464,7 +468,18 @@ data class IDETestContext(
         if (!readText.contains("BUILD_PROCESS_HEAP_SIZE")) {
           compilerXml.toFile().readLines().forEach {
             if (it.contains("<component name=\"CompilerConfiguration\">")) {
-              val newLine = "<component name=\"CompilerConfiguration\">\n<option name=\"BUILD_PROCESS_HEAP_SIZE\" value=\"2000\" />"
+              val newLine = "<component name=\"CompilerConfiguration\">\n<option name=\"BUILD_PROCESS_HEAP_SIZE\" value=\"$heapSize\" />"
+              newContent.appendLine(newLine)
+            }
+            else {
+              newContent.appendLine(it)
+            }
+          }
+          compilerXml.writeText(newContent.toString())
+        } else if (heapSizeValue.isNotEmpty()) {
+          compilerXml.toFile().readLines().forEach {
+            if (it.contains("BUILD_PROCESS_HEAP_SIZE")) {
+              val newLine = it.replace("value=\"\\d*\"".toRegex(), "value=\"$heapSize\"")
               newContent.appendLine(newLine)
             }
             else {
