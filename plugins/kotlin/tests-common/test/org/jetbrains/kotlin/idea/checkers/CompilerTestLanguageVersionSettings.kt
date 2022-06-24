@@ -54,9 +54,6 @@ fun parseLanguageVersionSettings(directives: Directives): CompilerTestLanguageVe
         analysisFlag(JvmAnalysisFlags.inheritMultifileParts, if (INHERIT_MULTIFILE_PARTS in directives) true else null),
         analysisFlag(JvmAnalysisFlags.sanitizeParentheses, if (SANITIZE_PARENTHESES in directives) true else null),
         analysisFlag(JvmAnalysisFlags.enableJvmPreview, if (ENABLE_JVM_PREVIEW in directives) true else null),
-        analysisFlag(AnalysisFlags.constraintSystemForOverloadResolution, directives[CONSTRAINT_SYSTEM_FOR_OVERLOAD_RESOLUTION]?.let {
-            ConstraintSystemForOverloadResolutionMode.valueOf(it)
-        }),
         analysisFlag(AnalysisFlags.explicitApiVersion, if (apiVersionString != null) true else null)
     )
 
