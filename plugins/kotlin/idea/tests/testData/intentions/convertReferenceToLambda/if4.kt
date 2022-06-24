@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 // AFTER-WARNING: Parameter 'a' is never used
 // AFTER-WARNING: Variable 'foo' is never used
 

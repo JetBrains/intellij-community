@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 // WITH_RUNTIME
 
 @Throws(Throwable::class)

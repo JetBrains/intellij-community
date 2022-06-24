@@ -1,6 +1,5 @@
 // !DIAGNOSTICS_NUMBER: 1
 // !DIAGNOSTICS: TYPE_MISMATCH_DUE_TO_TYPE_PROJECTIONS
-// !LANGUAGE: -NewInference
 
 interface A<T>
 interface B<E> {

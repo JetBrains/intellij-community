@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
     open class A<T>
     class B<X : A<X>>()
