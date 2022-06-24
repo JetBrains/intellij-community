@@ -30,26 +30,31 @@ public class CodeCompletionGroup extends DefaultActionGroup implements DumbAware
   }
 
   @Override
-  public void update(@NotNull AnActionEvent event){
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null){
+    if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    if (editor == null){
+    if (editor == null) {
       presentation.setEnabled(false);
       return;
     }
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file == null){
+    if (file == null) {
       presentation.setEnabled(false);
       return;
     }
 
     presentation.setEnabled(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }
