@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.util.caching
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
@@ -16,6 +17,8 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
         @Deprecated("Do not use directly", level = DeprecationLevel.ERROR) get
 
     private val lock = Any()
+
+    protected val logger = Logger.getInstance(javaClass)
 
     init {
         if (cleanOnLowMemory) {
@@ -41,14 +44,16 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
     }
 
     fun get(key: Key): Value {
-        try {
-            checkKeyValidity(key)
-        } catch (e: Throwable) {
-            useCache { cache ->
-                cache.remove(key)
-            }
+        if (isValidityChecksEnabled) {
+            try {
+                checkKeyValidity(key)
+            } catch (e: Throwable) {
+                useCache { cache ->
+                    cache.remove(key)
+                }
 
-            throw e
+                logger.error(e)
+            }
         }
 
         useCache { cache ->
@@ -58,6 +63,10 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
         ProgressManager.checkCanceled()
 
         val newValue = calculate(key)
+
+        if (isValidityChecksEnabled) {
+            checkValueValidity(newValue)
+        }
 
         ProgressManager.checkCanceled()
 
@@ -69,9 +78,11 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
     }
 
     protected fun putAll(map: Map<Key, Value>) {
-        for((key, value) in map) {
-            checkKeyValidity(key)
-            checkValueValidity(value)
+        if (isValidityChecksEnabled) {
+            for((key, value) in map) {
+                checkKeyValidity(key)
+                checkValueValidity(value)
+            }
         }
 
         useCache { cache ->
@@ -130,10 +141,12 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
     }
 
     private fun checkEntities(cache: MutableMap<Key, Value>, validityCondition: (Key, Value) -> Boolean) {
-        for (entry in cache) {
-            if (validityCondition(entry.key, entry.value)) {
-                checkKeyValidity(entry.key)
-                checkValueValidity(entry.value)
+        if (isValidityChecksEnabled) {
+            for (entry in cache) {
+                if (validityCondition(entry.key, entry.value)) {
+                    checkKeyValidity(entry.key)
+                    checkValueValidity(entry.value)
+                }
             }
         }
     }
@@ -149,6 +162,10 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
     companion object {
         val isFineGrainedCacheInvalidationEnabled: Boolean by lazy {
             Registry.`is`("kotlin.caches.fine.grained.invalidation")
+        }
+
+        val isValidityChecksEnabled: Boolean by lazy {
+            Registry.`is`("kotlin.caches.fine.grained.entity.validation")
         }
     }
 }
