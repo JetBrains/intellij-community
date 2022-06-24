@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -413,40 +413,52 @@ public class StringUtil extends StringUtilRt {
     return a[s1.length() - 1][s2.length() - 1];
   }
 
+  /**
+   * NOTE: This method only works somewhat well for sentences in the English language.
+   * Other languages have other capitalization rules. Do not use it for non-English text.
+   */
   @Contract(pure = true)
   public static @NotNull String wordsToBeginFromUpperCase(@NotNull String s) {
-    return fixCapitalization(s, ArrayUtil.mergeArrays(ourPrepositions, ourOtherNonCapitalizableWords), true);
+    return fixCapitalization(s, ourLowerCaseWords, true, true);
   }
 
   @Contract(pure = true)
   public static @NotNull String wordsToBeginFromLowerCase(@NotNull String s) {
-    return fixCapitalization(s, ourPrepositions, false);
+    return fixCapitalization(s, ArrayUtilRt.EMPTY_STRING_ARRAY, false, true);
   }
 
+  /**
+   * Does not actually convert to title case, but just capitalizes all words.
+   * This is probably not correct for any language.
+   * For actual (English) title case see {@link #wordsToBeginFromUpperCase(String)}.
+   */
   @Contract(pure = true)
   public static @NotNull String toTitleCase(@NotNull String s) {
-    return fixCapitalization(s, ArrayUtilRt.EMPTY_STRING_ARRAY, true);
+    return fixCapitalization(s, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false);
   }
 
-  private static @NotNull String fixCapitalization(@NotNull String s, String @NotNull [] prepositions, boolean title) {
+  @SuppressWarnings("AssignmentToForLoopParameter")
+  private static @NotNull String fixCapitalization(@NotNull String s, String @NotNull [] wordsToIgnore, boolean title, boolean mnemonics) {
     StringBuilder buffer = null;
-    for (int i = 0; i < s.length(); i++) {
+    final int length = s.length();
+    for (int i = 0; i < length; i++) {
       char prevChar = i == 0 ? ' ' : s.charAt(i - 1);
       char currChar = s.charAt(i);
       if (!Character.isLetterOrDigit(prevChar) && prevChar != '\'') {
         if (Character.isLetterOrDigit(currChar)) {
           if (title || Character.isUpperCase(currChar)) {
-            int j = i;
-            for (; j < s.length(); j++) {
-              if (!Character.isLetterOrDigit(s.charAt(j))) {
+            int start = i;
+            for (i++; i < length; i++) {
+              final char c = s.charAt(i);
+              if (mnemonics ? Character.isWhitespace(c) || c == '-' : !Character.isLetterOrDigit(s.charAt(i))) {
                 break;
               }
             }
-            if (!title && j > i + 1 && !Character.isLowerCase(s.charAt(i + 1))) {
+            if (!title && i > start + 1 && !Character.isLowerCase(s.charAt(start + 1))) {
               // filter out abbreviations like I18n, SQL and CSS
               continue;
             }
-            char prevPrevChar = i > 1 ? s.charAt(i - 2) : 0;
+            char prevPrevChar = start > 1 ? s.charAt(start - 2) : 0;
             if (prevChar == '.' && (prevPrevChar == ' ' || prevPrevChar == '*')) {
               // file extension like .java or *.java; don't change its capitalization
               continue;
@@ -455,11 +467,14 @@ public class StringUtil extends StringUtilRt {
               // special string like ~java or _java; keep it as is
               continue;
             }
-            if (!isPreposition(s, i, j - 1, prepositions)) {
-              if (buffer == null) {
-                buffer = new StringBuilder(s);
+            if (!isPreposition(s, start, i - 1, ourOtherNonCapitalizableWords)) {
+              boolean firstWord = start == 0 || prevPrevChar == '.' || prevPrevChar == '!' || prevPrevChar == ':' || prevPrevChar == '?';
+              if (!title || firstWord || i >= length /* last word */ || !isPreposition(s, start, i - 1, wordsToIgnore)) {
+                if (buffer == null) {
+                  buffer = new StringBuilder(s);
+                }
+                buffer.setCharAt(start, title ? toUpperCase(currChar) : toLowerCase(currChar));
               }
-              buffer.setCharAt(i, title ? toUpperCase(currChar) : toLowerCase(currChar));
             }
           }
         }
@@ -468,9 +483,9 @@ public class StringUtil extends StringUtilRt {
     return buffer == null ? s : buffer.toString();
   }
 
-  private static final String[] ourPrepositions = {
-    "a", "an", "and", "as", "at", "but", "by", "down", "for", "from", "if", "in", "into", "not", "of", "on", "onto", "or", "out", "over",
-    "per", "nor", "the", "to", "up", "upon", "via", "with"
+  private static final String[] ourLowerCaseWords = {
+    "a", "an", "and", "as", "at", "but", "by", "down", "for", "from", "in", "into", "near",
+    "nor", "of", "on", "onto", "or", "out", "over", "per", "so", "the", "to", "until", "unto", "up", "upon", "via", "with"
   };
 
   private static final String[] ourOtherNonCapitalizableWords = {
@@ -479,18 +494,11 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean isPreposition(@NotNull String s, int firstChar, int lastChar, String @NotNull [] prepositions) {
-    for (String preposition : prepositions) {
-      boolean found = false;
+    outer: for (String preposition : prepositions) {
       if (lastChar - firstChar + 1 == preposition.length()) {
-        found = true;
         for (int j = 0; j < preposition.length(); j++) {
-          if (toLowerCase(s.charAt(firstChar + j)) != toLowerCase(preposition.charAt(j))) {
-            found = false;
-            break;
-          }
+          if (toLowerCase(s.charAt(firstChar + j)) != toLowerCase(preposition.charAt(j))) continue outer;
         }
-      }
-      if (found) {
         return true;
       }
     }
