@@ -70,9 +70,10 @@ fun MutableEntityStorage.addSampleEntity(stringProperty: String,
                                          stringSetProperty: MutableSet<String> = LinkedHashSet(),
                                          virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
                                          fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp"),
-                                         info: String = ""
+                                         info: String = "",
+                                         stringMapProperty: MutableMap<String, String> = HashMap(),
 ): SampleEntity {
-  val entity = SampleEntity(booleanProperty, source, stringProperty, stringListProperty, fileProperty) {
+  val entity = SampleEntity(booleanProperty, source, stringProperty, stringListProperty, stringMapProperty, fileProperty) {
     this.children = emptyList()
   }
   this.addEntity(entity)

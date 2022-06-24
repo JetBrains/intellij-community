@@ -10,6 +10,7 @@ import com.esotericsoftware.kryo.serializers.DefaultSerializers
 import com.esotericsoftware.kryo.serializers.FieldSerializer
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
+import com.google.common.collect.MultimapBuilder.ListMultimapBuilder
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
@@ -32,6 +33,7 @@ import java.io.OutputStream
 import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.jvmName
 
@@ -43,7 +45,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v32"
+    const val SERIALIZER_VERSION = "v33"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
@@ -212,10 +214,18 @@ class EntityStorageSerializerImpl(
     kryo.register(HashSet::class.java).instantiator = ObjectInstantiator { HashSet<Any>() }
     kryo.register(BidirectionalMultiMap::class.java).instantiator = ObjectInstantiator { BidirectionalMultiMap<Any, Any>() }
     kryo.register(HashBiMap::class.java).instantiator = ObjectInstantiator { HashBiMap.create<Any, Any>() }
+    kryo.register(LinkedHashSet::class.java).instantiator = ObjectInstantiator { LinkedHashSet<Any>() }
     kryo.register(LinkedBidirectionalMap::class.java).instantiator = ObjectInstantiator { LinkedBidirectionalMap<Any, Any>() }
     kryo.register(Int2IntOpenHashMap::class.java).instantiator = ObjectInstantiator { Int2IntOpenHashMap() }
     kryo.register(ObjectOpenHashSet::class.java).instantiator = ObjectInstantiator { ObjectOpenHashSet<Any>() }
     kryo.register(Object2ObjectOpenHashMap::class.java).instantiator = ObjectInstantiator { Object2ObjectOpenHashMap<Any, Any>() }
+
+    /**
+     * Registrator for [kotlin.collections.builders.ListBuilder] and [kotlin.collections.builders.MapBuilder]
+     * Right now generator doesn't support Set collections thus [kotlin.collections.builders.SetBuilder] omitted
+     */
+    kryo.register(buildList<Any> { }::class.java).instantiator = ObjectInstantiator { ArrayList<Any>() }
+    kryo.register(buildMap<Any, Any> {  }::class.java).instantiator = ObjectInstantiator { HashMap<Any, Any>() }
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
     kryo.register(Arrays.asList("a").javaClass).instantiator = ObjectInstantiator { ArrayList<Any>() }
@@ -239,7 +249,6 @@ class EntityStorageSerializerImpl(
     kryo.register(ChangeEntry.ReplaceEntity::class.java)
     kryo.register(ChangeEntry.ChangeEntitySource::class.java)
     kryo.register(ChangeEntry.ReplaceAndChangeSource::class.java)
-    kryo.register(LinkedHashSet::class.java).instantiator = ObjectInstantiator { LinkedHashSet<Any>() }
 
     registerFieldSerializer(kryo, Collections.unmodifiableCollection<Any>(emptySet()).javaClass) {
       Collections.unmodifiableCollection(emptySet())

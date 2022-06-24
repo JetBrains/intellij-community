@@ -43,6 +43,9 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
     override val stringListProperty: List<String>
         get() = _stringListProperty!!   
     
+    @JvmField var _stringMapProperty: Map<String, String>? = null
+    override val stringMapProperty: Map<String, String>
+        get() = _stringMapProperty!!
     @JvmField var _fileProperty: VirtualFileUrl? = null
     override val fileProperty: VirtualFileUrl
         get() = _fileProperty!!
@@ -93,6 +96,9 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
             }
             if (!getEntityData().isStringListPropertyInitialized()) {
                 error("Field SampleEntity#stringListProperty should be initialized")
+            }
+            if (!getEntityData().isStringMapPropertyInitialized()) {
+                error("Field SampleEntity#stringMapProperty should be initialized")
             }
             if (!getEntityData().isFilePropertyInitialized()) {
                 error("Field SampleEntity#fileProperty should be initialized")
@@ -147,6 +153,14 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
                 getEntityData().stringListProperty = value
                 
                 changedProperty.add("stringListProperty")
+            }
+            
+        override var stringMapProperty: Map<String, String>
+            get() = getEntityData().stringMapProperty
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().stringMapProperty = value
+                changedProperty.add("stringMapProperty")
             }
             
         override var fileProperty: VirtualFileUrl
@@ -213,12 +227,14 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     var booleanProperty: Boolean = false
     lateinit var stringProperty: String
     lateinit var stringListProperty: List<String>
+    lateinit var stringMapProperty: Map<String, String>
     lateinit var fileProperty: VirtualFileUrl
     var nullableData: String? = null
 
     
     fun isStringPropertyInitialized(): Boolean = ::stringProperty.isInitialized
     fun isStringListPropertyInitialized(): Boolean = ::stringListProperty.isInitialized
+    fun isStringMapPropertyInitialized(): Boolean = ::stringMapProperty.isInitialized
     fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
     override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SampleEntity> {
@@ -238,6 +254,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         entity.booleanProperty = booleanProperty
         entity._stringProperty = stringProperty
         entity._stringListProperty = stringListProperty
+        entity._stringMapProperty = stringMapProperty
         entity._fileProperty = fileProperty
         entity._nullableData = nullableData
         entity.entitySource = entitySource
@@ -266,6 +283,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         if (this.entitySource != other.entitySource) return false
         if (this.stringProperty != other.stringProperty) return false
         if (this.stringListProperty != other.stringListProperty) return false
+        if (this.stringMapProperty != other.stringMapProperty) return false
         if (this.fileProperty != other.fileProperty) return false
         if (this.nullableData != other.nullableData) return false
         return true
@@ -280,6 +298,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         if (this.booleanProperty != other.booleanProperty) return false
         if (this.stringProperty != other.stringProperty) return false
         if (this.stringListProperty != other.stringListProperty) return false
+        if (this.stringMapProperty != other.stringMapProperty) return false
         if (this.fileProperty != other.fileProperty) return false
         if (this.nullableData != other.nullableData) return false
         return true
@@ -290,6 +309,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         result = 31 * result + booleanProperty.hashCode()
         result = 31 * result + stringProperty.hashCode()
         result = 31 * result + stringListProperty.hashCode()
+        result = 31 * result + stringMapProperty.hashCode()
         result = 31 * result + fileProperty.hashCode()
         result = 31 * result + nullableData.hashCode()
         return result

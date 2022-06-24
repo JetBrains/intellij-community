@@ -17,6 +17,7 @@ interface SampleEntity : WorkspaceEntity {
   val booleanProperty: Boolean
   val stringProperty: String
   val stringListProperty: List<String>
+  val stringMapProperty: Map<String, String>
   val fileProperty: VirtualFileUrl
   val children: List<@Child ChildSampleEntity>
   val nullableData: String?
@@ -29,18 +30,20 @@ interface SampleEntity : WorkspaceEntity {
       override var entitySource: EntitySource
       override var stringProperty: String
       override var stringListProperty: List<String>
+      override var stringMapProperty: Map<String, String>
       override var fileProperty: VirtualFileUrl
       override var children: List<ChildSampleEntity>
       override var nullableData: String?
   }
   
   companion object: Type<SampleEntity, Builder>() {
-      operator fun invoke(booleanProperty: Boolean, entitySource: EntitySource, stringProperty: String, stringListProperty: List<String>, fileProperty: VirtualFileUrl, init: (Builder.() -> Unit)? = null): SampleEntity {
+      operator fun invoke(booleanProperty: Boolean, entitySource: EntitySource, stringProperty: String, stringListProperty: List<String>, stringMapProperty: Map<String, String>, fileProperty: VirtualFileUrl, init: (Builder.() -> Unit)? = null): SampleEntity {
           val builder = builder()
           builder.booleanProperty = booleanProperty
           builder.entitySource = entitySource
           builder.stringProperty = stringProperty
           builder.stringListProperty = stringListProperty
+          builder.stringMapProperty = stringMapProperty
           builder.fileProperty = fileProperty
           init?.invoke(builder)
           return builder

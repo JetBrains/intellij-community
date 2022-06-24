@@ -1,13 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
+import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
+import com.intellij.workspaceModel.storage.entities.test.api.SampleEntitySource
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.Assert.*
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -28,6 +31,25 @@ class EntityStorageSerializationTest {
     builder.addSampleEntity(stringProperty = "MyEntity",
                             stringListProperty = mutableListOf("a", "b"),
                             stringSetProperty = mutableSetOf("c", "d"))
+
+    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+  }
+
+  @Test
+  fun `entity list and map builder serialization`() {
+    val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl()
+    val builder = createEmptyBuilder()
+    val stringListProperty = buildList {
+      this.add("a")
+      this.add("b")
+    }
+    val stringMapProperty = buildMap {
+      put("ab", "bc")
+      put("bc", "ce")
+    }
+    val entity = SampleEntity(false, SampleEntitySource("test"), "MyEntity", stringListProperty,
+                              stringMapProperty, virtualFileManager.fromUrl("file:///tmp"))
+    builder.addEntity(entity)
 
     SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
   }
@@ -129,44 +151,46 @@ private val expectedKryoRegistration = """
   [23, java.util.HashSet]
   [24, com.intellij.util.containers.BidirectionalMultiMap]
   [25, com.google.common.collect.HashBiMap]
-  [26, com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap]
-  [27, it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap]
-  [28, it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap]
-  [29, java.util.Arrays${'$'}ArrayList]
-  [30, byte[]]
-  [31, com.intellij.workspaceModel.storage.impl.ImmutableEntityFamily]
-  [32, com.intellij.workspaceModel.storage.impl.RefsTable]
-  [33, com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntBiMap]
-  [34, com.intellij.workspaceModel.storage.impl.containers.ImmutableIntIntUniqueBiMap]
-  [35, com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex]
-  [36, com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex]
-  [37, com.intellij.workspaceModel.storage.impl.indices.PersistentIdInternalIndex]
-  [38, com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntMultiMap${'$'}ByList]
-  [39, int[]]
-  [40, kotlin.Pair]
-  [41, com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex]
-  [42, com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl${'$'}SerializableEntityId]
-  [43, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}AddEntity]
-  [44, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}RemoveEntity]
-  [45, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity]
-  [46, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ChangeEntitySource]
-  [47, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceAndChangeSource]
-  [48, java.util.LinkedHashSet]
-  [49, java.util.Collections${'$'}UnmodifiableCollection]
-  [50, java.util.Collections${'$'}UnmodifiableSet]
-  [51, java.util.Collections${'$'}UnmodifiableRandomAccessList]
-  [52, java.util.Collections${'$'}UnmodifiableMap]
-  [53, java.util.Collections${'$'}EmptyList]
-  [54, java.util.Collections${'$'}EmptyMap]
-  [55, java.util.Collections${'$'}EmptySet]
-  [56, java.util.Collections${'$'}SingletonList]
-  [57, java.util.Collections${'$'}SingletonMap]
-  [58, java.util.Collections${'$'}SingletonSet]
-  [59, com.intellij.util.containers.ContainerUtilRt${'$'}EmptyList]
-  [60, com.intellij.util.containers.MostlySingularMultiMap${'$'}EmptyMap]
-  [61, com.intellij.util.containers.MultiMap${'$'}EmptyMap]
-  [62, kotlin.collections.EmptyMap]
-  [63, kotlin.collections.EmptyList]
-  [64, kotlin.collections.EmptySet]
-  [65, Object[]]
+  [26, java.util.LinkedHashSet]
+  [27, com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap]
+  [28, it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap]
+  [29, it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap]
+  [30, kotlin.collections.builders.ListBuilder]
+  [31, kotlin.collections.builders.MapBuilder]
+  [32, java.util.Arrays${'$'}ArrayList]
+  [33, byte[]]
+  [34, com.intellij.workspaceModel.storage.impl.ImmutableEntityFamily]
+  [35, com.intellij.workspaceModel.storage.impl.RefsTable]
+  [36, com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntBiMap]
+  [37, com.intellij.workspaceModel.storage.impl.containers.ImmutableIntIntUniqueBiMap]
+  [38, com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex]
+  [39, com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex]
+  [40, com.intellij.workspaceModel.storage.impl.indices.PersistentIdInternalIndex]
+  [41, com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntMultiMap${'$'}ByList]
+  [42, int[]]
+  [43, kotlin.Pair]
+  [44, com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex]
+  [45, com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl${'$'}SerializableEntityId]
+  [46, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}AddEntity]
+  [47, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}RemoveEntity]
+  [48, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity]
+  [49, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ChangeEntitySource]
+  [50, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceAndChangeSource]
+  [51, java.util.Collections${'$'}UnmodifiableCollection]
+  [52, java.util.Collections${'$'}UnmodifiableSet]
+  [53, java.util.Collections${'$'}UnmodifiableRandomAccessList]
+  [54, java.util.Collections${'$'}UnmodifiableMap]
+  [55, java.util.Collections${'$'}EmptyList]
+  [56, java.util.Collections${'$'}EmptyMap]
+  [57, java.util.Collections${'$'}EmptySet]
+  [58, java.util.Collections${'$'}SingletonList]
+  [59, java.util.Collections${'$'}SingletonMap]
+  [60, java.util.Collections${'$'}SingletonSet]
+  [61, com.intellij.util.containers.ContainerUtilRt${'$'}EmptyList]
+  [62, com.intellij.util.containers.MostlySingularMultiMap${'$'}EmptyMap]
+  [63, com.intellij.util.containers.MultiMap${'$'}EmptyMap]
+  [64, kotlin.collections.EmptyMap]
+  [65, kotlin.collections.EmptyList]
+  [66, kotlin.collections.EmptySet]
+  [67, Object[]]
 """.trimIndent()
