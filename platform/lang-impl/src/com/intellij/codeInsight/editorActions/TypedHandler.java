@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -33,7 +33,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.ProperTextRange;
@@ -54,7 +53,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public final class TypedHandler extends TypedActionHandlerBase {
   private static final Set<Character> COMPLEX_CHARS =
@@ -678,7 +679,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
   static final class TypedHandlerDelegatePreloader extends PreloadingActivity {
     @Override
-    public void preload(@NotNull ProgressIndicator indicator) {
+    public void preload() {
       if (!ApplicationManagerEx.getApplicationEx().isLightEditMode()) {
         TypedHandlerDelegate.EP_NAME.getExtensionList();
       }

@@ -10,7 +10,6 @@ import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
 import com.intellij.grazie.jlanguage.hunspell.LuceneHunspellDictionary
 import com.intellij.grazie.utils.text
 import com.intellij.openapi.application.PreloadingActivity
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.SequentialTaskExecutor
@@ -216,6 +215,8 @@ object LangTool : GrazieStateLifecycle {
   }
 
   internal class Preloader : PreloadingActivity() {
-    override fun preload(indicator: ProgressIndicator): Unit = preloadAsync()
+    override fun preload() {
+      preloadAsync()
+    }
   }
 }

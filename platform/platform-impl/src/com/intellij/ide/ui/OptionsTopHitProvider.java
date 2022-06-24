@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.text.StringUtil;
@@ -160,24 +159,24 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     }
 
     @Override
-    public void preload(@NotNull ProgressIndicator indicator) {
+    public void preload() {
       // for application
-      cacheAll(indicator, null);
+      cacheAll(null);
     }
 
     @Override
     public void runActivity(@NotNull Project project) {
       // for given project
-      cacheAll(null, project);
+      cacheAll(project);
     }
 
-    private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
+    private static void cacheAll(@Nullable Project project) {
       String name = project == null ? "application" : "project";
       com.intellij.diagnostic.Activity activity = StartUpMeasurer.startActivity("cache options in " + name, ActivityCategory.DEFAULT);
       SearchTopHitProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
         if (provider instanceof OptionsSearchTopHitProvider && (project == null || !(provider instanceof ApplicationLevelProvider))) {
           OptionsSearchTopHitProvider p = (OptionsSearchTopHitProvider)provider;
-          if (p.preloadNeeded() && (indicator == null || !indicator.isCanceled()) && (project == null || !project.isDisposed())) {
+          if (p.preloadNeeded() && (project == null || !project.isDisposed())) {
             getCachedOptions(p, project, pluginDescriptor);
           }
         }
@@ -186,9 +185,10 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       if (project != null) {
         TopHitCache cache = ProjectTopHitCache.getInstance(project);
         PROJECT_LEVEL_EP.processWithPluginDescriptor((provider, pluginDescriptor) -> {
-          if (indicator != null) {
-            indicator.checkCanceled();
+          if (project.isDisposed()) {
+            return;
           }
+
           try {
             cache.getCachedOptions(provider, project, pluginDescriptor);
           }

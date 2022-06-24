@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.FrameStateListener
@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -24,8 +23,8 @@ private const val AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY = "idea.auto.reload.plugin
 
 private var initialRefreshDone = false
 
-class DynamicPluginVfsListenerInitializer : PreloadingActivity() {
-  override fun preload(indicator: ProgressIndicator) {
+internal class DynamicPluginVfsListenerInitializer : PreloadingActivity() {
+  override fun preload() {
     if (java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) {
       val pluginsPath = PathManager.getPluginsPath()
       LocalFileSystem.getInstance().addRootToWatch(pluginsPath, true)

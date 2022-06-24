@@ -2,7 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * <p>An activity to be executed in background on IDE startup. It may load some classes or other configuration
@@ -19,10 +19,15 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PreloadingActivity {
   /**
    * Perform the preloading.
-   *
-   * @param indicator a progress indicator for the background preloading process.
-   *                  Canceled if the application has exited.
-   *                  Long actions should periodically perform {@code indicator.checkCanceled()}.
    */
-  public abstract void preload(@NotNull ProgressIndicator indicator);
+  public void preload() {
+  }
+
+  /**
+   * @deprecated Use {@link #preload()}
+   */
+  @Deprecated
+  public void preload(@SuppressWarnings("unused") @Nullable ProgressIndicator indicator) {
+    preload();
+  }
 }

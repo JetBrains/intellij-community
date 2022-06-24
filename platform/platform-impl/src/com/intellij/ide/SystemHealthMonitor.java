@@ -22,7 +22,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
@@ -35,7 +34,6 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.IoErrorText;
 import com.sun.jna.*;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -57,7 +55,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
   private static final String NOTIFICATION_GROUP_ID = "System Health";
 
   @Override
-  public void preload(@NotNull ProgressIndicator indicator) {
+  public void preload() {
     checkInstallationIntegrity();
     checkIdeDirectories();
     checkRuntime();
