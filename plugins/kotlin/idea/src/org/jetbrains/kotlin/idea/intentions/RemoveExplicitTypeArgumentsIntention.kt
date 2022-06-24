@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -37,7 +36,6 @@ import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 @Suppress("DEPRECATION")
 class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArgumentList>(RemoveExplicitTypeArgumentsIntention::class),
                                               CleanupLocalInspectionTool {
-    override fun problemHighlightType(element: KtTypeArgumentList): ProblemHighlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL
 
     override fun additionalFixes(element: KtTypeArgumentList): List<LocalQuickFix>? {
         val declaration = element.getStrictParentOfType<KtCallableDeclaration>() ?: return null

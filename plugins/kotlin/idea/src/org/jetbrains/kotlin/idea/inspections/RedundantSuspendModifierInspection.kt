@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
@@ -43,7 +46,6 @@ class RedundantSuspendModifierInspection : AbstractKotlinInspection(), CleanupLo
             holder.registerProblem(
                 suspendModifier,
                 KotlinBundle.message("redundant.suspend.modifier"),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                 IntentionWrapper(RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true))
             )
         })

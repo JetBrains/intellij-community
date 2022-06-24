@@ -121,7 +121,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
                 KotlinBundle.message("unused.import.directive"),
                 isOnTheFly,
                 fixes.toTypedArray(),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING
             )
         }
 

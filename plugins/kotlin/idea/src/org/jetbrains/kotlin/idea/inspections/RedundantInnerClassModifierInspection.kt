@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.JPanel
 
 class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+    @Suppress("MemberVisibilityCanBePrivate")
     var ignorableAnnotations = OrderedSet(listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED))
 
     override fun createOptionsPanel(): JPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
@@ -55,7 +56,6 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
         holder.registerProblem(
             innerModifier,
             KotlinBundle.message("inspection.redundant.inner.class.modifier.descriptor"),
-            ProblemHighlightType.LIKE_UNUSED_SYMBOL,
             RemoveInnerModifierFix()
         )
     })

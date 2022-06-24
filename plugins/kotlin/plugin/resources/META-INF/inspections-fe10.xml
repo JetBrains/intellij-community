@@ -1194,7 +1194,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.explicit.type.arguments.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.RemoveExplicitSuperQualifierInspection"
@@ -1203,7 +1203,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.explicit.super.qualifier.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.SimplifyNegatedBinaryExpressionInspection"
@@ -1268,7 +1268,7 @@
                      level="WARNING"
                      runForWholeFile="true"
                      language="kotlin"
-                     suppressId="unused"
+                     suppressId="unused" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.unused.symbol.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.UnusedReceiverParameterInspection"
@@ -1277,7 +1277,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.unused.receiver.parameter.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinUnusedImportInspection"
@@ -1287,7 +1287,7 @@
                      level="WARNING"
                      runForWholeFile="true"
                      language="kotlin"
-                     suppressId="UnusedImport"
+                     suppressId="UnusedImport" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.kotlin.unused.import.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantSamConstructorInspection"
@@ -1349,7 +1349,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.for.loop.indices.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.loopToCallChain.LoopToCallChainInspection"
@@ -1389,7 +1389,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.visibility.modifier.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.DestructureInspection"
@@ -1480,7 +1480,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.can.be.parameter.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantModalityModifierInspection"
@@ -1489,7 +1489,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.modality.modifier.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantSemicolonInspection"
@@ -1498,7 +1498,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.semicolon.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantUnitReturnTypeInspection"
@@ -1507,7 +1507,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.unit.return.type.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantIfInspection"
@@ -1566,7 +1566,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.setter.parameter.type.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.conventionNameCalls.ReplaceCallWithBinaryOperatorInspection"
@@ -1592,7 +1592,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.to.string.in.string.template.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.RemoveEmptyParenthesesFromLambdaCallInspection"
@@ -1601,7 +1601,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.empty.parentheses.from.lambda.call.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceArrayEqualityOpWithArraysEqualsInspection"
@@ -1663,7 +1663,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.empty.class.body.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.RemoveRedundantCallsOfConversionMethodsInspection"
@@ -1672,7 +1672,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.redundant.calls.of.conversion.methods.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.RemoveEmptyPrimaryConstructorInspection"
@@ -1681,7 +1681,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.empty.primary.constructor.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.RemoveEmptySecondaryConstructorBodyInspection"
@@ -1690,7 +1690,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.empty.secondary.constructor.body.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.JoinDeclarationAndAssignmentInspection"
@@ -1869,7 +1869,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.redundant.spread.operator.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.collections.UselessCallOnNotNullInspection"
@@ -1886,7 +1886,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.explicit.type.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.collections.UselessCallOnCollectionInspection"
@@ -1981,7 +1981,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.lambda.arrow.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantLambdaOrAnonymousFunctionInspection"
@@ -2070,7 +2070,7 @@
                      cleanupTool="true"
                      level="WEAK WARNING"
                      language="kotlin"
-                     suppressId="RedundantOverride"
+                     suppressId="RedundantOverride" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.kotlin.redundant.override.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinRedundantDiagnosticSuppressInspection"
@@ -2112,7 +2112,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      level="WARNING"
-                     cleanupTool="true"
+                     cleanupTool="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      language="kotlin" key="inspection.remove.redundant.qualifier.name.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantSetterInspection"
@@ -2138,7 +2138,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      level="INFORMATION"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.explicit.this.display.name" bundle="messages.KotlinBundle"/>
 
 
@@ -2156,7 +2156,7 @@
                      enabledByDefault="true"
                      level="WARNING"
                      language="kotlin"
-                     cleanupTool="true"
+                     cleanupTool="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.unit.expression.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.SelfAssignmentInspection"
@@ -2234,7 +2234,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.suspend.modifier.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.SortModifiersInspection"
@@ -2318,7 +2318,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.companion.reference.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.PublicApiImplicitTypeInspection"
@@ -2572,7 +2572,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.with.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.collections.ConvertCallChainIntoSequenceInspection"
@@ -2606,7 +2606,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.return.label.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.coroutines.DirectUseOfResultTypeInspection"
@@ -2649,7 +2649,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.empty.parentheses.from.annotation.entry.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.OptionalExpectationInspection"
@@ -2689,7 +2689,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="false"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.unused.main.parameter.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.DelegationToVarPropertyInspection"
@@ -2771,7 +2771,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.enum.constructor.invocation.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceRangeStartEndInclusiveWithFirstLastInspection"
@@ -2883,7 +2883,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WEAK WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.empty.initializer.block.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinEqualsBetweenInconvertibleTypesInspection"
@@ -2941,7 +2941,7 @@
                      enabledByDefault="false"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.inner.class.modifier.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantElvisReturnNullInspection"
@@ -2950,7 +2950,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
-                     language="kotlin"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.elvis.return.null.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.logging.KotlinLoggerInitializedWithForeignClassInspection"
@@ -3077,7 +3077,7 @@
                      cleanupTool="true"
                      level="WEAK WARNING"
                      language="kotlin"
-                     runForWholeFile="true"
+                     runForWholeFile="true"  editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.unnecessary.opt_in.annotation.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinJvmAnnotationInJavaInspection"

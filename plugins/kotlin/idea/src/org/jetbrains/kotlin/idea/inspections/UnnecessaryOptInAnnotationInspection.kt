@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
@@ -126,7 +129,6 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection(), Cleanup
                 holder.registerProblem(
                     annotationEntry,
                     KotlinBundle.message("inspection.unnecessary.opt_in.redundant.annotation"),
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     RemoveAnnotationEntry()
                 )
             } else {
@@ -140,7 +142,6 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection(), Cleanup
                                     "inspection.unnecessary.opt_in.redundant.marker",
                                     marker.fqName.shortName().render()
                                 ),
-                        ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                         RemoveAnnotationArgumentOrEntireEntry()
                     )
                 }

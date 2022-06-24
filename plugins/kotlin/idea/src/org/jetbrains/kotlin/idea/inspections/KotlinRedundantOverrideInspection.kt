@@ -81,7 +81,7 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
                 function,
                 TextRange(modifierList.startOffsetInParent, funKeyword.endOffset - function.startOffset),
                 KotlinBundle.message("redundant.overriding.method"),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 isOnTheFly,
                 RedundantOverrideFix()
             )

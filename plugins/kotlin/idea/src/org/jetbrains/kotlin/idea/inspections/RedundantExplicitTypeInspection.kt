@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -27,7 +26,6 @@ class RedundantExplicitTypeInspection : AbstractKotlinInspection(), CleanupLocal
                 holder.registerProblem(
                     typeReference,
                     KotlinBundle.message("explicitly.given.type.is.redundant.here"),
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     IntentionWrapper(RemoveExplicitTypeIntention())
                 )
             }

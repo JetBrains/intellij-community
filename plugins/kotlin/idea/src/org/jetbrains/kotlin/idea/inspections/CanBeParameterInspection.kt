@@ -3,7 +3,10 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -99,7 +102,6 @@ class CanBeParameterInspection : AbstractKotlinInspection(), CleanupLocalInspect
             holder.registerProblem(
                 valOrVar,
                 KotlinBundle.message("constructor.parameter.is.never.used.as.a.property"),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                 RemoveValVarFix(parameter)
             )
         })

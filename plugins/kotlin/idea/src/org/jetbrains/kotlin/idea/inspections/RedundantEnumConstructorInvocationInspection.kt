@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -21,7 +24,6 @@ class RedundantEnumConstructorInvocationInspection : AbstractKotlinInspection(),
         holder.registerProblem(
             valueArgumentList,
             KotlinBundle.message("redundant.enum.constructor.invocation"),
-            ProblemHighlightType.LIKE_UNUSED_SYMBOL,
             RemoveEnumConstructorInvocationFix()
         )
     })

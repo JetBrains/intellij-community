@@ -55,7 +55,7 @@ class RemoveRedundantSpreadOperatorInspection : AbstractKotlinInspection(), Clea
                 argument,
                 TextRange(startOffset, endOffset),
                 KotlinBundle.message("remove.redundant.spread.operator.quickfix.text"),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 isOnTheFly,
                 RemoveRedundantSpreadOperatorQuickfix()
             )

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -24,7 +23,6 @@ class RedundantReturnLabelInspection : AbstractKotlinInspection(), CleanupLocalI
             holder.registerProblem(
                 label,
                 KotlinBundle.message("redundant.0", labelName),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                 IntentionWrapper(RemoveReturnLabelFix(returnExpression, labelName)),
             )
         },

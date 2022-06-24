@@ -110,7 +110,6 @@ class UnusedReceiverParameterInspection : AbstractKotlinInspection(), CleanupLoc
                 holder.registerProblem(
                     receiverTypeReference,
                     KotlinBundle.message("inspection.unused.receiver.parameter"),
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     RemoveReceiverFix(inSameClass)
                 )
             }

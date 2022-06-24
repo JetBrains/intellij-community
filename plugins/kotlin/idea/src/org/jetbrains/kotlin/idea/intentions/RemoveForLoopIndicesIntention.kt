@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -21,9 +20,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 class RemoveForLoopIndicesInspection : IntentionBasedInspection<KtForExpression>(
     RemoveForLoopIndicesIntention::class,
     KotlinBundle.message("index.is.not.used.in.the.loop.body")
-), CleanupLocalInspectionTool {
-    override fun problemHighlightType(element: KtForExpression): ProblemHighlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL
-}
+), CleanupLocalInspectionTool
 
 class RemoveForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,

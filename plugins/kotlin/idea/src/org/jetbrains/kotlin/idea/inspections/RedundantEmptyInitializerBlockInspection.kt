@@ -16,7 +16,7 @@ class RedundantEmptyInitializerBlockInspection : AbstractKotlinInspection(), Cle
         holder.registerProblem(
             initializer,
             KotlinBundle.message("redundant.empty.initializer.block"),
-            ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             RemoveInitializerBlockFix()
         )
     })

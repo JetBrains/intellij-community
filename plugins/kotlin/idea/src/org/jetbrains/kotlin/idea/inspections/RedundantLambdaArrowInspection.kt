@@ -65,7 +65,7 @@ class RedundantLambdaArrowInspection : AbstractKotlinInspection(), CleanupLocalI
                     functionLiteral,
                     TextRange((singleParameter?.startOffset ?: arrow.startOffset) - startOffset, arrow.endOffset - startOffset),
                     KotlinBundle.message("redundant.lambda.arrow"),
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                     isOnTheFly,
                     DeleteFix()
                 )

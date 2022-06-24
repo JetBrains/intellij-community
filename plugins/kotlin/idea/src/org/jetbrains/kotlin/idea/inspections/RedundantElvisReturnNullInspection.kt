@@ -29,7 +29,7 @@ class RedundantElvisReturnNullInspection : AbstractKotlinInspection(), CleanupLo
             holder.registerProblem(
                 binaryExpression,
                 KotlinBundle.message("inspection.redundant.elvis.return.null.descriptor"),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 TextRange(binaryExpression.operationReference.startOffset, right.endOffset).shiftLeft(binaryExpression.startOffset),
                 RemoveRedundantElvisReturnNull()
             )

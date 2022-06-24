@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -23,7 +22,6 @@ class RemoveSetterParameterTypeInspection : AbstractKotlinInspection(), CleanupL
             holder.registerProblem(
                 typeReference,
                 KotlinBundle.message("redundant.setter.parameter.type"),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                 IntentionWrapper(RemoveExplicitTypeIntention())
             )
         }

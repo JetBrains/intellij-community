@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -64,7 +67,6 @@ class RedundantWithInspection : AbstractKotlinInspection(), CleanupLocalInspecti
                 holder.registerProblem(
                     callee,
                     KotlinBundle.message("inspection.redundant.with.display.name"),
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     quickfix
                 )
             }

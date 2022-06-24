@@ -1,14 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
@@ -24,9 +23,7 @@ import org.jetbrains.kotlin.types.error.ErrorUtils
 @Suppress("DEPRECATION")
 class RemoveExplicitSuperQualifierInspection : IntentionBasedInspection<KtSuperExpression>(
     RemoveExplicitSuperQualifierIntention::class
-), CleanupLocalInspectionTool {
-    override fun problemHighlightType(element: KtSuperExpression): ProblemHighlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL
-}
+), CleanupLocalInspectionTool
 
 class RemoveExplicitSuperQualifierIntention : SelfTargetingRangeIntention<KtSuperExpression>(
     KtSuperExpression::class.java,
