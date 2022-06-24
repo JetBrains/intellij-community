@@ -42,7 +42,7 @@ open class RecentProjectListActionProvider {
       createRecentProject(recentProject, duplicates, null)
     }
 
-    return ContainerUtil.concat(projectsWithoutGroups, projectGroups)
+    return ContainerUtil.concat(projectGroups, projectsWithoutGroups)
   }
 
   @JvmOverloads
