@@ -25,10 +25,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -510,7 +507,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       final PsiSubstitutor substitutor = methodCallExpression.resolveMethodGenerics().getSubstitutor();
       for (final PsiTypeParameter typeParameter : methodTypeParameters) {
         final PsiType type = substitutor.substitute(typeParameter);
-        if (type == null || PsiType.NULL.equals(type)) {
+        if (type == null || PsiType.NULL.equals(type) || !PsiTypesUtil.isDenotableType(type, methodCallExpression)) {
           return "";
         }
         typeSignature.add(type.getPresentableText());
