@@ -15,9 +15,3 @@ repositories {
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib"
 }
-compileKotlin {
-    kotlinOptions {
-        freeCompilerArgs = ["-XXLanguage:+SamConversionForKotlinFunctions", "-Xinline-classes"]
-        // Free compiler arguments
-    }
-}
