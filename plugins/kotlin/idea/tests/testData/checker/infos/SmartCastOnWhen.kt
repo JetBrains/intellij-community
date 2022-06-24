@@ -1,6 +1,5 @@
 // FIR_IDENTICAL
 
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 fun baz(s: String?): Int {
     if (s == null) return 0

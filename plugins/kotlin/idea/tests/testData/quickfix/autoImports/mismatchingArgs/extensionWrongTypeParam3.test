@@ -1,7 +1,6 @@
 // FILE: first.before.kt
 // "Import" "true"
 // ERROR: Not enough information to infer type variable T
-// COMPILER_ARGUMENTS: -XXLanguage:+NewInference
 
 package pack_one
 
@@ -18,7 +17,6 @@ fun foo() {}
 // FILE: first.after.kt
 // "Import" "true"
 // ERROR: Not enough information to infer type variable T
-// COMPILER_ARGUMENTS: -XXLanguage:+NewInference
 
 package pack_one
 
