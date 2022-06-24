@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="kotlin.base.analysis" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" exported="" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.inspections" exported="" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" exported="" />
     <orderEntry type="module" module-name="kotlin.base.facet" exported="" />
     <orderEntry type="module" module-name="kotlin.base.highlighting" exported="" />

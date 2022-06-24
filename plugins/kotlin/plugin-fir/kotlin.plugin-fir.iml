@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="kotlin.base.analysis" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.base.inspections" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.resources" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.highlighting" scope="PROVIDED" />
