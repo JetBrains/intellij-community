@@ -484,7 +484,7 @@ final class ActionUpdater {
     });
   }
 
-  private List<AnAction> expandGroupChild(AnAction child, boolean hideDisabled, UpdateStrategy strategy) {
+  private List<AnAction> expandGroupChild(AnAction child, boolean hideDisabledBase, UpdateStrategy strategy) {
     Application application = ApplicationManager.getApplication();
     if (application == null || application.isDisposed()) {
       return Collections.emptyList();
@@ -493,7 +493,7 @@ final class ActionUpdater {
     if (presentation == null) {
       return Collections.emptyList();
     }
-    else if (!presentation.isVisible() || hideDisabled && !presentation.isEnabled()) {
+    else if (!presentation.isVisible() || hideDisabledBase && !presentation.isEnabled()) {
       return Collections.emptyList();
     }
     else if (!(child instanceof ActionGroup)) {
@@ -506,10 +506,11 @@ final class ActionUpdater {
     boolean performOnly = isPopup && canBePerformed && (
       Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.SUPPRESS_SUBMENU)) ||
       child instanceof AlwaysPerformingActionGroup);
-    boolean hideEmpty = isPopup && (presentation.isHideGroupIfEmpty() || group.hideIfNoVisibleChildren());
-    boolean disableEmpty = isPopup && (presentation.isDisableGroupIfEmpty() && group.disableIfNoVisibleChildren());
-    boolean checkChildren = isPopup && (canBePerformed || hideDisabled || hideEmpty || disableEmpty) &&
-                            !(performOnly || child instanceof AlwaysVisibleActionGroup);
+    boolean skipChecks = performOnly || child instanceof AlwaysVisibleActionGroup;
+    boolean hideDisabled = isPopup && !skipChecks && hideDisabledBase;
+    boolean hideEmpty = isPopup && !skipChecks && (presentation.isHideGroupIfEmpty() || group.hideIfNoVisibleChildren());
+    boolean disableEmpty = isPopup && !skipChecks && (presentation.isDisableGroupIfEmpty() && group.disableIfNoVisibleChildren());
+    boolean checkChildren = isPopup && !skipChecks && (canBePerformed || hideDisabled || hideEmpty || disableEmpty);
 
     boolean hasEnabled = false, hasVisible = false;
     if (checkChildren) {
@@ -532,15 +533,15 @@ final class ActionUpdater {
       }
     }
 
-    if (checkChildren && (!hasEnabled && hideDisabled || !hasVisible && hideEmpty)) {
+    if (!hasEnabled && hideDisabled || !hasVisible && hideEmpty) {
       return Collections.emptyList();
     }
     else if (isPopup) {
-      return Collections.singletonList(!hideDisabled || child instanceof CompactActionGroup ? group :
+      return Collections.singletonList(!hideDisabledBase || child instanceof CompactActionGroup ? group :
                                        new EmptyAction.DelegatingCompactActionGroup(group));
     }
     else {
-      return doExpandActionGroup(group, hideDisabled || child instanceof CompactActionGroup, strategy);
+      return doExpandActionGroup(group, hideDisabledBase || child instanceof CompactActionGroup, strategy);
     }
   }
 
