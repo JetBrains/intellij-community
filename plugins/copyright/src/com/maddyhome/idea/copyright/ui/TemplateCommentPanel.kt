@@ -285,7 +285,7 @@ class TemplateCommentPanel(_fileType: FileType?,
       lineComment.isSelected = true
     }
 
-    prefixLines.isSelected = !allowBlock || options.isPrefixLines
+    prefixLines.isSelected = options.isPrefixLines
     separatorAfter.isSelected = options.isSeparateAfter
     separatorBefore.isSelected = options.isSeparateBefore
     lengthBefore.text = options.getLenBefore().toString()
@@ -320,7 +320,7 @@ class TemplateCommentPanel(_fileType: FileType?,
     // of a block comment. If there are any blank lines the replacement logic will fall apart.
     val result = LanguageOptions()
     result.isBlock = blockComment.isSelected
-    result.isPrefixLines = !allowBlock || prefixLines.isSelected
+    result.isPrefixLines = prefixLines.isSelected
     result.isSeparateAfter = separatorAfter.isSelected
     result.isSeparateBefore = separatorBefore.isSelected
     try {
@@ -414,7 +414,7 @@ class TemplateCommentPanel(_fileType: FileType?,
       borderGroup.enabled(true)
       blockComment.isEnabled = true
       lineComment.isEnabled = true
-      prefixLines.isEnabled = allowBlock
+      prefixLines.isEnabled = allowBlock && blockComment.isSelected
       separatorBefore.isEnabled = true
       separatorAfter.isEnabled = true
       lengthBefore.isEnabled = separatorBefore.isSelected
