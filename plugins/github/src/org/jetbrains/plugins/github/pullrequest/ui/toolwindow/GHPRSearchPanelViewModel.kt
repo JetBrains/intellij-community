@@ -14,7 +14,7 @@ internal class GHPRSearchPanelViewModel(
   private val repositoryDataService: GHPRRepositoryDataService,
   historyViewModel: GHPRSearchHistoryModel,
   val avatarIconsProvider: GHAvatarIconsProvider
-) : ReviewListSearchPanelViewModelBase<GHPRListSearchValue>(scope, historyViewModel, GHPRListSearchValue.DEFAULT) {
+) : ReviewListSearchPanelViewModelBase<GHPRListSearchValue>(scope, historyViewModel, GHPRListSearchValue.EMPTY, GHPRListSearchValue.DEFAULT) {
 
   override fun GHPRListSearchValue.withQuery(query: String?) = copy(searchQuery = query)
 

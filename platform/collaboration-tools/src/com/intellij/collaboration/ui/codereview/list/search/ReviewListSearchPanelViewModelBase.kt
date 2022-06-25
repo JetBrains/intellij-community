@@ -9,7 +9,8 @@ import kotlinx.coroutines.launch
 abstract class ReviewListSearchPanelViewModelBase<S : ReviewListSearchValue>(
   private val scope: CoroutineScope,
   private val historyModel: ReviewListSearchHistoryModel<S>,
-  private val defaultSearch: S
+  final override val emptySearch: S,
+  final override val defaultSearch: S
 ) : ReviewListSearchPanelViewModel<S> {
 
   final override val searchState = MutableStateFlow(historyModel.getHistory().lastOrNull() ?: defaultSearch)
@@ -18,7 +19,7 @@ abstract class ReviewListSearchPanelViewModelBase<S : ReviewListSearchValue>(
     withQuery(it)
   }
 
-  override fun getSearchHistory(): List<S> = historyModel.getHistory()
+  final override fun getSearchHistory(): List<S> = historyModel.getHistory()
 
   init {
     updateHistoryOnSearchChanges()
@@ -32,7 +33,7 @@ abstract class ReviewListSearchPanelViewModelBase<S : ReviewListSearchValue>(
           return@collectLatestWithPrevious
         }
 
-        if (new.isEmpty || new == defaultSearch) {
+        if (new.filterCount == 0 || new == defaultSearch) {
           return@collectLatestWithPrevious
         }
 

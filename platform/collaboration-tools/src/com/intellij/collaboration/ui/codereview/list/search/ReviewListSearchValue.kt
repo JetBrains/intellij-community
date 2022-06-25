@@ -3,6 +3,6 @@ package com.intellij.collaboration.ui.codereview.list.search
 
 interface ReviewListSearchValue {
   val searchQuery: String?
-  val isEmpty: Boolean
-    get() = searchQuery == null
+  val filterCount: Int
+    get() = if(searchQuery != null) 1 else 0
 }

@@ -22,7 +22,6 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -34,6 +33,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListUpdatesChecker
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
@@ -47,6 +47,7 @@ import javax.swing.event.ChangeEvent
 
 internal class GHPRListPanelFactory(private val project: Project,
                                     private val repositoryDataService: GHPRRepositoryDataService,
+                                    private val securityService: GHPRSecurityService,
                                     private val listLoader: GHPRListLoader,
                                     private val listUpdatesChecker: GHPRListUpdatesChecker,
                                     private val account: GithubAccount,
@@ -66,9 +67,9 @@ internal class GHPRListPanelFactory(private val project: Project,
       }
     }
 
-    ListEmptyTextController(scope, listLoader, searchVm.searchState, list.emptyText, disposable)
+    ListEmptyTextController(scope, listLoader, searchVm, list.emptyText, disposable)
 
-    val searchPanel = GHPRSearchPanelFactory(searchVm).create(scope)
+    val searchPanel = GHPRSearchPanelFactory(searchVm).create(scope, createQuickFilters())
 
     val outdatedStatePanel = JPanel(FlowLayout(FlowLayout.LEFT, JBUIScale.scale(5), 0)).apply {
       background = UIUtil.getPanelBackground()
@@ -111,6 +112,15 @@ internal class GHPRListPanelFactory(private val project: Project,
     }
   }
 
+  private fun createQuickFilters() = listOf(
+    GithubBundle.message("pull.request.list.filter.quick.open") to
+      GHPRListSearchValue(state = GHPRListSearchValue.State.OPEN),
+    GithubBundle.message("pull.request.list.filter.quick.yours") to
+      GHPRListSearchValue(state = GHPRListSearchValue.State.OPEN, author = securityService.currentUser.login),
+    GithubBundle.message("pull.request.list.filter.quick.assigned") to
+      GHPRListSearchValue(state = GHPRListSearchValue.State.OPEN, assignee = securityService.currentUser.login)
+  )
+
   private fun createListLoaderPanel(loader: GHListLoader<*>, list: JComponent, disposable: Disposable): JComponent {
 
     val scrollPane = ScrollPaneFactory.createScrollPane(list, true).apply {
@@ -149,13 +159,13 @@ internal class GHPRListPanelFactory(private val project: Project,
 
   private class ListEmptyTextController(scope: CoroutineScope,
                                         private val listLoader: GHListLoader<*>,
-                                        private val searchState: MutableStateFlow<GHPRListSearchValue>,
+                                        private val searchVm: GHPRSearchPanelViewModel,
                                         private val emptyText: StatusText,
                                         listenersDisposable: Disposable) {
     init {
       listLoader.addLoadingStateChangeListener(listenersDisposable, ::update)
       scope.launch {
-        searchState.collect {
+        searchVm.searchState.collect {
           update()
         }
       }
@@ -166,15 +176,15 @@ internal class GHPRListPanelFactory(private val project: Project,
       if (listLoader.loading || listLoader.error != null) return
 
 
-      val search = searchState.value
+      val search = searchVm.searchState.value
       if (search == GHPRListSearchValue.DEFAULT) {
         emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
           .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters"),
                                SimpleTextAttributes.LINK_ATTRIBUTES) {
-            searchState.update { GHPRListSearchValue.EMPTY }
+            searchVm.searchState.update { GHPRListSearchValue.EMPTY }
           }
       }
-      else if (search.isEmpty) {
+      else if (search.filterCount == 0) {
         emptyText.appendText(GithubBundle.message("pull.request.list.nothing.loaded"))
       }
       else {
@@ -182,7 +192,7 @@ internal class GHPRListPanelFactory(private val project: Project,
           .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters.to.default",
                                                     GHPRListSearchValue.DEFAULT.toQuery().toString()),
                                SimpleTextAttributes.LINK_ATTRIBUTES) {
-            searchState.update { GHPRListSearchValue.DEFAULT }
+            searchVm.searchState.update { GHPRListSearchValue.DEFAULT }
           }
       }
     }
