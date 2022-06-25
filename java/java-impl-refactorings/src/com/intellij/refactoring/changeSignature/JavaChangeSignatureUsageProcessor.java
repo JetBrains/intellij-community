@@ -182,7 +182,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       else if (usage instanceof ChangeSignatureParameterUsageInfo) {
         String newName = ((ChangeSignatureParameterUsageInfo)usage).newParameterName;
         String oldName = ((ChangeSignatureParameterUsageInfo)usage).oldParameterName;
-        processParameterUsage((PsiReferenceExpression)element, oldName, newName);
+        if (element instanceof PsiReferenceExpression) {
+          processParameterUsage((PsiReferenceExpression)element, oldName, newName);
+        }
         return true;
       }
       else if (usage instanceof RecordGetterDeclarationUsageInfo) {
