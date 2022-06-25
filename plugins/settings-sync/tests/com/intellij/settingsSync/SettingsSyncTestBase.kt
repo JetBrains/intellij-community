@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -18,6 +19,10 @@ import java.util.concurrent.TimeUnit
 internal val TIMEOUT_UNIT = TimeUnit.SECONDS
 
 internal abstract class SettingsSyncTestBase {
+
+  companion object {
+    val LOG = logger<SettingsSyncTestBase>()
+  }
 
   private val appRule = ApplicationRule()
   private val tempDirManager = TemporaryDirectory()
@@ -44,6 +49,12 @@ internal abstract class SettingsSyncTestBase {
     } else {
       MockRemoteCommunicator()
     }
+
+    val serverState = remoteCommunicator.checkServerState()
+    if (serverState != ServerState.FileNotExists) {
+      LOG.warn("Server state: $serverState")
+      remoteCommunicator.delete()
+    }
   }
 
   @After
@@ -51,6 +62,8 @@ internal abstract class SettingsSyncTestBase {
     if (::bridge.isInitialized) {
       bridge.waitForAllExecuted(10, TimeUnit.SECONDS)
     }
+
+    remoteCommunicator.delete()
   }
 
   protected fun assertSettingsPushed(build: SettingsSnapshotBuilder.() -> Unit) {
