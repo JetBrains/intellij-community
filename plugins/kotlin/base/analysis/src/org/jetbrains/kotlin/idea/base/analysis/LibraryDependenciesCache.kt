@@ -176,7 +176,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
-            invalidateKeys(libraryInfos)
+            invalidateEntries({ k, v -> k in libraryInfos || v.libraries.any { it in libraryInfos } })
         }
 
         override fun calculate(key: LibraryInfo): LibraryDependencies =
@@ -184,6 +184,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         override fun checkKeyValidity(key: LibraryInfo) {
             key.checkValidity()
+        }
+
+        override fun checkValueValidity(value: LibraryDependencies) {
+            value.libraries.forEach { it.checkValidity() }
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
@@ -239,7 +243,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             override fun map(storage: EntityStorage, entity: ModuleEntity): Module? = entity.findModule(storage)
 
             override fun entitiesChanged(outdated: List<Module>) {
-                invalidateKeys(outdated)
+                invalidateKeys(outdated) { _, _ -> false }
             }
         }
 
@@ -248,7 +252,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             invalidateEntries(
                 { _, v ->
                     v.first.any { candidate -> candidate.libraries.any { it in infos } }
-                }
+                },
+                { _, _ -> false }
             )
         }
     }
@@ -305,7 +310,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             value.forEach(Module::checkValidity)
         }
 
-        fun getModulesLibraryIsUsedIn(libraryInfo: LibraryInfo) = sequence<Module> {
+        fun getModulesLibraryIsUsedIn(libraryInfo: LibraryInfo) = sequence {
             val ideaModelInfosCache = getIdeaModelInfosCache(project)
             val libraryWrapper = libraryInfo.library.wrap()
             val modulesLibraryIsUsedIn = get(libraryWrapper)
