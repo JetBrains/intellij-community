@@ -52,7 +52,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
 
-class RecentProjectFilteringTree(
+internal class RecentProjectFilteringTree(
   treeComponent: Tree,
   parentDisposable: Disposable,
   collectors: List<() -> List<RecentProjectTreeItem>>
@@ -77,7 +77,7 @@ class RecentProjectFilteringTree(
       putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
       putClientProperty(
         RenderingUtil.CUSTOM_SELECTION_BACKGROUND,
-        Supplier { ListUiUtil.WithTallRow.background(JList<Any>(), true, true) }
+        Supplier { ListUiUtil.WithTallRow.background(JList<Any>(), isSelected = true, hasFocus = true) }
       )
 
       SmartExpander.installOn(this)
@@ -173,7 +173,7 @@ class RecentProjectFilteringTree(
   }
 
   private fun setSelectionOnLastOpenedProject() {
-    val recentProjectsManager = RecentProjectsManagerBase.instanceEx
+    val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
     val projectPath = recentProjectsManager.getLastOpenedProject() ?: return
 
     val node = TreeUtil.findNode(root, Condition {
@@ -344,7 +344,7 @@ class RecentProjectFilteringTree(
 
     private inner class RecentProjectComponent : BorderLayoutPanel() {
       private val recentProjectsManager: RecentProjectsManagerBase
-        get() = RecentProjectsManagerBase.instanceEx
+        get() = RecentProjectsManagerBase.getInstanceEx()
 
       private val projectNameLabel = JLabel()
       private val projectPathLabel = JLabel().apply {
@@ -451,7 +451,7 @@ class RecentProjectFilteringTree(
 
     private inner class CloneableProjectComponent : BorderLayoutPanel() {
       private val recentProjectsManager: RecentProjectsManagerBase
-        get() = RecentProjectsManagerBase.instanceEx
+        get() = RecentProjectsManagerBase.getInstanceEx()
 
       private val projectNameLabel = JLabel().apply {
         foreground = UIUtil.getInactiveTextColor()

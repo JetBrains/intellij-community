@@ -59,7 +59,7 @@ class CloneableProjectsService {
     }
   }
 
-  fun collectCloneableProjects(): List<CloneableProjectItem> {
+  internal fun collectCloneableProjects(): List<CloneableProjectItem> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
 
     return cloneableProjects.map { cloneableProject ->
@@ -193,23 +193,18 @@ class CloneableProjectsService {
   }
 
   interface CloneProjectListener {
-    @JvmDefault
     fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
     }
 
-    @JvmDefault
     fun onCloneRemoved() {
     }
 
-    @JvmDefault
     fun onCloneSuccess() {
     }
 
-    @JvmDefault
     fun onCloneFailed() {
     }
 
-    @JvmDefault
     fun onCloneCanceled() {
     }
   }

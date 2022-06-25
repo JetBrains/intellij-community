@@ -16,10 +16,13 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.InputEvent
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 
 /**
  * Items of recent project tree:
@@ -30,7 +33,7 @@ import java.nio.file.Paths
  * @see com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory.createWelcomeTab
  * @see com.intellij.ide.ManageRecentProjectsAction
  */
-sealed interface RecentProjectTreeItem {
+internal sealed interface RecentProjectTreeItem {
   fun displayName(): String
 
   fun children(): List<RecentProjectTreeItem>
@@ -40,7 +43,7 @@ sealed interface RecentProjectTreeItem {
   }
 }
 
-data class RecentProjectItem(
+internal data class RecentProjectItem(
   val projectPath: @SystemIndependent String,
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
@@ -50,11 +53,24 @@ data class RecentProjectItem(
 
   override fun children(): List<RecentProjectTreeItem> = emptyList()
 
+  companion object {
+    @OptIn(DelicateCoroutinesApi::class)
+    @JvmStatic
+    fun openProjectAndLogRecent(file: Path, options: OpenProjectTask, projectGroup: ProjectGroup?) {
+      GlobalScope.launch {
+        RecentProjectsManagerBase.getInstanceEx().openProject(file, options)
+        for (extension in ProjectDetector.EXTENSION_POINT_NAME.extensions) {
+          extension.logRecentProjectOpened(projectGroup)
+        }
+      }
+    }
+  }
+
   fun openProject(event: AnActionEvent) {
     // Force move focus to IdeFrame
     IdeEventQueue.getInstance().popupManager.closeAllPopups()
 
-    val file = Paths.get(projectPath).normalize()
+    val file = Path.of(projectPath).normalize()
     if (!Files.exists(file)) {
       val exitCode = Messages.showYesNoDialog(
         IdeBundle.message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(projectPath)),
@@ -81,11 +97,7 @@ data class RecentProjectItem(
       .withForceOpenInNewFrame(forceOpenInNewFrame)
       .withRunConfigurators()
 
-    RecentProjectsManagerBase.instanceEx.openProject(file, options)
-
-    for (extension in ProjectDetector.EXTENSION_POINT_NAME.extensions) {
-      extension.logRecentProjectOpened(projectGroup)
-    }
+    openProjectAndLogRecent(file, options, projectGroup)
   }
 
   fun searchName(): String {
@@ -94,13 +106,13 @@ data class RecentProjectItem(
     if (FileUtil.startsWith(path, home)) {
       path = path.substring(home.length)
     }
-    val groupName = RecentProjectsManagerBase.instanceEx.findGroup(projectPath)?.name.orEmpty()
+    val groupName = RecentProjectsManagerBase.getInstanceEx().findGroup(projectPath)?.name.orEmpty()
 
     return "$groupName $path $displayName"
   }
 }
 
-data class ProjectsGroupItem(
+internal data class ProjectsGroupItem(
   val group: ProjectGroup,
   val children: List<RecentProjectItem>
 ) : RecentProjectTreeItem {
@@ -109,7 +121,7 @@ data class ProjectsGroupItem(
   override fun children(): List<RecentProjectTreeItem> = children
 }
 
-data class CloneableProjectItem(
+internal data class CloneableProjectItem(
   val projectPath: @SystemIndependent String,
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
@@ -121,13 +133,13 @@ data class CloneableProjectItem(
 }
 
 // The root node is required for the filtering tree
-class RootItem(private val collectors: List<() -> List<RecentProjectTreeItem>>) : RecentProjectTreeItem {
+internal class RootItem(private val collectors: List<() -> List<RecentProjectTreeItem>>) : RecentProjectTreeItem {
   override fun displayName(): String = "" // Not visible in tree
 
   override fun children(): List<RecentProjectTreeItem> = collectors.flatMap { collector -> collector() }
 }
 
-object ProjectCollectors {
+internal object ProjectCollectors {
   @JvmField
   val recentProjectsCollector: () -> List<RecentProjectTreeItem> = {
     RecentProjectListActionProvider.getInstance().collectProjects()

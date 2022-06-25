@@ -138,7 +138,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
 
   val systemInfoData = CommonFeedbackSystemInfoData.getCurrentData()
 
-  val recentProjectsNumber = RecentProjectsManagerBase.instanceEx.getRecentPaths().size
+  val recentProjectsNumber = RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size
   val actionsNumber = service<ActionsLocalSummary>().getActionsStats().keys.size
 
   val emailCheckBox = JBCheckBox(LearnBundle.message("onboarding.feedback.email.consent"))

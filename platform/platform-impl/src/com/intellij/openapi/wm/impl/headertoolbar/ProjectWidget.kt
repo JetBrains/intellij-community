@@ -47,7 +47,6 @@ import kotlin.properties.Delegates
 private const val MAX_RECENT_COUNT = 100
 
 internal class ProjectWidgetFactory : MainToolbarProjectWidgetFactory {
-
   override fun createWidget(project: Project): JComponent {
     val widget = ProjectWidget(project)
     ProjectWidgetUpdater(project, widget).subscribe()
@@ -161,9 +160,6 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
   override fun dispose() {}
 
   private class ProjectWidgetRenderer(val separatorSupplier: (PopupFactoryImpl.ActionItem) -> ListSeparator?): ListCellRenderer<PopupFactoryImpl.ActionItem> {
-
-    private val recentProjectsManager = RecentProjectsManagerBase.instanceEx
-
     override fun getListCellRendererComponent(list: JList<out PopupFactoryImpl.ActionItem>?,
                                               value: PopupFactoryImpl.ActionItem?,
                                               index: Int,

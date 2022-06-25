@@ -38,13 +38,11 @@ import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.launch
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ForkJoinPool
 import javax.swing.JOptionPane
 
@@ -155,11 +153,10 @@ open class IdeStarter : ApplicationStarter {
         return
       }
       willReopenRecentProjectOnStart -> {
-        recentProjectManager.reopenLastProjectsOnStart().thenAccept { isOpened ->
-          if (!isOpened) {
-            WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
-          }
-        }.asDeferred().await()
+        val isOpened = recentProjectManager.reopenLastProjectsOnStart()
+        if (!isOpened) {
+          WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+        }
       }
       else -> {
         WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
@@ -208,13 +205,7 @@ open class IdeStarter : ApplicationStarter {
       }
 
       val recentProjectManager = RecentProjectsManager.getInstance()
-      val isOpened = (if (recentProjectManager.willReopenProjectOnStart()) {
-        recentProjectManager.reopenLastProjectsOnStart()
-      }
-      else {
-        CompletableFuture.completedFuture(true)
-      })
-        .asDeferred().await()
+      val isOpened = (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart() else true)
       if (!isOpened) {
         ApplicationManager.getApplication().invokeLater {
           LightEditService.getInstance().showEditorWindow()

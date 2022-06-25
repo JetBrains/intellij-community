@@ -1,92 +1,74 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide;
+package com.intellij.ide
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.PathUtil;
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.util.PathUtil
+import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.SystemIndependent
+import java.nio.file.Path
 
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+interface RecentProjectsManager {
+  companion object {
+    @JvmField
+    val RECENT_PROJECTS_CHANGE_TOPIC = Topic("Change of recent projects", RecentProjectsChange::class.java)
 
-public abstract class RecentProjectsManager {
-  public static final Topic<RecentProjectsChange> RECENT_PROJECTS_CHANGE_TOPIC =
-    Topic.create("Change of recent projects", RecentProjectsChange.class);
+    @JvmStatic
+    fun getInstance(): RecentProjectsManager = ApplicationManager.getApplication().getService(RecentProjectsManager::class.java)
 
-  public static RecentProjectsManager getInstance() {
-    return ApplicationManager.getApplication().getService(RecentProjectsManager.class);
+    fun fireChangeEvent() {
+      ApplicationManager.getApplication().messageBus.syncPublisher(RECENT_PROJECTS_CHANGE_TOPIC).change()
+    }
   }
 
-  public static void fireChangeEvent() {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(RECENT_PROJECTS_CHANGE_TOPIC).change();
-  }
+  // a path pointing to a directory where the last project was created or null if not available
+  var lastProjectCreationLocation: @SystemIndependent String?
 
-  public abstract @Nullable @SystemIndependent String getLastProjectCreationLocation();
-
-  public abstract void setLastProjectCreationLocation(@Nullable @SystemIndependent String lastProjectLocation);
-
-  public void setLastProjectCreationLocation(@Nullable Path value) {
-    if (value == null) {
-      setLastProjectCreationLocation((String)null);
+  fun setLastProjectCreationLocation(value: Path?) {
+    lastProjectCreationLocation = if (value == null) {
+      null
     }
     else {
-      setLastProjectCreationLocation(PathUtil.toSystemIndependentName(value.toString()));
+      PathUtil.toSystemIndependentName(value.toString())
     }
   }
 
-  public abstract void updateLastProjectPath();
+  fun updateLastProjectPath()
 
-  public abstract void removePath(@NotNull @SystemIndependent String path);
+  fun removePath(path: @SystemIndependent String)
 
-  /**
-   * @deprecated Use {@link RecentProjectListActionProvider#getActions}
-   */
-  @Deprecated
-  public abstract AnAction @NotNull [] getRecentProjectsActions(boolean addClearListItem);
+  @Deprecated("Use {@link RecentProjectListActionProvider#getActions}")
+  fun getRecentProjectsActions(addClearListItem: Boolean): Array<AnAction>
 
-  /**
-   * @deprecated Use {@link RecentProjectListActionProvider#getActions}
-   */
-  @Deprecated(forRemoval = true)
-  public AnAction @NotNull [] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
-    return getRecentProjectsActions(addClearListItem);
+  @Deprecated("Use {@link RecentProjectListActionProvider#getActions}")
+  fun getRecentProjectsActions(addClearListItem: Boolean, useGroups: Boolean): Array<AnAction> {
+    return getRecentProjectsActions(addClearListItem)
   }
 
-  @NotNull
-  public List<ProjectGroup> getGroups() {
-    return Collections.emptyList();
+  val groups: List<ProjectGroup>
+    get() = emptyList()
+
+  fun addGroup(group: ProjectGroup) {}
+
+  fun removeGroup(group: ProjectGroup) {}
+
+  fun moveProjectToGroup(projectPath: String, to: ProjectGroup) {}
+
+  fun removeProjectFromGroup(projectPath: String, from: ProjectGroup) {}
+
+  fun hasPath(path: @SystemIndependent String?): Boolean {
+    return false
   }
 
-  public void addGroup(@NotNull ProjectGroup group) {
-  }
-
-  public void removeGroup(@NotNull ProjectGroup group) {
-  }
-
-  public void moveProjectToGroup(@NotNull String projectPath, @NotNull ProjectGroup to) {
-  }
-
-  public void removeProjectFromGroup(@NotNull String projectPath, @NotNull ProjectGroup from) {
-  }
-
-  public boolean hasPath(@SystemIndependent String path) {
-    return false;
-  }
-
-  public abstract boolean willReopenProjectOnStart();
+  fun willReopenProjectOnStart(): Boolean
 
   @ApiStatus.Internal
-  public abstract CompletableFuture<Boolean> reopenLastProjectsOnStart();
+  suspend fun reopenLastProjectsOnStart(): Boolean
 
-  public abstract @NotNull String suggestNewProjectLocation();
+  fun suggestNewProjectLocation(): String
 
-  public interface RecentProjectsChange {
-    void change();
+  interface RecentProjectsChange {
+    fun change()
   }
 }

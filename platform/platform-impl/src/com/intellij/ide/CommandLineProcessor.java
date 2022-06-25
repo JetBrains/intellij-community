@@ -38,6 +38,11 @@ import com.intellij.pom.Navigatable;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
+import kotlinx.coroutines.CoroutineStart;
+import kotlinx.coroutines.GlobalScope;
+import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +98,10 @@ public final class CommandLineProcessor {
     Project[] projects = tempProject ? new Project[0] : ProjectUtilCore.getOpenProjects();
     if (!tempProject && projects.length == 0 && PlatformUtils.isDataGrip()) {
       RecentProjectsManager recentProjectManager = RecentProjectsManager.getInstance();
-      if (recentProjectManager.willReopenProjectOnStart() && recentProjectManager.reopenLastProjectsOnStart().join()) {
+      if (recentProjectManager.willReopenProjectOnStart() && FutureKt.<Boolean>asCompletableFuture(
+        BuildersKt.async(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
+          return recentProjectManager.reopenLastProjectsOnStart(continuation);
+        })).join()) {
         projects = ProjectUtilCore.getOpenProjects();
       }
     }

@@ -92,7 +92,7 @@ internal class RecentProjectIconHelper {
 
     @JvmStatic
     fun generateProjectIcon(path: @SystemIndependent String): Icon {
-      val projectManager = RecentProjectsManagerBase.instanceEx
+      val projectManager = RecentProjectsManagerBase.getInstanceEx()
       val displayName = projectManager.getDisplayName(path)
       val name = when {
         displayName == null -> projectManager.getProjectName(path)

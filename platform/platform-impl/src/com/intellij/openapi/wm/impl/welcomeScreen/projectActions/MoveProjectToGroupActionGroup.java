@@ -29,7 +29,7 @@ public final class MoveProjectToGroupActionGroup extends DefaultActionGroup impl
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    RecentProjectTreeItem item = RecentProjectsWelcomeScreenActionBase.getSelectedItem(e);
+    RecentProjectTreeItem item = RecentProjectsWelcomeScreenActionBase.Companion.getSelectedItem$intellij_platform_ide_impl(e);
 
     if (item instanceof RecentProjectItem || item instanceof CloneableProjectItem) {
       removeAll();

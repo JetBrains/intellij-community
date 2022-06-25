@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
@@ -60,7 +60,7 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
     return !PlatformUtils.isDataSpell();
   }
 
-  private static class ProjectsTab extends TabbedWelcomeScreen.DefaultWelcomeScreenTab {
+  private static final class ProjectsTab extends TabbedWelcomeScreen.DefaultWelcomeScreenTab {
     private final @NotNull Wrapper wrapper = new Wrapper();
     private final @NotNull Disposable parentDisposable;
     private final @NotNull JComponent recentProjectsPanel;
@@ -78,6 +78,18 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
 
       MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
       connect.subscribe(CloneableProjectsService.TOPIC, new CloneableProjectsService.CloneProjectListener() {
+        @Override
+        public void onCloneCanceled() {
+        }
+
+        @Override
+        public void onCloneFailed() {
+        }
+
+        @Override
+        public void onCloneSuccess() {
+        }
+
         @Override
         public void onCloneAdded(@NotNull ProgressIndicatorEx progressIndicator, @NotNull TaskInfo taskInfo) {
           checkState();
@@ -123,8 +135,9 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
     }
 
     private static @NotNull PanelState getCurrentState() {
-      List<RecentProjectTreeItem> recentProjects = RecentProjectListActionProvider.getInstance().collectProjects(true);
-      return !recentProjects.isEmpty() || CloneableProjectsService.getInstance().isCloneActive()
+      List<RecentProjectTreeItem> recentProjects = RecentProjectListActionProvider.getInstance().collectProjects$intellij_platform_ide_impl(true);
+      return !recentProjects.isEmpty() || CloneableProjectsService.getInstance().collectCloneableProjects$intellij_platform_ide_impl()
+        .isEmpty()
              ? PanelState.NOT_EMPTY
              : PanelState.EMPTY;
     }

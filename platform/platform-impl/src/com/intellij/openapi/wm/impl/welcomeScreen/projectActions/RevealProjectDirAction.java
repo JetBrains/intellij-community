@@ -15,14 +15,14 @@ import java.io.File;
 /**
  * @author Konstantin Bulenkov
  */
-public class RevealProjectDirAction extends DumbAwareAction implements LightEditCompatible {
+public final class RevealProjectDirAction extends DumbAwareAction implements LightEditCompatible {
   public RevealProjectDirAction() {
     super(RevealFileAction.getActionName());
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    RecentProjectItem item = (RecentProjectItem)RecentProjectsWelcomeScreenActionBase.getSelectedItem(e);
+    RecentProjectItem item = (RecentProjectItem)RecentProjectsWelcomeScreenActionBase.Companion.getSelectedItem$intellij_platform_ide_impl(e);
     assert item != null;
     String path = item.getProjectPath();
     RevealFileAction.selectDirectory(new File(path));
@@ -35,7 +35,7 @@ public class RevealProjectDirAction extends DumbAwareAction implements LightEdit
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    RecentProjectTreeItem item = RecentProjectsWelcomeScreenActionBase.getSelectedItem(e);
+    RecentProjectTreeItem item = RecentProjectsWelcomeScreenActionBase.Companion.getSelectedItem$intellij_platform_ide_impl(e);
     e.getPresentation().setEnabledAndVisible(item instanceof RecentProjectItem);
   }
 }

@@ -40,8 +40,6 @@ import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -53,6 +51,7 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Anton Katilin
@@ -501,9 +500,9 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @Override
-  public @NotNull Promise<?> toggleFullScreen(boolean state) {
+  public @NotNull CompletableFuture<?> toggleFullScreen(boolean state) {
     if (temporaryFixForIdea156004(state) || myFrameDecorator == null) {
-      return Promises.resolvedPromise();
+      return CompletableFuture.completedFuture(null);
     }
     else {
       return myFrameDecorator.toggleFullScreen(state);
