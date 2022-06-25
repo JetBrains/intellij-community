@@ -10,7 +10,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.text
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.IcsBundle
 import org.jetbrains.settingsRepository.createMergeActions
@@ -25,13 +27,16 @@ internal class ConfigureIcsAction : DumbAwareAction() {
         var urlTextField: TextFieldWithBrowseButton by Delegates.notNull()
         val panel = panel {
           row(icsMessage("settings.upstream.url")) {
-            urlTextField = textFieldWithBrowseButton(value = icsManager.repositoryManager.getUpstream(),
-                                                     browseDialogTitle = icsMessage("configure.ics.choose.local.repository.dialog.title"),
-                                                     fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()).component
+            urlTextField = textFieldWithBrowseButton(browseDialogTitle = icsMessage("configure.ics.choose.local.repository.dialog.title"),
+                                                     fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
+              .text(icsManager.repositoryManager.getUpstream() ?: "")
+              .horizontalAlign(HorizontalAlign.FILL)
+              .component
           }
-
-          noteRow(IcsBundle.message("message.see.help.pages.for.more.info",
-                                    "https://www.jetbrains.com/help/idea/sharing-your-ide-settings.html#settings-repository"))
+          row {
+            comment(IcsBundle.message("message.see.help.pages.for.more.info",
+                                      "https://www.jetbrains.com/help/idea/sharing-your-ide-settings.html#settings-repository"))
+          }
         }
         dialog(title = icsMessage("settings.panel.title"),
                panel = panel,
