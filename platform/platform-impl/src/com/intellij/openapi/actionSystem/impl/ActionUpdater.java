@@ -149,7 +149,7 @@ final class ActionUpdater {
   }
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
-    String operationName = action.getClass().getSimpleName() + "#" + operation + " (" + action.getClass().getName() + ", " + myPlace + ")";
+    String operationName = Utils.operationName(action, operation.name() + "@" + myPlace);
     return callAction(operationName, action.getActionUpdateThread(), call);
   }
 
@@ -539,7 +539,7 @@ final class ActionUpdater {
     }
     else if (isPopup) {
       return Collections.singletonList(!hideDisabledBase || child instanceof CompactActionGroup ? group :
-                                       new EmptyAction.DelegatingCompactActionGroup(group));
+                                       new Compact(group));
     }
     else {
       return doExpandActionGroup(group, hideDisabledBase || child instanceof CompactActionGroup, strategy);
@@ -754,6 +754,13 @@ final class ActionUpdater {
                                   @NotNull ActionUpdateThread updateThread,
                                   @NotNull Supplier<? extends T> supplier) {
       return updater.callAction(operationName, updateThread, supplier);
+    }
+  }
+
+  private static class Compact extends ActionGroupWrapper implements CompactActionGroup {
+
+    Compact(@NotNull ActionGroup action) {
+      super(action);
     }
   }
 }

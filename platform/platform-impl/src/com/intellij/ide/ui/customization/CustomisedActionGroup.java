@@ -9,8 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class CustomisedActionGroup extends ActionGroup {
-  private final ActionGroup myGroup;
+public class CustomisedActionGroup extends ActionGroupWrapper {
   private AnAction[] myChildren;
   private final CustomActionsSchema mySchema;
   private final String myDefaultGroupName;
@@ -24,22 +23,18 @@ public class CustomisedActionGroup extends ActionGroup {
                                CustomActionsSchema schema,
                                String defaultGroupName,
                                String name) {
+    super((group));
     copyFrom(group);
     getTemplatePresentation().setText(shortName);
 
-    myGroup = group;
     mySchema = schema;
     myDefaultGroupName = defaultGroupName;
     myRootGroupName = name;
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return myGroup.getActionUpdateThread();
-  }
-
-  @Override
   public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
+    ActionGroup myGroup = getDelegate();
     int currentSchemaStamp = CustomActionsSchema.getInstance().getModificationStamp();
     int currentGroupStamp = myGroup instanceof DefaultActionGroup ? ((DefaultActionGroup)myGroup).getModificationStamp() : -1;
     if (mySchemeModificationStamp < currentSchemaStamp || myGroupModificationStamp < currentGroupStamp || ArrayUtil.isEmpty(myChildren) ||
@@ -51,38 +46,15 @@ public class CustomisedActionGroup extends ActionGroup {
     return myChildren;
   }
 
-  @Override
-  public boolean isPopup() {
-    return myGroup.isPopup();
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    myGroup.update(e);
-  }
-
-  @Override
-  public boolean isDumbAware() {
-    return myGroup.isDumbAware();
-  }
-
-  @Override
-  public boolean canBePerformed(@NotNull DataContext context) {
-    return myGroup.canBePerformed(context);
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    myGroup.actionPerformed(e);
-  }
-
   @Nullable
   public AnAction getFirstAction() {
     final AnAction[] children = getChildren(null);
     return children.length > 0 ? children[0] : null;
   }
 
-  public ActionGroup getOrigin() { return myGroup; }
+  /** Use {@link #getDelegate()} instead */
+  @Deprecated
+  public @NotNull ActionGroup getOrigin() { return getDelegate(); }
 
   public void resetChildren() {
     myChildren = null;
