@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +35,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 @IntellijInternalApi
-public class UiInspectorAction extends UiMouseAction implements LightEditCompatible, ActionPromoter {
-
+public final class UiInspectorAction extends UiMouseAction implements LightEditCompatible, ActionPromoter {
   private static final String ACTION_ID = "UiInspector";
   public static final String RENDERER_BOUNDS = "clicked renderer";
 
@@ -48,7 +48,7 @@ public class UiInspectorAction extends UiMouseAction implements LightEditCompati
   public static synchronized void initGlobalInspector() {
     if (!ourGlobalInstanceInitialized) {
       ourGlobalInstanceInitialized = true;
-      UIUtil.invokeLaterIfNeeded(() -> {
+      EdtInvocationManager.invokeLaterIfNeeded(() -> {
         new UiInspector(null);
       });
     }
