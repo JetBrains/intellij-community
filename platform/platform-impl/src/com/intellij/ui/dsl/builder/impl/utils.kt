@@ -89,13 +89,21 @@ internal fun prepareVisualPaddings(component: JComponent): Gaps {
   var customVisualPaddings = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS) as? Gaps
 
   if (customVisualPaddings == null) {
+    // todo Move into components implementation
     // Patch visual paddings for known components
     customVisualPaddings = when (component) {
       is RawCommandLineEditor -> component.editorField.insets.toGaps()
       is SearchTextField -> component.textEditor.insets.toGaps()
       is JScrollPane -> Gaps.EMPTY
       is ComponentWithBrowseButton<*> -> component.childComponent.insets.toGaps()
-      else -> null
+      else -> {
+        if (component.getClientProperty(ToolbarDecorator.DECORATOR_KEY) != null) {
+          Gaps.EMPTY
+        }
+        else {
+          null
+        }
+      }
     }
   }
 
