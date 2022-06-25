@@ -380,15 +380,17 @@ public final class Utils {
       AnAction action = list.get(i);
       Presentation presentation = presentationFactory.getPresentation(action);
       if (!presentation.isVisible()) {
-        LOG.error("Invisible menu item for '" + action + "' (" + action.getClass() + ") in '" + place + "'");
+        String operationName = operationName(action, null);
+        LOG.error("Invisible menu item for " + operationName + " in '" + place + "'");
         continue;
       }
       else if (!(action instanceof Separator) && StringUtil.isEmpty(presentation.getText())) {
-        String message = "Empty menu item for '" + action + "' (" + action.getClass() + ") in '" + place + "'";
-        if (action.getTemplatePresentation().getText() == null) {
-          message += ". Please specify some default action text in plugin.xml or action constructor";
+        String operationName = operationName(action, null);
+        String message = "Empty menu item text for " + operationName + " in '" + place + "'";
+        if (StringUtil.isEmpty(action.getTemplatePresentation().getText())) {
+          message += ". The default action text must be specified in plugin.xml or its class constructor";
         }
-        LOG.warn(message);
+        LOG.error(message);
         continue;
       }
       if (multiChoice && action instanceof Toggleable) {
@@ -452,6 +454,15 @@ public final class Utils {
         }
       }
     }
+  }
+
+  public static @NotNull String operationName(@NotNull AnAction action, @Nullable String op) {
+    Class<?> c = action.getClass();
+    StringBuilder wrappers = new StringBuilder(0);
+    for (Object x = action; x instanceof ActionWithDelegate; x = ((ActionWithDelegate<?>)x).getDelegate(), c = x.getClass()) {
+      wrappers.append(c.getSimpleName()).append("/");
+    }
+    return c.getSimpleName() + (StringUtil.isEmpty(op) ? "" : "#" + op) + " (" + wrappers + c.getName() + ")";
   }
 
   public static boolean isMultiChoiceGroup(@NotNull ActionGroup actionGroup) {

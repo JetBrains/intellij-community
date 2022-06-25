@@ -83,127 +83,21 @@ public final class EmptyAction extends AnAction {
            new MyDelegatingAction(action);
   }
 
-  public static class MyDelegatingAction extends AnAction
-    implements ActionWithDelegate<AnAction>, PerformWithDocumentsCommitted {
-    @NotNull private final AnAction myDelegate;
-
+  /** @deprecated Use {@link AnActionWrapper} instead. */
+  @Deprecated
+  public static class MyDelegatingAction extends AnActionWrapper {
     public MyDelegatingAction(@NotNull AnAction action) {
-      myDelegate = action;
-      copyFrom(action);
-      setEnabledInModalContext(action.isEnabledInModalContext());
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-      myDelegate.update(e);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
-      myDelegate.actionPerformed(e);
-    }
-
-    @Override
-    public boolean isDumbAware() {
-      return myDelegate.isDumbAware();
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return myDelegate.getActionUpdateThread();
-    }
-
-    @Override
-    public boolean isPerformWithDocumentsCommitted() {
-      return PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(myDelegate);
-    }
-
-    @Override
-    public boolean isInInjectedContext() {
-      return myDelegate.isInInjectedContext();
-    }
-
-    @NotNull
-    @Override
-    public AnAction getDelegate() {
-      return myDelegate;
-    }
-  }
-
-  public static class MyDelegatingActionGroup extends ActionGroup
-    implements PerformWithDocumentsCommitted {
-    @NotNull private final ActionGroup myDelegate;
-
-    public MyDelegatingActionGroup(@NotNull ActionGroup action) {
-      myDelegate = action;
-      copyFrom(action);
-      setEnabledInModalContext(action.isEnabledInModalContext());
-    }
-
-    @NotNull
-    public ActionGroup getDelegate() {
-      return myDelegate;
-    }
-
-    @Override
-    public boolean isPopup() {
-      return myDelegate.isPopup();
-    }
-
-    @Override
-    public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
-      return myDelegate.getChildren(e);
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-      myDelegate.update(e);
-    }
-
-    @Override
-    public boolean canBePerformed(@NotNull DataContext context) {
-      return myDelegate.canBePerformed(context);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
-      myDelegate.actionPerformed(e);
-    }
-
-    @Override
-    public boolean isDumbAware() {
-      return myDelegate.isDumbAware();
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return myDelegate.getActionUpdateThread();
-    }
-
-    @Override
-    public boolean isPerformWithDocumentsCommitted() {
-      return PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(myDelegate);
-    }
-
-    @Override
-    public boolean isInInjectedContext() {
-      return myDelegate.isInInjectedContext();
-    }
-
-    @Override
-    public boolean hideIfNoVisibleChildren() {
-      return myDelegate.hideIfNoVisibleChildren();
-    }
-
-    @Override
-    public boolean disableIfNoVisibleChildren() {
-      return myDelegate.disableIfNoVisibleChildren();
-    }
-  }
-
-  public static class DelegatingCompactActionGroup extends MyDelegatingActionGroup implements CompactActionGroup {
-    public DelegatingCompactActionGroup(@NotNull ActionGroup action) {
       super(action);
     }
+  }
+
+  /** @deprecated Use {@link ActionGroupWrapper} instead. */
+  @Deprecated
+  public static class MyDelegatingActionGroup extends ActionGroupWrapper {
+
+    public MyDelegatingActionGroup(@NotNull ActionGroup group) {
+      super(group);
+    }
+
   }
 }
