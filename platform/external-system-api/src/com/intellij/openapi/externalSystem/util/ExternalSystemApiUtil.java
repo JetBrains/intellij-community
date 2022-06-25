@@ -713,6 +713,15 @@ public final class ExternalSystemApiUtil {
     return projectInfo.getExternalProjectStructure();
   }
 
+  public static @Nullable DataNode<ProjectData> findProjectNode(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull String projectPath
+  ) {
+    ExternalProjectInfo projectInfo = findProjectInfo(project, systemId, projectPath);
+    if (projectInfo == null) return null;
+    return projectInfo.getExternalProjectStructure();
+  }
   @ApiStatus.Experimental
   public static @Nullable ExternalProjectInfo findProjectInfo(@NotNull Project project,
                                                               @NotNull ProjectSystemId systemId,

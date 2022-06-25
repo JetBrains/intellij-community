@@ -2003,4 +2003,11 @@ def foo() {
 }
 """, "java.util.Collection<java.lang.Integer>"
   }
+
+  void 'test boxing on nullable receiver'() {
+    doTest """
+def xx = ""?.length()
+x<caret>x
+""", "java.lang.Integer"
+  }
 }

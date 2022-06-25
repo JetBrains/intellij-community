@@ -1344,6 +1344,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       Dimension pSize = p.getSize();
       if (myOrientation == SwingConstants.HORIZONTAL && pSize.height - availSize.height > 8 ||
           myOrientation == SwingConstants.VERTICAL && pSize.width - availSize.width > 8) {
+        if (availSize.width == 0 && availSize.height == 0) result = p;
         break;
       }
       result = p;

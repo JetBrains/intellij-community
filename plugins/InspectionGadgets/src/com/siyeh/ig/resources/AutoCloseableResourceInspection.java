@@ -62,7 +62,9 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
                   "java.io.StringReader",
                   "java.util.Formatter",
                   "java.util.Scanner",
-                  "org.springframework.context.ConfigurableApplicationContext");
+                  "org.springframework.context.ConfigurableApplicationContext",
+                  "io.micronaut.context.ApplicationContext");
+
   protected final MethodMatcher myMethodMatcher;
   final List<String> ignoredTypes = new ArrayList<>(DEFAULT_IGNORED_TYPES);
   @SuppressWarnings("PublicField")

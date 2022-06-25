@@ -1118,11 +1118,14 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project1", "project.project1.main", "project.project1.test",
                   "project.project2", "project.project2.main", "project.project2.test");
 
-    assertModuleOutput("project.project1.main", getProjectPath() + "/project1/buildIdea/main", "");
-    assertModuleOutput("project.project1.test", "", getProjectPath() + "/project1/buildIdea/test");
+    String mainClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/main" : "/build/classes/main";
+    String testClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/test" : "/build/classes/test";
 
-    assertModuleOutput("project.project2.main", getProjectPath() + "/project2/buildIdea/main", "");
-    assertModuleOutput("project.project2.test", "", getProjectPath() + "/project2/buildIdea/test");
+    assertModuleOutput("project.project1.main", getProjectPath() + "/project1" + mainClassesOutputPath, "");
+    assertModuleOutput("project.project1.test", "", getProjectPath() + "/project1" + testClassesOutputPath);
+
+    assertModuleOutput("project.project2.main", getProjectPath() + "/project2" + mainClassesOutputPath, "");
+    assertModuleOutput("project.project2.test", "", getProjectPath() + "/project2" + testClassesOutputPath);
 
     assertModuleModuleDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
     assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.test");

@@ -194,9 +194,17 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertDefaultGradleJavaProjectFolders("project");
 
-    assertModuleOutput("project.main", getProjectPath() + "/build", "");
+    String mainClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/main" : "/build/classes/main";
+    assertModuleOutput("project.main", getProjectPath() + mainClassesOutputPath, "");
     String testClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/test" : "/build/classes/test";
     assertModuleOutput("project.test", "", getProjectPath() + testClassesOutputPath);
+
+    getCurrentExternalProjectSettings().setDelegatedBuild(false);
+    GradleSettings.getInstance(myProject).getPublisher().onBuildDelegationChange(false, getProjectPath());
+    assertModuleOutput("project.main", getProjectPath() + "/build", "");
+    assertModuleOutput("project.test", "", getProjectPath() + "/out/test/classes");
+
+    getCurrentExternalProjectSettings().setDelegatedBuild(true);
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project");

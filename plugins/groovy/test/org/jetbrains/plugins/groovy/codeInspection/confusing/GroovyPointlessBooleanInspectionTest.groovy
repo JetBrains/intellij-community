@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -32,6 +32,11 @@ class GroovyPointlessBooleanInspectionTest extends GroovyLatestTest implements H
   void 'triple-negation unary'() {
     doTest($/!<caret><warning descr="Redundant boolean operations">!!false</warning>/$, '!false')
     doTest($/!<caret><warning descr="Redundant boolean operations">!!true</warning>/$, '!true')
+  }
+
+  @Test
+  void 'non-primitive type'() {
+    highlightingTest('Boolean x = null; x == true')
   }
 
   private void doTest(String before, String after) {

@@ -9,14 +9,6 @@ import org.jetbrains.annotations.SystemIndependent;
 import java.io.File;
 import java.nio.file.Path;
 
-/**
- * To be used in async Project initialization tasks to add files silently,
- * preventing triggering of 'add new files to vcs' notifications/dialogs
- * by {@link com.intellij.openapi.vcs.VcsVFSListener}.
- *
- * @see GitRepositoryInitializer
- * @see com.intellij.openapi.vcs.VcsFileListenerContextHelper
- */
 @ApiStatus.Internal
 public interface GitSilentFileAdder {
   /**
@@ -34,9 +26,9 @@ public interface GitSilentFileAdder {
   void markFileForAdding(@NotNull Path path, boolean isDirectory);
 
   /**
-   * Notify that marked files can be added on pooled thread.
+   * Notify that marked files can be scheduled for addition to VCS.
    * <p>
-   * Should be called after explicit VFS refresh if files are added externally (ex: using NIO).
+   * Method should be called after an explicit synchronous VFS refresh if files are added externally (ex: using NIO, by an external command, etc).
    */
   void finish();
 

@@ -65,7 +65,14 @@ public final class OSAgnosticPathUtil {
   }
 
   public static boolean isAbsoluteDosPath(@NotNull String path) {
-    return path.length() > 2 && path.charAt(1) == ':' && isSlash(path.charAt(2)) && isDriveLetter(path.charAt(0));
+    return path.length() > 2 && startsWithWindowsDrive(path) && isSlash(path.charAt(2));
+  }
+
+  /**
+   * @return true when the path starts with a drive letter followed by colon, e.g., "C:"
+   */
+  public static boolean startsWithWindowsDrive(@NotNull String path) {
+    return path.length() >= 2 && path.charAt(1) == ':' && isDriveLetter(path.charAt(0));
   }
 
   public static boolean isUncPath(@NotNull String path) {

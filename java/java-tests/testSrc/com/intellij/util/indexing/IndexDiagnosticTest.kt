@@ -10,6 +10,7 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import org.junit.Assert
@@ -73,7 +74,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
         projectName = "projectName",
         times = JsonProjectIndexingHistoryTimes(
           "reason",
-          false,
+          ScanningType.PARTIAL,
           JsonDuration(123),
           JsonDuration(456),
           JsonDuration(789),

@@ -15,6 +15,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -158,21 +159,19 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testDeleteSubstRoots() {
     IoTestUtil.assumeWindows();
+    Ref<VirtualFile> subst = new Ref<>();
+    Ref<String> substPath = new Ref<>();
 
-    File substRoot = IoTestUtil.createSubst(tempDirectory.getRoot().getPath());
-    VirtualFile subst;
-    try {
-      subst = refreshAndFind(substRoot);
+    IoTestUtil.performTestOnWindowsSubst(tempDirectory.getRoot().getPath(), substRoot -> {
+      substPath.set(substRoot.getPath());
+      subst.set(refreshAndFind(substRoot));
       assertNotNull(substRoot.listFiles());
-    }
-    finally {
-      IoTestUtil.deleteSubst(substRoot.getPath());
-    }
-    subst.refresh(false, true);
+    });
+    subst.get().refresh(false, true);
 
     VirtualFile[] roots = PersistentFS.getInstance().getRoots(LocalFileSystem.getInstance());
     for (VirtualFile root : roots) {
-      String prefix = StringUtil.commonPrefix(root.getPath(), substRoot.getPath());
+      String prefix = StringUtil.commonPrefix(root.getPath(), substPath.get());
       assertTrue(prefix, prefix.isEmpty());
     }
   }

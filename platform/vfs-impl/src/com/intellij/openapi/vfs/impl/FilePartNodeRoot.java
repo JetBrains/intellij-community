@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
@@ -138,27 +139,27 @@ final class FilePartNodeRoot extends FilePartNode {
   @NotNull
   NodeToUpdate findOrCreateByPath(@NotNull String path, @NotNull NewVirtualFileSystem fs) {
     NewVirtualFileSystem currentFS;
-    boolean jarSuffix;
+    String relativePathInsideJar;
     if (fs instanceof ArchiveFileSystem) {
       currentFS = LocalFileSystem.getInstance();
-      // strip trailing "!/" because LocalVirtualFileSystem.normalize() are afraid of them and strip them out
-      if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-        path = path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length());
-        jarSuffix = true;
+      int i = path.lastIndexOf(JarFileSystem.JAR_SEPARATOR);
+      // strip everything after "!/" and after extractRootFromPath() append it back,
+      // because LocalVirtualFileSystem.normalize() is afraid of these jar separators and tries to absolutize them incorrectly (e.g. "C:!/foo" -> "C:idea/bin/!/foo")
+      if (i == -1) {
+        relativePathInsideJar = JarFileSystem.JAR_SEPARATOR;
       }
       else {
-        jarSuffix = false;
+        relativePathInsideJar = path.substring(i);
+        path = path.substring(0, i);
       }
     }
     else {
       currentFS = fs;
-      jarSuffix = false;
+      relativePathInsideJar = "";
     }
     Pair<NewVirtualFile, String> pair = VfsImplUtil.extractRootFromPath(currentFS, path);
     String pathFromRoot = pair == null ? path : pair.second;
-    if (jarSuffix) {
-      pathFromRoot += JarFileSystem.JAR_SEPARATOR;
-    }
+    pathFromRoot += relativePathInsideJar;
     List<String> names = splitNames(pathFromRoot);
     NewVirtualFile fsRoot = pair == null ? null : pair.first;
 
@@ -283,16 +284,16 @@ final class FilePartNodeRoot extends FilePartNode {
     if (end == 0) return Collections.emptyList();
     List<String> names = new ArrayList<>(Math.max(20, end/4)); // path length -> path height approximation
     while (true) {
-      boolean isJarSeparator = StringUtil.endsWith(path, 0, end, JarFileSystem.JAR_SEPARATOR) && end > 2 && path.charAt(end - 3) != '/';
+      boolean isJarSeparator = StringUtil.endsWith(path, 0, end, JarFileSystem.JAR_SEPARATOR)
+                               && (end == 2 && SystemInfo.isWindows || end > 2 && path.charAt(end - 3) != '/');
       if (isJarSeparator) {
         names.add(JarFileSystem.JAR_SEPARATOR);
         end -= 2;
-        continue;
       }
-      if (path.charAt(end-1) == '/') {
+      if (end != 0 && path.charAt(end-1) == '/') {
         end--;
       }
-      if (end == 0 && path.charAt(0) == '/') {
+      if (end == 0) {
         break; // here's separator between non-empty root (e.g. on Windows) and path's tail
       }
       int startIndex = extractName(path, end);
@@ -321,8 +322,8 @@ final class FilePartNodeRoot extends FilePartNode {
   }
 
   // returns start index of the name (i.e. path[return..length) is considered a name)
-  private static int extractName(@NotNull CharSequence path, int length) {
-    int i = StringUtil.lastIndexOf(path, '/', 0, length);
+  private static int extractName(@NotNull CharSequence path, int endOffset) {
+    int i = StringUtil.lastIndexOf(path, '/', 0, endOffset);
     if (i != -1 && PathUtilRt.isWindowsUNCRoot(path, i)) {
       // UNC
       return 0;
