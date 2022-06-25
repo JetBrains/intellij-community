@@ -1,73 +1,64 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.project.ex;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.project.ex
 
-import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.nio.file.Path
 
-import java.nio.file.Path;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+abstract class ProjectManagerEx : ProjectManager() {
+  companion object {
+    @JvmStatic
+    fun getInstanceEx(): ProjectManagerEx = ApplicationManager.getApplication().getService(ProjectManager::class.java) as ProjectManagerEx
 
-public abstract class ProjectManagerEx extends ProjectManager {
-  public static ProjectManagerEx getInstanceEx() {
-    return (ProjectManagerEx)ApplicationManager.getApplication().getService(ProjectManager.class);
+    @JvmStatic
+    fun getInstanceExIfCreated(): ProjectManagerEx? = getInstanceIfCreated() as ProjectManagerEx?
   }
 
-  public static @Nullable ProjectManagerEx getInstanceExIfCreated() {
-    return (ProjectManagerEx)ProjectManager.getInstanceIfCreated();
-  }
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Use {@link #newProject(Path, OpenProjectTask)}")
+  abstract fun newProject(projectName: String?, filePath: String, useDefaultProjectSettings: Boolean, isDummy: Boolean): Project?
 
-  /**
-   * @deprecated Use {@link #newProject(Path, OpenProjectTask)}
-   */
-  @Deprecated
-  public abstract @Nullable Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
-
-  /**
-   * @deprecated Pass {@code projectName} using {@link OpenProjectTask#projectName}.
-   */
-  @Deprecated(forRemoval = true)
-  public final @Nullable Project newProject(@NotNull Path file, @Nullable String projectName, @NotNull OpenProjectTask options) {
-    return newProject(file, projectName == null ? options : options.withProjectName(projectName));
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Pass {@code projectName} using {@link OpenProjectTask#projectName}.")
+  fun newProject(file: Path, projectName: String?, options: OpenProjectTask): Project? {
+    return newProject(file, if (projectName == null) options else options.withProjectName(projectName))
   }
 
   /**
    * Creates project but not open it. Use this method only in a test mode or special cases like new project wizard.
    */
-  public abstract @Nullable Project newProject(@NotNull Path file, @NotNull OpenProjectTask options);
+  abstract fun newProject(file: Path, options: OpenProjectTask): Project?
 
-  public abstract @Nullable Project openProject(@NotNull Path projectStoreBaseDir, @NotNull OpenProjectTask options);
+  abstract fun openProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project?
 
-  public abstract @NotNull CompletableFuture<@Nullable Project> openProjectAsync(@NotNull Path projectStoreBaseDir, @NotNull OpenProjectTask options);
+  abstract suspend fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask): Project?
 
-  public abstract @NotNull Project loadProject(@NotNull Path path);
+  abstract fun loadProject(path: Path): Project
 
-  public abstract boolean openProject(@NotNull Project project);
+  abstract fun openProject(project: Project): Boolean
 
-  @TestOnly
-  public abstract boolean isDefaultProjectInitialized();
+  @get:TestOnly
+  abstract val isDefaultProjectInitialized: Boolean
 
-  public abstract boolean isProjectOpened(@NotNull Project project);
+  abstract fun isProjectOpened(project: Project): Boolean
 
-  public abstract boolean canClose(@NotNull Project project);
+  abstract fun canClose(project: Project): Boolean
 
   /**
    * The project and the app settings will be not saved.
    */
-  public abstract boolean forceCloseProject(@NotNull Project project);
+  abstract fun forceCloseProject(project: Project): Boolean
 
   @ApiStatus.Internal
-  public abstract boolean saveAndForceCloseProject(@NotNull Project project);
+  abstract fun saveAndForceCloseProject(project: Project): Boolean
 
   // return true if successful
-  public abstract boolean closeAndDisposeAllProjects(boolean checkCanClose);
+  abstract fun closeAndDisposeAllProjects(checkCanClose: Boolean): Boolean
 
-  @ApiStatus.Internal
-  public abstract @NotNull List<String> getAllExcludedUrls();
+  @get:ApiStatus.Internal
+  abstract val allExcludedUrls: List<String?>
 }

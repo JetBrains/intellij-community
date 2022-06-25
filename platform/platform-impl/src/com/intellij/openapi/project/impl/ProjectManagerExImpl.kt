@@ -48,24 +48,27 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
+import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.event.InvocationEvent
 import java.io.IOException
 import java.nio.file.*
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 
 @ApiStatus.Internal
 open class ProjectManagerExImpl : ProjectManagerImpl() {
+  @Suppress("OVERRIDE_DEPRECATION")
   final override fun createProject(name: String?, path: String): Project? {
     return newProject(toCanonicalName(path), OpenProjectTask(isNewProject = true, runConfigurators = false, projectName = name))
   }
 
-  final override fun newProject(projectName: String?, path: String, useDefaultProjectAsTemplate: Boolean, isDummy: Boolean): Project? {
-    return newProject(toCanonicalName(path), OpenProjectTask(isNewProject = true,
-                                                             useDefaultProjectAsTemplate = useDefaultProjectAsTemplate,
-                                                             projectName = projectName))
+  @Suppress("OVERRIDE_DEPRECATION")
+  final override fun newProject(projectName: String?, filePath: String, useDefaultProjectSettings: Boolean, isDummy: Boolean): Project? {
+    return newProject(toCanonicalName(filePath), OpenProjectTask(isNewProject = true,
+                                                                 useDefaultProjectAsTemplate = useDefaultProjectSettings,
+                                                                 projectName = projectName))
   }
 
   final override fun loadAndOpenProject(originalFilePath: String): Project? {
@@ -73,20 +76,20 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 
   final override fun openProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
-    return openProjectAsync(projectStoreBaseDir, options).get(30, TimeUnit.MINUTES)
+    return runBlocking { openProjectAsync(projectStoreBaseDir, options) }
   }
 
-  final override fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask): CompletableFuture<Project?> {
+  final override suspend fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
     if (LOG.isDebugEnabled && !ApplicationManager.getApplication().isUnitTestMode) {
       LOG.debug("open project: $options", Exception())
     }
 
     if (options.project != null && isProjectOpened(options.project as Project)) {
-      return CompletableFuture.completedFuture(null)
+      return null
     }
 
     if (!checkTrustedState(projectStoreBaseDir)) {
-      return CompletableFuture.completedFuture(null)
+      return null
     }
 
     val activity = StartUpMeasurer.startActivity("project opening preparation")
@@ -106,7 +109,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         // this null assertion is required to overcome bug in new version of KT compiler: KT-40034
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
         if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, options.projectName)) {
-          return CompletableFuture.completedFuture(null)
+          return null
         }
       }
     }
@@ -114,9 +117,9 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     return doOpenAsync(options, projectStoreBaseDir, activity)
   }
 
-  private fun doOpenAsync(options: OpenProjectTask,
-                          projectStoreBaseDir: Path,
-                          activity: Activity): CompletableFuture<Project?> {
+  private suspend fun doOpenAsync(options: OpenProjectTask,
+                                  projectStoreBaseDir: Path,
+                                  activity: Activity): Project? {
     val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       ProjectFrameAllocator(options)
     }
@@ -124,7 +127,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       ProjectUiFrameAllocator(options, projectStoreBaseDir)
     }
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
-    return frameAllocator.run { indicator ->
+    val result = frameAllocator.run { indicator ->
       activity.end()
       val result: PrepareProjectResult
       if (options.project == null) {
@@ -154,28 +157,22 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       }
 
       result
-    }
-      .handle { result, error ->
-        disableAutoSaveToken.finish()
+    }.asDeferred().await()
+    disableAutoSaveToken.finish()
 
-        if (error != null) {
-          throw error
-        }
-
-        if (result == null) {
-          frameAllocator.projectNotLoaded(error = null)
-          if (options.showWelcomeScreen) {
-            WelcomeFrame.showIfNoProjectOpened()
-          }
-          return@handle null
-        }
-
-        val project = result.project
-        if (options.callback != null) {
-          options.callback!!.projectOpened(project, result.module ?: ModuleManager.getInstance(project).modules[0])
-        }
-        project
+    if (result == null) {
+      frameAllocator.projectNotLoaded(error = null)
+      if (options.showWelcomeScreen) {
+        WelcomeFrame.showIfNoProjectOpened()
       }
+      return null
+    }
+
+    val project = result.project
+    if (options.callback != null) {
+      options.callback!!.projectOpened(project, result.module ?: ModuleManager.getInstance(project).modules[0])
+    }
+    return project
   }
 
   private fun handleProjectOpenCancelOrFailure(project: Project) {
@@ -279,13 +276,13 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     return true
   }
 
-  override fun newProject(projectFile: Path, options: OpenProjectTask): Project? {
-    removeProjectConfigurationAndCaches(projectFile)
+  override fun newProject(file: Path, options: OpenProjectTask): Project? {
+    removeProjectConfigurationAndCaches(file)
 
-    val project = instantiateProject(projectFile, options)
+    val project = instantiateProject(file, options)
     try {
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
-      initProject(projectFile, project, options.isRefreshVfsNeeded, options.preloadServices, template,
+      initProject(file, project, options.isRefreshVfsNeeded, options.preloadServices, template,
                   ProgressManager.getInstance().progressIndicator)
       project.setTrusted(true)
       return project

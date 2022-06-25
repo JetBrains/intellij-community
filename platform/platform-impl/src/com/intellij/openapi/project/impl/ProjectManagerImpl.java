@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -11,7 +11,9 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditUtil;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -611,6 +613,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   }
 
   private Runnable myGetAllExcludedUrlsCallback;
+
   @TestOnly
   public void testOnlyGetExcludedUrlsCallback(@NotNull Disposable parentDisposable, @NotNull Runnable callback) {
     if (myGetAllExcludedUrlsCallback != null) {
@@ -619,6 +622,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     myGetAllExcludedUrlsCallback = callback;
     Disposer.register(parentDisposable, () -> myGetAllExcludedUrlsCallback = null);
   }
+
   @Override
   public @NotNull List<String> getAllExcludedUrls() {
     Runnable callback = myGetAllExcludedUrlsCallback;

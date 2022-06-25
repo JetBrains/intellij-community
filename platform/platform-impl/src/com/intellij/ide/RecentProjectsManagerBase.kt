@@ -334,14 +334,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       ProjectUtil.findAndFocusExistingProjectForPath(projectFile)?.let {
         return it
       }
-      return ProjectManagerEx.getInstanceEx().openProjectAsync(projectFile, openProjectOptions).asDeferred().await()
+      return ProjectManagerEx.getInstanceEx().openProjectAsync(projectFile, openProjectOptions)
     }
     else {
       // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
       // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
       // IDEA-144453 IDEA rejects opening recent project if there are no .idea subfolder
       // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
-      return ProjectUtil.openOrImportAsync(projectFile, openProjectOptions).asDeferred().await()
+      return openOrImportAsync(projectFile, openProjectOptions)
     }
   }
 
