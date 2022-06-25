@@ -97,7 +97,6 @@
       "html.svg": "fileTypes/html.svg",
       "ideaModule.svg": "nodes/ideaModule.svg",
       "ignored.svg": "vcs/ignore_file.svg",
-      "image.svg": "org/intellij/images/icons/ImagesFileType.svg",
       "java.svg": "fileTypes/java.svg",
       "javascript.svg": [
         "fileTypes/javaScript.svg",
