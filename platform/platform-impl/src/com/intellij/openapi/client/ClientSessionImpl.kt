@@ -22,6 +22,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.util.messages.MessageBus
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -46,14 +47,15 @@ abstract class ClientSessionImpl(
     registerComponents()
   }
 
-  fun preloadServices() {
+  fun preloadServices(syncScope: CoroutineScope) {
     assert(containerState.get() == ContainerState.PRE_INIT)
     preloadServices(
       PluginManagerCore.getPluginSet().getEnabledModules(),
       container = this,
       activityPrefix = "client ",
+      syncScope = syncScope,
       onlyIfAwait = false
-    ).join()
+    )
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 

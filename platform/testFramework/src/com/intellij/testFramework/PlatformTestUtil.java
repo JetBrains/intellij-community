@@ -4,11 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.configurationStore.StoreReloadManager;
-import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -30,12 +26,10 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginSet;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
-import com.intellij.idea.ApplicationLoader;
 import com.intellij.idea.Main;
 import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
@@ -45,7 +39,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -66,16 +59,12 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -114,7 +103,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -124,11 +116,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
+import static com.intellij.testFramework.TestApplicationLoaderKt.loadAppInUnitTestMode;
 import static com.intellij.testFramework.UsefulTestCase.assertSameLines;
 import static com.intellij.util.ObjectUtils.consumeIfNotNull;
 import static com.intellij.util.containers.ContainerUtil.map2List;
 import static com.intellij.util.containers.ContainerUtil.sorted;
-import static java.util.Objects.requireNonNullElse;
 import static org.junit.Assert.*;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -173,44 +165,15 @@ public final class PlatformTestUtil {
     else {
       UITestUtil.setHeadlessProperty(true);
     }
+
     Main.setHeadlessInTestMode(isHeadless);
     PluginManagerCore.isUnitTestMode = true;
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
 
     PluginManagerCore.scheduleDescriptorLoading();
-    var loadedModuleFuture = PluginManagerCore.getInitPluginFuture();
-
     setupEventQueue.run();
 
-    var app = new ApplicationImpl(true, true, isHeadless, true);
-
-    if (SystemProperties.getBooleanProperty("tests.assertOnMissedCache", true)) {
-      RecursionManager.assertOnMissedCache(app);
-    }
-
-    PluginSet pluginSet;
-    try {
-      // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
-      pluginSet = loadedModuleFuture.get(40, TimeUnit.SECONDS);
-      app.registerComponents(pluginSet.getEnabledModules(), app, null, null);
-      ApplicationLoader.initConfigurationStore(app);
-      RegistryKeyBean.addKeysFromPlugins();
-      Registry.markAsLoaded();
-      var preloadServiceFuture = ApplicationLoader.preloadServices(pluginSet.getEnabledModules(), app, "", false);
-      app.loadComponents();
-
-      preloadServiceFuture.get(40, TimeUnit.SECONDS);
-      ForkJoinTask.invokeAll(ApplicationLoader.callAppInitialized(app));
-      StartUpMeasurer.setCurrentState(LoadingState.APP_STARTED);
-
-      ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContents();
-    }
-    catch (TimeoutException e) {
-      throw new RuntimeException("Cannot preload services in 40 seconds: ${ThreadDumper.dumpThreadsToString()}", e);
-    }
-    catch (InterruptedException e) {
-      throw requireNonNullElse(e.getCause(), e);
-    }
+    loadAppInUnitTestMode(isHeadless);
   }
 
   /**

@@ -16,6 +16,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectExImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.serviceContainer.ComponentManagerImpl;
+import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
+import kotlinx.coroutines.CoroutineStart;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -310,7 +315,10 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
     ClientSessionsManager<ClientSession> sessionsManager = getClientSessionsManager(componentManager);
     sessionsManager.registerSession(disposable, session);
     session.registerServices();
-    session.preloadServices();
+    BuildersKt.launch(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
+      session.preloadServices(scope);
+      return Unit.INSTANCE;
+    });
   }
 
   @SuppressWarnings("unchecked")

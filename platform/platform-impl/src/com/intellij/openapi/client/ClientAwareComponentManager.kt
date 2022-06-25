@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -10,8 +10,8 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.throwAlreadyDisposedError
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 abstract class ClientAwareComponentManager @JvmOverloads constructor(
@@ -79,23 +79,16 @@ abstract class ClientAwareComponentManager @JvmOverloads constructor(
 
   override fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
                                activityPrefix: String,
-                               onlyIfAwait: Boolean): PreloadServicesResult {
-    val result = super.preloadServices(modules, activityPrefix, onlyIfAwait)
-    val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
+                               syncScope: CoroutineScope,
+                               asyncScope: CoroutineScope,
+                               onlyIfAwait: Boolean) {
+    super.preloadServices(modules, activityPrefix, syncScope, asyncScope, onlyIfAwait)
 
-    val syncPreloadFutures = mutableListOf<CompletableFuture<*>>()
-    val asyncPreloadFutures = mutableListOf<CompletableFuture<*>>()
+    val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(true)) {
       session as? ClientSessionImpl ?: continue
-      val sessionResult = session.preloadServices(modules, activityPrefix, onlyIfAwait)
-      syncPreloadFutures.add(sessionResult.sync)
-      asyncPreloadFutures.add(sessionResult.async)
+      session.preloadServices(modules, activityPrefix, syncScope, asyncScope, onlyIfAwait)
     }
-
-    return PreloadServicesResult(
-      sync = CompletableFuture.allOf(result.sync, *syncPreloadFutures.toTypedArray()),
-      async = CompletableFuture.allOf(result.async, *asyncPreloadFutures.toTypedArray())
-    )
   }
 
   override fun isPreInitialized(component: Any): Boolean {

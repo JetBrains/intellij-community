@@ -49,9 +49,10 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
+import kotlin.coroutines.EmptyCoroutineContext;
 import kotlin.sequences.Sequence;
-import kotlinx.coroutines.CompletableJob;
-import kotlinx.coroutines.Job;
+import kotlinx.coroutines.*;
+import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
@@ -413,13 +414,18 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public final void load() {
     PluginManagerCore.scheduleDescriptorLoading();
-    Sequence<IdeaPluginDescriptorImpl> modules = PluginManagerCore.getInitPluginFuture().join().getEnabledModules();
+    Sequence<IdeaPluginDescriptorImpl> modules = FutureKt.asCompletableFuture(PluginManagerCore.getInitPluginFuture())
+      .join().getEnabledModules();
 
     registerComponents(modules, this, null, null);
     ApplicationLoader.initConfigurationStore(this);
-    preloadServices(modules, "", false).sync.join();
-    loadComponents();
-    ForkJoinTask.invokeAll(ApplicationLoader.callAppInitialized(this));
+    FutureKt.asCompletableFuture(BuildersKt.async(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
+      preloadServices(modules, "", scope, GlobalScope.INSTANCE, false);
+      loadComponents();
+
+      ApplicationLoader.callAppInitialized(this, continuation);
+      return null;
+    })).join();
   }
 
   public final void loadComponents() {

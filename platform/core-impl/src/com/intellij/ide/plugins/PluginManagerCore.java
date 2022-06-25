@@ -22,6 +22,12 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
+import kotlinx.coroutines.CoroutineStart;
+import kotlinx.coroutines.Deferred;
+import kotlinx.coroutines.GlobalScope;
+import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -32,8 +38,8 @@ import java.lang.ref.SoftReference;
 import java.nio.file.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -98,7 +104,7 @@ public final class PluginManagerCore {
   private static Set<PluginId> shadowedBundledPlugins;
 
   private static Boolean isRunningFromSources;
-  private static volatile CompletableFuture<PluginSet> initFuture;
+  private static volatile Deferred<PluginSet> initFuture;
 
   private static BuildNumber ourBuildNumber;
 
@@ -421,10 +427,10 @@ public final class PluginManagerCore {
   public static synchronized void invalidatePlugins() {
     pluginSet = null;
 
-    CompletableFuture<PluginSet> future = initFuture;
+    Deferred<PluginSet> future = initFuture;
     if (future != null) {
       initFuture = null;
-      future.cancel(false);
+      future.cancel(new CancellationException("invalidatePlugins"));
     }
     DisabledPluginsState.invalidate();
     shadowedBundledPlugins = null;
@@ -600,18 +606,18 @@ public final class PluginManagerCore {
     getOrScheduleLoading();
   }
 
-  private static synchronized @NotNull CompletableFuture<PluginSet> getOrScheduleLoading() {
-    CompletableFuture<PluginSet> future = initFuture;
+  private static synchronized @NotNull Deferred<PluginSet> getOrScheduleLoading() {
+    Deferred<PluginSet> future = initFuture;
     if (future != null) {
       return future;
     }
 
-    future = CompletableFuture.supplyAsync(() -> {
+    future = BuildersKt.async(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
       Activity activity = StartUpMeasurer.startActivity("plugin descriptor loading", ActivityCategory.DEFAULT);
       DescriptorListLoadingContext context = PluginDescriptorLoader.loadDescriptors(isUnitTestMode, isRunningFromSources());
       activity.end();
       return loadAndInitializePlugins(context, PluginManagerCore.class.getClassLoader());
-    }, ForkJoinPool.commonPool());
+    });
     initFuture = future;
     return future;
   }
@@ -621,12 +627,12 @@ public final class PluginManagerCore {
    */
   @ApiStatus.Internal
   public static @NotNull CompletableFuture<List<IdeaPluginDescriptorImpl>> getEnabledPluginRawList() {
-    return getOrScheduleLoading().thenApply(it -> it.enabledPlugins);
+    return FutureKt.asCompletableFuture(getOrScheduleLoading()).thenApply(it -> it.enabledPlugins);
   }
 
   @ApiStatus.Internal
-  public static @NotNull CompletableFuture<PluginSet> getInitPluginFuture() {
-    CompletableFuture<PluginSet> future = initFuture;
+  public static @NotNull Deferred<PluginSet> getInitPluginFuture() {
+    Deferred<PluginSet> future = initFuture;
     if (future == null) {
       throw new IllegalStateException("Call scheduleDescriptorLoading() first");
     }

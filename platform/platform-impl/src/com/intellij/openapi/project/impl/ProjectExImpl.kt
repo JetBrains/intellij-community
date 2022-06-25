@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
 import com.intellij.diagnostic.ActivityCategory
@@ -33,6 +33,10 @@ import com.intellij.util.TimedReference
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -130,6 +134,8 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectFilePath)
   }
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Deprecated in Java")
   final override fun getBaseDir(): VirtualFile? {
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectBasePath)
   }
@@ -162,19 +168,27 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
   @ApiStatus.Internal
   final override fun activityNamePrefix() = "project "
 
+  @OptIn(DelicateCoroutinesApi::class)
   override fun init(preloadServices: Boolean, indicator: ProgressIndicator?) {
     val app = ApplicationManager.getApplication()
 
     // for light projects, preload only services that are essential
     // ("await" means "project component loading activity is completed only when all such services are completed")
     val servicePreloadingFuture = if (preloadServices) {
-      preloadServices(PluginManagerCore.getPluginSet().getEnabledModules(), container = this, activityPrefix = "project ", onlyIfAwait = isLight)
+      val container = this
+      GlobalScope.launch {
+        preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                        container = container,
+                        activityPrefix = "project ",
+                        syncScope = this,
+                        onlyIfAwait = isLight)
+      }
     }
     else {
       null
     }
     createComponents(indicator)
-    servicePreloadingFuture?.join()
+    servicePreloadingFuture?.asCompletableFuture()?.join()
 
     var activity = if (StartUpMeasurer.isEnabled()) startActivity("projectComponentCreated event handling", ActivityCategory.DEFAULT) else null
     @Suppress("DEPRECATION")

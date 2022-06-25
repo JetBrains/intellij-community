@@ -19,6 +19,10 @@ import kotlin.coroutines.CoroutineContext
  */
 internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
 
+  init {
+
+  }
+
   override val immediate: MainCoroutineDispatcher get() = Immediate
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {

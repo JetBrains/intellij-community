@@ -33,10 +33,12 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
+import java.lang.Runnable
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.Constructor
@@ -383,10 +385,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   }
 
   fun createInitOldComponentsTask(): Runnable? {
-    val components = componentAdapters.getImmutableSet().filterIsInstance<MyComponentAdapter>()
-    if (components.isEmpty()) {
+    if (componentAdapters.getImmutableSet().none { it is MyComponentAdapter }) {
       return null
     }
+
     return Runnable {
       for (componentAdapter in componentAdapters.getImmutableSet()) {
         if (componentAdapter is MyComponentAdapter) {
@@ -981,25 +983,23 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
   open fun activityNamePrefix(): String? = null
 
-  class PreloadServicesResult(@JvmField val sync: CompletableFuture<*>, @JvmField val async: CompletableFuture<*>)
-
   open fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
                            activityPrefix: String,
-                           onlyIfAwait: Boolean = false): PreloadServicesResult {
-    val asyncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
-    val syncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
+                           syncScope: CoroutineScope,
+                           asyncScope: CoroutineScope,
+                           onlyIfAwait: Boolean = false) {
     for (plugin in modules) {
       serviceLoop@ for (service in getContainerDescriptor(plugin).services) {
         if (!isServiceSuitable(service) || service.os != null && !isSuitableForOs(service.os)) {
           continue@serviceLoop
         }
-        val list: MutableList<ForkJoinTask<*>> = when (service.preload) {
+        val scope: CoroutineScope = when (service.preload) {
           PreloadMode.TRUE -> {
             if (onlyIfAwait) {
               continue@serviceLoop
             }
             else {
-              asyncPreloadedServices
+              asyncScope
             }
           }
           PreloadMode.NOT_HEADLESS -> {
@@ -1007,7 +1007,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
               continue@serviceLoop
             }
             else {
-              asyncPreloadedServices
+              asyncScope
             }
           }
           PreloadMode.NOT_LIGHT_EDIT -> {
@@ -1015,17 +1015,17 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
               continue@serviceLoop
             }
             else {
-              asyncPreloadedServices
+              asyncScope
             }
           }
-          PreloadMode.AWAIT -> syncPreloadedServices
+          PreloadMode.AWAIT -> syncScope
           PreloadMode.FALSE -> continue@serviceLoop
           else -> throw IllegalStateException("Unknown preload mode ${service.preload}")
         }
 
-        list.add(ForkJoinTask.adapt task@{
+        scope.launch {
           if (isServicePreloadingCancelled || isDisposed) {
-            return@task
+            return@launch
           }
 
           val activity = StartUpMeasurer.startActivity("${service.`interface`} preloading")
@@ -1038,24 +1038,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
             isServicePreloadingCancelled = true
             throw e
           }
-
           activity.end()
-        })
+        }
       }
     }
-
-    return PreloadServicesResult(
-      sync = CompletableFuture.runAsync({
-                                          runActivity("${activityPrefix}service sync preloading") {
-                                            ForkJoinTask.invokeAll(syncPreloadedServices)
-                                          }
-                                        }, ForkJoinPool.commonPool()),
-      async = CompletableFuture.runAsync({
-                                           runActivity("${activityPrefix}service async preloading") {
-                                             ForkJoinTask.invokeAll(asyncPreloadedServices)
-                                           }
-                                         }, ForkJoinPool.commonPool())
-    )
   }
 
   protected open fun preloadService(service: ServiceDescriptor) {
@@ -1099,7 +1085,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   fun startDispose() {
     stopServicePreloading()
 
-    Disposer.disposeChildren(this, { _ -> true})
+    Disposer.disposeChildren(this) { true }
 
     val messageBus = messageBus
     // There is a chance that someone will try to connect to the message bus and will get NPE because of disposed connection disposable,
