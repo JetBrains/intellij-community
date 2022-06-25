@@ -15,13 +15,18 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.graph.*;
@@ -29,6 +34,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -254,6 +260,30 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           if (!isAtStartOfLine(comment)) out.append(' ');
           out.append(comment.getText()).append('\n');
         }
+        PsiExpression current = tailCall;
+        List<String> conditions = new ArrayList<>();
+        while (true) {
+          PsiPolyadicExpression parent =
+            ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(current.getParent()), PsiPolyadicExpression.class);
+          if (parent == null) {
+            break;
+          }
+          PsiExpression[] operands = parent.getOperands();
+          if (operands.length < 2) break;
+          String condition = parent.getText().substring(0, operands[operands.length - 2].getTextRangeInParent().getEndOffset());
+          boolean forceBraces = CodeStyle.getSettings(method.getContainingFile()).getCommonSettings(JavaLanguage.INSTANCE).IF_BRACE_FORCE ==
+                                CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+          boolean returnTrue = parent.getOperationTokenType() == JavaTokenType.OROR;
+          if (!returnTrue) {
+            PsiExpression cond = JavaPsiFacade.getElementFactory(method.getProject()).createExpressionFromText(condition, parent);
+            condition = BoolUtils.getNegatedExpressionText(cond);
+          }
+          String ifStatement = "if(" + condition + ") " +
+                               (forceBraces ? "{" : "") + "return " + returnTrue + ";" + (forceBraces ? "}" : "") + "\n";
+          conditions.add(0, ifStatement);
+          current = parent;
+        }
+        conditions.forEach(out::append);
         final Graph<Integer> graph = buildGraph(parameters, arguments);
         // When replacing recursion with iteration, new values are assigned to the parameters,
         // instead of calling the method with the new values. Care needs to be taken to not clobber
@@ -314,7 +344,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         assert body != null;
         if ((element instanceof PsiReturnStatement && ControlFlowUtils.blockCompletesWithStatement(body, (PsiStatement)element)) ||
             (element instanceof PsiExpressionStatement && (!isReturnAtTheEndOfWhileLoop || isBeforeVoidReturn(element, method)))) {
-          //don't do anything, as the continue is unnecessary
+          //don't do anything, as the continue statement is unnecessary
         }
         else if (tailCallIsContainedInLoop) {
           out.append("continue ").append(method.getName()).append(';');
@@ -459,7 +489,18 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     PsiMethodCallExpression tailCall = null;
     if (element instanceof PsiReturnStatement) {
       final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
-      final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
+      PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
+      while (returnValue instanceof PsiPolyadicExpression) {
+        PsiPolyadicExpression polyadic = (PsiPolyadicExpression)returnValue;
+        returnValue = null;
+        IElementType tokenType = polyadic.getOperationTokenType();
+        if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {
+          PsiExpression[] operands = polyadic.getOperands();
+          if (operands.length >= 2) {
+            returnValue = PsiUtil.skipParenthesizedExprDown(ArrayUtil.getLastElement(operands));
+          }
+        }
+      }
       tailCall = ObjectUtils.tryCast(returnValue, PsiMethodCallExpression.class);
     }
     else if (element instanceof PsiExpressionStatement &&
