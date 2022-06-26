@@ -38,6 +38,11 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
     Application app = ApplicationManager.getApplication();
     if (!app.isHeadlessEnvironment() || app.isUnitTestMode()) {
       myFontPreferences.register(FontPreferences.DEFAULT_FONT_NAME, UISettings.restoreFontSize((float)FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
+      if (FontFamilyService.isServiceSupported()) {
+        String regular = FontFamilyService.getRecommendedSubFamily(FontPreferences.DEFAULT_FONT_NAME);
+        myFontPreferences.setRegularSubFamily(regular);
+        myFontPreferences.setBoldSubFamily(FontFamilyService.getRecommendedBoldSubFamily(FontPreferences.DEFAULT_FONT_NAME, regular));
+      }
     }
   }
 
