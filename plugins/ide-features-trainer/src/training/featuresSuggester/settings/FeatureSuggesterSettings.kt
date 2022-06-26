@@ -1,7 +1,9 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester.settings
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.thisLogger
@@ -15,7 +17,7 @@ import kotlin.math.min
 
 @State(
   name = "FeatureSuggesterSettings",
-  storages = [Storage("FeatureSuggester.xml")]
+  storages = [Storage("FeatureSuggester.xml", roamingType = RoamingType.DISABLED)]
 )
 class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettings> {
   var suggesters: MutableMap<String, Boolean> = run {
