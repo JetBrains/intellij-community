@@ -26,9 +26,9 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private val client get() = _client.value
   private val _client = lazy { createCloudConfigClient(clientVersionContext) }
-
-  private val currentVersionOfFiles = mutableMapOf<String, String>() // todo persist this information
   private val clientVersionContext = CloudConfigVersionContext()
+
+  private var knownVersionOfSnapshotZip : String? = null
 
   private fun receiveSnapshotFile(): InputStream? {
     return clientVersionContext.doWithVersion(null) {
@@ -38,13 +38,14 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
   }
 
+  // executed under the lock of the VersionContext
   private fun rememberLatestVersion() {
     val actualVersion: String? = clientVersionContext.get(SETTINGS_SYNC_SNAPSHOT_ZIP)
     if (actualVersion == null) {
       LOG.warn("Version not stored in the context for $SETTINGS_SYNC_SNAPSHOT_ZIP")
     }
     else {
-      currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP] = actualVersion
+      knownVersionOfSnapshotZip = actualVersion
     }
   }
 
@@ -55,7 +56,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       versionToPush = getLatestVersion()?.versionId
     }
     else {
-      val rememberedVersion = currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]
+      val rememberedVersion = knownVersionOfSnapshotZip
       if (rememberedVersion != null) {
         versionToPush = rememberedVersion
       }
@@ -87,7 +88,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       LOG.info("Latest version info: $latestVersion")
       when (latestVersion?.versionId) {
         null -> return ServerState.FileNotExists
-        currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP] -> return ServerState.UpToDate
+        knownVersionOfSnapshotZip -> return ServerState.UpToDate
         else -> return ServerState.UpdateNeeded
       }
     }
@@ -184,7 +185,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   @Throws(IOException::class)
   override fun delete() {
-    currentVersionOfFiles.remove(SETTINGS_SYNC_SNAPSHOT_ZIP)
+    knownVersionOfSnapshotZip = null
     client.delete(SETTINGS_SYNC_SNAPSHOT_ZIP)
   }
 
