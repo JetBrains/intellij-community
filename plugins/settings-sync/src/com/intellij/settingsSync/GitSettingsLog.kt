@@ -112,7 +112,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
         val target = targetDir.resolve(dirToCopy.parent.relativize(file))  // file is mykeymap.xml => target is keymaps/mykeymap.xml
         NioFiles.createDirectories(target.parent)
-        Files.copy(file, target, LinkOption.NOFOLLOW_LINKS)
+        Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING)
         return FileVisitResult.CONTINUE
       }
     })
