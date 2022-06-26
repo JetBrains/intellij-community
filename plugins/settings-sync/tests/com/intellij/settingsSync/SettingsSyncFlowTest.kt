@@ -92,6 +92,28 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     }
   }
 
+  @Test fun `enable settings sync with Push to Server should overwrite server snapshot instead of merging with it`() {
+    // prepare settings on server
+    val editorXml = "options/editor.xml"
+    val editorContent = "Editor from Server"
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      fileState(editorXml, editorContent)
+    })
+
+    // prepare local settings
+    val lafXml = "options/laf.xml"
+    val lafContent = "LaF Initial"
+    configDir.resolve(lafXml).write(lafContent)
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    val pushedSnapshot = remoteCommunicator.latestPushedSnapshot
+    assertNotNull("Nothing has been pushed", pushedSnapshot)
+    pushedSnapshot!!.assertSettingsSnapshot {
+      fileState(lafXml, lafContent)
+    }
+  }
+
   @Test fun `enable settings via Take from Server should log existing settings`() {
     val fileName = "options/laf.xml"
     val initialContent = "LaF Initial"

@@ -9,7 +9,6 @@ import com.intellij.util.io.inputStream
 import com.jetbrains.cloudconfig.*
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
-import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
@@ -49,39 +48,37 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
   }
 
-  private fun sendSnapshotFile(inputStream: InputStream) {
-    val currentVersion = getCurrentVersion()
-    LOG.info("Sending $SETTINGS_SYNC_SNAPSHOT_ZIP, current version: $currentVersion")
-    clientVersionContext.doWithVersion(currentVersion) {
+  private fun sendSnapshotFile(inputStream: InputStream, force: Boolean): SettingsSyncPushResult {
+    val versionToPush: String?
+    if (force) {
+      // get the latest server version: pushing with it will overwrite the file in any case
+      versionToPush = getLatestVersion()?.versionId
+    }
+    else {
+      val rememberedVersion = currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]
+      if (rememberedVersion != null) {
+        versionToPush = rememberedVersion
+      }
+      else {
+        val serverVersion = getLatestVersion()?.versionId
+        if (serverVersion == null) {
+          // no file on the server => just push it there
+          versionToPush = null
+        }
+        else {
+          // we didn't store the server version locally yet => reject the push to avoid overwriting the server version;
+          // the next update after the rejected push will store the version information, and subsequent push will be successful.
+          return SettingsSyncPushResult.Rejected
+        }
+      }
+    }
+
+    clientVersionContext.doWithVersion(versionToPush) {
       client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
       rememberLatestVersion()
     }
-  }
-
-  private fun getCurrentVersion(): String? {
-    val rememberedVersion = currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]
-    if (rememberedVersion != null) {
-      return rememberedVersion
-    }
-
-    // todo in this case we should update first and not just overwrite
-    val serverVersion = try {
-      client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)?.versionId
-    }
-    catch (e: FileNotFoundException) {
-      LOG.info("File not found on server")
-      null
-    }
-
-    return if (serverVersion != null) {
-      LOG.warn("Current version is null, using the version from the server: $serverVersion")
-      serverVersion
-    }
-    else {
-      LOG.info("No settings file on the server")
-      null
-    }
-
+    // errors are thrown as exceptions, and are handled above
+    return SettingsSyncPushResult.Success
   }
 
   override fun checkServerState(): ServerState {
@@ -125,7 +122,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
   }
 
-  override fun push(snapshot: SettingsSnapshot): SettingsSyncPushResult {
+  override fun push(snapshot: SettingsSnapshot, force: Boolean): SettingsSyncPushResult {
     LOG.info("Pushing setting snapshot to the cloud config server...")
     val zip = try {
       SettingsSnapshotZipSerializer.serializeToZip(snapshot)
@@ -136,8 +133,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
 
     try {
-      sendSnapshotFile(zip.inputStream())
-      return SettingsSyncPushResult.Success
+      return sendSnapshotFile(zip.inputStream(), force)
     }
     catch (ive: InvalidVersionIdException) {
       LOG.info("Rejected: version doesn't match the version on server: ${ive.message}")

@@ -32,8 +32,8 @@ internal class TestCloudConfigRemoteCommunicator : TestRemoteCommunicator() {
     return latestPushedSnapshot
   }
 
-  override fun push(snapshot: SettingsSnapshot): SettingsSyncPushResult {
-    val result = cloudConfigServerCommunicator.push(snapshot)
+  override fun push(snapshot: SettingsSnapshot, force: Boolean): SettingsSyncPushResult {
+    val result = cloudConfigServerCommunicator.push(snapshot, force)
     latestPushedSnapshot = snapshot
     if (::pushedLatch.isInitialized) pushedLatch.countDown()
     return result

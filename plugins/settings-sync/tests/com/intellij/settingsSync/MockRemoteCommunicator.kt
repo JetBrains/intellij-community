@@ -28,7 +28,7 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
     return latestPushedSnapshot
   }
 
-  override fun push(snapshot: SettingsSnapshot): SettingsSyncPushResult {
+  override fun push(snapshot: SettingsSnapshot, force: Boolean): SettingsSyncPushResult {
     latestPushedSnapshot = snapshot
     if (::pushedLatch.isInitialized) pushedLatch.countDown()
     return SettingsSyncPushResult.Success

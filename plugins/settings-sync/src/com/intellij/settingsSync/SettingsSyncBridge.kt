@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
@@ -58,13 +59,9 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     settingsLog.logExistingSettings()
 
     when (initMode) {
-      is InitMode.TakeFromServer ->
-        applySnapshotFromServer(initMode.cloudEvent.snapshot)
-      InitMode.PushToServer ->
-        // todo this should be a force push, no reject is expected
-        mergeAndPush(previousIdePosition, previousCloudPosition, mustPushToCloud = true)
-      InitMode.JustInit ->
-        mergeAndPush(previousIdePosition, previousCloudPosition, mustPushToCloud = false)
+      is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent.snapshot)
+      InitMode.PushToServer -> mergeAndPush(previousIdePosition, previousCloudPosition, FORCE_PUSH)
+      InitMode.JustInit -> mergeAndPush(previousIdePosition, previousCloudPosition, PUSH_IF_NEEDED)
     }
   }
 
@@ -101,7 +98,7 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     val previousIdePosition = settingsLog.getIdePosition()
     val previousCloudPosition = settingsLog.getCloudPosition()
 
-    var mustPushToCloud = false
+    var pushRequestMode: PushRequestMode = PUSH_IF_NEEDED
     while (pendingEvents.isNotEmpty()) {
       val event = pendingEvents.removeAt(0)
       if (event is SyncSettingsEvent.IdeChange) {
@@ -114,16 +111,16 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
         settingsLog.logExistingSettings()
       }
       else if (event is SyncSettingsEvent.MustPushRequest) {
-        mustPushToCloud = true
+        pushRequestMode = MUST_PUSH
       }
     }
 
-    mergeAndPush(previousIdePosition, previousCloudPosition, mustPushToCloud)
+    mergeAndPush(previousIdePosition, previousCloudPosition, pushRequestMode)
   }
 
   private fun mergeAndPush(previousIdePosition: SettingsLog.Position,
                            previousCloudPosition: SettingsLog.Position,
-                           mustPushToCloud: Boolean) {
+                           pushRequestMode: PushRequestMode) {
     val newIdePosition = settingsLog.getIdePosition()
     val newCloudPosition = settingsLog.getCloudPosition()
     val masterPosition: SettingsLog.Position
@@ -158,8 +155,8 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
       }
     }
 
-    if (newCloudPosition != masterPosition || mustPushToCloud) {
-      val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot())
+    if (newCloudPosition != masterPosition || pushRequestMode == MUST_PUSH || pushRequestMode == FORCE_PUSH) {
+      val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot(), pushRequestMode == FORCE_PUSH)
       LOG.info("Result of pushing settings to the cloud: $pushResult")
       when (pushResult) {
         SettingsSyncPushResult.Success -> {
@@ -188,11 +185,22 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     }
   }
 
-  private fun pushToCloud(settingsSnapshot: SettingsSnapshot): SettingsSyncPushResult {
-    if (remoteCommunicator.checkServerState() is ServerState.UpdateNeeded) {
+  private enum class PushRequestMode {
+    PUSH_IF_NEEDED,
+    MUST_PUSH,
+    FORCE_PUSH
+  }
+
+  private fun pushToCloud(settingsSnapshot: SettingsSnapshot, force: Boolean): SettingsSyncPushResult {
+    if (force) {
+      return remoteCommunicator.push(settingsSnapshot, force = true)
+    }
+    else if (remoteCommunicator.checkServerState() is ServerState.UpdateNeeded) {
       return SettingsSyncPushResult.Rejected
     }
-    return remoteCommunicator.push(settingsSnapshot)
+    else {
+      return remoteCommunicator.push(settingsSnapshot, force = false)
+    }
   }
 
   private fun pushToIde(settingsSnapshot: SettingsSnapshot): SettingsSyncPushResult {
