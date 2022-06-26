@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.PluginException
@@ -33,7 +33,7 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stor
 
 /**
  * Only for Java clients.
- * Kotlin clients should use corresponding package-level suspending functions.
+ * Clients in kotlin should use corresponding package-level suspending functions.
  */
 class StoreUtil private constructor() {
   companion object {

@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.ide.lightEdit.*;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.ActionsBundle;
@@ -15,7 +14,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -26,7 +24,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -35,22 +32,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import com.intellij.platform.PlatformProjectOpenProcessor;
-import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
-
-import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction;
 
 public class OpenFileAction extends AnAction implements DumbAware, LightEditCompatible {
   @Override
@@ -120,7 +110,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
   private static void doOpenFile(@Nullable Project project, @NotNull VirtualFile file) {
     Path filePath = file.toNioPath();
     if (Files.isDirectory(filePath)) {
-      openExistingDir(filePath, project);
+      ProjectUtil.INSTANCE.openExistingDirSync(filePath, project);
       return;
     }
 
@@ -153,35 +143,6 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
     }
   }
 
-  @ApiStatus.Internal
-  @VisibleForTesting
-  public static @NotNull CompletableFuture<@Nullable Project> openExistingDir(@NotNull Path file, @Nullable Project currentProject) {
-    boolean canAttach = ProjectAttachProcessor.canAttachToProject();
-    boolean preferAttach = currentProject != null &&
-                           canAttach &&
-                           (PlatformUtils.isDataGrip() && !ProjectUtilCore.isValidProjectPath(file)
-                            || PlatformUtils.isDataSpell());
-    if (preferAttach && PlatformProjectOpenProcessor.attachToProject(currentProject, file, null)) {
-      return CompletableFuture.completedFuture(null);
-    }
-
-    CompletableFuture<Project> projectFuture;
-    if (canAttach) {
-      OpenProjectTask options = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject);
-      projectFuture = ProjectManagerEx.getInstanceEx().openProjectAsync(file, options);
-    }
-    else {
-      projectFuture = ProjectUtil.openOrImportAsync(file, OpenProjectTask.build().withProjectToClose(currentProject));
-    }
-
-    return projectFuture.thenApply(project -> {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        FileChooserUtil.setLastOpenedFile(project, file);
-      }
-      return project;
-    });
-  }
-
   @Messages.YesNoCancelResult
   private static int shouldOpenNewProject(@Nullable Project project, @NotNull VirtualFile file) {
     if (file.getFileType() instanceof ProjectFileType) {
@@ -207,7 +168,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
     NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
     if (LightEdit.owns(project)) {
       LightEditService.getInstance().openFile(file);
-      LightEditFeatureUsagesUtil.logFileOpen(project, LightEditOpenAction);
+      LightEditFeatureUsagesUtil.logFileOpen(project, LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction);
     }
     else {
       PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);

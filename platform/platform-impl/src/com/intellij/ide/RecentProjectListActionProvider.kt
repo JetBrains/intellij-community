@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -20,7 +20,7 @@ open class RecentProjectListActionProvider {
 
   internal fun collectProjects(withOpened: Boolean = true): List<RecentProjectTreeItem> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
-    val openedPaths = ProjectUtil.getOpenProjects().mapNotNull { openProject ->
+    val openedPaths = ProjectUtilCore.getOpenProjects().mapNotNull { openProject ->
       recentProjectManager.getProjectPath(openProject)
     }.toSet()
     val allRecentProjectPaths = if (withOpened) {
@@ -52,7 +52,7 @@ open class RecentProjectListActionProvider {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     val paths = LinkedHashSet(recentProjectManager.getRecentPaths())
     val openedPaths = mutableSetOf<String>()
-    for (openProject in ProjectUtil.getOpenProjects()) {
+    for (openProject in ProjectUtilCore.getOpenProjects()) {
       recentProjectManager.getProjectPath(openProject)?.let {
         openedPaths.add(it)
       }

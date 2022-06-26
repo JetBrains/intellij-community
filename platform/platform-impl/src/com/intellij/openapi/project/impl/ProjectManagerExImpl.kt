@@ -373,7 +373,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
                                          projectDir: Path?,
                                          projectName: String?): Boolean {
     val settings = GeneralSettings.getInstance()
-    val isValidProject = projectDir != null && ProjectUtil.isValidProjectPath(projectDir)
+    val isValidProject = projectDir != null && ProjectUtilCore.isValidProjectPath(projectDir)
     var result = false
 
     // modality per thread, it means that we cannot use invokeLater, because after getting result from EDT, we MUST continue execution

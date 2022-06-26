@@ -193,8 +193,9 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
 
     @JvmStatic
-    fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean =
-      ProjectAttachProcessor.EP_NAME.findFirstSafe { processor -> processor.attachToProject(project, projectDir, callback) } != null
+    fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
+      return ProjectAttachProcessor.EP_NAME.findFirstSafe { processor -> processor.attachToProject(project, projectDir, callback) } != null
+    }
 
     /**
      * If a project file in IDEA format (`.idea` directory or `.ipr` file) exists, opens it and runs configurators if no modules.
@@ -207,12 +208,13 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
      */
     @ApiStatus.Internal
     @JvmStatic
-    fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask =
-      OpenProjectTask(runConfigurators = true,
-                      isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir),
-                      projectToClose = projectToClose,
-                      isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode,  // doesn't make sense to refresh
-                      useDefaultProjectAsTemplate = true)
+    fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
+      return OpenProjectTask(runConfigurators = true,
+                             isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir),
+                             projectToClose = projectToClose,
+                             isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode,  // doesn't make sense to refresh
+                             useDefaultProjectAsTemplate = true)
+    }
   }
 
   override fun canOpenProject(file: VirtualFile) = file.isDirectory
@@ -226,14 +228,15 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     return doOpenProject(baseDir, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(forceOpenInNewFrame = forceOpenInNewFrame))
   }
 
-  override fun openProjectAndFile(file: Path, line: Int, column: Int, tempProject: Boolean): Project? =
-    // force open in a new frame if temp project
-    if (tempProject) {
+  // force open in a new frame if temp project
+  override fun openProjectAndFile(file: Path, line: Int, column: Int, tempProject: Boolean): Project? {
+    return if (tempProject) {
       createTempProjectAndOpenFile(file, OpenProjectTask(forceOpenInNewFrame = true, line = line, column = column))
     }
     else {
       doOpenProject(file, OpenProjectTask(line = line, column = column))
     }
+  }
 
   @Suppress("HardCodedStringLiteral")
   override fun getName() = "text editor"

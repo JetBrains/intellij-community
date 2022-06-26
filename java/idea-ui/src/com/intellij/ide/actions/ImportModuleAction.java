@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
@@ -128,7 +129,7 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
 
   @Nullable
   private static Project openProject(@NotNull DeprecatedProjectBuilderForImport projectBuilder, @NotNull String projectPath) {
-    VirtualFile file = ProjectUtil.getFileAndRefresh(Paths.get(projectPath));
+    VirtualFile file = ProjectUtilCore.getFileAndRefresh(Paths.get(projectPath));
     if (file == null) {
       LOG.warn(String.format("Cannot find project file in vfs `%s`", projectPath));
       return null;

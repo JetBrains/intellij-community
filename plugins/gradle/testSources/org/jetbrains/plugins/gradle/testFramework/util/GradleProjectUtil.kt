@@ -14,7 +14,7 @@ import org.jetbrains.plugins.gradle.util.waitForProjectReload
 
 fun openProject(projectRoot: VirtualFile): Project {
   return runInEdtAndGet {
-    ProjectUtil.openOrImport(projectRoot.toNioPath())
+    ProjectUtil.openOrImport(projectRoot.toNioPath())!!
   }
 }
 

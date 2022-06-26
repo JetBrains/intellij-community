@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.importing
 
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.ProjectUtil.*
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.ExternalSystemManager
@@ -22,7 +22,6 @@ import java.nio.file.Path
 
 @ApiStatus.Experimental
 abstract class AbstractOpenProjectProvider : OpenProjectProvider {
-
   protected open val systemId: ProjectSystemId by lazy {
     /**
      * Tries to resolve external system id
@@ -56,7 +55,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
       return null
     }
     val nioPath = projectDirectory.toNioPath()
-    val isValidIdeaProject = isValidProjectPath(nioPath)
+    val isValidIdeaProject = ProjectUtil.isValidProjectPath(nioPath)
 
     val options = OpenProjectTask(
       isNewProject = !isValidIdeaProject,
@@ -73,7 +72,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
           ApplicationManager.getApplication().invokeAndWait {
             linkToExistingProject(projectFile, project)
           }
-          updateLastProjectLocation(nioPath)
+          ProjectUtil.updateLastProjectLocation(nioPath)
         }
         true
       }
@@ -99,8 +98,8 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
 
   private fun focusOnOpenedSameProject(projectDirectory: Path): Boolean {
     for (project in ProjectManager.getInstance().openProjects) {
-      if (isSameProject(projectDirectory, project)) {
-        focusProjectWindow(project, false)
+      if (ProjectUtil.isSameProject(projectDirectory, project)) {
+        ProjectUtil.focusProjectWindow(project, false)
         return true
       }
     }

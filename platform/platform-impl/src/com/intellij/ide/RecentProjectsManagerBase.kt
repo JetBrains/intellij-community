@@ -7,6 +7,7 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.ide.RecentProjectsManager.Companion.fireChangeEvent
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.AnAction
@@ -237,7 +238,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     }
 
   override fun updateLastProjectPath() {
-    val openProjects = ProjectUtil.getOpenProjects()
+    val openProjects = ProjectUtilCore.getOpenProjects()
     synchronized(stateLock) {
       for (info in state.additionalInfo.values) {
         info.opened = false
@@ -341,7 +342,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
       // IDEA-144453 IDEA rejects opening recent project if there are no .idea subfolder
       // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
-      return openOrImportAsync(projectFile, openProjectOptions)
+      return ProjectUtil.openOrImportAsync(projectFile, openProjectOptions)
     }
   }
 
@@ -502,7 +503,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   }
 
   // open for Rider
-  protected open fun isValidProjectPath(file: Path) = ProjectUtil.isValidProjectPath(file)
+  protected open fun isValidProjectPath(file: Path) = ProjectUtilCore.isValidProjectPath(file)
 
   // open for Rider
   @Suppress("MemberVisibilityCanBePrivate")
