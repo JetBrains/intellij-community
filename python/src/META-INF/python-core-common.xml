@@ -510,6 +510,10 @@
     <extensionPoint qualifiedName="Pythonid.pySdkProvider"
                     interface="com.jetbrains.python.sdk.PySdkProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.connectionCredentialsToTargetConfigurationConverter"
+                    interface="com.jetbrains.python.run.target.ConnectionCredentialsToTargetConfigurationConverter"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
