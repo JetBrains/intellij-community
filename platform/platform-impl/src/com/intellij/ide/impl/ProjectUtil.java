@@ -1,124 +1,125 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.impl;
+package com.intellij.ide.impl
 
-import com.intellij.CommonBundle;
-import com.intellij.configurationStore.StoreUtil;
-import com.intellij.execution.wsl.WslPath;
-import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeCoreBundle;
-import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.actions.OpenFileAction;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.*;
-import com.intellij.platform.CommandLineProjectOpenProcessor;
-import com.intellij.platform.PlatformProjectOpenProcessor;
-import com.intellij.project.ProjectKt;
-import com.intellij.projectImport.ProjectOpenProcessor;
-import com.intellij.ui.AppIcon;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.util.*;
-import com.intellij.util.io.PathKt;
-import org.jetbrains.annotations.*;
+import com.intellij.CommonBundle
+import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.configurationStore.saveSettings
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.ide.*
+import com.intellij.ide.actions.OpenFileAction
+import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.impl.OpenProjectTask.Companion.build
+import com.intellij.ide.impl.OpenResult.Companion.cancel
+import com.intellij.ide.impl.OpenResult.Companion.failure
+import com.intellij.openapi.application.*
+import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.CommandLineProjectOpenProcessor
+import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.PlatformProjectOpenProcessor.Companion.attachToProject
+import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
+import com.intellij.project.stateStore
+import com.intellij.projectImport.ProjectAttachProcessor
+import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.ui.AppIcon
+import com.intellij.ui.ComponentUtil
+import com.intellij.util.*
+import com.intellij.util.io.basicAttributesIfExists
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.future.asDeferred
+import org.jetbrains.annotations.*
+import java.awt.Component
+import java.awt.Frame
+import java.awt.KeyboardFocusManager
+import java.awt.Window
+import java.io.File
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.function.Function
 
-import javax.swing.*;
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
-import java.util.*;
-import java.util.function.Function;
+private val LOG = Logger.getInstance(ProjectUtil::class.java)
+private var ourProjectsPath: String? = null
 
-import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
-
-public final class ProjectUtil extends ProjectUtilCore {
-  private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
-
-  public static final String DEFAULT_PROJECT_NAME = "default";
-  public static final String PROJECTS_DIR = "projects";
-  public static final String PROPERTY_PROJECT_PATH = "%s.project.path";
+object ProjectUtil {
+  const val DEFAULT_PROJECT_NAME = "default"
+  const val PROJECTS_DIR = "projects"
+  const val PROPERTY_PROJECT_PATH = "%s.project.path"
 
   @ApiStatus.Internal
-  public static final Key<Boolean> PREVENT_IPR_LOOKUP_KEY = Key.create("project.util.prevent.ipr.lookup");
+  @JvmField
+  val PREVENT_IPR_LOOKUP_KEY = Key.create<Boolean>("project.util.prevent.ipr.lookup")
 
   @ApiStatus.Internal
-  public static final Key<Function<List<? extends ProjectOpenProcessor>, ProjectOpenProcessor>> PROCESSOR_CHOOSER_KEY =
-    Key.create("project.util.processor.chooser");
+  @JvmField
+  val PROCESSOR_CHOOSER_KEY = Key.create<Function<List<ProjectOpenProcessor>, ProjectOpenProcessor>>("project.util.processor.chooser")
 
-  private static String ourProjectsPath;
-
-  private ProjectUtil() { }
-
-  /** @deprecated Use {@link #updateLastProjectLocation(Path)} */
-  @Deprecated(forRemoval = true)
-  public static void updateLastProjectLocation(@NotNull String projectFilePath) {
-    updateLastProjectLocation(Path.of(projectFilePath));
+  @Deprecated("Use {@link #updateLastProjectLocation(Path)} ", ReplaceWith("updateLastProjectLocation(Path.of(projectFilePath))", "com.intellij.ide.impl.ProjectUtil.updateLastProjectLocation",
+                                                                           "java.nio.file.Path"))
+  fun updateLastProjectLocation(projectFilePath: String) {
+    updateLastProjectLocation(Path.of(projectFilePath))
   }
 
-  public static void updateLastProjectLocation(@NotNull Path lastProjectLocation) {
-    if (Files.isRegularFile(lastProjectLocation)) {
+  @JvmStatic
+  fun updateLastProjectLocation(lastProjectLocation: Path) {
+    var location: Path? = lastProjectLocation
+    if (Files.isRegularFile(location!!)) {
       // for directory-based project storage
-      lastProjectLocation = lastProjectLocation.getParent();
+      location = location.parent
     }
-
-    if (lastProjectLocation == null) {
+    if (location == null) {
       // the immediate parent of the ipr file
-      return;
+      return
     }
 
     // the candidate directory to be saved
-    lastProjectLocation = lastProjectLocation.getParent();
-    if (lastProjectLocation == null) {
-      return;
+    location = location.parent
+    if (location == null) {
+      return
     }
-
-    String path = lastProjectLocation.toString();
-    try {
-      path = FileUtil.resolveShortWindowsName(path);
+    var path = location.toString()
+    path = try {
+      FileUtil.resolveShortWindowsName(path)
     }
-    catch (IOException e) {
-      LOG.info(e);
-      return;
+    catch (e: IOException) {
+      LOG.info(e)
+      return
     }
-    RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(path));
+    RecentProjectsManager.getInstance().lastProjectCreationLocation = PathUtil.toSystemIndependentName(path)
   }
 
-  /** @deprecated Use {@link ProjectManager#closeAndDispose(Project)} */
-  @Deprecated
-  public static boolean closeAndDispose(@NotNull Project project) {
-    return ProjectManager.getInstance().closeAndDispose(project);
+  @Deprecated("Use {@link ProjectManager#closeAndDispose(Project)} ")
+  @JvmStatic
+  fun closeAndDispose(project: Project): Boolean {
+    return ProjectManager.getInstance().closeAndDispose(project)
   }
 
-  public static Project openOrImport(@NotNull Path path, Project projectToClose, boolean forceOpenInNewFrame) {
-    return openOrImport(path, OpenProjectTask.build().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame));
-  }
-
-  public static Project openOrImport(@NotNull Path path) {
-    return openOrImport(path, new OpenProjectTask());
+  @JvmStatic
+  fun openOrImport(path: Path, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+    return openOrImport(path, build().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame))
   }
 
   /**
@@ -129,642 +130,708 @@ public final class ProjectUtil extends ProjectUtilCore {
    * installed importers (regardless of opening/import result)
    * null otherwise
    */
-  public static @Nullable Project openOrImport(@NotNull String path, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
-    return openOrImport(Path.of(path), OpenProjectTask.build().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame));
+  @JvmStatic
+  fun openOrImport(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+    return openOrImport(Path.of(path), build().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame))
   }
 
-  public static @Nullable Project openOrImport(@NotNull Path file, @NotNull OpenProjectTask options) {
-    OpenResult openResult = tryOpenOrImport(file, options);
-    if (openResult instanceof OpenResult.Success) {
-      return ((OpenResult.Success)openResult).getProject();
-    }
-    return null;
+  @JvmStatic
+  @JvmOverloads
+  fun openOrImport(file: Path, options: OpenProjectTask = OpenProjectTask()): Project? {
+    val openResult = tryOpenOrImport(file, options)
+    return if (openResult is OpenResult.Success) openResult.project else null
   }
 
   @ApiStatus.Experimental
-  public static @NotNull OpenResult tryOpenOrImport(@NotNull Path file, @NotNull OpenProjectTask options) {
-    if (!options.getForceOpenInNewFrame()) {
-      Project existing = findAndFocusExistingProjectForPath(file);
+  @JvmStatic
+  fun tryOpenOrImport(file: Path, options: OpenProjectTask): OpenResult {
+    if (!options.forceOpenInNewFrame) {
+      val existing = findAndFocusExistingProjectForPath(file)
       if (existing != null) {
-        return new OpenResult.Success(existing);
+        return OpenResult.Success(existing)
       }
     }
-
-    NullableLazyValue<VirtualFile> lazyVirtualFile = lazyNullable(() -> getFileAndRefresh(file));
-
-    if (!TrustedProjects.confirmOpeningAndSetProjectTrustedStateIfNeeded(file)) {
-      return OpenResult.cancel();
+    val lazyVirtualFile = NullableLazyValue.lazyNullable { ProjectUtilCore.getFileAndRefresh(file) }
+    if (!confirmOpeningAndSetProjectTrustedStateIfNeeded(file)) {
+      return cancel()
     }
-
-    for (ProjectOpenProcessor provider : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
-      if (!provider.isStrongProjectInfoHolder()) {
-        continue;
+    for (provider in ProjectOpenProcessor.EXTENSION_POINT_NAME.iterable) {
+      if (!provider.isStrongProjectInfoHolder) {
+        continue
       }
 
       // `PlatformProjectOpenProcessor` is not a strong project info holder, so there is no need to optimize (VFS not required)
-      VirtualFile virtualFile = lazyVirtualFile.getValue();
-      if (virtualFile == null) {
-        return OpenResult.failure();
-      }
-
+      val virtualFile = lazyVirtualFile.value ?: return failure()
       if (provider.canOpenProject(virtualFile)) {
-        Project project = chooseProcessorAndOpen(Collections.singletonList(provider), virtualFile, options);
-        return openResult(project, OpenResult.cancel());
+        val project = chooseProcessorAndOpen(mutableListOf(provider), virtualFile, options)
+        return openResult(project, cancel())
       }
     }
-
-    if (isValidProjectPath(file)) {
+    if (ProjectUtilCore.isValidProjectPath(file)) {
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
-      Project project = ProjectManagerEx.getInstanceEx().openProject(file, options.withRunConfigurators());
-      return openResult(project, OpenResult.failure());
+      val project = ProjectManagerEx.getInstanceEx().openProject(file, options.withRunConfigurators())
+      return openResult(project, failure())
     }
-
-    if (PREVENT_IPR_LOOKUP_KEY.get(options) != Boolean.TRUE && Files.isDirectory(file)) {
-      try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(file)) {
-        for (Path child : directoryStream) {
-          String childPath = child.toString();
-          if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-            Project project = openProject(Path.of(childPath), options);
-            return openResult(project, OpenResult.failure());
+    if (PREVENT_IPR_LOOKUP_KEY.get(options) == java.lang.Boolean.TRUE && Files.isDirectory(file)) {
+      try {
+        Files.newDirectoryStream(file).use { directoryStream ->
+          for (child in directoryStream) {
+            val childPath = child.toString()
+            if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+              val project = openProject(Path.of(childPath), options)
+              return openResult(project, failure())
+            }
           }
         }
       }
-      catch (IOException ignore) { }
+      catch (ignore: IOException) {
+      }
     }
-
-    List<ProjectOpenProcessor> processors = computeProcessors(file, lazyVirtualFile);
+    val processors = computeProcessors(file, lazyVirtualFile)
     if (processors.isEmpty()) {
-      return OpenResult.failure();
+      return failure()
     }
-
-    Project project;
-    if (processors.size() == 1 && processors.get(0) instanceof PlatformProjectOpenProcessor) {
-      project = ProjectManagerEx.getInstanceEx().openProject(file, options.asNewProject().withRunConfigurators().withBeforeOpenCallback(p -> {
-        p.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
-        return true;
-      }));
+    val project: Project?
+    project = if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
+      ProjectManagerEx.getInstanceEx().openProject(file,
+                                                   options.asNewProject().withRunConfigurators().withBeforeOpenCallback { p: Project ->
+                                                     p.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR,
+                                                                   java.lang.Boolean.TRUE)
+                                                     true
+                                                   })
     }
     else {
-      VirtualFile virtualFile = lazyVirtualFile.getValue();
-      if (virtualFile == null) {
-        return OpenResult.failure();
+      val virtualFile = lazyVirtualFile.value ?: return failure()
+      chooseProcessorAndOpen(processors, virtualFile, options)
+    }
+    if (project == null) {
+      return failure()
+    }
+    postProcess(project)
+    return OpenResult.Success(project)
+  }
+
+  private fun openResult(project: Project?, alternative: OpenResult): OpenResult {
+    return if (project != null) OpenResult.Success(project) else alternative
+  }
+
+  suspend fun openOrImportAsync(file: Path, options: OpenProjectTask): Project? {
+    if (!options.forceOpenInNewFrame) {
+      val existing = findAndFocusExistingProjectForPath(file)
+      if (existing != null) {
+        return existing
+      }
+    }
+    val lazyVirtualFile = NullableLazyValue.lazyNullable {
+      ProjectUtilCore.getFileAndRefresh(file)
+    }
+    for (provider in ProjectOpenProcessor.EXTENSION_POINT_NAME.iterable) {
+      if (!provider.isStrongProjectInfoHolder) {
+        continue
       }
 
-      project = chooseProcessorAndOpen(processors, virtualFile, options);
+      // `PlatformProjectOpenProcessor` is not a strong project info holder, so there is no need to optimize (VFS not required)
+      val virtualFile = lazyVirtualFile.value ?: return null
+      if (provider.canOpenProject(virtualFile)) {
+        return chooseProcessorAndOpenAsync(mutableListOf(provider), virtualFile, options)
+      }
+    }
+    if (ProjectUtilCore.isValidProjectPath(file)) {
+      // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
+      return ProjectManagerEx.getInstanceEx().openProjectAsync(file, options.withRunConfigurators())
+    }
+    if (PREVENT_IPR_LOOKUP_KEY.get(options) != java.lang.Boolean.TRUE && Files.isDirectory(file)) {
+      try {
+        Files.newDirectoryStream(file).use { directoryStream ->
+          for (child in directoryStream) {
+            val childPath = child.toString()
+            if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+              return openProject(Path.of(childPath), options)
+            }
+          }
+        }
+      }
+      catch (ignore: IOException) {
+      }
+    }
+    val processors = computeProcessors(file, lazyVirtualFile)
+    if (processors.isEmpty()) {
+      return null
     }
 
-    if (project == null) {
-      return OpenResult.failure();
+    val project: Project?
+    if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
+      project = ProjectManagerEx.getInstanceEx().openProjectAsync(file,
+                                                                  options.asNewProject().withRunConfigurators().withBeforeOpenCallback { p: Project ->
+                                                                    p.putUserData(
+                                                                      PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR,
+                                                                      java.lang.Boolean.TRUE)
+                                                                    true
+                                                                  })
     }
-
-    postProcess(project);
-    return new OpenResult.Success(project);
+    else {
+      val virtualFile = lazyVirtualFile.value ?: return null
+      project = chooseProcessorAndOpenAsync(processors, virtualFile, options)
+    }
+    return postProcess(project)
   }
 
-  private static @NotNull OpenResult openResult(@Nullable Project project, @NotNull OpenResult alternative) {
-    return project != null ? new OpenResult.Success(project) : alternative;
-  }
-
-  private static @NotNull List<ProjectOpenProcessor> computeProcessors(@NotNull Path file, @NotNull NullableLazyValue<? extends VirtualFile> lazyVirtualFile) {
-    List<ProjectOpenProcessor> processors = new SmartList<>();
-    ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe(processor -> {
-      if (processor instanceof PlatformProjectOpenProcessor) {
+  private fun computeProcessors(file: Path, lazyVirtualFile: NullableLazyValue<VirtualFile?>): MutableList<ProjectOpenProcessor> {
+    val processors = ArrayList<ProjectOpenProcessor>()
+    ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe { processor: ProjectOpenProcessor ->
+      if (processor is PlatformProjectOpenProcessor) {
         if (Files.isDirectory(file)) {
-          processors.add(processor);
+          processors.add(processor)
         }
       }
       else {
-        VirtualFile virtualFile = lazyVirtualFile.getValue();
+        val virtualFile = lazyVirtualFile.value
         if (virtualFile != null && processor.canOpenProject(virtualFile)) {
-          processors.add(processor);
+          processors.add(processor)
         }
       }
-    });
-    return processors;
-  }
-
-  private static @Nullable Project postProcess(@Nullable Project project) {
-    if (project == null) {
-      return null;
     }
-
-    StartupManager.getInstance(project).runAfterOpened(() -> {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.getDisposed(), () -> {
-        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
-        if (toolWindow != null) {
-          toolWindow.activate(null);
-        }
-      });
-    });
-    return project;
+    return processors
   }
 
-  private static @Nullable Project chooseProcessorAndOpen(@NotNull List<? extends ProjectOpenProcessor> processors,
-                                                          @NotNull VirtualFile virtualFile,
-                                                          @NotNull OpenProjectTask options) {
-    ProjectOpenProcessor processor;
-    if (processors.size() == 1) {
-      processor = processors.get(0);
+  private fun postProcess(project: Project?): Project? {
+    if (project == null) {
+      return null
+    }
+    StartupManager.getInstance(project).runAfterOpened {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed) {
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
+        toolWindow?.activate(null)
+      }
+    }
+    return project
+  }
+
+  private fun chooseProcessorAndOpen(processors: MutableList<ProjectOpenProcessor>,
+                                     virtualFile: VirtualFile,
+                                     options: OpenProjectTask): Project? {
+    var processor: ProjectOpenProcessor? = null
+    if (processors.size == 1) {
+      processor = processors[0]
     }
     else {
-      processors.removeIf(it -> it instanceof PlatformProjectOpenProcessor);
-      Function<List<? extends ProjectOpenProcessor>, ProjectOpenProcessor> chooser;
-      if (processors.size() == 1) {
-        processor = processors.get(0);
+      processors.removeIf { it: ProjectOpenProcessor? -> it is PlatformProjectOpenProcessor }
+      var chooser: Function<List<ProjectOpenProcessor>, ProjectOpenProcessor>
+      if (processors.size == 1) {
+        processor = processors.first()
       }
-      else if ((chooser = PROCESSOR_CHOOSER_KEY.get(options)) != null) {
-        LOG.info("options.openProcessorChooser will handle the open processor dilemma");
-        processor = chooser.apply(processors);
+      else if (PROCESSOR_CHOOSER_KEY.get(options).also { chooser = it } != null) {
+        LOG.info("options.openProcessorChooser will handle the open processor dilemma")
+        processor = chooser.apply(processors)
       }
       else {
-        Ref<ProjectOpenProcessor> ref = new Ref<>();
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          ref.set(SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile));
-        });
-        processor = ref.get();
+        ApplicationManager.getApplication().invokeAndWait {
+          processor = SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile)
+        }
         if (processor == null) {
-          return null;
+          return null
+        }
+      }
+    }
+    var result: Project? = null
+    ApplicationManager.getApplication().invokeAndWait {
+      result = processor!!.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
+    }
+    return result
+  }
+
+  fun openProject(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+    return openProject(Path.of(path), build().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame))
+  }
+
+  private suspend fun chooseProcessorAndOpenAsync(processors: MutableList<ProjectOpenProcessor>,
+                                                  virtualFile: VirtualFile,
+                                                  options: OpenProjectTask): Project? {
+    val processor = when (processors.size) {
+      1 -> {
+        processors.first()
+      }
+      else -> {
+        processors.removeIf { it: ProjectOpenProcessor? -> it is PlatformProjectOpenProcessor }
+        var chooser: Function<List<ProjectOpenProcessor>, ProjectOpenProcessor>
+        if (processors.size == 1) {
+          processors.first()
+        }
+        else if (PROCESSOR_CHOOSER_KEY.get(options).also { chooser = it } != null) {
+          LOG.info("options.openProcessorChooser will handle the open processor dilemma")
+          chooser.apply(processors)
+        }
+        else {
+          withContext(Dispatchers.EDT) {
+            SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile)
+          } ?: return null
         }
       }
     }
 
-    Ref<Project> result = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      result.set(processor.doOpenProject(virtualFile, options.getProjectToClose(), options.getForceOpenInNewFrame()));
-    });
-    return result.get();
+    val future = processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
+    if (future != null) {
+      return future.asDeferred().await()
+    }
+
+    return withContext(Dispatchers.EDT) {
+      processor.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
+    }
   }
 
-  public static @Nullable Project openProject(@NotNull String path, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
-    return openProject(Path.of(path), OpenProjectTask.build().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame));
-  }
-
-  public static @Nullable Project openProject(@NotNull Path file, @NotNull OpenProjectTask options) {
-    BasicFileAttributes fileAttributes = PathKt.basicAttributesIfExists(file);
+  @JvmStatic
+  fun openProject(file: Path, options: OpenProjectTask): Project? {
+    val fileAttributes = file.basicAttributesIfExists()
     if (fileAttributes == null) {
-      Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", file.toString()), CommonBundle.getErrorTitle());
-      return null;
+      Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", file.toString()), CommonBundle.getErrorTitle())
+      return null
     }
-
-    Project existing = findAndFocusExistingProjectForPath(file);
+    val existing = findAndFocusExistingProjectForPath(file)
     if (existing != null) {
-      return existing;
+      return existing
     }
-
     if (isRemotePath(file.toString()) && !RecentProjectsManager.getInstance().hasPath(FileUtil.toSystemIndependentName(file.toString()))) {
       if (!confirmLoadingFromRemotePath(file.toString(), "warning.load.project.from.share", "title.load.project.from.share")) {
-        return null;
+        return null
       }
     }
-
-    if (fileAttributes.isDirectory()) {
-      Path dir = file.resolve(Project.DIRECTORY_STORE_FOLDER);
+    if (fileAttributes.isDirectory) {
+      val dir = file.resolve(Project.DIRECTORY_STORE_FOLDER)
       if (!Files.isDirectory(dir)) {
-        Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", dir.toString()), CommonBundle.getErrorTitle());
-        return null;
+        Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", dir.toString()), CommonBundle.getErrorTitle())
+        return null
       }
     }
-
     try {
-      return ProjectManagerEx.getInstanceEx().openProject(file, options);
+      return ProjectManagerEx.getInstanceEx().openProject(file, options)
     }
-    catch (Exception e) {
-      Messages.showMessageDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()),
-                                 IdeBundle.message("title.cannot.load.project"), Messages.getErrorIcon());
+    catch (e: Exception) {
+      Messages.showMessageDialog(IdeBundle.message("error.cannot.load.project", e.message),
+                                 IdeBundle.message("title.cannot.load.project"), Messages.getErrorIcon())
     }
-    return null;
+    return null
   }
 
-  public static boolean confirmLoadingFromRemotePath(@NotNull String path,
-                                                     @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String msgKey,
-                                                     @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
-    return showYesNoDialog(IdeBundle.message(msgKey, path), titleKey);
+  fun confirmLoadingFromRemotePath(path: String,
+                                   msgKey: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String,
+                                   titleKey: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String): Boolean {
+    return showYesNoDialog(IdeBundle.message(msgKey, path), titleKey)
   }
 
-  public static boolean showYesNoDialog(@NotNull @Nls String message, @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
-    return MessageDialogBuilder.yesNo(IdeBundle.message(titleKey), message)
+  fun showYesNoDialog(message: @Nls String, titleKey: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String): Boolean {
+    return yesNo(IdeBundle.message(titleKey), message)
       .icon(Messages.getWarningIcon())
-      .ask(getActiveFrameOrWelcomeScreen());
+      .ask(getActiveFrameOrWelcomeScreen())
   }
 
-  public static Window getActiveFrameOrWelcomeScreen() {
-    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+  @JvmStatic
+  fun getActiveFrameOrWelcomeScreen(): Window? {
+    val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
     if (window != null) {
-      return window;
+      return window
     }
-
-    for (Frame frame : Frame.getFrames()) {
-      if (frame instanceof IdeFrame && frame.isVisible()) {
-        return frame;
+    for (frame in Frame.getFrames()) {
+      if (frame is IdeFrame && frame.isVisible) {
+        return frame
       }
     }
-    return null;
+    return null
   }
 
-  public static boolean isRemotePath(@NotNull String path) {
-    return (path.contains("://") || path.contains("\\\\")) && !WslPath.isWslUncPath(path);
+  fun isRemotePath(path: String): Boolean {
+    return path.contains("://") || path.contains("\\\\")
   }
 
-  public static @Nullable Project findProject(@NotNull Path file) {
-    Project[] openProjects = getOpenProjects();
-    if (openProjects.length == 0) {
-      return null;
+  fun findProject(file: Path): Project? {
+    val openProjects = getOpenProjects()
+    if (openProjects.size == 0) {
+      return null
     }
-
-    for (Project project : openProjects) {
+    for (project in openProjects) {
       if (isSameProject(file, project)) {
-        return project;
+        return project
       }
     }
-    return null;
+    return null
   }
 
-  public static @Nullable Project findAndFocusExistingProjectForPath(@NotNull Path file) {
-    var project = findProject(file);
+  @JvmStatic
+  fun findAndFocusExistingProjectForPath(file: Path): Project? {
+    val project = findProject(file)
     if (project != null) {
-      focusProjectWindow(project, false);
+      focusProjectWindow(project, false)
     }
-    return project;
-  }
-
-  /**
-   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW} or
-   *         {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW} or
-   *         {@link Messages#CANCEL} (when a user cancels the dialog)
-   */
-  public static int confirmOpenNewProject(boolean isNewProject) {
-    return confirmOpenNewProject(isNewProject, null);
+    return project
   }
 
   /**
    * @param isNewProject true if the project is just created
    * @param projectName name of the project to open (can be displayed to the user)
-   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW} or
-   *         {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW} or
-   *         {@link Messages#CANCEL} (when a user cancels the dialog)
+   * @return [GeneralSettings.OPEN_PROJECT_SAME_WINDOW] or
+   * [GeneralSettings.OPEN_PROJECT_NEW_WINDOW] or
+   * [Messages.CANCEL] (when a user cancels the dialog)
    */
-  public static int confirmOpenNewProject(boolean isNewProject, @Nullable String projectName) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
+  @JvmOverloads
+  fun confirmOpenNewProject(isNewProject: Boolean, projectName: String? = null): Int {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return GeneralSettings.OPEN_PROJECT_NEW_WINDOW
     }
-
-    int mode = GeneralSettings.getInstance().getConfirmOpenNewProject();
+    var mode = GeneralSettings.getInstance().confirmOpenNewProject
     if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
-      String message = projectName == null ? 
-                       IdeBundle.message("prompt.open.project.in.new.frame") :
-                       IdeBundle.message("prompt.open.project.with.name.in.new.frame", projectName);
-      if (isNewProject) {
-        boolean openInExistingFrame =
-          MessageDialogBuilder.yesNo(IdeCoreBundle.message("title.new.project"), message)
-            .yesText(IdeBundle.message("button.existing.frame"))
-            .noText(IdeBundle.message("button.new.frame"))
-            .doNotAsk(new ProjectNewWindowDoNotAskOption())
-            .guessWindowAndAsk();
-        mode = openInExistingFrame ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
+      val message = if (projectName == null) IdeBundle.message("prompt.open.project.in.new.frame")
+      else IdeBundle.message("prompt.open.project.with.name.in.new.frame", projectName)
+      mode = if (isNewProject) {
+        val openInExistingFrame = yesNo(IdeCoreBundle.message("title.new.project"), message)
+          .yesText(IdeBundle.message("button.existing.frame"))
+          .noText(IdeBundle.message("button.new.frame"))
+          .doNotAsk(ProjectNewWindowDoNotAskOption())
+          .guessWindowAndAsk()
+        if (openInExistingFrame) GeneralSettings.OPEN_PROJECT_SAME_WINDOW else GeneralSettings.OPEN_PROJECT_NEW_WINDOW
       }
       else {
-        int exitCode =
-          MessageDialogBuilder.yesNoCancel(IdeBundle.message("title.open.project"), message)
-            .yesText(IdeBundle.message("button.existing.frame"))
-            .noText(IdeBundle.message("button.new.frame"))
-            .doNotAsk(new ProjectNewWindowDoNotAskOption())
-            .guessWindowAndAsk();
-        mode = exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
-               exitCode == Messages.NO ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
-               Messages.CANCEL;
+        val exitCode = yesNoCancel(IdeBundle.message("title.open.project"), message)
+          .yesText(IdeBundle.message("button.existing.frame"))
+          .noText(IdeBundle.message("button.new.frame"))
+          .doNotAsk(ProjectNewWindowDoNotAskOption())
+          .guessWindowAndAsk()
+        if (exitCode == Messages.YES) GeneralSettings.OPEN_PROJECT_SAME_WINDOW else if (exitCode == Messages.NO) GeneralSettings.OPEN_PROJECT_NEW_WINDOW else Messages.CANCEL
       }
       if (mode != Messages.CANCEL) {
-        LifecycleUsageTriggerCollector.onProjectFrameSelected(mode);
+        LifecycleUsageTriggerCollector.onProjectFrameSelected(mode)
       }
     }
-    return mode;
+    return mode
   }
 
   /**
-   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW} or
-   *         {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW} or
-   *         {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW_ATTACH} or
-   *         {@code -1} (when a user cancels the dialog)
+   * @return [GeneralSettings.OPEN_PROJECT_SAME_WINDOW] or
+   * [GeneralSettings.OPEN_PROJECT_NEW_WINDOW] or
+   * [GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH] or
+   * `-1` (when a user cancels the dialog)
    */
-  public static int confirmOpenOrAttachProject() {
-    int mode = GeneralSettings.getInstance().getConfirmOpenNewProject();
+  fun confirmOpenOrAttachProject(): Int {
+    var mode = GeneralSettings.getInstance().confirmOpenNewProject
     if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
-      int exitCode = Messages.showDialog(
+      val exitCode = Messages.showDialog(
         IdeBundle.message("prompt.open.project.or.attach"),
-        IdeBundle.message("prompt.open.project.or.attach.title"),
-        new String[]{
-          IdeBundle.message("prompt.open.project.or.attach.button.this.window"),
-          IdeBundle.message("prompt.open.project.or.attach.button.new.window"),
-          IdeBundle.message("prompt.open.project.or.attach.button.attach"),
-          CommonBundle.getCancelButtonText()
-        },
+        IdeBundle.message("prompt.open.project.or.attach.title"), arrayOf(
+        IdeBundle.message("prompt.open.project.or.attach.button.this.window"),
+        IdeBundle.message("prompt.open.project.or.attach.button.new.window"),
+        IdeBundle.message("prompt.open.project.or.attach.button.attach"),
+        CommonBundle.getCancelButtonText()
+      ),
         0,
         Messages.getQuestionIcon(),
-        new ProjectNewWindowDoNotAskOption());
-      mode = exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
-             exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
-             exitCode == 2 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH :
-             -1;
+        ProjectNewWindowDoNotAskOption())
+      mode = if (exitCode == 0) GeneralSettings.OPEN_PROJECT_SAME_WINDOW else if (exitCode == 1) GeneralSettings.OPEN_PROJECT_NEW_WINDOW else if (exitCode == 2) GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH else -1
       if (mode != -1) {
-        LifecycleUsageTriggerCollector.onProjectFrameSelected(mode);
+        LifecycleUsageTriggerCollector.onProjectFrameSelected(mode)
       }
     }
-    return mode;
+    return mode
   }
 
-  /** @deprecated Use {@link #isSameProject(Path, Project)} */
-  @Deprecated
-  public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
-    return projectFilePath != null && isSameProject(Path.of(projectFilePath), project);
+  @Deprecated("Use {@link #isSameProject(Path, Project)} ")
+  fun isSameProject(projectFilePath: String?, project: Project): Boolean {
+    return projectFilePath != null && isSameProject(Path.of(projectFilePath), project)
   }
 
-  public static boolean isSameProject(@NotNull Path projectFile, @NotNull Project project) {
-    IProjectStore projectStore = ProjectKt.getStateStore(project);
-    Path existingBaseDirPath = projectStore.getProjectBasePath();
-
-    if (existingBaseDirPath.getFileSystem() != projectFile.getFileSystem()) {
-      return false;
+  @JvmStatic
+  fun isSameProject(projectFile: Path, project: Project): Boolean {
+    val projectStore = project.stateStore
+    val existingBaseDirPath = projectStore.projectBasePath
+    if (existingBaseDirPath.fileSystem !== projectFile.fileSystem) {
+      return false
     }
-
     if (Files.isDirectory(projectFile)) {
-      try {
-        return Files.isSameFile(projectFile, existingBaseDirPath);
+      return try {
+        Files.isSameFile(projectFile, existingBaseDirPath)
       }
-      catch (IOException ignore) {
-        return false;
-      }
-    }
-
-    if (projectStore.getStorageScheme() == StorageScheme.DEFAULT) {
-      try {
-        return Files.isSameFile(projectFile, projectStore.getProjectFilePath());
-      }
-      catch (IOException ignore) {
-        return false;
+      catch (ignore: IOException) {
+        false
       }
     }
-
-    Path parent = projectFile.getParent();
-    if (parent == null) {
-      return false;
+    if (projectStore.storageScheme == StorageScheme.DEFAULT) {
+      return try {
+        Files.isSameFile(projectFile, projectStore.projectFilePath)
+      }
+      catch (ignore: IOException) {
+        false
+      }
     }
-
-    Path parentFileName = parent.getFileName();
-    if (parentFileName != null && parentFileName.toString().equals(Project.DIRECTORY_STORE_FOLDER)) {
-      parent = parent.getParent();
-      return parent != null && FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString());
+    var parent: Path? = projectFile.parent ?: return false
+    val parentFileName = parent!!.fileName
+    if (parentFileName != null && parentFileName.toString() == Project.DIRECTORY_STORE_FOLDER) {
+      parent = parent.parent
+      return parent != null && FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString())
     }
-
-    return projectFile.getFileName().toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) &&
-           FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString());
+    return projectFile.fileName.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) &&
+           FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString())
   }
 
   /**
-   * Focuses the specified project's window. If {@code stealFocusIfAppInactive} is {@code true} and corresponding logic is supported by OS
-   * (making it work on Windows requires enabling focus stealing system-wise, see {@link com.intellij.ui.WinFocusStealer}), the window will
+   * Focuses the specified project's window. If `stealFocusIfAppInactive` is `true` and corresponding logic is supported by OS
+   * (making it work on Windows requires enabling focus stealing system-wise, see [com.intellij.ui.WinFocusStealer]), the window will
    * get the focus even if other application is currently active. Otherwise, there will be some indication that the target window requires
-   * user attention. Focus stealing behaviour (enabled by {@code stealFocusIfAppInactive}) is generally not considered a proper application
+   * user attention. Focus stealing behaviour (enabled by `stealFocusIfAppInactive`) is generally not considered a proper application
    * behaviour, and should only be used in special cases, when we know that user definitely expects it.
    */
-  public static void focusProjectWindow(@Nullable Project project, boolean stealFocusIfAppInactive) {
-    JFrame frame = WindowManager.getInstance().getFrame(project);
-    if (frame == null) {
-      return;
-    }
-
-    boolean appIsActive = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null;
+  @JvmStatic
+  fun focusProjectWindow(project: Project?, stealFocusIfAppInactive: Boolean) {
+    val frame = WindowManager.getInstance().getFrame(project) ?: return
+    val appIsActive = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow != null
 
     // On macOS, `j.a.Window#toFront` restores the frame if needed.
     // On X Window, restoring minimized frame can steal focus from an active application, so we do it only when the IDE is active.
     if (SystemInfo.isWindows || SystemInfo.isXWindow && appIsActive) {
-      int state = frame.getExtendedState();
-      if ((state & Frame.ICONIFIED) != 0) {
-        frame.setExtendedState(state & ~Frame.ICONIFIED);
+      val state = frame.extendedState
+      if (state and Frame.ICONIFIED != 0) {
+        frame.extendedState = state and Frame.ICONIFIED.inv()
       }
     }
-
     if (stealFocusIfAppInactive) {
-      AppIcon.getInstance().requestFocus((IdeFrame)frame);
+      AppIcon.getInstance().requestFocus(frame as IdeFrame)
     }
     else {
       if (!SystemInfo.isXWindow || appIsActive) {
         // some Linux window managers allow `j.a.Window#toFront` to steal focus, so we don't call it on Linux when the IDE is inactive
-        frame.toFront();
+        frame.toFront()
       }
       if (!SystemInfo.isWindows) {
         // on Windows, `j.a.Window#toFront` will request attention if needed
-        AppIcon.getInstance().requestAttention(project, true);
+        AppIcon.getInstance().requestAttention(project, true)
       }
     }
   }
 
-  public static @NotNull String getBaseDir() {
-    String defaultDirectory = GeneralSettings.getInstance().getDefaultProjectDirectory();
+  @JvmStatic
+  fun getBaseDir(): String {
+    val defaultDirectory = GeneralSettings.getInstance().defaultProjectDirectory
     if (Strings.isNotEmpty(defaultDirectory)) {
-      return defaultDirectory.replace('/', File.separatorChar);
+      return defaultDirectory.replace('/', File.separatorChar)
     }
-    final String lastProjectLocation = RecentProjectsManager.getInstance().getLastProjectCreationLocation();
-    if (lastProjectLocation != null) {
-      return lastProjectLocation.replace('/', File.separatorChar);
-    }
-    return getUserHomeProjectDir();
+    val lastProjectLocation = RecentProjectsManager.getInstance().lastProjectCreationLocation
+    return lastProjectLocation?.replace('/', File.separatorChar) ?: getUserHomeProjectDir()
   }
 
-  public static String getUserHomeProjectDir() {
-    String productName;
-    if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
-      productName = ApplicationNamesInfo.getInstance().getProductName();
+  @JvmStatic
+  fun getUserHomeProjectDir(): String {
+    val productName: String
+    productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
+      ApplicationNamesInfo.getInstance().productName
     }
     else {
-      productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+      ApplicationNamesInfo.getInstance().lowercaseProductName
     }
-    return SystemProperties.getUserHome().replace('/', File.separatorChar) + File.separator + productName + "Projects";
+    return SystemProperties.getUserHome().replace('/', File.separatorChar) + File.separator + productName + "Projects"
   }
 
-  public static @Nullable Project tryOpenFiles(@Nullable Project project, @NotNull List<? extends Path> list, String location) {
+  @JvmStatic
+  fun tryOpenFiles(project: Project?, list: List<Path>, location: String): Project? {
     try {
-      for (Path file : list) {
-        OpenProjectTask options = OpenProjectTask.build().withProjectToClose(project).withForceOpenInNewFrame(true);
-        OpenResult openResult = tryOpenOrImport(file.toAbsolutePath(), options);
-        if (openResult instanceof OpenResult.Success) {
-          LOG.debug(location + ": load project from ", file);
-          return ((OpenResult.Success)openResult).getProject();
+      for (file in list) {
+        val options = build().withProjectToClose(project).withForceOpenInNewFrame(true)
+        val openResult = tryOpenOrImport(file.toAbsolutePath(), options)
+        if (openResult is OpenResult.Success) {
+          LOG.debug("$location: load project from ", file)
+          return openResult.project
         }
-        else if (openResult instanceof OpenResult.Cancel) {
-          LOG.debug(location + ": canceled project opening");
-          return null;
+        else if (openResult is OpenResult.Cancel) {
+          LOG.debug("$location: canceled project opening")
+          return null
         }
       }
     }
-    catch (ProcessCanceledException ex) {
-      LOG.debug(location + ": skip project opening");
-      return null;
+    catch (ex: ProcessCanceledException) {
+      LOG.debug("$location: skip project opening")
+      return null
     }
-
-    Project result = null;
-    for (Path file : list) {
+    var result: Project? = null
+    for (file in list) {
       if (!Files.exists(file)) {
-        continue;
+        continue
       }
-
-      LOG.debug(location + ": open file ", file);
+      LOG.debug("$location: open file ", file)
       if (project != null) {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.toString()));
-        if (virtualFile != null && virtualFile.isValid()) {
-          OpenFileAction.openFile(virtualFile, project);
+        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.toString()))
+        if (virtualFile != null && virtualFile.isValid) {
+          OpenFileAction.openFile(virtualFile, project)
         }
-        result = project;
+        result = project
       }
       else {
-        CommandLineProjectOpenProcessor processor = CommandLineProjectOpenProcessor.getInstanceIfExists();
+        val processor = CommandLineProjectOpenProcessor.getInstanceIfExists()
         if (processor != null) {
-          Project opened = processor.openProjectAndFile(file, -1, -1, false);
+          val opened = processor.openProjectAndFile(file, -1, -1, false)
           if (opened != null && result == null) {
-            result = opened;
+            result = opened
           }
         }
       }
     }
-
-    return result;
+    return result
   }
 
-  @NotNull
-  @SystemDependent
-  public static String getProjectsPath() { //todo: merge somehow with getBaseDir
-    Application application = ApplicationManager.getApplication();
-    String fromSettings = application == null || application.isHeadlessEnvironment() ? null :
-                          GeneralSettings.getInstance().getDefaultProjectDirectory();
+  //todo: merge somehow with getBaseDir
+  @JvmStatic
+  fun getProjectsPath(): @SystemDependent String {
+    val application = ApplicationManager.getApplication()
+    val fromSettings = if (application == null || application.isHeadlessEnvironment) null else GeneralSettings.getInstance().defaultProjectDirectory
     if (StringUtil.isNotEmpty(fromSettings)) {
-      return PathManager.getAbsolutePath(fromSettings);
+      return PathManager.getAbsolutePath(fromSettings!!)
     }
     if (ourProjectsPath == null) {
-      String produceName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.ENGLISH);
-      String propertyName = String.format(PROPERTY_PROJECT_PATH, produceName);
-      String propertyValue = System.getProperty(propertyName);
-      ourProjectsPath = propertyValue != null
-                        ? PathManager.getAbsolutePath(StringUtil.unquoteString(propertyValue, '\"'))
-                        : getProjectsDirDefault();
+      val produceName = ApplicationNamesInfo.getInstance().productName.lowercase()
+      val propertyName = String.format(PROPERTY_PROJECT_PATH, produceName)
+      val propertyValue = System.getProperty(propertyName)
+      ourProjectsPath = if (propertyValue != null) PathManager.getAbsolutePath(StringUtil.unquoteString(propertyValue, '\"'))
+      else projectsDirDefault
     }
-    return ourProjectsPath;
+    return ourProjectsPath!!
   }
 
-  private static @NotNull String getProjectsDirDefault() {
-    if (PlatformUtils.isDataGrip()) return getUserHomeProjectDir();
-    return PathManager.getConfigPath() + File.separator + PROJECTS_DIR;
+  private val projectsDirDefault: String
+    get() = if (PlatformUtils.isDataGrip()) getUserHomeProjectDir() else PathManager.getConfigPath() + File.separator + PROJECTS_DIR
+
+  fun getProjectPath(name: String): Path {
+    return Path.of(getProjectsPath(), name)
   }
 
-  public static @NotNull Path getProjectPath(@NotNull String name) {
-    return Path.of(getProjectsPath(), name);
+  fun getProjectFile(name: String): Path? {
+    val projectDir = getProjectPath(name)
+    return if (isProjectFile(projectDir)) projectDir else null
   }
 
-  public static @Nullable Path getProjectFile(@NotNull String name) {
-    Path projectDir = getProjectPath(name);
-    return isProjectFile(projectDir) ? projectDir : null;
+  private fun isProjectFile(projectDir: Path): Boolean {
+    return Files.isDirectory(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER))
   }
 
-  private static boolean isProjectFile(@NotNull Path projectDir) {
-    return Files.isDirectory(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER));
+  @JvmOverloads
+  fun openOrCreateProject(name: String, projectCreatedCallback: ProjectCreatedCallback? = null): Project? {
+    return openOrCreateProject(name, getProjectPath(name), projectCreatedCallback)
   }
 
-  public static @Nullable Project openOrCreateProject(@NotNull String name) {
-    return openOrCreateProject(name, null);
+  @JvmStatic
+  fun openOrCreateProject(name: String, file: Path, projectCreatedCallback: ProjectCreatedCallback?): Project? {
+    return ProgressManager.getInstance().computeInNonCancelableSection<Project?, RuntimeException> {
+      openOrCreateProjectInner(name, file, projectCreatedCallback)
+    }
   }
 
-  public static @Nullable Project openOrCreateProject(@NotNull String name, @Nullable ProjectCreatedCallback projectCreatedCallback) {
-    return openOrCreateProject(name, getProjectPath(name), projectCreatedCallback);
-  }
-
-  public static @Nullable Project openOrCreateProject(@NotNull String name, @NotNull Path file, @Nullable ProjectCreatedCallback projectCreatedCallback) {
-    return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-      return openOrCreateProjectInner(name, file, projectCreatedCallback);
-    });
-  }
-
-  public interface ProjectCreatedCallback {
-    void projectCreated(Project project);
-  }
-
-  public static @NotNull Set<String> getExistingProjectNames() {
-    Set<String> result = new LinkedHashSet<>();
-    File file = new File(getProjectsPath());
-    for (String name : ObjectUtils.notNull(file.list(), ArrayUtilRt.EMPTY_STRING_ARRAY)) {
+  @JvmStatic
+  fun getExistingProjectNames(): Set<String> {
+    val result = LinkedHashSet<String>()
+    val file = File(getProjectsPath())
+    for (name in file.list() ?: ArrayUtilRt.EMPTY_STRING_ARRAY) {
       if (getProjectFile(name) != null) {
-        result.add(name);
+        result.add(name)
       }
     }
-    return result;
+    return result
   }
 
-  private static @Nullable Project openOrCreateProjectInner(@NotNull String name, @Nullable ProjectCreatedCallback projectCreatedCallback) {
-    Path file = getProjectPath(name);
-    return openOrCreateProjectInner(name, file, projectCreatedCallback);
+  private fun openOrCreateProjectInner(name: String, projectCreatedCallback: ProjectCreatedCallback?): Project? {
+    val file = getProjectPath(name)
+    return openOrCreateProjectInner(name, file, projectCreatedCallback)
   }
 
-  @Nullable
-  private static Project openOrCreateProjectInner(@NotNull String name, @NotNull Path file, @Nullable ProjectCreatedCallback projectCreatedCallback) {
-    Path existingFile = isProjectFile(file) ? file : null;
+  private fun openOrCreateProjectInner(name: String, file: Path, projectCreatedCallback: ProjectCreatedCallback?): Project? {
+    val existingFile = if (isProjectFile(file)) file else null
     if (existingFile != null) {
-      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-      for (Project p : openProjects) {
-        if (!p.isDefault() && isSameProject(existingFile, p)) {
-          focusProjectWindow(p, false);
-          return p;
+      val openProjects = ProjectManager.getInstance().openProjects
+      for (p in openProjects) {
+        if (!p.isDefault && isSameProject(existingFile, p)) {
+          focusProjectWindow(p, false)
+          return p
         }
       }
-      return ProjectManagerEx.getInstanceEx().openProject(existingFile, new OpenProjectTask().withRunConfigurators());
+      return ProjectManagerEx.getInstanceEx().openProject(existingFile, OpenProjectTask().withRunConfigurators())
+    }
+    val created = try {
+      !Files.exists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
+    }
+    catch (e: IOException) {
+      false
     }
 
-    boolean created;
-    try {
-      created = (!Files.exists(file) && Files.createDirectories(file) != null) || Files.isDirectory(file);
-    }
-    catch (IOException e) {
-      created = false;
-    }
-
-    Path projectFile = null;
+    var projectFile: Path? = null
     if (created) {
-      OpenProjectTask options = OpenProjectTask.build().asNewProject().withRunConfigurators().withProjectName(name);
-      Project project = ProjectManagerEx.getInstanceEx().newProject(file, options);
+      val options = build().asNewProject().withRunConfigurators().withProjectName(name)
+      val project = ProjectManagerEx.getInstanceEx().newProject(file, options)
       if (project != null) {
-        if (projectCreatedCallback != null) {
-          projectCreatedCallback.projectCreated(project);
+        projectCreatedCallback?.projectCreated(project)
+        runInAutoSaveDisabledMode {
+          runBlocking {
+            saveSettings(componentManager = project, forceSavingAllSettings = true)
+          }
         }
-        saveAndDisposeProject(project);
-        projectFile = file;
+        ApplicationManager.getApplication().invokeAndWait { WriteAction.run<RuntimeException> { Disposer.dispose(project) } }
+        projectFile = file
       }
     }
-    if (projectFile == null) return null;
 
-    OpenProjectTask options = OpenProjectTask.build().withRunConfigurators().withCreatedByWizard().withoutVfsRefresh();
-    return ProjectManagerEx.getInstanceEx().openProject(projectFile, options);
-  }
-
-  private static void saveAndDisposeProject(@NotNull Project project) {
-    StoreUtil.saveSettings(project, true);
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      WriteAction.run(() -> Disposer.dispose(project));
-    });
-  }
-
-  public static @Nullable Project getProjectForWindow(@Nullable Window window) {
-    if (window != null) {
-      while (window.getOwner() != null) {
-        window = window.getOwner();
-      }
-      if (window instanceof IdeFrame) {
-        return ((IdeFrame)window).getProject();
-      }
+    if (projectFile == null) {
+      return null
     }
-    return null;
+
+    val options = build().withRunConfigurators().withCreatedByWizard().withoutVfsRefresh()
+    return ProjectManagerEx.getInstanceEx().openProject(projectFile, options)
   }
 
-  public static @Nullable Project getProjectForComponent(@Nullable Component component) {
-    return getProjectForWindow(ComponentUtil.getWindow(component));
+  fun getProjectForWindow(window: Window?): Project? {
+    var w = window ?: return null
+    while (w.owner != null) {
+      w = w.owner
+    }
+    return if (w is IdeFrame) (w as IdeFrame).project else null
   }
 
-  public static @Nullable Project getActiveProject() {
-    return getProjectForWindow(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow());
+  @JvmStatic
+  fun getProjectForComponent(component: Component?): Project? = getProjectForWindow(ComponentUtil.getWindow(component))
+
+  @JvmStatic
+  fun getActiveProject(): Project? = getProjectForWindow(KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow)
+
+  interface ProjectCreatedCallback {
+    fun projectCreated(project: Project?)
+  }
+
+  @JvmStatic
+  fun getOpenProjects(): Array<Project> = ProjectUtilCore.getOpenProjects()
+
+  @OptIn(DelicateCoroutinesApi::class)
+  fun openExistingDirSync(file: Path, currentProject: Project?): CompletableFuture<*> {
+    return GlobalScope.launch {
+      openExistingDir(file, currentProject)
+    }.asCompletableFuture()
+  }
+
+  @ApiStatus.Internal
+  @VisibleForTesting
+  suspend fun openExistingDir(file: Path, currentProject: Project?): Project? {
+    val canAttach = ProjectAttachProcessor.canAttachToProject()
+    val preferAttach = currentProject != null &&
+                       canAttach &&
+                       (PlatformUtils.isDataGrip() && !ProjectUtilCore.isValidProjectPath(file) || PlatformUtils.isDataSpell())
+    if (preferAttach && attachToProject(currentProject!!, file, null)) {
+      return null
+    }
+
+    val project = if (canAttach) {
+      val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject)
+      ProjectManagerEx.getInstanceEx().openProjectAsync(file, options)
+    }
+    else {
+      openOrImportAsync(file, build().withProjectToClose(currentProject))
+    }
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      FileChooserUtil.setLastOpenedFile(project, file)
+    }
+    return project
+  }
+
+  @JvmStatic
+  fun isValidProjectPath(file: Path): Boolean {
+    return ProjectUtilCore.isValidProjectPath(file)
   }
 }
