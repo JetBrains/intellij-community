@@ -9,7 +9,6 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.*
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
-import org.eclipse.jgit.api.MergeResult.MergeStatus.FAST_FORWARD
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.lib.Constants
@@ -254,28 +253,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     return repository.findRef(ref.name)!!
   }
 
-  private fun fastForwardMaster(branchOnSamePosition: Ref, targetBranch: Ref): BranchPosition {
-    LOG.info("Advancing master. Its position is equal to ${branchOnSamePosition.short}: ${master.objectId.short}. " +
-             "Fast-forwarding to ${targetBranch.short} ${targetBranch.objectId.short}")
-    val mergeResult = git.merge().include(targetBranch).call()
-    if (mergeResult.mergeStatus != FAST_FORWARD) {
-      LOG.warn("Non-fast-forward result: $mergeResult")
-      // todo check consistency here
-    }
-    return getPosition(master)
-  }
-
   override fun advanceMaster(): SettingsLog.Position {
     git.checkout().setName(MASTER_REF_NAME).call()
-
-    if (master.objectId == ide.objectId) {
-      return fastForwardMaster(ide, cloud)
-    }
-
-    if (master.objectId == cloud.objectId) {
-      return fastForwardMaster(cloud, ide)
-    }
-
     LOG.info("Advancing master@${master.objectId.short}. Need merge of ide@${ide.objectId.short} and cloud@${cloud.objectId.short}")
     // 1. move master to ide
     git.reset().setRef(IDE_REF_NAME).setMode(ResetCommand.ResetType.HARD).call()
