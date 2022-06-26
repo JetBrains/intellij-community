@@ -56,6 +56,7 @@ public final class PlatformUtils {
   public static final String CWM_GUEST_PREFIX = "CodeWithMeGuest";
   public static final String JETBRAINS_CLIENT_PREFIX = "JetBrainsClient";
   public static final String GATEWAY_PREFIX = "Gateway";
+  public static final String QODANA_PREFIX = "Qodana";
 
   @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
     IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, MOBILE_IDE_PREFIX, PYCHARM_PREFIX, DATASPELL_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
