@@ -126,15 +126,15 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     else {
       ProjectUiFrameAllocator(options, projectStoreBaseDir)
     }
+
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
     val result = frameAllocator.run { indicator ->
       activity.end()
-      val result: PrepareProjectResult
-      if (options.project == null) {
-        result = prepareProject(options, projectStoreBaseDir) ?: return@run null
+      val result = if (options.project == null) {
+        prepareProject(options, projectStoreBaseDir) ?: return@run null
       }
       else {
-        result = PrepareProjectResult(options.project as Project, null)
+        PrepareProjectResult(options.project as Project, null)
       }
 
       val project = result.project

@@ -28,7 +28,6 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFrame
@@ -66,8 +65,8 @@ private var ourProjectsPath: String? = null
 
 object ProjectUtil {
   const val DEFAULT_PROJECT_NAME = "default"
-  const val PROJECTS_DIR = "projects"
-  const val PROPERTY_PROJECT_PATH = "%s.project.path"
+  private const val PROJECTS_DIR = "projects"
+  private const val PROPERTY_PROJECT_PATH = "%s.project.path"
 
   @ApiStatus.Internal
   @JvmField
@@ -111,7 +110,8 @@ object ProjectUtil {
     RecentProjectsManager.getInstance().lastProjectCreationLocation = PathUtil.toSystemIndependentName(path)
   }
 
-  @Deprecated("Use {@link ProjectManager#closeAndDispose(Project)} ")
+  @Deprecated("Use {@link ProjectManager#closeAndDispose(Project)} ",
+              ReplaceWith("ProjectManager.getInstance().closeAndDispose(project)", "com.intellij.openapi.project.ProjectManager"))
   @JvmStatic
   fun closeAndDispose(project: Project): Boolean {
     return ProjectManager.getInstance().closeAndDispose(project)
@@ -191,8 +191,7 @@ object ProjectUtil {
     if (processors.isEmpty()) {
       return failure()
     }
-    val project: Project?
-    project = if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
+    val project = if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
       ProjectManagerEx.getInstanceEx().openProject(file,
                                                    options.asNewProject().withRunConfigurators().withBeforeOpenCallback { p: Project ->
                                                      p.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR,
@@ -442,24 +441,13 @@ object ProjectUtil {
     return path.contains("://") || path.contains("\\\\")
   }
 
-  fun findProject(file: Path): Project? {
-    val openProjects = getOpenProjects()
-    if (openProjects.size == 0) {
-      return null
-    }
-    for (project in openProjects) {
-      if (isSameProject(file, project)) {
-        return project
-      }
-    }
-    return null
-  }
+  fun findProject(file: Path): Project? = getOpenProjects().firstOrNull { isSameProject(file, it) }
 
   @JvmStatic
   fun findAndFocusExistingProjectForPath(file: Path): Project? {
     val project = findProject(file)
     if (project != null) {
-      focusProjectWindow(project, false)
+      focusProjectWindow(project = project)
     }
     return project
   }
@@ -531,7 +519,9 @@ object ProjectUtil {
     return mode
   }
 
-  @Deprecated("Use {@link #isSameProject(Path, Project)} ")
+  @Deprecated("Use {@link #isSameProject(Path, Project)} ",
+              ReplaceWith("projectFilePath != null && isSameProject(Path.of(projectFilePath), project)",
+                                        "com.intellij.ide.impl.ProjectUtil.isSameProject", "java.nio.file.Path"))
   fun isSameProject(projectFilePath: String?, project: Project): Boolean {
     return projectFilePath != null && isSameProject(Path.of(projectFilePath), project)
   }
@@ -543,6 +533,7 @@ object ProjectUtil {
     if (existingBaseDirPath.fileSystem !== projectFile.fileSystem) {
       return false
     }
+
     if (Files.isDirectory(projectFile)) {
       return try {
         Files.isSameFile(projectFile, existingBaseDirPath)
@@ -577,7 +568,7 @@ object ProjectUtil {
    * behaviour, and should only be used in special cases, when we know that user definitely expects it.
    */
   @JvmStatic
-  fun focusProjectWindow(project: Project?, stealFocusIfAppInactive: Boolean) {
+  fun focusProjectWindow(project: Project?, stealFocusIfAppInactive: Boolean = false) {
     val frame = WindowManager.getInstance().getFrame(project) ?: return
     val appIsActive = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow != null
 
@@ -607,7 +598,7 @@ object ProjectUtil {
   @JvmStatic
   fun getBaseDir(): String {
     val defaultDirectory = GeneralSettings.getInstance().defaultProjectDirectory
-    if (Strings.isNotEmpty(defaultDirectory)) {
+    if (!defaultDirectory.isNullOrEmpty()) {
       return defaultDirectory.replace('/', File.separatorChar)
     }
     val lastProjectLocation = RecentProjectsManager.getInstance().lastProjectCreationLocation
@@ -616,8 +607,7 @@ object ProjectUtil {
 
   @JvmStatic
   fun getUserHomeProjectDir(): String {
-    val productName: String
-    productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
+    val productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
       ApplicationNamesInfo.getInstance().productName
     }
     else {
@@ -718,23 +708,6 @@ object ProjectUtil {
     }
   }
 
-  @JvmStatic
-  fun getExistingProjectNames(): Set<String> {
-    val result = LinkedHashSet<String>()
-    val file = File(getProjectsPath())
-    for (name in file.list() ?: ArrayUtilRt.EMPTY_STRING_ARRAY) {
-      if (getProjectFile(name) != null) {
-        result.add(name)
-      }
-    }
-    return result
-  }
-
-  private fun openOrCreateProjectInner(name: String, projectCreatedCallback: ProjectCreatedCallback?): Project? {
-    val file = getProjectPath(name)
-    return openOrCreateProjectInner(name, file, projectCreatedCallback)
-  }
-
   private fun openOrCreateProjectInner(name: String, file: Path, projectCreatedCallback: ProjectCreatedCallback?): Project? {
     val existingFile = if (isProjectFile(file)) file else null
     if (existingFile != null) {
@@ -824,7 +797,7 @@ object ProjectUtil {
     else {
       openOrImportAsync(file, build().withProjectToClose(currentProject))
     }
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
       FileChooserUtil.setLastOpenedFile(project, file)
     }
     return project

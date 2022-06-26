@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
@@ -16,6 +17,12 @@ abstract class ProjectManagerEx : ProjectManager() {
 
     @JvmStatic
     fun getInstanceExIfCreated(): ProjectManagerEx? = getInstanceIfCreated() as ProjectManagerEx?
+
+    @Internal
+    fun getOpenProjects(): List<Project> {
+      val projectManager = getInstanceIfCreated()
+      return projectManager?.openProjects?.toList() ?: emptyList()
+    }
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")

@@ -238,7 +238,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     }
 
   override fun updateLastProjectPath() {
-    val openProjects = ProjectUtilCore.getOpenProjects()
+    val openProjects = ProjectManagerEx.getOpenProjects()
     synchronized(stateLock) {
       for (info in state.additionalInfo.values) {
         info.opened = false
@@ -498,9 +498,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     }
   }
 
-  override fun suggestNewProjectLocation(): String {
-    return ProjectUtil.getBaseDir()
-  }
+  override fun suggestNewProjectLocation() = ProjectUtil.getBaseDir()
 
   // open for Rider
   protected open fun isValidProjectPath(file: Path) = ProjectUtilCore.isValidProjectPath(file)
@@ -807,7 +805,7 @@ int32 "extendedState"
         return
       }
 
-      val openProjects = ProjectUtil.getOpenProjects()
+      val openProjects = ProjectManagerEx.getOpenProjects()
       // do not delete info file if ProjectManager not created - it means that it was simply not loaded, so, unlikely something is changed
       if (openProjects.isEmpty()) {
         if (!isUseProjectFrameAsSplash()) {
