@@ -55,8 +55,6 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   }
 
   override fun applyToIde(snapshot: SettingsSnapshot) {
-    // todo race between this code and SettingsSyncStreamProvider.write which can write other user settings at the same time
-
     // 1. update SettingsSyncSettings first to apply changes in categories
     val settingsSyncFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncSettings.FILE_SPEC}" }
     if (settingsSyncFileState != null) {

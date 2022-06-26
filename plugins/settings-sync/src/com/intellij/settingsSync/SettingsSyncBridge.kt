@@ -69,22 +69,11 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings
 
     val masterPosition = settingsLog.forceWriteToMaster(settingsSnapshot)
-    settingsLog.setIdePosition(masterPosition)
+    pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
 
-    // normally we set cloud position only after successful push to cloud, but in this case we take all settings from the cloud,
+    // normally we set cloud position only after successful push to cloud, but in this case we already take all settings from the cloud,
     // so no push is needed, and we know the cloud settings state.
     settingsLog.setCloudPosition(masterPosition)
-
-    val pushResult = pushToIde(settingsLog.collectCurrentSnapshot())
-    LOG.info("Result of pushing settings to the IDE: $pushResult")
-    when (pushResult) {
-      SettingsSyncPushResult.Success -> SettingsSyncStatusTracker.getInstance().updateOnSuccess()
-      is SettingsSyncPushResult.Error ->
-        SettingsSyncStatusTracker.getInstance().updateOnError(SettingsSyncBundle.message("notification.title.apply.error") + ": " + pushResult.message)
-      SettingsSyncPushResult.Rejected -> {
-        // todo this should be a force push, no reject is expected
-      }
-    }
   }
 
   sealed class InitMode {
@@ -134,25 +123,7 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     }
 
     if (newIdePosition != masterPosition) { // master has advanced further that ide => the ide needs to be updated
-      val pushResult: SettingsSyncPushResult = pushToIde(settingsLog.collectCurrentSnapshot())
-      LOG.info("Result of pushing settings to the IDE: $pushResult")
-      when (pushResult) {
-        SettingsSyncPushResult.Success -> {
-          settingsLog.setIdePosition(masterPosition)
-          SettingsSyncStatusTracker.getInstance().updateOnSuccess()
-        }
-        is SettingsSyncPushResult.Error -> {
-          SettingsSyncStatusTracker.getInstance().updateOnError(
-            SettingsSyncBundle.message("notification.title.apply.error") + ": " + pushResult.message)
-        }
-        SettingsSyncPushResult.Rejected -> {
-          // In the case of reject we'll just "wait" for the next update event:
-          // it will be processed in the next session anyway
-          if (pendingEvents.none { it is SyncSettingsEvent.IdeChange }) {
-            // todo schedule update
-          }
-        }
-      }
+      pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
     }
 
     if (newCloudPosition != masterPosition || pushRequestMode == MUST_PUSH || pushRequestMode == FORCE_PUSH) {
@@ -203,9 +174,16 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     }
   }
 
-  private fun pushToIde(settingsSnapshot: SettingsSnapshot): SettingsSyncPushResult {
-    ideMediator.applyToIde(settingsSnapshot)
-    return SettingsSyncPushResult.Success // todo
+  private fun pushToIde(settingsSnapshot: SettingsSnapshot, targetPosition: SettingsLog.Position) {
+    try {
+      ideMediator.applyToIde(settingsSnapshot)
+      settingsLog.setIdePosition(targetPosition)
+      LOG.info("Applied settings to the IDE.")
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+      SettingsSyncStatusTracker.getInstance().updateOnError(SettingsSyncBundle.message("notification.title.apply.error") + ": " + e.message)
+    }
   }
 
   @TestOnly
