@@ -100,7 +100,8 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   override fun waitForStart(): BuiltInServerManager {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode ||
                    ApplicationManager.getApplication().isHeadlessEnvironment ||
-                   !ApplicationManager.getApplication().isDispatchThread)
+                   !ApplicationManager.getApplication().isDispatchThread,
+                   "Should not wait for built-in server on EDT")
 
     var future: Future<*>?
     synchronized(this) {
