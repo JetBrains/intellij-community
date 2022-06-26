@@ -24,7 +24,6 @@ public class CustomisedActionGroup extends ActionGroupWrapper {
                                String defaultGroupName,
                                String name) {
     super((group));
-    copyFrom(group);
     getTemplatePresentation().setText(shortName);
 
     mySchema = schema;
@@ -33,13 +32,16 @@ public class CustomisedActionGroup extends ActionGroupWrapper {
   }
 
   @Override
-  public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
-    ActionGroup myGroup = getDelegate();
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    ActionGroup delegate = getDelegate();
     int currentSchemaStamp = CustomActionsSchema.getInstance().getModificationStamp();
-    int currentGroupStamp = myGroup instanceof DefaultActionGroup ? ((DefaultActionGroup)myGroup).getModificationStamp() : -1;
-    if (mySchemeModificationStamp < currentSchemaStamp || myGroupModificationStamp < currentGroupStamp || ArrayUtil.isEmpty(myChildren) ||
-        myGroup instanceof DynamicActionGroup || !(myGroup instanceof DefaultActionGroup)) {
-      myChildren = CustomizationUtil.getReordableChildren(myGroup, mySchema, myDefaultGroupName, myRootGroupName, e);
+    int currentGroupStamp = delegate instanceof DefaultActionGroup ? ((DefaultActionGroup)delegate).getModificationStamp() : -1;
+    if (mySchemeModificationStamp < currentSchemaStamp ||
+        myGroupModificationStamp < currentGroupStamp ||
+        ArrayUtil.isEmpty(myChildren) ||
+        delegate instanceof DynamicActionGroup ||
+        !(delegate instanceof DefaultActionGroup)) {
+      myChildren = CustomizationUtil.getReordableChildren(delegate, mySchema, myDefaultGroupName, myRootGroupName, e);
       mySchemeModificationStamp = currentSchemaStamp;
       myGroupModificationStamp = currentGroupStamp;
     }
@@ -48,11 +50,11 @@ public class CustomisedActionGroup extends ActionGroupWrapper {
 
   @Nullable
   public AnAction getFirstAction() {
-    final AnAction[] children = getChildren(null);
+    AnAction[] children = getChildren(null);
     return children.length > 0 ? children[0] : null;
   }
 
-  /** Use {@link #getDelegate()} instead */
+  /** @deprecated Use {@link #getDelegate()} instead */
   @Deprecated
   public @NotNull ActionGroup getOrigin() { return getDelegate(); }
 
@@ -62,11 +64,11 @@ public class CustomisedActionGroup extends ActionGroupWrapper {
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof CustomisedActionGroup && Objects.equals(((CustomisedActionGroup)obj).getOrigin(), getOrigin());
+    return obj instanceof CustomisedActionGroup && Objects.equals(((CustomisedActionGroup)obj).getDelegate(), getDelegate());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getOrigin());
+    return Objects.hash(getDelegate());
   }
 }
