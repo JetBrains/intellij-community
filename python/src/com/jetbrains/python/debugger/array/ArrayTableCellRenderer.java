@@ -42,8 +42,11 @@ class ArrayTableCellRenderer extends DataViewCellRenderer implements ColoredCell
     if (myMax != myMin) {
       if (myColored && value != null) {
         try {
-          double rangedValue = PyNumericViewUtil.getRangedValue(value.toString(), myType, myMin, myMax, myComplexMax, myComplexMin);
-          background = PyNumericViewUtil.rangedValueToColor(rangedValue);
+          String valueStr = value.toString();
+          if (!valueStr.isEmpty()) {
+            double rangedValue = PyNumericViewUtil.getRangedValue(valueStr, myType, myMin, myMax, myComplexMax, myComplexMin);
+            background = PyNumericViewUtil.rangedValueToColor(rangedValue);
+          }
         }
         catch (NumberFormatException ignored) {
         }
