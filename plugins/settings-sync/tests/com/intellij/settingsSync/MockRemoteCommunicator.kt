@@ -14,7 +14,9 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
   }
 
   override fun checkServerState(): ServerState {
-    return if (versionOnServer != null && !downloadedLatestVersion) ServerState.UpdateNeeded else ServerState.UpToDate
+    return if (versionOnServer == null) ServerState.FileNotExists
+    else if (downloadedLatestVersion) ServerState.UpToDate
+    else ServerState.UpdateNeeded
   }
 
   override fun receiveUpdates(): UpdateResult {
