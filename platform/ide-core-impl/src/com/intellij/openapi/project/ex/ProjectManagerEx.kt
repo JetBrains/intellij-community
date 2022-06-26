@@ -5,7 +5,6 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -60,12 +59,12 @@ abstract class ProjectManagerEx : ProjectManager() {
    */
   abstract fun forceCloseProject(project: Project): Boolean
 
-  @ApiStatus.Internal
+  @Internal
   abstract fun saveAndForceCloseProject(project: Project): Boolean
 
   // return true if successful
   abstract fun closeAndDisposeAllProjects(checkCanClose: Boolean): Boolean
 
-  @get:ApiStatus.Internal
-  abstract val allExcludedUrls: List<String?>
+  @get:Internal
+  abstract val allExcludedUrls: List<String>
 }

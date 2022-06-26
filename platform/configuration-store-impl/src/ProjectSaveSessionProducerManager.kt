@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.notification.Notifications
@@ -7,7 +7,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
+import com.intellij.openapi.project.impl.UnableToSaveProjectNotification
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.containers.mapSmart
@@ -78,7 +78,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
       Notifications.Bus.notify(UnableToSaveProjectNotification(project, readOnlyFiles), project)
     }
     else {
-      notifications[0].setFiles(readOnlyFiles)
+      notifications[0].files = readOnlyFiles
     }
   }
 

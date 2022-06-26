@@ -151,10 +151,12 @@ object ProjectUtil {
         return OpenResult.Success(existing)
       }
     }
+
     val lazyVirtualFile = NullableLazyValue.lazyNullable { ProjectUtilCore.getFileAndRefresh(file) }
     if (!confirmOpeningAndSetProjectTrustedStateIfNeeded(file)) {
       return cancel()
     }
+
     for (provider in ProjectOpenProcessor.EXTENSION_POINT_NAME.iterable) {
       if (!provider.isStrongProjectInfoHolder) {
         continue
@@ -167,12 +169,14 @@ object ProjectUtil {
         return openResult(project, cancel())
       }
     }
+
     if (ProjectUtilCore.isValidProjectPath(file)) {
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
       val project = ProjectManagerEx.getInstanceEx().openProject(file, options.withRunConfigurators())
       return openResult(project, failure())
     }
-    if (PREVENT_IPR_LOOKUP_KEY.get(options) == java.lang.Boolean.TRUE && Files.isDirectory(file)) {
+
+    if (PREVENT_IPR_LOOKUP_KEY.get(options) != java.lang.Boolean.TRUE && Files.isDirectory(file)) {
       try {
         Files.newDirectoryStream(file).use { directoryStream ->
           for (child in directoryStream) {
@@ -187,10 +191,12 @@ object ProjectUtil {
       catch (ignore: IOException) {
       }
     }
+
     val processors = computeProcessors(file, lazyVirtualFile)
     if (processors.isEmpty()) {
       return failure()
     }
+
     val project = if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
       ProjectManagerEx.getInstanceEx().openProject(file,
                                                    options.asNewProject().withRunConfigurators().withBeforeOpenCallback { p: Project ->
@@ -315,20 +321,22 @@ object ProjectUtil {
     }
     else {
       processors.removeIf { it: ProjectOpenProcessor? -> it is PlatformProjectOpenProcessor }
-      var chooser: Function<List<ProjectOpenProcessor>, ProjectOpenProcessor>
       if (processors.size == 1) {
         processor = processors.first()
       }
-      else if (PROCESSOR_CHOOSER_KEY.get(options).also { chooser = it } != null) {
-        LOG.info("options.openProcessorChooser will handle the open processor dilemma")
-        processor = chooser.apply(processors)
-      }
       else {
-        ApplicationManager.getApplication().invokeAndWait {
-          processor = SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile)
+        val chooser = options.getUserData(PROCESSOR_CHOOSER_KEY)
+        if (chooser != null) {
+          LOG.info("options.openProcessorChooser will handle the open processor dilemma")
+          processor = chooser.apply(processors)
         }
-        if (processor == null) {
-          return null
+        else {
+          ApplicationManager.getApplication().invokeAndWait {
+            processor = SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile)
+          }
+          if (processor == null) {
+            return null
+          }
         }
       }
     }

@@ -21,6 +21,7 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.use
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
@@ -112,6 +113,17 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
   }
 
   @Test fun projectFileLookup() {
+    val projectDir = tempDir.root.toPath()
+    val projectFile = Files.writeString(projectDir.resolve("project.ipr"), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\"/>")
+    val project = runBlocking {
+      ProjectUtil.openOrImportAsync(projectDir, OpenProjectTask())
+    }
+    assertThat(project).isNotNull()
+    val projectFilePath = project!!.use { it.projectFilePath }
+    assertThat(projectFilePath).isEqualTo(projectFile.systemIndependentPath)
+  }
+
+  @Test fun projectFileLookupSync() {
     val projectDir = tempDir.root.toPath()
     val projectFile = Files.writeString(projectDir.resolve("project.ipr"), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\"/>")
     val project = ProjectUtil.openOrImport(projectDir, OpenProjectTask())

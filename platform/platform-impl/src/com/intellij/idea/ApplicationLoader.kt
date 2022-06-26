@@ -88,11 +88,10 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
 
   val args = processProgramArguments(rawArgs)
 
-
   // event queue is replaced as part of "prepareUiFuture" task - application must be created only after that
   val prepareUiFutureWaitActivity = initAppActivity.startChild("prepare ui waiting")
   val block = (prepareUiFuture as CompletableFuture<Any>).thenApply { baseLaf ->
-    GlobalScope.async {
+    GlobalScope.launch(errorHandler) {
       prepareUiFutureWaitActivity.end()
 
       val setBaseLafFuture = launch {
@@ -167,10 +166,10 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
 
       prepareStart(app, initAppActivity, pluginSet)
 
-      // not as a part of blocking initApplication
-      GlobalScope.async {
-        initAppActivity.end()
+      initAppActivity.end()
 
+      // not as a part of blocking initApplication
+      GlobalScope.launch(errorHandler) {
         coroutineScope {
           launch {
             addActivateAndWindowsCliListeners()
@@ -179,7 +178,12 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
           val starter = deferredStarter.await()
           if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
             if (starter is IdeStarter) {
-              starter.start(args)
+              try {
+                starter.start(args)
+              }
+              catch (e: Exception) {
+                throw e
+              }
             }
             else {
               starter.main(args)
@@ -198,6 +202,7 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
       }
     }
   }
+
   block.join().asCompletableFuture().join()
 }
 
@@ -229,7 +234,7 @@ private suspend fun prepareStart(app: ApplicationImpl, initAppActivity: Activity
     }
 
     // doesn't block app start-up
-    GlobalScope.async {
+    GlobalScope.launch(errorLogger) {
       coroutineScope {
         launch {
           runActivity("create locator file") {
@@ -339,21 +344,25 @@ internal fun createAppLocatorFile() {
   }
 }
 
+private val errorHandler = CoroutineExceptionHandler { _, error ->
+  if (error is ProcessCanceledException) {
+    throw error
+  }
+  else {
+    StartupAbortedException.processException(error)
+  }
+}
+
+private val errorLogger = CoroutineExceptionHandler { _, exception ->
+  LOG.error(exception)
+}
+
 @OptIn(DelicateCoroutinesApi::class)
 fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
                     container: ComponentManagerImpl,
                     activityPrefix: String,
                     syncScope: CoroutineScope,
                     onlyIfAwait: Boolean = false) {
-  val errorHandler = CoroutineExceptionHandler { _, error ->
-    if (error is ProcessCanceledException) {
-      throw error
-    }
-    else {
-      StartupAbortedException.processException(error)
-    }
-  }
-
   container.preloadServices(modules = modules,
                             activityPrefix = activityPrefix,
                             syncScope = syncScope + errorHandler,
