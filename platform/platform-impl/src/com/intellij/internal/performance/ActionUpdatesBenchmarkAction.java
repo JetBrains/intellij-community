@@ -7,9 +7,11 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.PotemkinProgress;
@@ -214,7 +216,7 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
       String actionIdIfNeeded = nonUniqueClasses.contains(className) ? " (" + id + ")" : "";
       String actionName = className + actionIdIfNeeded;
       ProgressManager.checkCanceled();
-      actionUpdateThreadCounts[updateThread.ordinal()] ++;
+      actionUpdateThreadCounts[updateThread.ordinal()]++;
       if (updateThread == ActionUpdateThread.OLD_EDT) {
         oldEdtActionNames.add(actionName);
       }
@@ -234,6 +236,27 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
       if (result.first < MIN_REPORTED_UPDATE_MILLIS) break;
       LOG.info(result.first + " ms - " + result.second);
     }
+
+    ExtensionsAreaImpl extensionArea = (ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea();
+    //noinspection TestOnlyProblems
+    extensionArea.processExtensionPoints(ep -> {
+      try {
+        if (ActionUpdateThreadAware.class.isAssignableFrom(ep.getExtensionClass())) {
+          //noinspection unchecked
+          List<ActionUpdateThreadAware> extensions = (List<ActionUpdateThreadAware>)ep.getExtensionList();
+          for (ActionUpdateThreadAware extension : extensions) {
+            ActionUpdateThread updateThread = extension.getActionUpdateThread();
+            if (updateThread == ActionUpdateThread.OLD_EDT) {
+              oldEdtActionNames.add(String.format("Extension %s (EP: %s)", extension.getClass().getName(), ep.getName()));
+            }
+          }
+        }
+      }
+      catch (Throwable e) {
+        LOG.warn(e);
+      }
+    });
+
     StringBuilder sb = new StringBuilder();
     sb.append("---- action-update-thread stats ----\n");
     sb.append(StringUtil.join(ActionUpdateThread.values(), t -> actionUpdateThreadCounts[t.ordinal()] + ":" + t.name(), ", "));
