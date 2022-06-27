@@ -7416,6 +7416,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("companionObjectAliased.kt")
+            public void testCompanionObjectAliased() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/typeAliases/companionObjectAliased.kt");
+            }
+
             @TestMetadata("compoundWithDeprecatedArgumentsAndConstructor.kt")
             public void testCompoundWithDeprecatedArgumentsAndConstructor() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/typeAliases/compoundWithDeprecatedArgumentsAndConstructor.kt");
@@ -7444,6 +7449,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("objectAliased.kt")
             public void testObjectAliased() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/typeAliases/objectAliased.kt");
+            }
+
+            @TestMetadata("objectAliasedWithPropertyReference.kt")
+            public void testObjectAliasedWithPropertyReference() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/typeAliases/objectAliasedWithPropertyReference.kt");
             }
 
             @TestMetadata("onlyAliasDeprecated.kt")
