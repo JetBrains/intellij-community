@@ -91,17 +91,10 @@ public final class DvcsUtil {
     return StringUtil.join(repositories, repository -> getShortRepositoryName(repository), ", ");
   }
 
-  public static boolean anyRepositoryIsFresh(Collection<? extends Repository> repositories) {
-    for (Repository repository : repositories) {
-      if (repository.isFresh()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public static <T extends Repository> void disableActionIfAnyRepositoryIsFresh(@NotNull AnActionEvent e, @NotNull List<T> repositories, @NlsSafe String operationName) {
-    boolean isFresh = repositories.stream().anyMatch(Repository::isFresh);
+  public static <T extends Repository> void disableActionIfAnyRepositoryIsFresh(@NotNull AnActionEvent e,
+                                                                                @NotNull List<T> repositories,
+                                                                                @Nls String operationName) {
+    boolean isFresh = ContainerUtil.exists(repositories, Repository::isFresh);
     if (isFresh) {
       Presentation p = e.getPresentation();
       p.setEnabled(false);
