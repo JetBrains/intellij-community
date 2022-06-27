@@ -1,0 +1,11 @@
+// "Replace with 'C'" "true"
+@Deprecated("", replaceWith = ReplaceWith("C"))
+private typealias A = C
+
+object C {
+    const val x = 1
+}
+
+fun f() {
+    val x = C.x
+}

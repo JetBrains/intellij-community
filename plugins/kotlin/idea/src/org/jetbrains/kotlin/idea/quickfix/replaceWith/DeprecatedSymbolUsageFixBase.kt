@@ -41,12 +41,14 @@ import org.jetbrains.kotlin.psi.psiUtil.isCallee
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
+import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForTypeAliasObject
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.constants.StringValue
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.util.*
+import org.jetbrains.kotlin.util.constructors
+import org.jetbrains.kotlin.util.mapAll
 
 //TODO: different replacements for property accessors
 
@@ -88,7 +90,11 @@ abstract class DeprecatedSymbolUsageFixBase(
             contextElement: KtReferenceExpression?,
             replaceInWholeProject: Boolean
         ): ReplaceWithData? {
-            val annotation = descriptor.annotations.findAnnotation(StandardNames.FqNames.deprecated) ?: return null
+            val annotations = when (descriptor) {
+                is FakeCallableDescriptorForTypeAliasObject -> descriptor.typeAliasDescriptor
+                else -> descriptor
+            }.annotations
+            val annotation = annotations.findAnnotation(StandardNames.FqNames.deprecated) ?: return null
             val replaceWithValue = annotation.getAnnotationValue(Deprecated::replaceWith) ?: return null
             val pattern = replaceWithValue.getStringValue(ReplaceWith::expression)?.takeIf { it.isNotEmpty() } ?: return null
             val imports = replaceWithValue.getArrayValue(ReplaceWith::imports)?.mapAll { (it as? StringValue)?.value } ?: return null
@@ -199,7 +205,12 @@ abstract class DeprecatedSymbolUsageFixBase(
             val bindingContext = resolutionFacade.analyze(element, BodyResolveMode.PARTIAL)
             val resolvedCall = element.getResolvedCall(bindingContext)
             var target = resolvedCall?.resultingDescriptor?.takeIf { it.isInvokeOperator }
-                ?: element.mainReference.resolveToDescriptors(bindingContext).singleOrNull()
+                ?: element.mainReference.resolveToDescriptors(bindingContext).singleOrNull()?.let {
+                    when (it) {
+                        is FakeCallableDescriptorForTypeAliasObject -> it.typeAliasDescriptor
+                        else -> it
+                    }
+                }
                 ?: return null
 
             var replacePatternFromSymbol =
