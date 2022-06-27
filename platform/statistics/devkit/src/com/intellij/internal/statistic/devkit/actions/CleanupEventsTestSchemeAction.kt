@@ -7,16 +7,19 @@ import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil.isAnyTestModeEnabled
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil.isTestModeEnabled
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 
-class CleanupEventsTestSchemeAction(private val recorderId: String? = null)
+internal class CleanupEventsTestSchemeAction(private val recorderId: String? = null)
   : DumbAwareAction(ActionsBundle.message("action.CleanupEventsTestSchemeAction.text"),
                     ActionsBundle.message("action.CleanupEventsTestSchemeAction.description"),
                     AllIcons.Actions.GC) {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabled = recorderId?.let { isTestModeEnabled(recorderId) } ?: isAnyTestModeEnabled()

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -14,9 +15,9 @@ import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
-import com.intellij.util.ObjectUtils
 
-class SetCaretVisualAttributesAction : AnAction(), DumbAware {
+internal class SetCaretVisualAttributesAction : AnAction(), DumbAware {
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return
@@ -32,11 +33,12 @@ class SetCaretVisualAttributesAction : AnAction(), DumbAware {
     }
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     val presentation = e.presentation
-    val project = e.project
-    val editor = ObjectUtils.tryCast(e.getData(CommonDataKeys.EDITOR), EditorImpl::class.java)
-    presentation.isEnabled = project != null && editor != null
+    presentation.isEnabled = e.project != null
+                             && e.getData(CommonDataKeys.EDITOR) is EditorImpl
   }
 }
 
