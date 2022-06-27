@@ -3,11 +3,11 @@ package com.intellij.internal.statistic.libraryJar;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -48,7 +48,9 @@ public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
       if (className == null) continue;
 
       MetricEvent event = ReadAction.nonBlocking(() -> {
-        PsiClass[] psiClasses = JavaPsiFacade.getInstance(project).findClasses(className, ProjectScope.getLibrariesScope(project));
+        PsiClass[] psiClasses = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> 
+          JavaPsiFacade.getInstance(project).findClasses(className, ProjectScope.getLibrariesScope(project))
+        );
         for (PsiClass psiClass : psiClasses) {
           String version = findJarVersion(psiClass);
           if (StringUtil.isNotEmpty(version)) {
