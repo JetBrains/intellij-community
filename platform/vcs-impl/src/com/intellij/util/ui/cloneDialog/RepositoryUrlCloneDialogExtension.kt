@@ -14,12 +14,11 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
-import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -57,14 +56,20 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     private val mainPanel = JPanel(BorderLayout())
     private val centerPanel = Wrapper()
 
-    private val comboBox: ComboBox<CheckoutProvider> = ComboBox<CheckoutProvider>().apply {
-      renderer = SimpleListCellRenderer.create<CheckoutProvider>("") { it.vcsName.removePrefix("_") }
-    }
+    private lateinit var comboBox: ComboBox<CheckoutProvider>
 
     init {
+      val providers = CheckoutProvider.EXTENSION_POINT_NAME.extensions
+      val selectedByDefaultProvider: CheckoutProvider? = if (providers.isNotEmpty()) providers[0] else null
+      providers.sortWith(CheckoutProvider.CheckoutProviderComparator())
+
       val northPanel = panel {
         row(VcsBundle.message("vcs.common.labels.version.control")) {
-          comboBox()
+          comboBox = comboBox(providers.asList(), SimpleListCellRenderer.create("") { it.vcsName.removePrefix("_") })
+            .applyToComponent {
+              selectedItem = null
+            }
+            .component
         }
       }
       val insets = UIUtil.PANEL_REGULAR_INSETS
@@ -72,12 +77,6 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       mainPanel.add(northPanel, BorderLayout.NORTH)
       mainPanel.add(centerPanel, BorderLayout.CENTER)
 
-      val providers = CheckoutProvider.EXTENSION_POINT_NAME.extensions
-      val selectedByDefaultProvider: CheckoutProvider? = if (providers.isNotEmpty()) providers[0] else null
-      providers.sortWith(CheckoutProvider.CheckoutProviderComparator())
-      comboBox.model = DefaultComboBoxModel(providers).apply {
-        selectedItem = null
-      }
       comboBox.addItemListener { e: ItemEvent ->
         if (e.stateChange == ItemEvent.SELECTED) {
           val provider = e.item as CheckoutProvider
