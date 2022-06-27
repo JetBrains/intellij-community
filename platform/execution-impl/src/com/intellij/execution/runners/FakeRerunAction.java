@@ -45,11 +45,6 @@ public class FakeRerunAction extends AnAction {
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
-  }
-
-  @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     ExecutionEnvironment environment = getEnvironment(event);
     if (environment != null) {
