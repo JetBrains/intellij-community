@@ -2,6 +2,7 @@
 package git4idea.actions.branch
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.project.DumbAwareAction
@@ -18,6 +19,10 @@ abstract class GitSingleBranchAction(dynamicText: Supplier<@NlsActions.ActionTex
   open val disabledForLocal: Boolean = false
   open val disabledForRemote: Boolean = false
   open val disabledForCurrent: Boolean = false
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   final override fun update(e: AnActionEvent) {
     val project = e.project
