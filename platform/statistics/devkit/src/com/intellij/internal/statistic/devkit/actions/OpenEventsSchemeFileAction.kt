@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.validator.storage.persistence.Ev
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -22,8 +23,12 @@ internal class OpenEventsSchemeFileAction(private val recorderId: String = Stati
   : DumbAwareAction(StatisticsBundle.message("stats.open.0.scheme.file", recorderId),
                     ActionsBundle.message("group.OpenEventsSchemeFileAction.description"),
                     AllIcons.FileTypes.Config) {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
+    event.presentation.isEnabled = event.project != null
+                                   && StatisticsRecorderUtil.isTestModeEnabled(recorderId)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
