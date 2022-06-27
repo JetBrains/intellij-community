@@ -92,8 +92,7 @@ class KotlinPluginUpdater : Disposable {
     @Volatile
     private var lastUpdateStatus: PluginUpdateStatus? = null
 
-    fun kotlinFileEdited(file: VirtualFile) {
-        if (!file.isInLocalFileSystem) return
+    fun kotlinFileEdited() {
         if (isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment) return
         if (!UpdateSettings.getInstance().isCheckNeeded) return
 
