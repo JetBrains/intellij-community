@@ -15,13 +15,11 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -131,7 +129,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
       builder.append('}');
       final PsiCodeBlock block = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(builder.toString(), method);
       removeEmptyElse(block);
-      body.replace(block);
+      CodeStyleManager.getInstance(project).reformat(body.replace(block));
     }
 
     private static void removeEmptyElse(PsiElement element) {
@@ -271,15 +269,12 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           PsiExpression[] operands = parent.getOperands();
           if (operands.length < 2) break;
           String condition = parent.getText().substring(0, operands[operands.length - 2].getTextRangeInParent().getEndOffset());
-          boolean forceBraces = CodeStyle.getSettings(method.getContainingFile()).getCommonSettings(JavaLanguage.INSTANCE).IF_BRACE_FORCE ==
-                                CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
           boolean returnTrue = parent.getOperationTokenType() == JavaTokenType.OROR;
           if (!returnTrue) {
             PsiExpression cond = JavaPsiFacade.getElementFactory(method.getProject()).createExpressionFromText(condition, parent);
             condition = BoolUtils.getNegatedExpressionText(cond);
           }
-          String ifStatement = "if(" + condition + ") " +
-                               (forceBraces ? "{" : "") + "return " + returnTrue + ";" + (forceBraces ? "}" : "") + "\n";
+          String ifStatement = "if(" + condition + ") return " + returnTrue + ";\n";
           conditions.add(0, ifStatement);
           current = parent;
         }
