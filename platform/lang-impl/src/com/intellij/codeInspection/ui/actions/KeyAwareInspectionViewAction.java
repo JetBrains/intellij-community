@@ -11,6 +11,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -71,6 +72,11 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
         return false;
       }
       return InspectionProjectProfileManager.getInstance(view.getProject()).getCurrentProfile().isToolEnabled(key);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
