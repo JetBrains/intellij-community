@@ -650,9 +650,12 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       restoreIfModifiedOrMoved()
     }
 
-    actionTask("EditorToggleCase") {
+    task {
+      text(JavaLessonsBundle.message("java.onboarding.apply.action", strong(toggleCase), LessonUtil.rawEnter()))
+      stateCheck {
+        editor.document.text.contains("\"average")
+      }
       restoreByUi(delayMillis = defaultRestoreDelay)
-      JavaLessonsBundle.message("java.onboarding.apply.action", strong(toggleCase), LessonUtil.rawEnter())
     }
 
     text(JavaLessonsBundle.message("java.onboarding.case.changed"))
