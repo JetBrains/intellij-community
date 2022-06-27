@@ -13,14 +13,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.castSafelyTo
 import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.JBUI
@@ -32,7 +36,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.SwingConstants
 
 sealed class RuntimeChooserDialogResult {
   object Cancel : RuntimeChooserDialogResult()
@@ -52,7 +55,7 @@ class RuntimeChooserDialog(
 
   init {
     title = LangBundle.message("dialog.title.choose.ide.runtime")
-    setResizable(false)
+    isResizable = false
     init()
     initClipboardListener()
   }
@@ -126,26 +129,24 @@ class RuntimeChooserDialog(
     return RuntimeChooserDialogResult.Cancel
   }
 
-  override fun createTitlePane(): JComponent {
-    return BorderLayoutPanel().apply {
-        val customLine = when {
-          SystemInfo.isWindows -> JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0)
-          else -> JBUI.Borders.customLineBottom(JBColor.border())
-        }
-        border = JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true)
-        background = JBUI.CurrentTheme.Notification.BACKGROUND
-        foreground = JBUI.CurrentTheme.Notification.FOREGROUND
-
-        addToCenter(JBLabel().apply {
-          icon = AllIcons.General.Warning
-          verticalTextPosition = SwingConstants.TOP
-          text = HtmlChunk
-            .html()
-            .addText(LangBundle.message("dialog.label.choose.ide.runtime.warn", ApplicationInfo.getInstance().shortCompanyName))
-            .toString()
-        })
-
-        withPreferredWidth(400)
+  private fun createTitlePanel(): JComponent {
+    return panel {
+      row {
+        icon(AllIcons.General.Warning)
+          .verticalAlign(VerticalAlign.TOP)
+          .gap(RightGap.SMALL)
+        text(LangBundle.message("dialog.label.choose.ide.runtime.warn", ApplicationInfo.getInstance().shortCompanyName),
+             maxLineLength = ComponentPanelBuilder.MAX_COMMENT_WIDTH)
+      }
+    }.apply {
+      val customLine = when {
+        SystemInfo.isWindows -> JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0)
+        else -> JBUI.Borders.customLineBottom(JBColor.border())
+      }
+      border = JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true)
+      background = JBUI.CurrentTheme.Notification.BACKGROUND
+      foreground = JBUI.CurrentTheme.Notification.FOREGROUND
+      putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
     }
   }
 
@@ -153,7 +154,6 @@ class RuntimeChooserDialog(
     jdkCombobox = object : ComboBox<RuntimeChooserItem>(model.mainComboBoxModel) {
       init {
         isSwingPopup = false
-        setMinimumAndPreferredWidth(400)
         setRenderer(RuntimeChooserPresenter())
       }
 
@@ -174,9 +174,12 @@ class RuntimeChooserDialog(
     }
 
     return panel {
+      row {
+        cell(createTitlePanel())
+      }
       row(LangBundle.message("dialog.label.choose.ide.runtime.current")) {
         val control = SimpleColoredComponent()
-        control().constraints(growX)
+        cell(control).horizontalAlign(HorizontalAlign.FILL)
 
         model.currentRuntime.getAndSubscribe(disposable) {
           control.clear()
@@ -189,7 +192,7 @@ class RuntimeChooserDialog(
       }
 
       row(LangBundle.message("dialog.label.choose.ide.runtime.combo")) {
-        jdkCombobox.invoke(growX)
+        cell(jdkCombobox).horizontalAlign(HorizontalAlign.FILL)
       }
 
       //download row
@@ -198,7 +201,7 @@ class RuntimeChooserDialog(
           project = project,
           browseDialogTitle = LangBundle.message("dialog.title.choose.ide.runtime.select.path.to.install.jdk"),
           fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        ).constraints(growX)
+        ).horizontalAlign(HorizontalAlign.FILL)
           .comment(LangBundle.message("dialog.message.choose.ide.runtime.select.path.to.install.jdk"))
           .component
 
