@@ -45,7 +45,8 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
       val method = GrLightMethodBuilder(manager, configurationName).apply {
         methodKind = dependencyMethodKind
         containingClass = clazz
-        returnType = null
+        returnType = TypesUtil.createType(GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY, place)
+        originInfo = DEPENDENCY_NOTATION
         addParameter("dependencyNotation", objectVarargType)
         setBaseIcon(GradleIcons.Gradle)
         putUserData(NonCodeMembersHolder.DOCUMENTATION, configuration.getDescription())
@@ -71,6 +72,7 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
   }
 
   companion object {
+    internal const val DEPENDENCY_NOTATION : String = "by Gradle, configuration method"
     const val dependencyMethodKind: String = "gradle:dependencyMethod"
   }
 }

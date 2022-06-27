@@ -64,6 +64,13 @@
                      enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleIncompleteVersionCatalogDependencyAccessorInspection"/>
 
+    <localInspection language="Groovy" groupPath="Gradle" shortName="DependencyNotationArgument"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.unrecognized.dependency.notation" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.DependencyNotationArgumentInspection"/>
+
+
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
                               order="last"/>
     <runLineMarkerContributor language="Groovy" id="gradleGroovyRunLineMarkerProvider"
