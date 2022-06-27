@@ -191,6 +191,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (isShowing()) repaint();
   });
   @NotNull private final EventDispatcher<EditorGutterListener> myEditorGutterListeners = EventDispatcher.create(EditorGutterListener.class);
+  private int myHoveredFreeMarkersLine = -1;
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -1888,6 +1889,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public void mouseMoved(final MouseEvent e) {
+    if (ExperimentalUI.isNewUI() && Registry.is("ide.gutter.update.free.markers.on.hover")) {
+      updateFreePainters(e);
+    }
     Point point = e.getPoint();
     PointInfo pointInfo = getPointInfo(point);
     if (pointInfo == null) {
@@ -1916,6 +1920,20 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
     if (debug()) {
       repaint();
+    }
+  }
+
+  private void updateFreePainters(MouseEvent e) {
+    if (!isLineMarkersShown()) return;
+    Point point = e.getPoint();
+    System.out.println(point + " Line: " + getEditor().xyToLogicalPosition(point).line);
+    int x = convertX(point.x);
+    int y = point.y;
+    if (x >= getLineMarkerAreaOffset() && x <= getLineMarkerAreaOffset() + getLeftFreePaintersAreaWidth() + getRightFreePaintersAreaWidth()) {
+      myHoveredFreeMarkersLine = getEditor().xyToLogicalPosition(point).line;
+      repaint();
+    } else {
+      myHoveredFreeMarkersLine = -1;
     }
   }
 
@@ -2673,5 +2691,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     public EventLogGroup getGroup() {
       return GROUP;
     }
+  }
+
+  @Override
+  public int getHoveredFreeMarkersLine() {
+    return myHoveredFreeMarkersLine;
   }
 }

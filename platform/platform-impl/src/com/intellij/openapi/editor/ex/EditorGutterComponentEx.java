@@ -89,4 +89,9 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   @ApiStatus.Internal
   public abstract boolean isInsideMarkerArea(@NotNull MouseEvent e);
+
+  @ApiStatus.Internal
+  public int getHoveredFreeMarkersLine() {
+    return -1;
+  }
 }
