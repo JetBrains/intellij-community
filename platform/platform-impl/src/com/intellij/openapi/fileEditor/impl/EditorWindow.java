@@ -68,7 +68,7 @@ public final class EditorWindow {
   public static final DataKey<EditorWindow> DATA_KEY = DataKey.create("editorWindow");
   public static final Key<Boolean> HIDE_TABS = Key.create("HIDE_TABS");
 
-  JPanel myPanel;
+  @NotNull JPanel panel;
   private final @NotNull EditorTabbedContainer myTabbedPane;
   @NotNull
   private final EditorsSplitters myOwner;
@@ -98,12 +98,12 @@ public final class EditorWindow {
 
   EditorWindow(@NotNull EditorsSplitters owner, @NotNull Disposable parentDisposable) {
     myOwner = owner;
-    myPanel = new JPanel(new BorderLayout());
-    myPanel.setOpaque(false);
-    myPanel.setFocusable(false);
+    panel = new JPanel(new BorderLayout());
+    panel.setOpaque(false);
+    panel.setFocusable(false);
 
     myTabbedPane = new EditorTabbedContainer(this, getManager().getProject(), parentDisposable);
-    myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+    panel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
     // tab layout policy
     if (UISettings.getInstance().getScrollTabLayoutInEditor()) {
@@ -136,7 +136,7 @@ public final class EditorWindow {
   }
 
   public boolean isShowing() {
-    return myPanel.isShowing();
+    return panel.isShowing();
   }
 
   public void closeAllExcept(@Nullable VirtualFile selectedFile) {
@@ -214,22 +214,22 @@ public final class EditorWindow {
         else {
 
           if (inSplitter()) {
-            Splitter splitter = (Splitter)myPanel.getParent();
-            JComponent otherComponent = splitter.getOtherComponent(myPanel);
+            Splitter splitter = (Splitter)panel.getParent();
+            JComponent otherComponent = splitter.getOtherComponent(panel);
 
             if (otherComponent != null) {
               IdeFocusManager.findInstance().requestFocus(otherComponent, true);
             }
           }
 
-          myPanel.removeAll ();
+          panel.removeAll ();
         }
 
         if (disposeIfNeeded && getTabCount() == 0) {
           removeFromSplitter();
         }
         else {
-          myPanel.revalidate();
+          panel.revalidate();
         }
       }
       finally {
@@ -259,8 +259,8 @@ public final class EditorWindow {
       myOwner.setCurrentWindow(siblings[0], true);
     }
 
-    Splitter splitter = (Splitter)myPanel.getParent();
-    JComponent otherComponent = splitter.getOtherComponent(myPanel);
+    Splitter splitter = (Splitter)panel.getParent();
+    JComponent otherComponent = splitter.getOtherComponent(panel);
 
     Container parent = splitter.getParent().getParent();
     if (parent instanceof Splitter) {
@@ -272,7 +272,7 @@ public final class EditorWindow {
         parentSplitter.setSecondComponent(otherComponent);
       }
 
-      normalizeProportionsIfNeed(myOwner.getCurrentWindow().myPanel);
+      normalizeProportionsIfNeed(myOwner.getCurrentWindow().panel);
     }
     else if (parent instanceof EditorsSplitters) {
       Component currentFocusComponent = getGlobalInstance().getFocusedDescendantFor(parent);
@@ -384,7 +384,7 @@ public final class EditorWindow {
   }
 
   public Dimension getSize() {
-    return myPanel.getSize();
+    return panel.getSize();
   }
 
   public @NotNull EditorTabbedContainer getTabbedPane() {
@@ -637,12 +637,12 @@ public final class EditorWindow {
       return target;
     }
 
-    JPanel panel = myPanel;
+    JPanel panel = this.panel;
     panel.setBorder(null);
     int tabCount = getTabCount();
     if (tabCount != 0) {
-      myPanel = new JPanel(new BorderLayout());
-      myPanel.setOpaque(false);
+      this.panel = new JPanel(new BorderLayout());
+      this.panel.setOpaque(false);
 
       Splitter splitter = EditorsSplitters.createSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
       splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, Boolean.TRUE);
@@ -653,18 +653,18 @@ public final class EditorWindow {
       panel.remove(myTabbedPane.getComponent());
       panel.add(splitter, BorderLayout.CENTER);
       if (fileIsSecondaryComponent) {
-        splitter.setFirstComponent(myPanel);
+        splitter.setFirstComponent(this.panel);
       } else {
-        splitter.setSecondComponent(myPanel);
+        splitter.setSecondComponent(this.panel);
       }
-      myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+      this.panel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
       if (fileIsSecondaryComponent) {
-        splitter.setSecondComponent(res.myPanel);
+        splitter.setSecondComponent(res.panel);
       }
       else {
-        splitter.setFirstComponent(res.myPanel);
+        splitter.setFirstComponent(res.panel);
       }
-      normalizeProportionsIfNeed(myPanel);
+      normalizeProportionsIfNeed(this.panel);
       // open only selected file in the new splitter instead of opening all tabs
       VirtualFile file = selectedComposite.getFile();
       VirtualFile nextFile = virtualFile == null ? file : virtualFile;
@@ -770,10 +770,10 @@ public final class EditorWindow {
   public EditorWindow @NotNull [] findSiblings() {
     checkConsistency();
     ArrayList<EditorWindow> res = new ArrayList<>();
-    if (myPanel.getParent() instanceof Splitter) {
-      Splitter splitter = (Splitter)myPanel.getParent();
+    if (panel.getParent() instanceof Splitter) {
+      Splitter splitter = (Splitter)panel.getParent();
       for (EditorWindow win : myOwner.getWindows()) {
-        if (win != this && SwingUtilities.isDescendingFrom(win.myPanel, splitter)) {
+        if (win != this && SwingUtilities.isDescendingFrom(win.panel, splitter)) {
           res.add(win);
         }
       }
@@ -800,10 +800,10 @@ public final class EditorWindow {
     windows.remove(this);
     final Map<JPanel, EditorWindow> panel2Window = new HashMap<>();
     for (EditorWindow win : windows) {
-      panel2Window.put(win.myPanel, win);
+      panel2Window.put(win.panel, win);
     }
 
-    final RelativePoint relativePoint = new RelativePoint(myPanel.getLocationOnScreen());
+    final RelativePoint relativePoint = new RelativePoint(panel.getLocationOnScreen());
     final Point point = relativePoint.getPoint(myOwner);
     BiFunction<Integer, Integer, Component> nearestComponent = (x, y) -> SwingUtilities.getDeepestComponentAt(myOwner, x, y);
     Function<Component, EditorWindow> findAdjacentEditor = (component) -> {
@@ -824,14 +824,14 @@ public final class EditorWindow {
 
     // Even if above/below adjacent editor is shifted a bit to the right from left edge of current editor,
     // still try to choose editor that is visually above/below - shifted nor more then quater of editor width.
-    int x = point.x + myPanel.getWidth() / 4;
+    int x = point.x + panel.getWidth() / 4;
     // Splitter has width of one pixel - we need to step at least 2 pixels to be over adjacent editor
     int searchStep = 2;
 
     biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(x, point.y - searchStep)), RelativePosition.UP);
-    biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(x, point.y + myPanel.getHeight() + searchStep)), RelativePosition.DOWN);
+    biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(x, point.y + panel.getHeight() + searchStep)), RelativePosition.DOWN);
     biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(point.x - searchStep, point.y)), RelativePosition.LEFT);
-    biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(point.x + myPanel.getWidth() + searchStep, point.y)), RelativePosition.RIGHT);
+    biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(point.x + panel.getWidth() + searchStep, point.y)), RelativePosition.RIGHT);
 
     return adjacentEditors;
   }
@@ -841,31 +841,31 @@ public final class EditorWindow {
     myPainter = new MySplitPainter(showInfoPanel);
 
     Disposable disposable = Disposer.newDisposable("GlassPaneListeners");
-    IdeGlassPaneUtil.find(myPanel).addPainter(myPanel, myPainter, disposable);
+    IdeGlassPaneUtil.find(panel).addPainter(panel, myPainter, disposable);
 
-    myPanel.repaint();
-    myPanel.setFocusable(true);
-    myPanel.grabFocus();
-    myPanel.setFocusTraversalKeysEnabled(false);
+    panel.repaint();
+    panel.setFocusable(true);
+    panel.grabFocus();
+    panel.setFocusTraversalKeysEnabled(false);
 
     final FocusAdapter focusAdapter = new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        myPanel.removeFocusListener(this);
+        panel.removeFocusListener(this);
         if (SplitterService.getInstance().myActiveWindow == EditorWindow.this) {
           SplitterService.getInstance().stopSplitChooser(true);
         }
       }
     };
 
-    myPanel.addFocusListener(focusAdapter);
+    panel.addFocusListener(focusAdapter);
 
     return () -> {
       myPainter.myRectangle = null;
       myPainter = null;
-      myPanel.removeFocusListener(focusAdapter);
-      myPanel.setFocusable(false);
-      myPanel.repaint();
+      panel.removeFocusListener(focusAdapter);
+      panel.setFocusable(false);
+      panel.repaint();
       Disposer.dispose(disposable);
     };
   }
@@ -1080,7 +1080,7 @@ public final class EditorWindow {
 
   void changeOrientation() {
     checkConsistency();
-    Container parent = myPanel.getParent();
+    Container parent = panel.getParent();
     if (parent instanceof Splitter) {
       Splitter splitter = (Splitter)parent;
       splitter.setOrientation(!splitter.getOrientation());
@@ -1137,7 +1137,7 @@ public final class EditorWindow {
 
   public void unsplit(boolean setCurrent) {
     checkConsistency();
-    Container splitter = myPanel.getParent();
+    Container splitter = panel.getParent();
 
     if (!(splitter instanceof Splitter)) return;
 
@@ -1171,14 +1171,14 @@ public final class EditorWindow {
     parent.remove(splitter);
     parent.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
     parent.revalidate();
-    myPanel = parent;
+    panel = parent;
     if (compositeToSelect != null) {
       setSelectedComposite(compositeToSelect, true);
     }
     if (setCurrent) {
       myOwner.setCurrentWindow(this, false);
     }
-    normalizeProportionsIfNeed(myPanel);
+    normalizeProportionsIfNeed(panel);
   }
 
   private void processSiblingComposite(@NotNull EditorComposite composite,
@@ -1201,7 +1201,7 @@ public final class EditorWindow {
 
   public boolean inSplitter() {
     checkConsistency();
-    return myPanel.getParent() instanceof Splitter;
+    return panel.getParent() instanceof Splitter;
   }
 
   public VirtualFile getSelectedFile() {

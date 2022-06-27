@@ -11,7 +11,6 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.withModalProgressIndicator
@@ -28,6 +27,8 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
@@ -64,10 +65,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
   // volatile not required because created in run (before executing run task)
   private var frameManager: ProjectUiFrameManager? = null
 
-  @Volatile
-  var cancelled = false
-    private set
-
   override suspend fun <T : Any> run(task: suspend () -> T?): T? {
     if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
       withContext(Dispatchers.EDT) {
@@ -76,11 +73,12 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
     }
 
     frameManager = createFrameManager()
-
     return withModalProgressIndicator(owner = ModalTaskOwner.component(frameManager!!.getComponent()), title = getProgressTitle()) {
-      // create project frame (not in this thread - all implementations uses invokeLater to perform UI tasks in EDT)
-      frameManager!!.init(this@ProjectUiFrameAllocator)
-      task()
+      coroutineScope {
+        // create project frame
+        launch { frameManager!!.init(this@ProjectUiFrameAllocator) }
+        task()
+      }
     }
   }
 
@@ -90,15 +88,14 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
     return IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", projectName)
   }
 
-  private fun createFrameManager(): ProjectUiFrameManager {
+  private suspend fun createFrameManager(): ProjectUiFrameManager {
     if (options.frameManager is ProjectUiFrameManager) {
       return options.frameManager as ProjectUiFrameManager
     }
 
-    return invokeAndWaitIfNeeded {
-      val freeRootFrame = (WindowManager.getInstance() as WindowManagerImpl).removeAndGetRootFrame()
-      if (freeRootFrame != null) {
-        return@invokeAndWaitIfNeeded DefaultProjectUiFrameManager(frame = freeRootFrame.frame!!, frameHelper = freeRootFrame)
+    return withContext(Dispatchers.EDT) {
+      (WindowManager.getInstance() as WindowManagerImpl).removeAndGetRootFrame()?.let { freeRootFrame ->
+        return@withContext DefaultProjectUiFrameManager(frame = freeRootFrame.frame!!, frameHelper = freeRootFrame)
       }
 
       runActivity("create a frame") {
@@ -122,7 +119,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
     ApplicationManager.getApplication().invokeLater(
       {
         val frameHelper = frameManager?.frameHelper ?: return@invokeLater
-
         val windowManager = WindowManager.getInstance() as WindowManagerImpl
         runActivity("project frame assigning") {
           windowManager.assignFrame(frameHelper, project)
@@ -133,8 +129,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
   }
 
   override fun projectNotLoaded(error: CannotConvertException?) {
-    cancelled = true
-
     ApplicationManager.getApplication().invokeLater {
       val frameHelper = frameManager?.frameHelper
       frameManager = null
@@ -203,7 +197,7 @@ internal fun createNewProjectFrame(frameInfo: FrameInfo?): IdeFrameImpl {
 internal interface ProjectUiFrameManager {
   val frameHelper: ProjectFrameHelper?
 
-  fun init(allocator: ProjectUiFrameAllocator)
+  suspend fun init(allocator: ProjectUiFrameAllocator)
 
   fun getComponent(): JComponent
 }
@@ -214,13 +208,9 @@ private class SplashProjectUiFrameManager(private val frame: IdeFrameImpl) : Pro
 
   override fun getComponent(): JComponent = frame.rootPane
 
-  override fun init(allocator: ProjectUiFrameAllocator) {
+  override suspend fun init(allocator: ProjectUiFrameAllocator) {
     assert(frameHelper == null)
-    ApplicationManager.getApplication().invokeLater {
-      if (allocator.cancelled) {
-        return@invokeLater
-      }
-
+    withContext(Dispatchers.EDT) {
       assert(frameHelper == null)
 
       runActivity("project frame initialization") {
@@ -228,7 +218,7 @@ private class SplashProjectUiFrameManager(private val frame: IdeFrameImpl) : Pro
         frameHelper.init()
         // otherwise, not painted if frame is already visible
         frame.validate()
-        this.frameHelper = frameHelper
+        this@SplashProjectUiFrameManager.frameHelper = frameHelper
       }
     }
   }
@@ -240,16 +230,12 @@ private class DefaultProjectUiFrameManager(private val frame: IdeFrameImpl, fram
 
   override fun getComponent(): JComponent = frame.rootPane
 
-  override fun init(allocator: ProjectUiFrameAllocator) {
+  override suspend fun init(allocator: ProjectUiFrameAllocator) {
     if (frameHelper != null) {
       return
     }
 
-    ApplicationManager.getApplication().invokeLater {
-      if (allocator.cancelled) {
-        return@invokeLater
-      }
-
+    withContext(Dispatchers.EDT) {
       runActivity("project frame initialization") {
         doInit(allocator)
       }
@@ -284,12 +270,8 @@ private class SingleProjectUiFrameManager(private val frameInfo: FrameInfo, priv
 
   override fun getComponent(): JComponent = frame.rootPane
 
-  override fun init(allocator: ProjectUiFrameAllocator) {
-    ApplicationManager.getApplication().invokeLater {
-      if (allocator.cancelled) {
-        return@invokeLater
-      }
-
+  override suspend fun init(allocator: ProjectUiFrameAllocator) {
+    withContext(Dispatchers.EDT) {
       runActivity("project frame initialization") {
         doInit(allocator)
       }

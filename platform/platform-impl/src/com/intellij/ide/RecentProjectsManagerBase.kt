@@ -568,7 +568,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     while (iterator.hasNext()) {
       val entry = iterator.next()
       try {
-        projectManager.openProject(entry.first, entry.second)
+        projectManager.openProjectAsync(entry.first, entry.second)
       }
       catch (e: Exception) {
         @Suppress("SSBasedInspection")
@@ -887,7 +887,7 @@ private class OldRecentDirectoryProjectsManager : PersistentStateComponent<Recen
 private open class MyProjectUiFrameManager(val frame: IdeFrameImpl, override val frameHelper: ProjectFrameHelper) : ProjectUiFrameManager {
   override fun getComponent(): JComponent = frame.rootPane
 
-  override fun init(allocator: ProjectUiFrameAllocator) {
+  override suspend fun init(allocator: ProjectUiFrameAllocator) {
     // this class is used for pre-initialized frames
   }
 

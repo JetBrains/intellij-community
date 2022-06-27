@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.isCorePlugin
 import com.intellij.openapi.project.impl.waitAndProcessInvocationEventsInIdeEventQueue
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ModalityUiUtil
@@ -227,7 +228,29 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       }
 
       indicator?.checkCanceled()
-      runActivityAndMeasureDuration(adapter.createInstance(project) ?: continue, pluginId, indicator)
+      val activity = adapter.createInstance<StartupActivity>(project) ?: continue
+      if (activity is InitProjectActivity) {
+        indicator?.pushState()
+        val startTime = StartUpMeasurer.getCurrentTime()
+        try {
+          tracer.spanBuilder("run activity")
+            .setAttribute(AttributeKey.stringKey("class"), activity.javaClass.name)
+            .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
+            .useWithScope {
+              if (project !is LightEditCompatible || activity is LightEditCompatible) {
+                activity.run(project)
+              }
+            }
+        }
+        finally {
+          indicator?.popState()
+        }
+
+        addCompletedActivity(startTime = startTime, runnableClass = activity.javaClass, pluginId = pluginId)
+      }
+      else {
+        runActivityAndMeasureDuration(activity, pluginId, indicator)
+      }
     }
   }
 
@@ -321,11 +344,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       indicator?.popState()
     }
 
-    return addCompletedActivity(
-      startTime,
-      activity.javaClass,
-      pluginId,
-    )
+    return addCompletedActivity(startTime = startTime, runnableClass = activity.javaClass, pluginId = pluginId)
   }
 
   private fun runPostStartupActivitiesRegisteredDynamically() {

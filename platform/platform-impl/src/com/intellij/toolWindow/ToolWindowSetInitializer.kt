@@ -16,7 +16,7 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -46,8 +46,8 @@ private inline fun Logger.debug(project: Project, lazyMessage: (project: String)
   }
 }
 
-internal class InitToolWindowSetActivity : StartupActivity {
-  override fun runActivity(project: Project) {
+internal class InitToolWindowSetActivity : InitProjectActivity {
+  override suspend fun run(project: Project) {
     val app = ApplicationManager.getApplication()
     if (app.isHeadlessEnvironment || app.isUnitTestMode) {
       return
@@ -79,6 +79,7 @@ internal class InitToolWindowSetActivity : StartupActivity {
   }
 }
 
+// open for rider
 class ToolWindowSetInitializer(private val project: Project, private val manager: ToolWindowManagerImpl) {
   @Volatile
   private var isInitialized = false

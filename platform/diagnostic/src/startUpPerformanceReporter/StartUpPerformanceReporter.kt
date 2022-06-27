@@ -17,7 +17,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
@@ -33,7 +33,7 @@ import java.nio.file.Path
 import java.util.concurrent.ForkJoinPool
 import java.util.function.Consumer
 
-class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
+class StartUpPerformanceReporter : InitProjectActivity, StartUpPerformanceService {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {
@@ -75,7 +75,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
   override fun getLastReport() = lastReport
 
-  override fun runActivity(project: Project) {
+  override suspend fun run(project: Project) {
     if (ActivityImpl.listener != null) {
       return
     }

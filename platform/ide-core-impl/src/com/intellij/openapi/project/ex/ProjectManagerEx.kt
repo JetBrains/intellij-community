@@ -24,7 +24,6 @@ abstract class ProjectManagerEx : ProjectManager() {
     }
   }
 
-  @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use {@link #newProject(Path, OpenProjectTask)}")
   abstract fun newProject(projectName: String?, filePath: String, useDefaultProjectSettings: Boolean, isDummy: Boolean): Project?
 

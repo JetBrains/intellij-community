@@ -6,15 +6,15 @@ import com.intellij.ide.util.RunOnceUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.isNotificationSilentMode
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.InitProjectActivity
 
-internal class OpenFilesActivity : StartupActivity {
-  override fun runActivity(project: Project) {
+internal class OpenFilesActivity : InitProjectActivity {
+  override suspend fun run(project: Project) {
     ProgressManager.getInstance().progressIndicator?.text = IdeBundle.message("progress.text.reopening.files")
 
     val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return
@@ -26,7 +26,7 @@ internal class OpenFilesActivity : StartupActivity {
                                                       EditorsSplitters.stopOpenFilesActivity(project)
                                                       if (!fileEditorManager.hasOpenFiles() && !isNotificationSilentMode(project)) {
                                                         project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true)
-                                                        if (getBoolean("ide.open.readme.md.on.startup")) {
+                                                        if (AdvancedSettings.getBoolean("ide.open.readme.md.on.startup")) {
                                                           RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart") {
                                                             findAndOpenReadme(project)
                                                           }
