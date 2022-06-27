@@ -45,6 +45,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.Resized
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
 import com.intellij.ui.BalloonImpl
@@ -1564,13 +1565,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     toolWindowPane!!.validateAndRepaint()
   }
 
-  @Deprecated("Please use fireStateChanged(ToolWindowManagerEventType)",
-              ReplaceWith("fireStateChanged(ToolWindowManagerEventType)"))
-  protected open fun fireStateChanged() {
-    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged(this)
-  }
-
-  protected fun fireStateChanged(changeType: ToolWindowManagerEventType) {
+  protected open fun fireStateChanged(changeType: ToolWindowManagerEventType) {
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged(this, changeType)
   }
 
@@ -1891,6 +1886,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         getRegisteredMutableInfoOrLogError(another.toolWindow.id).weight = paneWeight
       }
     }
+    fireStateChanged(Resized)
   }
 
   private fun focusToolWindowByDefault() {
