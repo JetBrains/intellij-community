@@ -51,6 +51,11 @@ public final class EmptyAction extends AnAction {
     e.getPresentation().setEnabledAndVisible(myEnabled);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   public static void setupAction(@NotNull AnAction action, @NotNull String id, @Nullable JComponent component) {
     ActionUtil.mergeFrom(action, id).registerCustomShortcutSet(component, null);
   }
@@ -83,7 +88,9 @@ public final class EmptyAction extends AnAction {
            new MyDelegatingAction(action);
   }
 
-  /** @deprecated Use {@link AnActionWrapper} instead. */
+  /**
+   * @deprecated Use {@link AnActionWrapper} instead.
+   */
   @Deprecated
   public static class MyDelegatingAction extends AnActionWrapper {
     public MyDelegatingAction(@NotNull AnAction action) {
@@ -91,13 +98,14 @@ public final class EmptyAction extends AnAction {
     }
   }
 
-  /** @deprecated Use {@link ActionGroupWrapper} instead. */
+  /**
+   * @deprecated Use {@link ActionGroupWrapper} instead.
+   */
   @Deprecated
   public static class MyDelegatingActionGroup extends ActionGroupWrapper {
 
     public MyDelegatingActionGroup(@NotNull ActionGroup group) {
       super(group);
     }
-
   }
 }

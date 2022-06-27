@@ -25,6 +25,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class EmptyActionGroup extends DefaultActionGroup {
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(false);
   }
