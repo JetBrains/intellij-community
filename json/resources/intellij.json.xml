@@ -135,7 +135,7 @@
       <bundleName>messages.JsonBundle</bundleName>
       <categoryKey>json.intention.category.name</categoryKey>
     </intentionAction>
-    <notificationGroup id="JSON Schema" displayType="NONE"/>
+    <notificationGroup id="JSON Schema" displayType="NONE" bundle="messages.JsonBundle" key="notification.group.json.schema"/>
 
     <psi.referenceContributor language="JSON" implementation="com.intellij.json.JsonWebReferenceContributor"/>
 
