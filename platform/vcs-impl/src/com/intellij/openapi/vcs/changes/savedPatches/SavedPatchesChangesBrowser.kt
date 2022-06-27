@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.EdtExecutorService
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.StatusText
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
@@ -174,7 +175,8 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
         .filter { it != null })
     }
     else if (SavedPatchesUi.SAVED_PATCH_SELECTED_CHANGES.`is`(dataId)) {
-      return VcsTreeModelData.selected(myViewer).userObjectsStream(SavedPatchesProvider.ChangeObject::class.java).toList()
+      val selected = VcsTreeModelData.selected(myViewer)
+      return JBIterable.create { selected.userObjectsStream(SavedPatchesProvider.ChangeObject::class.java).iterator() }
     }
     return super.getData(dataId)
   }
