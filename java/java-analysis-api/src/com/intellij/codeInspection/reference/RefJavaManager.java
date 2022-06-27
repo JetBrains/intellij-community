@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.reference;
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.uast.UastMetaLanguage;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UParameter;
@@ -19,6 +20,7 @@ import org.jetbrains.uast.UParameter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public abstract class RefJavaManager implements RefManagerExtension<RefJavaManager> {
   @NonNls public static final String CLASS = "class";
@@ -30,7 +32,7 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   @NonNls public static final String PACKAGE = "package";
   static final String FUNCTIONAL_EXPRESSION = "functional.expression";
   public static final Key<RefJavaManager> MANAGER = Key.create("RefJavaManager");
-
+  private final Set<String> myIgnoredLanguages = ContainerUtil.set(Registry.stringValue("ignored.jvm.languages").split(","));
 
   public abstract RefImplicitConstructor getImplicitConstructor(String classFQName);
 
@@ -74,12 +76,9 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   @Override
   public Collection<Language> getLanguages() {
     List<Language> languages = new ArrayList<>(Language.findInstance(UastMetaLanguage.class).getMatchingLanguages());
-    // TODO uast is not implemented in case of groovy
-    languages.removeIf(l -> l.isKindOf("Groovy"));
-    // Scala uast is also too experimental
-    languages.removeIf(l -> l.isKindOf("Scala"));
-
-    // TODO enable it in production when will be ready
+    for (String lang : myIgnoredLanguages) {
+      languages.removeIf(l -> l.isKindOf(lang));
+    }
     if (!Registry.is("batch.jvm.inspections") && !ApplicationManager.getApplication().isUnitTestMode()) {
       languages.removeIf(l -> l.isKindOf("kotlin"));
     }
