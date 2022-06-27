@@ -23,7 +23,7 @@ public class CaseJoinLinesHandler implements JoinLinesHandlerDelegate {
       return -1;
     }
     PsiSwitchLabelStatement firstLabel = PsiTreeUtil.getParentOfType(elementAtStartLineEnd, PsiSwitchLabelStatement.class);
-    if (firstLabel == null) return -1;
+    if (firstLabel == null || firstLabel.isDefaultCase()) return -1;
     PsiSwitchLabelStatement secondLabel = PsiTreeUtil.getParentOfType(elementAtNextLineStart, PsiSwitchLabelStatement.class);
     if (secondLabel == null || secondLabel == firstLabel) return -1;
     PsiElement nextToken = PsiTreeUtil.skipWhitespacesForward(elementAtNextLineStart);

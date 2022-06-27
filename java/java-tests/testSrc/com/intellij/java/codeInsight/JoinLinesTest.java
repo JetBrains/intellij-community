@@ -296,6 +296,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
     settings.SPACE_AFTER_COMMA = false;
     doTest();
   }
+  public void testCaseLabels3() {doTest();}
 
   private void doTest() {
     doTest(".java");
