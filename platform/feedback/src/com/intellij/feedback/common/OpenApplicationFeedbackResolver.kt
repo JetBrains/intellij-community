@@ -18,7 +18,7 @@ import kotlinx.datetime.todayAt
 class OpenApplicationFeedbackShower : AppLifecycleListener {
 
   companion object {
-    val LAST_DATE_COLLECT_FEEDBACK = LocalDate(2022, 7, 19)
+    val LAST_DATE_COLLECT_FEEDBACK = LocalDate(2022, 8, 26)
     const val MAX_NUMBER_NOTIFICATION_SHOWED = 1
 
     fun showNotification(project: Project?, forTest: Boolean) {
