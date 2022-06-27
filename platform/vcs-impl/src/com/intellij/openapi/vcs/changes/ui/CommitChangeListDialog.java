@@ -36,6 +36,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -55,7 +56,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsBundle.message;
@@ -790,13 +790,13 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
     @NotNull
     @Override
-    public Stream<Wrapper> getSelectedChanges() {
+    public Iterable<Wrapper> iterateSelectedChanges() {
       return wrap(getBrowser().getSelectedChanges(), getBrowser().getSelectedUnversionedFiles());
     }
 
     @NotNull
     @Override
-    public Stream<Wrapper> getAllChanges() {
+    public Iterable<Wrapper> iterateAllChanges() {
       return wrap(getDisplayedChanges(), getDisplayedUnversionedFiles());
     }
 
@@ -806,11 +806,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     @NotNull
-    private Stream<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends FilePath> unversioned) {
-      return Stream.concat(
-        changes.stream().map(ChangeWrapper::new),
-        unversioned.stream().map(UnversionedFileWrapper::new)
-      );
+    private Iterable<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends FilePath> unversioned) {
+      return JBIterable.<Wrapper>empty()
+        .append(JBIterable.from(changes).map(ChangeWrapper::new))
+        .append(JBIterable.from(unversioned).map(UnversionedFileWrapper::new));
     }
 
     @Override

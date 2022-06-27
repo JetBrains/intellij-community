@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.util.ui.tree.TreeUtil
 import java.beans.PropertyChangeListener
-import java.util.stream.Stream
 import javax.swing.JTree
 import javax.swing.SwingUtilities
 
@@ -35,11 +34,11 @@ class SimpleTreeDiffRequestProcessor(
     SwingUtilities.invokeLater { if (!isDisposed) updatePreview(component.isShowing, modelUpdateInProgress) }
   }
 
-  override fun getSelectedChanges(): Stream<Wrapper> {
+  override fun iterateSelectedChanges(): Iterable<Wrapper> {
     return wrap(VcsTreeModelData.selected(tree))
   }
 
-  override fun getAllChanges(): Stream<Wrapper> {
+  override fun iterateAllChanges(): Iterable<Wrapper> {
     return wrap(VcsTreeModelData.all(tree))
   }
 
@@ -48,7 +47,7 @@ class SimpleTreeDiffRequestProcessor(
     TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false)
   }
 
-  private fun wrap(treeModelData: VcsTreeModelData): Stream<Wrapper> {
-    return treeModelData.iterateUserObjects(Change::class.java).toStream().map { ChangeWrapper(it) }
+  private fun wrap(treeModelData: VcsTreeModelData): Iterable<Wrapper> {
+    return treeModelData.iterateUserObjects(Change::class.java).map { ChangeWrapper(it) }
   }
 }

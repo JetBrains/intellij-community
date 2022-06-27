@@ -71,7 +71,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.icons.AllIcons.Vcs.Patch_applied;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_DELETION_UNDO;
@@ -935,21 +934,20 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @Override
-    public @NotNull Stream<? extends Wrapper> getSelectedChanges() {
-      return VcsTreeModelData.selected(myTree).iterateUserObjects(ShelvedWrapper.class).toStream();
+    public @NotNull Iterable<? extends Wrapper> iterateSelectedChanges() {
+      return VcsTreeModelData.selected(myTree).iterateUserObjects(ShelvedWrapper.class);
     }
 
     @Override
-    public @NotNull Stream<Wrapper> getAllChanges() {
+    public @NotNull Iterable<? extends Wrapper> iterateAllChanges() {
       Set<ShelvedChangeList> changeLists =
         VcsTreeModelData.selected(myTree).iterateUserObjects(ShelvedWrapper.class)
           .map(wrapper -> wrapper.getChangeList())
           .toSet();
 
       return VcsTreeModelData.all(myTree).iterateRawNodes()
-        .toStream()
         .filter(node -> node instanceof ShelvedListNode && changeLists.contains(((ShelvedListNode)node).getList()))
-        .flatMap(node -> VcsTreeModelData.allUnder(node).iterateUserObjects(ShelvedWrapper.class).toStream());
+        .flatMap(node -> VcsTreeModelData.allUnder(node).iterateUserObjects(ShelvedWrapper.class));
     }
 
     @Override

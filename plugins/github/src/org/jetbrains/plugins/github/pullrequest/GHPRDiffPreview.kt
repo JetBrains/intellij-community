@@ -35,8 +35,6 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
 import org.jetbrains.plugins.github.util.GHToolbarLabelAction
 import java.util.*
-import java.util.stream.Stream
-import kotlin.streams.toList
 
 internal class GHPRDiffPreview(private val prId: GHPRIdentifier?,
                                private val filesManager: GHPRFilesManager) : DiffPreview {
@@ -175,13 +173,12 @@ private class GHPRCombinedDiffPreviewModel(tree: ChangesTree,
                                            parentDisposable: Disposable) :
   CombinedDiffPreviewModel(tree, prepareCombinedDiffModelRequests(tree.project, tree.getAllChanges(producerFactory)), parentDisposable) {
 
-  override fun getAllChanges(): Stream<out Wrapper> {
-    return tree.getAllChangesStream(producerFactory)
+  override fun iterateAllChanges(): Iterable<Wrapper> {
+    return tree.iterateAllChanges(producerFactory)
   }
 
-  override fun getSelectedChanges(): Stream<out Wrapper> {
+  override fun iterateSelectedChanges(): Iterable<Wrapper> {
     return VcsTreeModelData.selected(tree).iterateUserObjects(Change::class.java)
-      .toStream()
       .map { change -> MyChangeWrapper(change, producerFactory) }
   }
 
@@ -191,11 +188,10 @@ private class GHPRCombinedDiffPreviewModel(tree: ChangesTree,
   }
 
   companion object {
-    private fun ChangesTree.getAllChanges(producerFactory: ChangeDiffRequestProducerFactory) = getAllChangesStream(producerFactory).toList()
+    private fun ChangesTree.getAllChanges(producerFactory: ChangeDiffRequestProducerFactory) = iterateAllChanges(producerFactory).toList()
 
-    private fun ChangesTree.getAllChangesStream(producerFactory: ChangeDiffRequestProducerFactory): Stream<out Wrapper> {
+    private fun ChangesTree.iterateAllChanges(producerFactory: ChangeDiffRequestProducerFactory): Iterable<Wrapper> {
       return VcsTreeModelData.all(this).iterateUserObjects(Change::class.java)
-        .toStream()
         .map { change -> MyChangeWrapper(change, producerFactory) }
     }
   }

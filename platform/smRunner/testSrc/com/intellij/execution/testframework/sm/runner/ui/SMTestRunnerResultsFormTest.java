@@ -588,7 +588,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     suite2.setFinished();
 
     ListSelection<DiffHyperlink> hyperlinks = ViewAssertEqualsDiffAction.showDiff(suite2, myResultsViewer);
-    List<DiffHyperlink> providers = hyperlinks.getList();
+    List<? extends DiffHyperlink> providers = hyperlinks.getList();
     assertEquals(2, providers.size());
     assertEquals(1, hyperlinks.getSelectedIndex());
     DiffHyperlink selectedProvider = providers.get(0);

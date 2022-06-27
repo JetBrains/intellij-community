@@ -18,15 +18,15 @@ import java.util.List;
 public final class ListSelection<T> {
   private static final Logger LOG = Logger.getInstance(ListSelection.class);
 
-  @NotNull private final List<T> myList;
+  @NotNull private final List<? extends T> myList;
   private final int mySelectedIndex;
   private final boolean myExplicitSelection;
 
-  private ListSelection(@NotNull List<T> list, int selectedIndex) {
+  private ListSelection(@NotNull List<? extends T> list, int selectedIndex) {
     this(list, selectedIndex, false);
   }
 
-  private ListSelection(@NotNull List<T> list, int selectedIndex, boolean isExplicit) {
+  private ListSelection(@NotNull List<? extends T> list, int selectedIndex, boolean isExplicit) {
     myList = list;
     if (selectedIndex >= 0 && selectedIndex < list.size()) {
       mySelectedIndex = selectedIndex;
@@ -38,7 +38,7 @@ public final class ListSelection<T> {
   }
 
   @NotNull
-  public static <V> ListSelection<V> createAt(@NotNull List<V> list, int selectedIndex) {
+  public static <V> ListSelection<V> createAt(@NotNull List<? extends V> list, int selectedIndex) {
     if (list.contains(null)) {
       LOG.error("List selection should not contain nulls");
     }
@@ -46,7 +46,7 @@ public final class ListSelection<T> {
   }
 
   @NotNull
-  public static <V> ListSelection<V> create(@NotNull List<V> list, @Nullable V selected) {
+  public static <V> ListSelection<V> create(@NotNull List<? extends V> list, @Nullable V selected) {
     return createAt(list, list.indexOf(selected));
   }
 
@@ -67,7 +67,7 @@ public final class ListSelection<T> {
 
 
   @NotNull
-  public List<T> getList() {
+  public List<? extends T> getList() {
     return myList;
   }
 
@@ -113,7 +113,7 @@ public final class ListSelection<T> {
   }
 
   @NotNull
-  public List<T> getExplicitSelection() {
+  public List<? extends T> getExplicitSelection() {
     if (myList.isEmpty()) return Collections.emptyList();
     if (myExplicitSelection) return myList;
     return Collections.singletonList(myList.get(mySelectedIndex));

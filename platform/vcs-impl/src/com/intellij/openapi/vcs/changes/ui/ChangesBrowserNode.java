@@ -225,16 +225,11 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   @NotNull
-  public List<FilePath> getAllFilePathsUnder() {
-    return getFilePathsUnderStream().collect(Collectors.toList());
-  }
-
-  @NotNull
-  public Stream<FilePath> getFilePathsUnderStream() {
-    return toStream(preorderEnumeration())
+  public JBIterable<FilePath> iterateFilePathsUnder() {
+    return traverse()
       .filter(ChangesBrowserNode::isLeaf)
       .map(ChangesBrowserNode::getUserObject)
-      .select(FilePath.class);
+      .filter(FilePath.class);
   }
 
   @NotNull

@@ -22,7 +22,6 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.EditedCommitNode;
 import com.intellij.vcsUtil.VcsUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
@@ -213,11 +211,11 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
   }
 
   @NotNull
-  public Stream<FilePath> getUnversionedFiles() {
+  public JBIterable<FilePath> getUnversionedFiles() {
     ChangesBrowserUnversionedFilesNode node = TreeUtil.nodeChildren(getRoot())
       .filter(ChangesBrowserUnversionedFilesNode.class).first();
-    if (node == null) return StreamEx.empty();
-    return node.getFilePathsUnderStream();
+    if (node == null) return JBIterable.empty();
+    return node.iterateFilePathsUnder();
   }
 
   @NotNull
@@ -255,7 +253,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
   @NotNull
   private static JBIterable<FilePath> getSelectedFilePaths(@NotNull JTree tree, @Nullable Object tag) {
     return getSelectionNodes(tree, tag)
-      .flatMap(node -> JBIterable.create(() -> node.getFilePathsUnderStream().iterator()))
+      .flatMap(node -> node.iterateFilePathsUnder())
       .unique();
   }
 
@@ -304,7 +302,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
-      .flatMap(node -> JBIterable.create(() -> node.getFilePathsUnderStream().iterator()))
+      .flatMap(node -> node.iterateFilePathsUnder())
       .unique();
   }
 

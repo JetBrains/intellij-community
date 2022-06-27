@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
 
@@ -164,7 +163,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
     if (unversioned.size() == 1 && changes.isEmpty()) { // show all unversioned changes
       FilePath selectedFile = unversioned.get(0);
-      List<FilePath> allUnversioned = changesView.getUnversionedFiles().collect(Collectors.toList());
+      List<FilePath> allUnversioned = changesView.getUnversionedFiles().toList();
       int selectedIndex = allUnversioned.indexOf(selectedFile);
       return createUnversionedProducers(project, allUnversioned, selectedIndex);
     }
