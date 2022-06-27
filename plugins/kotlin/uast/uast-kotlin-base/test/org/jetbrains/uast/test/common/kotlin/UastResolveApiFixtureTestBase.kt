@@ -161,7 +161,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals(firstArgument, firstParameter)
     }
 
-
     fun checkResolveFromBaseJava(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """public class X {
@@ -219,7 +218,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             """
         )
 
-
         val functionCall =
             file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
                 .findElementByText<UElement>("foo").uastParent as KotlinUFunctionCallExpression
@@ -257,7 +255,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                 }
         """.trimIndent()
         )
-
 
         for (i in 1..3) {
             myFixture.addFileToProject(
@@ -316,7 +313,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                 }
             """
         )
-
 
         val functionCall =
             file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
@@ -836,6 +832,20 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             .orFail("cant convert to UCallExpression")
         TestCase.assertEquals("use", uCallExpression.methodName)
         TestCase.assertEquals("PsiType:String", uCallExpression.receiverType?.toString())
+    }
+
+    fun checkCallKindOfSamConstructor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                val r = java.lang.Runnable { }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val uCallExpression = uFile.findElementByTextFromPsi<UCallExpression>("Runnable", strict = false)
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("Runnable", uCallExpression.methodName)
+        TestCase.assertEquals(UastCallKind.CONSTRUCTOR_CALL, uCallExpression.kind)
     }
 
 }

@@ -13,7 +13,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = In
     UBlockExpression -> UQualifiedReferenceExpression -> Kotlin_Light_Method: run
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = runnable) -> Kotlin_Light_Variable: runnable
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = run) -> Kotlin_Light_Method: run
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Runnable) -> Decompiled_Class: Runnable
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Runnable) -> Decompiled_Class: Runnable
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = println) -> Decompiled_Method: println
     UBlockExpression -> UQualifiedReferenceExpression -> Decompiled_Method: run
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = runnable2) -> Kotlin_Light_Variable: runnable2

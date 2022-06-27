@@ -173,4 +173,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testSubstitutedReceiverType() {
         doCheck("SubstitutedReceiverType", ::checkSubstitutedReceiverType)
     }
+
+    fun testCallKindOfSamConstructor() {
+        doCheck("CallKindOfSamConstructor", ::checkCallKindOfSamConstructor)
+    }
 }
