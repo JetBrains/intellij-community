@@ -4,7 +4,6 @@ package com.jetbrains.python.facet;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -17,10 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.library.PythonLibraryType;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 
 public final class FacetLibraryConfigurator {
@@ -48,7 +44,7 @@ public final class FacetLibraryConfigurator {
               createNewLibrary(model);
               return;
             }
-            fillLibrary(module.getProject(), lib, paths);
+            fillLibrary(lib, paths);
             if (existingModel == null) {
               modelsProvider.commitModuleModifiableModel(model);
             }
@@ -62,7 +58,7 @@ public final class FacetLibraryConfigurator {
       private void createNewLibrary(ModifiableRootModel model) {
         final LibraryTable.ModifiableModel projectLibrariesModel = modelsProvider.getLibraryTableModifiableModel(model.getProject());
         Library lib = projectLibrariesModel.createLibrary(libraryName, PythonLibraryType.getInstance().getKind());
-        fillLibrary(module.getProject(), lib, paths);
+        fillLibrary(lib, paths);
         projectLibrariesModel.commit();
         model.addLibraryEntry(lib);
         if (existingModel == null) {
@@ -72,15 +68,11 @@ public final class FacetLibraryConfigurator {
     });
   }
 
-  private static void fillLibrary(Project project, Library lib, List<String> paths) {
+  private static void fillLibrary(Library lib, List<String> paths) {
     Library.ModifiableModel modifiableModel = lib.getModifiableModel();
     for (String root : lib.getUrls(OrderRootType.CLASSES)) {
       modifiableModel.removeRoot(root, OrderRootType.CLASSES);
     }
-    Set<VirtualFile> roots = new HashSet<>();
-    ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-    Collections.addAll(roots, rootManager.getContentRoots());
-    Collections.addAll(roots, rootManager.getContentSourceRoots());
     if (paths != null) {
       for (String dir : paths) {
         VirtualFile pathEntry = LocalFileSystem.getInstance().findFileByPath(dir);
