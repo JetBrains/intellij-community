@@ -225,6 +225,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 ktCallElement.resolveCall().singleFunctionCallOrNull()?.symbol ?: return UastCallKind.METHOD_CALL
             val fqName = resolvedFunctionLikeSymbol.callableIdIfNonLocal?.asSingleFqName()
             return when {
+                resolvedFunctionLikeSymbol is KtSamConstructorSymbol ||
                 resolvedFunctionLikeSymbol is KtConstructorSymbol -> UastCallKind.CONSTRUCTOR_CALL
                 fqName != null && isAnnotationArgumentArrayInitializer(ktCallElement, fqName) -> UastCallKind.NESTED_ARRAY_INITIALIZER
                 else -> UastCallKind.METHOD_CALL

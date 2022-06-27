@@ -18,7 +18,7 @@ UFile (package = ) [import java.lang.Thread...]
                 UQualifiedReferenceExpression [java.lang] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Runnable({ ...})] : PsiType:Runnable
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] : PsiType:Runnable
                     UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
                     USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : PsiType:Runnable
                     ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
@@ -77,7 +77,7 @@ UFile (package = ) [import java.lang.Thread...]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(Runnable({ ...}))] : PsiType:Thread
                             UIdentifier (Identifier (Thread)) [UIdentifier (Identifier (Thread))]
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] : PsiType:Thread
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Runnable({ ...})] : PsiType:Runnable
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] : PsiType:Runnable
                                 UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
                                 USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : PsiType:Runnable
                                 ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
@@ -91,7 +91,7 @@ UFile (package = ) [import java.lang.Thread...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [ambiguousSamAcceptor(Supplier({ ...}))] : PsiType:String
                     UIdentifier (Identifier (ambiguousSamAcceptor)) [UIdentifier (Identifier (ambiguousSamAcceptor))]
                     USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null) [ambiguousSamAcceptor] : PsiType:String
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Supplier({ ...})] : PsiType:Supplier<String>
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Supplier({ ...})] : PsiType:Supplier<String>
                         UIdentifier (Identifier (Supplier)) [UIdentifier (Identifier (Supplier))]
                         USimpleNameReferenceExpression (identifier = Supplier, resolvesTo = PsiClass: Supplier) [Supplier] : PsiType:Supplier<String>
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends String>
@@ -101,7 +101,7 @@ UFile (package = ) [import java.lang.Thread...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [ambiguousSamAcceptor(Callable({ ...}))] : PsiType:String
                     UIdentifier (Identifier (ambiguousSamAcceptor)) [UIdentifier (Identifier (ambiguousSamAcceptor))]
                     USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null) [ambiguousSamAcceptor] : PsiType:String
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Callable({ ...})] : PsiType:Callable<String>
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Callable({ ...})] : PsiType:Callable<String>
                         UIdentifier (Identifier (Callable)) [UIdentifier (Identifier (Callable))]
                         USimpleNameReferenceExpression (identifier = Callable, resolvesTo = PsiClass: Callable) [Callable] : PsiType:Callable<String>
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends String>
