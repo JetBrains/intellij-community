@@ -68,7 +68,7 @@ public class Notification {
   private @Nullable NotificationListener myListener;
   private @Nullable @LinkLabel String myDropDownText;
   private @Nullable List<@NotNull AnAction> myActions;
-  private @NotNull CollapseActionsDirection myCollapseDirection = CollapseActionsDirection.KEEP_RIGHTMOST;
+  private @NotNull CollapseActionsDirection myCollapseDirection = CollapseActionsDirection.KEEP_LEFTMOST;
   private @Nullable AnAction myContextHelpAction;
   private @Nullable List<@NotNull Runnable> myWhenExpired;
   private @Nullable Boolean myImportant;
