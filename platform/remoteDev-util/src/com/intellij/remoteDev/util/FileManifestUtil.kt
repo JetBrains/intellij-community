@@ -47,7 +47,7 @@ object FileManifestUtil {
             else                             33188 // -rw-r--r--, octal 0100644
           }
           // symlink permissions don't have meaning anyway, and we can't even set them to be consistent across OS:
-          // https://bugs.openjdk.java.net/browse/JDK-8220793 can't set attributes for symlinks pointing to non-existing files
+          // https://bugs.openjdk.org/browse/JDK-8220793 can't set attributes for symlinks pointing to non-existing files
           EntryType.SYMLINK -> -1
           EntryType.DIR ->     16877 // drwxr-xr-x, octal 0040755
           else -> error("Unknown entry type for ${entry.name}")

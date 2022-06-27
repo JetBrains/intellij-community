@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -1017,7 +1017,7 @@ public final class JsonSchemaObject {
       return false;
     } catch (Exception e) {
       // catch exceptions around to prevent things like:
-      // https://bugs.openjdk.java.net/browse/JDK-6984178
+      // https://bugs.openjdk.org/browse/JDK-6984178
       Logger.getInstance(JsonSchemaObject.class).info(e);
       return false;
     }

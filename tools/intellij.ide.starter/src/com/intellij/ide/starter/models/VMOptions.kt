@@ -224,7 +224,7 @@ data class VMOptions(
     .filterKeys { it == "-XX:+UseG1GC" }
     .addLine("-XX:+UseG1GC")
 
-  /** see https://openjdk.java.net/jeps/318 **/
+  /** see [JEP 318](https://openjdk.org/jeps/318) **/
   fun withEpsilonGC() = this
     .filterKeys { it == "-XX:+UseConcMarkSweepGC" }
     .filterKeys { it == "-XX:+UseG1GC" }

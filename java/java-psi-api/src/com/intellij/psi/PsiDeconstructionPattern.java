@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * <a href="https://openjdk.java.net/jeps/405">JEP</a>
+ * <a href="https://openjdk.org/jeps/405">JEP</a>
  * <p>
  * Represents record pattern, for example: {@code Point(int x, int y) p }
  */

@@ -1,6 +1,6 @@
 /**
  *
- *  This code can be assembled with <a href="https://wiki.openjdk.java.net/display/CodeTools/asmtools">asmtools</a>
+ *  This code can be assembled with <a href="https://wiki.openjdk.org/display/CodeTools/asmtools">asmtools</a>
  *  using <code>asmtools jcoder *.jcoder</code> command line.
  *
  *  Test handling constant pool entries of unknown type.

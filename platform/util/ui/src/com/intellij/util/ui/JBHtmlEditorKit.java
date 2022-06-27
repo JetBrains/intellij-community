@@ -173,7 +173,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
-  // Workaround for https://bugs.openjdk.java.net/browse/JDK-8202529
+  // Workaround for https://bugs.openjdk.org/browse/JDK-8202529
   private static class MouseExitSupportLinkController extends HTMLEditorKit.LinkController {
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
