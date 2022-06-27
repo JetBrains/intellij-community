@@ -2,6 +2,7 @@ package org.jetbrains.plugins.notebooks.visualization.outputs.impl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.util.ui.GraphicsUtil
 import org.jetbrains.plugins.notebooks.visualization.SwingClientProperty
 import org.jetbrains.plugins.notebooks.visualization.notebookCellEditorScrollingPositionKeeper
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory
@@ -27,6 +28,9 @@ internal class InnerComponent(private val editor: EditorImpl) : JPanel() {
     require(constraints is Constraint)
     comp.layoutConstraints = constraints
     super.add(comp, constraints, index)
+    if (GraphicsUtil.isProjectorEnvironment()) {
+      (parent as SurroundingComponent).fireResize()
+    }
   }
 
   override fun remove(index: Int) {
