@@ -13,18 +13,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.dsl.builder.DslComponentProperty
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.toJBEmptyBorder
 import com.intellij.util.castSafelyTo
 import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.JBUI
@@ -129,14 +127,14 @@ class RuntimeChooserDialog(
     return RuntimeChooserDialogResult.Cancel
   }
 
-  private fun createTitlePanel(): JComponent {
+  override fun createTitlePane(): JComponent {
     return panel {
       row {
         icon(AllIcons.General.Warning)
           .verticalAlign(VerticalAlign.TOP)
           .gap(RightGap.SMALL)
         text(LangBundle.message("dialog.label.choose.ide.runtime.warn", ApplicationInfo.getInstance().shortCompanyName),
-             maxLineLength = ComponentPanelBuilder.MAX_COMMENT_WIDTH)
+             maxLineLength = DEFAULT_COMMENT_WIDTH)
       }
     }.apply {
       val customLine = when {
@@ -174,9 +172,6 @@ class RuntimeChooserDialog(
     }
 
     return panel {
-      row {
-        cell(createTitlePanel())
-      }
       row(LangBundle.message("dialog.label.choose.ide.runtime.current")) {
         val control = SimpleColoredComponent()
         cell(control).horizontalAlign(HorizontalAlign.FILL)
@@ -230,6 +225,9 @@ class RuntimeChooserDialog(
         updateLocation()
         jdkCombobox.addItemListener { updateLocation() }
       }
+    }.apply {
+      border = IntelliJSpacingConfiguration().dialogGap.toJBEmptyBorder()
+      putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
     }
   }
 }
