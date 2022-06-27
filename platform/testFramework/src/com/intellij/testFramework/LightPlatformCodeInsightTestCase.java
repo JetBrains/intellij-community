@@ -249,7 +249,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       if (myVFile instanceof VirtualFileWindow) {
         myVFile = ((VirtualFileWindow)myVFile).getDelegate();
       }
-      if (myFile.isWritable() && !myVFile.getFileSystem().isReadOnly()) {
+      if (myVFile.isWritable() && !myVFile.getFileSystem().isReadOnly()) {
         WriteAction.run(() -> {
           // avoid messing with invalid files, in case someone calls configureXXX() several times
           PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
