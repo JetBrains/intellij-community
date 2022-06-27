@@ -91,8 +91,7 @@ class KotlinPluginUpdater : Disposable {
     @Volatile
     private var lastUpdateStatus: PluginUpdateStatus? = null
 
-    fun kotlinFileEdited(file: VirtualFile) {
-        if (!file.isInLocalFileSystem) return
+    fun kotlinFileEdited() {
         if (!UpdateSettings.getInstance().isCheckNeeded) return
 
         val lastUpdateTime = PropertiesComponent.getInstance().getLong(PROPERTY_NAME, 0L)
