@@ -25,13 +25,10 @@ import java.util.function.Supplier;
  * to implement your own {@code ActionGroup}.
  *
  * @see Constraints
- *
  * @see com.intellij.openapi.actionSystem.ComputableActionGroup
- *
  * @see com.intellij.ide.actions.NonEmptyActionGroup
  * @see com.intellij.ide.actions.NonTrivialActionGroup
  * @see com.intellij.ide.actions.SmartPopupActionGroup
- *
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance(DefaultActionGroup.class);
@@ -79,7 +76,9 @@ public class DefaultActionGroup extends ActionGroup {
     super(shortName, popup);
   }
 
-  public DefaultActionGroup(@Nullable @ActionText String text, @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon) {
+  public DefaultActionGroup(@Nullable @ActionText String text,
+                            @Nullable @NlsActions.ActionDescription String description,
+                            @Nullable Icon icon) {
     super(text, description, icon);
   }
 
@@ -185,8 +184,8 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   public final synchronized @NotNull ActionInGroup addAction(@NotNull AnAction action,
-                                                              @NotNull Constraints constraint,
-                                                              @NotNull ActionManager actionManager) {
+                                                             @NotNull Constraints constraint,
+                                                             @NotNull ActionManager actionManager) {
     if (action == this) {
       throw newThisGroupToItselfAddedException();
     }
@@ -324,6 +323,7 @@ public class DefaultActionGroup extends ActionGroup {
 
   /**
    * Copies content from {@code group}.
+   *
    * @param other group to copy from
    */
   public synchronized void copyFromGroup(@NotNull DefaultActionGroup other) {
@@ -484,6 +484,7 @@ public class DefaultActionGroup extends ActionGroup {
    * Creates an action group with specified template text.
    * It is necessary to redefine template text if the group contains
    * user-specific data such as Project name, file name, etc.
+   *
    * @param templateText template text which will be used in statistics
    * @return action group
    */
