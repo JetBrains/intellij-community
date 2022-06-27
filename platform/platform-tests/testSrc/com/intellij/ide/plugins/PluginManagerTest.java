@@ -380,7 +380,6 @@ public class PluginManagerTest {
       descriptor.jarFiles = List.of();
     }
     parentContext.close();
-    parentContext.result.finishLoading();
     return PluginManagerCore.initializePlugins(parentContext, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false, null);
   }
 

@@ -19,6 +19,7 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.io.Closeable
 import java.io.File
@@ -364,9 +365,16 @@ private fun loadDescriptorsFromProperty(result: PluginLoadingResult, context: De
   }
 }
 
-internal fun loadDescriptors(
-  isUnitTestMode: Boolean,
-  isRunningFromSources: Boolean,
+/**
+ * Think twice before use and get approve from core team.
+ *
+ * Returns enabled plugins only.
+ */
+@Internal
+@JvmOverloads
+fun loadDescriptors(
+  isUnitTestMode: Boolean = PluginManagerCore.isUnitTestMode,
+  isRunningFromSources: Boolean = PluginManagerCore.isRunningFromSources(),
 ): DescriptorListLoadingContext {
   val result = createPluginLoadingResult(null)
   val context = DescriptorListLoadingContext(
@@ -385,13 +393,12 @@ internal fun loadDescriptors(
     )
 
     loadDescriptorsFromProperty(result, context)
-    if (isUnitTestMode && result.enabledPluginCount() <= 1) {
+    if (isUnitTestMode && result.enabledPluginsById.size <= 1) {
       // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
       ForkJoinPool.commonPool().invoke(LoadDescriptorsFromDirAction(Paths.get(PathManager.getPreInstalledPluginsPath()), context,
                                                                     isBundled = true))
     }
   }
-  context.result.finishLoading()
   return context
 }
 
@@ -514,15 +521,6 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String>
   return urlToFilename
 }
 
-/**
- * Think twice before use and get approve from core team.
- *
- * Returns enabled plugins only.
- */
-fun loadUncachedDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Boolean): List<IdeaPluginDescriptorImpl> {
-  return loadDescriptors(isUnitTestMode = isUnitTestMode, isRunningFromSources = isRunningFromSources).result.getEnabledPlugins()
-}
-
 @Throws(IOException::class)
 fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
   val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
@@ -617,10 +615,9 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
     urlToFilename = urlToFilename,
     context = context,
     pathResolver = ClassPathXmlPathResolver(loader, isRunningFromSources = false),
-    useCoreClassLoader = true
+    useCoreClassLoader = true,
   ).compute()
-  context.result.finishLoading()
-  return context.result.getEnabledPlugins()
+  return context.result.enabledPlugins
 }
 
 private class LoadDescriptorsFromDirAction(

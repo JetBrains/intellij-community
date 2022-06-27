@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
@@ -25,7 +25,9 @@ class DescriptorListLoadingContext constructor(
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,
   @JvmField val transient: Boolean = false
-) : AutoCloseable, ReadModuleContext {
+) : AutoCloseable,
+    ReadModuleContext {
+
   private val toDispose = ConcurrentLinkedQueue<Array<MyXmlInterner?>>()
   // synchronization will ruin parallel loading, so, string pool is local for thread
   private val threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
@@ -45,8 +47,6 @@ class DescriptorListLoadingContext constructor(
       return result
     }
     private set
-
-  @JvmField var usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins
 
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 

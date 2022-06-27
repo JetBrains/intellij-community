@@ -857,7 +857,7 @@ public final class PluginManagerCore {
       activity.end();
     }
 
-    PluginSetBuilder pluginSetBuilder = new PluginSetBuilder(loadingResult.getEnabledPlugins());
+    PluginSetBuilder pluginSetBuilder = new PluginSetBuilder(loadingResult.enabledPluginsById.values());
     disableIncompatiblePlugins(pluginSetBuilder.getUnsortedPlugins(), idMap, pluginErrorsById);
     pluginSetBuilder.checkPluginCycles(globalErrors);
 

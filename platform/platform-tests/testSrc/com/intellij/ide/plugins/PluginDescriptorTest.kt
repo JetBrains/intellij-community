@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
@@ -47,12 +47,12 @@ private fun loadDescriptors(
   // constant order in tests
   val paths: List<Path> = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
-    for (file in paths) {
-      val descriptor = loadDescriptor(file, context) ?: continue
-      context.result.add(descriptor, false)
-    }
+    paths.asSequence()
+      .mapNotNull { loadDescriptor(it, context) }
+      .forEach {
+        context.result.add(it, overrideUseIfCompatible = false)
+      }
   }
-  context.result.finishLoading()
   return context
 }
 
@@ -311,7 +311,7 @@ class PluginDescriptorTest {
 
     val result = loadDescriptors(pluginsPath, BuildNumber.fromString("4.0")!!).result
     assertThat(result.hasPluginErrors).isFalse()
-    val plugins = result.getEnabledPlugins()
+    val plugins = result.enabledPlugins.toList()
     assertThat(plugins).hasSize(1)
     assertThat(result.duplicateModuleMap).isNull()
     assertThat(result.incompletePlugins).isEmpty()

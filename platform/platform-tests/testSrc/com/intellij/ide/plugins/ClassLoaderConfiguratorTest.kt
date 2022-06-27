@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
@@ -65,7 +65,9 @@ internal class ClassLoaderConfiguratorTest {
 
   @Test
   fun regularPluginClassLoaderIsUsedIfPackageSpecified() {
-    val plugin = loadPlugins(modulePackage = "com.example.extraSupportedFeature").getEnabledPlugins().get(1)
+    val plugin = loadPlugins(modulePackage = "com.example.extraSupportedFeature")
+      .enabledPlugins
+      .get(1)
     assertThat(plugin.content.modules.get(0).requireDescriptor().pluginClassLoader).isInstanceOf(PluginAwareClassLoader::class.java)
   }
 
@@ -94,7 +96,7 @@ internal class ClassLoaderConfiguratorTest {
     </idea-plugin>
     """)
 
-    val plugins = loadDescriptors(rootDir).getEnabledPlugins()
+    val plugins = loadDescriptors(rootDir).enabledPlugins
     assertThat(plugins).hasSize(2)
     val barPlugin = plugins.get(1)
     assertThat(barPlugin.pluginId.idString).isEqualTo("2-bar")
@@ -142,7 +144,7 @@ internal class ClassLoaderConfiguratorTest {
     """)
 
     val loadResult = loadDescriptors(rootDir)
-    val plugins = loadResult.getEnabledPlugins()
+    val plugins = loadResult.enabledPlugins
     assertThat(plugins).hasSize(2)
 
     val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).createPluginSetWithEnabledModulesMap())
@@ -162,6 +164,5 @@ private fun loadDescriptors(dir: Path): PluginLoadingResult {
       result.add(loadDescriptor(file, context) ?: continue, false)
     }
   }
-  result.finishLoading()
   return result
 }

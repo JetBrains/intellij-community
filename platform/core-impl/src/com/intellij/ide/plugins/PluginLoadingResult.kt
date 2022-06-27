@@ -14,6 +14,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Supplier
 
@@ -21,11 +22,14 @@ import java.util.function.Supplier
 // If a plugin does not include any module dependency tags in its plugin.xml,
 // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
 @ApiStatus.Internal
-class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<String?>>,
-                          @JvmField val productBuildNumber: Supplier<BuildNumber>,
-                          private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ()) {
+class PluginLoadingResult(
+  private val brokenPluginVersions: Map<PluginId, Set<String?>>,
+  @JvmField val productBuildNumber: Supplier<BuildNumber>,
+  private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ(),
+) {
+
   @JvmField val incompletePlugins = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
-  private val plugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
+  @JvmField val enabledPluginsById: SortedMap<PluginId, IdeaPluginDescriptorImpl> = ConcurrentSkipListMap()
 
   // only read is concurrent, write from the only thread
   @JvmField val idMap = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
@@ -36,24 +40,13 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
   @VisibleForTesting
   @JvmField val shadowedBundledIds = HashSet<PluginId>()
 
-  // result, after calling finishLoading
-  private var enabledPlugins: List<IdeaPluginDescriptorImpl>? = null
-
   @get:TestOnly
   val hasPluginErrors: Boolean
     get() = !pluginErrors.isEmpty()
 
-  fun getEnabledPlugins(): List<IdeaPluginDescriptorImpl> = enabledPlugins!!
-
-  fun enabledPluginCount() = plugins.size
-
-  fun finishLoading() {
-    val enabledPlugins = plugins.values.toTypedArray()
-    plugins.clear()
-    Arrays.sort(enabledPlugins, Comparator.comparing { it.pluginId })
-    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-    this.enabledPlugins = Arrays.asList(*enabledPlugins)
-  }
+  @get:TestOnly
+  val enabledPlugins: List<IdeaPluginDescriptorImpl>
+    get() = enabledPluginsById.values.toList()
 
   fun isBroken(id: PluginId): Boolean {
     val set = brokenPluginVersions.get(id) ?: return false
@@ -117,7 +110,7 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     // remove any error that occurred for plugin with the same `id`
     pluginErrors.remove(pluginId)
     incompletePlugins.remove(pluginId)
-    val prevDescriptor = if (descriptor.onDemand) null else plugins.put(pluginId, descriptor)
+    val prevDescriptor = if (descriptor.onDemand) null else enabledPluginsById.put(pluginId, descriptor)
     if (prevDescriptor == null) {
       idMap.put(pluginId, descriptor)
       for (module in descriptor.modules) {
@@ -137,7 +130,7 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
       return true
     }
     else {
-      plugins.put(pluginId, prevDescriptor)
+      enabledPluginsById.put(pluginId, prevDescriptor)
       return false
     }
   }
