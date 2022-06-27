@@ -312,8 +312,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         anchor instanceof JavaMethodReferenceReturnAnchor ? ((JavaMethodReferenceReturnAnchor)anchor).getMethodReferenceExpression() :
         null;
       if (expression == null || shouldBeSuppressed(expression)) return;
-      if (JavaPsiPatternUtil.getExposedPatternVariables(expression).stream()
-        .anyMatch(var -> VariableAccessUtils.variableIsUsed(var, var.getDeclarationScope()))) {
+      if (ContainerUtil.exists(JavaPsiPatternUtil.getExposedPatternVariables(expression),
+                               var -> VariableAccessUtils.variableIsUsed(var, var.getDeclarationScope()))) {
         return;
       }
       reporter.registerProblem(expression,
@@ -409,8 +409,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       return allBranches.size() != 1 || BreakConverter.from(statement) != null;
     }
     // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either
-    return (allBranches.size() <= 2 &&
-           !ContainerUtil.and(allBranches, branch -> branch == labelStatement || SwitchUtils.isDefaultLabel(branch))) ||
+    return !ContainerUtil.and(allBranches, branch -> branch == labelStatement || SwitchUtils.isDefaultLabel(branch)) ||
            (labelStatement instanceof PsiSwitchLabeledRuleStatement &&
             ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() instanceof PsiExpressionStatement);
   }
