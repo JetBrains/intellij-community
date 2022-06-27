@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.lightEdit.LightEditServiceListener;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 public final class WindowDressing implements ProjectManagerListener, LightEditServiceListener {
   @Override
   public void projectOpened(@NotNull Project project) {
-    getWindowActionGroup().addProject(project);
+    ActionManagerEx.doWithLazyActionManager(manager -> {
+      ((ProjectWindowActionGroup)manager.getAction("OpenProjectWindows")).addProject(project);
+    });
   }
 
   @Override
@@ -18,8 +21,7 @@ public final class WindowDressing implements ProjectManagerListener, LightEditSe
     getWindowActionGroup().removeProject(project);
   }
 
-  @NotNull
-  public static ProjectWindowActionGroup getWindowActionGroup() {
+  public static @NotNull ProjectWindowActionGroup getWindowActionGroup() {
     return (ProjectWindowActionGroup)ActionManager.getInstance().getAction("OpenProjectWindows");
   }
 

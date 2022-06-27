@@ -38,6 +38,8 @@ import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import kotlinx.coroutines.Deferred;
+import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +77,7 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 
 @ApiStatus.Internal
-@SuppressWarnings("LoggerInitializedWithForeignClass")
+@SuppressWarnings({"LoggerInitializedWithForeignClass", "Convert2MethodRef"})
 public final class StartupUtil {
   public static final String IDE_STARTED =  "------------------------------------------------------ IDE STARTED ------------------------------------------------------";
   private static final String IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------";
@@ -99,6 +101,7 @@ public final class StartupUtil {
   private StartupUtil() { }
 
   /** Called via reflection from {@link Main#bootstrap}. */
+  @SuppressWarnings("JavadocReference")
   public static void start(@NotNull String mainClass,
                            boolean isHeadless,
                            boolean setFlagsAgain,
@@ -194,6 +197,7 @@ public final class StartupUtil {
 
       if (splashTaskFuture != null) {
         // please do not use a method-reference here
+        //noinspection Convert2MethodRef
         showEuaIfNeededFuture.thenAcceptBothAsync(splashTaskFuture, (__, runnable) -> {
           runnable.run();
         }, it -> EventQueue.invokeLater(it));
@@ -254,7 +258,7 @@ public final class StartupUtil {
           showEuaIfNeededFuture.join();
           importConfig(argsAsList, log, appStarter, showEuaIfNeededFuture, initUiFuture);
         }
-        return appStarter.start(argsAsList, showEuaIfNeededFuture.thenApply(__ -> initUiFuture.join()));
+        return appStarter.start(argsAsList, FutureKt.asDeferred(showEuaIfNeededFuture.thenApply(__ -> initUiFuture.join())));
       })
       .exceptionally(e -> {
         StartupAbortedException.logAndExit(new StartupAbortedException("Cannot start app", unwrapError(e)), log);
@@ -264,6 +268,7 @@ public final class StartupUtil {
     // prevent JVM from exiting - because in FJP pool "all worker threads are initialized with {@link Thread#isDaemon} set {@code true}"
     // `awaitQuiescence` allows us to reuse the main thread instead of creating another one
     do {
+      //noinspection ResultOfMethodCallIgnored
       forkJoinPool.awaitQuiescence(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
     }
     while (!future.isDone());
@@ -376,7 +381,7 @@ public final class StartupUtil {
 
   public interface AppStarter {
     /* called from IDE init thread */
-    @NotNull CompletableFuture<?> start(@NotNull List<String> args, @NotNull CompletableFuture<Object> prepareUiFuture);
+    @NotNull CompletableFuture<?> start(@NotNull List<String> args, @NotNull Deferred<Object> prepareUiFuture);
 
     /* called from IDE init thread */
     default void beforeImportConfigs() {}

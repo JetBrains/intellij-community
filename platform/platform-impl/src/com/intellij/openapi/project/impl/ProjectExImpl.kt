@@ -2,11 +2,11 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupManagerEx
-import com.intellij.idea.preloadServices
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -14,7 +14,10 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -33,17 +36,17 @@ import com.intellij.util.TimedReference
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.lang.Runnable
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Internal
-open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(ApplicationManager.getApplication() as ComponentManagerImpl), ProjectStoreOwner {
+open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(
+  ApplicationManager.getApplication() as ComponentManagerImpl), ProjectStoreOwner {
   companion object {
     @ApiStatus.Internal
     val RUN_START_UP_ACTIVITIES = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
@@ -169,28 +172,29 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
   final override fun activityNamePrefix() = "project "
 
   @OptIn(DelicateCoroutinesApi::class)
-  override fun init(preloadServices: Boolean, indicator: ProgressIndicator?) {
+  internal suspend fun init(preloadServices: Boolean, indicator: ProgressIndicator?) {
     val app = ApplicationManager.getApplication()
 
-    // for light projects, preload only services that are essential
-    // ("await" means "project component loading activity is completed only when all such services are completed")
-    val servicePreloadingFuture = if (preloadServices) {
-      val container = this
-      GlobalScope.launch {
-        preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                        container = container,
-                        activityPrefix = "project ",
-                        syncScope = this,
-                        onlyIfAwait = isLight)
+    val container = this
+    coroutineScope {
+      if (preloadServices) {
+        launch {
+          // for light projects, preload only services that are essential
+          // ("await" means "project component loading activity is completed only when all such services are completed")
+          container.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                                    activityPrefix = "project ",
+                                    syncScope = this,
+                                    asyncScope = GlobalScope + CoroutineExceptionHandler { _, exception ->
+                                      LOG.error(exception)
+                                    },
+                                    onlyIfAwait = isLight)
+        }
       }
+      createComponents(indicator)
     }
-    else {
-      null
-    }
-    createComponents(indicator)
-    servicePreloadingFuture?.asCompletableFuture()?.join()
 
-    var activity = if (StartUpMeasurer.isEnabled()) startActivity("projectComponentCreated event handling", ActivityCategory.DEFAULT) else null
+    var activity = if (StartUpMeasurer.isEnabled()) startActivity("projectComponentCreated event handling", ActivityCategory.DEFAULT)
+    else null
     @Suppress("DEPRECATION")
     app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this)
 
@@ -303,5 +307,31 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     val componentStore = if (store == null) "<not initialized>" else if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.toString() else store.projectFilePath
     val disposedStr = if (isDisposed) " (disposed)" else ""
     return "Project(name=$cachedName, containerState=$containerState, componentStore=$componentStore)$disposedStr"
+  }
+}
+
+private suspend inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: suspend (T) -> Unit) {
+  for (adapter in ep.sortedAdapters) {
+    val pluginDescriptor = adapter.pluginDescriptor
+    if (!isCorePlugin(pluginDescriptor)) {
+      logger<ProjectImpl>().error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
+      continue
+    }
+
+    try {
+      executor(adapter.createInstance(ep.componentManager) ?: continue)
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: PluginException) {
+      logger<ProjectImpl>().error(e)
+    }
+    catch (e: Throwable) {
+      logger<ProjectImpl>().error(PluginException(e, pluginDescriptor.pluginId))
+    }
   }
 }

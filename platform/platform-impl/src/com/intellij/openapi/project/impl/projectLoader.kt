@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectLoadHelper")
 @file:ApiStatus.Internal
 package com.intellij.openapi.project.impl
@@ -12,6 +12,7 @@ import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -36,12 +37,11 @@ private inline fun createActivity(project: ProjectImpl, message: () -> String): 
   return if (project.isDefault || !StartUpMeasurer.isEnabled()) null else startActivity(message(), ActivityCategory.DEFAULT)
 }
 
-internal inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: (T) -> Unit) {
+private inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: (T) -> Unit) {
   ep.processWithPluginDescriptor(true) { handler, pluginDescriptor ->
-    if (pluginDescriptor.pluginId != PluginManagerCore.CORE_ID && pluginDescriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
-        // K/N Platform Deps is a repackaged Java plugin
-        pluginDescriptor.pluginId.idString != "com.intellij.kotlinNative.platformDeps") {
+    if (!isCorePlugin(pluginDescriptor)) {
       logger<ProjectImpl>().error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
+      return@processWithPluginDescriptor
     }
 
     try {
@@ -57,6 +57,14 @@ internal inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl
       logger<ProjectImpl>().error(PluginException(e, pluginDescriptor.pluginId))
     }
   }
+}
+
+internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
+  val id = descriptor.pluginId
+  return id == PluginManagerCore.CORE_ID ||
+         id == PluginManagerCore.JAVA_PLUGIN_ID ||
+         // K/N Platform Deps is a repackaged Java plugin
+         id.idString == "com.intellij.kotlinNative.platformDeps"
 }
 
 /**
@@ -86,5 +94,5 @@ interface ProjectServiceContainerInitializedListener {
    * Invoked after implementation classes for project's components were determined (and loaded),
    * but before components are instantiated.
    */
-  fun serviceCreated(project: Project)
+  suspend fun serviceCreated(project: Project)
 }

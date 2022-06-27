@@ -49,6 +49,7 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
+import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlin.sequences.Sequence;
 import kotlinx.coroutines.*;
@@ -419,12 +420,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     registerComponents(modules, this, null, null);
     ApplicationLoader.initConfigurationStore(this);
-    FutureKt.asCompletableFuture(BuildersKt.async(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
+    FutureKt.asCompletableFuture(BuildersKt.launch(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
       preloadServices(modules, "", scope, GlobalScope.INSTANCE, false);
       loadComponents();
 
       ApplicationLoader.callAppInitialized(this, continuation);
-      return null;
+      return Unit.INSTANCE;
     })).join();
   }
 

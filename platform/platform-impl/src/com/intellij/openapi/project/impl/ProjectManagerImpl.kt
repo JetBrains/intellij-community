@@ -68,16 +68,16 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
-import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.awt.event.InvocationEvent
 import java.io.IOException
 import java.nio.file.*
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -85,12 +85,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 @Internal
 open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   companion object {
-    internal fun initProject(file: Path,
-                             project: ProjectImpl,
-                             isRefreshVfsNeeded: Boolean,
-                             preloadServices: Boolean,
-                             template: Project?,
-                             indicator: ProgressIndicator?) {
+    internal suspend fun initProject(file: Path,
+                                     project: ProjectImpl,
+                                     isRefreshVfsNeeded: Boolean,
+                                     preloadServices: Boolean,
+                                     template: Project?,
+                                     indicator: ProgressIndicator?) {
       LOG.assertTrue(!project.isDefault)
 
       try {
@@ -105,7 +105,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         activity.end()
         registerComponents(project)
         project.stateStore.setPath(file, isRefreshVfsNeeded, template)
-        project.init(preloadServices, indicator)
+        if (project is ProjectExImpl) {
+          project.init(preloadServices, indicator)
+        }
       }
       catch (initThrowable: Throwable) {
         try {
@@ -215,14 +217,16 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   override fun loadProject(path: Path): Project {
     val project = ProjectExImpl(path, null)
-    initProject(
-      file = path,
-      project = project,
-      isRefreshVfsNeeded = true,
-      preloadServices = true,
-      template = null,
-      indicator = ProgressManager.getInstance().progressIndicator
-    )
+    runBlocking {
+      initProject(
+        file = path,
+        project = project,
+        isRefreshVfsNeeded = true,
+        preloadServices = true,
+        template = null,
+        indicator = ProgressManager.getInstance().progressIndicator
+      )
+    }
     return project
   }
 
@@ -240,7 +244,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   @TestOnly
-  @ApiStatus.Internal
+  @Internal
   fun disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests() {
     defaultProject.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
   }
@@ -562,37 +566,69 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
      }
 
      val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
-     val result = frameAllocator.run { indicator ->
-       activity.end()
-       val result = if (options.project == null) {
-         prepareProject(options, projectStoreBaseDir) ?: return@run null
-       }
-       else {
-         PrepareProjectResult(options.project as Project, null)
-       }
+     val result = try {
+       frameAllocator.run {
+         activity.end()
+         val result = if (options.project == null) {
+           prepareProject(options, projectStoreBaseDir) ?: return@run null
+         }
+         else {
+           PrepareProjectResult(options.project as Project, null)
+         }
 
-       val project = result.project
-       if (!addToOpened(project)) {
-         return@run null
-       }
+         val project = result.project
+         if (!addToOpened(project)) {
+           return@run null
+         }
 
-       if (!checkOldTrustedStateAndMigrate(project, projectStoreBaseDir)) {
-         handleProjectOpenCancelOrFailure(project)
-         return@run null
-       }
+         if (!checkOldTrustedStateAndMigrate(project, projectStoreBaseDir)) {
+           handleProjectOpenCancelOrFailure(project)
+           return@run null
+         }
 
-       frameAllocator.projectLoaded(project)
-       try {
-         openProject(project, indicator, isRunStartUpActivitiesEnabled(project)).join()
-       }
-       catch (e: ProcessCanceledException) {
-         handleProjectOpenCancelOrFailure(project)
-         return@run null
-       }
+         frameAllocator.projectLoaded(project)
+         try {
+           val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
+           val indicator = ProgressManager.getInstance().progressIndicator
+           if (indicator != null) {
+             indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..."  // NON-NLS (internal mode)
+             else ProjectBundle.message("project.preparing.workspace")
+             indicator.isIndeterminate = true
+           }
 
-       result
-     }.asDeferred().await()
-     disableAutoSaveToken.finish()
+           tracer.spanBuilder("open project")
+             .setAttribute(AttributeKey.stringKey("project"), project.name)
+             .useWithScope {
+               doOpenProject(project, indicator, isRunStartUpActivitiesEnabled(project), waitEdtActivity)
+             }
+         }
+         catch (e: ProcessCanceledException) {
+           handleProjectOpenCancelOrFailure(project)
+           return@run null
+         }
+
+         result
+       }
+     }
+     catch (e: CancellationException) {
+       frameAllocator.projectNotLoaded(error = null)
+       throw e
+     }
+     catch (e: ProcessCanceledException) {
+       frameAllocator.projectNotLoaded(error = null)
+       throw e
+     }
+     catch (e: Throwable) {
+       LOG.error(e)
+       frameAllocator.projectNotLoaded(error = e as? CannotConvertException)
+       if (options.showWelcomeScreen) {
+         WelcomeFrame.showIfNoProjectOpened()
+       }
+       return null
+     }
+     finally {
+       disableAutoSaveToken.finish()
+     }
 
      if (result == null) {
        frameAllocator.projectNotLoaded(error = null)
@@ -695,7 +731,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
      }
 
      try {
-       openProject(project, ProgressManager.getInstance().progressIndicator, isRunStartUpActivitiesEnabled(project)).join()
+       openProjectSync(project, ProgressManager.getInstance().progressIndicator, isRunStartUpActivitiesEnabled(project))
      }
      catch (e: ProcessCanceledException) {
        app.invokeAndWait { closeProject(project, saveProject = false, dispose = true, checkCanClose = false) }
@@ -714,14 +750,16 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
      val project = instantiateProject(file, options)
      try {
        val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
-       initProject(
-         file = file,
-         project = project,
-         isRefreshVfsNeeded = options.isRefreshVfsNeeded,
-         preloadServices = options.preloadServices,
-         template = template,
-         indicator = ProgressManager.getInstance().progressIndicator
-       )
+       runBlocking {
+         initProject(
+           file = file,
+           project = project,
+           isRefreshVfsNeeded = options.isRefreshVfsNeeded,
+           preloadServices = options.preloadServices,
+           template = template,
+           indicator = ProgressManager.getInstance().progressIndicator
+         )
+       }
        project.setTrusted(true)
        return project
      }
@@ -753,7 +791,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
      return project
    }
 
-   private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path): PrepareProjectResult? {
+   private suspend fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path): PrepareProjectResult? {
      val project: Project?
      val indicator = ProgressManager.getInstance().progressIndicator
      if (options.isNewProject) {
@@ -796,8 +834,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
      if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty()) ||
          project.isLoadedFromCacheButHasNoModules()) {
-       val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(projectStoreBaseDir, project,
-                                                                                  options.isProjectCreatedWithWizard)
+       val module = PlatformProjectOpenProcessor
+         .runDirectoryProjectConfigurators(projectStoreBaseDir, project, options.isProjectCreatedWithWizard)
        options.preparedToOpen?.invoke(module)
        return PrepareProjectResult(project, module)
      }
@@ -906,71 +944,101 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
    pce?.let { throw it }
  }
 
- private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean): CompletableFuture<*> {
-   val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
-   if (indicator != null) {
-     indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..."  // NON-NLS (internal mode)
-     else ProjectBundle.message("project.preparing.workspace")
-     indicator.isIndeterminate = true
-   }
+private fun openProjectSync(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean) {
+  val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
+  if (indicator != null) {
+    indicator.text = ProjectBundle.message("project.preparing.workspace")
+    indicator.isIndeterminate = true
+  }
 
-   tracer.spanBuilder("open project")
-     .setAttribute(AttributeKey.stringKey("project"), project.name)
-     .useWithScope {
-       val traceContext = Context.current()
-       // invokeLater cannot be used for now
-       executeInEdtWithProgress(indicator) {
-         waitEdtActivity.end()
+  // invokeLater cannot be used for now
+  executeInEdtWithProgress(indicator) {
+    waitEdtActivity.end()
 
-         indicator?.checkCanceled()
+    indicator?.checkCanceled()
 
-         if (indicator != null && ApplicationManager.getApplication().isInternal) {
-           indicator.text = "Running project opened tasks..."  // NON-NLS (internal mode)
-         }
+    LOG.debug("projectOpened")
 
-         LOG.debug("projectOpened")
+    val activity = StartUpMeasurer.startActivity("project opened callbacks")
 
-         val activity = StartUpMeasurer.startActivity("project opened callbacks")
+    runActivity("projectOpened event executing") {
+      ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
+    }
 
-         runActivity("projectOpened event executing") {
-           tracer.spanBuilder("execute projectOpened handlers").setParent(traceContext).useWithScope {
-             ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-           }
-         }
+    callOldProjectOpened(project, indicator)
 
-         @Suppress("DEPRECATION")
-         (project as ComponentManagerEx)
-           .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
-             indicator?.checkCanceled()
-             try {
-               val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
-                                                                     pluginDescriptor.pluginId.idString)
-               component.projectOpened()
-               componentActivity.end()
-             }
-             catch (e: ProcessCanceledException) {
-               throw e
-             }
-             catch (e: Throwable) {
-               LOG.error(e)
-             }
-           }
+    activity.end()
+  }
 
-         activity.end()
-       }
+  ProjectImpl.ourClassesAreLoaded = true
 
-       ProjectImpl.ourClassesAreLoaded = true
+  if (runStartUpActivities) {
+    tracer.spanBuilder("StartupManager.projectOpened").useWithScope {
+      val startupManager = StartupManager.getInstance(project) as StartupManagerImpl
+      runBlocking { startupManager.projectOpened(indicator) }
+    }
+  }
 
-       if (runStartUpActivities) {
-         tracer.spanBuilder("StartupManager.projectOpened").useWithScope {
-           (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
-         }
-       }
+  LifecycleUsageTriggerCollector.onProjectOpened(project)
+}
 
-       LifecycleUsageTriggerCollector.onProjectOpened(project)
-       return CompletableFuture.completedFuture(null)
-     }
- }
+private suspend fun doOpenProject(project: Project,
+                                  indicator: ProgressIndicator?,
+                                  runStartUpActivities: Boolean,
+                                  waitEdtActivity: Activity) {
+  val traceContext = Context.current()
+  withContext(Dispatchers.EDT) {
+    waitEdtActivity.end()
+
+    if (indicator != null && ApplicationManager.getApplication().isInternal) {
+      indicator.text = "Running project opened tasks..."  // NON-NLS (internal mode)
+    }
+
+    LOG.debug("projectOpened")
+
+    val activity = StartUpMeasurer.startActivity("project opened callbacks")
+
+    runActivity("projectOpened event executing") {
+      tracer.spanBuilder("execute projectOpened handlers").setParent(traceContext).useWithScope {
+        ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
+      }
+    }
+
+    callOldProjectOpened(project, indicator)
+
+    activity.end()
+  }
+
+  ProjectImpl.ourClassesAreLoaded = true
+
+  if (runStartUpActivities) {
+    tracer.spanBuilder("StartupManager.projectOpened").useWithScope {
+      (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
+    }
+  }
+
+  LifecycleUsageTriggerCollector.onProjectOpened(project)
+}
+
+private fun callOldProjectOpened(project: Project, indicator: ProgressIndicator?) {
+  @Suppress("DEPRECATION")
+  (project as ComponentManagerEx)
+    .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
+      indicator?.checkCanceled()
+      try {
+        val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
+                                                              pluginDescriptor.pluginId.idString)
+        component.projectOpened()
+        componentActivity.end()
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    }
+}
 
 private val LOG = Logger.getInstance(ProjectManagerImpl::class.java)
 

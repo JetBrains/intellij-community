@@ -7,7 +7,6 @@ import com.intellij.configurationStore.StateStorageManager
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.idea.preloadServices
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.ComponentConfig
@@ -22,7 +21,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.util.messages.MessageBus
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -47,14 +46,17 @@ abstract class ClientSessionImpl(
     registerComponents()
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   fun preloadServices(syncScope: CoroutineScope) {
     assert(containerState.get() == ContainerState.PRE_INIT)
-    preloadServices(
-      PluginManagerCore.getPluginSet().getEnabledModules(),
-      container = this,
-      activityPrefix = "client ",
-      syncScope = syncScope,
-      onlyIfAwait = false
+    val exceptionHandler = CoroutineExceptionHandler { _, exception ->
+      LOG.error(exception)
+    }
+    this.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                         activityPrefix = "client ",
+                         syncScope = syncScope + exceptionHandler,
+                         asyncScope = GlobalScope + exceptionHandler,
+                         onlyIfAwait = false
     )
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }

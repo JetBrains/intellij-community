@@ -3,23 +3,18 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
-import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.impl.ProgressResult
-import com.intellij.openapi.progress.impl.ProgressRunner
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.withModalProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -32,26 +27,23 @@ import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Frame
 import java.awt.Image
 import java.io.EOFException
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
-import java.util.function.Function
 import javax.swing.JComponent
 import kotlin.math.min
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
-  open fun <T : Any> run(task: (indicator: ProgressIndicator?) -> T?): CompletableFuture<T?> {
+  open suspend fun <T : Any> run(task: suspend () -> T?): T? {
     if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
-      runBlocking {
-        saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
-      }
+      saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
     }
-    return CompletableFuture.completedFuture(task(ProgressManager.getInstance().progressIndicator))
+    return task()
   }
 
   /**
@@ -70,62 +62,25 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
 
 internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
   // volatile not required because created in run (before executing run task)
-  var frameManager: ProjectUiFrameManager? = null
+  private var frameManager: ProjectUiFrameManager? = null
 
   @Volatile
   var cancelled = false
     private set
 
-  override fun <T : Any> run(task: (indicator: ProgressIndicator?) -> T?): CompletableFuture<T?> {
+  override suspend fun <T : Any> run(task: suspend () -> T?): T? {
     if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
-      invokeAndWaitIfNeeded {
+      withContext(Dispatchers.EDT) {
         SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(ProjectManager.getInstance().defaultProject)
       }
     }
 
     frameManager = createFrameManager()
 
-    val progress = (ApplicationManager.getApplication() as ApplicationImpl)
-      .createProgressWindowAsyncIfNeeded(getProgressTitle(), true, true, null, frameManager!!.getComponent(), null)
-
-    val progressRunner = ProgressRunner<T?>(Function { indicator ->
+    return withModalProgressIndicator(owner = ModalTaskOwner.component(frameManager!!.getComponent()), title = getProgressTitle()) {
       // create project frame (not in this thread - all implementations uses invokeLater to perform UI tasks in EDT)
       frameManager!!.init(this@ProjectUiFrameAllocator)
-      try {
-        task(indicator)
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Exception) {
-        if (e is StartupAbortedException || e is PluginException) {
-          StartupAbortedException.logAndExit(e, null)
-        }
-        else {
-          logger<ProjectFrameAllocator>().error(e)
-          projectNotLoaded(e as? CannotConvertException)
-        }
-        null
-      }
-    })
-      .onThread(ProgressRunner.ThreadToUse.FJ)
-      .modal()
-      .withProgress(progress)
-
-    val progressResultFuture: CompletableFuture<ProgressResult<T?>>
-    if (ApplicationManager.getApplication().isDispatchThread) {
-      progressResultFuture = CompletableFuture.completedFuture(progressRunner.submitAndGet())
-    }
-    else {
-      progressResultFuture = progressRunner.submit()
-    }
-
-    return progressResultFuture.thenCompose { result ->
-      when (result.throwable) {
-        null -> CompletableFuture.completedFuture(result.result)
-        is ProcessCanceledException -> CompletableFuture.completedFuture(null)
-        else -> CompletableFuture.failedFuture(result.throwable)
-      }
+      task()
     }
   }
 

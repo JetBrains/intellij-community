@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -11,6 +11,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.TimeoutUtil;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +59,15 @@ public final class LightEditProjectManager {
     Runnable fireRunnable = () -> {
       // similar to com.intellij.openapi.project.impl.ProjectManagerExImplKt.openProject
       app.getMessageBus().syncPublisher(ProjectManager.TOPIC).projectOpened(project);
-      ((StartupManagerImpl)StartupManager.getInstance(project)).projectOpened(null);
+      try {
+        BuildersKt.runBlocking(EmptyCoroutineContext.INSTANCE, (scope, continuation) -> {
+          ((StartupManagerImpl)StartupManager.getInstance(project)).projectOpened(null, continuation);
+          return null;
+        });
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
     };
     if (app.isDispatchThread() || app.isUnitTestMode()) {
       fireRunnable.run();

@@ -3,7 +3,6 @@ package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
 import com.intellij.diagnostic.opentelemetry.TraceManager
-import com.intellij.diagnostic.telemetry.forkJoinTask
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEdit
@@ -24,14 +23,12 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicatorProvider
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.isCorePlugin
 import com.intellij.openapi.project.impl.waitAndProcessInvocationEventsInIdeEventQueue
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
@@ -42,13 +39,14 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
+import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -159,7 +157,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
   override fun getAllActivitiesPassedFuture() = allActivitiesPassed
 
-  fun projectOpened(indicator: ProgressIndicator?) {
+  @OptIn(DelicateCoroutinesApi::class)
+  suspend fun projectOpened(indicator: ProgressIndicator?) {
     val app = ApplicationManager.getApplication()
     if (indicator != null && app.isInternal) {
       indicator.text = IdeBundle.message("startup.indicator.text.running.startup.activities")
@@ -176,14 +175,24 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
     indicator?.checkCanceled()
 
-    StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)  // opened on startup
-    StartUpMeasurer.compareAndSetCurrentState(LoadingState.APP_STARTED, LoadingState.PROJECT_OPENED)        // opened from the welcome screen
+    // opened on startup
+    StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)
+    // opened from the welcome screen
+    StartUpMeasurer.compareAndSetCurrentState(LoadingState.APP_STARTED, LoadingState.PROJECT_OPENED)
 
     if (app.isUnitTestMode && !app.isDispatchThread) {
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, ::runPostStartupActivities)
     }
     else {
-      ForkJoinPool.commonPool().execute(forkJoinTask(tracer.spanBuilder("run post-startup activities")) {
+      // doesn't block project opening
+      GlobalScope.launch(CoroutineExceptionHandler { _, error ->
+        if (error is ProcessCanceledException || error is CancellationException) {
+          // ignored
+        }
+        else {
+          LOG.error(error)
+        }
+      }) {
         if (!project.isDisposed) {
           try {
             BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, ::runPostStartupActivities)
@@ -191,7 +200,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           catch (ignore: ProcessCanceledException) {
           }
         }
-      })
+      }
       if (app.isUnitTestMode) {
         LOG.assertTrue(app.isDispatchThread)
         @Suppress("TestOnlyProblems")
@@ -200,7 +209,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     }
   }
 
-  private fun runStartUpActivities(indicator: ProgressIndicator?, app: Application) {
+  private suspend fun runStartUpActivities(indicator: ProgressIndicator?, app: Application) {
     runActivities(startupActivities, indicator = indicator)
     val extensionPoint = (app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<StartupActivity>("com.intellij.startupActivity")
 
@@ -212,10 +221,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       }
 
       val pluginId = adapter.pluginDescriptor.pluginId
-      if (pluginId != PluginManagerCore.CORE_ID
-          && pluginId != PluginManagerCore.JAVA_PLUGIN_ID
-          && pluginId.idString != "com.jetbrains.performancePlugin"
-          && pluginId.idString != "com.intellij.kotlinNative.platformDeps") {
+      if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin") {
         LOG.error("Only bundled plugin can define $extensionPointName: ${adapter.pluginDescriptor}")
         continue
       }

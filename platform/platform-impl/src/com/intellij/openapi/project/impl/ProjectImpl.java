@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -17,7 +17,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public abstract class ProjectImpl extends ClientAwareComponentManager implements ProjectEx {
@@ -49,9 +48,6 @@ public abstract class ProjectImpl extends ClientAwareComponentManager implements
   }
 
   protected abstract IProjectStore getStateStore();
-
-  public void init(boolean preloadServices, @Nullable ProgressIndicator indicator) {
-  }
 
   @Override
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {

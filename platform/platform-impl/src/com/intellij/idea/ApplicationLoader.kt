@@ -24,7 +24,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -61,28 +61,30 @@ import javax.swing.LookAndFeel
 import javax.swing.UIManager
 import kotlin.system.exitProcess
 
-private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
-
 @Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 // for non-technical reasons this method cannot return CompletableFuture
 @OptIn(DelicateCoroutinesApi::class)
-fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>) {
+fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
   val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
 
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
-  if (isInternal) {
-    ForkJoinPool.commonPool().execute {
-      initAppActivity.runChild("assert on missed keys enabling") {
-        BundleBase.assertOnMissedKeys(true)
+  GlobalScope.launch(errorHandler) {
+    coroutineScope {
+      if (isInternal) {
+        launch {
+          initAppActivity.runChild("assert on missed keys enabling") {
+            BundleBase.assertOnMissedKeys(true)
+          }
+        }
       }
-    }
-  }
 
-  initAppActivity.runChild("disposer debug mode enabling if needed") {
-    if (isInternal || Disposer.isDebugDisposerOn()) {
-      Disposer.setDebugMode(true)
+      initAppActivity.runChild("disposer debug mode enabling if needed") {
+        if (isInternal || Disposer.isDebugDisposerOn()) {
+          Disposer.setDebugMode(true)
+        }
+      }
     }
   }
 
@@ -90,120 +92,117 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
 
   // event queue is replaced as part of "prepareUiFuture" task - application must be created only after that
   val prepareUiFutureWaitActivity = initAppActivity.startChild("prepare ui waiting")
-  val block = (prepareUiFuture as CompletableFuture<Any>).thenApply { baseLaf ->
-    GlobalScope.launch(errorHandler) {
-      prepareUiFutureWaitActivity.end()
+  runBlocking {
+    val baseLaf = prepareUiFuture.await()
+    prepareUiFutureWaitActivity.end()
 
-      val setBaseLafFuture = launch {
-        initAppActivity.runChild("base laf passing") {
-          DarculaLaf.setPreInitializedBaseLaf(baseLaf as LookAndFeel)
-        }
+    val setBaseLafFuture = launch {
+      initAppActivity.runChild("base laf passing") {
+        DarculaLaf.setPreInitializedBaseLaf(baseLaf as LookAndFeel)
       }
+    }
 
-      if (!Main.isHeadless()) {
-        launch {
-          EventQueue.invokeLater {
-            WeakFocusStackManager.getInstance()
-          }
-        }
-      }
-
-      val app = initAppActivity.runChild("app instantiation") {
-        ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
-      }
-
+    if (!Main.isHeadless()) {
       launch {
-        initAppActivity.runChild("opentelemetry configuration") {
-          TraceManager.init()
+        EventQueue.invokeLater {
+          WeakFocusStackManager.getInstance()
         }
       }
+    }
 
-      if (!Main.isHeadless()) {
-        app.invokeLater({
-                          val patchingActivity = StartUpMeasurer.startActivity("html style patching")
-                          // patch html styles
-                          val uiDefaults = UIManager.getDefaults()
-                          // create a separate copy for each case
-                          uiDefaults.put("javax.swing.JLabel.userStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet())
-                          uiDefaults.put("HTMLEditorKit.jbStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet())
+    val app = initAppActivity.runChild("app instantiation") {
+      ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
+    }
 
-                          patchingActivity.end()
-                        }, ModalityState.any())
+    launch {
+      initAppActivity.runChild("opentelemetry configuration") {
+        TraceManager.init()
       }
+    }
 
-      val pluginSetFutureWaitActivity = initAppActivity.startChild("plugin descriptor init waiting")
-
-      val pluginSet = PluginManagerCore.getInitPluginFuture().await()
-      pluginSetFutureWaitActivity.end()
-
-      initAppActivity.runChild("app component registration") {
-        app.registerComponents(modules = pluginSet.getEnabledModules(),
-                               app = app,
-                               precomputedExtensionModel = null,
-                               listenerCallbacks = null)
-      }
-
-      // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
-      // but it is OK, because registry is not and should not be used.
-      initConfigurationStore(app)
-
+    if (!Main.isHeadless()) {
       app.invokeLater({
-                        // ensure that base laf is set before initialization of LafManagerImpl
-                        runActivity("base laf waiting") {
-                          setBaseLafFuture.asCompletableFuture().join()
-                        }
+                        val patchingActivity = StartUpMeasurer.startActivity("html style patching")
+                        // patch html styles
+                        val uiDefaults = UIManager.getDefaults()
+                        // create a separate copy for each case
+                        uiDefaults.put("javax.swing.JLabel.userStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet())
+                        uiDefaults.put("HTMLEditorKit.jbStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet())
 
-                        runActivity("laf initialization") {
-                          LafManager.getInstance()
-                        }
+                        patchingActivity.end()
                       }, ModalityState.any())
+    }
 
-      val deferredStarter = async {
-        initAppActivity.runChild("app starter creation") {
-          findAppStarter(args)
-        }
+    val pluginSetFutureWaitActivity = initAppActivity.startChild("plugin descriptor init waiting")
+
+    val pluginSet = PluginManagerCore.getInitPluginFuture().await()
+    pluginSetFutureWaitActivity.end()
+
+    initAppActivity.runChild("app component registration") {
+      app.registerComponents(modules = pluginSet.getEnabledModules(),
+                             app = app,
+                             precomputedExtensionModel = null,
+                             listenerCallbacks = null)
+    }
+
+    // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
+    // but it is OK, because registry is not and should not be used.
+    initConfigurationStore(app)
+
+    app.invokeLater({
+                      // ensure that base laf is set before initialization of LafManagerImpl
+                      runActivity("base laf waiting") {
+                        setBaseLafFuture.asCompletableFuture().join()
+                      }
+
+                      runActivity("laf initialization") {
+                        LafManager.getInstance()
+                      }
+                    }, ModalityState.any())
+
+    val deferredStarter = async {
+      initAppActivity.runChild("app starter creation") {
+        findAppStarter(args)
       }
+    }
 
-      prepareStart(app, initAppActivity, pluginSet)
+    prepareStart(app, initAppActivity, pluginSet)
 
-      initAppActivity.end()
+    initAppActivity.end()
 
-      // not as a part of blocking initApplication
-      GlobalScope.launch(errorHandler) {
-        coroutineScope {
-          launch {
-            addActivateAndWindowsCliListeners()
-          }
+    // not as a part of blocking initApplication
+    GlobalScope.launch(errorHandler) {
+      coroutineScope {
+        launch {
+          addActivateAndWindowsCliListeners()
+        }
 
-          val starter = deferredStarter.await()
-          if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
-            if (starter is IdeStarter) {
-              try {
-                starter.start(args)
-              }
-              catch (e: Exception) {
-                throw e
-              }
+        val starter = deferredStarter.await()
+        if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
+          if (starter is IdeStarter) {
+            try {
+              starter.start(args)
             }
-            else {
-              starter.main(args)
+            catch (e: Exception) {
+              throw e
             }
-            // no need to use pool once plugins are loaded
-            ZipFilePool.POOL = null
           }
           else {
-            ApplicationManager.getApplication().invokeLater {
-              (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-                starter.main(args)
-              }
+            starter.main(args)
+          }
+          // no need to use pool once plugins are loaded
+          ZipFilePool.POOL = null
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater {
+            (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+              starter.main(args)
             }
           }
         }
       }
     }
   }
-
-  block.join().asCompletableFuture().join()
 }
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -453,20 +452,20 @@ fun initConfigurationStore(app: ApplicationImpl) {
 /**
  * The method looks for `-Dkey=value` program arguments and stores some of them in system properties.
  * We should use it for a limited number of safe keys; one of them is a list of required plugins.
- *
- * @see SAFE_JAVA_ENV_PARAMETERS
  */
 @Suppress("SpellCheckingInspection")
 private fun processProgramArguments(args: List<String>): List<String> {
   if (args.isEmpty()) {
-    return Collections.emptyList()
+    return emptyList()
   }
 
+  // no need to have it as a file-level constant - processProgramArguments called at most once.
+  val safeJavaEnvParameters = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
   val arguments = mutableListOf<String>()
   for (arg in args) {
     if (arg.startsWith("-D")) {
       val keyValue = arg.substring(2).split('=')
-      if (keyValue.size == 2 && SAFE_JAVA_ENV_PARAMETERS.contains(keyValue[0])) {
+      if (keyValue.size == 2 && safeJavaEnvParameters.contains(keyValue[0])) {
         System.setProperty(keyValue[0], keyValue[1])
         continue
       }
@@ -483,7 +482,8 @@ suspend fun callAppInitialized(app: ApplicationImpl) {
   val extensionArea = app.extensionArea
   val extensionPoint = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
   coroutineScope {
-    extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, _ ->
+    // sort for stable performance results
+    extensionPoint.processImplementations(/* shouldBeSorted = */ true) { supplier, _ ->
       launch {
         try {
           supplier.get()?.componentsInitialized()
@@ -503,7 +503,7 @@ private suspend fun executePreloadActivity(activity: PreloadingActivity, descrip
   }
 
   val isDebugEnabled = LOG.isDebugEnabled
-  blockingContext {
+  runUnderIndicator {
     val measureActivity = if (descriptor == null) {
       null
     }

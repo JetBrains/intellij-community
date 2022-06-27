@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.Disposable;
@@ -6,13 +6,17 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
+import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
+import kotlinx.coroutines.CoroutineStart;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Comparator;
-import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 
 public abstract class ActionManagerEx extends ActionManager {
@@ -21,24 +25,35 @@ public abstract class ActionManagerEx extends ActionManager {
   }
 
   @NotNull
-  public abstract ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons);
+  public abstract ActionToolbar createActionToolbar(@NotNull String place,
+                                                    @NotNull ActionGroup group,
+                                                    boolean horizontal,
+                                                    boolean decorateButtons);
 
-  /** Do not call directly, prefer {@link ActionUtil} methods. */
+  /**
+   * Do not call directly, prefer {@link ActionUtil} methods.
+   */
   @ApiStatus.Internal
   public abstract void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event);
 
-  /** Do not call directly, prefer {@link ActionUtil} methods. */
+  /**
+   * Do not call directly, prefer {@link ActionUtil} methods.
+   */
   @ApiStatus.Internal
   public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result);
 
 
-  /** @deprecated use {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead */
+  /**
+   * @deprecated use {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead
+   */
   @Deprecated(forRemoval = true)
   public final void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
     fireBeforeActionPerformed(action, event);
   }
 
-  /** @deprecated use {@link #fireAfterActionPerformed(AnAction, AnActionEvent, AnActionResult)} instead */
+  /**
+   * @deprecated use {@link #fireAfterActionPerformed(AnAction, AnActionEvent, AnActionResult)} instead
+   */
   @Deprecated(forRemoval = true)
   public final void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
     fireAfterActionPerformed(action, event, AnActionResult.PERFORMED);
@@ -60,7 +75,7 @@ public abstract class ActionManagerEx extends ActionManager {
    * A comparator that compares action ids (String) by the order of action registration.
    *
    * @return a negative integer if the action that corresponds to the first id was registered earlier than the action that corresponds
-   *  to the second id; zero if both ids are equal; a positive number otherwise.
+   * to the second id; zero if both ids are equal; a positive number otherwise.
    */
   @NotNull
   public abstract Comparator<String> getRegistrationOrderComparator();
@@ -106,11 +121,14 @@ public abstract class ActionManagerEx extends ActionManager {
   public static void doWithLazyActionManager(@NotNull Consumer<? super ActionManager> whatToDo) {
     ActionManager created = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     if (created == null) {
-      ForkJoinPool.commonPool().execute(() -> {
-        ActionManager actionManager = getInstanceEx();
+      // reuse default dispatcher thread
+      BuildersKt.launch(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
+        ActionManager actionManager = getInstance();
         ApplicationManager.getApplication().invokeLater(() -> whatToDo.accept(actionManager), ModalityState.any());
+        return Unit.INSTANCE;
       });
-    } else {
+    }
+    else {
       whatToDo.accept(created);
     }
   }
