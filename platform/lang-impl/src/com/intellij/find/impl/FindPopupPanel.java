@@ -77,8 +77,6 @@ import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -98,6 +96,8 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Vector;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
@@ -663,7 +663,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     Runnable updatePreviewRunnable = () -> {
       if (Disposer.isDisposed(myDisposable)) return;
       int[] selectedRows = myResultsPreviewTable.getSelectedRows();
-      List<Promise<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
+      List<CompletableFuture<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
       String file = null;
       for (int row : selectedRows) {
         Object value = myResultsPreviewTable.getModel().getValueAt(row, 0);
@@ -675,10 +675,16 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       }
 
       String selectedFile = file;
-      Promises.collectResults(selectedUsagePromises).onSuccess(data -> {
+      CompletableFuture.allOf(selectedUsagePromises.toArray(new CompletableFuture[0])).thenAccept(__ -> {
         List<UsageInfo> selectedUsages = new SmartList<>();
-        for (UsageInfo[] usageInfos : data) {
-          Collections.addAll(selectedUsages, usageInfos);
+        for (CompletableFuture<UsageInfo[]> f : selectedUsagePromises) {
+          try {
+            UsageInfo[] usageInfos = f.get();
+            Collections.addAll(selectedUsages, usageInfos);
+          }
+          catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+          }
         }
         myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));
         FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());

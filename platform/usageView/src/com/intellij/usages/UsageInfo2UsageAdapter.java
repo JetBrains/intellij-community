@@ -31,14 +31,13 @@ import com.intellij.usages.rules.*;
 import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
@@ -98,10 +97,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return infos instanceof UsageInfo ? new UsageInfo[]{(UsageInfo)infos} : (UsageInfo[])infos;
   }
 
-  @NotNull
   @Override
-  public Promise<UsageInfo[]> getMergedInfosAsync() {
-    return Promises.resolvedPromise(getMergedInfos());
+  public @NotNull CompletableFuture<UsageInfo[]> getMergedInfosAsync() {
+    return CompletableFuture.completedFuture(getMergedInfos());
   }
 
   private static int getLineNumber(@NotNull Document document, final int startOffset) {
@@ -317,7 +315,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @Override
   public OrderEntry getLibraryEntry() {
     if (!isValid()) return null;
-    PsiFile psiFile = getPsiFile();
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
 

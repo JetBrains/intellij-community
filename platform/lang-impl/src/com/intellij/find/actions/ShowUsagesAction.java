@@ -79,8 +79,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -93,6 +91,8 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -880,7 +880,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       Runnable updatePreviewRunnable = () -> {
         if (popupRef.get().isDisposed()) return;
         int[] selectedRows = table.getSelectedRows();
-        final List<Promise<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
+        final List<CompletableFuture<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
         String file = null;
         for (int row : selectedRows) {
           Object value = table.getModel().getValueAt(row, 0);
@@ -898,10 +898,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         }
 
         String selectedFile = file;
-        Promises.collectResults(selectedUsagePromises).onSuccess(data -> {
-          final List<UsageInfo> selectedUsages = new SmartList<>();
-          for (UsageInfo[] usageInfos : data) {
-            Collections.addAll(selectedUsages, usageInfos);
+        CompletableFuture.allOf(selectedUsagePromises.toArray(new CompletableFuture[0])).thenAccept(__ -> {
+          final List<UsageInfo> selectedUsages = new ArrayList<>(selectedUsagePromises.size());
+          for (CompletableFuture<UsageInfo[]> f : selectedUsagePromises) {
+            try {
+              UsageInfo[] usageInfos = f.get();
+              Collections.addAll(selectedUsages, usageInfos);
+            }
+            catch (InterruptedException | ExecutionException e) {
+              throw new RuntimeException(e);
+            }
           }
 
           usagePreviewPanel.updateLayout(selectedUsages);
