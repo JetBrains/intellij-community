@@ -128,14 +128,14 @@ class IdeKotlinVersionTest {
             assertEquals(LanguageVersion.KOTLIN_1_5, languageVersion)
             assertEquals(ApiVersion.KOTLIN_1_5, apiVersion)
             assertEquals("1.5.0", baseVersion)
-            assertEquals("1.5.0-Beta${beta}", artifactVersion)
+            assertEquals(if (beta == 1) "1.5.0-Beta" else "1.5.0-Beta$beta", artifactVersion)
             assertFalse(isRelease)
             assertTrue(isPreRelease)
             assertFalse(isDev)
             assertFalse(isSnapshot)
         }
 
-        test("1.5.0-Beta1", beta = 1)
+        test("1.5.0-Beta", beta = 1)
         test("1.5.0-Beta2-release", beta = 2)
         test("1.5.0-BETA5-123", beta = 5)
         test("1.5.0-beta15-release-123", beta = 15)
