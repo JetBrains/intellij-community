@@ -95,7 +95,7 @@ public final class ChangeListChooserPanel extends JPanel {
       }
 
       @Override
-      protected void nameChangedImpl(Project project, LocalChangeList initial) {
+      protected void nameChangedImpl(@Nullable LocalChangeList initial) {
         nameChanged(StringUtil.isEmptyOrSpaces(getChangeListName()) ? VcsBundle.message("new.changelist.empty.name.error") : null);
       }
     };
@@ -155,7 +155,7 @@ public final class ChangeListChooserPanel extends JPanel {
 
   public void updateEnabled() {
     if (myProject != null) {
-      myListPanel.nameChangedImpl(myProject, null);
+      myListPanel.nameChangedImpl(null);
     }
   }
 

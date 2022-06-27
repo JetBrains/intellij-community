@@ -28,7 +28,7 @@ import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-abstract class NewEditChangelistPanel(protected val myProject: Project) : Wrapper() {
+abstract class NewEditChangelistPanel(protected val project: Project) : Wrapper() {
   private val nameTextField: EditorTextField
   private val nameComponent: ComponentWithTextFieldWrapper
 
@@ -39,30 +39,30 @@ abstract class NewEditChangelistPanel(protected val myProject: Project) : Wrappe
   private val consumers: MutableList<Consumer<LocalChangeList>> = mutableListOf()
 
   init {
-    nameComponent = createComponentWithTextField(myProject)
+    nameComponent = createComponentWithTextField(project)
     nameTextField = nameComponent.editorTextField
     nameTextField.setOneLineMode(true)
-    val generateUniqueName = createNameForChangeList(myProject, VcsBundle.message("changes.new.changelist"))
+    val generateUniqueName = createNameForChangeList(project, VcsBundle.message("changes.new.changelist"))
     nameTextField.text = generateUniqueName
     nameTextField.selectAll()
-    descriptionTextArea = createEditorField(myProject, 4)
+    descriptionTextArea = createEditorField(project, 4)
     descriptionTextArea.setOneLineMode(false)
     makeActiveCheckBox = JCheckBox(VcsBundle.message("new.changelist.make.active.checkbox"))
     additionalControlsPanel.add(makeActiveCheckBox)
   }
 
   open fun init(initial: LocalChangeList?) {
-    makeActiveCheckBox.isSelected = VcsConfiguration.getInstance(myProject).MAKE_NEW_CHANGELIST_ACTIVE
-    for (support in EditChangelistSupport.EP_NAME.getExtensions(myProject)) {
+    makeActiveCheckBox.isSelected = VcsConfiguration.getInstance(project).MAKE_NEW_CHANGELIST_ACTIVE
+    for (support in EditChangelistSupport.EP_NAME.getExtensions(project)) {
       support.installSearch(nameTextField, descriptionTextArea)
       ContainerUtil.addIfNotNull(consumers, support.addControls(additionalControlsPanel, initial))
     }
     nameTextField.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        nameChangedImpl(myProject, initial)
+        nameChangedImpl(initial)
       }
     })
-    nameChangedImpl(myProject, initial)
+    nameChangedImpl(initial)
     setContent(buildMainPanel())
     validate()
     repaint()
@@ -99,13 +99,12 @@ abstract class NewEditChangelistPanel(protected val myProject: Project) : Wrappe
   }
 
 
-  protected open fun nameChangedImpl(project: Project?, initial: LocalChangeList?) {
+  protected open fun nameChangedImpl(initial: LocalChangeList?) {
     val name = changeListName
     if (name.isBlank()) {
       nameChanged(VcsBundle.message("new.changelist.empty.name.error"))
     }
-    else if ((initial == null || name != initial.name) && ChangeListManager.getInstance(
-        project!!).findChangeList(name) != null) {
+    else if ((initial == null || name != initial.name) && ChangeListManager.getInstance(project).findChangeList(name) != null) {
       nameChanged(VcsBundle.message("new.changelist.duplicate.name.error"))
     }
     else {
