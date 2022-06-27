@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -12,12 +13,16 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 import java.util.function.Supplier
 
-abstract class ShelfAction : DumbAwareAction {
-  constructor() : super()
-  constructor(dynamicText: Supplier<@NlsActions.ActionText String>,
-              dynamicDescription: Supplier<@NlsActions.ActionDescription String>) : super(dynamicText, dynamicDescription, null)
+abstract class ShelfAction(
+  dynamicText: Supplier<@NlsActions.ActionText String>,
+  dynamicDescription: Supplier<@NlsActions.ActionDescription String>)
+  : DumbAwareAction(dynamicText, dynamicDescription, null) {
 
   abstract fun perform(project: Project, shelves: List<ShelvedChangeList>)
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null && !ShelvedChangesViewManager.getShelvedLists(e.dataContext).isEmpty()
