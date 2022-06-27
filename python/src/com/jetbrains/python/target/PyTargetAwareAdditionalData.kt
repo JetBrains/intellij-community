@@ -82,6 +82,12 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     b.load(element)
     // the state that contains information of the target, as for now the target configuration is embedded into the additional data
     val (loadedState, loadedConfiguration) = loadTargetBasedSdkAdditionalData(element)
+    // add Python language runtime for the loaded configuration
+    if (loadedConfiguration != null) {
+      val pythonLanguageRuntimeConfiguration = PythonLanguageRuntimeConfiguration()
+      pythonLanguageRuntimeConfiguration.pythonInterpreterPath = interpreterPath
+      loadedConfiguration.addLanguageRuntime(pythonLanguageRuntimeConfiguration)
+    }
     targetState = loadedState
     _targetEnvironmentConfiguration = loadedConfiguration
   }
