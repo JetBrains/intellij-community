@@ -132,7 +132,7 @@ class IdeKotlinVersion private constructor(
     sealed class Kind(val artifactSuffix: String?, val requireBuildNumber: Boolean = false) {
         object Release : Kind(artifactSuffix = null)
         data class ReleaseCandidate(val number: Int) : Kind(artifactSuffix = if (number == 1) "RC" else "RC$number")
-        data class Beta(val number: Int) : Kind(artifactSuffix = "Beta$number")
+        data class Beta(val number: Int) : Kind(artifactSuffix = if (number == 1) "Beta" else "Beta$number")
         data class Milestone(val number: Int) : Kind(artifactSuffix = "M$number")
         data class Eap(val number: Int) : Kind(artifactSuffix = if (number == 1) "eap" else "eap$number")
         object Dev : Kind(artifactSuffix = "dev", requireBuildNumber = true)
