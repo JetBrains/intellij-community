@@ -9,21 +9,17 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.ReferableWorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
-import com.intellij.workspaceModel.codegen.javaImplName
-import com.intellij.workspaceModel.codegen.implWsCode
 import com.intellij.workspaceModel.codegen.deft.model.DefType
 import com.intellij.workspaceModel.codegen.deft.model.KtObjModule
 import com.intellij.workspaceModel.codegen.patcher.rewrite
 import com.intellij.workspaceModel.codegen.utils.fileContents
+import com.intellij.workspaceModel.storage.*
 import java.io.File
 
 val SKIPPED_TYPES = setOf(WorkspaceEntity::class.simpleName,
                           ReferableWorkspaceEntity::class.simpleName,
                           ModifiableWorkspaceEntity::class.simpleName,
+                          ModifiableReferableWorkspaceEntity::class.simpleName,
                           WorkspaceEntityWithPersistentId::class.simpleName)
 
 fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {
