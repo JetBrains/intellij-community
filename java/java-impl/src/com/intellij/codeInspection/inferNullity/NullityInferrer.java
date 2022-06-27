@@ -254,7 +254,8 @@ public class NullityInferrer {
     return myNotNullSet.contains(pointer);
   }
 
-  private boolean isNullable(PsiModifierListOwner owner) {
+  private boolean isNullable(@Nullable PsiModifierListOwner owner) {
+    if (owner == null) return false;
     if (NullableNotNullManager.isNullable(owner)) {
       return true;
     }
