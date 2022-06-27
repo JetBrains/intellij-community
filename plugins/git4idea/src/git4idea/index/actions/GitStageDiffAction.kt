@@ -3,6 +3,7 @@ package git4idea.index.actions
 
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.project.DumbAwareAction
@@ -38,6 +39,10 @@ class GitStageDiffAction : AnActionExtensionProvider {
 }
 
 class GitStageThreeSideDiffAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun update(e: AnActionEvent) {
     val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
     e.presentation.isEnabled = e.project != null &&
