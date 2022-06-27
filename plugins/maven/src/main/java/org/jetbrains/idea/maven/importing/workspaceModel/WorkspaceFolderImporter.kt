@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.containers.FileCollectionFactory
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaResourceRootEntity
@@ -14,7 +15,6 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
-import org.jetbrains.idea.maven.importing.workspaceModel.ContentRootCollector.collect
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.*
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -29,15 +29,22 @@ class WorkspaceFolderImporter(
   private val builder: MutableEntityStorage,
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val importingSettings: MavenImportingSettings,
-  private val importFoldersByMavenIdCache: MutableMap<String, CachedProjectFolders>) {
+  private val importingContext: FolderImportingContext) {
 
   fun createContentRoots(module: ModuleEntity, importData: MavenModuleImportData): CachedProjectFolders {
     val allFolders = mutableListOf<ContentRootCollector.Folder>()
-    addContentRoot(importData, allFolders)
-    addSourceFolders(importData, allFolders)
-    val cachedFolders = addCachedFolders(importData, allFolders)
 
-    for (rootInfo in collect(allFolders)) {
+    val cachedFolders = importingContext.projectIdToCachedFolders.getOrPut(importData.mavenProject.mavenId.key) {
+      collectMavenFolders(importData)
+    }
+
+    addContentRoot(cachedFolders, allFolders)
+    addSourceFolders(importData, allFolders)
+    addCachedFolders(importData, cachedFolders, allFolders)
+
+    for (rootInfo in ContentRootCollector.collect(allFolders)) {
+      if (!File(rootInfo.path).exists()) continue
+
       val excludedUrls = rootInfo.folders.filterIsInstance<ContentRootCollector.BaseExcludedFolder>().map {
         virtualFileUrlManager.fromPath(it.path)
       }
@@ -52,12 +59,16 @@ class WorkspaceFolderImporter(
     return cachedFolders
   }
 
-  private fun addContentRoot(importData: MavenModuleImportData,
+  private fun addContentRoot(cachedFolders: CachedProjectFolders,
                              allFolders: MutableList<ContentRootCollector.Folder>) {
-    when (importData.moduleData.type) {
-      MavenModuleType.MAIN, MavenModuleType.TEST -> return
-      else -> allFolders.add(ContentRootCollector.ContentRootFolder(importData.mavenProject.directory))
-    }
+    val contentRoot = cachedFolders.projectContentRootPath
+
+    // make sure we don't have overlapping content roots in different modules
+    val alreadyRegisteredRoot = importingContext.alreadyRegisteredContentRoots.contains(contentRoot)
+    if (alreadyRegisteredRoot) return
+
+    allFolders.add(ContentRootCollector.ContentRootFolder(contentRoot))
+    importingContext.alreadyRegisteredContentRoots.add(contentRoot)
   }
 
   private fun addSourceFolders(importData: MavenModuleImportData,
@@ -74,9 +85,8 @@ class WorkspaceFolderImporter(
   }
 
   private fun addCachedFolders(importData: MavenModuleImportData,
-                               allFolders: MutableList<ContentRootCollector.Folder>): CachedProjectFolders {
-    val cachedFolders = importFoldersByMavenIdCache.getOrPut(importData.mavenProject.mavenId.key) { collectMavenFolders(importData) }
-
+                               cachedFolders: CachedProjectFolders,
+                               allFolders: MutableList<ContentRootCollector.Folder>) {
     fun includeIf(it: ContentRootCollector.Folder, forTests: Boolean) =
       when (it) {
         is ContentRootCollector.UserOrGeneratedSourceFolder -> it.type.isForTests == forTests
@@ -91,7 +101,6 @@ class WorkspaceFolderImporter(
                         MavenModuleType.AGGREGATOR_MAIN_TEST -> cachedFolders.folders.filter { exceptSources(it) }
                         else -> cachedFolders.folders
                       })
-    return cachedFolders
   }
 
   private fun registerSourceRootFolder(contentRootEntity: ContentRootEntity,
@@ -164,7 +173,7 @@ class WorkspaceFolderImporter(
       addTargetFolders(File(toAbsolutePath(generatedDirTest)), generatedTestSourceFolders)
     }
 
-    return CachedProjectFolders(outputPath, testOutputPath, folders)
+    return CachedProjectFolders(importData.mavenProject.directory, outputPath, testOutputPath, folders)
   }
 
   private class GeneratedFoldersCollector(val result: MutableList<ContentRootCollector.Folder>,
@@ -200,7 +209,13 @@ class WorkspaceFolderImporter(
     }
   }
 
+  class FolderImportingContext {
+    internal val projectIdToCachedFolders = mutableMapOf<String, CachedProjectFolders>()
+    internal val alreadyRegisteredContentRoots = FileCollectionFactory.createCanonicalFilePathSet()
+  }
+
   class CachedProjectFolders(
+    val projectContentRootPath: String,
     val outputPath: String,
     val testOutputPath: String,
     val folders: List<ContentRootCollector.Folder>

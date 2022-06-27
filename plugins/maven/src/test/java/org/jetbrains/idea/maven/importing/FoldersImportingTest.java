@@ -1247,8 +1247,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testCustomPomFileNameCustomContentRoots() throws Exception {
-    Assume.assumeTrue(supportsSeveralProjectsInSameFolders());
-
     createProjectSubFile("m1/pom.xml", createPomXml(
       "<artifactId>m1-pom</artifactId>" +
       "<version>1</version>" +
@@ -1278,6 +1276,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     createProjectSubDirs("m1/src/main/java",
                          "m1/src/main/resources",
                          "m1/src/test/java",
+                         "m1/src/test/resources",
+
                          "m1/sources/resources",
                          "m1/tests");
 
@@ -1300,19 +1300,25 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertContentRootSources(m1_pom_module, m1_pom_root, "src/main/java");
     assertContentRootResources(m1_pom_module, m1_pom_root, "src/main/resources");
     assertContentRootTestSources(m1_pom_module, m1_pom_root, "src/test/java");
+    assertContentRootTestResources(m1_pom_module, m1_pom_root, "src/test/resources");
 
     String m1_custom_sources_root = getProjectPath() + "/m1/sources";
     String m1_custom_tests_root = getProjectPath() + "/m1/tests";
-    assertContentRoots(m1_custom_module, m1_custom_sources_root, m1_custom_tests_root);
+    String m1_standard_test_resources = getProjectPath() + "/m1/src/test/resources";
+    assertContentRoots(m1_custom_module,
+                       m1_custom_sources_root,
+                       m1_custom_tests_root,
+                       // [anton] The next folder doesn't look correct, as it intersects with 'pom.xml' module folders,
+                       // but I'm testing the behavior as is in order to preserve it in the new Workspace import
+                       m1_standard_test_resources);
     assertContentRootSources(m1_custom_module, m1_custom_sources_root, "");
     assertContentRootResources(m1_custom_module, m1_custom_sources_root);
     assertContentRootTestSources(m1_custom_module, m1_custom_tests_root, "");
+    assertContentRootTestResources(m1_custom_module, m1_standard_test_resources, "");
   }
 
   @Test
   public void testContentRootOutsideOfModuleDir() throws Exception {
-    Assume.assumeTrue(supportsSeveralProjectsInSameFolders());
-
     createProjectSubFile("m1/pom.xml", createPomXml(
       "<artifactId>m1-pom</artifactId>" +
       "<version>1</version>" +

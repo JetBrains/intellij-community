@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
@@ -14,14 +15,16 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.idea.maven.importing.MavenModelUtil
 import org.jetbrains.idea.maven.importing.MavenModuleImporter
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper
 import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
+import org.jetbrains.idea.maven.importing.tree.MavenModuleImportContext
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
+import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.util.*
 
 class MavenProjectImporterToWorkspace(
   projectsTree: MavenProjectsTree,
@@ -94,15 +97,40 @@ class MavenProjectImporterToWorkspace(
                                                     mavenProjectToModuleName).getContext(projectsToImport.keys)
 
     val createdModules = mutableListOf<ImportedModuleData>()
-    val mavenFolderHolderByMavenId = TreeMap<String, WorkspaceFolderImporter.CachedProjectFolders>()
+    val folderImportingContext = WorkspaceFolderImporter.FolderImportingContext()
 
-    for (importData in context.allModules) {
+    for (importData in sortProjectsToImportByPrecedence(context)) {
       val moduleEntity = WorkspaceModuleImporter(
-        myProject, importData, virtualFileUrlManager, builder, myImportingSettings, mavenFolderHolderByMavenId
+        myProject, importData, virtualFileUrlManager, builder, myImportingSettings, folderImportingContext
       ).importModule()
       createdModules.add(ImportedModuleData(moduleEntity.persistentId, importData.mavenProject, importData.moduleData.type))
     }
     return createdModules
+  }
+
+  private fun sortProjectsToImportByPrecedence(context: MavenModuleImportContext): List<MavenTreeModuleImportData> {
+    // We need to order the projects to import folders correctly:
+    //   in case of overlapping root/source folders in several projects,
+    //   we register them only once for the first project in the list
+
+    val comparator =
+      // order by file structure
+      compareBy<MavenTreeModuleImportData> { it.mavenProject.directory }
+        // if both projects reside in the same folder, then:
+
+        // 'project' before 'project.main'/'project.test'
+        .then(compareBy { MavenModelUtil.isMainOrTestSubmodule(it.moduleData.moduleName) })
+
+        // '.main' before '.test'
+        .then(compareBy { !MavenModelUtil.isMainModule(it.moduleData.moduleName) })
+
+        // 'pom.*' files before custom named files (e.g. 'custom.xml')
+        .then(compareBy { !FileUtil.namesEqual("pom", it.mavenProject.file.nameWithoutExtension) })
+
+        // stabilize order by file name
+        .thenComparing { a, b -> FileUtil.comparePaths(a.mavenProject.file.name, b.mavenProject.file.name) }
+
+    return context.allModules.sortedWith(comparator)
   }
 
   private fun applyModulesToWorkspaceModel(builder: MutableEntityStorage,

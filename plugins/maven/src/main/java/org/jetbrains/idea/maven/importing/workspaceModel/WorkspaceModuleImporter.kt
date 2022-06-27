@@ -33,7 +33,7 @@ class WorkspaceModuleImporter(
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val builder: MutableEntityStorage,
   private val importingSettings: MavenImportingSettings,
-  private val importFoldersByMavenIdCache: MutableMap<String, WorkspaceFolderImporter.CachedProjectFolders>
+  private val folderImportingContext: WorkspaceFolderImporter.FolderImportingContext
 ) {
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
 
@@ -46,7 +46,7 @@ class WorkspaceModuleImporter(
 
     val dependencies = collectDependencies(moduleName, importData.dependencies, entitySource)
     val moduleEntity = createModuleEntity(moduleName, importData.mavenProject, dependencies, entitySource)
-    configureModuleEntity(importData, moduleEntity, importFoldersByMavenIdCache)
+    configureModuleEntity(importData, moduleEntity, folderImportingContext)
     return moduleEntity
   }
 
@@ -67,8 +67,8 @@ class WorkspaceModuleImporter(
 
   private fun configureModuleEntity(importData: MavenModuleImportData,
                                     moduleEntity: ModuleEntity,
-                                    importFoldersByMavenIdCache: MutableMap<String, WorkspaceFolderImporter.CachedProjectFolders>) {
-    val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings, importFoldersByMavenIdCache)
+                                    folderImportingContext: WorkspaceFolderImporter.FolderImportingContext) {
+    val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings, folderImportingContext)
 
     val importFolderHolder = folderImporter.createContentRoots(moduleEntity, importData)
     when (importData.moduleData.type) {
