@@ -6,8 +6,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.*
-import com.intellij.psi.CommonClassNames.JAVA_LANG_CHAR_SEQUENCE
-import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
+import com.intellij.psi.CommonClassNames.*
 import com.intellij.psi.util.InheritanceUtil.isInheritor
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.gradle.config.GradleFileType
@@ -53,8 +52,9 @@ class GradleIncorrectDependencyNotationArgumentInspection : GroovyLocalInspectio
         val argumentsToCheck = getObservableArguments(call, arguments)
         for (argument in argumentsToCheck) {
           val type = argument.type
-          val actualType = extractFromProvider(argument, type)
-          checkArgument(argument, actualType, holder)
+          val providerComponentType = extractComponentType(argument, type, GRADLE_API_PROVIDER_PROVIDER)
+          val iterableComponentType = extractComponentType(argument, providerComponentType, JAVA_LANG_ITERABLE)
+          checkArgument(argument, iterableComponentType, holder)
         }
       }
     }
@@ -74,12 +74,12 @@ class GradleIncorrectDependencyNotationArgumentInspection : GroovyLocalInspectio
     holder.registerProblem(argument, GradleInspectionBundle.message("inspection.display.name.unrecognized.dependency.notation"))
   }
 
-  private fun extractFromProvider(context: PsiElement, type: PsiType?): PsiType? {
-    if (!isInheritor(type, GRADLE_API_PROVIDER_PROVIDER)) {
+  private fun extractComponentType(context: PsiElement, type: PsiType?, fqn: String): PsiType? {
+    if (isInheritor(type, GRADLE_API_FILE_FILE_COLLECTION) ||  !isInheritor(type, fqn)) {
       return type
     }
     val providerClass =
-      JavaPsiFacade.getInstance(context.project).findClass(GRADLE_API_PROVIDER_PROVIDER, context.resolveScope) ?: return type
+      JavaPsiFacade.getInstance(context.project).findClass(fqn, context.resolveScope) ?: return type
     val conversion = TypeConversionUtil.getSuperClassSubstitutor(providerClass, type as PsiClassType)
     return conversion.substitutionMap.values.firstOrNull() ?: type
   }

@@ -111,5 +111,13 @@ class GradleDependencyNotationTest : GradleCodeInsightTestCase() {
     }
   }
 
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testList(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GradleIncorrectDependencyNotationArgumentInspection::class.java)
+      testHighlighting("dependencies { implementation(['org.apache.groovy:groovy:4.0.0']) }")
+    }
+  }
 
 }
