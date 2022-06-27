@@ -16,6 +16,7 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Path
+import java.time.Instant
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 
@@ -123,6 +124,25 @@ internal class GitSettingsLogTest {
 
     assertEquals("Incorrect deleted file content", DELETED_FILE_MARKER, (settingsSyncStorage / "options" / "editor.xml").readText())
     assertMasterIsMergeOfIdeAndCloud()
+  }
+
+  @Test
+  fun `date of the snapshot`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
+      listOf(editorXml)
+    }
+    settingsLog.initialize()
+
+    val instant = Instant.ofEpochSecond(100500)
+    settingsLog.applyCloudState(settingsSnapshot(instant) {
+      fileState("options/editor.xml", "moreCloudEditorContent")
+    })
+    settingsLog.advanceMaster()
+
+    val snapshot = settingsLog.collectCurrentSnapshot()
+    assertEquals("The date of the snapshot incorrect", instant, snapshot.metaInfo.dateCreated)
   }
 
   //@Test
