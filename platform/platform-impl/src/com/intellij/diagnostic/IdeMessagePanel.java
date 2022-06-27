@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.codeWithMe.ClientId;
@@ -10,6 +10,7 @@ import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -195,6 +196,12 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
   private void showErrorNotification(@NotNull Project project) {
     if (myBalloon != null) return;
 
+    BalloonLayout layout = myFrame.getBalloonLayout();
+    if (layout == null) {
+      Logger.getInstance(IdeMessagePanel.class).error("frame=" + myFrame + " (" + myFrame.getClass() + ')');
+      return;
+    }
+
     String title = DiagnosticBundle.message("error.new.notification.title");
     String linkText = DiagnosticBundle.message("error.new.notification.link");
     //noinspection UnresolvedPluginConfigReference
@@ -207,9 +214,6 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
           openErrorsDialog(null);
         }
       });
-
-    BalloonLayout layout = myFrame.getBalloonLayout();
-    assert layout != null : myFrame;
 
     BalloonLayoutData layoutData = BalloonLayoutData.createEmpty();
     layoutData.fadeoutTime = 10000;
