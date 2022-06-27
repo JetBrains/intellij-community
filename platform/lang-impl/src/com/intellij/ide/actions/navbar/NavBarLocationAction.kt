@@ -30,6 +30,10 @@ abstract class NavBarLocationAction(private val location: NavBarLocation) : Togg
     }
     super.update(e)
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
 class NavBarTopLocationAction : NavBarLocationAction(NavBarLocation.TOP)
