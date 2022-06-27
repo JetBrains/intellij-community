@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.*
@@ -12,7 +13,7 @@ import kotlin.io.path.div
 
 internal object SettingsSnapshotZipSerializer {
   private const val METAINFO = ".metainfo"
-  private const val TIMESTAMP = "timestamp"
+  private const val INFO = "info.json"
 
   private val LOG = logger<SettingsSnapshotZipSerializer>()
 
@@ -20,8 +21,7 @@ internal object SettingsSnapshotZipSerializer {
     val file = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, null)
     Compressor.Zip(file)
       .use { zip ->
-        val formattedDate = DateTimeFormatter.ISO_INSTANT.format(snapshot.metaInfo.dateCreated)
-        zip.addFile("$METAINFO/$TIMESTAMP", formattedDate.toByteArray())
+        zip.addFile("$METAINFO/$INFO", serializeMetaInfo(snapshot.metaInfo))
 
         for (fileState in snapshot.fileStates) {
           val content = if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
@@ -43,12 +43,17 @@ internal object SettingsSnapshotZipSerializer {
     return SettingsSnapshot(metaInfo, fileStates)
   }
 
+  private fun serializeMetaInfo(metaInfo: SettingsSnapshot.MetaInfo): ByteArray {
+    val formattedDate = DateTimeFormatter.ISO_INSTANT.format(metaInfo.dateCreated)
+    return ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsBytes(MetaInfo(formattedDate))
+  }
+
   private fun parseMetaInfo(path: Path): SettingsSnapshot.MetaInfo {
     try {
-      val timestampFile = path / TIMESTAMP
-      if (timestampFile.exists()) {
-        val timestamp = timestampFile.readText()
-        val date = DateTimeFormatter.ISO_INSTANT.parse(timestamp, Instant::from)
+      val infoFile = path / INFO
+      if (infoFile.exists()) {
+        val metaInfo = ObjectMapper().readValue(infoFile.readText(), MetaInfo::class.java)
+        val date = DateTimeFormatter.ISO_INSTANT.parse(metaInfo.date, Instant::from)
         return SettingsSnapshot.MetaInfo(date)
       }
       else {
@@ -59,5 +64,13 @@ internal object SettingsSnapshotZipSerializer {
       LOG.error("Couldn't read .metainfo from $SETTINGS_SYNC_SNAPSHOT_ZIP", e)
     }
     return SettingsSnapshot.MetaInfo(Instant.now())
+  }
+
+  private class MetaInfo() {
+    lateinit var date: String
+
+    constructor(date: String) : this() {
+      this.date = date
+    }
   }
 }
