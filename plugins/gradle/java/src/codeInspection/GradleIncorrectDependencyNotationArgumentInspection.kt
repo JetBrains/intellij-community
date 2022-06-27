@@ -108,9 +108,6 @@ class GradleIncorrectDependencyNotationArgumentInspection : GroovyLocalInspectio
   }
 
   private fun checkString(argument: GrExpression, holder: ProblemsHolder) {
-    if (GROOVY_LANG_GSTRING == argument.type?.canonicalText) {
-      return
-    }
     val string = GroovyConstantExpressionEvaluator.evaluate(argument)
     if (string is String) {
       val parts = string.split(":")
