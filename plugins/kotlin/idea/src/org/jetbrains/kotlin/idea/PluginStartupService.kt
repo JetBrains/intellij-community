@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.searches.IndexPatternSearch
+import org.jetbrains.kotlin.idea.configuration.notifications.showEapAdvertisementNotification
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTodoSearcher
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 
@@ -22,8 +23,9 @@ class PluginStartupService : Disposable {
             val documentListener: DocumentListener = object : DocumentListener {
                 override fun documentChanged(e: DocumentEvent) {
                     FileDocumentManager.getInstance().getFile(e.document)?.let { virtualFile ->
-                        if (virtualFile.isKotlinFileType()) {
-                            KotlinPluginUpdater.getInstance().kotlinFileEdited(virtualFile)
+                        if (virtualFile.isKotlinFileType() && virtualFile.isInLocalFileSystem) {
+                            KotlinPluginUpdater.getInstance().kotlinFileEdited()
+                            showEapAdvertisementNotification()
                         }
                     }
                 }
