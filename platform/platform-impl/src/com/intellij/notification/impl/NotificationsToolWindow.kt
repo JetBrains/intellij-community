@@ -210,7 +210,8 @@ internal class NotificationContent(val project: Project,
       }
     }
 
-    val findAction = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND)
+    val actionManager = ActionManager.getInstance()
+    val findAction = actionManager.getAction(IdeActions.ACTION_FIND)
     if (findAction == null) {
       gearAction.templatePresentation.text = ActionsBundle.actionText(IdeActions.ACTION_FIND)
     }
@@ -222,7 +223,16 @@ internal class NotificationContent(val project: Project,
     val group = DefaultActionGroup()
     group.add(gearAction)
     group.addSeparator()
-    group.add(ActionManager.getInstance().getAction(NotificationsToolWindowFactory.CLEAR_ACTION_ID))
+
+    val clearAction = actionManager.getAction(NotificationsToolWindowFactory.CLEAR_ACTION_ID)
+    if (clearAction != null) {
+      group.add(clearAction)
+    }
+
+    val markAction = actionManager.getAction("MarkNotificationsAsRead")
+    if (markAction != null) {
+      group.add(markAction)
+    }
 
     (toolWindow as ToolWindowEx).setAdditionalGearActions(group)
   }
@@ -269,6 +279,8 @@ internal class NotificationContent(val project: Project,
   fun getStateNotifications() = ArrayList(myIconNotifications)
 
   fun getNotifications() = ArrayList(myNotifications)
+
+  fun isEmpty() = suggestions.isEmpty() && timeline.isEmpty()
 
   fun expire(notification: Notification?) {
     if (notification == null) {
@@ -595,6 +607,16 @@ private class NotificationGroupComponent(private val myMainContent: Notification
       layout.removeLayoutComponent(component)
       layout.addLayoutComponent(null, component)
     }
+  }
+
+  fun isEmpty(): Boolean {
+    val count = myList.componentCount
+    for (i in 0 until count) {
+      if (myList.getComponent(i) is NotificationComponent) {
+        return false
+      }
+    }
+    return true
   }
 
   fun setRemoveCallback(callback: Consumer<Notification>) {
@@ -1492,6 +1514,11 @@ internal class ApplicationNotificationModel {
     }
   }
 
+  fun isEmptyContent(project: Project): Boolean {
+    val model = myProjectToModel[project]
+    return model == null || model.isEmptyContent()
+  }
+
   fun expire(notification: Notification) {
     val runnables = ArrayList<Runnable>()
 
@@ -1579,6 +1606,10 @@ private class ProjectNotificationModel {
     return myContent!!.getStateNotifications()
   }
 
+  fun isEmptyContent(): Boolean {
+    return myContent == null || myContent!!.isEmpty()
+  }
+
   fun getNotifications(appNotifications: List<Notification>): List<Notification> {
     if (myContent == null) {
       val notifications = ArrayList(appNotifications)
@@ -1628,7 +1659,9 @@ fun Project.closeAllBalloons() {
 
 class ClearAllNotificationsAction : DumbAwareAction(IdeBundle.message("clear.all.notifications"), null, AllIcons.Actions.GC) {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = NotificationsToolWindowFactory.getNotifications(e.project).isNotEmpty()
+    val project = e.project
+    e.presentation.isEnabled = NotificationsToolWindowFactory.getNotifications(project).isNotEmpty() ||
+                               (project != null && !NotificationsToolWindowFactory.myModel.isEmptyContent(project))
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
