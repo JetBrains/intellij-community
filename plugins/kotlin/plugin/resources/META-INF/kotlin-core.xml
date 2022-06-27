@@ -369,6 +369,11 @@
             key="kotlin.eap.survey.notification.group.name"
     />
     <notificationGroup
+            id="Kotlin EAP"
+            displayType="STICKY_BALLOON"
+            key="kotlin.eap.notification.group.name"
+    />
+    <notificationGroup
             id="Kotlin Maven project import"
             displayType="STICKY_BALLOON"
             key="configuration.maven.group.name"
