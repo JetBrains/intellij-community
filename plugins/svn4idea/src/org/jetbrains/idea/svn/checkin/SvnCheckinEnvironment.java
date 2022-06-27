@@ -103,7 +103,7 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
   @NotNull
   private Collection<FilePath> getCommitables(@NotNull List<? extends Change> changes) {
     Set<FilePath> result = CollectionFactory.createCustomHashingStrategySet(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
-    ChangesUtil.getPaths(changes.stream()).forEach(path -> {
+    ChangesUtil.getPaths(changes).forEach(path -> {
       if (result.add(path)) {
         addParents(result, path);
       }

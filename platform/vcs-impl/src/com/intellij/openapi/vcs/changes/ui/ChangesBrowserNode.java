@@ -215,13 +215,11 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return (JBIterable<ChangesBrowserNode<?>>)iterable;
   }
 
-  @NotNull
-  public JBIterable<VirtualFile> iterateFilesUnder() {
+  public @NotNull JBIterable<VirtualFile> iterateFilesUnder() {
     return traverse().filter(VirtualFile.class).filter(VirtualFile::isValid);
   }
 
-  @NotNull
-  public JBIterable<FilePath> iterateFilePathsUnder() {
+  public @NotNull JBIterable<FilePath> iterateFilePathsUnder() {
     return traverse()
       .filter(ChangesBrowserNode::isLeaf)
       .map(ChangesBrowserNode::getUserObject)

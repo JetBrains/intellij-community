@@ -22,10 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static java.util.Objects.hash;
-import static java.util.stream.Collectors.toList;
 
 public final class ChangesUtil {
   private static final Key<Boolean> INTERNAL_OPERATION_KEY = Key.create("internal vcs operation");
@@ -113,29 +111,20 @@ public final class ChangesUtil {
 
   @NotNull
   public static List<FilePath> getPaths(@NotNull Collection<? extends Change> changes) {
-    return getPaths(changes.stream()).collect(toList());
+    return iteratePaths(changes).toList();
   }
 
   @NotNull
   public static List<File> getIoFilesFromChanges(@NotNull Collection<? extends Change> changes) {
-    return getPaths(changes.stream())
+    return iteratePaths(changes)
       .map(FilePath::getIOFile)
-      .distinct()
-      .collect(toList());
+      .unique()
+      .toList();
   }
 
   @NotNull
-  public static Stream<FilePath> getPaths(@NotNull Stream<? extends Change> changes) {
-    return changes.flatMap(ChangesUtil::getPathsCaseSensitive);
-  }
-
-  @NotNull
-  private static Stream<FilePath> getPathsCaseSensitive(@NotNull Change change) {
-    FilePath beforePath = getBeforePath(change);
-    FilePath afterPath = getAfterPath(change);
-
-    return Stream.of(beforePath, !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath) ? afterPath : null)
-      .filter(Objects::nonNull);
+  public static JBIterable<FilePath> iteratePaths(@NotNull Iterable<? extends Change> changes) {
+    return JBIterable.from(changes).flatMap(ChangesUtil::iteratePathsCaseSensitive);
   }
 
   @NotNull
@@ -152,22 +141,15 @@ public final class ChangesUtil {
   }
 
   @NotNull
-  public static Stream<VirtualFile> getFiles(@NotNull Stream<? extends Change> changes) {
-    return getPaths(changes)
+  public static JBIterable<VirtualFile> iterateFiles(@NotNull Iterable<? extends Change> changes) {
+    return iteratePaths(changes)
       .map(FilePath::getVirtualFile)
       .filter(Objects::nonNull);
   }
 
   @NotNull
-  public static Stream<VirtualFile> getFilesFromPaths(@NotNull Stream<? extends FilePath> paths) {
-    return paths
-      .map(FilePath::getVirtualFile)
-      .filter(Objects::nonNull);
-  }
-
-  @NotNull
-  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<? extends Change> changes) {
-    return changes
+  public static JBIterable<VirtualFile> iterateAfterRevisionsFiles(@NotNull Iterable<? extends Change> changes) {
+    return JBIterable.from(changes)
       .map(ChangesUtil::getAfterPath)
       .filter(Objects::nonNull)
       .map(FilePath::getVirtualFile)
@@ -175,14 +157,7 @@ public final class ChangesUtil {
   }
 
   public static VirtualFile @NotNull [] getFilesFromChanges(@NotNull Collection<? extends Change> changes) {
-    return getFiles(changes.stream()).toArray(VirtualFile[]::new);
-  }
-
-  public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, @NotNull Stream<? extends VirtualFile> files) {
-    return files
-      .filter(file -> !file.isDirectory())
-      .map(file -> new OpenFileDescriptor(project, file))
-      .toArray(Navigatable[]::new);
+    return iterateFiles(changes).toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, @NotNull Iterable<? extends VirtualFile> files) {
