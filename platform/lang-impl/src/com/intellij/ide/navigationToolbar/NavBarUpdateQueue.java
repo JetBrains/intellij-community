@@ -259,10 +259,6 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     });
   }
 
-  boolean isUpdating() {
-    return myModelUpdating.get();
-  }
-
   private abstract class AfterModelUpdate extends Update {
     private AfterModelUpdate(ID id) {
       super(id.name(), id.getPriority());

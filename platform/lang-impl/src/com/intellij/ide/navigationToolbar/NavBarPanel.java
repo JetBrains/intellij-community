@@ -1046,10 +1046,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return NavBarUIManager.getUI();
   }
 
-  boolean isUpdating() {
-    return myUpdateQueue.isUpdating();
-  }
-
   void queueFileUpdate(PsiFile psiFile) {
     myForcedFileUpdateQueue.add(psiFile);
   }
