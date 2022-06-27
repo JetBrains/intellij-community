@@ -324,7 +324,7 @@ Includes the following features:</p>
     </intentionAction>
 
 
-    <notificationGroup id="Markdown" displayType="BALLOON"/>
+    <notificationGroup id="Markdown" displayType="BALLOON" bundle="messages.MarkdownBundle" key="notification.group.markdown"/>
 
     <registryKey key="markdown.clear.cache.interval"
                  defaultValue="600000"
