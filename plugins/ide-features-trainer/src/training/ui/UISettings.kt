@@ -51,7 +51,7 @@ internal class UISettings {
   val inactiveColor: Color = defaultTextColor.addAlpha(transparencyInactiveFactor)
   val moduleProgressColor: Color = JBColor.namedColor("Label.infoForeground", 0x808080, 0x8C8C8C)
   val backgroundColor: Color = UIUtil.getTreeBackground()
-  val completedColor: Color = JBColor.namedColor("Label.successForeground", 0x368746, 0x50A661)
+  val completedColor: Color = UIUtil.getLabelSuccessForeground()
   val activeTaskBorder: Color = JBColor.namedColor("Component.focusColor", 0x97C3F3, 0x3D6185)
 
   val tooltipBackgroundColor: Color = JBColor.namedColor("Tooltip.Learning.background", 0x1071E8, 0x0E62CF)
