@@ -16,7 +16,7 @@ public class PythonFacetUtil {
   }
 
   public static void updateLibrary(Module module, PythonFacetSettings facetSettings) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
       final ModifiableRootModel model = rootManager.getModifiableModel();
       boolean modelChanged = false;
