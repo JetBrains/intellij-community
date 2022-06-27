@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -8,15 +8,16 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.impl.ProjectExImpl;
 import com.intellij.openapi.project.impl.ProjectLoadHelper;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -36,7 +37,15 @@ final class LightEditProjectImpl extends ProjectExImpl implements LightEditCompa
     ProjectLoadHelper.registerComponents(this);
     customizeRegisteredComponents();
     getStateStore().setPath(projectPath, false, null);
-    init(true, null);
+    try {
+      BuildersKt.runBlocking(EmptyCoroutineContext.INSTANCE, (scope, continuation) -> {
+        init$intellij_platform_ide_impl(true, null, continuation);
+        return Unit.INSTANCE;
+      });
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void customizeRegisteredComponents() {

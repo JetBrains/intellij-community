@@ -52,7 +52,10 @@ import com.intellij.util.ui.EdtInvocationManager;
 import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlin.sequences.Sequence;
-import kotlinx.coroutines.*;
+import kotlinx.coroutines.BuildersKt;
+import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.GlobalScope;
+import kotlinx.coroutines.Job;
 import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
@@ -420,13 +423,18 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     registerComponents(modules, this, null, null);
     ApplicationLoader.initConfigurationStore(this);
-    FutureKt.asCompletableFuture(BuildersKt.launch(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
-      preloadServices(modules, "", scope, GlobalScope.INSTANCE, false);
-      loadComponents();
+    try {
+      BuildersKt.runBlocking(EmptyCoroutineContext.INSTANCE, (scope, continuation) -> {
+        preloadServices(modules, "", scope, GlobalScope.INSTANCE, false);
+        loadComponents();
 
-      ApplicationLoader.callAppInitialized(this, continuation);
-      return Unit.INSTANCE;
-    })).join();
+        ApplicationLoader.callAppInitialized(this, continuation);
+        return Unit.INSTANCE;
+      });
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public final void loadComponents() {

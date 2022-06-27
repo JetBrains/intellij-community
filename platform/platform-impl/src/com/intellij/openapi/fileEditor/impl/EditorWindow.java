@@ -506,7 +506,7 @@ public final class EditorWindow {
   }
 
   public @NotNull List<@NotNull EditorComposite> getAllComposites() {
-    return IntStream.range(0, getTabCount()).mapToObj(i -> getCompositeAt(i))
+    return IntStream.range(0, getTabCount()).mapToObj(this::getCompositeAt)
       .collect(Collectors.toList());
   }
 
@@ -520,7 +520,7 @@ public final class EditorWindow {
   }
 
   public VirtualFile @NotNull [] getFiles() {
-    return ContainerUtil.map2Array(getAllComposites(), VirtualFile.class, it -> it.getFile());
+    return ContainerUtil.map2Array(getAllComposites(), VirtualFile.class, EditorComposite::getFile);
   }
 
   /**
@@ -1450,7 +1450,7 @@ public final class EditorWindow {
 
   private static boolean hasClientPropertyInHierarchy(@Nullable Component owner,
                                                       @SuppressWarnings("SameParameterValue") @NotNull Key<Boolean> propertyKey) {
-    Component parent = JBIterable.generate(owner, child -> child.getParent()).find(component -> {
+    Component parent = JBIterable.generate(owner, Component::getParent).find(component -> {
       if (component instanceof JComponent) {
         return Boolean.TRUE.equals(((JComponent)component).getClientProperty(propertyKey));
       }

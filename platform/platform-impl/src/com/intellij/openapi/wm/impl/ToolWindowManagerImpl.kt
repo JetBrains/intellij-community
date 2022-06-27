@@ -110,7 +110,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   private val recentToolWindowsState: LinkedList<String> get() = state.recentToolWindows
 
   @Suppress("LeakingThis")
-  protected val toolWindowSetInitializer = ToolWindowSetInitializer(project, this)
+  private val toolWindowSetInitializer = ToolWindowSetInitializer(project, this)
 
   @Suppress("TestOnlyProblems")
   constructor(project: Project) : this(project, isNewUi = ExperimentalUI.isNewUI(), isEdtRequired = true)
@@ -222,7 +222,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         else if (event.id == FocusEvent.FOCUS_GAINED) {
           val component = event.component ?: return
           processOpenedProjects { project ->
-            for (composite in FileEditorManagerEx.getInstanceEx(project).splitters.allComposites) {
+            for (composite in FileEditorManagerEx.getInstanceEx(project).splitters.getAllComposites()) {
               if (composite.allEditors.any { SwingUtilities.isDescendingFrom(component, it.component) }) {
                 (getInstance(project) as ToolWindowManagerImpl).activeStack.clear()
               }
@@ -2097,11 +2097,6 @@ private fun getRootBounds(frame: JFrame): Rectangle {
   bounds.setLocation(frame.x + rootPane.x, frame.y + rootPane.y)
   return bounds
 }
-
-private const val EDITOR_ELEMENT = "editor"
-private const val ACTIVE_ATTR_VALUE = "active"
-private const val LAYOUT_TO_RESTORE = "layout-to-restore"
-private const val RECENT_TW_TAG = "recentWindows"
 
 private fun getToolWindowIdForComponent(component: Component?): String? {
   var c = component

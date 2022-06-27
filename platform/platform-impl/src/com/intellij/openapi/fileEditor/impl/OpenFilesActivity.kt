@@ -15,15 +15,13 @@ import com.intellij.openapi.startup.StartupActivity
 
 internal class OpenFilesActivity : StartupActivity {
   override fun runActivity(project: Project) {
-    val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return
     ProgressManager.getInstance().progressIndicator?.text = IdeBundle.message("progress.text.reopening.files")
 
+    val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return
     val editorSplitters = fileEditorManager.mainSplitters
-    val panelRef = editorSplitters.restoreEditors()
+    val panel = editorSplitters.restoreEditors()
     ApplicationManager.getApplication().invokeLater({
-                                                      if (panelRef != null) {
-                                                        editorSplitters.doOpenFiles(panelRef.get())
-                                                      }
+                                                      panel?.let(editorSplitters::doOpenFiles)
                                                       fileEditorManager.initDockableContentFactory()
                                                       EditorsSplitters.stopOpenFilesActivity(project)
                                                       if (!fileEditorManager.hasOpenFiles() && !isNotificationSilentMode(project)) {
