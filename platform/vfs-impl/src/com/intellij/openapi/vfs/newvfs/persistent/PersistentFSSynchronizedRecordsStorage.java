@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.ResizeableMappedFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @ApiStatus.Internal
-final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecordsStorage {
+final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsStorage {
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
   private static final int NAME_OFFSET = PARENT_OFFSET + PARENT_SIZE;
@@ -43,10 +44,10 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     }
   }
 
-  private <V, E extends Throwable> V write(ThrowableComputable<V, E> action) throws E {
+  private <E extends Throwable> void write(ThrowableRunnable<E> action) throws E {
     myFile.getStorageLockContext().lockWrite();
     try {
-      return action.compute();
+      action.run();
     }
     finally {
       myFile.getStorageLockContext().unlockWrite();
@@ -82,7 +83,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   private void saveGlobalModCount() throws IOException {
     write(() -> {
       myFile.putInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET, getGlobalModCount());
-      return null;
     });
   }
 
@@ -103,7 +103,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     write(() -> {
       myFile.putInt(PersistentFSHeaders.HEADER_VERSION_OFFSET, version);
       myFile.putLong(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
-      return null;
     });
   }
 
@@ -118,7 +117,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   public void setConnectionStatus(int connectionStatus) throws IOException {
     write(() -> {
       myFile.putInt(PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET, connectionStatus);
-      return null;
     });
   }
 
@@ -139,10 +137,9 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
 
   @Override
   public void setNameId(int id, int nameId) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(nameId);
     write(() -> {
-      PersistentFSConnection.ensureIdIsValid(nameId);
       putRecordInt(id, NAME_OFFSET, nameId);
-      return null;
     });
   }
 
@@ -157,7 +154,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   public void setParent(int id, int parent) throws IOException {
     write(() -> {
       putRecordInt(id, PARENT_OFFSET, parent);
-      return null;
     });
   }
 
@@ -181,7 +177,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     write(() -> {
       FSRecords.incModCount(id);
       putRecordInt(id, FLAGS_OFFSET, flags);
-      return null;
     });
   }
 
@@ -189,7 +184,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   public void setModCount(int id, int value) throws IOException {
     write(() -> {
       putRecordInt(id, MOD_COUNT_OFFSET, value);
-      return null;
     });
   }
 
@@ -204,7 +198,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   public void setContentRecordId(int id, int value) throws IOException {
     write(() -> {
       putRecordInt(id, CONTENT_OFFSET, value);
-      return null;
     });
   }
 
@@ -219,7 +212,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   public void setAttributeRecordId(int id, int value) throws IOException {
     write(() -> {
       putRecordInt(id, ATTR_REF_OFFSET, value);
-      return null;
     });
   }
 
@@ -238,7 +230,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
         myFile.putLong(timeStampOffset, value);
         FSRecords.incModCount(id);
       }
-      return null;
     });
   }
 
@@ -257,7 +248,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
         myFile.putLong(lengthOffset, value);
         FSRecords.incModCount(id);
       }
-      return null;
     });
   }
 
@@ -266,7 +256,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     write(() -> {
       myRecordCount.updateAndGet(operand -> Math.max(id + 1, operand));
       myFile.put(((long)id) * RECORD_SIZE, ZEROES, 0, RECORD_SIZE);
-      return null;
     });
   }
 
@@ -284,7 +273,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   private void putRecordInt(int id, int offset, int value) throws IOException {
     write(() -> {
       myFile.putInt(getOffset(id, offset), value);
-      return null;
     });
   }
 
@@ -301,7 +289,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
       assert myPooledWriteBuffer.position() == 0;
       myFile.put(((long)id) * RECORD_SIZE, myPooledWriteBuffer);
       myPooledWriteBuffer.rewind();
-      return null;
     });
   }
 
@@ -321,7 +308,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     write(() -> {
       saveGlobalModCount();
       myFile.close();
-      return null;
     });
   }
 
@@ -330,7 +316,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     write(() -> {
       saveGlobalModCount();
       myFile.force();
-      return null;
     });
   }
 

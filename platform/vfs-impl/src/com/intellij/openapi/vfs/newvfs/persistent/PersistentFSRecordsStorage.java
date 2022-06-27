@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 @ApiStatus.Internal
-interface PersistentFSRecordsStorage {
-  boolean useLockFreeRecordsStorage = SystemProperties.getBooleanProperty("idea.use.lock.free.record.storage.for.vfs", false);
+abstract class PersistentFSRecordsStorage {
+  static boolean useLockFreeRecordsStorage = SystemProperties.getBooleanProperty("idea.use.lock.free.record.storage.for.vfs", false);
 
   static int recordsLength() {
     return useLockFreeRecordsStorage ? PersistentFSLockFreeRecordsStorage.RECORD_SIZE : PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
@@ -20,68 +20,70 @@ interface PersistentFSRecordsStorage {
     return useLockFreeRecordsStorage ? new PersistentFSLockFreeRecordsStorage(file) : new PersistentFSSynchronizedRecordsStorage(file);
   }
 
-  int allocateRecord();
+  abstract int allocateRecord();
 
-  void setAttributeRecordId(int fileId, int recordId) throws IOException;
+  abstract void setAttributeRecordId(int fileId, int recordId) throws IOException;
 
-  int getAttributeRecordId(int fileId) throws IOException;
+  abstract int getAttributeRecordId(int fileId) throws IOException;
 
-  int getParent(int fileId) throws IOException;
+  abstract int getParent(int fileId) throws IOException;
 
-  void setParent(int fileIf, int parentId) throws IOException;
+  abstract void setParent(int fileIf, int parentId) throws IOException;
 
-  int getNameId(int fileId) throws IOException;
+  abstract int getNameId(int fileId) throws IOException;
 
-  void setNameId(int fileId, int nameId) throws IOException;
+  abstract void setNameId(int fileId, int nameId) throws IOException;
 
-  void setFlags(int fileId, int flags) throws IOException;
+  abstract void setFlags(int fileId, int flags) throws IOException;
 
-  long getLength(int fileId) throws IOException;
+  abstract long getLength(int fileId) throws IOException;
 
-  void putLength(int fileId, long length) throws IOException;
+  abstract void putLength(int fileId, long length) throws IOException;
 
-  long getTimestamp(int fileId) throws IOException;
+  abstract long getTimestamp(int fileId) throws IOException;
 
-  void putTimestamp(int fileId, long timestamp) throws IOException;
+  abstract void putTimestamp(int fileId, long timestamp) throws IOException;
 
-  int getModCount(int fileId) throws IOException;
+  abstract int getModCount(int fileId) throws IOException;
 
-  void setModCount(int fileId, int counter) throws IOException;
+  abstract void setModCount(int fileId, int counter) throws IOException;
 
-  int getContentRecordId(int fileId) throws IOException;
+  abstract int getContentRecordId(int fileId) throws IOException;
 
-  void setContentRecordId(int fileId, int recordId) throws IOException;
+  abstract void setContentRecordId(int fileId, int recordId) throws IOException;
 
-  int getFlags(int fileId) throws IOException;
+  abstract int getFlags(int fileId) throws IOException;
 
-  void setAttributesAndIncModCount(int fileId, long timestamp, long length, int flags, int nameId, int parentId, boolean overwriteMissed) throws IOException;
+  abstract void setAttributesAndIncModCount(int fileId, long timestamp, long length, int flags, int nameId, int parentId, boolean overwriteMissed) throws IOException;
 
-  boolean isDirty();
+  abstract boolean isDirty();
 
-  long getTimestamp() throws IOException;
+  abstract long getTimestamp() throws IOException;
 
-  void setConnectionStatus(int code) throws IOException;
+  abstract void setConnectionStatus(int code) throws IOException;
 
-  int getConnectionStatus() throws IOException;
+  abstract int getConnectionStatus() throws IOException;
 
-  void setVersion(int version) throws IOException;
+  abstract void setVersion(int version) throws IOException;
 
-  int getVersion() throws IOException;
+  abstract int getVersion() throws IOException;
 
-  int getGlobalModCount();
+  abstract int getGlobalModCount();
 
-  int incGlobalModCount();
+  abstract int incGlobalModCount();
 
-  long length();
+  abstract long length();
 
-  void cleanRecord(int fileId) throws IOException;
+  abstract void cleanRecord(int fileId) throws IOException;
 
-  boolean processAllNames(@NotNull NameFlagsProcessor processor) throws IOException;
+  @SuppressWarnings("UnusedReturnValue")
+  abstract boolean processAllNames(@NotNull NameFlagsProcessor processor) throws IOException;
 
-  void force() throws IOException;
+  abstract void force() throws IOException;
 
-  void close() throws IOException;
+  abstract void close() throws IOException;
 
+  @FunctionalInterface
   interface NameFlagsProcessor {
     void process(int fileId, int nameId, int flags);
   }

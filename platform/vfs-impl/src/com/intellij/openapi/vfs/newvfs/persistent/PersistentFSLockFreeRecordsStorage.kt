@@ -15,7 +15,7 @@ import kotlin.concurrent.withLock
 import kotlin.math.max
 
 @ApiStatus.Internal
-internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) constructor(private val file: ResizeableMappedFile): PersistentFSRecordsStorage {
+internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) constructor(private val file: ResizeableMappedFile): PersistentFSRecordsStorage() {
   private val metadataReadLock = file.storageLockContext.readLock()
   private val metadataWriteLock = file.storageLockContext.writeLock()
 

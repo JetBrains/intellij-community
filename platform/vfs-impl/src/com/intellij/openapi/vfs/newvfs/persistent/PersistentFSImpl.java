@@ -302,7 +302,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public int getModificationCount() {
-    return FSRecords.getPersistentModCount();
+    return FSRecords.getLocalModCount();
   }
 
   @Override
