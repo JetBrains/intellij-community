@@ -257,7 +257,6 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
                                            "<version>1</version>");
 
     importProjects(m1, m2);
-    assertModules("m1", "m2");
     ModuleOrderEntry dep = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"));
     assertNotNull(dep);
     assertFalse(dep.isProductionOnTestDependency());
