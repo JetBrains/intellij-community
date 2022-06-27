@@ -1064,6 +1064,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public AbstractProjectViewPane getCurrentProjectViewPane() {
+    if (myProject.isDisposed()) return null;
     ProjectViewCurrentPaneProvider currentPaneProvider = ProjectViewCurrentPaneProvider.getInstance(myProject);
     final String currentProjectViewPaneId = currentPaneProvider != null
                                             ? currentPaneProvider.getCurrentPaneId()
