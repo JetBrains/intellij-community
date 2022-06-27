@@ -463,7 +463,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
     """.trimIndent())
     myFixture.configureFromExistingVirtualFile(file.virtualFile)
-    val intention = myFixture.findSingleIntention("Create File two-column.txt")
+    val intention = myFixture.findSingleIntention("Create file two-column.txt")
     assertNotNull(intention)
     myFixture.launchAction(intention)
     assertNotNull(myFixture.findFileInTempDir("two-column.txt"))

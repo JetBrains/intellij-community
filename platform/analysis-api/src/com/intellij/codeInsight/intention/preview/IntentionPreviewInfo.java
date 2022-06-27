@@ -120,7 +120,7 @@ public interface IntentionPreviewInfo {
      * @param content content that may refer to some icons via {@code &lt;icon src="$id$"&gt;}
      * @param iconMap a map from icon ID used in URL to the icon itself
      */
-    private Html(@NotNull HtmlChunk content, @NotNull Map<String, Icon> iconMap) {
+    public Html(@NotNull HtmlChunk content, @NotNull Map<String, Icon> iconMap) {
       myContent = content;
       myIconMap = Map.copyOf(iconMap);
     }

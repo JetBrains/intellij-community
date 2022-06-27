@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -25,16 +26,19 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.List;
 
 import static com.intellij.openapi.project.ProjectUtilCore.displayUrlRelativeToProject;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
+import static com.intellij.openapi.util.text.HtmlChunk.*;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
 
@@ -147,6 +151,36 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
   protected abstract void apply(@NotNull Project project, @NotNull PsiDirectory targetDirectory, @Nullable Editor editor)
     throws IncorrectOperationException;
 
+  @NotNull
+  protected HtmlChunk getDescription() {
+    String fileIcon = "<icon src=\"file\"> ";
+    if (myDirectories.size() == 1) {
+      TargetDirectory directory = myDirectories.get(0);
+      PsiDirectory psiDirectory = directory.getDirectory();
+      String path = psiDirectory == null ? "" : StringUtil.escapeXmlEntities(psiDirectory.getVirtualFile().getPresentableUrl());
+      String pathToCreate = StreamEx.of(directory.getPathToCreate())
+        .append(mySubPath)
+        .joining(File.separator);
+      if (pathToCreate.isEmpty()) {
+        return fragment(raw(CodeInsightBundle.message(myKey, fileIcon + StringUtil.escapeXmlEntities(myNewFileName))), br(),
+                        raw(CodeInsightBundle.message("intention.description.inside.directory", path)));
+      }
+      String fullFileName = pathToCreate + File.separator + myNewFileName;
+      return fragment(raw(CodeInsightBundle.message(myKey, fileIcon + StringUtil.escapeXmlEntities(fullFileName))),
+                      br(),
+                      text(CodeInsightBundle.message("intention.description.including.intermediate.directories")),
+                      br(),
+                      raw(CodeInsightBundle.message("intention.description.inside.directory", path)));
+    }
+    if (mySubPath.length == 0) {
+      return raw(CodeInsightBundle.message(myKey, fileIcon + StringUtil.escapeXmlEntities(myNewFileName)));
+    }
+    String fullFileName = StreamEx.of(mySubPath).append(myNewFileName).joining(File.separator);
+    return fragment(raw(CodeInsightBundle.message(myKey, fileIcon + StringUtil.escapeXmlEntities(fullFileName))),
+                    br(),
+                    text(CodeInsightBundle.message("intention.description.including.intermediate.directories")));
+  }
+
   @Nullable
   private static PsiDirectory findOrCreateSubdirectory(@Nullable PsiDirectory directory, @NotNull String subDirectoryName) {
     if (directory == null) {
@@ -196,7 +230,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
       .setItemChosenCallback(chosenValue -> {
 
         WriteCommandAction.writeCommandAction(project)
-          .withName(CodeInsightBundle.message("create.file.text", myNewFileName))
+          .withName(CodeInsightBundle.message(myKey, myNewFileName))
           .run(() -> apply(project, chosenValue.getTarget(), editor));
       })
       .addListener(new JBPopupListener() {
