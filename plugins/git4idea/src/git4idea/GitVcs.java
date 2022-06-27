@@ -318,12 +318,6 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   @RequiresEdt
-  public void enableIntegration() {
-    enableIntegration(null);
-  }
-
-  @Override
-  @RequiresEdt
   public void enableIntegration(@Nullable VirtualFile targetDirectory) {
     new Task.Backgroundable(myProject, GitBundle.message("progress.title.enabling.git"), true) {
       @Override

@@ -82,6 +82,7 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * Returns the name of the VCS as it should be displayed in the UI.
+   *
    * @see #getShortName()
    */
   @Nls
@@ -278,35 +279,40 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * This method is called when user invokes "Enable VCS Integration" and selects a particular VCS.
-   * By default it sets up a single mapping {@code <Project> -> selected VCS}.
+   * <p>
+   * By default, it sets up a single mapping {@code <Project> -> selected VCS}.
    */
   @RequiresEdt
   public void enableIntegration() {
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    if (vcsManager != null) {
-      vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(getName())));
-    }
+    enableIntegration(null);
   }
 
   /**
    * This method is called when a user invokes "Enable VCS Integration" and selects a particular VCS.
+   * <p>
    * By default, it sets up a single mapping {@code <targetDirectory> -> selected VCS}.
    * Some VCSes might try to automatically detect VCS roots or create a new one.
    *
    * @param targetDirectory overridden location of project files to check
    */
   @RequiresEdt
-  public void enableIntegration(@NotNull VirtualFile targetDirectory) {
+  public void enableIntegration(@Nullable VirtualFile targetDirectory) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (vcsManager != null) {
-      vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(targetDirectory.getPath(), getName())));
+      if (targetDirectory != null) {
+        vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(targetDirectory.getPath(), getName())));
+      }
+      else {
+        vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(getName())));
+      }
     }
   }
 
   /**
    * Invoked when a changelist is deleted explicitly by user or implicitly (e.g. after default changelist switch
    * when the previous one was empty).
-   * @param list change list that's about to be removed
+   *
+   * @param list       change list that's about to be removed
    * @param explicitly whether it's a result of explicit Delete action, or just after switching the active changelist.
    * @return UNSURE if the VCS has nothing to say about this changelist.
    * YES or NO if the changelist has to be removed or not, and no further confirmations are needed about this changelist
@@ -662,7 +668,7 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * Returns true if VCS root needs to be added to watched roots by 
+   * Returns true if VCS root needs to be added to watched roots by
    * {@link com.intellij.openapi.vcs.impl.projectlevelman.FileWatchRequestModifier} when updating VCS mappings.
    *
    * @return true if VCS root needs to be added to watched roots, false otherwise.
