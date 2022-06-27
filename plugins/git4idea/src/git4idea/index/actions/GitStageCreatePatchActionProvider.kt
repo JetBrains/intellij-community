@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.vcs.changes.Change
@@ -15,6 +16,10 @@ import git4idea.index.ui.NodeKind
 open class GitStageCreatePatchActionProvider private constructor(private val silentClipboard: Boolean) : AnActionExtensionProvider {
   class Dialog : GitStageCreatePatchActionProvider(false)
   class Clipboard : GitStageCreatePatchActionProvider(true)
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null
 

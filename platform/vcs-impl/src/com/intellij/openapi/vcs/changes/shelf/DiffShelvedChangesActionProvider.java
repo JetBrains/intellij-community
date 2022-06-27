@@ -13,10 +13,7 @@ import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
@@ -71,6 +68,11 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public final class DiffShelvedChangesActionProvider implements AnActionExtensionProvider {
   private static final Logger LOG = getInstance(DiffShelvedChangesActionProvider.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {

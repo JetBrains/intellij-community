@@ -6,10 +6,7 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -45,6 +42,11 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
   public ShowDiffWithLocalAction(boolean useBeforeVersion) {
     myUseBeforeVersion = useBeforeVersion;
     ActionUtil.copyFrom(this, useBeforeVersion ? VcsActions.DIFF_BEFORE_WITH_LOCAL : VcsActions.DIFF_AFTER_WITH_LOCAL);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

@@ -15,6 +15,10 @@ import git4idea.index.ui.GitStageDataKeys
 import git4idea.index.ui.NodeKind
 
 class GitStageDiffAction : AnActionExtensionProvider {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null
 
   override fun update(e: AnActionEvent) {
