@@ -18,6 +18,7 @@ import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.codehaus.stax2.XMLStreamReader2
 import org.codehaus.stax2.typed.TypedXMLStreamException
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.io.InputStream
@@ -29,6 +30,10 @@ import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
+
+@Internal const val PACKAGE_ATTRIBUTE = "package"
+@Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE = "implementation-detail"
+@Internal const val ON_DEMAND_ATTRIBUTE = "on-demand"
 
 private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
 
@@ -132,11 +137,12 @@ fun readModuleDescriptorForTest(input: ByteArray): RawPluginDescriptor {
 private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDescriptor) {
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      "package" -> descriptor.`package` = getNullifiedAttributeValue(reader, i)
+      PACKAGE_ATTRIBUTE -> descriptor.`package` = getNullifiedAttributeValue(reader, i)
       "url" -> descriptor.url = getNullifiedAttributeValue(reader, i)
       "use-idea-classloader" -> descriptor.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
       "allow-bundled-update" -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
-      "implementation-detail" -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
+      IMPLEMENTATION_DETAIL_ATTRIBUTE -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
+      ON_DEMAND_ATTRIBUTE -> descriptor.onDemand = reader.getAttributeAsBoolean(i)
       "require-restart" -> descriptor.isRestartRequired = reader.getAttributeAsBoolean(i)
       "version" -> {
         // internalVersionString - why it is not used, but just checked?

@@ -542,6 +542,23 @@ class PluginDescriptorTest {
     assertThat(result.enabledPlugins).isEmpty()
   }
 
+  @Test
+  fun testLoadOnDemandPlugin() {
+    PluginBuilder()
+      .noDepends()
+      .id("foo")
+      .onDemand()
+      .build(pluginsPath.resolve("foo"))
+
+    PluginBuilder()
+      .id("bar")
+      .pluginDependency("foo")
+      .build(pluginsPath.resolve("bar"))
+
+    val pluginSet = loadAndInitDescriptors().pluginSet
+    assertThat(pluginSet.enabledPlugins).isEmpty()
+  }
+
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
     pluginsPath.resolve(id)
       .resolve(PluginManagerCore.PLUGIN_XML_PATH)

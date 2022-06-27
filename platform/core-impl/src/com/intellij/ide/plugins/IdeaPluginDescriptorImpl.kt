@@ -103,13 +103,10 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   private val descriptionChildText = raw.description
 
   @JvmField val isUseIdeaClassLoader = raw.isUseIdeaClassLoader
-
   @JvmField val isBundledUpdateAllowed = raw.isBundledUpdateAllowed
-
   @JvmField internal val implementationDetail = raw.implementationDetail
-
+  @JvmField internal val onDemand = raw.onDemand
   @JvmField internal val isRestartRequired = raw.isRestartRequired
-
   @JvmField val packagePrefix = raw.`package`
 
   private val sinceBuild = raw.sinceBuild
@@ -517,6 +514,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   override fun allowBundledUpdate() = isBundledUpdateAllowed
 
   override fun isImplementationDetail() = implementationDetail
+
+  override fun isOnDemand() = onDemand
 
   override fun isRequireRestart() = isRestartRequired
 

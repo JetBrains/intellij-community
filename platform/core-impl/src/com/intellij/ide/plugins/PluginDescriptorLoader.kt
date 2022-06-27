@@ -345,19 +345,19 @@ private fun loadDescriptorsFromProperty(result: PluginLoadingResult, context: De
   val pathProperty = System.getProperty(PluginManagerCore.PROPERTY_PLUGIN_PATH) ?: return
 
   // gradle-intellij-plugin heavily depends on this property in order to have core class loader plugins during tests
-  val useCoreClassLoaderForPluginsFromProperty = java.lang.Boolean.parseBoolean(
-    System.getProperty("idea.use.core.classloader.for.plugin.path"))
+  val useCoreClassLoaderForPluginsFromProperty = java.lang.Boolean.getBoolean("idea.use.core.classloader.for.plugin.path")
   val t = StringTokenizer(pathProperty, File.pathSeparatorChar + ",")
   while (t.hasMoreTokens()) {
-    val s = t.nextToken()
-    val file = Paths.get(s)
-    loadDescriptorFromFileOrDir(file = file,
-                                context = context,
-                                pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                isBundled = false,
-                                isEssential = false,
-                                isDirectory = Files.isDirectory(file),
-                                useCoreClassLoader = useCoreClassLoaderForPluginsFromProperty)?.let {
+    val file = Paths.get(t.nextToken())
+    loadDescriptorFromFileOrDir(
+      file = file,
+      context = context,
+      pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+      isBundled = false,
+      isEssential = false,
+      isDirectory = Files.isDirectory(file),
+      useCoreClassLoader = useCoreClassLoaderForPluginsFromProperty,
+    )?.let {
       // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
       result.add(it, overrideUseIfCompatible = true)
     }
@@ -369,11 +369,13 @@ internal fun loadDescriptors(
   isRunningFromSources: Boolean,
 ): DescriptorListLoadingContext {
   val result = createPluginLoadingResult(null)
-  val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
-                                             isMissingIncludeIgnored = isUnitTestMode,
-                                             checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
-                                             disabledPlugins = DisabledPluginsState.disabledPlugins(),
-                                             result = result)
+  val context = DescriptorListLoadingContext(
+    isMissingSubDescriptorIgnored = true,
+    isMissingIncludeIgnored = isUnitTestMode,
+    checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
+    disabledPlugins = DisabledPluginsState.disabledPlugins(),
+    result = result,
+  )
   context.use {
     loadDescriptorsFromDirs(
       context = context,
@@ -621,9 +623,11 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
   return context.result.getEnabledPlugins()
 }
 
-private class LoadDescriptorsFromDirAction(private val dir: Path,
-                                           private val context: DescriptorListLoadingContext,
-                                           private val isBundled: Boolean) : RecursiveAction() {
+private class LoadDescriptorsFromDirAction(
+  private val dir: Path,
+  private val context: DescriptorListLoadingContext,
+  private val isBundled: Boolean,
+) : RecursiveAction() {
 
   override fun compute() {
     try {
@@ -648,7 +652,7 @@ private class LoadDescriptorsFromDirAction(private val dir: Path,
       ForkJoinTask.invokeAll(tasks)
       for (task in tasks) {
         task.rawResult?.let {
-          context.result.add(it,  /* overrideUseIfCompatible = */false)
+          context.result.add(it,   overrideUseIfCompatible = false)
         }
       }
     }
@@ -658,10 +662,13 @@ private class LoadDescriptorsFromDirAction(private val dir: Path,
 }
 
 // urls here expected to be a file urls to plugin.xml
-private class LoadDescriptorsFromClassPathAction(private val urlToFilename: Map<URL, String>,
-                                                 private val context: DescriptorListLoadingContext,
-                                                 private val pathResolver: ClassPathXmlPathResolver,
-                                                 private val useCoreClassLoader: Boolean) : RecursiveAction() {
+private class LoadDescriptorsFromClassPathAction(
+  private val urlToFilename: Map<URL, String>,
+  private val context: DescriptorListLoadingContext,
+  private val pathResolver: ClassPathXmlPathResolver,
+  private val useCoreClassLoader: Boolean,
+) : RecursiveAction() {
+
   public override fun compute() {
     val tasks = ArrayList<ForkJoinTask<IdeaPluginDescriptorImpl?>>(urlToFilename.size)
     urlToFilename.forEach(BiConsumer { url, filename ->

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
@@ -117,7 +117,7 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     // remove any error that occurred for plugin with the same `id`
     pluginErrors.remove(pluginId)
     incompletePlugins.remove(pluginId)
-    val prevDescriptor = plugins.put(pluginId, descriptor)
+    val prevDescriptor = if (descriptor.onDemand) null else plugins.put(pluginId, descriptor)
     if (prevDescriptor == null) {
       idMap.put(pluginId, descriptor)
       for (module in descriptor.modules) {
