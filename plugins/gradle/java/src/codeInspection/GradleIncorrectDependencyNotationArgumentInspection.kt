@@ -25,10 +25,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvalua
 
 /**
  * It is possible to implement this inspection by specifying overloads to configuration methods,
- * but it would greatly pollute the completion list, since there is 12 overloads to each of the configuration.
+ * but it would greatly pollute the completion list, since there are 12 overloads to each of the configuration.
  * Also, we can provide custom parsing of string and map literals right here.
  */
-class DependencyNotationArgumentInspection : GroovyLocalInspectionTool() {
+class GradleIncorrectDependencyNotationArgumentInspection : GroovyLocalInspectionTool() {
 
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     return if (file.fileType == GradleFileType) super.checkFile(file, manager, isOnTheFly) else null
