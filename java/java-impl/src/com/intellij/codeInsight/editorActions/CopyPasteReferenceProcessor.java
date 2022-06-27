@@ -135,7 +135,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
       }
     };
     if (Registry.is("run.refactorings.under.progress")) {
-      app.runWriteActionWithNonCancellableProgressInDispatchThread(JavaBundle.message("progress.title.restore.references"), project, null, consumer);
+      app.runWriteActionWithCancellableProgressInDispatchThread(JavaBundle.message("progress.title.restore.references"), project, null, consumer);
     }
     else {
       app.runWriteAction(() -> consumer.accept(null));
