@@ -7,3 +7,7 @@ import com.intellij.psi.PsiElement
 @Deprecated("Use 'textRange' instead", ReplaceWith("textRange"))
 val PsiElement.range: TextRange
     get() = textRange!!
+
+@Deprecated("Use 'startOffset' instead", ReplaceWith("startOffset"))
+val TextRange.start: Int
+    get() = startOffset
