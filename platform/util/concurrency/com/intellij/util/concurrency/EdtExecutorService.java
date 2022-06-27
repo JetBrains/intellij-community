@@ -21,13 +21,25 @@ public abstract class EdtExecutorService extends AbstractExecutorService {
   }
 
   /**
-   * @deprecated use {@link com.intellij.openapi.application.Application#invokeLater(Runnable, ModalityState)} directly
+   * The invocation of this method is equivalent to:
+   * <pre>
+   * ApplicationManager.getApplication().invokeLater(command, modalityState)
+   * </pre>
+   *
+   * @see com.intellij.openapi.application.Application#invokeLater(Runnable, ModalityState)
+   * @deprecated this method is not a part of ExecutorService interface
    */
   @Deprecated(forRemoval = true)
   public abstract void execute(@NotNull Runnable command, @NotNull ModalityState modalityState);
 
   /**
-   * @deprecated use {@link com.intellij.openapi.application.Application#invokeLater(Runnable, ModalityState, Condition)} directly
+   * The invocation of this method is equivalent to:
+   * <pre>
+   * ApplicationManager.getApplication().invokeLater(command, modalityState, expired)
+   * </pre>
+   *
+   * @see com.intellij.openapi.application.Application#invokeLater(Runnable, ModalityState, Condition)
+   * @deprecated this method is not a part of ExecutorService interface
    */
   @Deprecated(forRemoval = true)
   public abstract void execute(@NotNull Runnable command, @NotNull ModalityState modalityState, @NotNull Condition<?> expired);
