@@ -95,6 +95,9 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     try {
       myFixture.disableInspections(inspection)
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }
