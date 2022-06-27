@@ -129,7 +129,15 @@ object CodeWithMeClientDownloader {
     require(jreBuildParts[0].matches(Regex("^[0-9_.]+$"))) { "jreBuild format should be like 12_3_45b6789.0: ${jreBuild}" }
     require(jreBuildParts[1].matches(Regex("^[0-9.]+$"))) { "jreBuild format should be like 12_3_45b6789.0: ${jreBuild}" }
 
-    val jdkVersion = jreBuildParts[0]
+    /**
+     * After upgrade to JRE 17 Jetbrains Runtime Team made a couple of incompatible changes:
+     * 1. Java version began to contain dots in it's version
+     * 2. Root directory was renamed from 'jbr' to 'jbr_jcef_12.3.4b1235'
+     *
+     * We decided to maintain backward compatibility with old IDEs and
+     * rename archives and root directories back to old format.
+     */
+    val jdkVersion = jreBuildParts[0].replace(".", "_")
     val jdkBuild = jreBuildParts[1]
     val jreDownloadUrl = "${config.jreDownloadUrl}jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
 
