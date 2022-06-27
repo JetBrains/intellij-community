@@ -151,7 +151,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   @NotNull
-  private static ComboBox<Object> buildSdkComboBox(@NotNull Runnable onShowAllSelected, @NotNull Runnable onSdkSelected) {
+  private static ComboBox<Object> buildSdkComboBox(@NotNull Runnable onShowAllSelected,
+                                                   @NotNull Runnable onSdkSelected) {
     final ComboBox<Object> result = new ComboBox<>() {
       @Override
       public void setSelectedItem(Object item) {
@@ -249,7 +250,13 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void onShowAllSelected() {
-    buildAllSdksDialog().show();
+    if (Registry.is("python.use.targets.api")) {
+      Sdk selectedSdk = PythonInterpreterConfigurable.openInDialog(myProject, myModule, getEditableSelectedSdk());
+      onShowAllInterpretersDialogClosed(selectedSdk);
+    }
+    else {
+      buildAllSdksDialog().show();
+    }
   }
 
   protected void onSdkSelected() {
@@ -268,35 +275,46 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                               detailsButton.getLocationOnScreen(), new SdkAddedCallback());
   }
 
+  /**
+   * To be deprecated.
+   * <p>
+   * The part of the legacy implementation for editing SDKs based on {@link com.jetbrains.python.remote.PyRemoteSdkAdditionalData}.
+   */
   @NotNull
   private PythonSdkDetailsDialog buildAllSdksDialog() {
     return new PythonSdkDetailsDialog(
       myProject,
       myModule,
-      selectedSdk -> {
-        if (selectedSdk != null) {
-          updateSdkListAndSelect(selectedSdk);
-        }
-        else {
-          // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to applying
-          final Sdk currentSelectedSdk = getEditableSelectedSdk();
-
-          if (currentSelectedSdk != null && myProjectSdksModel.findSdk(currentSelectedSdk.getName()) != null) {
-            // nothing has been selected but previously selected sdk still exists, stay with it
-            updateSdkListAndSelect(currentSelectedSdk);
-          }
-          else {
-            // nothing has been selected but previously selected sdk removed, switch to `No interpreter`
-            updateSdkListAndSelect(null);
-          }
-        }
-      },
+      this::onShowAllInterpretersDialogClosed,
       reset -> {
         // data is invalidated on `model` resetting so we need to reload sdks to not stuck with outdated ones
         // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to resetting
         if (reset) updateSdkListAndSelect(getEditableSelectedSdk());
       }
     );
+  }
+
+  /**
+   * @param selectedSdk the selected Python SDK before closing "Python Interpreters" dialog if the user clicked "OK" and {@code null} if the
+   *                    user clicked "Cancel" button
+   */
+  private void onShowAllInterpretersDialogClosed(@Nullable Sdk selectedSdk) {
+    if (selectedSdk != null) {
+      updateSdkListAndSelect(selectedSdk);
+    }
+    else {
+      // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to applying
+      final Sdk currentSelectedSdk = getEditableSelectedSdk();
+
+      if (currentSelectedSdk != null && myProjectSdksModel.findSdk(currentSelectedSdk.getName()) != null) {
+        // nothing has been selected but previously selected sdk still exists, stay with it
+        updateSdkListAndSelect(currentSelectedSdk);
+      }
+      else {
+        // nothing has been selected but previously selected sdk removed, switch to `No interpreter`
+        updateSdkListAndSelect(null);
+      }
+    }
   }
 
   @Override
