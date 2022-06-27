@@ -184,9 +184,25 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     is KotlinWhenConditionAnchor -> {
                         val condition = anchor.condition
                         if (!shouldSuppressWhenCondition(cv, condition)) {
-                            val key = if (cv == ConstantValue.TRUE) "inspection.message.when.condition.always.true"
-                            else "inspection.message.when.condition.always.false"
-                            holder.registerProblem(condition, KotlinBundle.message(key))
+                            val message = KotlinBundle.message("inspection.message.when.condition.always.false")
+                            if (cv == ConstantValue.FALSE) {
+                                holder.registerProblem(condition, message)
+                            } else if (cv == ConstantValue.TRUE) {
+                                var next = condition
+                                while (true) {
+                                    next = PsiTreeUtil.getNextSiblingOfType(next, KtWhenCondition::class.java) ?: break
+                                    holder.registerProblem(next, message)
+                                }
+                                var nextEntry = condition.parent as? KtWhenEntry
+                                while (true) {
+                                    nextEntry = PsiTreeUtil.getNextSiblingOfType(nextEntry, KtWhenEntry::class.java) ?: break
+                                    if (!nextEntry.isElse) {
+                                        nextEntry.conditions.forEach {
+                                            holder.registerProblem(it, message)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     is KotlinForVisitedAnchor -> {
