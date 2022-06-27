@@ -50,7 +50,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private final @NotNull Project myProject;
   private final @NotNull UsageViewImpl myUsageView;
   private final @NotNull JBPanelWithEmptyText myMainPanel;
-  private final @NotNull JScrollPane myScrollPane;
+  private final @NotNull JScrollPane myMostCommonUsageScrollPane;
   private final @NotNull SimpleColoredComponent myResultsText;
   private @NotNull Set<Usage> mySelectedUsages;
   private @Nullable ClusteringSearchSession mySession;
@@ -70,10 +70,10 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     myMainPanel.setLayout(new VerticalLayout(0));
     myMainPanel.setBackground(UIUtil.getTextFieldBackground());
     addMostCommonUsagesForSelectedGroups();
-    myScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
-    myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    myMostCommonUsageScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
+    myMostCommonUsageScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     revalidate();
-    setContent(myScrollPane);
+    setContent(myMostCommonUsageScrollPane);
   }
 
   @Nullable
@@ -96,7 +96,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
           mySelectedUsages = myUsageView.getSelectedUsages();
           updateResultsText(UsageViewBundle.message("similar.usages.0.results", mySelectedUsages.size()));
           addMostCommonUsagesForSelectedGroups();
-          setContent(myScrollPane);
+          setContent(myMostCommonUsageScrollPane);
         }
 
         @Override
@@ -105,34 +105,28 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
           presentation.setEnabled(true);
         }
       });
-    actionGroup.add(
-      new AnAction(IdeBundle.messagePointer("action.Anonymous.text.back"), IdeBundle.messagePointer("action.Anonymous.text.back"),
-                   AllIcons.Actions.Back) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          if (myIsShowingSimilarUsages) {
-            myIsShowingSimilarUsages = false;
-            updateResultsText(UsageViewBundle.message("similar.usages.0.results", mySelectedUsages.size()));
-            ActivityTracker.getInstance().inc();
-            setContent(myScrollPane);
-            revalidate();
-          }
-        }
-
-        @Override
-        public void update(@NotNull AnActionEvent event) {
-          Presentation presentation = event.getPresentation();
-          presentation.setVisible(myIsShowingSimilarUsages);
-        }
-      });
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(SIMILAR_USAGES_PREVIEW_TOOLBAR, actionGroup, true);
     actionToolbar.getComponent().setBackground(UIUtil.getTextFieldBackground());
     actionToolbar.setTargetComponent(this);
     JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT));
     toolbar.setBackground(UIUtil.getTextFieldBackground());
     updateResultsText(UsageViewBundle.message("similar.usages.0.results", mySelectedUsages.size()));
+    ActionLink backLink = new ActionLink(UsageViewBundle.message("0.similar.usages.back.to.search.results", UIUtil.leftArrow()), e -> {
+      if (myIsShowingSimilarUsages) {
+        myIsShowingSimilarUsages = false;
+        updateResultsText(UsageViewBundle.message("similar.usages.0.results", mySelectedUsages.size()));
+        setContent(myMostCommonUsageScrollPane);
+        revalidate();
+      }
+    }) {
+      @Override
+      public boolean isVisible() {
+        return myIsShowingSimilarUsages;
+      }
+    };
     toolbar.add(myResultsText);
     toolbar.add(actionToolbar.getComponent());
+    toolbar.add(backLink);
     return toolbar;
   }
 
@@ -178,7 +172,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     clusterToShow.stream().limit(CLUSTER_LIMIT).forEach(cluster -> {
       renderClusterDescription(summaryPanel, cluster.getUsages());
     });
-    final JScrollBar verticalScrollBar = myScrollPane.getVerticalScrollBar();
+    final JScrollBar verticalScrollBar = myMostCommonUsageScrollPane.getVerticalScrollBar();
     BoundedRangeModelThresholdListener.install(verticalScrollBar, () -> {
       clusterToShow.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
         renderClusterDescription(summaryPanel, cluster.getUsages());
@@ -189,10 +183,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   }
 
   private void renderClusterDescription(@NotNull JPanel summaryPanel, @NotNull Collection<SimilarUsage> selectedUsages) {
-    final Set<SimilarUsage> usageFilteredByGroup = new HashSet<>();
-    ApplicationManager.getApplication().runReadAction(() -> {
-      usageFilteredByGroup.addAll(selectedUsages);
-    });
+    final Set<SimilarUsage> usageFilteredByGroup = new HashSet<>(selectedUsages);
     SimilarUsage usage = ContainerUtil.getFirstItem(usageFilteredByGroup);
     if (usage instanceof UsageInfo2UsageAdapter) {
       final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
