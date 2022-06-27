@@ -193,7 +193,11 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         override fun rootsChanged(event: ModuleRootEvent) {
             // SDK could be changed (esp in tests) out of message bus subscription
             val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
-            invalidateEntries({ _, value -> value.sdk.any { it.sdk !in jdks } }, { _, _ -> false })
+            invalidateEntries(
+                { _, value -> value.sdk.any { it.sdk !in jdks } },
+                // unable to check entities properly: an event could be not the last
+                validityCondition = null
+            )
         }
     }
 
@@ -233,7 +237,12 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         override fun rootsChanged(event: ModuleRootEvent) {
             // SDK could be changed (esp in tests) out of message bus subscription
             val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
-            invalidateEntries({_, (_, sdkInfos) -> sdkInfos.any { it.sdk !in jdks }}, { _, _ -> false })
+
+            invalidateEntries(
+                { _, (_, sdkInfos) -> sdkInfos.any { it.sdk !in jdks } },
+                // unable to check entities properly: an event could be not the last
+                validityCondition = null
+            )
         }
 
         inner class ModelChangeListener : WorkspaceEntityChangeListener<ModuleEntity, Module>(project) {
@@ -253,7 +262,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 { _, v ->
                     v.first.any { candidate -> candidate.libraries.any { it in infos } }
                 },
-                { _, _ -> false }
+                // unable to check entities properly: an event could be not the last
+                validityCondition = null
             )
         }
     }

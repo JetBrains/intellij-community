@@ -197,7 +197,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             }
 
             override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
-                invalidateEntries({ _, v -> v.libraryInfo in libraryInfos }, { _, v -> v.libraryInfo != null})
+                invalidateEntries({ _, v -> v.libraryInfo in libraryInfos }, validityCondition = { _, v -> v.libraryInfo != null })
             }
         }
 

@@ -16,6 +16,10 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
     private val cache: MutableMap<Key, Value> by StorageProvider(project, javaClass) { HashMap() }
         @Deprecated("Do not use directly", level = DeprecationLevel.ERROR) get
 
+    private var invalidationCount: Int = 0
+
+    private var currentInvalidationCount: Int = 0
+
     private val lock = Any()
 
     protected val logger = Logger.getInstance(javaClass)
@@ -57,6 +61,10 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
         }
 
         useCache { cache ->
+            if (currentInvalidationCount > invalidationCount) {
+                checkEntities(cache, CHECK_ALL)
+            }
+
             cache[key]?.let { return it }
         }
 
@@ -100,13 +108,14 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
 
     protected fun invalidateKeysAndGetOutdatedValues(
         keys: Collection<Key>,
-        validityCondition: (Key, Value) -> Boolean = { _, _ -> true }
+        validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
     ): Collection<Value> {
         val removedValues = mutableListOf<Value>()
         useCache { cache ->
             for (key in keys) {
                 removedValues.addIfNotNull(cache.remove(key))
             }
+            currentInvalidationCount++
             checkEntities(cache, validityCondition)
         }
         return removedValues
@@ -114,19 +123,20 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
 
     protected fun invalidateKeys(
         keys: Collection<Key>,
-        validityCondition: (Key, Value) -> Boolean = { _, _ -> true }
+        validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
     ) {
         useCache { cache ->
             for (key in keys) {
                 cache.remove(key)
             }
+            currentInvalidationCount++
             checkEntities(cache, validityCondition)
         }
     }
 
     protected fun invalidateEntries(
         condition: (Key, Value) -> Boolean,
-        validityCondition: (Key, Value) -> Boolean = { _, _ -> true }
+        validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
     ) {
         useCache { cache ->
             val iterator = cache.entries.iterator()
@@ -136,17 +146,31 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
                     iterator.remove()
                 }
             }
+            currentInvalidationCount++
             checkEntities(cache, validityCondition)
         }
     }
 
-    private fun checkEntities(cache: MutableMap<Key, Value>, validityCondition: (Key, Value) -> Boolean) {
-        if (isValidityChecksEnabled) {
-            for (entry in cache) {
+    private fun checkEntities(cache: MutableMap<Key, Value>, validityCondition: ((Key, Value) -> Boolean)?) {
+        if (isValidityChecksEnabled && validityCondition != null) {
+            var allEntriesChecked = true
+            val iterator = cache.entries.iterator()
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
                 if (validityCondition(entry.key, entry.value)) {
-                    checkKeyValidity(entry.key)
-                    checkValueValidity(entry.value)
+                    try {
+                        checkKeyValidity(entry.key)
+                        checkValueValidity(entry.value)
+                    } catch (e: Throwable) {
+                        iterator.remove()
+                        throw e
+                    }
+                } else {
+                    allEntriesChecked = false
                 }
+            }
+            if (allEntriesChecked) {
+                invalidationCount = currentInvalidationCount
             }
         }
     }
@@ -160,6 +184,9 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
     protected abstract fun calculate(key: Key): Value
 
     companion object {
+
+        val CHECK_ALL:(Any, Any) -> Boolean = { _, _ -> true }
+
         val isFineGrainedCacheInvalidationEnabled: Boolean by lazy {
             Registry.`is`("kotlin.caches.fine.grained.invalidation")
         }
