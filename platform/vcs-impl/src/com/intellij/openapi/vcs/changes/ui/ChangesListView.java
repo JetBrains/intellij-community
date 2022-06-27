@@ -241,7 +241,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
   @NotNull
   protected JBIterable<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
     return getSelectionNodes(this, tag)
-      .flatMap(node -> JBIterable.create(() -> node.getFilesUnderStream().iterator()))
+      .flatMap(node -> node.iterateFilesUnder())
       .unique();
   }
 
@@ -292,7 +292,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
-      .flatMap(node -> JBIterable.create(() -> node.getFilesUnderStream().iterator()))
+      .flatMap(node -> node.iterateFilesUnder())
       .unique();
   }
 

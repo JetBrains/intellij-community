@@ -20,7 +20,6 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,11 +29,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.function.ToIntFunction;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
@@ -172,14 +169,14 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
   public int getFileCount() {
     if (myFileCount == -1) {
-      myFileCount = (isFile() ? 1 : 0) + toStream(children()).mapToInt(ChangesBrowserNode::getFileCount).sum();
+      myFileCount = (isFile() ? 1 : 0) + sumForChildren(ChangesBrowserNode::getFileCount);
     }
     return myFileCount;
   }
 
   public int getDirectoryCount() {
     if (myDirectoryCount == -1) {
-      myDirectoryCount = (isDirectory() ? 1 : 0) + toStream(children()).mapToInt(ChangesBrowserNode::getDirectoryCount).sum();
+      myDirectoryCount = (isDirectory() ? 1 : 0) + sumForChildren(ChangesBrowserNode::getDirectoryCount);
     }
     return myDirectoryCount;
   }
@@ -189,9 +186,13 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     myDirectoryCount = -1;
   }
 
-  @NotNull
-  public Stream<ChangesBrowserNode<?>> getNodesUnderStream() {
-    return toStream(preorderEnumeration());
+  private int sumForChildren(@NotNull ToIntFunction<ChangesBrowserNode<?>> counter) {
+    int sum = 0;
+    for (int i = 0; i < getChildCount(); i++) {
+      ChangesBrowserNode<?> child = (ChangesBrowserNode<?>)getChildAt(i);
+      sum += counter.applyAsInt(child);
+    }
+    return sum;
   }
 
   @NotNull
@@ -215,13 +216,8 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   @NotNull
-  public List<VirtualFile> getAllFilesUnder() {
-    return getFilesUnderStream().collect(Collectors.toList());
-  }
-
-  @NotNull
-  public Stream<VirtualFile> getFilesUnderStream() {
-    return StreamEx.of(traverseObjectsUnder().filter(VirtualFile.class).filter(VirtualFile::isValid).iterator());
+  public JBIterable<VirtualFile> iterateFilesUnder() {
+    return traverse().filter(VirtualFile.class).filter(VirtualFile::isValid);
   }
 
   @NotNull
@@ -230,12 +226,6 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
       .filter(ChangesBrowserNode::isLeaf)
       .map(ChangesBrowserNode::getUserObject)
       .filter(FilePath.class);
-  }
-
-  @NotNull
-  private static StreamEx<ChangesBrowserNode<?>> toStream(@NotNull Enumeration enumeration) {
-    //noinspection unchecked
-    return StreamEx.<ChangesBrowserNode>of(enumeration);
   }
 
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
