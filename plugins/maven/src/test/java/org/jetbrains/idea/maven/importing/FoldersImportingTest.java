@@ -1275,8 +1275,11 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
       "  <testSourceDirectory>tests</testSourceDirectory>" +
       "</build>"));
 
-    new File(myProjectRoot.getPath(), "m1/sources/resources").mkdirs();
-    new File(myProjectRoot.getPath(), "m1/tests").mkdirs();
+    createProjectSubDirs("m1/src/main/java",
+                         "m1/src/main/resources",
+                         "m1/src/test/java",
+                         "m1/sources/resources",
+                         "m1/tests");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1288,10 +1291,22 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                   "  <module>m1/custom.xml</module>" +
                   "</modules>");
 
-    assertModules("project", mn("project", "m1-pom"), mn("project", "m1-custom"));
+    String m1_pom_module = mn("project", "m1-pom");
+    String m1_custom_module = mn("project", "m1-custom");
+    assertModules("project", m1_pom_module, m1_custom_module);
 
-    assertContentRoots(mn("project", "m1-pom"), getProjectPath() + "/m1");
-    assertContentRoots(mn("project", "m1-custom"), getProjectPath() + "/m1/sources", getProjectPath() + "/m1/tests");
+    String m1_pom_root = getProjectPath() + "/m1";
+    assertContentRoots(m1_pom_module, m1_pom_root);
+    assertContentRootSources(m1_pom_module, m1_pom_root, "src/main/java");
+    assertContentRootResources(m1_pom_module, m1_pom_root, "src/main/resources");
+    assertContentRootTestSources(m1_pom_module, m1_pom_root, "src/test/java");
+
+    String m1_custom_sources_root = getProjectPath() + "/m1/sources";
+    String m1_custom_tests_root = getProjectPath() + "/m1/tests";
+    assertContentRoots(m1_custom_module, m1_custom_sources_root, m1_custom_tests_root);
+    assertContentRootSources(m1_custom_module, m1_custom_sources_root, "");
+    assertContentRootResources(m1_custom_module, m1_custom_sources_root);
+    assertContentRootTestSources(m1_custom_module, m1_custom_tests_root, "");
   }
 
   @Test
