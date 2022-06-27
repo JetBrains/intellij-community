@@ -20,5 +20,7 @@ class UrlParameterKeys {
     @Deprecated("Use sourceUrl")
     const val download = "download"
     const val sourceUrl = "sourceUrl"
+    // should only be allowed for locally round-tripped URLs, not from external sources
+    const val localUploadPath = "localUploadPath"
   }
 }
