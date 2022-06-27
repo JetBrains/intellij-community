@@ -5,3 +5,4 @@ fun test() {
     var list = listOf(1)
     list <selection>+=<caret></selection> 2
 }
+// OFFLINE_REPORT: "'+=' on a read-only list creates a new list under the hood"
