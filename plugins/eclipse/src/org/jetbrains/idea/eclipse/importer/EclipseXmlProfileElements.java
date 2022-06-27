@@ -3,10 +3,6 @@ package org.jetbrains.idea.eclipse.importer;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author Rustam Vishnyakov
- */
-@SuppressWarnings("UnusedDeclaration")
 public interface EclipseXmlProfileElements {
   @NonNls String PROFILES_TAG = "profiles";
   @NonNls String PROFILE_TAG = "profile";

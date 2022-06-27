@@ -21,9 +21,6 @@ import java.util.Properties;
 
 import static org.jetbrains.idea.eclipse.importer.EclipseProjectCodeStyleData.CORE_PREFS_FILE_NAME;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class EclipseSettingsImportTest extends LightPlatformTestCase {
   
   private static String getTestDataPath() {
