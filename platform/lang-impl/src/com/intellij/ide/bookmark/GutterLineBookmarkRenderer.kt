@@ -55,7 +55,8 @@ internal data class GutterLineBookmarkRenderer(val bookmark: LineBookmark) : Dum
     val mnemonic = type.let { if (it == BookmarkType.DEFAULT) null else it.mnemonic }
     mnemonic?.let { result.append(" ").append(it) }
 
-    val description = manager?.defaultGroup?.getDescription(bookmark)
+    val description = manager?.getGroups(bookmark)?.mapNotNull { group -> group.getDescription(bookmark) }?.singleOrNull()
+
     description?.let { if (it.isNotEmpty()) result.append(": ").append(escapeXmlEntities(it)) }
 
     val shortcut = mnemonic?.let { getShortcut(it) } ?: getShortcut()
