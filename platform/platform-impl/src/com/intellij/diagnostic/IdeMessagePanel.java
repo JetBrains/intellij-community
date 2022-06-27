@@ -7,7 +7,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsManagerImpl;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,8 +71,7 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
   }
 
   @Override
-  @NotNull
-  public String ID() {
+  public @NotNull String ID() {
     return FATAL_ERROR;
   }
 
@@ -202,18 +200,10 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
       return;
     }
 
-    String title = DiagnosticBundle.message("error.new.notification.title");
-    String linkText = DiagnosticBundle.message("error.new.notification.link");
     //noinspection UnresolvedPluginConfigReference
-    Notification notification = new Notification("", title, NotificationType.ERROR)
+    Notification notification = new Notification("", DiagnosticBundle.message("error.new.notification.title"), NotificationType.ERROR)
       .setIcon(AllIcons.Ide.FatalError)
-      .addAction(new NotificationAction(linkText) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          notification.expire();
-          openErrorsDialog(null);
-        }
-      });
+      .addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.new.notification.link"), () -> openErrorsDialog(null)));
 
     BalloonLayoutData layoutData = BalloonLayoutData.createEmpty();
     layoutData.fadeoutTime = 10000;
