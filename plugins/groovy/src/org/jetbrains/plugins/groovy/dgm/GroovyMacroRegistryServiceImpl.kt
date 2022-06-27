@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.castSafelyTo
 import com.intellij.util.lazyPub
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -31,7 +32,9 @@ class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistry
 
   init {
     val connection = project.messageBus.connect()
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, GroovyMacroModuleListener())
+    val listener = GroovyMacroModuleListener()
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener)
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(connection, listener)
   }
 
   override fun resolveAsMacro(call: GrMethodCall): PsiMethod? {
