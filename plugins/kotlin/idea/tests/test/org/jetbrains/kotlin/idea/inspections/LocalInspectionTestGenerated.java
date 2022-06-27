@@ -10504,6 +10504,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("functionType.kt")
+        public void testFunctionType() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/functionType.kt");
+        }
+
         @TestMetadata("ktij-10623.kt")
         public void testKtij_10623() throws Exception {
             runTest("testData/inspectionsLocal/removeExplicitTypeArguments/ktij-10623.kt");
@@ -10527,6 +10532,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("removeTypeFromProperty.kt")
         public void testRemoveTypeFromProperty() throws Exception {
             runTest("testData/inspectionsLocal/removeExplicitTypeArguments/removeTypeFromProperty.kt");
+        }
+
+        @TestMetadata("typealiasToFunctionType.kt")
+        public void testTypealiasToFunctionType() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/typealiasToFunctionType.kt");
         }
     }
 
