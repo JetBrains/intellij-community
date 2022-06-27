@@ -170,6 +170,10 @@ class RepositoryBrowserPanel(
 }
 
 class DiffRepoWithLocalAction : AnActionExtensionProvider {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun isActive(e: AnActionEvent): Boolean {
     return e.getData(REPOSITORY_BROWSER_DATA_KEY) != null
   }
