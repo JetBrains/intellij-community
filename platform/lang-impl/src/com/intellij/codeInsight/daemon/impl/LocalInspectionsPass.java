@@ -446,7 +446,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   @NotNull
   List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
     List<InspectionToolWrapper<?, ?>> toolWrappers = profile.getInspectionProfile().getInspectionTools(getFile());
-    InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
+
+    if (LOG.isDebugEnabled()) {
+      // this triggers heavy class loading of all inspections, do not run if DEBUG not enabled
+      InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
+    }
+
     List<LocalInspectionToolWrapper> enabled = new ArrayList<>();
     for (InspectionToolWrapper<?, ?> toolWrapper : toolWrappers) {
       ProgressManager.checkCanceled();
@@ -468,12 +473,23 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       if (language != null && Language.findLanguageByID(language) == null) {
         continue; // filter out at least unknown languages
       }
-      if (myIgnoreSuppressed && wrapper.getTool().isSuppressedFor(getFile())) {
+      if (myIgnoreSuppressed && isSuppressedForFile(wrapper)) {
         continue;
       }
       enabled.add(wrapper);
     }
     return enabled;
+  }
+
+  private boolean isSuppressedForFile(@NotNull LocalInspectionToolWrapper wrapper) {
+    PsiFile file = getFile();
+    if (wrapper.isApplicable(file.getLanguage())) {
+      return wrapper.getTool().isSuppressedFor(file);
+    }
+
+    // language mismatch, we only check suppressors, but do not call isSuppressed of tool
+    // do not trigger class loading and tool instantiation
+    return InspectionProfileEntry.isSuppressedBySuppressors(file, wrapper.getShortName());
   }
 
   protected boolean isAcceptableLocalTool(@NotNull LocalInspectionToolWrapper wrapper) {
