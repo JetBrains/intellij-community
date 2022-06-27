@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +63,9 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
   @NotNull
   static Stream<Wrapper> wrap(@NotNull VcsLogChangesBrowser browser, @NotNull VcsTreeModelData modelData) {
-    return StreamEx.of(modelData.nodesStream()).select(ChangesBrowserChangeNode.class)
+    return modelData.iterateNodes()
+      .filter(ChangesBrowserChangeNode.class)
+      .toStream()
       .map(n -> new MyChangeWrapper(browser, n.getUserObject(), browser.getTag(n.getUserObject())));
   }
 
@@ -91,6 +92,7 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
   private static class MyChangeWrapper extends ChangeWrapper {
     @NotNull private final VcsLogChangesBrowser myBrowser;
+
     MyChangeWrapper(@NotNull VcsLogChangesBrowser browser, @NotNull Change change, @Nullable ChangesBrowserNode.Tag tag) {
       super(change, tag);
       myBrowser = browser;

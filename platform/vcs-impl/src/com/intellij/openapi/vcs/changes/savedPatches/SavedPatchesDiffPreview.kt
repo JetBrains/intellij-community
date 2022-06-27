@@ -58,7 +58,9 @@ class SavedPatchesDiffPreview(project: Project,
   }
 
   private fun wrap(treeModelData: VcsTreeModelData): Stream<Wrapper> {
-    return treeModelData.userObjectsStream(SavedPatchesProvider.ChangeObject::class.java).map { MyChangeWrapper(it) }
+    return treeModelData.iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
+      .toStream()
+      .map { MyChangeWrapper(it) }
   }
 
   private inner class MyChangeWrapper(private val change: SavedPatchesProvider.ChangeObject) : Wrapper(), PresentableChange by change {

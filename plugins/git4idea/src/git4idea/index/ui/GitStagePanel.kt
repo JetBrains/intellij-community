@@ -71,7 +71,6 @@ import java.awt.BorderLayout
 import java.awt.event.InputEvent
 import java.beans.PropertyChangeListener
 import java.util.*
-import java.util.stream.Collectors
 import javax.swing.JPanel
 
 internal class GitStagePanel(private val tracker: GitStageTracker,
@@ -370,10 +369,10 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     override fun getIncludableUserObjects(treeModelData: VcsTreeModelData): List<Any> {
       return treeModelData
-        .rawNodesStream()
+        .iterateRawNodes()
         .filter { node -> isIncludable(node) }
         .map { node -> node.userObject }
-        .collect(Collectors.toList())
+        .toList()
     }
 
     override fun getNodeStatus(node: ChangesBrowserNode<*>): ThreeStateCheckBox.State {

@@ -27,7 +27,7 @@ abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider
     else {
       VcsTreeModelData.selected(changesBrowser.viewer)
     }
-    e.presentation.isEnabled = selection.userObjectsStream().anyMatch {
+    e.presentation.isEnabled = selection.iterateUserObjects().any {
       getDiffRequestProducer(changesBrowser, it) != null
     }
   }

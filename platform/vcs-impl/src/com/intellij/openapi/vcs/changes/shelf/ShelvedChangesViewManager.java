@@ -49,7 +49,6 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.*;
 import com.intellij.util.IconUtil.IconSizeWrapper;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.UtilKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
@@ -385,7 +384,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private boolean hasExactlySelectedChanges() {
-      return !UtilKt.isEmpty(VcsTreeModelData.exactlySelected(this).userObjectsStream(ShelvedWrapper.class));
+      return VcsTreeModelData.exactlySelected(this).iterateUserObjects(ShelvedWrapper.class).isNotEmpty();
     }
 
     @Override
@@ -413,12 +412,14 @@ public class ShelvedChangesViewManager implements Disposable {
         return new ArrayList<>(getSelectedLists(this, l -> l.isDeleted()));
       }
       else if (SHELVED_CHANGE_KEY.is(dataId)) {
-        return StreamEx.of(VcsTreeModelData.selected(this).userObjectsStream(ShelvedWrapper.class)).map(s -> s.getShelvedChange())
-          .nonNull().toList();
+        return VcsTreeModelData.selected(this).iterateUserObjects(ShelvedWrapper.class)
+          .map(s -> s.getShelvedChange())
+          .filterNotNull().toList();
       }
       else if (SHELVED_BINARY_FILE_KEY.is(dataId)) {
-        return StreamEx.of(VcsTreeModelData.selected(this).userObjectsStream(ShelvedWrapper.class)).map(s -> s.getBinaryFile())
-          .nonNull().toList();
+        return VcsTreeModelData.selected(this).iterateUserObjects(ShelvedWrapper.class)
+          .map(s -> s.getBinaryFile())
+          .filterNotNull().toList();
       }
       else if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
         return getSelectionCount() > 0;
@@ -504,7 +505,7 @@ public class ShelvedChangesViewManager implements Disposable {
   public static List<ShelvedChangeList> getExactlySelectedLists(@NotNull final DataContext dataContext) {
     ChangesTree shelvedChangeTree = dataContext.getData(SHELVED_CHANGES_TREE);
     if (shelvedChangeTree == null) return emptyList();
-    return StreamEx.of(VcsTreeModelData.exactlySelected(shelvedChangeTree).userObjectsStream(ShelvedChangeList.class)).toList();
+    return VcsTreeModelData.exactlySelected(shelvedChangeTree).iterateUserObjects(ShelvedChangeList.class).toList();
   }
 
   @NotNull
@@ -521,7 +522,7 @@ public class ShelvedChangesViewManager implements Disposable {
   public static List<String> getSelectedShelvedChangeNames(@NotNull final DataContext dataContext) {
     ChangesTree shelvedChangeTree = dataContext.getData(SHELVED_CHANGES_TREE);
     if (shelvedChangeTree == null) return emptyList();
-    return StreamEx.of(VcsTreeModelData.selected(shelvedChangeTree).userObjectsStream(ShelvedWrapper.class))
+    return VcsTreeModelData.selected(shelvedChangeTree).iterateUserObjects(ShelvedWrapper.class)
       .map(ShelvedWrapper::getPath).toList();
   }
 
@@ -935,18 +936,20 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public @NotNull Stream<? extends Wrapper> getSelectedChanges() {
-      return VcsTreeModelData.selected(myTree).userObjectsStream(ShelvedWrapper.class);
+      return VcsTreeModelData.selected(myTree).iterateUserObjects(ShelvedWrapper.class).toStream();
     }
 
     @Override
     public @NotNull Stream<Wrapper> getAllChanges() {
       Set<ShelvedChangeList> changeLists =
-        VcsTreeModelData.selected(myTree).userObjectsStream(ShelvedWrapper.class)
-          .map(wrapper -> wrapper.getChangeList()).collect(Collectors.toSet());
+        VcsTreeModelData.selected(myTree).iterateUserObjects(ShelvedWrapper.class)
+          .map(wrapper -> wrapper.getChangeList())
+          .toSet();
 
-      return VcsTreeModelData.all(myTree).rawNodesStream()
+      return VcsTreeModelData.all(myTree).iterateRawNodes()
+        .toStream()
         .filter(node -> node instanceof ShelvedListNode && changeLists.contains(((ShelvedListNode)node).getList()))
-        .flatMap(node -> VcsTreeModelData.allUnder(node).userObjectsStream(ShelvedWrapper.class));
+        .flatMap(node -> VcsTreeModelData.allUnder(node).iterateUserObjects(ShelvedWrapper.class).toStream());
     }
 
     @Override

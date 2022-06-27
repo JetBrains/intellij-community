@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.diff.FrameDiffTool
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -50,6 +49,6 @@ class SimpleTreeDiffRequestProcessor(
   }
 
   private fun wrap(treeModelData: VcsTreeModelData): Stream<Wrapper> {
-    return treeModelData.userObjectsStream(Change::class.java).map { ChangeWrapper(it) }
+    return treeModelData.iterateUserObjects(Change::class.java).toStream().map { ChangeWrapper(it) }
   }
 }

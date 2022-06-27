@@ -80,8 +80,12 @@ class GitStageDiffPreview(project: Project,
 
   private fun wrap(modelData: VcsTreeModelData): Stream<Wrapper> =
     Stream.concat(
-      modelData.userObjectsStream(GitFileStatusNode::class.java).filter { it.kind != NodeKind.IGNORED }.map { GitFileStatusNodeWrapper(it) },
-      modelData.userObjectsStream(Change::class.java).map { ChangeWrapper(it) }
+      modelData.iterateUserObjects(GitFileStatusNode::class.java)
+        .toStream()
+        .filter { it.kind != NodeKind.IGNORED }.map { GitFileStatusNodeWrapper(it) },
+      modelData.iterateUserObjects(Change::class.java)
+        .toStream()
+        .map { ChangeWrapper(it) }
     )
 
   private class GitFileStatusNodeWrapper(val node: GitFileStatusNode) : Wrapper() {

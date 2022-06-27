@@ -130,7 +130,7 @@ public final class ChangesUtil {
   }
 
   @NotNull
-  public static Stream<FilePath> getPathsCaseSensitive(@NotNull Change change) {
+  private static Stream<FilePath> getPathsCaseSensitive(@NotNull Change change) {
     FilePath beforePath = getBeforePath(change);
     FilePath afterPath = getAfterPath(change);
 

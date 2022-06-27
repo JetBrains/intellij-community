@@ -180,7 +180,9 @@ private class GHPRCombinedDiffPreviewModel(tree: ChangesTree,
   }
 
   override fun getSelectedChanges(): Stream<out Wrapper> {
-    return VcsTreeModelData.selected(tree).userObjectsStream(Change::class.java).map { change -> MyChangeWrapper(change, producerFactory) }
+    return VcsTreeModelData.selected(tree).iterateUserObjects(Change::class.java)
+      .toStream()
+      .map { change -> MyChangeWrapper(change, producerFactory) }
   }
 
   private class MyChangeWrapper(change: Change,
@@ -192,7 +194,9 @@ private class GHPRCombinedDiffPreviewModel(tree: ChangesTree,
     private fun ChangesTree.getAllChanges(producerFactory: ChangeDiffRequestProducerFactory) = getAllChangesStream(producerFactory).toList()
 
     private fun ChangesTree.getAllChangesStream(producerFactory: ChangeDiffRequestProducerFactory): Stream<out Wrapper> {
-      return VcsTreeModelData.all(this).userObjectsStream(Change::class.java).map { change -> MyChangeWrapper(change, producerFactory) }
+      return VcsTreeModelData.all(this).iterateUserObjects(Change::class.java)
+        .toStream()
+        .map { change -> MyChangeWrapper(change, producerFactory) }
     }
   }
 }

@@ -21,9 +21,7 @@ import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.StatusText
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
-import java.util.stream.Stream
 import javax.swing.tree.DefaultTreeModel
-import kotlin.streams.toList
 
 class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Component?) -> Unit,
                                  parentDisposable: Disposable) : ChangesBrowserBase(project, false, false), Disposable {
@@ -139,8 +137,10 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
     return newProcessor
   }
 
-  private fun VcsTreeModelData.mapToChange(): Stream<Change> {
-    return userObjectsStream(SavedPatchesProvider.ChangeObject::class.java).map { it.asChange() }.filter { it != null } as Stream<Change>
+  private fun VcsTreeModelData.mapToChange(): JBIterable<Change> {
+    return iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
+      .map { it.asChange() }
+      .filterNotNull()
   }
 
   override fun getData(dataId: String): Any? {
@@ -157,27 +157,27 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
       return VcsTreeModelData.getListSelectionOrAll(myViewer).map { (it as? SavedPatchesProvider.ChangeObject)?.asChange() }
     }
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.`is`(dataId)) {
-      return VcsTreeModelData.exactlySelected(myViewer).mapToChange().limit(1).toList().toTypedArray()
+      return VcsTreeModelData.exactlySelected(myViewer).mapToChange().take(1).toList().toTypedArray()
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId)) {
-      return VcsTreeModelData.selected(myViewer).userObjectsStream(SavedPatchesProvider.ChangeObject::class.java)
+      return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
         .map { it.filePath.virtualFile }
-        .filter { it != null }.toList().toTypedArray()
+        .filterNotNull()
+        .toList().toTypedArray()
     }
     else if (VcsDataKeys.IO_FILE_ARRAY.`is`(dataId)) {
-      return VcsTreeModelData.selected(myViewer).userObjectsStream(SavedPatchesProvider.ChangeObject::class.java)
+      return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
         .map { it.filePath.ioFile }
         .toList().toTypedArray()
     }
     else if (CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId)) {
-      return ChangesUtil.getNavigatableArray(myProject, VcsTreeModelData.selected(myViewer)
-        .userObjectsStream(SavedPatchesProvider.ChangeObject::class.java)
+      val virtualFiles = VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
         .map { it.filePath.virtualFile }
-        .filter { it != null })
+        .filterNotNull()
+      return ChangesUtil.getNavigatableArray(myProject, virtualFiles)
     }
     else if (SavedPatchesUi.SAVED_PATCH_SELECTED_CHANGES.`is`(dataId)) {
-      val selected = VcsTreeModelData.selected(myViewer)
-      return JBIterable.create { selected.userObjectsStream(SavedPatchesProvider.ChangeObject::class.java).iterator() }
+      return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
     }
     return super.getData(dataId)
   }

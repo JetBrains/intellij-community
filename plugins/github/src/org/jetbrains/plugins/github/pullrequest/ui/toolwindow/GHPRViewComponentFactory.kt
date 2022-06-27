@@ -24,7 +24,6 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
-import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -386,7 +385,8 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   ): JComponent {
     val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText)
 
-    val diffPreviewController = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider, dataContext.filesManager)
+    val diffPreviewController = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider,
+                                                          dataContext.filesManager)
 
     reloadChangesAction.registerCustomShortcutSet(tree, null)
     tree.installPopupHandler(actionManager.getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
@@ -434,9 +434,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 }
 
 private fun ChangesTree.getPullRequestFiles(): Iterable<FilePath> =
-  JBIterable.create {
-    VcsTreeModelData.selected(this)
-      .userObjectsStream(Change::class.java)
-      .map { ChangesUtil.getFilePath(it) }
-      .iterator()
-  }
+  VcsTreeModelData.selected(this)
+    .iterateUserObjects(Change::class.java)
+    .map { ChangesUtil.getFilePath(it) }
