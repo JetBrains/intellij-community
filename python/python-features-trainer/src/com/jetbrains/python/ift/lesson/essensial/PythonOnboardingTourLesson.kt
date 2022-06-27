@@ -566,9 +566,12 @@ class PythonOnboardingTourLesson :
       restoreIfModifiedOrMoved()
     }
 
-    actionTask("EditorToggleCase") {
+    task {
+      text(PythonLessonsBundle.message("python.onboarding.apply.action", strong(toggleCase), LessonUtil.rawEnter()))
+      stateCheck {
+        editor.document.text.contains("\"average")
+      }
       restoreByUi(delayMillis = defaultRestoreDelay)
-      PythonLessonsBundle.message("python.onboarding.apply.action", strong(toggleCase), LessonUtil.rawEnter())
     }
 
     text(PythonLessonsBundle.message("python.onboarding.case.changed"))
