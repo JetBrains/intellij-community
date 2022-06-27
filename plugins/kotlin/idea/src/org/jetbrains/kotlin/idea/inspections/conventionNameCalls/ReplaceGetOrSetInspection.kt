@@ -28,10 +28,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.isValidOperator
 
-class Foo {
-
-}
-
 class ReplaceGetOrSetInspection : AbstractApplicabilityBasedInspection<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java
 ), CleanupLocalInspectionTool {
