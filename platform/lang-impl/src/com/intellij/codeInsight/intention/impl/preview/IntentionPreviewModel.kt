@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
@@ -35,7 +34,7 @@ internal class IntentionPreviewModel {
 
       if (start >= end) return
 
-      val document = FileDocumentManager.getInstance().getDocument(psiFileCopy.viewProvider.virtualFile)
+      val document = psiFileCopy.viewProvider.document
       if (document != null) PsiDocumentManager.getInstance(project).commitDocument(document)
 
       CodeStyleManager.getInstance(project).reformatRange(psiFileCopy, start, end, true)
