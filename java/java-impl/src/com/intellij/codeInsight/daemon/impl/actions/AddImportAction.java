@@ -207,7 +207,7 @@ public class AddImportAction implements QuestionAction {
 
   private void addImport(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
     DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
-      if (!ref.getElement().isValid() || !targetClass.isValid() || ref.resolve() == targetClass) {
+      if (!ref.getElement().isValid() || !targetClass.isValid()) {
         return;
       }
 
