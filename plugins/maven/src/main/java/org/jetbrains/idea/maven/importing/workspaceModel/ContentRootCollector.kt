@@ -34,9 +34,16 @@ object ContentRootCollector {
         result.add(nearestRoot)
       }
 
-      // 2. MERGE SUBFOLDERS:
+      // 2. MERGE DUPLICATE PATHS
       val prev = nearestRoot.folders.lastOrNull()
-      if (prev != null && FileUtil.isAncestor(prev.path, curr.path, false)) {
+      if (prev != null && FileUtil.pathsEqual(prev.path, curr.path)) {
+        if (prev.rank <= curr.rank) {
+          return@forEach
+        }
+      }
+
+      // 3. MERGE SUBFOLDERS:
+      if (prev != null && FileUtil.isAncestor(prev.path, curr.path, true)) {
         if (prev is SourceFolder && curr is UserOrGeneratedSourceFolder) {
           // don't add sub source folders
           return@forEach
@@ -59,13 +66,13 @@ object ContentRootCollector {
         }
       }
 
-      // 3. REGISTER FOLDER UNDER THE ROOT
+      // 4. REGISTER FOLDER UNDER THE ROOT
       nearestRoot.folders.add(curr)
     }
 
-    // 4. Now, we need a second pass over the merged folders, to remove nested exclude folders.
-    //    Couldn't do it during the first pass, since exclude folders have different properties (preventing subfolders),
-    //    which need to be taken into account during the first pass.
+    // Now, we need a second pass over the merged folders, to remove nested exclude folders.
+    //  Couldn't do it during the first pass, since exclude folders have different properties (preventing subfolders),
+    //  which need to be taken into account during the first pass.
     val rootIterator = result.iterator()
     while (rootIterator.hasNext()) {
       val root = rootIterator.next()
@@ -116,7 +123,7 @@ object ContentRootCollector {
       }
 
     override fun toString(): String {
-      return "$path rootType='$type'"
+      return "$path rootType='${if (type.isForTests) "test" else "main"} ${type.javaClass.simpleName}'"
     }
   }
 
