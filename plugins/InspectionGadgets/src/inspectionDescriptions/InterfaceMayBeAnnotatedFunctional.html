@@ -2,7 +2,20 @@
 <body>
 Reports interfaces that can be annotated with <code>@FunctionalInterface</code> (available since JDK 1.8).
 <p>Annotating an interface with <code>@FunctionalInterface</code> indicates that the interface
-  is functional and cannot have any more <code>abstract</code> methods.</p>
+  is functional and no more <code>abstract</code> methods can be added to it.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  interface FileProcessor {
+    void execute(File file);
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  @FunctionalInterface
+  interface FileProcessor {
+    void execute(File file);
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>This inspection only reports if the language level of the project or module is 8 or higher.</p>
 </body>
