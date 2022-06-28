@@ -390,6 +390,10 @@ public final class JBUI {
       }
     }
 
+    public static final class Banner {
+      public static final Color WARNING_BACKGROUND = JBColor.namedColor("Banner.warningBackground", 0xfff8e3, 0x3d3223);
+    }
+
     public static final class Button {
       public static @NotNull Color buttonColorStart() {
         return JBColor.namedColor("Button.startBackground", JBColor.namedColor("Button.darcula.startColor", 0x555a5c));
