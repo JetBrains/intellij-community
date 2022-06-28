@@ -15,13 +15,12 @@ import javax.swing.SwingUtilities
 /**
  * Get the position of a current [NotebookCellLines.Interval]. It is calculated according to the focused component and the caret position.
  */
-val DataContext.notebookCellLinesInterval: NotebookCellLines.Interval?
-  get() =
-    getData(NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY)
-    ?: getOffsetInEditorWithComponents(this) { it.notebookCellLinesProvider != null }
-      ?.let { (editor, offset) ->
-        NotebookCellLines.get(editor).intervalsIterator(editor.document.getLineNumber(offset)).takeIf { it.hasNext() }?.next()
-      }
+fun DataContext.getNotebookCellLinesInterval(): NotebookCellLines.Interval? =
+  getData(NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY)
+  ?: getOffsetInEditorWithComponents(this) { it.notebookCellLinesProvider != null }
+    ?.let { (editor, offset) ->
+      NotebookCellLines.get(editor).intervalsIterator(editor.document.getLineNumber(offset)).takeIf { it.hasNext() }?.next()
+    }
 
 inline fun getOffsetInEditorWithComponents(
   dataContext: DataContext,
