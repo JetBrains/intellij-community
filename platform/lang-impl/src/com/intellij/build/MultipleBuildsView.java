@@ -110,6 +110,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   @Override
   public void dispose() {
     myDisposed = true;
+    myProgressWatcher.stopWatching();
   }
 
   public Content getContent() {
@@ -456,6 +457,8 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     private final Alarm myRefreshAlarm = new Alarm();
     private final Set<AbstractViewManager.BuildInfo> myBuilds = ContainerUtil.newConcurrentSet();
 
+    private volatile boolean myIsStopped = false;
+
     @Override
     public void run() {
       myRefreshAlarm.cancelAllRequests();
@@ -470,6 +473,10 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     }
 
     void addBuild(AbstractViewManager.BuildInfo buildInfo) {
+      if (myIsStopped) {
+        LOG.warn("Attempt to add new build " + buildInfo + ";title=" + buildInfo.getTitle() + " to stopped watcher instance");
+        return;
+      }
       myBuilds.add(buildInfo);
       if (myBuilds.size() > 1) {
         myRefreshAlarm.cancelAllRequests();
@@ -479,6 +486,11 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
 
     void stopBuild(AbstractViewManager.BuildInfo buildInfo) {
       myBuilds.remove(buildInfo);
+    }
+
+    public void stopWatching() {
+      myIsStopped = true;
+      myRefreshAlarm.cancelAllRequests();
     }
   }
 }
