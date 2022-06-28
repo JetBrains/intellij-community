@@ -153,54 +153,7 @@ def build():
         additional_args.append('--force-cython')  # Build always forces Cython!
 
     if sys.platform.startswith('darwin'):
-        # Cross-compilation for x86 and M1.
-
-        tempdir = tempfile.mkdtemp()
-
-        args = [
-            sys.executable,
-            os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
-            'build_ext',
-            '--inplace',
-            '--build-lib=%s/lib.x86' % tempdir,
-            '--build-temp=%s/temp.x86' % tempdir,
-            '--target=x86_64-apple-macos10.12',
-        ] + additional_args
-
-        print('Calling args: %s' % (args,))
-        subprocess.check_call(args, env=env,)
-
-        args = [
-            sys.executable,
-            os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
-            'build_ext',
-            '--inplace',
-            '--build-lib=%s/lib.arm64' % tempdir,
-            '--build-temp=%s/temp.arm64' % tempdir,
-            '--target=arm64-apple-macos11',
-        ] + additional_args
-
-        print('Calling args: %s' % (args,))
-        subprocess.check_call(args, env=env,)
-
-        # See: https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary.
-        for ext_dir_x86, ext_dir_arm64 in zip(glob.glob('%s/lib.x86/*' % tempdir),
-                                              glob.glob('%s/lib.arm64/*' % tempdir)):
-            for shared_lib_x86, shared_lib_arm64 in zip(
-                    glob.glob('%s/*' % ext_dir_x86), glob.glob('%s/*' % ext_dir_arm64)):
-                args = [
-                    'lipo',
-                    '-create',
-                    '-output',
-                    '%s/%s/%s' % (root_dir, os.path.basename(ext_dir_x86),
-                                  os.path.basename(shared_lib_x86)),
-                    shared_lib_x86,
-                    shared_lib_arm64,
-                ]
-
-                print('Building universal binary: %s' % (args,))
-                subprocess.check_call(args, env=env,)
-
+        macos_cross_compile(additional_args, env)
     else:
         args = [
             sys.executable,
@@ -211,6 +164,50 @@ def build():
 
         print('Calling args: %s' % (args,))
         subprocess.check_call(args, env=env,)
+
+
+def macos_cross_compile(additional_args, env):
+    # Cross-compilation for x86 and M1.
+    tempdir = tempfile.mkdtemp()
+    args = [
+               sys.executable,
+               os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
+               'build_ext',
+               '--inplace',
+               '--build-lib=%s/lib.x86' % tempdir,
+               '--build-temp=%s/temp.x86' % tempdir,
+               '--target=x86_64-apple-macos10.12',
+           ] + additional_args
+    print('Calling args: %s' % (args,))
+    subprocess.check_call(args, env=env, )
+    args = [
+               sys.executable,
+               os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
+               'build_ext',
+               '--inplace',
+               '--build-lib=%s/lib.arm64' % tempdir,
+               '--build-temp=%s/temp.arm64' % tempdir,
+               '--target=arm64-apple-macos11',
+           ] + additional_args
+    print('Calling args: %s' % (args,))
+    subprocess.check_call(args, env=env, )
+    # See: https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary.
+    for ext_dir_x86, ext_dir_arm64 in zip(glob.glob('%s/lib.x86/*' % tempdir),
+                                          glob.glob('%s/lib.arm64/*' % tempdir)):
+        for shared_lib_x86, shared_lib_arm64 in zip(
+                glob.glob('%s/*' % ext_dir_x86), glob.glob('%s/*' % ext_dir_arm64)):
+            args = [
+                'lipo',
+                '-create',
+                '-output',
+                '%s/%s/%s' % (root_dir, os.path.basename(ext_dir_x86),
+                              os.path.basename(shared_lib_x86)),
+                shared_lib_x86,
+                shared_lib_arm64,
+            ]
+
+            print('Building universal binary: %s' % (args,))
+            subprocess.check_call(args, env=env, )
 
 
 if __name__ == '__main__':
