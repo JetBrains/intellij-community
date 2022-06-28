@@ -525,6 +525,15 @@ public final class SwitchUtils {
     return ContainerUtil.exists(labelElementList.getElements(), element -> element instanceof PsiDefaultCaseLabelElement);
   }
 
+  public static boolean hasOnlyDefaultCase(@Nullable PsiSwitchLabelStatementBase statement) {
+    if (statement == null) return false;
+    if (statement.isDefaultCase()) return true;
+    PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
+    return labelElementList != null &&
+           labelElementList.getElementCount() == 1 &&
+           labelElementList.getElements()[0] instanceof PsiDefaultCaseLabelElement;
+  }
+
   private static class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final String m_labelName;
