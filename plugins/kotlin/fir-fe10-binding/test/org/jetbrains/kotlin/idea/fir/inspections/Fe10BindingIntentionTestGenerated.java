@@ -17,289 +17,430 @@ import org.junit.runner.RunWith;
 @TestRoot("fir-fe10-binding")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/tests/testData/intentions/conventionNameCalls")
 public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10BindingIntentionTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator")
-    public static class ReplaceCallWithUnaryOperator extends AbstractFe10BindingIntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    @TestMetadata("../idea/tests/testData/intentions/conventionNameCalls")
+    public abstract static class ConventionNameCalls extends AbstractFe10BindingIntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator")
+        public static class ReplaceCallWithUnaryOperator extends AbstractFe10BindingIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("complexPlus.kt")
+            public void testComplexPlus() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/complexPlus.kt");
+            }
+
+            @TestMetadata("dec.kt")
+            public void testDec() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/dec.kt");
+            }
+
+            @TestMetadata("extensionFunction.kt")
+            public void testExtensionFunction() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/extensionFunction.kt");
+            }
+
+            @TestMetadata("functionLiteralArgument.kt")
+            public void testFunctionLiteralArgument() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/functionLiteralArgument.kt");
+            }
+
+            @TestMetadata("inc.kt")
+            public void testInc() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/inc.kt");
+            }
+
+            @TestMetadata("minusSanityTest.kt")
+            public void testMinusSanityTest() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/minusSanityTest.kt");
+            }
+
+            @TestMetadata("namedValueArgument.kt")
+            public void testNamedValueArgument() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/namedValueArgument.kt");
+            }
+
+            @TestMetadata("notSanityTest.kt")
+            public void testNotSanityTest() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/notSanityTest.kt");
+            }
+
+            @TestMetadata("plusPlus.kt")
+            public void testPlusPlus() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/plusPlus.kt");
+            }
+
+            @TestMetadata("plusSanityTest.kt")
+            public void testPlusSanityTest() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/plusSanityTest.kt");
+            }
+
+            @TestMetadata("qualifier.kt")
+            public void testQualifier() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/qualifier.kt");
+            }
+
+            @TestMetadata("super.kt")
+            public void testSuper() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/super.kt");
+            }
+
+            @TestMetadata("typeArguments.kt")
+            public void testTypeArguments() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/typeArguments.kt");
+            }
+
+            @TestMetadata("unacceptableVararg.kt")
+            public void testUnacceptableVararg() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/unacceptableVararg.kt");
+            }
+
+            @TestMetadata("valueArgument.kt")
+            public void testValueArgument() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/valueArgument.kt");
+            }
         }
 
-        @TestMetadata("complexPlus.kt")
-        public void testComplexPlus() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/complexPlus.kt");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../idea/tests/testData/intentions/conventionNameCalls/replaceContains")
+        public static class ReplaceContains extends AbstractFe10BindingIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("containsFromJava.kt")
+            public void testContainsFromJava() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/containsFromJava.kt");
+            }
+
+            @TestMetadata("containsInExpression.kt")
+            public void testContainsInExpression() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/containsInExpression.kt");
+            }
+
+            @TestMetadata("extensionFunction.kt")
+            public void testExtensionFunction() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/extensionFunction.kt");
+            }
+
+            @TestMetadata("functionLiteralArgument.kt")
+            public void testFunctionLiteralArgument() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/functionLiteralArgument.kt");
+            }
+
+            @TestMetadata("functionLiteralArgumentAfterSemicolon.kt")
+            public void testFunctionLiteralArgumentAfterSemicolon() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/functionLiteralArgumentAfterSemicolon.kt");
+            }
+
+            @TestMetadata("functionLiteralArgumentAtStartOfBlock.kt")
+            public void testFunctionLiteralArgumentAtStartOfBlock() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/functionLiteralArgumentAtStartOfBlock.kt");
+            }
+
+            @TestMetadata("functionLiteralArgumentInExpression.kt")
+            public void testFunctionLiteralArgumentInExpression() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/functionLiteralArgumentInExpression.kt");
+            }
+
+            @TestMetadata("invalidArgument.kt")
+            public void testInvalidArgument() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/invalidArgument.kt");
+            }
+
+            @TestMetadata("missingArgument.kt")
+            public void testMissingArgument() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/missingArgument.kt");
+            }
+
+            @TestMetadata("missingDefaultArgument.kt")
+            public void testMissingDefaultArgument() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/missingDefaultArgument.kt");
+            }
+
+            @TestMetadata("multipleArguments.kt")
+            public void testMultipleArguments() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/multipleArguments.kt");
+            }
+
+            @TestMetadata("notContains.kt")
+            public void testNotContains() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/notContains.kt");
+            }
+
+            @TestMetadata("qualifier.kt")
+            public void testQualifier() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/qualifier.kt");
+            }
+
+            @TestMetadata("simpleArgument.kt")
+            public void testSimpleArgument() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/simpleArgument.kt");
+            }
+
+            @TestMetadata("simpleStringLiteral.kt")
+            public void testSimpleStringLiteral() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/simpleStringLiteral.kt");
+            }
+
+            @TestMetadata("super.kt")
+            public void testSuper() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/super.kt");
+            }
+
+            @TestMetadata("twoArgsContainsFromJava.kt")
+            public void testTwoArgsContainsFromJava() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/twoArgsContainsFromJava.kt");
+            }
+
+            @TestMetadata("typeArguments.kt")
+            public void testTypeArguments() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/typeArguments.kt");
+            }
+
+            @TestMetadata("unacceptableVararg1.kt")
+            public void testUnacceptableVararg1() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/unacceptableVararg1.kt");
+            }
+
+            @TestMetadata("unacceptableVararg2.kt")
+            public void testUnacceptableVararg2() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/unacceptableVararg2.kt");
+            }
+
+            @TestMetadata("withoutOperatorModifier.kt")
+            public void testWithoutOperatorModifier() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/withoutOperatorModifier.kt");
+            }
         }
 
-        @TestMetadata("dec.kt")
-        public void testDec() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/dec.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke")
+        public static class ReplaceInvoke extends AbstractFe10BindingIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("extensionFunction.kt")
-        public void testExtensionFunction() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/extensionFunction.kt");
-        }
+            @TestMetadata("dotQualifiedReceiver.kt")
+            public void testDotQualifiedReceiver() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/dotQualifiedReceiver.kt");
+            }
 
-        @TestMetadata("functionLiteralArgument.kt")
-        public void testFunctionLiteralArgument() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/functionLiteralArgument.kt");
-        }
+            @TestMetadata("dotQualifiedReceiver2.kt")
+            public void testDotQualifiedReceiver2() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/dotQualifiedReceiver2.kt");
+            }
 
-        @TestMetadata("inc.kt")
-        public void testInc() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/inc.kt");
-        }
+            @TestMetadata("dotQualifiedReceiver3.kt")
+            public void testDotQualifiedReceiver3() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/dotQualifiedReceiver3.kt");
+            }
 
-        @TestMetadata("minusSanityTest.kt")
-        public void testMinusSanityTest() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/minusSanityTest.kt");
-        }
+            @TestMetadata("expressionReceiver.kt")
+            public void testExpressionReceiver() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/expressionReceiver.kt");
+            }
 
-        @TestMetadata("namedValueArgument.kt")
-        public void testNamedValueArgument() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/namedValueArgument.kt");
-        }
+            @TestMetadata("extensionFunction.kt")
+            public void testExtensionFunction() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/extensionFunction.kt");
+            }
 
-        @TestMetadata("notSanityTest.kt")
-        public void testNotSanityTest() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/notSanityTest.kt");
-        }
+            @TestMetadata("functionLiteralInvoke.kt")
+            public void testFunctionLiteralInvoke() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/functionLiteralInvoke.kt");
+            }
 
-        @TestMetadata("plusPlus.kt")
-        public void testPlusPlus() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/plusPlus.kt");
-        }
+            @TestMetadata("invokeInExpression.kt")
+            public void testInvokeInExpression() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/invokeInExpression.kt");
+            }
 
-        @TestMetadata("plusSanityTest.kt")
-        public void testPlusSanityTest() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/plusSanityTest.kt");
-        }
+            @TestMetadata("java.kt")
+            public void testJava() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/java.kt");
+            }
 
-        @TestMetadata("qualifier.kt")
-        public void testQualifier() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/qualifier.kt");
-        }
+            @TestMetadata("namedArgumentInvoke.kt")
+            public void testNamedArgumentInvoke() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/namedArgumentInvoke.kt");
+            }
 
-        @TestMetadata("super.kt")
-        public void testSuper() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/super.kt");
-        }
+            @TestMetadata("noArgumentInvoke.kt")
+            public void testNoArgumentInvoke() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/noArgumentInvoke.kt");
+            }
 
-        @TestMetadata("typeArguments.kt")
-        public void testTypeArguments() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/typeArguments.kt");
-        }
+            @TestMetadata("notOperator.kt")
+            public void testNotOperator() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/notOperator.kt");
+            }
 
-        @TestMetadata("unacceptableVararg.kt")
-        public void testUnacceptableVararg() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/unacceptableVararg.kt");
-        }
+            @TestMetadata("typeAndValueArgument.kt")
+            public void testTypeAndValueArgument() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/typeAndValueArgument.kt");
+            }
 
-        @TestMetadata("valueArgument.kt")
-        public void testValueArgument() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator/valueArgument.kt");
+            @TestMetadata("typeArgumentAndFunctionLiteral.kt")
+            public void testTypeArgumentAndFunctionLiteral() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/typeArgumentAndFunctionLiteral.kt");
+            }
+
+            @TestMetadata("valueAndFunctionLiteralInvoke.kt")
+            public void testValueAndFunctionLiteralInvoke() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/valueAndFunctionLiteralInvoke.kt");
+            }
+
+            @TestMetadata("valueArgumentInvoke.kt")
+            public void testValueArgumentInvoke() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/valueArgumentInvoke.kt");
+            }
+
+            @TestMetadata("varargInvoke.kt")
+            public void testVarargInvoke() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/varargInvoke.kt");
+            }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/intentions/conventionNameCalls/replaceContains")
-    public static class ReplaceContains extends AbstractFe10BindingIntentionTest {
+    @TestMetadata("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary")
+    public static class ConvertSecondaryConstructorToPrimary extends AbstractFe10BindingIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("containsFromJava.kt")
-        public void testContainsFromJava() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/containsFromJava.kt");
+        @TestMetadata("assignmentToGlobalVariable.kt")
+        public void testAssignmentToGlobalVariable() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/assignmentToGlobalVariable.kt");
         }
 
-        @TestMetadata("containsInExpression.kt")
-        public void testContainsInExpression() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/containsInExpression.kt");
+        @TestMetadata("defaultValueChain.kt")
+        public void testDefaultValueChain() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/defaultValueChain.kt");
         }
 
-        @TestMetadata("extensionFunction.kt")
-        public void testExtensionFunction() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/extensionFunction.kt");
+        @TestMetadata("init.kt")
+        public void testInit() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/init.kt");
         }
 
-        @TestMetadata("functionLiteralArgument.kt")
-        public void testFunctionLiteralArgument() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/functionLiteralArgument.kt");
+        @TestMetadata("initAndParams.kt")
+        public void testInitAndParams() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/initAndParams.kt");
         }
 
-        @TestMetadata("functionLiteralArgumentAfterSemicolon.kt")
-        public void testFunctionLiteralArgumentAfterSemicolon() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/functionLiteralArgumentAfterSemicolon.kt");
+        @TestMetadata("nonReachable.kt")
+        public void testNonReachable() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/nonReachable.kt");
         }
 
-        @TestMetadata("functionLiteralArgumentAtStartOfBlock.kt")
-        public void testFunctionLiteralArgumentAtStartOfBlock() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/functionLiteralArgumentAtStartOfBlock.kt");
+        @TestMetadata("nonReachableLoop.kt")
+        public void testNonReachableLoop() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/nonReachableLoop.kt");
         }
 
-        @TestMetadata("functionLiteralArgumentInExpression.kt")
-        public void testFunctionLiteralArgumentInExpression() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/functionLiteralArgumentInExpression.kt");
+        @TestMetadata("propertyWithGetter.kt")
+        public void testPropertyWithGetter() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/propertyWithGetter.kt");
         }
 
-        @TestMetadata("invalidArgument.kt")
-        public void testInvalidArgument() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/invalidArgument.kt");
+        @TestMetadata("propertyWithSetter.kt")
+        public void testPropertyWithSetter() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/propertyWithSetter.kt");
         }
 
-        @TestMetadata("missingArgument.kt")
-        public void testMissingArgument() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/missingArgument.kt");
+        @TestMetadata("protectedConstructor.kt")
+        public void testProtectedConstructor() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/protectedConstructor.kt");
         }
 
-        @TestMetadata("missingDefaultArgument.kt")
-        public void testMissingDefaultArgument() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/missingDefaultArgument.kt");
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/simple.kt");
         }
 
-        @TestMetadata("multipleArguments.kt")
-        public void testMultipleArguments() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/multipleArguments.kt");
+        @TestMetadata("useParam.kt")
+        public void testUseParam() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/useParam.kt");
         }
 
-        @TestMetadata("notContains.kt")
-        public void testNotContains() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/notContains.kt");
+        @TestMetadata("varArg.kt")
+        public void testVarArg() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/varArg.kt");
         }
 
-        @TestMetadata("qualifier.kt")
-        public void testQualifier() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/qualifier.kt");
+        @TestMetadata("varargVal.kt")
+        public void testVarargVal() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/varargVal.kt");
         }
 
-        @TestMetadata("simpleArgument.kt")
-        public void testSimpleArgument() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/simpleArgument.kt");
+        @TestMetadata("withBaseAliasImplicit.kt")
+        public void testWithBaseAliasImplicit() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withBaseAliasImplicit.kt");
         }
 
-        @TestMetadata("simpleStringLiteral.kt")
-        public void testSimpleStringLiteral() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/simpleStringLiteral.kt");
+        @TestMetadata("withBaseClass.kt")
+        public void testWithBaseClass() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withBaseClass.kt");
         }
 
-        @TestMetadata("super.kt")
-        public void testSuper() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/super.kt");
+        @TestMetadata("withBaseClassImplicit.kt")
+        public void testWithBaseClassImplicit() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withBaseClassImplicit.kt");
         }
 
-        @TestMetadata("twoArgsContainsFromJava.kt")
-        public void testTwoArgsContainsFromJava() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/twoArgsContainsFromJava.kt");
+        @TestMetadata("withBaseClassNoArgs.kt")
+        public void testWithBaseClassNoArgs() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withBaseClassNoArgs.kt");
         }
 
-        @TestMetadata("typeArguments.kt")
-        public void testTypeArguments() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/typeArguments.kt");
+        @TestMetadata("withComments.kt")
+        public void testWithComments() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withComments.kt");
         }
 
-        @TestMetadata("unacceptableVararg1.kt")
-        public void testUnacceptableVararg1() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/unacceptableVararg1.kt");
+        @TestMetadata("withComposedModifiers.kt")
+        public void testWithComposedModifiers() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withComposedModifiers.kt");
         }
 
-        @TestMetadata("unacceptableVararg2.kt")
-        public void testUnacceptableVararg2() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/unacceptableVararg2.kt");
+        @TestMetadata("withDelegation.kt")
+        public void testWithDelegation() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withDelegation.kt");
         }
 
-        @TestMetadata("withoutOperatorModifier.kt")
-        public void testWithoutOperatorModifier() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceContains/withoutOperatorModifier.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke")
-    public static class ReplaceInvoke extends AbstractFe10BindingIntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        @TestMetadata("withDifferentTypeProperty.kt")
+        public void testWithDifferentTypeProperty() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withDifferentTypeProperty.kt");
         }
 
-        @TestMetadata("dotQualifiedReceiver.kt")
-        public void testDotQualifiedReceiver() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/dotQualifiedReceiver.kt");
+        @TestMetadata("withInterfaceAlias.kt")
+        public void testWithInterfaceAlias() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withInterfaceAlias.kt");
         }
 
-        @TestMetadata("dotQualifiedReceiver2.kt")
-        public void testDotQualifiedReceiver2() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/dotQualifiedReceiver2.kt");
+        @TestMetadata("withModifiers.kt")
+        public void testWithModifiers() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withModifiers.kt");
         }
 
-        @TestMetadata("dotQualifiedReceiver3.kt")
-        public void testDotQualifiedReceiver3() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/dotQualifiedReceiver3.kt");
+        @TestMetadata("withParameters.kt")
+        public void testWithParameters() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withParameters.kt");
         }
 
-        @TestMetadata("expressionReceiver.kt")
-        public void testExpressionReceiver() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/expressionReceiver.kt");
+        @TestMetadata("withPrimary.kt")
+        public void testWithPrimary() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withPrimary.kt");
         }
 
-        @TestMetadata("extensionFunction.kt")
-        public void testExtensionFunction() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/extensionFunction.kt");
-        }
-
-        @TestMetadata("functionLiteralInvoke.kt")
-        public void testFunctionLiteralInvoke() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/functionLiteralInvoke.kt");
-        }
-
-        @TestMetadata("invokeInExpression.kt")
-        public void testInvokeInExpression() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/invokeInExpression.kt");
-        }
-
-        @TestMetadata("java.kt")
-        public void testJava() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/java.kt");
-        }
-
-        @TestMetadata("namedArgumentInvoke.kt")
-        public void testNamedArgumentInvoke() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/namedArgumentInvoke.kt");
-        }
-
-        @TestMetadata("noArgumentInvoke.kt")
-        public void testNoArgumentInvoke() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/noArgumentInvoke.kt");
-        }
-
-        @TestMetadata("notOperator.kt")
-        public void testNotOperator() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/notOperator.kt");
-        }
-
-        @TestMetadata("typeAndValueArgument.kt")
-        public void testTypeAndValueArgument() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/typeAndValueArgument.kt");
-        }
-
-        @TestMetadata("typeArgumentAndFunctionLiteral.kt")
-        public void testTypeArgumentAndFunctionLiteral() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/typeArgumentAndFunctionLiteral.kt");
-        }
-
-        @TestMetadata("valueAndFunctionLiteralInvoke.kt")
-        public void testValueAndFunctionLiteralInvoke() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/valueAndFunctionLiteralInvoke.kt");
-        }
-
-        @TestMetadata("valueArgumentInvoke.kt")
-        public void testValueArgumentInvoke() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/valueArgumentInvoke.kt");
-        }
-
-        @TestMetadata("varargInvoke.kt")
-        public void testVarargInvoke() throws Exception {
-            runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/varargInvoke.kt");
+        @TestMetadata("withProperties.kt")
+        public void testWithProperties() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withProperties.kt");
         }
     }
 }

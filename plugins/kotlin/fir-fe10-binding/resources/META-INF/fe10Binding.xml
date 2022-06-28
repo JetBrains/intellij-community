@@ -20,6 +20,13 @@
       <category>Kotlin</category>
     </intentionAction>
 
+    <intentionAction>
+      <className>org.jetbrains.kotlin.idea.intentions.ConvertSecondaryConstructorToPrimaryIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.AddOperatorModifierInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
@@ -93,6 +100,14 @@
                      level="INFORMATION"
                      language="kotlin"
                      key="inspection.convert.pair.constructor.to.to.function.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.ConvertSecondaryConstructorToPrimaryInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.convert.secondary.constructor.to.primary.display.name" bundle="messages.KotlinBundle"/>
 
   </extensions>
 </idea-plugin>

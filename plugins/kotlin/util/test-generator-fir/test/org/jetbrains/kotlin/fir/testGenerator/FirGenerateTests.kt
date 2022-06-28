@@ -229,6 +229,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFe10BindingIntentionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/intentions/conventionNameCalls", pattern = pattern)
+            model("testData/intentions/convertSecondaryConstructorToPrimary", pattern = pattern)
         }
     }
 
