@@ -8,6 +8,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeFormatter
+import java.util.*
 import java.util.stream.Collectors
 import kotlin.io.path.div
 
@@ -45,7 +46,7 @@ internal object SettingsSnapshotZipSerializer {
 
   private fun serializeMetaInfo(metaInfo: SettingsSnapshot.MetaInfo): ByteArray {
     val formattedDate = DateTimeFormatter.ISO_INSTANT.format(metaInfo.dateCreated)
-    return ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsBytes(MetaInfo(formattedDate))
+    return ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsBytes(MetaInfo(formattedDate, metaInfo.applicationId.toString()))
   }
 
   private fun parseMetaInfo(path: Path): SettingsSnapshot.MetaInfo {
@@ -54,7 +55,7 @@ internal object SettingsSnapshotZipSerializer {
       if (infoFile.exists()) {
         val metaInfo = ObjectMapper().readValue(infoFile.readText(), MetaInfo::class.java)
         val date = DateTimeFormatter.ISO_INSTANT.parse(metaInfo.date, Instant::from)
-        return SettingsSnapshot.MetaInfo(date)
+        return SettingsSnapshot.MetaInfo(date, UUID.fromString(metaInfo.applicationId))
       }
       else {
         LOG.warn("Timestamp file doesn't exist")
@@ -63,14 +64,16 @@ internal object SettingsSnapshotZipSerializer {
     catch (e: Throwable) {
       LOG.error("Couldn't read .metainfo from $SETTINGS_SYNC_SNAPSHOT_ZIP", e)
     }
-    return SettingsSnapshot.MetaInfo(Instant.now())
+    return SettingsSnapshot.MetaInfo(Instant.now(), applicationId = null)
   }
 
   private class MetaInfo() {
     lateinit var date: String
+    lateinit var applicationId: String
 
-    constructor(date: String) : this() {
+    constructor(date: String, applicationId: String) : this() {
       this.date = date
+      this.applicationId = applicationId
     }
   }
 }

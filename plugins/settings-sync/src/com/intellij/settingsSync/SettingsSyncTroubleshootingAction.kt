@@ -57,7 +57,14 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
     try {
       val version =
         ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-          remoteCommunicator.getLatestVersion()
+          val fileVersion = remoteCommunicator.getLatestVersion()
+          if (fileVersion == null) {
+            null
+          }
+          else {
+            val zip = downloadToZip(fileVersion, remoteCommunicator)
+            Version(fileVersion, SettingsSnapshotZipSerializer.extractFromZip(zip!!.toPath()))
+          }
         }, SettingsSyncBundle.message("troubleshooting.loading.info.progress.dialog.title"), false, e.project)
       TroubleshootingDialog(e.project, remoteCommunicator, version).show()
     }
@@ -72,9 +79,11 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
     }
   }
 
+  private data class Version(val fileVersion: FileVersionInfo, val snapshot: SettingsSnapshot?)
+
   private class TroubleshootingDialog(val project: Project?,
                                       val remoteCommunicator: CloudConfigServerCommunicator,
-                                      val latestVersion: FileVersionInfo?) : DialogWrapper(project, true) {
+                                      val latestVersion: Version?) : DialogWrapper(project, true) {
 
     val userData = SettingsSyncAuthService.getInstance().getUserData()
 
@@ -95,6 +104,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         serverUrlRow()
         loginNameRow(userData)
         emailRow(userData)
+        appIdRow()
 
         if (latestVersion == null) {
           row {
@@ -103,7 +113,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         }
         else {
           row { label(SettingsSyncBundle.message("troubleshooting.dialog.latest.version.label", SETTINGS_SYNC_SNAPSHOT_ZIP)).bold() }
-          versionRow(latestVersion, remoteCommunicator)
+          versionRow(latestVersion)
 
           row {
             button(SettingsSyncBundle.message("troubleshooting.dialog.show.history.button")) {
@@ -142,34 +152,38 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         copyableLabel(userData?.email)
       }.layout(RowLayout.PARENT_GRID)
 
-    private fun Panel.versionRow(version: FileVersionInfo, remoteCommunicator: CloudConfigServerCommunicator) = row {
+    private fun Panel.appIdRow() =
+      row {
+        label(SettingsSyncBundle.message("troubleshooting.dialog.applicationId.label"))
+        copyableLabel(SettingsSyncLocalSettings.getInstance().applicationId.toString())
+      }
+
+    private fun Panel.versionRow(version: Version) = row {
       label(SettingsSyncBundle.message("troubleshooting.dialog.version.date.label"))
-      copyableLabel(formatDate(version.modifiedDate))
+      copyableLabel(formatDate(version.fileVersion.modifiedDate))
 
       label(SettingsSyncBundle.message("troubleshooting.dialog.version.id.label"))
-      copyableLabel(version.versionId)
+      copyableLabel(version.fileVersion.versionId)
+
+      val snapshot = version.snapshot
+      if (snapshot != null) {
+        label(SettingsSyncBundle.message("troubleshooting.dialog.applicationId.label"))
+        val appId = snapshot.metaInfo.applicationId
+        val suffix = if (appId == SettingsSyncLocalSettings.getInstance().applicationId) " (this) " else " (other)"
+        val text = if (appId == null) "Unknown" else appId.toString() + suffix
+        copyableLabel(text)
+      }
 
       actionButton(object : DumbAwareAction(AllIcons.Actions.Download) {
         override fun actionPerformed(e: AnActionEvent) {
-          downloadVersion(remoteCommunicator, version, e.project)
+          downloadVersion(version.fileVersion, e.project)
         }
       })
     }
 
-    private fun downloadVersion(remoteCommunicator: CloudConfigServerCommunicator,
-                                version: FileVersionInfo,
-                                project: Project?) {
+    private fun downloadVersion(version: FileVersionInfo, project: Project?) {
       val zipFile = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<File?, Exception> {
-        val stream = remoteCommunicator.downloadSnapshot(version) ?: return@ThrowableComputable null
-        try {
-          val tempFile = FileUtil.createTempFile(getSnapshotFileName(version), null)
-          FileUtil.writeToFile(tempFile, stream.readAllBytes())
-          tempFile
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-          null
-        }
+        downloadToZip(version, remoteCommunicator)
       }, SettingsSyncBundle.message("troubleshooting.dialog.downloading.settings.from.server.progress.title"), false, project)
 
       if (zipFile != null) {
@@ -185,10 +199,6 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
       }
     }
 
-    private fun getSnapshotFileName(version: FileVersionInfo) = "settings-sync-snapshot-${formatDate(version.modifiedDate)}.zip"
-
-    private fun formatDate(date: Date) = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(date)
-
     private fun showFileDownloadedMessage(zipFile: File, @Nls message: String) {
       if (Messages.OK == Messages.showOkCancelDialog(contentPane, message, "",
                                                      RevealFileAction.getActionName(), CommonBundle.getCancelButtonText(), null)) {
@@ -200,13 +210,20 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
                                   remoteCommunicator: CloudConfigServerCommunicator,
                                   loginName: String) {
       val history = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-        remoteCommunicator.fetchHistory()
+        remoteCommunicator.fetchHistory().mapIndexed { index, fileVersion ->
+          val snapshot = if (index < 10) {
+            val zip = downloadToZip(fileVersion, remoteCommunicator)
+            SettingsSnapshotZipSerializer.extractFromZip(zip!!.toPath())
+          }
+          else null
+          Version(fileVersion, snapshot)
+        }
       }, SettingsSyncBundle.message("troubleshooting.fetching.history.progress.title"), false, project)
 
       val dialogBuilder = DialogBuilder(contentPane).title(SettingsSyncBundle.message("troubleshooting.settings.history.dialog.title"))
       val historyPanel = panel {
         for (version in history) {
-          versionRow(version, remoteCommunicator).layout(RowLayout.PARENT_GRID)
+          versionRow(version).layout(RowLayout.PARENT_GRID)
         }
       }.withBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP))
 
@@ -227,7 +244,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
 
     private fun downloadFullHistory(project: Project?,
                                     remoteCommunicator: CloudConfigServerCommunicator,
-                                    history: List<FileVersionInfo>,
+                                    history: List<Version>,
                                     loginName: String) {
       val compoundZip = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
         val fileName = "settings-server-history-${FileUtil.sanitizeFileName(loginName)}-${formatDate(Date())}.zip"
@@ -239,12 +256,13 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
             indicator.checkCanceled()
             indicator.fraction = (step.toDouble() / history.size)
 
-            val stream = remoteCommunicator.downloadSnapshot(version)
+            val fileVersion = version.fileVersion
+            val stream = remoteCommunicator.downloadSnapshot(fileVersion)
             if (stream != null) {
-              zip.addFile(getSnapshotFileName(version), stream)
+              zip.addFile(getSnapshotFileName(fileVersion), stream)
             }
             else {
-              LOG.warn("Couldn't download snapshot for version made on ${version.modifiedDate}")
+              LOG.warn("Couldn't download snapshot for version made on ${fileVersion.modifiedDate}")
             }
           }
         }
@@ -280,3 +298,20 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
     val LOG = logger<SettingsSyncTroubleshootingAction>()
   }
 }
+
+private fun downloadToZip(version: FileVersionInfo, remoteCommunicator: CloudConfigServerCommunicator): File? {
+  val stream = remoteCommunicator.downloadSnapshot(version) ?: return null
+  try {
+    val tempFile = FileUtil.createTempFile(getSnapshotFileName(version), null)
+    FileUtil.writeToFile(tempFile, stream.readAllBytes())
+    return tempFile
+  }
+  catch (e: Throwable) {
+    SettingsSyncTroubleshootingAction.LOG.error(e)
+    return null
+  }
+}
+
+private fun getSnapshotFileName(version: FileVersionInfo) = "settings-sync-snapshot-${formatDate(version.modifiedDate)}.zip"
+
+private fun formatDate(date: Date) = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(date)

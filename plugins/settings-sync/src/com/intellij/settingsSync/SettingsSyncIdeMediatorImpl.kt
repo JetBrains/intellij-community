@@ -103,7 +103,8 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       return
     }
 
-    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now()), setOf(FileState.Modified(file, content, size)))
+    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), SettingsSyncLocalSettings.getInstance().applicationId),
+                                    setOf(FileState.Modified(file, content, size)))
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
@@ -162,7 +163,8 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       deleteOrLogError(file)
     }
     if (deleted) {
-      val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now()), setOf(FileState.Deleted(adjustedSpec)))
+      val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), SettingsSyncLocalSettings.getInstance().applicationId),
+                                      setOf(FileState.Deleted(adjustedSpec)))
       SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
     }
     return deleted

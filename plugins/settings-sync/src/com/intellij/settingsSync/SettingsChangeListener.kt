@@ -23,7 +23,7 @@ internal sealed class SyncSettingsEvent {
 
 internal data class SettingsSnapshot(val metaInfo: MetaInfo, val fileStates: Set<FileState>) {
 
-  data class MetaInfo(val dateCreated: Instant)
+  data class MetaInfo(val dateCreated: Instant, val applicationId: UUID?)
 
   fun isEmpty(): Boolean = fileStates.isEmpty()
 }

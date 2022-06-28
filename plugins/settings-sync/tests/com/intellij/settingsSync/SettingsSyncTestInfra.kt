@@ -46,7 +46,8 @@ internal fun PersistentStateComponent<*>.serialize(): ByteArray {
 internal fun settingsSnapshot(date: Instant = Instant.now(), build: SettingsSnapshotBuilder.() -> Unit) : SettingsSnapshot {
   val builder = SettingsSnapshotBuilder()
   builder.build()
-  return SettingsSnapshot(SettingsSnapshot.MetaInfo(date), builder.fileStates.toSet())
+  return SettingsSnapshot(SettingsSnapshot.MetaInfo(date, SettingsSyncLocalSettings.getInstance().applicationId),
+                          builder.fileStates.toSet())
 }
 
 internal class SettingsSnapshotBuilder {
