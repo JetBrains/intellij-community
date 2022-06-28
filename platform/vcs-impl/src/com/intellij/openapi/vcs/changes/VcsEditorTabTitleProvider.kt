@@ -3,24 +3,20 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.editor.DiffRequestProcessorEditor
 import com.intellij.diff.tools.combined.CombinedDiffModelRepository
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.vcs.changes.actions.diff.COMBINED_DIFF_PREVIEW_TAB_NAME
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class VcsEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
@@ -52,10 +48,7 @@ class VcsEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
     if (EDT.isCurrentThreadEdt()) {
       return supplier()
     }
-    return runBlockingCancellable {
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        blockingContext(supplier)
-      }
-    }
+    val future = EdtExecutorService.getInstance().submit(supplier, ModalityState.any())
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(future)
   }
 }
