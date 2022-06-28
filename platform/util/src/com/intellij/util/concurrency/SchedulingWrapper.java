@@ -296,7 +296,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
   /**
    * Returns the trigger time of a delayed action.
    */
-  static long triggerTime(@NotNull AppDelayQueue queue, long delay, TimeUnit unit) {
+  static long triggerTime(@NotNull AppDelayQueue queue, long delay, @NotNull TimeUnit unit) {
     return triggerTime(queue, unit.toNanos(delay < 0 ? 0 : delay));
   }
 
@@ -350,15 +350,19 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   @NotNull
   <T> MyScheduledFutureTask<T> delayedExecute(@NotNull MyScheduledFutureTask<T> t) {
-    if (isShutdown()) {
-      throw new RejectedExecutionException("Already shutdown");
-    }
+    checkAlreadyShutdown();
     delayQueue.add(t);
     if (t.getDelay(TimeUnit.DAYS) > 31 && !t.isPeriodic()) {
       // guard against inadvertent queue overflow
       throw new IllegalArgumentException("Unsupported crazy delay " + t.getDelay(TimeUnit.DAYS) + " days: " + BoundedTaskExecutor.info(t));
     }
     return t;
+  }
+
+  private void checkAlreadyShutdown() {
+    if (isShutdown()) {
+      throw new RejectedExecutionException("Already shutdown");
+    }
   }
 
   @NotNull

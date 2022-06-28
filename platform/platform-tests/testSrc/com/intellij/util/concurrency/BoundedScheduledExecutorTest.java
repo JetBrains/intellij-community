@@ -4,6 +4,7 @@ package com.intellij.util.concurrency;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.TripleFunction;
@@ -224,18 +225,8 @@ public class BoundedScheduledExecutorTest extends TestCase {
     assertTrue(executor.isShutdown());
     assertEquals(N, runnables.size());
 
-    try {
-      executor.schedule(EmptyRunnable.getInstance(), 10, TimeUnit.SECONDS);
-      fail("Must reject");
-    }
-    catch (RejectedExecutionException ignored) {
-    }
-    try {
-      executor.execute(EmptyRunnable.getInstance());
-      fail("Must reject");
-    }
-    catch (RejectedExecutionException ignored) {
-    }
+    UsefulTestCase.assertThrows(RejectedExecutionException.class, ()-> executor.schedule(EmptyRunnable.getInstance(), 10, TimeUnit.SECONDS));
+    UsefulTestCase.assertThrows(RejectedExecutionException.class, () -> executor.execute(EmptyRunnable.getInstance()));
 
     for (int i = 0; i < N; i++) {
       assertTrue(futures[i].isCancelled());
@@ -257,18 +248,8 @@ public class BoundedScheduledExecutorTest extends TestCase {
     }
     executor.shutdown();
     assertTrue(executor.isShutdown());
-    try {
-      executor.schedule(EmptyRunnable.getInstance(), 10, TimeUnit.SECONDS);
-      fail("Must reject");
-    }
-    catch (RejectedExecutionException ignored) {
-    }
-    try {
-      executor.execute(EmptyRunnable.getInstance());
-      fail("Must reject");
-    }
-    catch (RejectedExecutionException ignored) {
-    }
+    UsefulTestCase.assertThrows(RejectedExecutionException.class, ()-> executor.schedule(EmptyRunnable.getInstance(), 10, TimeUnit.SECONDS));
+    UsefulTestCase.assertThrows(RejectedExecutionException.class, () -> executor.execute(EmptyRunnable.getInstance()));
 
     for (int i = 0; i < N; i++) {
       assertTrue(futures[i].isCancelled());
