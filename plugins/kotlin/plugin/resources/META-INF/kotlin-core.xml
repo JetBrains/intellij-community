@@ -58,8 +58,8 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner" preload="true"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.KotlinTypingListenerService" preload="true"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.PluginStartupService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.KotlinPluginDisposable"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.util.ProjectJob"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder"/>

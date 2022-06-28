@@ -4,19 +4,15 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.project.Project
-import com.intellij.psi.search.searches.IndexPatternSearch
 import org.jetbrains.kotlin.idea.configuration.notifications.showEapAdvertisementNotification
-import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTodoSearcher
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 
-class PluginStartupService : Disposable {
-    fun register() {
+class KotlinTypingListenerService : Disposable {
+    init {
         val application = ApplicationManager.getApplication()
         if (!application.isUnitTestMode && !application.isHeadlessEnvironment) {
             val eventMulticaster = EditorFactory.getInstance().eventMulticaster
@@ -36,8 +32,4 @@ class PluginStartupService : Disposable {
     }
 
     override fun dispose() = Unit
-
-    companion object {
-        fun getInstance(project: Project): PluginStartupService = project.service()
-    }
 }

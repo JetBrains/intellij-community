@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinPluginCompatibilityVerifier.checkCompatibility
 import org.jetbrains.kotlin.idea.configuration.notifications.notifyKotlinStyleUpdateIfNeeded
-import org.jetbrains.kotlin.idea.configuration.notifications.showEapAdvertisementNotification
 import org.jetbrains.kotlin.idea.configuration.notifications.showEapSurveyNotification
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter.Companion.setupReportingFromRelease
 import org.jetbrains.kotlin.idea.search.containsKotlinFile
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -25,10 +25,6 @@ import java.util.concurrent.Callable
 
 internal class PluginStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
-        val startupService = PluginStartupService.getInstance(project)
-
-        startupService.register()
-
         initializeDiagnostics()
         excludedFromUpdateCheckPlugins.add("org.jetbrains.kotlin")
         checkCompatibility()
@@ -39,7 +35,7 @@ internal class PluginStartupActivity : StartupActivity.Background {
 
         ReadAction.nonBlocking(Callable { project.containsKotlinFile() })
             .inSmartMode(project)
-            .expireWith(startupService)
+            .expireWith(KotlinPluginDisposable.getInstance(project))
             .finishOnUiThread(ModalityState.any()) { hasKotlinFiles ->
                 if (!hasKotlinFiles) return@finishOnUiThread
 
