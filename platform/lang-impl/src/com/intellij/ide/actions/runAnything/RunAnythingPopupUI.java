@@ -818,10 +818,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
     return result;
   }
 
-
-  @NotNull
   @Override
-  protected @NlsContexts.PopupAdvertisement String[] getInitialHints() {
+  protected @NlsContexts.PopupAdvertisement String @NotNull [] getInitialHints() {
     return new String[]{IdeBundle.message("run.anything.hint.initial.text",
                                           KeymapUtil.getKeystrokeText(UP_KEYSTROKE),
                                           KeymapUtil.getKeystrokeText(DOWN_KEYSTROKE))};
