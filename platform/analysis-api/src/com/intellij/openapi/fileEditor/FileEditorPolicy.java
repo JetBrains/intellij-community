@@ -18,13 +18,15 @@ public enum FileEditorPolicy {
 
   /**
    * Do not create default IDE editor (if any) for the file.
+   * <p></p>
+   * It is recommended to use {@link FileEditorPolicy#HIDE_OTHER_EDITORS} instead.
    */
   HIDE_DEFAULT_EDITOR,
 
   /**
    * Hide other editors (if any) for the file.
-   * If several instances of {@code FileEditorProvider} with such policy exist for the file,
-   * then the editors related to such instances of {@code FileEditorProvider} will be created,
+   * If at least one instance of {@code FileEditorProvider} with such policy exists for the file,
+   * then the editor(s) related to such instance(s) of {@code FileEditorProvider} will be created,
    * but the editors for other instances (if any) of {@code FileEditorProvider} will not.
    *
    * @see FileEditorProvider
