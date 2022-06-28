@@ -230,6 +230,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/intentions/conventionNameCalls", pattern = pattern)
             model("testData/intentions/convertSecondaryConstructorToPrimary", pattern = pattern)
+            model("testData/intentions/convertToStringTemplate", pattern = pattern)
         }
     }
 
