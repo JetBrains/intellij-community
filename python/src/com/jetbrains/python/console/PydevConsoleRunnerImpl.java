@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
@@ -32,6 +31,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -39,7 +39,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.ui.Messages;
@@ -545,7 +544,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       return resolvedPortBinding.getTargetEndpoint();
     };
 
-    configureVolumes(targetEnvironmentRequest);
+    addProjectAndModuleToRequest(targetEnvironmentRequest);
 
     PythonConsoleRunParams runParams = createConsoleRunParams(myWorkingDir, sdk, myEnvironmentVariables);
     PythonExecution pythonConsoleExecution = createPythonConsoleExecution(ideServerHostPortOnTarget, runParams, helpersAwareRequest);
@@ -606,20 +605,30 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return new CommandLineProcess(process, commandLineString, targetEnvironment);
   }
 
+
+  /**
+   * @return if console is module-specific then provide it.
+   */
+  protected @Nullable Module getModule() {
+    return null;
+  }
+
   /**
    * Adds upload volumes to request, so console will have access to required files
    */
-  protected void configureVolumes(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    VirtualFile projectDir = ProjectUtil.guessProjectDir(myProject);
-    if (projectDir != null) {
-      // TODO [Targets API] The path where project files go should be included in Python Console Target's setup
-      TargetEnvironment.TargetPath.Temporary targetPath = new TargetEnvironment.TargetPath.Temporary();
-      targetEnvironmentRequest.getUploadVolumes().add(new TargetEnvironment.UploadRoot(projectDir.toNioPath(), targetPath));
+  private void addProjectAndModuleToRequest(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+    var module = getModule();
+    Module[] modules;
+    if (module != null) {
+      // Use module if provided
+      modules = new Module[1];
+      modules[0] = module;
     }
     else {
-      LOG.warn(MessageFormat.format("Unable to guess project directory for project '{0}'." +
-                                    " Project files might be unavailable in Python Console.", myProject));
+      // Use all modules otherwise
+      modules = ModuleManager.getInstance(myProject).getModules();
     }
+    PythonScripts.ensureProjectAndModuleDirsAreOnTarget(targetEnvironmentRequest, myProject, modules);
   }
 
   private static class PyRemoteSocketToLocalHostProviderStub implements PyRemoteSocketToLocalHostProvider {
