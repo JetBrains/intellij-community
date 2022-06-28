@@ -1,9 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
@@ -12,38 +15,39 @@ import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDec
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.classes.*
-import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
-import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
+import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
+import org.jetbrains.kotlin.idea.caches.project.getPlatformModuleInfo
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
 open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport() {
     private val psiManager: PsiManager = PsiManager.getInstance(project)
-    private val languageVersionSettings = project.languageVersionSettings
 
     override fun getFacadeNames(packageFqName: FqName, scope: GlobalSearchScope): Collection<String> {
         val facadeFilesInPackage = project.runReadActionInSmartMode {
             KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, scope)
         }
+
         return facadeFilesInPackage.map { it.javaFileFacadeFqName.shortName().asString() }.toSet()
     }
 
@@ -137,12 +141,13 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         if (virtualFile != null) {
             when {
                 RootKindFilter.projectSources.matches(project, virtualFile) -> {
-                    val jvmDefaultMode = languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
-                    return KtLightClassForSourceDeclaration.create(classOrObject, jvmDefaultMode)
+                    return KtLightClassForSourceDeclaration.create(classOrObject)
                 }
+
                 RootKindFilter.libraryClasses.matches(project, virtualFile) -> {
                     return getLightClassForDecompiledClassOrObject(classOrObject, project)
                 }
+
                 RootKindFilter.librarySources.matches(project, virtualFile) -> {
                     return guardedRun {
                         SourceNavigationHelper.getOriginalClass(classOrObject) as? KtLightClass
@@ -150,12 +155,11 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
                 }
             }
         }
+
         if ((classOrObject.containingFile as? KtFile)?.analysisContext != null ||
             classOrObject.containingFile.originalFile.virtualFile != null
         ) {
-            // explicit request to create light class from dummy.kt
-            val jvmDefaultMode = languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
-            return KtLightClassForSourceDeclaration.create(classOrObject, jvmDefaultMode)
+            return KtLightClassForSourceDeclaration.create(classOrObject)
         }
 
         return null
@@ -199,7 +203,9 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         return facadeKtFiles.mapNotNull { facadeKtFile ->
             if (facadeKtFile is KtClsFile) {
                 val partClassFile = facadeKtFile.virtualFile.parent.findChild(partClassFileShortName) ?: return@mapNotNull null
-                val javaClsClass = DecompiledLightClassesFactory.createClsJavaClassFromVirtualFile(facadeKtFile, partClassFile, null, project) ?: return@mapNotNull null
+                val javaClsClass =
+                    DecompiledLightClassesFactory.createClsJavaClassFromVirtualFile(facadeKtFile, partClassFile, null, project)
+                        ?: return@mapNotNull null
                 KtLightClassForDecompiledDeclaration(javaClsClass, javaClsClass.parent, facadeKtFile, null)
             } else {
                 // TODO should we build light classes for parts from source?

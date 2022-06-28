@@ -9,5 +9,3 @@ class C : A() {
         return super.foo()
     }
 }
-
-// LAZINESS:NoConsistency
