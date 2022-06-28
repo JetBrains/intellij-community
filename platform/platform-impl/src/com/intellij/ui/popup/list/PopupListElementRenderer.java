@@ -148,6 +148,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       Dimension preferredSize = new JLabel("W").getPreferredSize();
       JBInsets.addTo(preferredSize, JBUI.insetsLeft(4));
       myMnemonicLabel.setPreferredSize(preferredSize);
+      myMnemonicLabel.setMinimumSize(JBUI.size(12, myMnemonicLabel.getMinimumSize().height));
     }
 
     myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
