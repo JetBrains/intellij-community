@@ -143,8 +143,6 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: Fe10WrapperContex
 
     protected abstract fun getPackageFqNameIfTopLevel(): FqName
 
-    private fun KtSymbol.toSignature(): IdSignature = context.withAnalysisSession { this@toSignature.toSignature() }
-
     override fun equals(other: Any?): Boolean {
         if (other === this) return true
         if (other !is KtSymbolBasedDeclarationDescriptor) return false
@@ -153,12 +151,12 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: Fe10WrapperContex
             return other.ktSymbol.psi == it
         }
 
-        return ktSymbol.toSignature() == other.ktSymbol.toSignature()
+        return ktSymbol == other.ktSymbol
     }
 
     override fun hashCode(): Int {
         ktSymbol.psi?.let { return it.hashCode() }
-        return ktSymbol.toSignature().hashCode()
+        return ktSymbol.hashCode()
     }
 
     override fun <R : Any?, D : Any?> accept(visitor: DeclarationDescriptorVisitor<R, D>?, data: D): R = noImplementation()
