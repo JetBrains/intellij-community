@@ -41,7 +41,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
-                                               MergeableUsage, Comparable<UsageInfo2UsageAdapter>,
+                                               MergeableUsage,
                                                RenameableUsage, DataProvider, UsagePresentation {
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
   private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
@@ -54,7 +54,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   private volatile Reference<UsageNodePresentation> myCachedPresentation;
   private volatile UsageType myUsageType;
 
-  public UsageInfo2UsageAdapter(final @NotNull UsageInfo usageInfo) {
+  public UsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
     myMergedUsageInfos = usageInfo;
 
@@ -102,7 +102,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return CompletableFuture.completedFuture(getMergedInfos());
   }
 
-  private static int getLineNumber(@NotNull Document document, final int startOffset) {
+  private static int getLineNumber(@NotNull Document document, int startOffset) {
     if (document.getTextLength() == 0) return 0;
     if (startOffset >= document.getTextLength()) return document.getLineCount();
     return document.getLineNumber(startOffset);
@@ -414,14 +414,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   }
 
   // by start offset
-  @Override
-  public int compareTo(@NotNull final UsageInfo2UsageAdapter o) {
+  public final int compareTo(@NotNull UsageInfo2UsageAdapter o) {
     return getUsageInfo().compareToByStartOffset(o.getUsageInfo());
   }
 
   @Override
   public void rename(@NotNull String newName) throws IncorrectOperationException {
-    final PsiReference reference = getUsageInfo().getReference();
+    PsiReference reference = getUsageInfo().getReference();
     assert reference != null : this;
     reference.handleElementRename(newName);
   }
@@ -449,7 +448,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   private long myModificationStamp;
   private long getCurrentModificationStamp() {
-    final PsiFile containingFile = getPsiFile();
+    PsiFile containingFile = getPsiFile();
     return containingFile == null ? -1L : containingFile.getViewProvider().getModificationStamp();
   }
 
@@ -499,7 +498,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @Override
   @NotNull
   public String getPlainText() {
-    final PsiElement element = getElement();
+    PsiElement element = getElement();
     VirtualFile file = getFile();
     boolean isNullOrBinary = file == null || file.getFileType().isBinary();
     if (element != null && isNullOrBinary) {
@@ -507,7 +506,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     }
     int startOffset;
     if (element != null && (startOffset = getNavigationOffset()) != -1) {
-      final Document document = getDocument();
+      Document document = getDocument();
       if (document != null) {
         int lineNumber = document.getLineNumber(startOffset);
         int lineStart = document.getLineStartOffset(lineNumber);

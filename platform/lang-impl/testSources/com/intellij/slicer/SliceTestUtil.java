@@ -110,7 +110,7 @@ public final class SliceTestUtil {
 
     int size = expectedChildren.size();
     assertEquals(message(startOffset, usage), size, children.size());
-    children.sort(Comparator.naturalOrder());
+    children.sort((o1, o2) -> o1.compareTo(o2));
 
     for (int i = 0; i < children.size(); i++) {
       checkUsages(children.get(i), expectedChildren.get(i));

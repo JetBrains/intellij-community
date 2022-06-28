@@ -43,7 +43,7 @@ public class RemoveUsageAction extends AnAction {
   private static void process(Usage @NotNull [] usages, @NotNull UsageView usageView) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (usages.length == 0) return;
-    Arrays.sort(usages, UsageViewImpl.USAGE_COMPARATOR);
+    Arrays.sort(usages, UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET);
     final Usage nextToSelect = getNextToSelect(usageView, usages[usages.length - 1]);
 
     usageView.removeUsagesBulk(Arrays.asList(usages));

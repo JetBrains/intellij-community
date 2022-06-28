@@ -125,7 +125,7 @@ public class UsageViewImpl implements UsageViewEx {
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected;
 
-  public static final Comparator<Usage> USAGE_COMPARATOR = (o1, o2) -> {
+  public static final Comparator<Usage> USAGE_COMPARATOR_BY_FILE_AND_OFFSET = (o1, o2) -> {
     if (o1 == o2) return 0;
     if (o1 == NullUsage.INSTANCE) return -1;
     if (o2 == NullUsage.INSTANCE) return 1;
@@ -1090,7 +1090,7 @@ public class UsageViewImpl implements UsageViewEx {
       captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     }
     List<Usage> allUsages = new ArrayList<>(myUsageNodes.keySet());
-    allUsages.sort(USAGE_COMPARATOR);
+    allUsages.sort(USAGE_COMPARATOR_BY_FILE_AND_OFFSET);
     Set<Usage> excludedUsages = getExcludedUsages();
     reset();
     myGroupingRules = getActiveGroupingRules(myProject, getUsageViewSettings(), getPresentation());
@@ -1874,7 +1874,7 @@ public class UsageViewImpl implements UsageViewEx {
   @NotNull
   public List<Usage> getSortedUsages() {
     List<Usage> usages = new ArrayList<>(getUsages());
-    usages.sort(USAGE_COMPARATOR);
+    usages.sort(USAGE_COMPARATOR_BY_FILE_AND_OFFSET);
     return usages;
   }
 

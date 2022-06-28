@@ -52,7 +52,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -146,27 +145,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       int weight2 = o2 == myTable.USAGES_FILTERED_OUT_SEPARATOR ? 3 : o2 == myTable.USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o2 == myTable.MORE_USAGES_SEPARATOR ? 1 : 0;
       if (weight1 != weight2) return weight1 - weight2;
 
-      if (o1 instanceof Comparable && o2 instanceof Comparable) {
-        //noinspection unchecked,rawtypes
-        return ((Comparable)o1).compareTo(o2);
-      }
-
-      VirtualFile v1 = UsageListCellRenderer.getVirtualFile(o1);
-      VirtualFile v2 = UsageListCellRenderer.getVirtualFile(o2);
-      String name1 = v1 == null ? null : v1.getName();
-      String name2 = v2 == null ? null : v2.getName();
-      int i = Comparing.compare(name1, name2);
-      if (i != 0) return i;
-      if (Comparing.equal(v1, v2)) {
-        FileEditorLocation loc1 = o1.getLocation();
-        FileEditorLocation loc2 = o2.getLocation();
-        return Comparing.compare(loc1, loc2);
-      }
-      else {
-        String path1 = v1 == null ? null : v1.getPath();
-        String path2 = v2 == null ? null : v2.getPath();
-        return Comparing.compare(path1, path2);
-      }
+      return UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET.compare(o1, o2);
     }
   }
 
