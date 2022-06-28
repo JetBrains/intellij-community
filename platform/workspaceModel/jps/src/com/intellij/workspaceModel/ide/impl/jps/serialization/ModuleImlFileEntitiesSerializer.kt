@@ -77,17 +77,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val moduleEntity = externalSerializer?.loadModuleEntity(reader, builder, errorReporter, virtualFileManager)
                          ?: loadModuleEntity(reader, builder, errorReporter, virtualFileManager)
       if (moduleEntity != null) {
-        // "res" is a temporal solution to catch the root cause of https://ea.jetbrains.com/browser/ea_problems/239676
-        var res = true
-        res = res && createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
-        res = res && externalSerializer?.createFacetSerializer()?.loadFacetEntities(builder, moduleEntity, reader) ?: true
-        if (!res) {
-          LOG.error(
-            "Facets are loaded with issues",
-            fileUrl.virtualFile?.let { AttachmentFactory.createAttachment(it).also { att -> att.isIncluded = true } },
-            externalSerializer?.fileUrl?.virtualFile?.let { AttachmentFactory.createAttachment(it).also { att -> att.isIncluded = true } },
-          )
-        }
+        createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
+        externalSerializer?.createFacetSerializer()?.loadFacetEntities(builder, moduleEntity, reader)
       }
     }
   }

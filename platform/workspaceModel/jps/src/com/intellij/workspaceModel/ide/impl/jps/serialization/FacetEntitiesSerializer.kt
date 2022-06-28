@@ -25,11 +25,11 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
    * This function should return void (Unit)
    * The current result value is a temporal solution to find the root cause of https://ea.jetbrains.com/browser/ea_problems/239676
    */
-  internal fun loadFacetEntities(builder: MutableEntityStorage, moduleEntity: ModuleEntity, reader: JpsFileContentReader): Boolean {
-    val facetManagerTag = reader.loadComponent(imlFileUrl.url, componentName, baseModuleDirPath) ?: return true
+  internal fun loadFacetEntities(builder: MutableEntityStorage, moduleEntity: ModuleEntity, reader: JpsFileContentReader) {
+    val facetManagerTag = reader.loadComponent(imlFileUrl.url, componentName, baseModuleDirPath) ?: return
     val facetManagerState = XmlSerializer.deserialize(facetManagerTag, FacetManagerState::class.java)
     val orderOfFacets = ArrayList<String>()
-    val res = loadFacetEntities(facetManagerState.facets, builder, moduleEntity, null, orderOfFacets)
+    loadFacetEntities(facetManagerState.facets, builder, moduleEntity, null, orderOfFacets)
     if (orderOfFacets.size > 1 && !externalStorage) {
       val entity = moduleEntity.facetOrder
       if (entity != null) {
@@ -43,12 +43,10 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
         })
       }
     }
-    return res
   }
 
   private fun loadFacetEntities(facetStates: List<FacetState>, builder: MutableEntityStorage, moduleEntity: ModuleEntity,
-                                underlyingFacet: FacetEntity?, orderOfFacets: MutableList<String>): Boolean {
-    var res = true
+                                underlyingFacet: FacetEntity?, orderOfFacets: MutableList<String>) {
     for (facetState in facetStates) {
       orderOfFacets.add(facetState.name)
       val configurationXmlTag = facetState.configuration?.let { JDOMUtil.write(it) }
@@ -63,8 +61,6 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
         if (existingFacet.configurationXmlTag == null) {
           facetEntity = builder.modifyEntity(existingFacet)  { this.configurationXmlTag = configurationXmlTag }
           facetEntity = builder.modifyEntity(facetEntity) { this.entitySource = source }
-        } else {
-          res = false
         }
       }
 
@@ -77,9 +73,8 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
           this.facet = facetEntity
         })
       }
-      res = res && loadFacetEntities(facetState.subFacets, builder, moduleEntity, facetEntity, orderOfFacets)
+      loadFacetEntities(facetState.subFacets, builder, moduleEntity, facetEntity, orderOfFacets)
     }
-    return res
   }
 
   internal fun saveFacetEntities(facets: List<FacetEntity>, writer: JpsFileContentWriter) {
