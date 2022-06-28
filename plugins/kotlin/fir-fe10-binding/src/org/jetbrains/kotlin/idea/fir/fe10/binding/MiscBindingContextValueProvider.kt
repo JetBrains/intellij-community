@@ -1,10 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
+import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import org.jetbrains.kotlin.idea.fir.fe10.toConstantValue
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.constants.CompileTimeConstant
+import org.jetbrains.kotlin.resolve.constants.TypedCompileTimeConstant
 import org.jetbrains.kotlin.types.KotlinType
 
 class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContext) {
@@ -13,6 +18,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
     init {
         bindingContext.registerGetterByKey(BindingContext.TYPE, this::getType)
         bindingContext.registerGetterByKey(BindingContext.THIS_TYPE_FOR_SUPER_EXPRESSION, this::getThisTypeForSuperExpression)
+        bindingContext.registerGetterByKey(BindingContext.COMPILE_TIME_VALUE, this::getCompileTimeValue)
     }
 
     private fun getType(ktTypeReference: KtTypeReference): KotlinType {
@@ -23,4 +29,22 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
 
     private fun getThisTypeForSuperExpression(superExpression: KtSuperExpression): KotlinType =
         context.withAnalysisSession { superExpression.getKtType() }?.toKotlinType(context) ?: context.errorHandling()
+
+    private fun getCompileTimeValue(key: KtExpression): CompileTimeConstant<*>? {
+        val ktConstantValue = context.withAnalysisSession { key.evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION) }
+            ?: return null
+        val constantValue = ktConstantValue.toConstantValue()
+        // only usesNonConstValAsConstant seems to be used in IDE code
+        val parameters = CompileTimeConstant.Parameters(
+            canBeUsedInAnnotation = false,
+            isPure = false,
+            isUnsignedNumberLiteral = false,
+            isUnsignedLongNumberLiteral = false,
+            usesVariableAsConstant = false,
+            usesNonConstValAsConstant = false,
+            isConvertableConstVal = false,
+            dontCreateILT = false
+        )
+        return TypedCompileTimeConstant(constantValue, context.moduleDescriptor, parameters)
+    }
 }

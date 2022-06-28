@@ -96,7 +96,7 @@ private fun KtAnnotationValue.toConstantValue(): ConstantValue<*> {
     }
 }
 
-private fun KtConstantValue.toConstantValue(): ConstantValue<*> =
+internal fun KtConstantValue.toConstantValue(): ConstantValue<*> =
     when (this) {
         is KtConstantValue.KtErrorConstantValue -> ErrorValue.create(errorMessage)
         else -> when (constantValueKind) {
