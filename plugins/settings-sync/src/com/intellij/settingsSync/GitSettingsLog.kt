@@ -217,7 +217,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       .onEnter { it.name != ".git" }
       .filter { it.isFile && it.name != ".gitignore" }
       .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), settingsSyncStorage) }
-    return SettingsSnapshot(MetaInfo(lastModifiedDate, SettingsSyncLocalSettings.getInstance().applicationId), files)
+    return SettingsSnapshot(MetaInfo(lastModifiedDate, getLocalApplicationInfo()), files)
   }
 
   override fun getIdePosition(): SettingsLog.Position {

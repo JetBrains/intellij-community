@@ -5,6 +5,7 @@ import com.intellij.configurationStore.serializeStateInto
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
+import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.util.toBufferExposingByteArray
 import com.intellij.util.xmlb.Constants
 import org.jdom.Element
@@ -43,11 +44,11 @@ internal fun PersistentStateComponent<*>.serialize(): ByteArray {
   return appElement.toBufferExposingByteArray().toByteArray()
 }
 
-internal fun settingsSnapshot(date: Instant = Instant.now(), build: SettingsSnapshotBuilder.() -> Unit) : SettingsSnapshot {
+internal fun settingsSnapshot(metaInfo: MetaInfo = MetaInfo(Instant.now(), getLocalApplicationInfo()),
+                              build: SettingsSnapshotBuilder.() -> Unit) : SettingsSnapshot {
   val builder = SettingsSnapshotBuilder()
   builder.build()
-  return SettingsSnapshot(SettingsSnapshot.MetaInfo(date, SettingsSyncLocalSettings.getInstance().applicationId),
-                          builder.fileStates.toSet())
+  return SettingsSnapshot(metaInfo, builder.fileStates.toSet())
 }
 
 internal class SettingsSnapshotBuilder {

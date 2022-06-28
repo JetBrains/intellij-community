@@ -44,9 +44,16 @@ internal object SettingsSnapshotZipSerializer {
     return SettingsSnapshot(metaInfo, fileStates)
   }
 
-  private fun serializeMetaInfo(metaInfo: SettingsSnapshot.MetaInfo): ByteArray {
-    val formattedDate = DateTimeFormatter.ISO_INSTANT.format(metaInfo.dateCreated)
-    return ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsBytes(MetaInfo(formattedDate, metaInfo.applicationId.toString()))
+  private fun serializeMetaInfo(snapshotMetaInfo: SettingsSnapshot.MetaInfo): ByteArray {
+    val formattedDate = DateTimeFormatter.ISO_INSTANT.format(snapshotMetaInfo.dateCreated)
+    val metaInfo = MetaInfo().apply {
+      date = formattedDate
+      applicationId = snapshotMetaInfo.appInfo?.applicationId.toString()
+      userName = snapshotMetaInfo.appInfo?.userName.toString()
+      hostName = snapshotMetaInfo.appInfo?.hostName.toString()
+      configFolder = snapshotMetaInfo.appInfo?.configFolder.toString()
+    }
+    return ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsBytes(metaInfo)
   }
 
   private fun parseMetaInfo(path: Path): SettingsSnapshot.MetaInfo {
@@ -55,7 +62,9 @@ internal object SettingsSnapshotZipSerializer {
       if (infoFile.exists()) {
         val metaInfo = ObjectMapper().readValue(infoFile.readText(), MetaInfo::class.java)
         val date = DateTimeFormatter.ISO_INSTANT.parse(metaInfo.date, Instant::from)
-        return SettingsSnapshot.MetaInfo(date, UUID.fromString(metaInfo.applicationId))
+        val appInfo = SettingsSnapshot.AppInfo(UUID.fromString(metaInfo.applicationId),
+                                               metaInfo.userName, metaInfo.hostName, metaInfo.configFolder)
+        return SettingsSnapshot.MetaInfo(date, appInfo)
       }
       else {
         LOG.warn("Timestamp file doesn't exist")
@@ -64,16 +73,14 @@ internal object SettingsSnapshotZipSerializer {
     catch (e: Throwable) {
       LOG.error("Couldn't read .metainfo from $SETTINGS_SYNC_SNAPSHOT_ZIP", e)
     }
-    return SettingsSnapshot.MetaInfo(Instant.now(), applicationId = null)
+    return SettingsSnapshot.MetaInfo(Instant.now(), appInfo = null)
   }
 
-  private class MetaInfo() {
+  private class MetaInfo {
     lateinit var date: String
     lateinit var applicationId: String
-
-    constructor(date: String, applicationId: String) : this() {
-      this.date = date
-      this.applicationId = applicationId
-    }
+    var userName: String = ""
+    var hostName: String = ""
+    var configFolder: String = ""
   }
 }

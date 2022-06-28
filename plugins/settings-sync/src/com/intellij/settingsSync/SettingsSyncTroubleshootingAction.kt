@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.components.JBLabel
@@ -104,7 +105,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         serverUrlRow()
         loginNameRow(userData)
         emailRow(userData)
-        appIdRow()
+        appInfoRow()
 
         if (latestVersion == null) {
           row {
@@ -152,25 +153,47 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         copyableLabel(userData?.email)
       }.layout(RowLayout.PARENT_GRID)
 
-    private fun Panel.appIdRow() =
+    private fun Panel.appInfoRow() {
+      val appInfo = getLocalApplicationInfo()
       row {
         label(SettingsSyncBundle.message("troubleshooting.dialog.applicationId.label"))
-        copyableLabel(SettingsSyncLocalSettings.getInstance().applicationId.toString())
-      }
+        copyableLabel(appInfo.applicationId)
+      }.layout(RowLayout.PARENT_GRID)
+      row {
+        label(SettingsSyncBundle.message("troubleshooting.dialog.username.label"))
+        copyableLabel(appInfo.userName)
+      }.layout(RowLayout.PARENT_GRID)
+      row {
+        label(SettingsSyncBundle.message("troubleshooting.dialog.hostname.label"))
+        copyableLabel(appInfo.hostName)
+      }.layout(RowLayout.PARENT_GRID)
+      row {
+        label(SettingsSyncBundle.message("troubleshooting.dialog.configFolder.label"))
+        copyableLabel(appInfo.configFolder)
+      }.layout(RowLayout.PARENT_GRID)
+    }
+
+    private fun String.shorten() = StringUtil.shortenTextWithEllipsis(this, 12, 0, true)
 
     private fun Panel.versionRow(version: Version) = row {
       label(SettingsSyncBundle.message("troubleshooting.dialog.version.date.label"))
       copyableLabel(formatDate(version.fileVersion.modifiedDate))
 
       label(SettingsSyncBundle.message("troubleshooting.dialog.version.id.label"))
-      copyableLabel(version.fileVersion.versionId)
+      copyableLabel(version.fileVersion.versionId.shorten())
 
       val snapshot = version.snapshot
       if (snapshot != null) {
-        label(SettingsSyncBundle.message("troubleshooting.dialog.applicationId.label"))
-        val appId = snapshot.metaInfo.applicationId
-        val suffix = if (appId == SettingsSyncLocalSettings.getInstance().applicationId) " (this) " else " (other)"
-        val text = if (appId == null) "Unknown" else appId.toString() + suffix
+        label(SettingsSyncBundle.message("troubleshooting.dialog.machineInfo.label"))
+        val appInfo = snapshot.metaInfo.appInfo
+        val text = if (appInfo != null) {
+          val appId = appInfo.applicationId
+          val thisOrThat = if (appId == SettingsSyncLocalSettings.getInstance().applicationId) "[this]  " else "[other]"
+          "$thisOrThat ${appId.toString().shorten()} - ${appInfo.userName} - ${appInfo.hostName} - ${appInfo.configFolder}"
+        }
+        else {
+          "Unknown"
+        }
         copyableLabel(text)
       }
 
@@ -314,4 +337,4 @@ private fun downloadToZip(version: FileVersionInfo, remoteCommunicator: CloudCon
 
 private fun getSnapshotFileName(version: FileVersionInfo) = "settings-sync-snapshot-${formatDate(version.modifiedDate)}.zip"
 
-private fun formatDate(date: Date) = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(date)
+private fun formatDate(date: Date) = SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.US).format(date)

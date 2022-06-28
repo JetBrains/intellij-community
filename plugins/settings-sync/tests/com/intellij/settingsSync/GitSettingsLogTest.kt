@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.createDirectories
@@ -17,6 +18,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Path
 import java.time.Instant
+import java.util.*
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 
@@ -136,7 +138,7 @@ internal class GitSettingsLogTest {
     settingsLog.initialize()
 
     val instant = Instant.ofEpochSecond(100500)
-    settingsLog.applyCloudState(settingsSnapshot(instant) {
+    settingsLog.applyCloudState(settingsSnapshot(SettingsSnapshot.MetaInfo(instant, AppInfo(UUID.randomUUID(), "", "", ""))) {
       fileState("options/editor.xml", "moreCloudEditorContent")
     })
     settingsLog.advanceMaster()
