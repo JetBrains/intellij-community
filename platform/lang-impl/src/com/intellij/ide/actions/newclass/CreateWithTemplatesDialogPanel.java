@@ -5,6 +5,7 @@ import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
@@ -13,7 +14,9 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
 
@@ -27,6 +30,9 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
         setTextFieldIcon(selectedValue.second);
       }
     });
+    if (ExperimentalUI.isNewUI()) {
+      myTemplatesList.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+    }
     selectTemplate(selectedItem);
     setTemplatesListVisible(templates.size() > 1);
   }
@@ -80,6 +86,19 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
                                                   boolean cellHasFocus) {
       JComponent delegate = (JComponent) delegateRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       delegate.setBorder(JBUI.Borders.empty(JBUIScale.scale(3), JBUIScale.scale(1)));
+      if (index == 0 && ExperimentalUI.isNewUI()) {
+        JPanel wrapper = new JPanel(new BorderLayout()) {
+          @Override
+          public AccessibleContext getAccessibleContext() {
+            return delegate.getAccessibleContext();
+          }
+        };
+        wrapper.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+        //noinspection UseDPIAwareBorders
+        wrapper.setBorder(new EmptyBorder(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth(), 0, 0, 0));
+        wrapper.add(delegate, BorderLayout.CENTER);
+        return wrapper;
+      }
       return delegate;
     }
   }
