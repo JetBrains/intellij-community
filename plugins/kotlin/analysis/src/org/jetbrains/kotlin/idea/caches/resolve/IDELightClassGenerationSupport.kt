@@ -3,12 +3,18 @@
 package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.Project
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ConcurrentFactoryMap
+import org.jetbrains.kotlin.asJava.LightClassBuilder
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
+import org.jetbrains.kotlin.asJava.builder.InvalidLightClassDataHolder
+import org.jetbrains.kotlin.asJava.builder.LightClassDataHolder
 import org.jetbrains.kotlin.asJava.classes.*
+import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.JvmCodegenUtil
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
@@ -19,6 +25,9 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.caches.lightClasses.IDELightClassContexts
+import org.jetbrains.kotlin.idea.caches.lightClasses.LazyLightClassDataHolder
+import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
@@ -30,7 +39,8 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import java.util.concurrent.ConcurrentMap
 
-class IDELightClassGenerationSupport : LightClassGenerationSupport() {
+class IDELightClassGenerationSupport(project: Project) : LightClassGenerationSupport() {
+
     private class KtUltraLightSupportImpl(private val element: KtElement) : KtUltraLightSupport {
 
         private val module = ModuleUtilCore.findModuleForPsiElement(element)
@@ -74,6 +84,45 @@ class IDELightClassGenerationSupport : LightClassGenerationSupport() {
     }
 
     override fun getUltraLightClassSupport(element: KtElement): KtUltraLightSupport = KtUltraLightSupportImpl(element)
+
+    private val scopeFileComparator = JavaElementFinder.byClasspathComparator(GlobalSearchScope.allScope(project))
+
+    override fun createDataHolderForClass(classOrObject: KtClassOrObject, builder: LightClassBuilder): LightClassDataHolder.ForClass {
+        return when {
+            classOrObject.shouldNotBeVisibleAsLightClass() -> InvalidLightClassDataHolder
+            classOrObject.isLocal -> LazyLightClassDataHolder(
+                builder,
+                exactContextProvider = { IDELightClassContexts.contextForLocalClassOrObject(classOrObject) }
+            ) { classOrObject.getDiagnosticsHolder() }
+
+            else -> LazyLightClassDataHolder(
+                builder,
+                exactContextProvider = { IDELightClassContexts.contextForNonLocalClassOrObject(classOrObject) }
+            ) { classOrObject.getDiagnosticsHolder() }
+        }
+    }
+
+    override fun createDataHolderForFacade(files: Collection<KtFile>, builder: LightClassBuilder): LightClassDataHolder.ForFacade {
+        assert(!files.isEmpty()) { "No files in facade" }
+
+        val sortedFiles = files.sortedWith(scopeFileComparator)
+
+        return LazyLightClassDataHolder(
+            builder,
+            exactContextProvider = { IDELightClassContexts.contextForFacade(sortedFiles) }
+        ) { files.first().getDiagnosticsHolder() }
+    }
+
+    override fun createDataHolderForScript(script: KtScript, builder: LightClassBuilder): LightClassDataHolder.ForScript {
+        return LazyLightClassDataHolder(
+            builder,
+            exactContextProvider = { IDELightClassContexts.contextForScript(script) }
+        ) { script.getDiagnosticsHolder() }
+    }
+
+    @OptIn(FrontendInternals::class)
+    private fun KtElement.getDiagnosticsHolder() =
+        getResolutionFacade().frontendService<LazyLightClassDataHolder.DiagnosticsHolder>()
 
     override fun resolveToDescriptor(declaration: KtDeclaration): DeclarationDescriptor? =
         declaration.resolveToDescriptorIfAny(BodyResolveMode.FULL)
