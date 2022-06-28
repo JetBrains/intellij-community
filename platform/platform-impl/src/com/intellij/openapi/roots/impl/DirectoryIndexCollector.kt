@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.impl
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 
@@ -27,19 +28,23 @@ class DirectoryIndexCollector : CounterUsagesCollector() {
     val BUILDING_ACTIVITY = GROUP.registerIdeActivity("building", startEventAdditionalFields = arrayOf(BUILD_REQUEST, BUILD_PART))
 
     @JvmField
-    val WORKSPACE_MODEL_STAGE = BUILDING_ACTIVITY.registerStage("workspaceModel")
+    val DURATION_MS_FIELD = EventFields.Long("duration_ms")
 
     @JvmField
-    val SDK_STAGE = BUILDING_ACTIVITY.registerStage("sdk")
+    val WORKSPACE_MODEL_STAGE_FINISHED = BUILDING_ACTIVITY.registerStage("workspaceModel.finished", arrayOf(DURATION_MS_FIELD))
 
     @JvmField
-    val ADDITIONAL_LIBRARIES_STAGE = BUILDING_ACTIVITY.registerStage("additionalLibraryRootsProvider")
+    val SDK_STAGE_FINISHED = BUILDING_ACTIVITY.registerStage("sdk.finished", arrayOf(DURATION_MS_FIELD))
 
     @JvmField
-    val EXCLUSION_POLICY_STAGE = BUILDING_ACTIVITY.registerStage("exclusionPolicy")
+    val ADDITIONAL_LIBRARIES_STAGE_FINISHED = BUILDING_ACTIVITY.registerStage("additionalLibraryRootsProvider.finished",
+                                                                              arrayOf(DURATION_MS_FIELD))
 
     @JvmField
-    val FINALIZING_STAGE = BUILDING_ACTIVITY.registerStage("finalizing")
+    val EXCLUSION_POLICY_STAGE_FINISHED = BUILDING_ACTIVITY.registerStage("exclusionPolicy.finished", arrayOf(DURATION_MS_FIELD))
+
+    @JvmField
+    val FINALIZING_STAGE_FINISHED = BUILDING_ACTIVITY.registerStage("finalizing.finished", arrayOf(DURATION_MS_FIELD))
   }
 
   override fun getGroup(): EventLogGroup {
@@ -62,28 +67,39 @@ class DirectoryIndexAnalyticsReporterImpl(private val project: Project) : Direct
   }
 
   private class ActivityReporter(private val impl: StructuredIdeActivity) : DirectoryIndexAnalyticsReporter.ActivityReporter {
-    override fun reportWorkspacePhaseStarted() {
-      impl.stageStarted(DirectoryIndexCollector.WORKSPACE_MODEL_STAGE)
+    override fun reportWorkspacePhaseStarted(): DirectoryIndexAnalyticsReporter.PhaseReporter {
+      return PhaseReporter(impl, DirectoryIndexCollector.WORKSPACE_MODEL_STAGE_FINISHED)
     }
 
-    override fun reportSdkPhaseStarted() {
-      impl.stageStarted(DirectoryIndexCollector.SDK_STAGE)
+    override fun reportSdkPhaseStarted(): DirectoryIndexAnalyticsReporter.PhaseReporter {
+      return PhaseReporter(impl, DirectoryIndexCollector.SDK_STAGE_FINISHED)
     }
 
-    override fun reportAdditionalLibrariesPhaseStarted() {
-      impl.stageStarted(DirectoryIndexCollector.ADDITIONAL_LIBRARIES_STAGE)
+    override fun reportAdditionalLibrariesPhaseStarted(): DirectoryIndexAnalyticsReporter.PhaseReporter {
+      return PhaseReporter(impl, DirectoryIndexCollector.ADDITIONAL_LIBRARIES_STAGE_FINISHED)
     }
 
-    override fun reportExclusionPolicyPhaseStarted() {
-      impl.stageStarted(DirectoryIndexCollector.EXCLUSION_POLICY_STAGE)
+    override fun reportExclusionPolicyPhaseStarted(): DirectoryIndexAnalyticsReporter.PhaseReporter {
+      return PhaseReporter(impl, DirectoryIndexCollector.EXCLUSION_POLICY_STAGE_FINISHED)
     }
 
-    override fun reportFinalizingPhaseStarted() {
-      impl.stageStarted(DirectoryIndexCollector.FINALIZING_STAGE)
+    override fun reportFinalizingPhaseStarted(): DirectoryIndexAnalyticsReporter.PhaseReporter {
+      return PhaseReporter(impl, DirectoryIndexCollector.FINALIZING_STAGE_FINISHED)
     }
 
     override fun reportFinished() {
       impl.finished()
+    }
+
+    private class PhaseReporter(private val impl: StructuredIdeActivity,
+                                private val event: VarargEventId) : DirectoryIndexAnalyticsReporter.PhaseReporter {
+      private val started = System.currentTimeMillis()
+
+      override fun reportPhaseFinished() {
+        impl.stageStarted(event) {
+          listOf(DirectoryIndexCollector.DURATION_MS_FIELD.with(System.currentTimeMillis() - started))
+        }
+      }
     }
   }
 }
