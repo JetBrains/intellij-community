@@ -33,8 +33,6 @@ class PluginStartupService : Disposable {
 
             eventMulticaster.addDocumentListener(documentListener, this)
         }
-
-        service<IndexPatternSearch>().registerExecutor(KotlinTodoSearcher(), this)
     }
 
     override fun dispose() = Unit
