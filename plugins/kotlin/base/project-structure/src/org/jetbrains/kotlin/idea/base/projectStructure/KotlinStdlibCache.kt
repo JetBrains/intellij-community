@@ -26,7 +26,7 @@ import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.name.FqName
@@ -119,7 +119,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
     override fun dispose() = Unit
 
-    private abstract class BaseStdLibCache(project: Project) : FineGrainedEntityCache<LibraryInfo, Boolean>(project, cleanOnLowMemory = true),
+    private abstract class BaseStdLibCache(project: Project) : SynchronizedFineGrainedEntityCache<LibraryInfo, Boolean>(project, cleanOnLowMemory = true),
                                                                OutdatedLibraryInfoListener {
         override fun subscribe() {
             val busConnection = project.messageBus.connect(this)
@@ -170,7 +170,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         override fun dispose() = Unit
 
         private abstract inner class AbstractCache<Key : IdeaModuleInfo> :
-            FineGrainedEntityCache<Key, StdlibDependency>(project, cleanOnLowMemory = true),
+            SynchronizedFineGrainedEntityCache<Key, StdlibDependency>(project, cleanOnLowMemory = true),
             OutdatedLibraryInfoListener,
             ProjectJdkTable.Listener,
             ModuleRootListener {

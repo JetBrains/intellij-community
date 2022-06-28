@@ -37,8 +37,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache.
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
-import org.jetbrains.kotlin.idea.base.util.caching.AbstractFineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
-import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
+import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -166,7 +166,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     }
 
     private inner class LibraryDependenciesInnerCache :
-        FineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, cleanOnLowMemory = true),
+        SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, cleanOnLowMemory = true),
         OutdatedLibraryInfoListener,
         ModuleRootListener {
         override fun subscribe() {
@@ -202,7 +202,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     }
 
     private inner class ModuleDependenciesCache :
-        FineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project, cleanOnLowMemory = true),
+        SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project, cleanOnLowMemory = true),
         ProjectJdkTable.Listener,
         OutdatedLibraryInfoListener,
         ModuleRootListener {
@@ -271,7 +271,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     private data class Change<T>(val old: List<T>, val new: List<T>)
 
     private inner class LibraryUsageIndex2:
-        FineGrainedEntityCache<LibraryWrapper, Set<Module>>(project, cleanOnLowMemory = true),
+        SynchronizedFineGrainedEntityCache<LibraryWrapper, Set<Module>>(project, cleanOnLowMemory = true),
         WorkspaceModelChangeListener {
 
         init {

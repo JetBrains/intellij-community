@@ -9,12 +9,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 @Service(Service.Level.PROJECT)
-class JvmOnlyProjectChecker(project: Project) : FineGrainedEntityCache<Unit, Boolean>(project, cleanOnLowMemory = false) {
+class JvmOnlyProjectChecker(project: Project) : SynchronizedFineGrainedEntityCache<Unit, Boolean>(project, cleanOnLowMemory = false) {
     override fun subscribe() {
         val busConnection = project.messageBus.connect(this)
         WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener(project))

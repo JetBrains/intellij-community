@@ -7,14 +7,14 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 
 abstract class FrameworkAvailabilityChecker(
     project: Project
-) : FineGrainedEntityCache<FrameworkAvailabilityChecker.CompoundKey, Boolean>(project, cleanOnLowMemory = false) {
+) : SynchronizedFineGrainedEntityCache<FrameworkAvailabilityChecker.CompoundKey, Boolean>(project, cleanOnLowMemory = false) {
     data class CompoundKey(val module: Module, val includeTests: Boolean)
 
     protected abstract val fqNames: Set<String>
