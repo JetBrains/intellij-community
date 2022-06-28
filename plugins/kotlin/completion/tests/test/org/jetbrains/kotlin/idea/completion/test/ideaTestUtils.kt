@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.completion.test
 
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import java.io.File
@@ -19,3 +21,15 @@ fun CodeInsightTestFixture.configureWithExtraFile(path: String, vararg extraName
 }
 
 inline fun <reified T : Any> Any?.assertInstanceOf() = UsefulTestCase.assertInstanceOf(this, T::class.java)
+
+inline fun <reified T : Any, R> ComponentManager.withServiceRegistered(instance: T, body: () -> R): R {
+    val picoContainer = this as ComponentManagerImpl
+    val key = T::class.java.name
+    try {
+        picoContainer.unregisterComponent(key)
+        picoContainer.registerComponentInstance(key, instance)
+        return body()
+    } finally {
+        picoContainer.unregisterComponent(key)
+    }
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
@@ -20,8 +20,6 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDe
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.*
-import org.jetbrains.kotlin.asJava.elements.KtLightField
-import org.jetbrains.kotlin.asJava.elements.KtLightFieldImpl
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -129,14 +127,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
         fun findUsagesByJavaProcessor(element: PsiElement, forceReferencedElementUnwrapping: Boolean): NonCodeUsageSearchInfo? {
             val javaUsages = ArrayList<UsageInfo>()
 
-            val elementToPassToJava = when (element) {
-                is KtLightFieldImpl<*> -> object : KtLightField by element {
-                    // Suppress walking through initializer compiled PSI (it doesn't contain any reference expressions anyway)
-                    override fun getInitializer(): PsiExpression? = null
-                }
-                else -> element
-            }
-            val searchInfo = super.findUsages(elementToPassToJava, asLightElements(allElementsToDelete), javaUsages)
+            val searchInfo = super.findUsages(element, asLightElements(allElementsToDelete), javaUsages)
 
             javaUsages.filterIsInstance<SafeDeleteOverridingMethodUsageInfo>().mapNotNullTo(deleteSet) { it.element }
 
@@ -153,9 +144,9 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                         usageInfo.smartPointer.element?.let { usageElement ->
                             when {
                                 usageElement.isTrueJavaMethod() -> usageInfo
-                                usageElement.toLightMethods().all { method -> method.findSuperMethods().isEmpty() } -> {
-                                    KotlinSafeDeleteOverrideAnnotation(usageElement, usageInfo.referencedElement) as UsageInfo
-                                }
+                                usageElement.toLightMethods().all { method -> method.findSuperMethods().isEmpty() } ->
+                                    KotlinSafeDeleteOverrideAnnotation(usageElement, usageInfo.referencedElement)
+
                                 else -> null
                             }
                         }
@@ -376,9 +367,11 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
             is KtParameter -> {
                 (parent as? KtParameterList)?.removeParameter(this)
             }
+
             is KtCallableDeclaration, is KtClassOrObject, is KtTypeAlias -> {
                 delete()
             }
+
             else -> {
                 removeModifier(KtTokens.IMPL_KEYWORD)
                 removeModifier(KtTokens.ACTUAL_KEYWORD)
@@ -477,6 +470,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                 if (isUnitTestMode()) return Collections.singletonList(element)
                 checkSuperMethods(element as KtDeclaration, allElementsToDelete, KotlinBundle.message("delete.with.usage.search"))
             }
+
             else ->
                 super.getElementsToSearch(element, module, allElementsToDelete)
         }

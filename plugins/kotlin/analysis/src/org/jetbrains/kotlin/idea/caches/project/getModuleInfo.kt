@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.runReadAction
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.sure
 import org.jetbrains.kotlin.utils.yieldIfNotNull
@@ -221,7 +222,7 @@ private fun <T> KtLightElement<*, *>.processLightElement(c: ModuleInfoCollector<
 
     val element = kotlinOrigin ?: when (this) {
         is KtLightClassForFacade -> this.files.first()
-        else -> return c.onFailure("Light element without origin is referenced by resolve:\n$this\n${this.clsDelegate.text}")
+        else -> return c.onFailure("Light element without origin is referenced by resolve:\n$this")
     }
 
     return element.collectInfos(c)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.lightClasses;
 
@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration;
 import org.jetbrains.kotlin.asJava.classes.KtLightClass;
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration;
-import org.jetbrains.kotlin.config.JvmDefaultMode;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
@@ -24,7 +23,7 @@ public class LightClassEqualsTest extends KotlinLightCodeInsightFixtureTestCase 
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE;
     }
 
-    public void testEqualsForExplicitDeclaration() throws Exception {
+    public void testEqualsForExplicitDeclaration() {
         myFixture.configureByText("a.kt", "class A");
 
         PsiClass theClass = myFixture.getJavaFacade().findClass("A");
@@ -34,7 +33,7 @@ public class LightClassEqualsTest extends KotlinLightCodeInsightFixtureTestCase 
         doTestEquals(((KtLightClass) theClass).getKotlinOrigin());
     }
 
-    public void testEqualsForDecompiledClass() throws Exception {
+    public void testEqualsForDecompiledClass() {
         myFixture.configureByText("a.kt", "");
 
         PsiClass theClass = myFixture.getJavaFacade().findClass("kotlin.Unit");
@@ -47,8 +46,8 @@ public class LightClassEqualsTest extends KotlinLightCodeInsightFixtureTestCase 
     static void doTestEquals(@Nullable KtClassOrObject origin) {
         assertNotNull(origin);
 
-        PsiClass lightClass1 = KtLightClassForSourceDeclaration.Companion.createNoCache(origin, JvmDefaultMode.DEFAULT, true);
-        PsiClass lightClass2 = KtLightClassForSourceDeclaration.Companion.createNoCache(origin, JvmDefaultMode.DEFAULT, true);
+        PsiClass lightClass1 = KtLightClassForSourceDeclaration.Companion.createNoCache(origin);
+        PsiClass lightClass2 = KtLightClassForSourceDeclaration.Companion.createNoCache(origin);
         assertNotNull(lightClass1);
         assertNotNull(lightClass2);
 

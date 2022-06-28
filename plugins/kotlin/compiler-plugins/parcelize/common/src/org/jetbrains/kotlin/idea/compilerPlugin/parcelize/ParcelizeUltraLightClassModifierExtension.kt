@@ -1,19 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize
 
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.impl.light.LightFieldBuilder
-import org.jetbrains.kotlin.parcelize.serializers.ParcelizeExtensionBase
 import org.jetbrains.kotlin.asJava.UltraLightClassModifierExtension
+import org.jetbrains.kotlin.asJava.builder.LightMemberOrigin
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.asJava.classes.createGeneratedMethodFromDescriptor
 import org.jetbrains.kotlin.asJava.elements.KtLightField
-import org.jetbrains.kotlin.asJava.elements.KtLightFieldImpl
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.parcelize.ParcelizeSyntheticComponent
+import org.jetbrains.kotlin.parcelize.serializers.ParcelizeExtensionBase
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.util.isAnnotated
 import org.jetbrains.kotlin.util.isOrdinaryClass
@@ -48,18 +50,17 @@ class ParcelizeUltraLightClassModifierExtension : ParcelizeExtensionBase, UltraL
         val parcelizeClass = tryGetParcelizeClass(declaration, descriptor) ?: return
         if (parcelizeClass.hasCreatorField()) return
 
-        val fieldWrapper = KtLightFieldImpl.KtLightFieldForSourceDeclaration(
-            origin = null,
-            computeDelegate = {
-                LightFieldBuilder("CREATOR", "android.os.Parcelable.Creator", containingDeclaration).also {
-                    it.setModifiers("public", "static", "final")
-                }
-            },
-            containingClass = containingDeclaration,
-            dummyDelegate = null
-        )
+        val field = object: LightFieldBuilder("CREATOR", "android.os.Parcelable.Creator", containingDeclaration), KtLightField {
+            override val kotlinOrigin: KtDeclaration? get() = null
+            override val lightMemberOrigin: LightMemberOrigin? get() = null
+            override fun computeConstantValue(visitedVars: MutableSet<PsiVariable>?): Any? = null
+            override fun getContainingClass(): KtLightClass = containingDeclaration
 
-        fieldsList.add(fieldWrapper)
+        }.also {
+            it.setModifiers("public", "static", "final")
+        }
+
+        fieldsList.add(field)
     }
 
     override fun interceptMethodsBuilding(
