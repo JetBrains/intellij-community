@@ -12,12 +12,16 @@ interface DirectoryIndexAnalyticsReporter {
   enum class BuildPart { MAIN, ORDER_ENTRY_GRAPH }
 
   interface ActivityReporter {
-    fun reportWorkspacePhaseStarted()
-    fun reportSdkPhaseStarted()
-    fun reportAdditionalLibrariesPhaseStarted()
-    fun reportExclusionPolicyPhaseStarted()
-    fun reportFinalizingPhaseStarted()
+    fun reportWorkspacePhaseStarted(): PhaseReporter
+    fun reportSdkPhaseStarted(): PhaseReporter
+    fun reportAdditionalLibrariesPhaseStarted(): PhaseReporter
+    fun reportExclusionPolicyPhaseStarted(): PhaseReporter
+    fun reportFinalizingPhaseStarted(): PhaseReporter
     fun reportFinished()
+  }
+
+  interface PhaseReporter {
+    fun reportPhaseFinished()
   }
 
   fun reportResetImpl(reason: ResetReason)
@@ -36,11 +40,15 @@ interface DirectoryIndexAnalyticsReporter {
     fun reportStarted(project: Project, requestKind: BuildRequestKind, buildPart: BuildPart): ActivityReporter {
       return EP_NAME.getExtensions(project).firstOrNull()?.reportStartedImpl(requestKind, buildPart)
              ?: object : ActivityReporter {
-               override fun reportWorkspacePhaseStarted() {}
-               override fun reportSdkPhaseStarted() {}
-               override fun reportAdditionalLibrariesPhaseStarted() {}
-               override fun reportExclusionPolicyPhaseStarted() {}
-               override fun reportFinalizingPhaseStarted() {}
+               val phaseReporter = object : PhaseReporter {
+                 override fun reportPhaseFinished() {}
+               }
+
+               override fun reportWorkspacePhaseStarted(): PhaseReporter = phaseReporter
+               override fun reportSdkPhaseStarted(): PhaseReporter = phaseReporter
+               override fun reportAdditionalLibrariesPhaseStarted(): PhaseReporter = phaseReporter
+               override fun reportExclusionPolicyPhaseStarted(): PhaseReporter = phaseReporter
+               override fun reportFinalizingPhaseStarted(): PhaseReporter = phaseReporter
                override fun reportFinished() {}
              }
     }

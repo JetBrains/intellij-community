@@ -77,7 +77,7 @@ class RootIndex {
     try {
       final RootInfo info = buildRootInfo(project, activityReporter);
 
-      activityReporter.reportFinalizingPhaseStarted();
+      DirectoryIndexAnalyticsReporter.PhaseReporter phase = activityReporter.reportFinalizingPhaseStarted();
       Set<VirtualFile> allRoots = info.getAllRoots();
       MultiMap<String, VirtualFile> rootsByPackagePrefix = MultiMap.create(allRoots.size(), 0.75f);
       myRootInfos = new HashMap<>(allRoots.size());
@@ -104,6 +104,7 @@ class RootIndex {
           return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
         }
       };
+      phase.reportPhaseFinished();
     }
     finally {
       activityReporter.reportFinished();
@@ -194,7 +195,7 @@ class RootIndex {
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     boolean includeProjectJdk = true;
 
-    activity.reportWorkspacePhaseStarted();
+    DirectoryIndexAnalyticsReporter.PhaseReporter phase = activity.reportWorkspacePhaseStarted();
     for (final Module module : moduleManager.getModules()) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
 
@@ -265,15 +266,19 @@ class RootIndex {
         }
       }
     }
+    phase.reportPhaseFinished();
+
     if (includeProjectJdk) {
-      activity.reportSdkPhaseStarted();
+      phase = activity.reportSdkPhaseStarted();
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null) {
-        fillIndexWithLibraryRoots(info, sdk, myRootSupplier.getSdkRoots(sdk, OrderRootType.SOURCES), myRootSupplier.getSdkRoots(sdk, OrderRootType.CLASSES));
+        fillIndexWithLibraryRoots(info, sdk, myRootSupplier.getSdkRoots(sdk, OrderRootType.SOURCES),
+                                  myRootSupplier.getSdkRoots(sdk, OrderRootType.CLASSES));
       }
+      phase.reportPhaseFinished();
     }
 
-    activity.reportAdditionalLibrariesPhaseStarted();
+    phase = activity.reportAdditionalLibrariesPhaseStarted();
     for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
       for (SyntheticLibrary library : libraries) {
@@ -307,8 +312,9 @@ class RootIndex {
         }
       }
     }
+    phase.reportPhaseFinished();
 
-    activity.reportExclusionPolicyPhaseStarted();
+    phase = activity.reportExclusionPolicyPhaseStarted();
     for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
       List<VirtualFile> files = ContainerUtil.mapNotNull(policy.getExcludeUrlsForProject(), myRootSupplier::findFileByUrl);
       info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> RootFileSupplier.ensureValid(file, project, policy)));
@@ -347,6 +353,8 @@ class RootIndex {
         }
       }
     }
+    phase.reportPhaseFinished();
+
     return info;
   }
 
@@ -381,9 +389,10 @@ class RootIndex {
         logActivityStarted(DirectoryIndexAnalyticsReporter.BuildPart.ORDER_ENTRY_GRAPH);
       try {
         RootInfo rootInfo = buildRootInfo(myProject, activityReporter);
-        activityReporter.reportFinalizingPhaseStarted();
+        DirectoryIndexAnalyticsReporter.PhaseReporter phase = activityReporter.reportFinalizingPhaseStarted();
         Couple<MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();
         myOrderEntryGraph = new OrderEntryGraph(myProject, rootInfo, pair.first, pair.second);
+        phase.reportPhaseFinished();
       }
       finally {
         activityReporter.reportFinished();
