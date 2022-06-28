@@ -11,4 +11,3 @@ interface B: A {
 
 // TODO: could be lazy
 // see KT-22819
-// LAZINESS:NoLaziness

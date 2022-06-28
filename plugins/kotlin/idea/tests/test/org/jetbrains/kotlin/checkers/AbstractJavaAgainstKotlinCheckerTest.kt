@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.checkers
 
-import org.jetbrains.kotlin.idea.perf.forceUsingOldLightClassesForTest
-import java.io.File
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import java.io.File
 
 abstract class AbstractJavaAgainstKotlinSourceCheckerTest : AbstractJavaAgainstKotlinCheckerTest() {
     fun doTest(path: String) {
@@ -21,12 +20,5 @@ abstract class AbstractJavaAgainstKotlinSourceCheckerTest : AbstractJavaAgainstK
         } else {
             doTest()
         }
-    }
-}
-
-abstract class AbstractJavaAgainstKotlinSourceCheckerWithoutUltraLightTest : AbstractJavaAgainstKotlinSourceCheckerTest() {
-    override fun setUp() {
-        super.setUp()
-        forceUsingOldLightClassesForTest()
     }
 }

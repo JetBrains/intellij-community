@@ -1159,49 +1159,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/addJvmNameAnnotation")
-    public static class AddJvmNameAnnotation extends AbstractQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("basic.kt")
-        public void testBasic() throws Exception {
-            runTest("testData/quickfix/addJvmNameAnnotation/basic.kt");
-        }
-
-        @TestMetadata("extension.kt")
-        public void testExtension() throws Exception {
-            runTest("testData/quickfix/addJvmNameAnnotation/extension.kt");
-        }
-
-        @TestMetadata("extension2.kt")
-        public void testExtension2() throws Exception {
-            runTest("testData/quickfix/addJvmNameAnnotation/extension2.kt");
-        }
-
-        @TestMetadata("extension3.kt")
-        public void testExtension3() throws Exception {
-            runTest("testData/quickfix/addJvmNameAnnotation/extension3.kt");
-        }
-
-        @TestMetadata("hasAnnotation.kt")
-        public void testHasAnnotation() throws Exception {
-            runTest("testData/quickfix/addJvmNameAnnotation/hasAnnotation.kt");
-        }
-
-        @TestMetadata("hasAnnotation2.kt")
-        public void testHasAnnotation2() throws Exception {
-            runTest("testData/quickfix/addJvmNameAnnotation/hasAnnotation2.kt");
-        }
-
-        @TestMetadata("topLevel.kt")
-        public void testTopLevel() throws Exception {
-            runTest("testData/quickfix/addJvmNameAnnotation/topLevel.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addJvmStaticAnnotation")
     public static class AddJvmStaticAnnotation extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {

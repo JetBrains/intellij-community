@@ -88,10 +88,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         val originalDeclaration: KtNamedFunction,
         val supers: List<PsiElement>
     ) : KtLightElement<KtNamedFunction, KtNamedFunction>, PsiNamedElement by originalDeclaration {
-        override val kotlinOrigin: KtNamedFunction
-            get() = originalDeclaration
-        override val clsDelegate: KtNamedFunction
-            get() = originalDeclaration
+        override val kotlinOrigin: KtNamedFunction get() = originalDeclaration
     }
 
     private fun substituteForExpectOrActual(element: PsiElement?) =
