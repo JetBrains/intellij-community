@@ -95,7 +95,7 @@ internal class InnerComponent(private val editor: EditorImpl) : JPanel() {
       val proposedSize = component.sizeProposer()
       val newWidth = getComponentWidthByConstraint(component, proposedSize.width)
       val newHeight =
-        if (!component.isPreferredSizeSet && component.layoutConstraints?.limitedHeight == true) min(maxHeight, proposedSize.height)
+        if (!component.hasBeenManuallyResized && component.layoutConstraints?.limitedHeight == true) min(maxHeight, proposedSize.height)
         else proposedSize.height
       handleComponent(component, newWidth, newHeight)
     }
