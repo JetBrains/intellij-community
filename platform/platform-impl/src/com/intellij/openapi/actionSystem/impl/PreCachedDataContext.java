@@ -205,8 +205,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       if (answer == EXPLICIT_NULL) break;
       if (answer != null) {
         if (map.valueByRules.get(keyIndex)) {
+          reportValueProvidedByRulesUsage(dataId, !ruleValuesAllowed);
           if (!ruleValuesAllowed) return null;
-          reportValueProvidedByRulesUsage(dataId);
         }
         answer = DataValidators.validOrNull(answer, dataId, this);
         if (answer != null) break;
@@ -233,13 +233,17 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return answer;
   }
 
-  private static void reportValueProvidedByRulesUsage(@NotNull String dataId) {
+  private static void reportValueProvidedByRulesUsage(@NotNull String dataId, boolean error) {
     if (!Registry.is("actionSystem.update.actions.warn.dataRules.on.edt")) return;
     if (EDT.isCurrentThreadEdt() && SlowOperations.isInsideActivity(SlowOperations.ACTION_UPDATE) &&
         ActionUpdater.currentInEDTOperationName() != null && !SlowOperations.isAlwaysAllowed()) {
       String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.currentInEDTOperationName() + ". See ActionUpdateThread javadoc.";
       //noinspection StringEquality
-      if (message == ourEDTWarnsInterner.intern(message)) {
+      if (message != ourEDTWarnsInterner.intern(message)) return;
+      if (error) {
+        LOG.error(message);
+      }
+      else {
         LOG.warn(message);
       }
     }
