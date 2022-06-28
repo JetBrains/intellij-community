@@ -2,10 +2,6 @@
 
 package org.jetbrains.kotlin.idea.fir.fe10
 
-import org.jetbrains.kotlin.builtins.DefaultBuiltIns
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.analysis.api.KtStarProjectionTypeArgument
 import org.jetbrains.kotlin.analysis.api.KtTypeArgument
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
@@ -14,15 +10,20 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.builtins.DefaultBuiltIns
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.DescriptorUtils
+import org.jetbrains.kotlin.resolve.calls.inference.substitute
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.error.ErrorUtils
-import org.jetbrains.kotlin.types.error.ErrorTypeKind
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
+import org.jetbrains.kotlin.types.error.ErrorTypeKind
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.utils.Printer
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -108,7 +109,7 @@ fun KtType.toKotlinType(context: Fe10WrapperContext, annotations: Annotations = 
     val typeConstructor: TypeConstructor = when (this) {
         is KtTypeParameterType -> KtSymbolBasedTypeParameterDescriptor(this.symbol, context).typeConstructor
         is KtNonErrorClassType -> when (val classLikeSymbol = classSymbol) {
-            is KtTypeAliasSymbol -> context.typeAliasImplementationPlanned()
+            is KtTypeAliasSymbol -> return classLikeSymbol.toExpandedKotlinType(context, typeArguments, annotations)
             is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(classLikeSymbol, context).typeConstructor
             is KtAnonymousObjectSymbol -> context.implementationPostponed()
         }
@@ -136,4 +137,27 @@ fun KtType.toKotlinType(context: Fe10WrapperContext, annotations: Annotations = 
         annotations.toDefaultAttributes(), typeConstructor, ktTypeArguments.map { it.toTypeProjection(context) }, markedAsNullable,
         MemberScopeForKtSymbolBasedDescriptors { this.asStringForDebugging() }
     )
+}
+
+fun KtTypeAliasSymbol.toExpandedKotlinType(
+    context: Fe10WrapperContext,
+    arguments: List<KtTypeArgument>,
+    annotations: Annotations
+): UnwrappedType {
+    check(arguments.size == typeParameters.size) {
+        "${arguments.size} != ${typeParameters.size}"
+    }
+
+    val expandedUnsubstitutedType = expandedType.toKotlinType(context, annotations)
+    if (typeParameters.isEmpty()) return expandedUnsubstitutedType
+
+    // KtSubstitutor isn't able to substitute TypeProjections KT-53095
+    val map = mutableMapOf<TypeConstructor, TypeProjection>()
+
+    typeParameters.forEachIndexed { index, ktTypeParameterSymbol ->
+        val argument = arguments[index].toTypeProjection(context)
+        map[KtSymbolBasedTypeParameterDescriptor(ktTypeParameterSymbol, context).typeConstructor] = argument
+    }
+
+    return TypeSubstitutor.create(map).substitute(expandedUnsubstitutedType)
 }

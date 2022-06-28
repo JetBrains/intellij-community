@@ -47,9 +47,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 internal fun Fe10WrapperContext.containerDeclarationImplementationPostponed(): Nothing =
     implementationPostponed("It isn't clear what we really need and how to implement it")
 
-internal fun Fe10WrapperContext.typeAliasImplementationPlanned(): Nothing =
-    implementationPlanned("It is easy to implement, but it isn't first priority")
-
 interface KtSymbolBasedNamed : Named {
     val ktSymbol: KtNamedSymbol
     override fun getName(): Name = ktSymbol.name
