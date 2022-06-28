@@ -608,14 +608,13 @@ public final class ArrayUtil {
 
   //must be Comparables
   @Contract(pure=true)
-  public static <T> int lexicographicCompare(T @NotNull [] obj1, T @NotNull [] obj2) {
+  public static <T extends Comparable<T>> int lexicographicCompare(T @NotNull [] obj1, T @NotNull [] obj2) {
     for (int i = 0; i < Math.max(obj1.length, obj2.length); i++) {
       T o1 = i < obj1.length ? obj1[i] : null;
       T o2 = i < obj2.length ? obj2[i] : null;
       if (o1 == null) return -1;
       if (o2 == null) return 1;
-      //noinspection unchecked
-      int res = ((Comparable<T>)o1).compareTo(o2);
+      int res = o1.compareTo(o2);
       if (res != 0) return res;
     }
     return 0;
