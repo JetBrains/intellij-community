@@ -346,6 +346,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("kotlinAndJavaChecker/javaWithKotlin")
         }
 
+        testClass<AbstractJavaAgainstKotlinSourceCheckerWithoutUltraLightTest> {
+            model("kotlinAndJavaChecker/javaAgainstKotlin")
+            model("kotlinAndJavaChecker/javaWithKotlin")
+        }
+
         testClass<AbstractJavaAgainstKotlinBinariesCheckerTest> {
             model("kotlinAndJavaChecker/javaAgainstKotlin")
         }

@@ -9,6 +9,8 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.asJava.builder.LightClassConstructionContext
 import org.jetbrains.kotlin.asJava.builder.StubComputationTracker
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -16,22 +18,27 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinDaemonAnalyzerTestCase
-import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.idea.caches.lightClasses.IDELightClassConstructionContext
 import org.jetbrains.kotlin.idea.caches.resolve.LightClassLazinessChecker.Tracker.Level.*
 import org.jetbrains.kotlin.idea.completion.test.withServiceRegistered
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.perf.forceUsingOldLightClassesForTest
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.utils.keysToMap
+import org.jetbrains.plugins.groovy.lang.psi.impl.stringValue
 import java.io.File
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase() {
     fun doTest(@Suppress("UNUSED_PARAMETER") unused: String) {
+        forceUsingOldLightClassesForTest()
         val fileName = fileName()
         val extraFilePath = when {
             fileName.endsWith(fileExtension) -> fileName.replace(fileExtension, ".extra$fileExtension")
@@ -93,6 +100,7 @@ abstract class AbstractIdeCompiledLightClassTest : KotlinDaemonAnalyzerTestCase(
 
         val testDataDir = TestMetadataUtil.getTestData(this::class.java)
         val testFile = listOf(File(testDataDir, "$testName.kt"), File(testDataDir, "$testName.kts")).first { it.exists() }
+            ?: error("Test file not found!")
 
         val extraClasspath = mutableListOf(KotlinArtifacts.jetbrainsAnnotations, KotlinArtifacts.kotlinStdlibJdk8)
         if (testFile.extension == "kts") {
@@ -100,7 +108,7 @@ abstract class AbstractIdeCompiledLightClassTest : KotlinDaemonAnalyzerTestCase(
         }
 
         val extraOptions = KotlinTestUtils.parseDirectives(testFile.readText())[
-                CompilerTestDirectives.JVM_TARGET_DIRECTIVE.substringBefore(":")
+          CompilerTestDirectives.JVM_TARGET_DIRECTIVE.substringBefore(":")
         ]?.let { jvmTarget ->
             listOf("-jvm-target", jvmTarget)
         } ?: emptyList()
@@ -193,6 +201,7 @@ object LightClassLazinessChecker {
 
     enum class Mode {
         AllChecks,
+        NoLaziness,
         NoConsistency
     }
 
@@ -250,35 +259,39 @@ object LightClassLazinessChecker {
 
         tracker.allowLevel(EXACT)
 
+        lightClass.clsDelegate // trigger exact context
+
         tracker.checkLevel(EXACT)
 
         lazinessInfo.checkConsistency()
     }
 
     private class LazinessInfo(private val lightClass: KtLightClass, private val lazinessMode: Mode) {
+        val classInfo = classInfo(lightClass)
+        val fieldsToInfo = lightClass.fields.asList().keysToMap { fieldInfo(it) }
+        val methodsToInfo = lightClass.methods.asList().keysToMap { methodInfo(it, lazinessMode) }
         val innerClasses = lightClass.innerClasses.map { LazinessInfo(it as KtLightClass, lazinessMode) }
 
         fun checkConsistency() {
-            checkModifierList(lightClass.modifierList!!)
-
             // still collecting data to trigger possible exceptions
             if (lazinessMode == Mode.NoConsistency) return
 
             // check collected data against delegates which should contain correct data
-            for (field in lightClass.fields) {
-                field as KtLightField
-                checkModifierList(field.modifierList!!)
+            for ((field, lightFieldInfo) in fieldsToInfo) {
+                val delegate = (field as KtLightField).clsDelegate
+                assertEquals(fieldInfo(delegate), lightFieldInfo)
                 checkAnnotationConsistency(field)
             }
-            for (method in lightClass.methods) {
-                method as KtLightMethod
-                checkModifierList(method.modifierList)
+            for ((method, lightMethodInfo) in methodsToInfo) {
+                val delegate = (method as KtLightMethod).clsDelegate
+                assertEquals(methodInfo(delegate, lazinessMode), lightMethodInfo)
                 checkAnnotationConsistency(method)
                 method.parameterList.parameters.forEach {
                     checkAnnotationConsistency(it as KtLightParameter)
                 }
             }
 
+            assertEquals(classInfo(lightClass.clsDelegate), classInfo)
             checkAnnotationConsistency(lightClass)
 
             innerClasses.forEach(LazinessInfo::checkConsistency)
@@ -288,15 +301,97 @@ object LightClassLazinessChecker {
     private fun checkAnnotationConsistency(modifierListOwner: KtLightElement<*, PsiModifierListOwner>) {
         if (modifierListOwner is KtLightClassForFacade) return
 
-        val annotations = modifierListOwner.safeAs<PsiModifierListOwner>()?.modifierList?.annotations ?: return
-        for (annotation in annotations) {
-            if (annotation !is KtLightNullabilityAnnotation<*>)
-                assertNotNull(
-                    annotation!!.nameReferenceElement,
-                    "nameReferenceElement should be not null for $annotation of ${annotation.javaClass}"
+        modifierListOwner.clsDelegate.modifierList!!.annotations.groupBy { delegateAnnotation ->
+            delegateAnnotation.qualifiedName!!
+        }.map { (fqName, clsAnnotations) ->
+
+            val annotations = (modifierListOwner as? PsiModifierListOwner)?.modifierList?.annotations
+            val lightAnnotations = annotations?.filter { it.qualifiedName == fqName }.orEmpty()
+            if (fqName != Nullable::class.java.name && fqName != NotNull::class.java.name) {
+                assertEquals(clsAnnotations.size, lightAnnotations.size, "Missing $fqName annotation")
+            } else {
+                // having duplicating nullability annotations is fine
+                // see KtLightNullabilityAnnotation
+                assertTrue(
+                    lightAnnotations.isNotEmpty(),
+                    "Missing $fqName annotation in '${modifierListOwner}' have only ${
+                        annotations?.joinToString(
+                            ", ",
+                            "[",
+                            "]"
+                        ) { it.toString() }
+                    }"
                 )
+            }
+            clsAnnotations.zip(lightAnnotations).forEach { (clsAnnotation, lightAnnotation) ->
+                if (lightAnnotation !is KtLightNullabilityAnnotation<*>)
+                    assertNotNull(
+                        lightAnnotation!!.nameReferenceElement,
+                        "nameReferenceElement should be not null for $lightAnnotation of ${lightAnnotation.javaClass}"
+                    )
+                if (lightAnnotation is KtLightAbstractAnnotation) {
+                    assertEquals(clsAnnotation.values(), lightAnnotation.values())
+                    withAllowedAnnotationsClsDelegate {
+                        assertEquals(clsAnnotation, lightAnnotation.clsDelegate)
+                    }
+                }
+            }
         }
     }
+
+    private fun PsiAnnotation.values() = parameterList.attributes.map { it.value.stringValue() }
+
+    private data class ClassInfo(
+        val fieldNames: Collection<String>,
+        val methodNames: Collection<String>,
+        val modifiers: List<String>
+    )
+
+    private fun classInfo(psiClass: PsiClass) = with(psiClass) {
+        checkModifierList(modifierList!!)
+        ClassInfo(fields.names(), methods.names(), PsiModifier.MODIFIERS.asList().filter { modifierList!!.hasModifierProperty(it) })
+    }
+
+    private data class FieldInfo(
+        val name: String,
+        val modifiers: List<String>
+    )
+
+    private fun fieldInfo(field: PsiField) = with(field) {
+        checkModifierList(modifierList!!)
+
+        FieldInfo(
+            name, PsiModifier.MODIFIERS.asList().filter { modifierList!!.hasModifierProperty(it) }
+        )
+    }
+
+    private data class MethodInfo(
+        val name: String,
+        val modifiers: List<String>,
+        val isConstructor: Boolean,
+        val parameterCount: Int,
+        val isVarargs: Boolean
+    )
+
+    private fun methodInfo(method: PsiMethod, lazinessMode: Mode) = with(method) {
+        checkModifierList(method.modifierList)
+
+        MethodInfo(
+            name, relevantModifiers(lazinessMode),
+            isConstructor, method.parameterList.parametersCount, isVarArgs
+        )
+    }
+
+    private fun PsiMethod.relevantModifiers(lazinessMode: Mode) = when {
+        containingClass!!.isInterface -> PsiModifier.MODIFIERS.filter {
+            // we have custom strategy for interface members with implementation
+            it !in modifiersHackedForInterfaceMembersWithImplementation
+        }
+        else -> PsiModifier.MODIFIERS.asList()
+    }.filter {
+        // cannot compute visibility for overrides without proper resolve, we check consistency if laziness is turned off
+        lazinessMode == Mode.NoLaziness || it !in visibilityModifiers
+    }.filter { modifierList.hasModifierProperty(it) }
 
     private fun checkModifierList(modifierList: PsiModifierList) {
         // see org.jetbrains.kotlin.asJava.elements.KtLightNonSourceAnnotation
@@ -310,7 +405,12 @@ object LightClassLazinessChecker {
             modifierList.findAnnotation("some.package.MadeUpAnnotation")
         }
     }
+
+    private fun Array<out PsiMember>.names() = mapTo(LinkedHashSet()) { it.name!! }
 }
+
+private val modifiersHackedForInterfaceMembersWithImplementation = listOf(PsiModifier.ABSTRACT, PsiModifier.DEFAULT)
+private val visibilityModifiers = listOf(PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC)
 
 private fun String.removeLinesStartingWith(prefix: String): String {
     return lines().filterNot { it.trimStart().startsWith(prefix) }.joinToString(separator = "\n")

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.caches.lightClasses
 
@@ -62,11 +62,11 @@ import org.jetbrains.kotlin.resolve.lazy.declarations.FileBasedDeclarationProvid
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.storage.StorageManager
+import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorTypeKind
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.WrappedTypeFactory
-import org.jetbrains.kotlin.types.error.ErrorTypeKind
-import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.utils.sure
 
 class IDELightClassConstructionContext(
@@ -227,6 +227,8 @@ internal object IDELightClassContexts {
 
     private fun isDummyResolveApplicable(classOrObject: KtClassOrObject): Boolean {
         if (classOrObject.hasModifier(KtTokens.INLINE_KEYWORD)) return false
+
+        if (classOrObject.hasLightClassMatchingErrors) return false
 
         if (hasDelegatedSupertypes(classOrObject)) return false
 

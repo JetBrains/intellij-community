@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -85,20 +86,27 @@ class IDELightClassGenerationSupport(project: Project) : LightClassGenerationSup
 
     override fun getUltraLightClassSupport(element: KtElement): KtUltraLightSupport = KtUltraLightSupportImpl(element)
 
+    override val useUltraLightClasses: Boolean
+        get() =
+            !KtUltraLightSupport.forceUsingOldLightClasses && Registry.`is`("kotlin.use.ultra.light.classes", true)
+
     private val scopeFileComparator = JavaElementFinder.byClasspathComparator(GlobalSearchScope.allScope(project))
 
     override fun createDataHolderForClass(classOrObject: KtClassOrObject, builder: LightClassBuilder): LightClassDataHolder.ForClass {
         return when {
             classOrObject.shouldNotBeVisibleAsLightClass() -> InvalidLightClassDataHolder
-            classOrObject.isLocal -> LazyLightClassDataHolder(
+            classOrObject.isLocal -> LazyLightClassDataHolder.ForClass(
                 builder,
-                exactContextProvider = { IDELightClassContexts.contextForLocalClassOrObject(classOrObject) }
-            ) { classOrObject.getDiagnosticsHolder() }
-
-            else -> LazyLightClassDataHolder(
+                exactContextProvider = { IDELightClassContexts.contextForLocalClassOrObject(classOrObject) },
+                dummyContextProvider = null,
+                diagnosticsHolderProvider = { classOrObject.getDiagnosticsHolder() }
+            )
+            else -> LazyLightClassDataHolder.ForClass(
                 builder,
-                exactContextProvider = { IDELightClassContexts.contextForNonLocalClassOrObject(classOrObject) }
-            ) { classOrObject.getDiagnosticsHolder() }
+                exactContextProvider = { IDELightClassContexts.contextForNonLocalClassOrObject(classOrObject) },
+                dummyContextProvider = { IDELightClassContexts.lightContextForClassOrObject(classOrObject) },
+                diagnosticsHolderProvider = { classOrObject.getDiagnosticsHolder() }
+            )
         }
     }
 
@@ -107,17 +115,21 @@ class IDELightClassGenerationSupport(project: Project) : LightClassGenerationSup
 
         val sortedFiles = files.sortedWith(scopeFileComparator)
 
-        return LazyLightClassDataHolder(
+        return LazyLightClassDataHolder.ForFacade(
             builder,
-            exactContextProvider = { IDELightClassContexts.contextForFacade(sortedFiles) }
-        ) { files.first().getDiagnosticsHolder() }
+            exactContextProvider = { IDELightClassContexts.contextForFacade(sortedFiles) },
+            dummyContextProvider = { IDELightClassContexts.lightContextForFacade(sortedFiles) },
+            diagnosticsHolderProvider = { files.first().getDiagnosticsHolder() }
+        )
     }
 
     override fun createDataHolderForScript(script: KtScript, builder: LightClassBuilder): LightClassDataHolder.ForScript {
-        return LazyLightClassDataHolder(
+        return LazyLightClassDataHolder.ForScript(
             builder,
-            exactContextProvider = { IDELightClassContexts.contextForScript(script) }
-        ) { script.getDiagnosticsHolder() }
+            exactContextProvider = { IDELightClassContexts.contextForScript(script) },
+            dummyContextProvider = { null },
+            diagnosticsHolderProvider = { script.getDiagnosticsHolder() }
+        )
     }
 
     @OptIn(FrontendInternals::class)

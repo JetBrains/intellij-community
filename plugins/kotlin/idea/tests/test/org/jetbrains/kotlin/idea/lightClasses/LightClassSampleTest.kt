@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.lightClasses
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
@@ -15,7 +16,9 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class LightClassSampleTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    }
 
     fun testDeprecationLevelHIDDEN() {
         // KT27243
@@ -31,7 +34,6 @@ class LightClassSampleTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.configureByText(
             "b.kt", """
                 class B : A { 
-                    @Deprecated(level = DeprecationLevel.HIDDEN, message = "nothing")
                     override fun foo() {} 
                 }
             """.trimIndent()
@@ -58,17 +60,30 @@ class LightClassSampleTest : KotlinLightCodeInsightFixtureTestCase() {
 
     @Suppress("SameParameterValue")
     private fun doTestAndCheck(className: String, methodName: String, methods: Int) {
-        val theClass: PsiClass = myFixture.javaFacade.findClass(className)
-        assertNotNull(theClass)
-        UsefulTestCase.assertInstanceOf(
-            theClass,
-            KtLightClassForSourceDeclaration::class.java
-        )
+        withLightClasses {
+            val theClass: PsiClass = myFixture.javaFacade.findClass(className)
+            assertNotNull(theClass)
+            UsefulTestCase.assertInstanceOf(
+                theClass,
+                KtLightClassForSourceDeclaration::class.java
+            )
+            doTestEquals((theClass as KtLightClass).kotlinOrigin)
+            assertEquals(methods, (theClass.allMethods + theClass.allMethods.flatMap { it.findSuperMethods().toList() })
+                .count { it.name == methodName })
+        }
 
-        doTestEquals((theClass as KtLightClass).kotlinOrigin)
-        assertEquals(
-            methods,
-            theClass.allMethods.plus(theClass.allMethods.flatMap { it.findSuperMethods().toList() }).count { it.name == methodName },
-        )
     }
+
+
+    private fun withLightClasses(block: () -> Any) {
+        val registryValue = Registry.get("kotlin.use.ultra.light.classes")
+        val initialValue = registryValue.asBoolean()
+        registryValue.setValue(false)
+        try {
+            block()
+        } finally {
+            registryValue.setValue(initialValue)
+        }
+    }
+
 }
