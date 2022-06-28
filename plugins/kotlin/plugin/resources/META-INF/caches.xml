@@ -57,11 +57,4 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.project.ModulePlatformCache"/>
   </extensions>
-
-  <projectListeners>
-<!--    <listener class="org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache$ModelChangeListener"-->
-<!--              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>-->
-<!--    <listener class="org.jetbrains.kotlin.idea.project.ModulePlatformCache$ModelChangeListener"-->
-<!--              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>-->
-  </projectListeners>
 </idea-plugin>

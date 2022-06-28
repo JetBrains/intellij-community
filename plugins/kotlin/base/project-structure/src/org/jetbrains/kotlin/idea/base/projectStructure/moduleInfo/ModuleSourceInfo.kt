@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.serviceContainer.AlreadyDisposedException
 import org.jetbrains.kotlin.analyzer.ModuleSourceInfoBase
 import org.jetbrains.kotlin.analyzer.TrackableModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -43,5 +44,15 @@ interface ModuleSourceInfo : OldModuleSourceInfo, IdeaModuleInfo, TrackableModul
 
     override fun createModificationTracker(): ModificationTracker {
         return KotlinModificationTrackerProvider.getInstance(module.project).createModuleModificationTracker(module)
+    }
+
+    override fun checkValidity() {
+        module.checkValidity()
+    }
+}
+
+fun Module.checkValidity() {
+    if (isDisposed) {
+        throw AlreadyDisposedException("Module '${name}' is already disposed")
     }
 }

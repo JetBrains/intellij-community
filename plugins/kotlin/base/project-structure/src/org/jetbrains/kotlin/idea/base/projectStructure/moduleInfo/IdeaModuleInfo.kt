@@ -32,15 +32,11 @@ interface IdeaModuleInfo : ModuleInfo {
         get() = super.capabilities + mapOf(OriginCapability to moduleOrigin)
 
     override fun dependencies(): List<IdeaModuleInfo>
+
+    fun checkValidity() {}
 }
 
 interface LanguageSettingsOwner {
     val languageVersionSettings: LanguageVersionSettings
     val targetPlatformVersion: TargetPlatformVersion
-}
-
-fun Module.checkValidity() {
-    if (isDisposed) {
-        throw AlreadyDisposedException("Module '${name}' is already disposed")
-    }
 }

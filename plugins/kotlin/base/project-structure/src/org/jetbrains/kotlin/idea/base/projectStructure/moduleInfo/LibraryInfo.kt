@@ -72,7 +72,7 @@ abstract class LibraryInfo(
     internal val isDisposed
         get() = if (library is LibraryEx) library.isDisposed else false
 
-    fun checkValidity() {
+    override fun checkValidity() {
         if (isDisposed) {
             throw AlreadyDisposedException("Library '${name}' is already disposed")
         }

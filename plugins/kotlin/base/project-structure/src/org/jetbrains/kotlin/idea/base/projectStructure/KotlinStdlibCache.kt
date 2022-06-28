@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.base.projectStructure
 
+import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -170,10 +171,14 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
         private abstract inner class AbstractCache<Key : IdeaModuleInfo> :
             FineGrainedEntityCache<Key, StdlibDependency>(project, cleanOnLowMemory = true),
-            OutdatedLibraryInfoListener {
+            OutdatedLibraryInfoListener,
+            ProjectJdkTable.Listener,
+            ModuleRootListener {
             override fun subscribe() {
                 val connection = project.messageBus.connect(this)
                 connection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+                connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
+                connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
                 subscribe(connection)
             }
 
@@ -199,6 +204,24 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
                 invalidateEntries({ _, v -> v.libraryInfo in libraryInfos }, validityCondition = { _, v -> v.libraryInfo != null })
             }
+
+            override fun jdkRemoved(jdk: Sdk) {
+                invalidateEntries({ k, _ -> k.safeAs<SdkInfo>()?.sdk == jdk })
+            }
+
+            override fun jdkNameChanged(jdk: Sdk, previousName: String) {
+                jdkRemoved(jdk)
+            }
+
+            override fun rootsChanged(event: ModuleRootEvent) {
+                // SDK could be changed (esp in tests) out of message bus subscription
+                val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
+                invalidateEntries(
+                    { k, _ -> k.safeAs<SdkInfo>()?.let { it.sdk !in jdks } == true  },
+                    // unable to check entities properly: an event could be not the last
+                    validityCondition = null
+                )
+            }
         }
 
         private inner class LibraryCache : AbstractCache<LibraryInfo>() {
@@ -221,24 +244,12 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             }
         }
 
-        private inner class SdkCache : AbstractCache<SdkInfo>(),
-                                       ProjectJdkTable.Listener {
-            override fun subscribe(connection: MessageBusConnection) {
-                connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
-            }
-
+        private inner class SdkCache : AbstractCache<SdkInfo>() {
             override fun calculate(key: SdkInfo): StdlibDependency =
                 key.findStdLib().toStdlibDependency()
 
             override fun checkKeyValidity(key: SdkInfo) = Unit
 
-            override fun jdkRemoved(jdk: Sdk) {
-                invalidateEntries({ k, _ -> k.sdk == jdk })
-            }
-
-            override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-                jdkRemoved(jdk)
-            }
         }
 
         private inner class ModuleCache : AbstractCache<IdeaModuleInfo>(), WorkspaceModelChangeListener {
@@ -285,12 +296,12 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             }
 
             override fun checkKeyValidity(key: IdeaModuleInfo) {
-                key.safeAs<ModuleSourceInfo>()?.module?.checkValidity()
+                key.checkValidity()
             }
 
             override fun changed(event: VersionedStorageChange) {
                 event.getChanges(ModuleEntity::class.java).ifEmpty { return }
-                invalidate()
+                invalidateEntries({ k, _ -> k !is LibraryInfo && k !is SdkInfo }, validityCondition = null)
             }
         }
     }

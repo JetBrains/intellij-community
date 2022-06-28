@@ -37,8 +37,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache.
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
+import org.jetbrains.kotlin.idea.base.util.caching.AbstractFineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
 import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
-import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
 import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.utils.addIfNotNull
