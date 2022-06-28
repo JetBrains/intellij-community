@@ -5,5 +5,9 @@
 @file:JvmMultifileClass
 package test
 
-val x = 1
-fun getX() = 1
+<error descr="[CONFLICTING_JVM_DECLARATIONS] Platform declaration clash: The following declarations have the same JVM signature (getX()I):
+    fun `<get-x>`(): Int defined in test in file topLevelMultifileRuntime.kt
+    fun getX(): Int defined in test in file topLevelMultifileRuntime.kt">val x</error> = 1
+<error descr="[CONFLICTING_JVM_DECLARATIONS] Platform declaration clash: The following declarations have the same JVM signature (getX()I):
+    fun `<get-x>`(): Int defined in test in file topLevelMultifileRuntime.kt
+    fun getX(): Int defined in test in file topLevelMultifileRuntime.kt">fun getX()</error> = 1

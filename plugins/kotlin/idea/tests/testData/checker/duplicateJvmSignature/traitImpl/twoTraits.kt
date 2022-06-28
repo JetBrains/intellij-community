@@ -7,5 +7,5 @@ interface T2 {
         get() = 1
 }
 
-class C : T1, T2 {
+class <error>C</error> : T1, T2 {
 }

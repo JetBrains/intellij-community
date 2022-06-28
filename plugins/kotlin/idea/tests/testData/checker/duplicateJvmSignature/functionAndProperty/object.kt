@@ -1,6 +1,6 @@
 // FIR_COMPARISON
 
 object C {
-    val x = 1
-    fun getX() = 1
+    <error>val x</error> = 1
+    <error>fun getX()</error> = 1
 }

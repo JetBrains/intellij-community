@@ -6,8 +6,8 @@ class B {
 }
 
 class C {
-    companion object A {
-        val A = this
+    companion <error>object A</error> {
+        <error>val A</error> = this
     }
 
 }
