@@ -17,8 +17,8 @@ import org.jetbrains.yaml.lexer.YAMLFlexLexer;
 import org.jetbrains.yaml.parser.YAMLParser;
 import org.jetbrains.yaml.psi.impl.*;
 
-public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes {
-  private static final TokenSet myCommentTokens = TokenSet.create(YAMLTokenTypes.COMMENT);
+public class YAMLParserDefinition implements ParserDefinition {
+  public static final IFileElementType FILE = new IFileElementType(YAMLLanguage.INSTANCE);
 
   @Override
   @NotNull
@@ -39,13 +39,13 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
   @Override
   @NotNull
   public TokenSet getWhitespaceTokens() {
-    return TokenSet.create(YAMLTokenTypes.WHITESPACE);
+    return YAMLElementTypes.WHITESPACE_TOKENS;
   }
 
   @Override
   @NotNull
   public TokenSet getCommentTokens() {
-    return myCommentTokens;
+    return YAMLElementTypes.YAML_COMMENT_TOKENS;
   }
 
   @Override
@@ -58,46 +58,46 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
   @NotNull
   public PsiElement createElement(final ASTNode node) {
     final IElementType type = node.getElementType();
-    if (type == DOCUMENT){
+    if (type == YAMLElementTypes.DOCUMENT){
       return new YAMLDocumentImpl(node);
     }
-    if (type == KEY_VALUE_PAIR) {
+    if (type == YAMLElementTypes.KEY_VALUE_PAIR) {
       return new YAMLKeyValueImpl(node);
     }
-    if (type == COMPOUND_VALUE) {
+    if (type == YAMLElementTypes.COMPOUND_VALUE) {
       return new YAMLCompoundValueImpl(node);
     }
-    if (type == SEQUENCE) {
+    if (type == YAMLElementTypes.SEQUENCE) {
       return new YAMLBlockSequenceImpl(node);
     }
-    if (type == MAPPING) {
+    if (type == YAMLElementTypes.MAPPING) {
       return new YAMLBlockMappingImpl(node);
     }
-    if (type == SEQUENCE_ITEM) {
+    if (type == YAMLElementTypes.SEQUENCE_ITEM) {
       return new YAMLSequenceItemImpl(node);
     }
-    if (type == HASH) {
+    if (type == YAMLElementTypes.HASH) {
       return new YAMLHashImpl(node);
     }
-    if (type == ARRAY) {
+    if (type == YAMLElementTypes.ARRAY) {
       return new YAMLArrayImpl(node);
     }
-    if (type == SCALAR_LIST_VALUE) {
+    if (type == YAMLElementTypes.SCALAR_LIST_VALUE) {
       return new YAMLScalarListImpl(node);
     }
-    if (type == SCALAR_TEXT_VALUE) {
+    if (type == YAMLElementTypes.SCALAR_TEXT_VALUE) {
       return new YAMLScalarTextImpl(node);
     }
-    if (type == SCALAR_PLAIN_VALUE) {
+    if (type == YAMLElementTypes.SCALAR_PLAIN_VALUE) {
       return new YAMLPlainTextImpl(node);
     }
-    if (type == SCALAR_QUOTED_STRING) {
+    if (type == YAMLElementTypes.SCALAR_QUOTED_STRING) {
       return new YAMLQuotedTextImpl(node);
     }
-    if (type == ANCHOR_NODE) {
+    if (type == YAMLElementTypes.ANCHOR_NODE) {
       return new YAMLAnchorImpl(node);
     }
-    if (type == ALIAS_NODE) {
+    if (type == YAMLElementTypes.ALIAS_NODE) {
       return new YAMLAliasImpl(node);
     }
     return new YAMLPsiElementImpl(node);
