@@ -144,7 +144,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     else {
       myMnemonicLabel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.ActionsList.mnemonicInsets()));
       myMnemonicLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-      myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
 
       Dimension preferredSize = new JLabel("W").getPreferredSize();
       JBInsets.addTo(preferredSize, JBUI.insetsLeft(4));
@@ -229,6 +228,9 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (myIconLabel == null) return;
     myIconLabel.setIcon(icon);
     myIconLabel.setDisabledIcon(disabledIcon);
+    if (ExperimentalUI.isNewUI()) {
+      myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
+    }
   }
 
   @NotNull
