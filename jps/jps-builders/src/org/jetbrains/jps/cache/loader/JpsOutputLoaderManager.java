@@ -46,7 +46,8 @@ import static org.jetbrains.jps.incremental.storage.ProjectStamps.FORCE_DOWNLOAD
 public class JpsOutputLoaderManager {
   private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
   private static final String FS_STATE_FILE = "fs_state.dat";
-  private static final int DEFAULT_PROJECT_MODULES_COUNT = 2200;
+  // Downloading caches applicable only for the good internet connection
+  private static final int MAX_DOWNLOAD_DURATION = 600;
   private static final int PROJECT_MODULE_DOWNLOAD_SIZE_BYTES = 512_000;
   private static final int AVERAGE_CACHE_SIZE_BYTES = 512_000 * 1024;
   private static final int PROJECT_MODULE_SIZE_DISK_BYTES = 921_600;
@@ -156,7 +157,12 @@ public class JpsOutputLoaderManager {
       LOG.info("Can't calculate approximate project build time");
       return false;
     }
-    return calculateApproximateDownloadTimeMs(systemOpsStatistic, projectModulesCount) < approximateBuildTime;
+    long approximateDownloadTime = calculateApproximateDownloadTimeMs(systemOpsStatistic, projectModulesCount);
+    if (approximateDownloadTime == 0) {
+      LOG.info("Can't calculate approximate download time");
+      return false;
+    }
+    return approximateDownloadTime < approximateBuildTime;
   }
 
   private static long calculateApproximateDownloadTimeMs(SystemOpsStatistic systemOpsStatistic, int projectModulesCount) {
@@ -186,6 +192,10 @@ public class JpsOutputLoaderManager {
              "Expected decompression time: " + expectedDecompressionTimeSec + "sec. " +
              "Expected size to delete: " + StringUtil.formatFileSize(approximateDownloadSize) + ". Expected delete time: " + expectedDeleteTimeSec + "sec. " +
              "Total time of work: " + StringUtil.formatDuration(expectedTimeOfWorkMs));
+    if (expectedDownloadTimeSec >=  MAX_DOWNLOAD_DURATION) {
+      LOG.info("Downloading can consume more than 10 mins, connection speed is too small for caches usages");
+      return 0;
+    }
     return expectedTimeOfWorkMs;
   }
 
