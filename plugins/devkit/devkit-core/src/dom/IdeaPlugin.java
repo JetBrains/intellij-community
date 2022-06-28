@@ -65,6 +65,9 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull GenericAttributeValue<Boolean> getImplementationDetail();
 
+  @ApiStatus.Experimental
+  @NotNull GenericAttributeValue<Boolean> getOnDemand();
+
   @NotNull GenericAttributeValue<Boolean> getRequireRestart();
 
   @ApiStatus.Experimental
