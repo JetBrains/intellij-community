@@ -1,0 +1,14 @@
+{
+  "icons": {
+    "com": {
+      "jetbrains": {
+        "python": {
+          "expui": {
+            "python.svg": "icons/com/jetbrains/python/pythonFile.svg"
+
+          }
+        }
+      }
+    }
+  }
+}
