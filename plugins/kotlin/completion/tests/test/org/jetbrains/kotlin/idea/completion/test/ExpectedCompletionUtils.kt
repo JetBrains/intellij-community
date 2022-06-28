@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test
 
@@ -17,12 +17,12 @@ import org.jetbrains.kotlin.idea.completion.LookupElementFactory
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.test.AstAccessControl
 import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
@@ -153,7 +153,6 @@ object ExpectedCompletionUtils {
         RUNTIME_TYPE,
         COMPLETION_TYPE_PREFIX,
         BLOCK_CODE_FRAGMENT,
-        LightClassComputationControl.LIGHT_CLASS_DIRECTIVE,
         AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE,
         IgnoreTests.DIRECTIVES.FIR_COMPARISON,
     )

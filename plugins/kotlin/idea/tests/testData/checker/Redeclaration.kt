@@ -19,8 +19,8 @@ class A {
 }
 
 object B {
-    <error>class <error>C</error></error>
-    <error>class <error>C</error></error>
+    class <error>C</error>
+    class <error>C</error>
 }
 
 fun <<error>T</error>, <error>T</error>> PairParam() {}
