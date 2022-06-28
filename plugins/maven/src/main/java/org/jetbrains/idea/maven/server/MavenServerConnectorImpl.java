@@ -22,6 +22,7 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,6 +48,8 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
       return false;
     }
   };
+  private ScheduledFuture<?> myPullingLoggerFuture = null;
+  private ScheduledFuture<?> myPullingDownloadFuture = null;
 
 
   public MavenServerConnectorImpl(@NotNull Project project,
@@ -129,6 +132,8 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
 
   private void cleanUpFutures() {
     try {
+      cancelFuture(myPullingDownloadFuture);
+      cancelFuture(myPullingLoggerFuture);
       if (!myExecutor.isShutdown()) {
         myExecutor.shutdownNow();
       }
@@ -138,6 +143,16 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
       if (count != 0) MavenLog.LOG.warn("Maven pulling download listener was failed: " + count + " times");
     }
     catch (IllegalStateException ignore) {
+    }
+  }
+
+  private static void cancelFuture(ScheduledFuture<?> future) {
+    if (future != null) {
+      try {
+        future.cancel(true);
+      }
+      catch (Throwable ignore) {
+      }
     }
   }
 
@@ -250,7 +265,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
   private void startPullingDownloadListener(MavenServer server) throws RemoteException {
     MavenPullDownloadListener listener = server.createPullDownloadListener(MavenRemoteObjectWrapper.ourToken);
     if (listener == null) return;
-    myExecutor.scheduleWithFixedDelay(
+    myPullingDownloadFuture = myExecutor.scheduleWithFixedDelay(
       () -> {
         try {
           List<DownloadArtifactEvent> artifactEvents = listener.pull();
@@ -278,7 +293,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
   private void startPullingLogger(MavenServer server) throws RemoteException {
     MavenPullServerLogger logger = server.createPullLogger(MavenRemoteObjectWrapper.ourToken);
     if (logger == null) return;
-    myExecutor.scheduleWithFixedDelay(
+    myPullingLoggerFuture = myExecutor.scheduleWithFixedDelay(
       () -> {
         try {
           List<ServerLogEvent> logEvents = logger.pull();
