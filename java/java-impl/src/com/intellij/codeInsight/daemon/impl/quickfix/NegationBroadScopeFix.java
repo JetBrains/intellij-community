@@ -2,13 +2,16 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * if (!a == b) ...  =>  if (!(a == b)) ...
@@ -18,6 +21,11 @@ public class NegationBroadScopeFix implements IntentionAction {
 
   public NegationBroadScopeFix(@NotNull PsiPrefixExpression prefixExpression) {
     myPrefixExpression = prefixExpression;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new NegationBroadScopeFix(PsiTreeUtil.findSameElementInCopy(myPrefixExpression, target));
   }
 
   @Override
@@ -68,7 +76,7 @@ public class NegationBroadScopeFix implements IntentionAction {
   @NotNull
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myPrefixExpression;
+    return myPrefixExpression.getContainingFile();
   }
 
   @Override
