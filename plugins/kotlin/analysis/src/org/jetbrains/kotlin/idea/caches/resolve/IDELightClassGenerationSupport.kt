@@ -61,16 +61,12 @@ class IDELightClassGenerationSupport : LightClassGenerationSupport() {
         override val deprecationResolver: DeprecationResolver
             get() = resolutionFacade.getFrontendService(DeprecationResolver::class.java)
 
-        override val jvmTarget: JvmTarget by lazyPub {
-            module?.platform?.subplatformsOfType<JdkPlatform>()?.firstOrNull()?.targetVersion ?: JvmTarget.DEFAULT
-        }
-
         override val typeMapper: KotlinTypeMapper by lazyPub {
             KotlinTypeMapper(
                 BindingContext.EMPTY, ClassBuilderMode.LIGHT_CLASSES,
                 moduleName, languageVersionSettings,
                 useOldInlineClassesManglingScheme = false,
-                jvmTarget = jvmTarget,
+                jvmTarget = module?.platform?.subplatformsOfType<JdkPlatform>()?.firstOrNull()?.targetVersion ?: JvmTarget.DEFAULT,
                 typePreprocessor = KotlinType::cleanFromAnonymousTypes,
                 namePreprocessor = ::tryGetPredefinedName
             )
