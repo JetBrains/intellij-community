@@ -205,7 +205,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            psiResolved = ((UUnaryExpression)node).resolveOperator();
                          }
                          if (psiResolved == null) {
-                           psiResolved = tryFindKotlinParameter(node);
+                           psiResolved = tryParenthesisOverloading(node);
                          }
 
                          psiResolved = returnToPhysical(psiResolved);
@@ -399,7 +399,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     }
   }
 
-  private static PsiElement tryFindKotlinParameter(@NotNull UExpression node) {
+  private static PsiElement tryParenthesisOverloading(@NotNull UExpression node) {
     if (node instanceof UCallExpression && "invoke".equals(((UCallExpression)node).getMethodName())) {
       UExpression receiver = ((UCallExpression)node).getReceiver();
       if (receiver instanceof UResolvable) {
