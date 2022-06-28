@@ -4,6 +4,7 @@ package com.intellij.roots
 import com.intellij.facet.FacetManager
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
+import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
@@ -58,6 +59,7 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     assertEquals(VfsUtilCore.pathToUrl(contentRootPath), assertOneElement(ModuleRootManager.getInstance(newA!!).contentRootUrls))
   }
 
+  @TestFor(issues = ["IDEA-296840"])
   fun `test reload module and check if facet is not disposed`() {
     registerFacetType(MockFacetType(), project)
     val a = createModule("a")
