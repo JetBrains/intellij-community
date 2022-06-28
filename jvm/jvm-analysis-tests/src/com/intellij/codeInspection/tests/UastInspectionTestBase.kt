@@ -2,6 +2,7 @@ package com.intellij.codeInspection.tests
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
@@ -54,6 +55,21 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   ) {
     configureByText("$fileName${lang.ext}", before)
     hints.forEach { runQuickFix(it) }
+    checkResult(after)
+  }
+
+  protected fun JavaCodeInsightTestFixture.testAllQuickfixes(
+    lang: ULanguage,
+    before: String,
+    after: String,
+    vararg hints: String = emptyArray(),
+    fileName: String = generateFileName()
+  ) {
+    configureByText("$fileName${lang.ext}", before)
+    myFixture.getAllQuickFixes()
+      .filterIsInstance(QuickFixWrapper::class.java)
+      .filter {(hints.isEmpty() || hints.contains(it.fix.familyName)) }
+      .forEach { myFixture.launchAction(it) }
     checkResult(after)
   }
 
