@@ -4,6 +4,7 @@ package com.intellij.codeInspection.emptyMethod;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.reference.*;
@@ -310,6 +311,8 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private static final class DeleteMethodQuickFix implements LocalQuickFix, BatchQuickFix {
+    // QuickFix is registered for global inspection only; not displayed in the editor anyway
+    @SuppressWarnings("ActionIsNotPreviewFriendly")
     private final ProblemDescriptionsProcessor myProcessor;
     private final boolean myNeedToDeleteHierarchy;
 
