@@ -60,7 +60,7 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
 
   override fun isModified(): Boolean {
     return (isEnabled != (settings.isProviderEnabled(id) && settings.codeVisionEnabled)
-            || positionComboBox.item != (settings.getPositionForGroup(id) ?: settings.defaultPosition))
+            || positionComboBox.item != (settings.getPositionForGroup(id) ?: CodeVisionAnchorKind.Default))
   }
 
   override fun apply() {
