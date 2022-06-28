@@ -6,10 +6,12 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class CopyAction extends AnAction implements DumbAware, LightEditCompatible {
 
@@ -34,33 +36,33 @@ public class CopyAction extends AnAction implements DumbAware, LightEditCompatib
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    updateFromProvider(event, PlatformDataKeys.COPY_PROVIDER, (provider, presentation) -> {
-      presentation.setEnabled(provider.isCopyEnabled(event.getDataContext()));
+    computeWithProviderDumbAware(event, PlatformDataKeys.COPY_PROVIDER, provider -> {
       boolean isEditorPopup = event.getPlace().equals(ActionPlaces.EDITOR_POPUP);
-      presentation.setVisible(!isEditorPopup || provider.isCopyVisible(event.getDataContext()));
+      event.getPresentation().setEnabled(provider.isCopyEnabled(event.getDataContext()));
+      event.getPresentation().setVisible(!isEditorPopup || provider.isCopyVisible(event.getDataContext()));
     });
   }
 
-  static <T extends ActionUpdateThreadAware> void updateFromProvider(@NotNull AnActionEvent event,
-                                                                     @NotNull DataKey<T> key,
-                                                                     @NotNull BiConsumer<T, Presentation> presentationUpdater) {
-    Presentation presentation = event.getPresentation();
+  static <T extends ActionUpdateThreadAware> void computeWithProviderDumbAware(@NotNull AnActionEvent event,
+                                                                               @NotNull DataKey<T> key,
+                                                                               @NotNull Consumer<T> consumer) {
     DataContext dataContext = event.getDataContext();
     T provider = key.getData(dataContext);
-    if (provider == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(true);
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    if (provider == null || project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+      event.getPresentation().setEnabled(false);
+      event.getPresentation().setVisible(true);
       return;
     }
     ActionUpdateThread updateThread = provider.getActionUpdateThread();
     if (updateThread == ActionUpdateThread.BGT || EDT.isCurrentThreadEdt()) {
-      presentationUpdater.accept(provider, presentation);
+      consumer.accept(provider);
     }
     else {
       Utils.getOrCreateUpdateSession(event).compute(
-        "ProviderState#create", updateThread, () -> {
-          presentationUpdater.accept(provider, presentation);
-          return presentation;
+        provider.getClass().getName() + "#update", updateThread, () -> {
+          consumer.accept(provider);
+          return null;
         });
     }
   }

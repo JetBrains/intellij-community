@@ -61,17 +61,13 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
       return;
     }
 
-    CopyAction.updateFromProvider(e, PlatformDataKeys.DELETE_ELEMENT_PROVIDER, (provider, p) -> {
+    CopyAction.computeWithProviderDumbAware(e, PlatformDataKeys.DELETE_ELEMENT_PROVIDER, provider -> {
+      boolean isPopupPlace = ActionPlaces.isPopupPlace(e.getPlace());
+      boolean enabled = provider.canDeleteElement(e.getDataContext());
+      presentation.setEnabled(enabled);
+      presentation.setVisible(!isPopupPlace || enabled);
       if (provider instanceof TitledHandler) {
         presentation.setText(((TitledHandler)provider).getActionTitle());
-      }
-      boolean canDelete = provider != null && provider.canDeleteElement(e.getDataContext());
-      presentation.setEnabled(canDelete);
-      if (ActionPlaces.isPopupPlace(e.getPlace())) {
-        presentation.setVisible(canDelete);
-      }
-      else {
-        presentation.setVisible(true);
       }
     });
    }

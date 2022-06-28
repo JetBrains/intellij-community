@@ -3,7 +3,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -39,17 +42,10 @@ public class CutAction extends DumbAwareAction implements LightEditCompatible {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    CopyAction.updateFromProvider(event, PlatformDataKeys.CUT_PROVIDER, (provider, presentation) -> {
-      DataContext dataContext = event.getDataContext();
-      Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      boolean notDumbAware = project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(provider);
-      presentation.setEnabled(!notDumbAware && project != null && project.isOpen() && provider != null && provider.isCutEnabled(dataContext));
-      if (event.getPlace().equals(ActionPlaces.EDITOR_POPUP) && provider != null) {
-        presentation.setVisible(provider.isCutVisible(dataContext));
-      }
-      else {
-        presentation.setVisible(true);
-      }
+    CopyAction.computeWithProviderDumbAware(event, PlatformDataKeys.CUT_PROVIDER, provider -> {
+      boolean isEditorPopup = event.getPlace().equals(ActionPlaces.EDITOR_POPUP);
+      event.getPresentation().setEnabled(provider.isCutEnabled(event.getDataContext()));
+      event.getPresentation().setVisible(!isEditorPopup || provider.isCutVisible(event.getDataContext()));
     });
   }
 }
