@@ -27,10 +27,10 @@
     <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Vertical">
+    <action id="Terminal.SplitVertically" class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Vertical">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Horizontal">
+    <action id="Terminal.SplitHorizontally" class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Horizontal">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
     <action id="Terminal.NextSplitter" use-shortcut-of="NextSplitter"
