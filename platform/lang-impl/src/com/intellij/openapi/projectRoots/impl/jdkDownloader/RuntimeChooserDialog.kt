@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.builder.*
@@ -142,7 +143,7 @@ class RuntimeChooserDialog(
         else -> JBUI.Borders.customLineBottom(JBColor.border())
       }
       border = JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true)
-      background = JBUI.CurrentTheme.Notification.BACKGROUND
+      background = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Banner.WARNING_BACKGROUND else JBUI.CurrentTheme.Notification.BACKGROUND
       foreground = JBUI.CurrentTheme.Notification.FOREGROUND
       putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
     }
