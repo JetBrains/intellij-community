@@ -1923,6 +1923,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
+  public void visitPatternGuard(@NotNull PsiPatternGuard guard) {
+    super.visitPatternGuard(guard);
+    myHolder.add(checkFeature(guard, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
+  }
+
+  @Override
+  public void visitDeconstructionPattern(@NotNull PsiDeconstructionPattern deconstructionPattern) {
+    super.visitDeconstructionPattern(deconstructionPattern);
+    myHolder.add(checkFeature(deconstructionPattern, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
+  }
+
+  @Override
   public void visitTypeTestPattern(@NotNull PsiTypeTestPattern pattern) {
     super.visitTypeTestPattern(pattern);
     if (pattern.getParent() instanceof PsiCaseLabelElementList) {
