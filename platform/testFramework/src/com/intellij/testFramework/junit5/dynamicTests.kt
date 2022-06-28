@@ -5,11 +5,14 @@ package com.intellij.testFramework.junit5
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.function.Executable
+import org.opentest4j.AssertionFailedError
 
 /**
  * Describes a test failure. [name] will be used as a test name for a separate test failure when [asDynamicTests] is called.
  */
-data class NamedFailure(val name: String, val error: Throwable)
+data class NamedFailure(val name: String, val error: Throwable) {
+  constructor(name: String, errorMessage: String) : this(name, AssertionFailedError(errorMessage))
+}
 
 /**
  * Converts multiple failures to separate tests. If there are no failures in the list, a single (successful) test with name [testNameForSuccess]

@@ -12,11 +12,16 @@ import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.ApplicationExtension;
+import com.intellij.testFramework.DisposableExtension;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.testFramework.junit5.DynamicTests;
+import com.intellij.testFramework.junit5.NamedFailure;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -24,9 +29,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
+public class ActionsTreeTest {
   private static final Logger LOG = Logger.getInstance(ActionsTreeTest.class);
   private static final String ACTION_WITHOUT_TEXT_AND_DESCRIPTION = "DummyWithoutTextAndDescription";
   private static final String ACTION_WITH_TEXT_ONLY = "DummyWithTextOnly";
@@ -57,9 +62,13 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
 
   private ActionShortcutRestrictions mySavedRestrictions;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @RegisterExtension
+  static ApplicationExtension ourApplicationExtension = new ApplicationExtension();
+  @RegisterExtension 
+  DisposableExtension myDisposableExtension = new DisposableExtension();
+
+  @BeforeEach
+  void setUp() {
     // create dummy actions
     myActionWithoutTextAndDescription = new MyAction(null, null);
     myActionWithTextOnly = new MyAction("some text", null);
@@ -127,52 +136,46 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     myActionsTree.reset(child, new QuickList[0]);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      if (mySavedRestrictions != null) {
-        setRestrictions(mySavedRestrictions);
-      }
+  @AfterEach
+  void tearDown() {
+    if (mySavedRestrictions != null) {
+      setRestrictions(mySavedRestrictions);
+    }
 
-      ActionManager actionManager = ActionManager.getInstance();
-      DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_EDITOR);
-      group.remove(myActionWithoutTextAndDescription);
-      group.remove(myActionWithTextOnly);
-      group.remove(myActionWithTextAndDescription);
-      group.remove(myActionExistent);
-      group.remove(myActionWithUseShortcutOfExistent);
-      group.remove(myActionWithUseShortcutOfExistentRedefined);
-      group.remove(myActionWithUseShortcutOfExistentRedefinedInParent);
-      group.remove(myActionWithUseShortcutOfNonExistent);
-      group.remove(myActionWithFixedShortcuts);
-      actionManager.unregisterAction(ACTION_WITHOUT_TEXT_AND_DESCRIPTION);
-      actionManager.unregisterAction(ACTION_WITH_TEXT_ONLY);
-      actionManager.unregisterAction(ACTION_WITH_TEXT_AND_DESCRIPTION);
-      actionManager.unregisterAction(EXISTENT_ACTION);
-      actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
-      actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
-      actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
-      actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
-      actionManager.unregisterAction(ACTION_WITH_FIXED_SHORTCUTS);
+    ActionManager actionManager = ActionManager.getInstance();
+    DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_EDITOR);
+    group.remove(myActionWithoutTextAndDescription);
+    group.remove(myActionWithTextOnly);
+    group.remove(myActionWithTextAndDescription);
+    group.remove(myActionExistent);
+    group.remove(myActionWithUseShortcutOfExistent);
+    group.remove(myActionWithUseShortcutOfExistentRedefined);
+    group.remove(myActionWithUseShortcutOfExistentRedefinedInParent);
+    group.remove(myActionWithUseShortcutOfNonExistent);
+    group.remove(myActionWithFixedShortcuts);
+    actionManager.unregisterAction(ACTION_WITHOUT_TEXT_AND_DESCRIPTION);
+    actionManager.unregisterAction(ACTION_WITH_TEXT_ONLY);
+    actionManager.unregisterAction(ACTION_WITH_TEXT_AND_DESCRIPTION);
+    actionManager.unregisterAction(EXISTENT_ACTION);
+    actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
+    actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
+    actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
+    actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
+    actionManager.unregisterAction(ACTION_WITH_FIXED_SHORTCUTS);
 
-      KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
-      KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
-      KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
-      KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+    KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
+    KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
+    KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
+    KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
   }
 
   private void setRestrictions(@NotNull ActionShortcutRestrictions restrictions) {
     ServiceContainerUtil
-      .replaceService(ApplicationManager.getApplication(), ActionShortcutRestrictions.class, restrictions, getTestRootDisposable());
+      .replaceService(ApplicationManager.getApplication(), ActionShortcutRestrictions.class, restrictions,
+                      myDisposableExtension.getDisposable());
   }
 
+  @Test
   public void testVariousActionsArePresent() {
     doTest(null,
            Arrays.asList(
@@ -193,10 +196,11 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     );
   }
 
-  public void testPresentation() {
+  @TestFactory
+  public List<DynamicTest> testPresentation() {
     ActionManager manager = ActionManager.getInstance();
 
-    List<String> failures = new ArrayList<>();
+    List<NamedFailure> failures = new ArrayList<>();
     for (String id : ContainerUtil.sorted(manager.getActionIdList(""))) {
       if (ACTION_WITHOUT_TEXT_AND_DESCRIPTION.equals(id)) {
         continue;
@@ -218,7 +222,10 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
           LOG.debug("ignored action group: " + actionIdAndClass);
         }
         else if (StringUtil.isEmpty(action.getTemplatePresentation().getText())) {
-          failures.add("no text is defined for template presentation of " + actionIdAndClass + "; even if text is set in 'update' method the internal ID will be shown in Settings | Keymap");
+          String message = "no text is defined for template presentation of " +
+                           actionIdAndClass +
+                           "; even if text is set in 'update' method the internal ID will be shown in Settings | Keymap";
+          failures.add(new NamedFailure("no text defined for " + id, message));
         }
       }
       catch (PluginException exception) {
@@ -226,7 +233,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
       }
     }
 
-    assertThat(failures).isEmpty();
+    return DynamicTests.asDynamicTests(failures, "presentations are correct", "too many actions without text");
   }
 
   private static void checkPresentationProperty(String name, String message, Object expected, Object actual) {
@@ -235,6 +242,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testFiltering() {
     doTest("Dummy",
            // all below actions should still be present, as they contain 'Dummy' in their actionId
@@ -269,8 +277,8 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     for (String actionId : idsThatMustNotBePresent) {
       if (myActionsTree.getMainGroup().containsId(actionId)) present.add(actionId);
     }
-    assertTrue("Missing actions: " + missing + "\nWrongly shown: " + present,
-               missing.isEmpty() && present.isEmpty());
+    assertTrue(missing.isEmpty() && present.isEmpty(),
+               "Missing actions: " + missing + "\nWrongly shown: " + present);
   }
 
   private static final class MyAction extends AnAction {
