@@ -19,9 +19,6 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.asJava.classes.LightClassInheritanceHelper"
             serviceImplementation="org.jetbrains.kotlin.idea.caches.lightClasses.IdeLightClassInheritanceHelper"/>
-        <projectService
-            serviceInterface="org.jetbrains.kotlin.asJava.KotlinExtraDiagnosticsProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.IDEKotlinExtraDiagnosticsProvider"/>
 
     <constantExpressionEvaluator
             language="kotlin"
