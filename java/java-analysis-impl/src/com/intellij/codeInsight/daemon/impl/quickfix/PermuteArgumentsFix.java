@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -94,8 +94,9 @@ public final class PermuteArgumentsFix implements IntentionAction, HighPriorityA
         }
 
         try {
-          registerSwapFixes(expressions, callExpression, permutations, methodCandidate, incompatibilitiesCount, minIncompatibleIndex, maxIncompatibleIndex);
-          registerShiftFixes(expressions, callExpression, permutations, methodCandidate, minIncompatibleIndex, maxIncompatibleIndex);
+          PsiExpression[] clonedExpressions = expressions.clone();
+          registerSwapFixes(clonedExpressions, callExpression, permutations, methodCandidate, incompatibilitiesCount, minIncompatibleIndex, maxIncompatibleIndex);
+          registerShiftFixes(clonedExpressions, callExpression, permutations, methodCandidate, minIncompatibleIndex, maxIncompatibleIndex);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
