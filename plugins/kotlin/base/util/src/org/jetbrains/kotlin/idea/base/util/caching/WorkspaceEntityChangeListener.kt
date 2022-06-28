@@ -10,15 +10,31 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import kotlin.reflect.KFunction1
 
-abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value: Any>(protected val project: Project): WorkspaceModelChangeListener {
+abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value : Any>(
+    protected val project: Project,
+    private val afterChangeApplied: Boolean = true
+) : WorkspaceModelChangeListener {
     protected abstract val entityClass: Class<Entity>
 
     protected abstract fun map(storage: EntityStorage, entity: Entity): Value?
 
     protected abstract fun entitiesChanged(outdated: List<Value>)
 
+    final override fun beforeChanged(event: VersionedStorageChange) {
+        if (!afterChangeApplied) {
+            handleEvent(event)
+        }
+    }
+
     final override fun changed(event: VersionedStorageChange) {
+        if (afterChangeApplied) {
+            handleEvent(event)
+        }
+    }
+
+    private fun handleEvent(event: VersionedStorageChange) {
         val storageBefore = event.storageBefore
         val changes = event.getChanges(entityClass).ifEmpty { return }
 

@@ -81,7 +81,7 @@ class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Lib
         return JvmPlatforms.defaultJvmPlatform
     }
 
-    internal class ModelChangeListener(project: Project) : WorkspaceEntityChangeListener<LibraryEntity, Library>(project) {
+    internal class ModelChangeListener(project: Project) : WorkspaceEntityChangeListener<LibraryEntity, Library>(project, afterChangeApplied = false) {
         override val entityClass: Class<LibraryEntity>
             get() = LibraryEntity::class.java
 
