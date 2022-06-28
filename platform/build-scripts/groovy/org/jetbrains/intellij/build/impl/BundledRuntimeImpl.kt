@@ -100,12 +100,12 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
    *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
    *  `UploadingAndSigning#getMissingJbrs(java.lang.String)`
    */
-  override fun archiveName(prefix: String, arch: JvmArchitecture, os: OsFamily): String {
+  override fun archiveName(prefix: String, arch: JvmArchitecture, os: OsFamily, forceVersionWithUnderscores: Boolean): String {
     val split = build.split('b')
     if (split.size != 2) {
       throw IllegalArgumentException("$build doesn't match '<update>b<build_number>' format (e.g.: 17.0.2b387.1)")
     }
-    val version = split[0]
+    val version = if (forceVersionWithUnderscores) split[0].replace(".", "_") else split[0]
     val buildNumber = "b${split[1]}"
     val archSuffix = getArchSuffix(arch)
     return "${prefix}${version}-${os.jbrArchiveSuffix}-${archSuffix}-${runtimeBuildPrefix()}${buildNumber}.tar.gz"

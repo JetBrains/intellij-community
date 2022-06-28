@@ -15,7 +15,7 @@ interface BundledRuntime {
 
   fun extractTo(prefix: String, os: OsFamily, destinationDir: Path, arch: JvmArchitecture)
 
-  fun archiveName(prefix: String, arch: JvmArchitecture, os: OsFamily): String
+  fun archiveName(prefix: String, arch: JvmArchitecture, os: OsFamily, forceVersionWithUnderscores: Boolean = false): String
 
   fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path
 
