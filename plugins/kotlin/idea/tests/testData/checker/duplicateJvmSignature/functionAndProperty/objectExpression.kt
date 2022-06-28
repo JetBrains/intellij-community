@@ -2,6 +2,6 @@
 
 fun foo() =
     object {
-        <error>val x</error> = 1
-        <error>fun getX()</error> = 1
+        val x = 1
+        fun getX() = 1
     }

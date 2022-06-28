@@ -22,6 +22,3 @@ class C {
         fun j() {}
     }
 }
-
-// SKIP_SANITY_TEST
-// LAZINESS:NoLaziness

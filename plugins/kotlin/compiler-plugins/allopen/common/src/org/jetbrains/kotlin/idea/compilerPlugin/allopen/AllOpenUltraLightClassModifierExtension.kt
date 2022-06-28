@@ -1,20 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.allopen
-
-import org.jetbrains.kotlin.descriptors.*
 
 /*
  * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiModifier
+import org.jetbrains.kotlin.allopen.AbstractAllOpenDeclarationAttributeAltererExtension
+import org.jetbrains.kotlin.asJava.UltraLightClassModifierExtension
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.MemberDescriptor
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.extensions.AnnotationBasedExtension
 import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
 import org.jetbrains.kotlin.idea.compilerPlugin.getAnnotationNames
-import org.jetbrains.kotlin.asJava.UltraLightClassModifierExtension
-import org.jetbrains.kotlin.extensions.AnnotationBasedExtension
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
@@ -27,8 +30,12 @@ class AllOpenUltraLightClassModifierExtension(project: Project) :
 
     private val cachedAnnotationsNames = CachedAnnotationNames(project, ALL_OPEN_ANNOTATION_OPTION_PREFIX)
 
-    override fun getAnnotationFqNames(modifierListOwner: KtModifierListOwner?): List<String> =
-        cachedAnnotationsNames.getAnnotationNames(modifierListOwner)
+    override fun getAnnotationFqNames(modifierListOwner: KtModifierListOwner?): List<String> {
+        return if (ApplicationManager.getApplication().isUnitTestMode)
+            AbstractAllOpenDeclarationAttributeAltererExtension.ANNOTATIONS_FOR_TESTS
+        else
+            cachedAnnotationsNames.getAnnotationNames(modifierListOwner)
+    }
 
     private val KtDeclaration.isMethodOrProperty get() = this is KtProperty || this is KtPropertyAccessor || this is KtFunction || (this is KtParameter && this.isPropertyParameter())
 
