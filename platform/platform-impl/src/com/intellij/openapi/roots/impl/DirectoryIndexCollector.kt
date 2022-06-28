@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 
 class DirectoryIndexCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("directoryIndex", 1)
+    val GROUP = EventLogGroup("directoryIndex", 2)
 
     @JvmField
     val RESET_REASON = EventFields.Enum("reason", DirectoryIndexAnalyticsReporter.ResetReason::class.java)
