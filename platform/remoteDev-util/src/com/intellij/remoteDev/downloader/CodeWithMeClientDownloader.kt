@@ -114,7 +114,7 @@ object CodeWithMeClientDownloader {
 
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
 
-    val clientDownloadUrl = "${config.clientDownloadUrl}$clientDistributionName-$hostBuildNumber$platformSuffix"
+    val clientDownloadUrl = "${config.clientDownloadUrl.toString().trimEnd('/')}/$clientDistributionName-$hostBuildNumber$platformSuffix"
 
     val platformString = when {
       SystemInfo.isLinux -> "linux-x64"
@@ -139,7 +139,7 @@ object CodeWithMeClientDownloader {
      */
     val jdkVersion = jreBuildParts[0].replace(".", "_")
     val jdkBuild = jreBuildParts[1]
-    val jreDownloadUrl = "${config.jreDownloadUrl}jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
+    val jreDownloadUrl = "${config.jreDownloadUrl.toString().trimEnd('/')}/jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
 
     val clientName = "$clientDistributionName-$hostBuildNumber"
     val jreName = jreDownloadUrl.substringAfterLast('/').removeSuffix(".tar.gz")
