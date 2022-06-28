@@ -73,15 +73,18 @@ fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): K
         else -> error("Unexpected kind of KtFunctionLikeSymbol: ${this.javaClass}")
     }
 
+fun KtValueParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedValueParameterDescriptor {
+    val containingSymbol = context.withAnalysisSession { this@toDeclarationDescriptor.getContainingSymbol() }
+    check(containingSymbol is KtFunctionLikeSymbol) {
+        "Unexpected containing symbol = $containingSymbol"
+    }
+    return KtSymbolBasedValueParameterDescriptor(this, context, containingSymbol.toDeclarationDescriptor(context))
+}
+
+
 fun KtVariableLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedDeclarationDescriptor =
     when (this) {
-        is KtValueParameterSymbol -> {
-            val containingSymbol = context.withAnalysisSession { this@toDeclarationDescriptor.getContainingSymbol() }
-            check(containingSymbol is KtFunctionLikeSymbol) {
-                "Unexpected containing symbol = $containingSymbol"
-            }
-            KtSymbolBasedValueParameterDescriptor(this, context, containingSymbol.toDeclarationDescriptor(context))
-        }
+        is KtValueParameterSymbol -> toDeclarationDescriptor(context)
         is KtPropertySymbol -> KtSymbolBasedPropertyDescriptor(this, context)
         is KtJavaFieldSymbol -> KtSymbolBasedJavaPropertyDescriptor(this, context)
         else -> context.implementationPlanned(this::class.toString())
