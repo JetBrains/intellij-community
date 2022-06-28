@@ -262,7 +262,10 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
       }
 
       when {
-        !intersectionStarted -> beforeViewport[index.mod(delta)] = block
+        !intersectionStarted -> {
+          beforeViewport[index.mod(delta)]?.let(hiddenBlocks::add)
+          beforeViewport[index.mod(delta)] = block
+        }
         viewportIntersected -> blocksInViewport.add(block)
         afterViewport.any(Objects::isNull) -> afterViewport[index.mod(delta)] = block
         else -> hiddenBlocks.add(block)
