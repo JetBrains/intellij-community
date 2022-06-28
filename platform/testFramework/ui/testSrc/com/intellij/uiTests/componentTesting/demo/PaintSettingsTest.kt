@@ -26,7 +26,7 @@ class PaintSettingsTest {
     """)
     list.forEach { id ->
       remoteRobot.runJs("""
-        importPackage(com.intellij.uiTests.canvas)
+        importPackage(com.intellij.uiTests.componentTesting.canvas)
         ComponentTesting.INSTANCE.show(new ${SettingsComponentToTest::class.java.canonicalName}('$id'))
       """.apply { println(this) })
       try {
@@ -36,7 +36,7 @@ class PaintSettingsTest {
       } finally {
         try {
           remoteRobot.runJs("""
-            importPackage(com.intellij.uiTests.canvas)
+            importPackage(com.intellij.uiTests.componentTesting.canvas)
             ComponentTesting.INSTANCE.close()
           """)
         } catch (e: Throwable) {

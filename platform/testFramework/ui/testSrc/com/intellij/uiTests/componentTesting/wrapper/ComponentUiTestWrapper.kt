@@ -21,11 +21,11 @@ internal fun <T : Class<out ComponentToTest>> componentUiTest(componentClass: T,
 }
 
 private fun RemoteRobot.showComponent(componentCanonicalName: String) = runJs("""
-    importPackage(com.intellij.uiTests.canvas)
+    importPackage(com.intellij.uiTests.componentTesting.canvas)
     ComponentTesting.INSTANCE.show(new ${componentCanonicalName}())
   """)
 
 private fun RemoteRobot.close() = runJs("""
-    importPackage(com.intellij.uiTests.canvas)
+    importPackage(com.intellij.uiTests.componentTesting.canvas)
     ComponentTesting.INSTANCE.close()
   """)
