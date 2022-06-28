@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -94,15 +94,13 @@ public final class PluginDescriptorChooser {
           return candidate.getIcon();
         }
 
-        @NotNull
         @Override
-        public String getTextFor(PluginDescriptorCandidate candidate) {
+        public @NotNull String getTextFor(PluginDescriptorCandidate candidate) {
           return candidate.getText();
         }
 
-        @Nullable
         @Override
-        public ListSeparator getSeparatorAbove(PluginDescriptorCandidate candidate) {
+        public @Nullable ListSeparator getSeparatorAbove(PluginDescriptorCandidate candidate) {
           final String separatorText = candidate.getSeparatorText();
           if (separatorText != null) {
             return new ListSeparator(separatorText);
@@ -119,11 +117,9 @@ public final class PluginDescriptorChooser {
     JBPopupFactory.getInstance().createListPopup(popupStep).showInBestPositionFor(editor);
   }
 
-  @NotNull
-  public static Extensions findOrCreateExtensionsForEP(DomFileElement<? extends IdeaPlugin> domFileElement, String epName) {
+  public static @NotNull Extensions findOrCreateExtensionsForEP(DomFileElement<? extends IdeaPlugin> domFileElement, String epName) {
     final IdeaPlugin ideaPlugin = domFileElement.getRootElement();
-    final List<Extensions> extensionsList = ideaPlugin.getExtensions();
-    for (Extensions extensions : extensionsList) {
+    for (Extensions extensions : ideaPlugin.getExtensions()) {
       if (extensions.getXmlTag() instanceof IncludedXmlTag) {
         continue;
       }
@@ -222,8 +218,7 @@ public final class PluginDescriptorChooser {
       myStartsNewGroup = startsNewGroup;
     }
 
-    @NlsContexts.ListItem
-    public String getText() {
+    public @NlsContexts.ListItem String getText() {
       final String name = myDomFileElement.getFile().getName();
       final String pluginId = getPluginId();
       return pluginId != null ? name + " [" + pluginId + "]" : name;
@@ -233,16 +228,14 @@ public final class PluginDescriptorChooser {
       return getPluginId() != null ? AllIcons.Nodes.Plugin : EmptyIcon.create(AllIcons.Nodes.Plugin);
     }
 
-    @NlsContexts.Separator
-    public String getSeparatorText() {
+    public @NlsContexts.Separator String getSeparatorText() {
       if (!myStartsNewGroup) return null;
 
       final Module module = myDomFileElement.getModule();
       return module == null ? null : module.getName();
     }
 
-    @NlsSafe
-    private String getPluginId() {
+    private @NlsSafe String getPluginId() {
       return myDomFileElement.getRootElement().getPluginId();
     }
   }

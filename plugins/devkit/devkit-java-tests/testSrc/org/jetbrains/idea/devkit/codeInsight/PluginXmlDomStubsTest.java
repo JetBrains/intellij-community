@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -109,7 +109,7 @@ public class PluginXmlDomStubsTest extends DomStubTest {
     assertTrue(included instanceof IncludedXmlTag);
     assertEquals("actions", included.getName());
 
-    List<Actions> actions = element.getRootElement().getActions();
+    List<? extends Actions> actions = element.getRootElement().getActions();
     assertEquals(2, actions.size());
 
     assertNotNull(actions.get(1).getXmlTag());
