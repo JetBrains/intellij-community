@@ -139,6 +139,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testSwitchKeywordWithCondition() { doTest(); }
   public void testSwitchBraces() { doTest(); }
   public void testCaseColon() { doTest(); }
+  public void testMultipleCasesColon() { doTest(); }
   public void testDefaultColon() { doTest(); }
   public void testNewInParentheses() { doTest(); }
   public void testIDEADEV20713() { doTest(); }
