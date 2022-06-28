@@ -3,6 +3,7 @@ package com.intellij.codeInsight.documentation.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -34,5 +35,10 @@ public class CopyQuickDocAction extends AnAction implements DumbAware, HintManag
   public void update(@NotNull AnActionEvent e) {
     String selected = e.getData(DocumentationManager.SELECTED_QUICK_DOC_TEXT);
     e.getPresentation().setEnabledAndVisible(selected != null && !selected.isEmpty());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }
