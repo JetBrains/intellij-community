@@ -6,8 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.*
+import com.intellij.psi.impl.java.stubs.PsiJavaFileStub
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.asJava.builder.LightClassConstructionContext
+import org.jetbrains.kotlin.asJava.builder.StubComputationTracker
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.*
@@ -15,6 +18,9 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinDaemonAnalyzerTestCase
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.caches.lightClasses.IDELightClassConstructionContext
+import org.jetbrains.kotlin.idea.caches.resolve.LightClassLazinessChecker.Tracker.Level.*
+import org.jetbrains.kotlin.idea.completion.test.withServiceRegistered
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
@@ -33,8 +39,13 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
         }
 
         val fileText = File(testDataPath, fileName).readText()
+        if (InTextDirectivesUtils.isDirectiveDefined(fileText, "SKIP_IDE_TEST")) {
+            return
+        }
+
         withCustomCompilerOptions(fileText, project, module) {
             val testFiles = if (File(testDataPath, extraFilePath).isFile) listOf(fileName, extraFilePath) else listOf(fileName)
+            val lazinessMode = lazinessModeByFileText()
             myFixture.configureByFiles(*testFiles.toTypedArray())
             if ((myFixture.file as? KtFile)?.isScript() == true) {
                 ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
@@ -47,12 +58,25 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
                 testData,
                 { LightClassTestCommon.removeEmptyDefaultImpls(it) },
                 { fqName ->
-                    findClass(fqName, ktFile, project)?.apply {
-                        checkConsistency(this as KtLightClass)
-                        PsiElementChecker.checkPsiElementStructure(this)
+                    val tracker = LightClassLazinessChecker.Tracker(fqName)
+                    project.withServiceRegistered<StubComputationTracker, PsiClass?>(tracker) {
+                        findClass(fqName, ktFile, project)?.apply {
+                            LightClassLazinessChecker.check(this as KtLightClass, tracker, lazinessMode)
+                            tracker.allowLevel(EXACT)
+                            PsiElementChecker.checkPsiElementStructure(this)
+                        }
                     }
-                },
-            )
+                })
+        }
+    }
+
+    private fun lazinessModeByFileText(): LightClassLazinessChecker.Mode {
+        return dataFile().readText().run {
+            val argument = substringAfter("LAZINESS:", "").substringBefore('\n').substringBefore(' ')
+            if (argument == "") LightClassLazinessChecker.Mode.AllChecks
+            else requireNotNull(LightClassLazinessChecker.Mode.values().firstOrNull { it.name == argument }) {
+                "Invalid LAZINESS testdata parameter $argument"
+            }
         }
     }
 
@@ -165,52 +189,126 @@ fun findClass(fqName: String, ktFile: KtFile?, project: Project): PsiClass? {
             ?.toLightClass()
 }
 
-private fun checkConsistency(lightClass: KtLightClass) {
-    checkModifierList(lightClass.modifierList!!)
+object LightClassLazinessChecker {
 
-    for (field in lightClass.fields) {
-        field as KtLightField
-        checkModifierList(field.modifierList!!)
-        checkAnnotationConsistency(field)
+    enum class Mode {
+        AllChecks,
+        NoConsistency
     }
 
-    for (method in lightClass.methods) {
-        method as KtLightMethod
-        checkModifierList(method.modifierList)
-        checkAnnotationConsistency(method)
-        method.parameterList.parameters.forEach {
-            checkAnnotationConsistency(it as KtLightParameter)
+    class Tracker(private val fqName: String) : StubComputationTracker {
+
+        private var level = NONE
+            set(newLevel) {
+                if (newLevel.ordinal <= field.ordinal) {
+                    error("Level should not decrease at any point: $level -> $newLevel, allowed: $allowedLevel")
+                }
+                if (newLevel.ordinal > allowedLevel.ordinal) {
+                    error("Level increased before it was expected: $level -> $newLevel, allowed: $allowedLevel")
+                }
+                field = newLevel
+            }
+
+        private var allowedLevel = NONE
+
+        enum class Level {
+            NONE,
+            LIGHT,
+            EXACT
+        }
+
+        override fun onStubComputed(javaFileStub: PsiJavaFileStub, context: LightClassConstructionContext) {
+            if (fqName != javaFileStub.classes.single().qualifiedName!!) return
+            if (context !is IDELightClassConstructionContext) error("Unknown context ${context::class}")
+            level = when (context.mode) {
+                IDELightClassConstructionContext.Mode.LIGHT -> LIGHT
+                IDELightClassConstructionContext.Mode.EXACT -> EXACT
+            }
+        }
+
+        fun checkLevel(expectedLevel: Level) {
+            assert(level == expectedLevel)
+        }
+
+        fun allowLevel(newAllowed: Level) {
+            allowedLevel = newAllowed
         }
     }
 
-    checkAnnotationConsistency(lightClass)
+    fun check(lightClass: KtLightClass, tracker: Tracker, lazinessMode: Mode) {
+        // lighter classes not implemented for locals
+        if (lightClass.kotlinOrigin?.isLocal == true) return
 
-    lightClass.innerClasses.forEach { checkConsistency(it as KtLightClass) }
-}
+        tracker.allowLevel(LIGHT)
 
-private fun checkAnnotationConsistency(modifierListOwner: KtLightElement<*, PsiModifierListOwner>) {
-    if (modifierListOwner is KtLightClassForFacade) return
+        if (lazinessMode != Mode.AllChecks) {
+            tracker.allowLevel(EXACT)
+        }
 
-    val annotations = modifierListOwner.safeAs<PsiModifierListOwner>()?.modifierList?.annotations ?: return
-    for (annotation in annotations) {
-        if (annotation !is KtLightNullabilityAnnotation<*>)
-            assertNotNull(
-                annotation!!.nameReferenceElement,
-                "nameReferenceElement should be not null for $annotation of ${annotation.javaClass}"
-            )
+        // collect api method call results on light members that should not trigger exact context evaluation
+        val lazinessInfo = LazinessInfo(lightClass, lazinessMode)
+
+        tracker.allowLevel(EXACT)
+
+        tracker.checkLevel(EXACT)
+
+        lazinessInfo.checkConsistency()
     }
-}
 
-private fun checkModifierList(modifierList: PsiModifierList) {
-    // see org.jetbrains.kotlin.asJava.elements.KtLightNonSourceAnnotation
-    val isAnnotationClass = (modifierList.parent as? PsiClass)?.isAnnotationType ?: false
+    private class LazinessInfo(private val lightClass: KtLightClass, private val lazinessMode: Mode) {
+        val innerClasses = lightClass.innerClasses.map { LazinessInfo(it as KtLightClass, lazinessMode) }
 
-    if (!isAnnotationClass) {
-        // check getting annotations list doesn't trigger exact resolve
-        modifierList.annotations
+        fun checkConsistency() {
+            checkModifierList(lightClass.modifierList!!)
 
-        // check searching for non-existent annotation doesn't trigger exact resolve
-        modifierList.findAnnotation("some.package.MadeUpAnnotation")
+            // still collecting data to trigger possible exceptions
+            if (lazinessMode == Mode.NoConsistency) return
+
+            // check collected data against delegates which should contain correct data
+            for (field in lightClass.fields) {
+                field as KtLightField
+                checkModifierList(field.modifierList!!)
+                checkAnnotationConsistency(field)
+            }
+            for (method in lightClass.methods) {
+                method as KtLightMethod
+                checkModifierList(method.modifierList)
+                checkAnnotationConsistency(method)
+                method.parameterList.parameters.forEach {
+                    checkAnnotationConsistency(it as KtLightParameter)
+                }
+            }
+
+            checkAnnotationConsistency(lightClass)
+
+            innerClasses.forEach(LazinessInfo::checkConsistency)
+        }
+    }
+
+    private fun checkAnnotationConsistency(modifierListOwner: KtLightElement<*, PsiModifierListOwner>) {
+        if (modifierListOwner is KtLightClassForFacade) return
+
+        val annotations = modifierListOwner.safeAs<PsiModifierListOwner>()?.modifierList?.annotations ?: return
+        for (annotation in annotations) {
+            if (annotation !is KtLightNullabilityAnnotation<*>)
+                assertNotNull(
+                    annotation!!.nameReferenceElement,
+                    "nameReferenceElement should be not null for $annotation of ${annotation.javaClass}"
+                )
+        }
+    }
+
+    private fun checkModifierList(modifierList: PsiModifierList) {
+        // see org.jetbrains.kotlin.asJava.elements.KtLightNonSourceAnnotation
+        val isAnnotationClass = (modifierList.parent as? PsiClass)?.isAnnotationType ?: false
+
+        if (!isAnnotationClass) {
+            // check getting annotations list doesn't trigger exact resolve
+            modifierList.annotations
+
+            // check searching for non-existent annotation doesn't trigger exact resolve
+            modifierList.findAnnotation("some.package.MadeUpAnnotation")
+        }
     }
 }
 

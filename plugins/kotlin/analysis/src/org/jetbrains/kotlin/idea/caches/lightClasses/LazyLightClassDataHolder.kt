@@ -28,6 +28,10 @@ class LazyLightClassDataHolder(
 
     private val _builderExactContextProvider: LightClassBuilderResult by lazyPub { builder(exactContextProvider()) }
 
+    private val exactResultLazyValue = lazyPub { _builderExactContextProvider.stub }
+
+    override val javaFileStub by exactResultLazyValue
+
     override val extraDiagnostics: Diagnostics
         get() = diagnosticsHolderProvider().getOrCompute(this) {
             // Force lazy diagnostics computation because otherwise a lot of memory is retained by computation.

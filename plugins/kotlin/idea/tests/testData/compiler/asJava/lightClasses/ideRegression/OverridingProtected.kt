@@ -10,4 +10,5 @@ class C : A() {
     }
 }
 
+// LAZINESS:NoLaziness
 // FIR_COMPARISON

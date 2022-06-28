@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.idea.asJava.renderClass
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
+import kotlin.test.assertFails
 
 object UltraLightChecker {
     fun checkClassEquivalence(file: KtFile) {
@@ -82,8 +84,14 @@ object UltraLightChecker {
             mapOf(element to element.javaClass.name),
             Any::class.java,
             Conditions.alwaysTrue<Any>()::value,
-            PairProcessor.alwaysTrue(),
-        )
+            PairProcessor { value, backLink ->
+                if (value is DeclarationDescriptor) {
+                    assertFails {
+                        """Leaked descriptor ${value.javaClass.name} in ${element.javaClass.name}\n$backLink"""
+                    }
+                }
+                true
+            })
     }
 
     fun checkDescriptorsLeak(lightClass: KtLightClass) {

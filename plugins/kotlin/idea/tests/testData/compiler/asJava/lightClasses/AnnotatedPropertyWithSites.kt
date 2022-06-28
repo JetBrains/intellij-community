@@ -16,4 +16,5 @@ class Test(@get:MyAnnotation @set:MyAnnotation2 @setparam:MyAnnotation3 @propert
         set(value) {}
 }
 
+// SKIP_SANITY_TEST
 // FIR_COMPARISON
