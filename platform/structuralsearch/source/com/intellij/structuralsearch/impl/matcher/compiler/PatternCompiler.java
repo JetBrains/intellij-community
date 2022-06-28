@@ -587,18 +587,16 @@ public final class PatternCompiler {
     final String scriptCodeConstraint = constraint.getScriptCodeConstraint();
     if (scriptCodeConstraint.length() > 2) {
       final String scriptText = StringUtil.unquoteString(scriptCodeConstraint);
-      Script script;
-      if (checkForErrors) {
-        script = ScriptSupport.buildScript(
-          name,
-          scriptText,
-          matchOptions,
-          (problem) -> SSRBundle.message("error.script.constraint.for.0.has.problem.1", constraint.getName(), problem)
-        );
-      } else {
-        script = ScriptSupport.buildScript(name, scriptText, matchOptions, null);
+      try {
+        final Script script = ScriptSupport.buildScript(name, scriptText, matchOptions);
+        addPredicate(handler, new ScriptPredicate(project, name, script, variableNames));
+      } catch (MalformedPatternException e) {
+        if (checkForErrors) {
+          throw new MalformedPatternException(
+            SSRBundle.message("error.script.constraint.for.0.has.problem.1", constraint.getName(), e.getLocalizedMessage())
+          );
+        }
       }
-      addPredicate(handler, new ScriptPredicate(project, name, script, variableNames));
     }
   }
 

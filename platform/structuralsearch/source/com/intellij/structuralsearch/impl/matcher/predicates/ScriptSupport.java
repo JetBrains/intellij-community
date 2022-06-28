@@ -17,12 +17,9 @@ import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.messages.Message;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * @author Maxim.Mossienko
@@ -111,10 +108,9 @@ public class ScriptSupport {
   }
 
   public static Script buildScript(
-    String scriptName,
+    @NotNull String scriptName,
     @NotNull String scriptText,
-    @NotNull MatchOptions matchOptions,
-    @Nullable Function<@NlsSafe String, @Nls String> errorMessage
+    @NotNull MatchOptions matchOptions
   ) throws MalformedPatternException {
     try {
       final GroovyShell shell = new GroovyShell(Objects.requireNonNull(matchOptions.getDialect()).getClass().getClassLoader());
@@ -127,19 +123,18 @@ public class ScriptSupport {
         if (error instanceof SyntaxErrorMessage) {
           final SyntaxErrorMessage syntaxError = (SyntaxErrorMessage)error;
           final SyntaxException cause = syntaxError.getCause();
-          if (errorMessage != null) throw new MalformedPatternException(errorMessage.apply(cause.getMessage()));
+          throw new MalformedPatternException(cause.getLocalizedMessage());
         }
       }
-      if (errorMessage != null) throw new MalformedPatternException(errorMessage.apply(e.getMessage()));
+      throw new MalformedPatternException(e.getLocalizedMessage());
     }
     catch (CompilationFailedException ex) {
-      if (errorMessage != null) throw new MalformedPatternException(errorMessage.apply(ex.getLocalizedMessage()));
+      throw new MalformedPatternException(ex.getLocalizedMessage());
     }
     catch (Throwable e) {
       // to catch errors in groovy parsing
       LOG.warn(e);
-      if (errorMessage != null) throw new MalformedPatternException(errorMessage.apply(SSRBundle.message("error.in.groovy.parser")));
+      throw new MalformedPatternException(SSRBundle.message("error.in.groovy.parser"));
     }
-    throw new IllegalStateException("Script must be build or throw parse error");
   }
 }

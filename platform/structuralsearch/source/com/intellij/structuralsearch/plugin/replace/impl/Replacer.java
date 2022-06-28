@@ -297,12 +297,14 @@ public class Replacer {
           if (definition == null || definition.getScriptCodeConstraint().length() <= 2 /*empty quotes*/) {
             throw new MalformedPatternException(SSRBundle.message("replacement.variable.is.not.defined.message", replacementSegmentName));
           } else {
-            ScriptSupport.buildScript( // build script to check whether script is compilable
-              definition.getName(),
-              StringUtil.unquoteString(definition.getScriptCodeConstraint()),
-              options.getMatchOptions(),
-              (problem) -> SSRBundle.message("replacement.variable.is.not.valid", replacementSegmentName, problem)
-            );
+            final String scriptText = StringUtil.unquoteString(definition.getScriptCodeConstraint());
+            try {
+              ScriptSupport.buildScript(definition.getName(), scriptText, options.getMatchOptions());
+            } catch (MalformedPatternException e) {
+              throw new MalformedPatternException(
+                SSRBundle.message("replacement.variable.is.not.valid", replacementSegmentName, e.getLocalizedMessage())
+              );
+            }
           }
         }
       }
