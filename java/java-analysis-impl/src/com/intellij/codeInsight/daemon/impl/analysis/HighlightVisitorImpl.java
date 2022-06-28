@@ -1903,13 +1903,25 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitParenthesizedPattern(@NotNull PsiParenthesizedPattern pattern) {
     super.visitParenthesizedPattern(pattern);
-    myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
+    if (HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(pattern)) {
+      String message = JavaErrorBundle.message("guarded.patterns.unavailable");
+      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern.getNode()).descriptionAndTooltip(message).create());
+    }
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
+    }
   }
 
   @Override
   public void visitGuardedPattern(@NotNull PsiGuardedPattern pattern) {
     super.visitGuardedPattern(pattern);
-    myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
+    if (HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(pattern)) {
+      String message = JavaErrorBundle.message("guarded.patterns.unavailable");
+      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern.getNode()).descriptionAndTooltip(message).create());
+    }
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
+    }
     if (myHolder.hasErrorResults()) return;
     PsiExpression guardingExpr = pattern.getGuardingExpression();
     if (guardingExpr == null) return;
