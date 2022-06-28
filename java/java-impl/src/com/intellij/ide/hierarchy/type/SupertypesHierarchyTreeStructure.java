@@ -33,7 +33,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
           descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, aSuper, false));
         }
       }
-      return descriptors.toArray(new HierarchyNodeDescriptor[0]);
+      return descriptors.toArray(HierarchyNodeDescriptor.EMPTY_ARRAY);
     } else if (element instanceof PsiFunctionalExpression) {
       PsiClass functionalInterfaceClass = LambdaUtil.resolveFunctionalInterfaceClass((PsiFunctionalExpression)element);
       if (functionalInterfaceClass != null) {
