@@ -1926,7 +1926,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void updateFreePainters(MouseEvent e) {
     if (!isLineMarkersShown()) return;
     Point point = e.getPoint();
-    System.out.println(point + " Line: " + getEditor().xyToLogicalPosition(point).line);
     int x = convertX(point.x);
     int y = point.y;
     if (x >= getLineMarkerAreaOffset() && x <= getLineMarkerAreaOffset() + getLeftFreePaintersAreaWidth() + getRightFreePaintersAreaWidth()) {
