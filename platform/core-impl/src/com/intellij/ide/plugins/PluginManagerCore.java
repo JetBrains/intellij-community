@@ -865,14 +865,19 @@ public final class PluginManagerCore {
     Set<IdeaPluginDescriptorImpl> disabledRequired = new HashSet<>();
 
     pluginSetBuilder.computeEnabledModuleMap(descriptor -> {
-      if (pluginSetBuilder.initEnableState$intellij_platform_core_impl(descriptor, idMap, disabledRequired,
-                                                                       context.disabledPlugins, pluginErrorsById)) {
-        return false;
+      PluginLoadingError loadingError = pluginSetBuilder.initEnableState$intellij_platform_core_impl(descriptor,
+                                                                                                     idMap,
+                                                                                                     disabledRequired,
+                                                                                                     context.disabledPlugins,
+                                                                                                     pluginErrorsById);
+      boolean result = loadingError != null;
+      if (result) {
+        pluginErrorsById.put(descriptor.getPluginId(), loadingError);
+        descriptor.setEnabled(false);
+        disabledAfterInit.add(descriptor);
       }
 
-      descriptor.setEnabled(false);
-      disabledAfterInit.add(descriptor);
-      return true;
+      return result;
     });
 
     List<Supplier<HtmlChunk>> actions = prepareActions(disabledAfterInit, disabledRequired);
