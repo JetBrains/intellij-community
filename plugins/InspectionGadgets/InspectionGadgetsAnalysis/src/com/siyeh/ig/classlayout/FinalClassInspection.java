@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
+import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class FinalClassInspection extends BaseInspection {
@@ -29,13 +30,13 @@ public class FinalClassInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "final.class.problem.descriptor");
+    final PsiClass aClass = (PsiClass)infos[1];
+    return InspectionGadgetsBundle.message("final.class.problem.descriptor", aClass.getName());
   }
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new FinalStaticClassVisitor();
+    return new FinalClassVisitor();
   }
 
   @Override
@@ -43,16 +44,18 @@ public class FinalClassInspection extends BaseInspection {
     return new RemoveModifierFix((String)infos[0]);
   }
 
-  private static class FinalStaticClassVisitor
-    extends BaseInspectionVisitor {
+  private static class FinalClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      //no call to super, so we don't drill into inner classes
       if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      registerModifierError(PsiModifier.FINAL, aClass, PsiModifier.FINAL);
+      if (SealedUtils.hasSealedParent(aClass)) {
+        // removing `final` in this case would make the code uncompilable
+        return;
+      }
+      registerModifierError(PsiModifier.FINAL, aClass, PsiModifier.FINAL, aClass);
     }
   }
 }
