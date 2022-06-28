@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class EdtInterceptor implements InvocationInterceptor {
   private final boolean myAnnotationDependant;
@@ -21,14 +22,15 @@ public class EdtInterceptor implements InvocationInterceptor {
     myAnnotationDependant = annotationDependant;
   }
 
-  private void doRun(Invocation<Void> invocation, ExtensionContext extensionContext) throws Throwable {
+  private <T> T doRun(Invocation<T> invocation, ExtensionContext extensionContext) throws Throwable {
     if (myAnnotationDependant && 
         AnnotationSupport.findAnnotation(extensionContext.getTestClass(), RunsInEdt.class).isEmpty() &&
         AnnotationSupport.findAnnotation(extensionContext.getTestMethod(), RunsInEdt.class).isEmpty()) {
-      invocation.proceed();
-      return;
+      return invocation.proceed();
     }
-    EdtTestUtil.runInEdtAndWait(() -> invocation.proceed());
+    AtomicReference<T> result = new AtomicReference<>();
+    EdtTestUtil.runInEdtAndWait(() -> result.set(invocation.proceed()));
+    return result.get();
   }
 
   @Override
@@ -57,5 +59,12 @@ public class EdtInterceptor implements InvocationInterceptor {
                                        ReflectiveInvocationContext<Method> invocationContext,
                                        ExtensionContext extensionContext) throws Throwable {
     doRun(invocation, extensionContext);
+  }
+
+  @Override
+  public <T> T interceptTestFactoryMethod(Invocation<T> invocation,
+                                          ReflectiveInvocationContext<Method> invocationContext,
+                                          ExtensionContext extensionContext) throws Throwable {
+    return doRun(invocation, extensionContext);
   }
 }
