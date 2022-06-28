@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
@@ -73,6 +74,13 @@ private fun KtClassKind.toDescriptorKlassKind(): ClassKind =
         KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT, KtClassKind.ANONYMOUS_OBJECT -> ClassKind.OBJECT
         KtClassKind.INTERFACE -> ClassKind.INTERFACE
     }
+
+private fun KtSymbolOrigin.toCallableDescriptorKind(): CallableMemberDescriptor.Kind = when(this) {
+    DELEGATED -> CallableMemberDescriptor.Kind.DELEGATION
+    SUBSTITUTION_OVERRIDE, INTERSECTION_OVERRIDE -> CallableMemberDescriptor.Kind.FAKE_OVERRIDE
+    SOURCE_MEMBER_GENERATED -> CallableMemberDescriptor.Kind.SYNTHESIZED
+    else -> CallableMemberDescriptor.Kind.DECLARATION
+}
 
 private fun KtAnnotationValue.toConstantValue(): ConstantValue<*> {
     return when (this) {
@@ -296,7 +304,8 @@ abstract class KtSymbolBasedFunctionLikeDescriptor(context: Fe10WrapperContext) 
 
     override fun hasStableParameterNames(): Boolean = ktSymbol.hasStableParameterNames
     override fun hasSynthesizedParameterNames(): Boolean = implementationPostponed()
-    override fun getKind(): CallableMemberDescriptor.Kind = implementationPostponed()
+
+    override fun getKind(): CallableMemberDescriptor.Kind = ktSymbol.origin.toCallableDescriptorKind()
 
     override fun <V : Any?> getUserData(key: CallableDescriptor.UserDataKey<V>?): V? = null
 
@@ -627,7 +636,7 @@ abstract class AbstractKtSymbolBasedPropertyDescriptor(
     override fun setOverriddenDescriptors(overriddenDescriptors: MutableCollection<out CallableMemberDescriptor>) =
         noImplementation()
 
-    override fun getKind(): CallableMemberDescriptor.Kind = implementationPlanned()
+    override fun getKind() = ktSymbol.origin.toCallableDescriptorKind()
 
     override fun copy(
         newOwner: DeclarationDescriptor?,
