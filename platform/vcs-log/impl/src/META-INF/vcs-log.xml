@@ -225,8 +225,6 @@
            class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Actions.GroupBy"
            popup="true">
-      <separator key="action.vcs.log.show.separator"/>
-      <reference id="Vcs.Log.ShowOtherBranches"/>
       <reference id="Vcs.Log.PreferCommitDate"/>
       <reference id="Vcs.Log.ToggleColumns"/>
       <reference id="Vcs.Log.LayoutConfiguration"/>
@@ -236,6 +234,7 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
       <separator/>
+      <reference id="Vcs.Log.ShowOtherBranches"/>
       <reference id="Vcs.FileHistory.PresentationSettings"/>
       <separator/>
       <reference id="VcsHistoryActionsGroup.Toolbar"/>
