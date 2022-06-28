@@ -3,16 +3,16 @@ import X.combine
 class IndentationIssue {
     fun method() {
         X.Y.combine(
-                1,
-                1
+            1,
+            1
         )
-                .let {
-                    "zzz"
-                }
+            .let {
+                "zzz"
+            }
 
         X.Y.combine(
-                1,
-                1
+            1,
+            1
         ).let {
             "zzz"
         }
@@ -20,69 +20,69 @@ class IndentationIssue {
         X.Y./*
         comment
         */combine(
-                1,
-                1
+            1,
+            1
         )
-                .let {
-                    "zzz"
-                }
+            .let {
+                "zzz"
+            }
 
         X.Y./*
         comment
         */combine(
-                1,
-                1
+            1,
+            1
         ).let {
             "zzz"
         }
 
         (X.Y.combine(
-                1,
-                1
+            1,
+            1
         )
                 ).let {
-                    "zzz"
-                }
+                "zzz"
+            }
 
         X.Y
-                .combine(
-                        1,
-                        1
-                )
-                .let { "zzz" }
-
-        X.Y
-                .combine(
-                        1,
-                        1
-                ).let {
-                    "zzz"
-                }
-
-        X
-                .Y
-                .combine(
-                        1,
-                        1
-                )
-                .let { "zzz" }
-
-        X
-                .Y.combine(
-                        1,
-                        1
-                )
-                .let { "zzz" }
-
-        combine(
+            .combine(
                 1,
                 1
-        )
-                .let { "zzz" }
+            )
+            .let { "zzz" }
+
+        X.Y
+            .combine(
+                1,
+                1
+            ).let {
+                "zzz"
+            }
+
+        X
+            .Y
+            .combine(
+                1,
+                1
+            )
+            .let { "zzz" }
+
+        X
+            .Y.combine(
+                1,
+                1
+            )
+            .let { "zzz" }
 
         combine(
-                1,
-                2
+            1,
+            1
+        )
+            .let { "zzz" }
+
+        combine(
+            1,
+            2
         ).let {
             "zzz"
         }.let {
@@ -90,8 +90,8 @@ class IndentationIssue {
         }
 
         (combine(
-                1,
-                2
+            1,
+            2
         ).let {
             "zzz"
         }).let {
@@ -99,18 +99,18 @@ class IndentationIssue {
         }
 
         (combine(
-                1,
-                2
+            1,
+            2
         )
-                .let {
-                    "zzz"
-                }).let {
-                    "zzz"
-                }
+            .let {
+                "zzz"
+            }).let {
+                "zzz"
+            }
 
         combine(
-                1,
-                2
+            1,
+            2
         ).let {
             "zzz"
         }!!.let {
@@ -118,38 +118,38 @@ class IndentationIssue {
         }
 
         combine(
-                1,
-                2
+            1,
+            2
         )
-                .let {
-                    "zzz"
-                }!!.let {
-                    "zzz"
-                }
+            .let {
+                "zzz"
+            }!!.let {
+                "zzz"
+            }
 
         (combine(
-                1,
-                2
+            1,
+            2
         )
-                .let {
-                    "zzz"
-                })!!.let {
-                    "zzz"
-                }
+            .let {
+                "zzz"
+            })!!.let {
+                "zzz"
+            }
 
         ((combine(
-                1,
-                2
+            1,
+            2
         )
                 ).let {
-                    "zzz"
-                }!!)!!.let {
-                    "zzz"
-                }
+                "zzz"
+            }!!)!!.let {
+                "zzz"
+            }
 
         ((combine(
-                1,
-                2
+            1,
+            2
         )).let {
             "zzz"
         }!!)!!.let {
@@ -157,14 +157,14 @@ class IndentationIssue {
         }
 
         ((combine(
-                1,
-                2
+            1,
+            2
         )).let {
             "zzz"
         }!!
                 )!!.let {
-                    "zzz"
-                }
+                "zzz"
+            }
     }
 }
 

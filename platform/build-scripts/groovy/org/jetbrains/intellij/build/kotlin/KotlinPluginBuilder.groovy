@@ -6,9 +6,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.tasks.ArchiveKt
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -33,6 +31,14 @@ final class KotlinPluginBuilder {
 
   @SuppressWarnings('SpellCheckingInspection')
   public static final List<String> MODULES = List.of(
+    "kotlin.base.util",
+    "kotlin.base.indices",
+    "kotlin.base.compiler-configuration",
+    "kotlin.base.plugin",
+    "kotlin.base.psi",
+    "kotlin.base.fe10.analysis",
+    "kotlin.base.fe10.kdoc",
+    "kotlin.base.fe10.obsolete-compat",
     "kotlin.core",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",
@@ -105,16 +111,17 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
     "kotlin.project-model",
-    "kotlin.features-trainer",
+    "kotlin.features-trainer"
     )
 
   @SuppressWarnings('SpellCheckingInspection')
   private static final List<String> LIBRARIES = List.of(
-    "kotlin-script-runtime",
+    "kotlinc.kotlin-script-runtime",
     "kotlinc.kotlin-scripting-compiler-impl",
     "kotlinc.kotlin-scripting-common",
     "kotlinc.kotlin-scripting-jvm",
-    "kotlinc.kotlin-gradle-statistics"
+    "kotlinc.kotlin-gradle-statistics",
+    "kotlin-gradle-plugin-idea"
   )
 
   private static final List<String> COMPILER_PLUGINS = List.of(
@@ -138,7 +145,7 @@ final class KotlinPluginBuilder {
   }
 
   static PluginLayout kotlinPlugin(KotlinPluginKind kind) {
-    return PluginLayout.plugin(MAIN_KOTLIN_PLUGIN_MODULE) {
+    return PluginLayoutGroovy.plugin(MAIN_KOTLIN_PLUGIN_MODULE) {
       switch (kind) {
         default:
           directoryName = "Kotlin"
@@ -161,7 +168,7 @@ final class KotlinPluginBuilder {
         withProjectLibraryUnpackedIntoJar(library, mainJarName)
       }
       for (String library : COMPILER_PLUGINS) {
-        withProjectLibrary(library, ProjectLibraryData.PackMode.STANDALONE_MERGED)
+        withProjectLibrary(library, LibraryPackMode.STANDALONE_MERGED)
       }
 
       if (isUltimate && kind == KotlinPluginKind.IJ) {
@@ -175,7 +182,7 @@ final class KotlinPluginBuilder {
       }
 
       String kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
-      withProjectLibrary(kotlincKotlinCompilerCommon, ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary(kotlincKotlinCompilerCommon, LibraryPackMode.STANDALONE_MERGED)
 
       withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
         @Override
@@ -206,9 +213,9 @@ final class KotlinPluginBuilder {
       withProjectLibrary("kotlinc.kotlin-stdlib", "kotlinc-lib.jar")
       withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
-      withProjectLibrary("javaslang", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("kotlinx-collections-immutable-jvm", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("javax-inject", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("javaslang", LibraryPackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinx-collections-immutable-jvm", LibraryPackMode.STANDALONE_MERGED)
+      withProjectLibrary("javax-inject", LibraryPackMode.STANDALONE_MERGED)
       withProjectLibrary("completion-ranking-kotlin")
 
       withGeneratedResources(new BiConsumer<Path, BuildContext>() {
@@ -318,7 +325,7 @@ final class KotlinPluginBuilder {
   }
 
   def build() {
-    BuildContext buildContext = BuildContext.createContext(communityHome, home, properties)
+    BuildContext buildContext = BuildContextImpl.createContext(communityHome, home, properties)
     BuildTasks.create(buildContext).buildNonBundledPlugins([MAIN_KOTLIN_PLUGIN_MODULE])
   }
 

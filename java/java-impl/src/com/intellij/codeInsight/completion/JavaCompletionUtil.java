@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -697,6 +698,7 @@ public final class JavaCompletionUtil {
           catch (IncorrectOperationException e) {
             return endOffset; // can happen if fqn contains reserved words, for example
           }
+          SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.createPointer(psiClass);
 
           final RangeMarker rangeMarker = document.createRangeMarker(newElement.getTextRange());
           documentManager.doPostponedOperationsAndUnblockDocument(document);
@@ -714,8 +716,10 @@ public final class JavaCompletionUtil {
                 newEndOffset = parameterList.getTextRange().getStartOffset();
               }
             }
+            psiClass = classPointer.getElement();
 
             if (!staticImport &&
+                psiClass != null &&
                 !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement)) &&
                 !PsiUtil.isInnerClass(psiClass)) {
               final String qName = psiClass.getQualifiedName();
@@ -1006,6 +1010,7 @@ public final class JavaCompletionUtil {
   }
 
   public static boolean isEffectivelyDeprecated(PsiDocCommentOwner member) {
+    if (DumbService.isDumb(member.getProject())) return false;
     if (member.isDeprecated()) {
       return true;
     }

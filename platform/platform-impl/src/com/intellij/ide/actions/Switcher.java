@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
@@ -173,13 +173,14 @@ public final class Switcher extends BaseSwitcherAction {
       }
       // register custom actions as soon as possible to block overridden actions
       registerAction(this::navigate, "ENTER");
-      registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
       if (pinned) {
+        registerAction(this::hideSpeedSearchOrPopup, ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE));
         registerAction(this::closeTabOrToolWindow, ActionUtil.getShortcutSet("DeleteRecentFiles"));
         registerAction(this::navigate, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_NEW_WINDOW));
         registerAction(this::navigate, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT));
       }
       else {
+        registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
         registerAction(this::closeTabOrToolWindow, "DELETE", "BACK_SPACE");
         registerSwingAction(ListActions.Up.ID, "KP_UP", "UP");
         registerSwingAction(ListActions.Down.ID, "KP_DOWN", "DOWN");
@@ -196,19 +197,20 @@ public final class Switcher extends BaseSwitcherAction {
       pathLabel.putClientProperty(SwingTextTrimmer.KEY, SwingTextTrimmer.THREE_DOTS_AT_LEFT);
 
       JPanel header = new JPanel(new HorizontalLayout(5));
-      header.setBackground(JBUI.CurrentTheme.Popup.headerBackground(false));
-      header.add(HorizontalLayout.LEFT, RelativeFont.BOLD.install(new JLabel(title)));
+      JLabel titleLabel = RelativeFont.BOLD.install(new JLabel(title));
+      header.add(HorizontalLayout.LEFT, titleLabel);
 
       if (ExperimentalUI.isNewUI()) {
         setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
-        Insets headerInsets = JBUI.CurrentTheme.Popup.headerInsets().getUnscaled();
-        // Remove size of focus ring insets around checkbox
-        int focusRing = cbShowOnlyEditedFiles == null ? 0 : 3;
+        titleLabel.setBorder(PopupUtil.getComplexPopupVerticalHeaderBorder());
+        header.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
         header.setBorder(
-          JBUI.Borders.empty(headerInsets.top - focusRing, headerInsets.left, headerInsets.bottom - focusRing, headerInsets.right));
+          JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
+                                PopupUtil.getComplexPopupHorizontalHeaderBorder()));
       }
       else {
         setBackground(JBColor.background());
+        header.setBackground(JBUI.CurrentTheme.Popup.headerBackground(false));
         header.setBorder(JBUI.Borders.empty(4, 8));
       }
 

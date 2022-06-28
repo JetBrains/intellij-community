@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.noarg.gradleJava
 
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractAnnotationBasedCompilerPluginGradleImportHandler
 import org.jetbrains.kotlin.noarg.NoArgCommandLineProcessor
 import org.jetbrains.kotlin.idea.gradleTooling.model.noarg.NoArgModel
@@ -12,7 +13,7 @@ class NoArgGradleProjectImportHandler : AbstractAnnotationBasedCompilerPluginGra
     override val compilerPluginId = NoArgCommandLineProcessor.PLUGIN_ID
     override val pluginName = "noarg"
     override val annotationOptionName = NoArgCommandLineProcessor.ANNOTATION_OPTION.optionName
-    override val pluginJarFileFromIdea = KotlinArtifacts.instance.noargCompilerPlugin
+    override val pluginJarFileFromIdea = KotlinArtifacts.instance.noargCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
     override val modelKey = NoArgProjectResolverExtension.KEY
 
     override fun getOptions(model: NoArgModel): List<PluginOption> {

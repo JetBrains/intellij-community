@@ -356,15 +356,15 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       addStackFramesInternal(mutableListOf(errorMessage), null, true)
     }
 
-    override fun addStackFrames(stackFrames: MutableList<out XStackFrame>, toSelect: XStackFrame?, last: Boolean) {
+    override fun addStackFrames(stackFrames: List<XStackFrame>, toSelect: XStackFrame?, last: Boolean) {
       addStackFramesInternal(stackFrames, toSelect, last)
     }
 
-    override fun addStackFrames(stackFrames: MutableList<out XStackFrame>, last: Boolean) {
+    override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
       addStackFrames(stackFrames, null, last)
     }
 
-    private fun addStackFramesInternal(stackFrames: MutableList<*>, toSelect: XStackFrame?, last: Boolean) {
+    private fun addStackFramesInternal(stackFrames: List<*>, toSelect: XStackFrame?, last: Boolean) {
       invokeIfNeeded {
         val insertIndex = myItems.size - 1
 
@@ -461,7 +461,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       }
     }
 
-    override fun addExecutionStack(executionStacks: MutableList<out XExecutionStack>, last: Boolean) {
+    override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
       invokeIfNeeded {
         val model = myThreadsList.model
         val insertIndex = model.size - 1
@@ -485,7 +485,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       addExecutionStack(mutableListOf(executionStack), last)
     }
 
-    private fun getThreadsList(executionStacks: MutableList<out XExecutionStack>): List<StackInfo> {
+    private fun getThreadsList(executionStacks: List<XExecutionStack>): List<StackInfo> {
       var sequence = executionStacks.asSequence()
       if (myActiveStack != null) {
         sequence = sequence.filter { it != myActiveStack }

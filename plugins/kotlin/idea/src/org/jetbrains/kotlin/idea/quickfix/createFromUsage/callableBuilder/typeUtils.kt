@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.resolveTopLevelClass
 import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.supertypes
@@ -65,7 +66,7 @@ private fun KotlinType.renderSingle(typeParameterNameMap: Map<TypeParameterDescr
 
         val defaultType = typeParameter.defaultType
         val wrappingType = KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
-            defaultType.annotations,
+            defaultType.annotations.toDefaultAttributes(),
             wrappingTypeConstructor,
             defaultType.arguments,
             defaultType.isMarkedNullable,
@@ -300,7 +301,7 @@ internal fun KotlinType.substitute(substitution: KotlinTypeSubstitution, varianc
             val (projection, typeParameter) = pair
             TypeProjectionImpl(Variance.INVARIANT, projection.type.substitute(substitution, typeParameter.variance))
         }
-        KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(annotations, constructor, newArguments, isMarkedNullable, memberScope)
+        KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(annotations.toDefaultAttributes(), constructor, newArguments, isMarkedNullable, memberScope)
     }
 }
 

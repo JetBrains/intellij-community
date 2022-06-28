@@ -3,6 +3,7 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.runToolbar.components.MouseListenerHelper
 import com.intellij.execution.runToolbar.components.ProcessesByType
+import com.intellij.execution.runToolbar.data.RWActiveProcesses
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -25,7 +26,7 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
     private val LOG = Logger.getInstance(RunToolbarMainSlotInfoAction::class.java)
     private val PROP_ACTIVE_PROCESS_COLOR = Key<Color>("ACTIVE_PROCESS_COLOR")
     private val PROP_ACTIVE_PROCESSES_COUNT = Key<Int>("PROP_ACTIVE_PROCESSES_COUNT")
-    private val PROP_ACTIVE_PROCESSES = Key<ActiveProcesses>("PROP_ACTIVE_PROCESSES")
+    private val PROP_ACTIVE_PROCESSES = Key<RWActiveProcesses>("PROP_ACTIVE_PROCESSES")
   }
 
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.FLEXIBLE
@@ -69,6 +70,7 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
 
   private class RunToolbarMainSlotInfo(presentation: Presentation) : SegmentedCustomPanel(presentation), PopupControllerComponent {
     private val arrow = JLabel()
+    private val dragArea = DraggablePane()
 
     private val processComponents = mutableListOf<ProcessesByType>()
     private val migLayout = MigLayout("fill, hidemode 3, ins 0, novisualpadding, ay center, flowx, gapx 0")
@@ -77,12 +79,13 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
 
     init {
       layout = MigLayout("ins 0, fill, ay center")
-      add(JPanel(MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]5[fill]5")).apply {
+      val pane = JPanel(MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]5[fill]5")).apply {
         add(JPanel().apply {
           isOpaque = false
           add(arrow)
           val d = preferredSize
           d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+
           preferredSize = d
         })
         add(JPanel().apply {
@@ -98,11 +101,13 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
           isOpaque = false
         }, "pushx, ay center, wmin 0")
         isOpaque = false
+      }
 
-      }, "growx, wmin 10")
+      add(dragArea, "pos 0 0")
+      add(pane, "growx, wmin 10")
 
       info.isOpaque = false
-      MouseListenerHelper.addListener(this, { doClick() }, { doShiftClick() }, { doRightClick() })
+      MouseListenerHelper.addListener(pane, { doClick() }, { doShiftClick() }, { doRightClick() })
     }
 
     fun doRightClick() {

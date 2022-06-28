@@ -241,6 +241,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/stepInto/inlineOnly.kt");
         }
 
+        @TestMetadata("oneLineSuspendFunWithInline.kt")
+        public void testOneLineSuspendFunWithInline() throws Exception {
+            runTest("testData/stepping/stepInto/oneLineSuspendFunWithInline.kt");
+        }
+
         @TestMetadata("propertyReference.kt")
         public void testPropertyReference() throws Exception {
             runTest("testData/stepping/stepInto/propertyReference.kt");
@@ -1088,6 +1093,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         @TestMetadata("anonymousFunAsParamDefaultValue.kt")
         public void testAnonymousFunAsParamDefaultValue() throws Exception {
             runTest("testData/stepping/custom/anonymousFunAsParamDefaultValue.kt");
+        }
+
+        @TestMetadata("breakpointInInlineLambda.kt")
+        public void testBreakpointInInlineLambda() throws Exception {
+            runTest("testData/stepping/custom/breakpointInInlineLambda.kt");
         }
 
         @TestMetadata("breakpointOnWhen.kt")

@@ -31,17 +31,33 @@ class KotlinTestJUnitInspection : DomElementsInspection<MavenDomProjectModel>(Ma
             return
         }
 
+        val kotlinTestJunitDependency =
+            domFileElement.rootElement.dependencies.dependencies.filter {
+                it.groupId.rawText == KotlinMavenConfigurator.GROUP_ID && it.artifactId.rawText == KotlinJavaMavenConfigurator.JUNIT_TEST_LIB_ID
+            }
+
         val kotlinTestDependencies = domFileElement.rootElement.dependencies.dependencies.filter {
             it.groupId.rawText == KotlinMavenConfigurator.GROUP_ID && it.artifactId.rawText == KotlinJavaMavenConfigurator.TEST_LIB_ID
         }
 
-        kotlinTestDependencies.forEach {
-            holder.createProblem(
-                it.artifactId,
-                HighlightSeverity.WEAK_WARNING,
-                KotlinMavenBundle.message("fix.kotlin.test.junit.is.recommended"),
-                ReplaceToKotlinTest(it)
-            )
+        if (kotlinTestJunitDependency.isNotEmpty()) {
+            kotlinTestDependencies.forEach {
+                holder.createProblem(
+                    it.artifactId,
+                    HighlightSeverity.WEAK_WARNING,
+                    KotlinMavenBundle.message("inspection.message.kotlin.test.junit.already.presented"),
+                    RemoveKotlinTest(it)
+                )
+            }
+        } else {
+            kotlinTestDependencies.forEach {
+                holder.createProblem(
+                    it.artifactId,
+                    HighlightSeverity.WEAK_WARNING,
+                    KotlinMavenBundle.message("fix.kotlin.test.junit.is.recommended"),
+                    ReplaceToKotlinTest(it)
+                )
+            }
         }
     }
 
@@ -49,10 +65,19 @@ class KotlinTestJUnitInspection : DomElementsInspection<MavenDomProjectModel>(Ma
         override fun getName() = KotlinMavenBundle.message("fix.replace.to.kotlin.test.name")
         override fun getFamilyName() = name
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             if (dependency.isValid) {
                 dependency.artifactId.stringValue = "kotlin-test-junit"
             }
+        }
+    }
+
+    private class RemoveKotlinTest(val dependency: MavenDomDependency) : LocalQuickFix {
+        override fun getName() = KotlinMavenBundle.message("fix.remove.kotlin.test")
+        override fun getFamilyName() = name
+
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            dependency.xmlTag?.delete()
         }
     }
 }

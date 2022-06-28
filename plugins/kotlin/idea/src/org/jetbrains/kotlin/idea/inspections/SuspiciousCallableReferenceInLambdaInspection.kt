@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -85,16 +85,16 @@ class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection()
     class MoveIntoParenthesesIntention : ConvertLambdaToReferenceIntention(
         KotlinBundle.lazyMessage("move.suspicious.callable.reference.into.parentheses")
     ) {
-        override fun buildReferenceText(element: KtLambdaExpression): String? {
+        override fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
             val callableReferenceExpression =
-                element.bodyExpression?.statements?.singleOrNull() as? KtCallableReferenceExpression ?: return null
+                lambdaExpression.bodyExpression?.statements?.singleOrNull() as? KtCallableReferenceExpression ?: return null
             val callableReference = callableReferenceExpression.callableReference
             val receiverExpression = callableReferenceExpression.receiverExpression
             val receiver = if (receiverExpression == null) {
                 ""
             } else {
                 val descriptor = receiverExpression.getCallableDescriptor()
-                val literal = element.functionLiteral
+                val literal = lambdaExpression.functionLiteral
                 if (descriptor == null ||
                     descriptor is ValueParameterDescriptor && descriptor.containingDeclaration == literal.resolveToDescriptorIfAny()
                 ) {

@@ -14,8 +14,6 @@ import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.function.Consumer
-
 /**
  * Provides mapping between files in the product distribution and modules and libraries in the project configuration. The generated JSON file
  * contains array of {@link DistributionFileEntry}.
@@ -32,10 +30,6 @@ final class ProjectStructureMapping {
 
   ProjectStructureMapping(@NotNull Collection<DistributionFileEntry> entries) {
     this.entries = Collections.unmodifiableCollection(entries)
-  }
-
-  void processEntries(Consumer<DistributionFileEntry> consumer) {
-    entries.forEach(consumer)
   }
 
   void addEntry(DistributionFileEntry entry) {

@@ -508,6 +508,7 @@ public class AllIcons {
     /** 24x24 */ public static final @NotNull Icon NotificationWarning = load("general/notificationWarning.svg", -1793999716, 2);
     /** 16x16 */ public static final @NotNull Icon OpenDisk = load("general/openDisk.svg", 1690828212, 0);
     /** 16x16 */ public static final @NotNull Icon OpenDiskHover = load("general/openDiskHover.svg", 1612325831, 0);
+    /** 16x16 */ public static final @NotNull Icon OpenInToolWindow = load("general/openInToolWindow.svg", -1512598006, 2);
     /** 16x16 */ public static final @NotNull Icon OverridenMethod = load("general/overridenMethod.svg", -303739634, 0);
     /** 16x16 */ public static final @NotNull Icon OverridingMethod = load("general/overridingMethod.svg", -440147955, 0);
     /** 16x16 */ public static final @NotNull Icon Pin_tab = load("general/pin_tab.svg", 513437504, 2);
@@ -707,7 +708,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon GeneratedFolder = load("modules/generatedFolder.svg", 105797316, 0);
     /** 16x16 */ public static final @NotNull Icon GeneratedSourceRoot = load("modules/generatedSourceRoot.svg", -2076359125, 0);
     /** 16x16 */ public static final @NotNull Icon GeneratedTestRoot = load("modules/generatedTestRoot.svg", 522368653, 0);
-    /** 16x16 */ public static final @NotNull Icon Output = load("modules/output.svg", 1974303945, 0);
     /** 16x16 */ public static final @NotNull Icon ResourcesRoot = load("modules/resourcesRoot.svg", 1285426194, 0);
     /** 16x16 */ public static final @NotNull Icon SourceRoot = load("modules/sourceRoot.svg", -810501043, 0);
     /** 16x16 */ public static final @NotNull Icon SourceRootFileLayer = load("modules/sourceRootFileLayer.svg", 1979775248, 0);
@@ -716,6 +716,11 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TestRoot = load("modules/testRoot.svg", 455514743, 0);
     /** 16x16 */ public static final @NotNull Icon UnloadedModule = load("modules/unloadedModule.svg", 1661160062, 0);
     /** 16x16 */ public static final @NotNull Icon UnmarkWebroot = load("modules/unmarkWebroot.svg", -1891812686, 0);
+
+    /** @deprecated meaning is unclear, use other icons */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final @NotNull Icon Output = load("modules/output.png", 0, 0);
   }
 
   public static final class Nodes {
@@ -855,6 +860,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TestGroup = load("nodes/testGroup.svg", -583694017, 0);
     /** 16x16 */ public static final @NotNull Icon TestIgnored = load("nodes/testIgnored.svg", 518410949, 0);
     /** 16x16 */ public static final @NotNull Icon TestSourceFolder = load("nodes/testSourceFolder.svg", -499120325, 0);
+    /** 16x16 */ public static final @NotNull Icon TextArea = load("nodes/textArea.svg", -1234407031, 0);
     /** 16x16 */ public static final @NotNull Icon Toolbox = load("nodes/toolbox.svg", 1675184983, 0);
     /** 16x16 */ public static final @NotNull Icon Type = load("nodes/type.svg", -722164684, 0);
     /** 16x16 */ public static final @NotNull Icon Undeploy = load("nodes/undeploy.svg", 1931602003, 0);
@@ -966,6 +972,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CockroachDB = load("providers/cockroachDB.svg", 471223242, 0);
     /** 16x16 */ public static final @NotNull Icon Couchbase = load("providers/couchbase.svg", -1313146722, 0);
     /** 16x16 */ public static final @NotNull Icon DB2 = load("providers/DB2.svg", 1246290135, 2);
+    /** 16x16 */ public static final @NotNull Icon DuckDB = load("providers/duckDB.svg", 1595573396, 2);
     /** 16x16 */ public static final @NotNull Icon Eclipse = load("providers/eclipse.svg", 368039171, 2);
     /** 16x16 */ public static final @NotNull Icon Elasticsearch = load("providers/elasticsearch.svg", -797083948, 0);
     /** 16x16 */ public static final @NotNull Icon Exasol = load("providers/exasol.svg", -669364139, 2);

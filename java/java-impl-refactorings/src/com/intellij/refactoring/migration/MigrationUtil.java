@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.application.WriteAction;
@@ -14,6 +14,10 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.generate.UastCodeGenerationPluginKt;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -84,11 +88,11 @@ public final class MigrationUtil {
           if (Objects.equals(newQName, usageInfo.mapEntry.getNewName())) {
             PsiElement element = usage.getElement();
             if (element == null || !element.isValid()) continue;
-            PsiElement psiElement;
-            if (element instanceof PsiJavaCodeReferenceElement) {
-              psiElement = ((PsiJavaCodeReferenceElement)element).bindToElement(elementToBind);
-            }
-            else {
+            UElement uElement = UastContextKt.toUElement(element);
+            PsiElement psiElement = null;
+            if (uElement instanceof UReferenceExpression) {
+              psiElement = UastCodeGenerationPluginKt.bindToElement((UReferenceExpression)uElement, elementToBind);
+            } else {
               psiElement = bindNonJavaReference(elementToBind, element, usage);
             }
             if (psiElement != null) {

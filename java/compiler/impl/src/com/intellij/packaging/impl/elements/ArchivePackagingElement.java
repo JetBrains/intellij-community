@@ -13,14 +13,13 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableArchivePackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.*;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ArchivePackagingElement extends CompositeElementWithManifest<ArchivePackagingElement> {
   @NonNls public static final String NAME_ATTRIBUTE = "name";
@@ -43,12 +42,12 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
 
   @Attribute(NAME_ATTRIBUTE)
   public @NlsSafe String getArchiveFileName() {
-    return myArchiveFileName;
+    return getMyArchiveName();
   }
 
   @NonNls @Override
   public String toString() {
-    return "archive:" + myArchiveFileName;
+    return "archive:" + getMyArchiveName();
   }
 
   @Override
@@ -62,7 +61,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
 
   @Override
   public String getName() {
-    return myArchiveFileName;
+    return getMyArchiveName();
   }
 
   @Override
@@ -84,7 +83,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
 
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
-    return element instanceof ArchivePackagingElement && ((ArchivePackagingElement)element).getArchiveFileName().equals(myArchiveFileName);
+    return element instanceof ArchivePackagingElement && ((ArchivePackagingElement)element).getArchiveFileName().equals(getMyArchiveName());
   }
 
   @Override
@@ -106,5 +105,18 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     var entity = BridgeModelModifiableEntitiesKt.addArchivePackagingElementEntity(diff, myArchiveFileName, children, source);
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;
+  }
+
+  private String getMyArchiveName() {
+    if (myStorage == null) {
+      return myArchiveFileName;
+    } else {
+      ArchivePackagingElementEntity entity = (ArchivePackagingElementEntity)getThisEntity();
+      String fileName = entity.getFileName();
+      if (!Objects.equals(fileName, myArchiveFileName)) {
+        myArchiveFileName = fileName;
+      }
+      return fileName;
+    }
   }
 }

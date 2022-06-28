@@ -87,6 +87,10 @@ public class JsonHighlightingTest extends JsonHighlightingTestBase {
     doTest();
   }
 
+  public void testWebUrls() {
+    doTest();
+  }
+
   public void testRainbow() {
     myFixture.testRainbow("test.json",
                           "{\n" +

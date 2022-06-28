@@ -373,7 +373,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     else {
       NonOpaquePanel wrapper = new NonOpaquePanel(component);
       if (!Boolean.TRUE.equals(component.getClientProperty(FileEditorManager.SEPARATOR_DISABLED))) {
-        wrapper.setBorder(createTopBottomSideBorder(top));
+        wrapper.setBorder(createTopBottomSideBorder(top, ClientProperty.get(component, FileEditorManager.SEPARATOR_COLOR)));
       }
       int index = calcComponentInsertionIndex(component, container);
       container.add(wrapper, index);
@@ -622,7 +622,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     @Override
     public Color getBackground() {
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      if (ExperimentalUI.isNewEditorTabs()) {
+      if (ExperimentalUI.isNewUI()) {
         return globalScheme.getDefaultBackground();
       }
       Color color = globalScheme.getColor(EditorColors.GUTTER_BACKGROUND);
@@ -631,12 +631,15 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
   }
 
   @NotNull
-  private static SideBorder createTopBottomSideBorder(boolean top) {
+  private static SideBorder createTopBottomSideBorder(boolean top, @Nullable Color borderColor) {
     return new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP) {
       @Override
       public Color getLineColor() {
+        if (borderColor != null) {
+          return borderColor;
+        }
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-        if (ExperimentalUI.isNewEditorTabs()) {
+        if (ExperimentalUI.isNewUI()) {
           return scheme.getDefaultBackground();
         }
         Color result = scheme.getColor(top ? EditorColors.SEPARATOR_ABOVE_COLOR : EditorColors.SEPARATOR_BELOW_COLOR);

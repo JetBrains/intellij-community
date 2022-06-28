@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.extensions.gradle.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
@@ -29,7 +30,7 @@ class DifferentStdlibGradleVersionInspection : BaseInspection() {
 
     private abstract class VersionFinder(private val groupId: String, private val libraryIds: List<String>) :
         KotlinGradleInspectionVisitor() {
-        protected abstract fun onFound(stdlibVersion: String, stdlibStatement: GrCallExpression)
+        protected abstract fun onFound(stdlibVersion: IdeKotlinVersion, stdlibStatement: GrCallExpression)
 
         override fun visitClosure(closure: GrClosableBlock) {
             super.visitClosure(closure)
@@ -47,8 +48,8 @@ class DifferentStdlibGradleVersionInspection : BaseInspection() {
     }
 
     private inner class MyVisitor(groupId: String, libraryIds: List<String>) : VersionFinder(groupId, libraryIds) {
-        override fun onFound(stdlibVersion: String, stdlibStatement: GrCallExpression) {
-            val gradlePluginVersion = getResolvedKotlinGradleVersion(stdlibStatement.containingFile)
+        override fun onFound(stdlibVersion: IdeKotlinVersion, stdlibStatement: GrCallExpression) {
+            val gradlePluginVersion = findResolvedKotlinGradleVersion(stdlibStatement.containingFile)
 
             if (stdlibVersion != gradlePluginVersion) {
                 registerError(stdlibStatement, gradlePluginVersion, stdlibVersion)
@@ -71,7 +72,7 @@ class DifferentStdlibGradleVersionInspection : BaseInspection() {
             }
         }
 
-        fun getResolvedLibVersion(file: PsiFile, groupId: String, libraryIds: List<String>): String? {
+        fun getRawResolvedLibVersion(file: PsiFile, groupId: String, libraryIds: List<String>): String? {
             val projectStructureNode = findGradleProjectStructure(file) ?: return null
             val module = ProjectRootManager.getInstance(file.project).fileIndex.getModuleForFile(file.virtualFile) ?: return null
             val gradleFacade = KotlinGradleFacade.instance ?: return null
@@ -83,6 +84,11 @@ class DifferentStdlibGradleVersionInspection : BaseInspection() {
             }
 
             return null
+        }
+
+        fun getResolvedLibVersion(file: PsiFile, groupId: String, libraryIds: List<String>): IdeKotlinVersion? {
+            val rawVersion = getRawResolvedLibVersion(file, groupId, libraryIds) ?: return null
+            return IdeKotlinVersion.opt(rawVersion)
         }
     }
 }

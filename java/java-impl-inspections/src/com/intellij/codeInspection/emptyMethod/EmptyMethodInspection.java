@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.emptyMethod;
 
 import com.intellij.analysis.AnalysisScope;
@@ -35,7 +35,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
-  @NonNls private static final String SHORT_NAME = "EmptyMethod";
+  private static final @NonNls String SHORT_NAME = "EmptyMethod";
 
   private static final ExtensionPointName<Condition<RefMethod>> CAN_BE_EMPTY_EP = new ExtensionPointName<>("com.intellij.canBeEmpty");
 
@@ -172,8 +172,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     return true;
   }
 
-  @Nullable
-  private static RefMethod findSuperWithBody(RefMethod refMethod) {
+  private static @Nullable RefMethod findSuperWithBody(RefMethod refMethod) {
     for (RefMethod refSuper : refMethod.getSuperMethods()) {
       if (refSuper.hasBody()) return refSuper;
     }
@@ -204,14 +203,14 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager,
-                                                @NotNull final GlobalJavaInspectionContext context,
-                                                @NotNull final ProblemDescriptionsProcessor descriptionsProcessor) {
+  protected boolean queryExternalUsagesRequests(final @NotNull RefManager manager,
+                                                final @NotNull GlobalJavaInspectionContext context,
+                                                final @NotNull ProblemDescriptionsProcessor descriptionsProcessor) {
      manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefElement && descriptionsProcessor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
+            @Override public void visitMethod(final @NotNull RefMethod refMethod) {
               if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
               context.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
                 UMethod uDerivedMethod = UastContextKt.toUElement(derivedMethod, UMethod.class);
@@ -232,14 +231,12 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -255,7 +252,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  public String getHint(@NotNull final QuickFix fix) {
+  public String getHint(final @NotNull QuickFix fix) {
     if (fix instanceof DeleteMethodQuickFix) {
       return String.valueOf(((DeleteMethodQuickFix)fix).myNeedToDeleteHierarchy);
     }
@@ -263,14 +260,12 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  @Nullable
-  public LocalQuickFix getQuickFix(final String hint) {
+  public @Nullable LocalQuickFix getQuickFix(final String hint) {
     return new DeleteMethodIntention(hint);
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
+  public @Nullable JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(JavaBundle.message("checkbox.comments.and.javadoc.count.as.content"),  "commentsAreContent");
 
@@ -289,13 +284,12 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return getQuickFixName();
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class, false);
       if (psiMethod != null) {
         final List<PsiElement> psiElements = new ArrayList<>();
@@ -315,24 +309,22 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-
-  private static class DeleteMethodQuickFix implements LocalQuickFix, BatchQuickFix {
+  private static final class DeleteMethodQuickFix implements LocalQuickFix, BatchQuickFix {
     private final ProblemDescriptionsProcessor myProcessor;
     private final boolean myNeedToDeleteHierarchy;
 
-    DeleteMethodQuickFix(final ProblemDescriptionsProcessor processor, final boolean needToDeleteHierarchy) {
+    private DeleteMethodQuickFix(final ProblemDescriptionsProcessor processor, final boolean needToDeleteHierarchy) {
       myProcessor = processor;
       myNeedToDeleteHierarchy = needToDeleteHierarchy;
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return getQuickFixName();
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
        applyFix(project, new ProblemDescriptor[]{descriptor}, List.of(), null);
     }
 
@@ -352,10 +344,10 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull final Project project,
+    public void applyFix(final @NotNull Project project,
                          final CommonProblemDescriptor @NotNull [] descriptors,
-                         @NotNull final List<PsiElement> psiElementsToIgnore,
-                         @Nullable final Runnable refreshViews) {
+                         final @NotNull List<PsiElement> psiElementsToIgnore,
+                         final @Nullable Runnable refreshViews) {
       for (CommonProblemDescriptor descriptor : descriptors) {
         RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
         if (refElement instanceof RefMethod && refElement.isValid()) {

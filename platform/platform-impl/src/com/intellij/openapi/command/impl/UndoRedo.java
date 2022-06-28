@@ -243,7 +243,7 @@ abstract class UndoRedo {
     doWithReportHandler(handler -> handler.reportException(myManager.getProject(), e, !isRedo()));
   }
 
-  private static void doWithReportHandler(Predicate<UndoReportHandler> condition) {
+  private static void doWithReportHandler(Predicate<? super UndoReportHandler> condition) {
     for (var handler : UndoReportHandler.EP_NAME.getExtensionList()) {
       if (condition.test(handler)) {
         return;

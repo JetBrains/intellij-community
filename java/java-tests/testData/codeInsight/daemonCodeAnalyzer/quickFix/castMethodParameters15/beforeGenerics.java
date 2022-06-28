@@ -1,4 +1,4 @@
-// "Wrap argument using 'Arrays.stream()'" "false"
+// "Adapt argument using 'Arrays.stream()'" "false"
 import java.util.*;
 class a {
   {

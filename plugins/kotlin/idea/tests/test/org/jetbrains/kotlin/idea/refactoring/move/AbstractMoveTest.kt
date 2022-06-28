@@ -264,7 +264,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
             val targetClassName = config.getNullableString("targetClass")
             val targetClass =
                 if (targetClassName != null) {
-                    KotlinFullClassNameIndex.getInstance().get(targetClassName, project, project.projectScope()).first()!!
+                    KotlinFullClassNameIndex.get(targetClassName, project, project.projectScope()).first()!!
                 } else null
             val delegate = MoveDeclarationsDelegate.NestedClass(
                 config.getNullableString("newName"),
@@ -290,15 +290,14 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
         override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
             val project = mainFile.project
             val method =
-                KotlinFunctionShortNameIndex.getInstance().get(config.getString("methodToMove"), project, project.projectScope()).first()
+                KotlinFunctionShortNameIndex.get(config.getString("methodToMove"), project, project.projectScope()).first()
             val methodParameterName = config.getNullableString("methodParameter")
             val sourcePropertyName = config.getNullableString("sourceProperty")
             val targetObjectName = config.getNullableString("targetObject")
             val targetVariable = when {
                 methodParameterName != null -> method.valueParameters.find { it.name == methodParameterName }!!
-                sourcePropertyName != null -> KotlinPropertyShortNameIndex.getInstance()
-                    .get(sourcePropertyName, project, project.projectScope()).first()
-                else -> KotlinFullClassNameIndex.getInstance().get(targetObjectName!!, project, project.projectScope()).first()
+                sourcePropertyName != null -> KotlinPropertyShortNameIndex.get(sourcePropertyName, project, project.projectScope()).first()
+                else -> KotlinFullClassNameIndex.get(targetObjectName!!, project, project.projectScope()).first()
 
             }
             val oldClassParameterNames = mutableMapOf<KtClass, String>()

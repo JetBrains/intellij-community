@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.callOn
-import org.jetbrains.kotlin.nj2k.parenthesizeIfBinaryExpression
+import org.jetbrains.kotlin.nj2k.parenthesizeIfCompoundExpression
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -68,7 +68,7 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
             val initialTypeName = expressionTypeAsPrimitive.kotlinName()
             val conversionFunctionName = "to${toTypeAsPrimitive.kotlinName()}"
             return JKQualifiedExpression(
-                expression.copyTreeAndDetach().parenthesizeIfBinaryExpression(),
+                expression.copyTreeAndDetach().parenthesizeIfCompoundExpression(),
                 JKCallExpressionImpl(
                     symbolProvider.provideMethodSymbol("kotlin.$initialTypeName.$conversionFunctionName"),
                     JKArgumentList()
@@ -76,7 +76,7 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
             ).withFormattingFrom(expression)
         }
 
-        fun RecursiveApplicableConversionBase.charConversion(
+        private fun RecursiveApplicableConversionBase.charConversion(
             expression: JKExpression,
             fromType: JKJavaPrimitiveType,
             toType: JKJavaPrimitiveType
@@ -97,7 +97,7 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
         ): JKExpression? {
             if (toType == JKJavaPrimitiveType.BOOLEAN) return null
 
-            var result = expression.copyTreeAndDetach().parenthesizeIfBinaryExpression()
+            var result = expression.copyTreeAndDetach().parenthesizeIfCompoundExpression()
 
             result = JKQualifiedExpression(
                 result,
@@ -118,7 +118,7 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
             // Int.toChar() is not deprecated, leave it as is.
             if (fromType == JKJavaPrimitiveType.BOOLEAN || fromType == JKJavaPrimitiveType.INT) return null
 
-            val result = expression.copyTreeAndDetach().parenthesizeIfBinaryExpression()
+            val result = expression.copyTreeAndDetach().parenthesizeIfCompoundExpression()
 
             if (fromType == JKJavaPrimitiveType.FLOAT || fromType == JKJavaPrimitiveType.DOUBLE) {
                 return result.callOn(

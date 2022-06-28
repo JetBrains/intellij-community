@@ -11,7 +11,9 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.idea.maven.model.MavenArtifact
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectChanges
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.tasks.TasksBundle
 
 class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin") {
@@ -19,24 +21,6 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
   private val myProcessedLibraries = hashSetOf<MavenArtifact>()
 
   override fun processChangedModulesOnly(): Boolean = false
-
-  override fun process(modifiableModelsProvider: IdeModifiableModelsProvider?,
-                       module: Module?,
-                       rootModel: MavenRootModelAdapter?,
-                       mavenModel: MavenProjectsTree?,
-                       mavenProject: MavenProject?,
-                       changes: MavenProjectChanges?,
-                       mavenProjectToModuleName: MutableMap<MavenProject, String>?,
-                       postTasks: MutableList<MavenProjectsProcessorTask>?) {
-    // do nothing
-  }
-
-  override fun preProcess(module: Module?,
-                          mavenProject: MavenProject?,
-                          changes: MavenProjectChanges?,
-                          modifiableModelsProvider: IdeModifiableModelsProvider?) {
-    //do nothing
-  }
 
   override fun postProcess(module: Module,
                            mavenProject: MavenProject,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.configurations.coverage;
 
@@ -43,7 +43,7 @@ import java.util.Arrays;
  * </code>
  * @author ven
  */
-public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
+public final class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
   private static final Logger LOG = Logger.getInstance(CoverageConfigurable.class);
 
   private final JreVersionDetector myVersionDetector = new JreVersionDetector();
@@ -117,7 +117,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
       .filter(classFilter -> classFilter.INCLUDE == include).toArray(ClassFilter[]::new);
   }
 
-  protected boolean canHavePerTestCoverage() {
+  private boolean canHavePerTestCoverage() {
     return CoverageEnabledConfiguration.getOrCreate(myConfig).canHavePerTestCoverage();
   }
 

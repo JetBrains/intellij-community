@@ -5,6 +5,7 @@ import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -12,13 +13,16 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
@@ -204,5 +208,28 @@ public final class CommonJavaFragments {
       }
     })));
     return jrePath;
+  }
+
+  @NotNull
+  public static <T extends JavaRunConfigurationBase> SettingsEditorFragment<T, RawCommandLineEditor> vmOptions(Computable<Boolean> hasModule) {
+    String group = ExecutionBundle.message("group.java.options");
+    RawCommandLineEditor vmOptions = new RawCommandLineEditor();
+    setMinimumWidth(vmOptions, 400);
+    CommonParameterFragments.setMonospaced(vmOptions.getTextField());
+    String message = ExecutionBundle.message("run.configuration.java.vm.parameters.empty.text");
+    vmOptions.getEditorField().getAccessibleContext().setAccessibleName(message);
+    vmOptions.getEditorField().getEmptyText().setText(message);
+    MacrosDialog.addMacroSupport(vmOptions.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
+    FragmentedSettingsUtil.setupPlaceholderVisibility(vmOptions.getEditorField());
+    SettingsEditorFragment<T, RawCommandLineEditor> vmParameters =
+      new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions,
+                                   15,
+                                   (configuration, c) -> c.setText(configuration.getVMParameters()),
+                                   (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getText() : null),
+                                   configuration -> StringUtil.isNotEmpty(configuration.getVMParameters()));
+    vmParameters.setHint(ExecutionBundle.message("run.configuration.java.vm.parameters.hint"));
+    vmParameters.setActionHint(ExecutionBundle.message("specify.vm.options.for.running.the.application"));
+    vmParameters.setEditorGetter(editor -> editor.getEditorField());
+    return vmParameters;
   }
 }

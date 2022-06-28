@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.defaultFileTemplateUsage;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -28,7 +28,7 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class FileHeaderChecker {
+final class FileHeaderChecker {
   private static final Logger LOG = Logger.getInstance(FileHeaderChecker.class);
 
   static ProblemDescriptor checkFileHeader(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean onTheFly) {

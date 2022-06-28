@@ -1,5 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
+
 
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
 import com.intellij.openapi.editor.Editor;
@@ -15,15 +16,12 @@ import java.util.Set;
 
 /**
  * Extension point interface for providing language specific postfix templates.
- *
  * @see LanguagePostfixTemplate#EP_NAME
  * @see PostfixTemplate
- * @see <a href=https://plugins.jetbrains.com/docs/intellij/postfix-completion.html">Postfix Completion (IntelliJ Platform Docs)</a>
  */
 public interface PostfixTemplateProvider {
-
   /**
-   * @return identifier used for storing settings of this provider's templates
+   * Identifier of template provider. Used for storing settings of provider's templates.
    */
   @NotNull
   default @NonNls String getId() {
@@ -31,7 +29,7 @@ public interface PostfixTemplateProvider {
   }
 
   /**
-   * @return presentation name of an editable template type. If {@code null}, the provider doesn't allow customizing its templates.
+   * Presentation name of editable template type. If null, provider doesn't allow to custom templates.
    */
   @Nullable
   default @NlsActions.ActionText String getPresentableName() {
@@ -39,59 +37,54 @@ public interface PostfixTemplateProvider {
   }
 
   /**
-   * @return built-in templates registered in the provider in their original state.
+   * Returns builtin templates registered in the provider in their original state.
    * Consider using {@link PostfixTemplatesUtils#getAvailableTemplates(PostfixTemplateProvider)} for actually enabled templates.
    */
   @NotNull
   Set<PostfixTemplate> getTemplates();
 
   /**
-   * @return {@code true} if a given symbol can separate template keys
+   * Check symbol can separate template keys
    */
   boolean isTerminalSymbol(char currentChar);
 
   /**
-   * Prepares a file for template expanding,
-   * e.g. a Java postfix template adds a semicolon after caret in order to simplify context checking.
+   * Prepare file for template expanding. Running on EDT.
+   * E.g. java postfix templates adds semicolon after caret in order to simplify context checking.
    * <p>
    * File content doesn't contain template's key, it is deleted just before this method invocation.
    * <p>
-   * Running on EDT.
-   * <p>
-   * Note that when postfix template's availability is checked, the {@code file} parameter is a COPY of the actual file,
-   * so you can do with it anything that you want.
-   * At the same time, it is not recommended to modify the editor state because it's real.
+   * Note that while postfix template is checking its availability the file parameter is a _COPY_ of the real file,
+   * so you can do with it anything that you want, but in the same time it doesn't recommended to modify editor state because it's real.
    */
   void preExpand(@NotNull PsiFile file, @NotNull Editor editor);
 
   /**
-   * Cleans up a file content after template expanding is finished (doesn't matter if it finished successfully or not),
-   * e.g. a Java postfix template cleans a semicolon inserted in {@link #preExpand(PsiFile, Editor)}.
+   * Invoked after template finished (doesn't matter if it finished successfully or not).
+   * E.g. java postfix template use this method for deleting inserted semicolon.
    */
   void afterExpand(@NotNull PsiFile file, @NotNull Editor editor);
 
   /**
-   * Prepares a file for checking the availability of templates.
-   * Almost the same as {@link #preExpand(PsiFile, Editor)} with several differences:
-   * <ol>
-   * <li>Processes copy of the file. So implementations can modify it without corrupting the real file.
-   * <li>Could be invoked from anywhere (EDT, write-action, read-action, completion-thread, etc.) so implementations should make
-   * additional effort to make changes in the file.
-   * </ol>
+   * Prepare file for checking availability of templates.
+   * Almost the same as {@link this#preExpand(PsiFile, Editor)} with several differences:
+   * 1. Processes copy of file. So implementations can modify it without corrupting the real file.
+   * 2. Could be invoked from anywhere (EDT, write-action, read-action, completion-thread etc.). So implementations should make
+   * additional effort to make changes in file.
    * <p>
-   * File content doesn't contain template's key, it is deleted just before this method invocation.
+   * Content of file copy doesn't contain template's key, it is deleted just before this method invocation.
    * <p>
-   * NOTE: editor is real (not a copy) and it doesn't represent the {@code copyFile}.
-   * It's safer to use {@code currentOffset} parameter instead of the editor offset.
-   * Do not modify text with the provided {@code realEditor}.
+   * NOTE: editor is real (not copy) and it doesn't represents the copyFile.
+   * So it's safer to use currentOffset parameter instead of offset from editor. Do not modify text via editor.
    */
   @NotNull
   PsiFile preCheck(@NotNull PsiFile copyFile, @NotNull Editor realEditor, int currentOffset);
 
   /**
-   * Returns the editor that is used to represent a template in UI and create the template from the settings provided by users.
+   * Return the editor that it able to represent template in UI
+   * and create the template from the settings that users set in UI.
    * <p>
-   * If {@code templateToEdit} is {@code null}, it's considered as an editor for a new template.
+   * If templateToEdit is null, it's considered like an editor for a new template.
    */
   @Nullable
   default PostfixTemplateEditor createEditor(@Nullable PostfixTemplate templateToEdit) {
@@ -99,7 +92,7 @@ public interface PostfixTemplateProvider {
   }
 
   /**
-   * Reads from a given DOM element, and instantiates a template that was stored by this provider.
+   * Instantiates the template that was serialized by the provider to XML.
    */
   @Nullable
   default PostfixTemplate readExternalTemplate(@NotNull @NonNls String id, @NotNull @NlsSafe String name, @NotNull Element template) {
@@ -107,7 +100,7 @@ public interface PostfixTemplateProvider {
   }
 
   /**
-   * Stores a given template that was created by this provider to a given parent DOM element.
+   * Serialized to XML the template that was created by the provider.
    */
   default void writeExternalTemplate(@NotNull PostfixTemplate template, @NotNull Element parentElement) {
   }

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 /**
  * Defines type used to determine highlighting of {@link ProblemDescriptor}.
- * Please use {@link #GENERIC_ERROR_OR_WARNING} if you are not sure which one to pick, otherwise user's settings would be ignored.
- *
+ * Please use {@link #GENERIC_ERROR_OR_WARNING}, otherwise user's settings would be ignored.
+ * <p/>
+ * If you need specific text attributes in the editor, please use {@link InspectionProfileEntry#getEditorAttributesKey()} instead.
  * @see com.intellij.codeInspection.ProblemDescriptorUtil#getHighlightInfoType
  */
 public enum ProblemHighlightType {

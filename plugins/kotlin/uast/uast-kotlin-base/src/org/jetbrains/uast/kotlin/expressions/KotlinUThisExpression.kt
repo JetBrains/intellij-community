@@ -2,12 +2,14 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UThisExpression
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
+@ApiStatus.Internal
 class KotlinUThisExpression(
     override val sourcePsi: KtThisExpression,
     givenParent: UElement?

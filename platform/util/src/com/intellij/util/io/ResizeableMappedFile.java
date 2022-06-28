@@ -70,6 +70,10 @@ public class ResizeableMappedFile implements Forceable {
     myLastWrittenLogicalSize = myLogicalSize = readLength();
   }
 
+  public boolean isNativeBytesOrder() {
+    return myStorage.isNativeBytesOrder();
+  }
+
   public void clear() throws IOException {
     myStorage.resize(0);
     myLogicalSize = 0;

@@ -24,7 +24,7 @@ import com.intellij.refactoring.util.duplicates.DuplicatesImpl
 import com.intellij.ui.ReplacePromptDialog
 import com.siyeh.ig.psiutils.SideEffectChecker.mayHaveSideEffects
 
-class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
+class DuplicatesMethodExtractor {
 
   companion object {
     private val isSilentMode = ApplicationManager.getApplication().isUnitTestMode
@@ -38,8 +38,9 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
 
   private var extractOptions: ExtractOptions? = null
 
-  override fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
+  fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): ExtractedElements {
     val file = targetClass.containingFile
+    val document = file.viewProvider.document
     JavaDuplicatesFinder.linkCopiedClassMembersWithOrigin(file)
     val copiedFile = file.copy() as PsiFile
     val copiedClass = PsiTreeUtil.findSameElementInCopy(targetClass, copiedFile)
@@ -51,15 +52,23 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     this.extractOptions = extractOptions
 
     val elementsToReplace = MethodExtractor().prepareRefactoringElements(extractOptions)
-    val calls = replacePsiRange(elements, elementsToReplace.callElements)
-    val method = targetClass.addAfter(elementsToReplace.method, anchor) as PsiMethod
+    val calls = runWriteAction { replacePsiRange(elements, elementsToReplace.callElements) }
+    val method = runWriteAction { targetClass.addAfter (elementsToReplace.method, anchor) as PsiMethod }
 
-    this.callsToReplace = calls.map(SmartPointerManager::createPointer)
-    val callExpression = PsiTreeUtil.findChildOfType(calls.first(), PsiMethodCallExpression::class.java, false)!!
-    return Pair(method, callExpression)
+    val methodPointer = SmartPointerManager.createPointer(method)
+    val callsPointer = calls.map(SmartPointerManager::createPointer)
+    val manager = PsiDocumentManager.getInstance(file.project)
+    manager.doPostponedOperationsAndUnblockDocument(document)
+    manager.commitDocument(document)
+    val replacedMethod = methodPointer.element ?: throw IllegalStateException()
+    val replacedCalls = callsPointer.map { it.element ?: throw IllegalStateException() }
+
+    this.callsToReplace = callsPointer
+
+    return ExtractedElements(replacedCalls, replacedMethod)
   }
 
-  override fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean) {
+  fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean) {
     val extractOptions = findExtractOptions(targetClass, elements, methodName, makeStatic)
     MethodExtractor().doDialogExtract(extractOptions)
   }
@@ -72,7 +81,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     return options
   }
 
-  override fun postprocess(editor: Editor, method: PsiMethod) {
+  fun postprocess(editor: Editor, method: PsiMethod) {
     val project = editor.project ?: return
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
     val finder = duplicatesFinder ?: return
@@ -113,7 +122,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val changeSignature = parametrizedDuplicatesNumber > 0 && confirmChange()
     duplicates = if (changeSignature) duplicatesWithUnifiedParameters else exactDuplicates
     val parameters = if (changeSignature) updatedParameters else options.inputParameters
-    val extractedElements = if (changeSignature) parametrizedExtraction else MethodExtractor.ExtractedElements(calls, method)
+    val extractedElements = if (changeSignature) parametrizedExtraction else ExtractedElements(calls, method)
 
     duplicates = when (replaceDuplicatesDefault) {
       null -> confirmDuplicates (project, editor, duplicates)

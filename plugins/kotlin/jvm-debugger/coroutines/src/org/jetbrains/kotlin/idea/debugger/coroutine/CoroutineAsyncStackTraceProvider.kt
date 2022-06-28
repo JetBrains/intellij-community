@@ -21,7 +21,7 @@ class CoroutineAsyncStackTraceProvider : AsyncStackTraceProvider {
             else
                 null
         }
-        return if (stackFrameList == null || stackFrameList.isEmpty())
+        return if (stackFrameList.isNullOrEmpty())
             null
         else
             stackFrameList

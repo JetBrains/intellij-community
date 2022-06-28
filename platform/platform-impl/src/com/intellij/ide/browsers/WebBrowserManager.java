@@ -30,7 +30,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   public static final UUID PREDEFINED_FIREFOX_ID = UUID.fromString("A7BB68E0-33C0-4D6F-A81A-AAC1FDB870C8");
   private static final UUID PREDEFINED_SAFARI_ID = UUID.fromString("E5120D43-2C3F-47EF-9F26-65E539E05186");
   private static final UUID PREDEFINED_OPERA_ID = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776");
-  private static final UUID PREDEFINED_YANDEX_ID = UUID.fromString("B1B2EC2C-20BD-4EE2-89C4-616DB004BCD4");
   private static final UUID PREDEFINED_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
   private static final UUID PREDEFINED_OLD_EDGE_ID = UUID.fromString("B2A9DCA7-9D0B-4E1E-98A8-AFB19C1328D2");
   private static final UUID PREDEFINED_EDGE_ID = UUID.fromString("37cae5b9-e8b2-4949-9172-aafa37fbc09c");
@@ -40,7 +39,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     PREDEFINED_FIREFOX_ID,
     PREDEFINED_SAFARI_ID,
     PREDEFINED_OPERA_ID,
-    PREDEFINED_YANDEX_ID,
     PREDEFINED_EXPLORER_ID,
     PREDEFINED_EDGE_ID
   };
@@ -68,9 +66,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
                                  BrowserFamily.SAFARI.getExecutionPath(), SystemInfo.isMac,
                                  BrowserFamily.SAFARI.createBrowserSpecificSettings()),
       new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.CHROME, "Opera", SystemInfo.isMac ? "Opera" : "opera", false, null),
-      new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex",
-                                 SystemInfo.isWindows ? "browser" : (SystemInfo.isMac ? "Yandex" : "yandex"), false,
-                                 BrowserFamily.CHROME.createBrowserSpecificSettings()),
       new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER, BrowserFamily.EXPLORER.getName(),
                                  BrowserFamily.EXPLORER.getExecutionPath(), false,
                                  BrowserFamily.EXPLORER.createBrowserSpecificSettings()),
@@ -96,11 +91,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   }
 
   public static boolean isYandexBrowser(@NotNull WebBrowser browser) {
-    return browser.getFamily().equals(BrowserFamily.CHROME) && (browser.getId().equals(PREDEFINED_YANDEX_ID) || checkNameAndPath("Yandex", browser));
-  }
-
-  public static boolean isDartium(@NotNull WebBrowser browser) {
-    return browser.getFamily().equals(BrowserFamily.CHROME) && checkNameAndPath("Dartium", browser);
+    return browser.getFamily().equals(BrowserFamily.CHROME) && checkNameAndPath("Yandex", browser);
   }
 
   public static boolean isEdge(@NotNull WebBrowser browser) {
@@ -325,7 +316,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     Map<UUID, ConfigurableWebBrowser> idToBrowser = null;
     int n = list.size();
     pb: for (UUID predefinedBrowserId : PREDEFINED_BROWSER_IDS) {
-      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < n; i++) {
         if (list.get(i).getId().equals(predefinedBrowserId)) {
           continue pb;

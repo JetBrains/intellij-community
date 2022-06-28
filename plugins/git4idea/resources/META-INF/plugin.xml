@@ -429,6 +429,18 @@
       <separator/>
       <reference id="LocalHistory.ShowHistory"/>
     </group>
+
+    <action id="git4idea.actions.GitUseSharedLogAction"
+            class="git4idea.actions.GitUseSharedLogAction"
+            internal="true"/>
+    <action id="git4idea.actions.GitDumpLogIndexDataAction"
+            class="git4idea.actions.GitDumpLogIndexDataAction"
+            internal="true"/>
+    <group id="git4idea.actions.ShareLogIndexData" internal="true">
+      <reference id="git4idea.actions.GitUseSharedLogAction"/>
+      <reference id="git4idea.actions.GitDumpLogIndexDataAction"/>
+      <add-to-group group-id="Vcs.Log.Internal"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -514,6 +526,8 @@
                  defaultValue="true"/>
     <registryKey key="git.branches.popup.tree" defaultValue="false"
                  description="Show branches tree in a popup instead of a list"/>
+    <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
+                 description="Persist branches panel tree state between restarts"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -573,7 +587,6 @@
 
     <applicationService serviceImplementation="git4idea.light.LightGitTracker"/>
 
-    <fileType name="PLAIN_TEXT" fileNames=".gitmodules"/>
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 
     <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>

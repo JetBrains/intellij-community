@@ -19,18 +19,16 @@ import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 
 class DeprecatedSymbolUsageInWholeProjectFix(
     element: KtReferenceExpression,
-    replaceWith: ReplaceWith,
+    replaceWith: ReplaceWithData,
     @Nls private val text: String
 ) : DeprecatedSymbolUsageFixBase(element, replaceWith) {
-
     override fun getFamilyName() = KotlinBundle.message("replace.deprecated.symbol.usage.in.whole.project")
-
     override fun getText() = text
-
     override fun startInWriteAction() = false
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =
-        super.isAvailable(project, editor, file) && targetPsiElement() != null
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
+        return super.isAvailable(project, editor, file) && targetPsiElement() != null
+    }
 
     override fun invoke(replacementStrategy: UsageReplacementStrategy, project: Project, editor: Editor?) {
         val psiElement = targetPsiElement()!!
@@ -71,7 +69,7 @@ class DeprecatedSymbolUsageInWholeProjectFix(
                 referenceExpression,
                 replacement,
                 KotlinBundle.message("replace.usages.of.0.in.whole.project", descriptorName)
-            ).takeIf(DeprecatedSymbolUsageInWholeProjectFix::available)
+            ).takeIf { it.isAvailable }
         }
     }
 }

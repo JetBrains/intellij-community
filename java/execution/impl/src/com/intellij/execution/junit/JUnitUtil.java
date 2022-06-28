@@ -43,7 +43,6 @@ public final class JUnitUtil {
   public static final Set<String> CUSTOM_TESTABLE_ANNOTATION_LIST = Collections.singleton(CUSTOM_TESTABLE_ANNOTATION);
   
   public static final String TEST5_FACTORY_ANNOTATION = "org.junit.jupiter.api.TestFactory";
-  public static final String IGNORE_ANNOTATION = "org.junit.Ignore";
   public static final String RUN_WITH = "org.junit.runner.RunWith";
   public static final String DATA_POINT = "org.junit.experimental.theories.DataPoint";
   public static final String SUITE_METHOD_NAME = "suite";
@@ -458,7 +457,7 @@ public final class JUnitUtil {
         if (AnnotationUtil.isAnnotated(psiMethod, INSTANCE_5_CONFIGS, 0)) {
           return true;
         }
-        if (TestUtils.testInstancePerClass(containingClass) && AnnotationUtil.isAnnotated(psiMethod, STATIC_5_CONFIGS, 0)) {
+        if (AnnotationUtil.isAnnotated(psiMethod, STATIC_5_CONFIGS, 0) && TestUtils.testInstancePerClass(containingClass)) {
           return true;
         }
       }

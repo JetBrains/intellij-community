@@ -4,20 +4,19 @@ package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.Processors
 import com.intellij.util.indexing.*
+import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
-import com.intellij.util.io.VoidDataExternalizer
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
+import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.caches.IDEKotlinBinaryClassCache
-import org.jetbrains.kotlin.idea.decompiler.builtIns.BuiltInDefinitionFile
-import org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.decompiler.js.KotlinJavaScriptMetaFileType
 import org.jetbrains.kotlin.idea.klib.KlibLoadingMetadataCache
 import org.jetbrains.kotlin.idea.klib.KlibMetaFileType
@@ -72,7 +71,7 @@ abstract class KotlinFileIndexBase<T>(classOfIndex: Class<T>) : ScalarIndexExten
             } catch (e: ProcessCanceledException) {
                 throw e
             } catch (e: Throwable) {
-                LOG.warn("Error while indexing file " + it.fileName, e)
+                LOG.warn("Error while indexing file ${it.fileName}: ${e.message}")
                 emptyMap()
             }
         }
@@ -81,15 +80,22 @@ abstract class KotlinFileIndexBase<T>(classOfIndex: Class<T>) : ScalarIndexExten
 fun FileBasedIndexExtension<FqName, Void>.hasSomethingInPackage(fqName: FqName, scope: GlobalSearchScope): Boolean =
     !FileBasedIndex.getInstance().processValues(name, fqName, null, { _, _ -> false }, scope)
 
-object KotlinPartialPackageNamesIndex: FileBasedIndexExtension<FqName, Void>() {
+object KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>() {
+    private val LOG = logger<KotlinPartialPackageNamesIndex>()
 
-    private val VOID = null as Void?
+    private object NullableNameExternalizer: DataExternalizer<Name?> {
+        override fun save(out: DataOutput, value: Name?) {
+            out.writeBoolean(value == null)
+            if (value != null) {
+                IOUtil.writeUTF(out, value.asString())
+            }
+        }
 
-    private val LOG = Logger.getInstance(KotlinPartialPackageNamesIndex::class.java)
+        override fun read(input: DataInput): Name? =
+            if (input.readBoolean()) null else Name.guessByFirstCharacter(IOUtil.readUTF(input))
+    }
 
-    private const val VERSION = 3
-
-    private val KEY: ID<FqName, Void> = ID.create(KotlinPartialPackageNamesIndex::class.java.canonicalName)
+    val KEY: ID<FqName, Name?> = ID.create(KotlinPartialPackageNamesIndex::class.java.canonicalName)
 
     override fun getName() = KEY
 
@@ -97,7 +103,7 @@ object KotlinPartialPackageNamesIndex: FileBasedIndexExtension<FqName, Void>() {
 
     override fun getKeyDescriptor() = FQNAME_KEY_DESCRIPTOR
 
-    override fun getValueExternalizer(): VoidDataExternalizer = VoidDataExternalizer.INSTANCE
+    override fun getValueExternalizer(): DataExternalizer<Name?> = NullableNameExternalizer
 
     override fun getInputFilter(): DefaultFileTypeSpecificInputFilter =
         DefaultFileTypeSpecificInputFilter(
@@ -106,76 +112,30 @@ object KotlinPartialPackageNamesIndex: FileBasedIndexExtension<FqName, Void>() {
             KotlinJavaScriptMetaFileType
         )
 
-    override fun getVersion() = VERSION
+    override fun getVersion() = 4
 
-    fun findAllFqNames(project: Project): Set<FqName> {
-        val keys = hashSetOf<FqName>()
-        val fileBasedIndex = FileBasedIndex.getInstance()
-        fileBasedIndex.processAllKeys(name, Processors.cancelableCollectProcessor(keys), project)
-        return keys
-    }
-
-    /**
-     * @param fqName
-     * @return top-level (after root) name from `fqName`. E.g. if [fqName] is `a.b.c` it returns `a`
-     */
-    fun toTopLevelFqName(fqName: FqName): FqName =
-        if (fqName.isRoot) {
-            fqName
-        } else {
-            val asString = fqName.asString()
-            // so far we use only the most top segment frm fqName if it is not a root
-            // i.e. only `foo` from `foo.bar.zoo`
-            val dotIndex = asString.indexOf('.')
-            FqName(if (dotIndex > 0) asString.substring(0, dotIndex) else asString)
-        }
-
-    fun findAllFqNames(scope: GlobalSearchScope): Set<FqName> {
-        val keys = hashSetOf<FqName>()
-        val fileBasedIndex = FileBasedIndex.getInstance()
-        fileBasedIndex.processAllKeys(name, Processors.cancelableCollectProcessor(keys), scope, null)
-
-        val valueProcessor = FileBasedIndex.ValueProcessor<Void> { _, _ -> false }
-        keys.apply {
-            removeIf { fileBasedIndex.processValues(name, it, null, valueProcessor, scope) }
-        }
-        return keys
-    }
-
-    fun filterFqNames(keys: Set<FqName>, scope: GlobalSearchScope): Set<FqName> {
-        // in fact, processAllKeys returns all keys for project despite provided scope
-        // therefore it is faster to reuse already existed `keys` to avoid extra call to indices
-
-        val fileBasedIndex = FileBasedIndex.getInstance()
-        val valueProcessor = FileBasedIndex.ValueProcessor<Void> { _, _ -> false }
-
-        return keys.toHashSet().apply {
-            removeIf { fileBasedIndex.processValues(name, it, null, valueProcessor, scope) }
-        }
-    }
+    override fun traceKeyHashToVirtualFileMapping(): Boolean = true
 
     private fun FileContent.toPackageFqName(): FqName? =
         when (this.fileType) {
             KotlinFileType.INSTANCE -> this.psiFile.safeAs<KtFile>()?.packageFqName
-            JavaClassFileType.INSTANCE -> IDEKotlinBinaryClassCache.getInstance()
-                .getKotlinBinaryClassHeaderData(this.file, this.content)?.let {
-                    it.packageName?.let(::FqName) ?: it.classId.packageFqName
-                }
+            JavaClassFileType.INSTANCE -> ClsKotlinBinaryClassCache.getInstance()
+                .getKotlinBinaryClassHeaderData(this.file, this.content)?.packageNameWithFallback
             KotlinJavaScriptMetaFileType -> this.fqNameFromJsMetadata()
             else -> null
         }
 
-    override fun getIndexer() = INDEXER
-
-    private val INDEXER = DataIndexer<FqName, Void, FileContent> { fileContent ->
+    override fun getIndexer() = DataIndexer<FqName, Name?, FileContent> { fileContent ->
         try {
-            fileContent.toPackageFqName()?.let {
-                generateSequence(it, FqName::parentOrNull).associateWith { VOID }
-            } ?: emptyMap()
+            val packageFqName = fileContent.toPackageFqName() ?: return@DataIndexer emptyMap<FqName, Name?>()
+
+            generateSequence(packageFqName) {
+                it.parentOrNull()
+            }.filterNot { it.isRoot }.associateBy({ it.parent() }, { it.shortName() }) + mapOf(packageFqName to null)
         } catch (e: ProcessCanceledException) {
             throw e
         } catch (e: Throwable) {
-            LOG.warn("Error while indexing file " + fileContent.fileName, e)
+            LOG.warn("Error `(${e.javaClass.simpleName}: ${e.message})` while indexing file ${fileContent.fileName} using $name index. Probably the file is broken.")
             emptyMap()
         }
     }
@@ -192,7 +152,7 @@ object KotlinClassFileIndex : KotlinFileIndexBase<KotlinClassFileIndex>(KotlinCl
     private const val VERSION = 3
 
     private val INDEXER = indexer { fileContent ->
-        val headerInfo = IDEKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(fileContent.file, fileContent.content)
+        val headerInfo = ClsKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(fileContent.file, fileContent.content)
         if (headerInfo != null && headerInfo.metadataVersion.isCompatible()) headerInfo.classId.asSingleFqName() else null
     }
 }

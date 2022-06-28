@@ -767,9 +767,4 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testTypedDictInReturnType() {
     doTest();
   }
-
-  // PY-52648
-  public void testListLiteralPassedToIter() {
-    doTest();
-  }
 }

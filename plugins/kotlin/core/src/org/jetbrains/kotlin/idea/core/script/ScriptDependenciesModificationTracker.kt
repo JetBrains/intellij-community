@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.idea.core.script
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 class ScriptDependenciesModificationTracker : SimpleModificationTracker() {
 
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): ScriptDependenciesModificationTracker = project.getServiceSafe()
+        fun getInstance(project: Project): ScriptDependenciesModificationTracker = project.service()
     }
 }

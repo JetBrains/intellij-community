@@ -2,8 +2,10 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UastQualifiedExpressionAccessType
 
+@ApiStatus.Internal
 object KotlinQualifiedExpressionAccessTypes {
     @JvmField
     val SAFE = UastQualifiedExpressionAccessType("?.")

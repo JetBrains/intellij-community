@@ -41,6 +41,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
+import java.util.function.Supplier
 import javax.swing.*
 
 open class FrameWrapper @JvmOverloads constructor(project: Project?,
@@ -102,7 +103,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
     UIUtil.decorateWindowHeader((frame as RootPaneContainer).rootPane)
     if (frame is JFrame) {
-      ToolbarUtil.setTransparentTitleBar(frame, frame.rootPane) { runnable ->
+      val handlerProvider = Supplier { FullScreeSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport") }
+      ToolbarUtil.setTransparentTitleBar(frame, frame.rootPane, handlerProvider) { runnable ->
         Disposer.register(this, Disposable { runnable.run() })
       }
     }

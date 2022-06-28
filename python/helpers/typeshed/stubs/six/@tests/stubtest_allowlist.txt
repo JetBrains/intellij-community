@@ -3,6 +3,8 @@ six.BytesIO.readlines
 six.BytesIO.seek
 six.StringIO.seek
 six.StringIO.truncate
+six.create_bound_method.__closure__
+six.create_bound_method.__defaults__
 six.moves.*
 
 # Implemented using "operator" functions in the implementation

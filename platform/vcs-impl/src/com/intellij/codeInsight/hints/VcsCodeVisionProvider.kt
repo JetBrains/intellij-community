@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import com.intellij.util.application
 import com.intellij.util.text.nullize
 import com.intellij.vcs.CacheableAnnotationProvider
 import java.awt.event.MouseEvent
@@ -74,52 +73,31 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
       val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
 
-      val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
-                                  ?: return@runReadAction READY_EMPTY
-      val traverser = SyntaxTraverser.psiTraverser(file)
-      for (element in traverser.preOrderDfsTraversal()) {
-        if (visionLanguageContext.isAccepted(element)) {
-          val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
-          val length = editor.document.textLength
-          val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
-          val codeAuthorInfo = PREVIEW_INFO_KEY.get(editor) ?: getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
-          val text = codeAuthorInfo.getText()
-          val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
-          val clickHandler = CodeAuthorClickHandler(element, language)
-          val entry = ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList())
-          entry.showInMorePopup = false
-          lenses.add(adjustedRange to entry)
+      try {
+        val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
+                                    ?: return@runReadAction READY_EMPTY
+        val traverser = SyntaxTraverser.psiTraverser(file)
+        for (element in traverser.preOrderDfsTraversal()) {
+          if (visionLanguageContext.isAccepted(element)) {
+            val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
+            val length = editor.document.textLength
+            val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
+            val codeAuthorInfo = PREVIEW_INFO_KEY.get(editor) ?: getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
+            val text = codeAuthorInfo.getText()
+            val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
+            val clickHandler = CodeAuthorClickHandler(element, language)
+            val entry = ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList())
+            entry.showInMorePopup = false
+            lenses.add(adjustedRange to entry)
+          }
         }
+      }
+      catch (e: Exception) {
+        e.printStackTrace()
+        throw e
       }
       return@runReadAction CodeVisionState.Ready(lenses)
     }
-  }
-
-  override fun collectPlaceholders(editor: Editor): List<TextRange> {
-
-    application.assertReadAccessAllowed()
-
-    val project = editor.project ?: return emptyList()
-    val document = editor.document
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return emptyList()
-    val language = file.language
-
-    val ranges = ArrayList<TextRange>()
-
-    try {
-      val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return emptyList()
-      val traverser = SyntaxTraverser.psiTraverser(file)
-      for (element in traverser.preOrderDfsTraversal()) {
-        if (visionLanguageContext.isAccepted(element)) {
-          ranges.add(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element))
-        }
-      }
-    }
-    catch (e: Exception) {
-      e.printStackTrace()
-      throw e
-    }
-    return ranges
   }
 
   override fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?): CodeVisionPlaceholderCollector? {
@@ -129,10 +107,10 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return null
     val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(psiFile.virtualFile) ?: return null
     if ("Git" != vcs.name) {
-      return null
+        return null
     }
     if (vcs.annotationProvider !is CacheableAnnotationProvider) return null
-    return object: BypassBasedPlaceholderCollector {
+    return object : BypassBasedPlaceholderCollector {
       override fun collectPlaceholders(element: PsiElement, editor: Editor): List<TextRange> {
         val ranges = ArrayList<TextRange>()
         if (visionLanguageContext.isAccepted(element)) {
@@ -212,7 +190,7 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
   val annotation = provider.getFromCache(file) ?: return Result.Failure()
 
   val annotationDisposable = Disposable {
-    unregisterAnnotation(file, annotation)
+    unregisterAnnotation(annotation)
     annotation.dispose()
   }
   annotation.setCloser {
@@ -224,7 +202,7 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
   annotation.setReloader { annotation.close() }
 
   editor.putUserData(VCS_CODE_AUTHOR_ANNOTATION, annotation)
-  registerAnnotation(file, annotation)
+  registerAnnotation(annotation)
   ApplicationManager.getApplication().invokeLater {
     EditorUtil.disposeWithEditor(editor, annotationDisposable)
   }
@@ -232,11 +210,11 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
   return Result.Success(annotation)
 }
 
-private fun registerAnnotation(file: VirtualFile, annotation: FileAnnotation) =
-  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.registerAnnotation(file, annotation)
+private fun registerAnnotation(annotation: FileAnnotation) =
+  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.registerAnnotation(annotation)
 
-private fun unregisterAnnotation(file: VirtualFile, annotation: FileAnnotation) =
-  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.unregisterAnnotation(file, annotation)
+private fun unregisterAnnotation(annotation: FileAnnotation) =
+  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.unregisterAnnotation(annotation)
 
 private val VcsCodeAuthorInfo.isMultiAuthor: Boolean get() = otherAuthorsCount > 0
 
@@ -252,11 +230,12 @@ private fun VcsCodeAuthorInfo.getText(): String {
   }
 }
 
-private sealed class Result<out T>(val isSuccess: Boolean, val result: T?){
+private sealed class Result<out T>(val isSuccess: Boolean, val result: T?) {
 
-  companion object{
+  companion object {
     val SUCCESS_EMPTY = Success(null)
   }
+
   class Success<T>(result: T) : Result<T>(true, result)
   class Failure<T> : Result<T>(false, null)
 }

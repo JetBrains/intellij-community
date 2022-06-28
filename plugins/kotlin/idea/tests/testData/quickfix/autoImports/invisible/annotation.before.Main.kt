@@ -6,3 +6,5 @@ package my.pack
 
 @F<caret>()
 class A
+
+/* IGNORE_FIR */

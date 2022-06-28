@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
@@ -22,7 +22,7 @@ import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataV
  *  </li>
  *  <li>
  *    Add group to events test scheme with "Add Group to Events Test Scheme" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction}
+ *    {@link com.intellij.internal.statistic.devkit.actions.scheme.AddGroupToTestSchemeAction}
  *  </li>
  *  <li>
  *    Perform action to check that it's recorded in "Statistics Event Log" toolwindow.

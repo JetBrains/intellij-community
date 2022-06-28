@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
 import com.intellij.diff.DiffDialogHints
@@ -23,7 +23,7 @@ class GitStageDiffAction : AnActionExtensionProvider {
   override fun actionPerformed(e: AnActionEvent) {
     val producers = e.getRequiredData(GitStageDataKeys.GIT_STAGE_TREE).statusNodesListSelection(true)
       .map { createTwoSidesDiffRequestProducer(e.project!!, it) }
-    DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
+    DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers.list, producers.selectedIndex), DiffDialogHints.DEFAULT)
   }
 
   companion object {
@@ -42,13 +42,13 @@ class GitStageThreeSideDiffAction : DumbAwareAction() {
     val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
     e.presentation.isEnabled = e.project != null &&
                                e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null &&
-                               nodes.filter { it.kind != NodeKind.IGNORED  }.isNotEmpty
+                               nodes.filter { it.kind != NodeKind.IGNORED }.isNotEmpty
     e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val producers = e.getRequiredData(GitStageDataKeys.GIT_STAGE_TREE).statusNodesListSelection(false)
       .map { createThreeSidesDiffRequestProducer(e.project!!, it) }
-    DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
+    DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers.list, producers.selectedIndex), DiffDialogHints.DEFAULT)
   }
 }

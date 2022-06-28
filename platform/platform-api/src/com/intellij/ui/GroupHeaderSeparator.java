@@ -17,7 +17,7 @@ public class GroupHeaderSeparator extends SeparatorWithText {
 
   private boolean myHideLine;
   private final Insets myLabelInsets;
-  private final JBInsets lineInsets;
+  private final Insets lineInsets;
 
   public GroupHeaderSeparator(Insets labelInsets) {
     myLabelInsets = labelInsets;
@@ -43,7 +43,7 @@ public class GroupHeaderSeparator extends SeparatorWithText {
     else {
       size = getLabelSize(myLabelInsets);
     }
-    if (!myHideLine) size.height += lineInsets.height() + 1;
+    if (!myHideLine) size.height += lineInsets.top + lineInsets.bottom + 1;
 
     JBInsets.addTo(size, getInsets());
     return size;
@@ -58,7 +58,7 @@ public class GroupHeaderSeparator extends SeparatorWithText {
 
     if (!myHideLine) {
       paintLine(g, bounds);
-      int lineHeight = lineInsets.height() + 1;
+      int lineHeight = lineInsets.top + lineInsets.bottom + 1;
       bounds.y += lineHeight;
       bounds.height -= lineHeight;
     }
@@ -82,7 +82,7 @@ public class GroupHeaderSeparator extends SeparatorWithText {
 
   private void paintLine(Graphics g, Rectangle bounds) {
     int x = bounds.x + lineInsets.left;
-    int width = bounds.width - lineInsets.width();
+    int width = bounds.width - lineInsets.left - lineInsets.right;
     int y = bounds.y + lineInsets.top;
     FILL.paint((Graphics2D)g, x, y, width, 1, null);
   }

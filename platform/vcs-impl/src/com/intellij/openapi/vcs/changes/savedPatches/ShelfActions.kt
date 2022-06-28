@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 import java.util.function.Supplier
 
 abstract class ShelfAction : DumbAwareAction {
-  constructor(): super()
+  constructor() : super()
   constructor(dynamicText: Supplier<@NlsActions.ActionText String>,
               dynamicDescription: Supplier<@NlsActions.ActionDescription String>) : super(dynamicText, dynamicDescription, null)
 

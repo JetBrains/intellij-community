@@ -68,6 +68,11 @@ final class CachedValueLeakChecker {
   }
 
   private static boolean isAncestor(@NotNull PsiElement ancestor, @NotNull PsiElement element) {
+    // To avoid AST loading, on stub-based trees let's use PsiTreeUtil.isContextAncestor(). It's possible because
+    // StubBasedPsiElementBase.getContext() uses stub tree node's parents for PsiElement.getContext(). It skips elements which are
+    // not bound to stub tree. "PsiElement.getStub() != null" means that AST is not loaded, so there are no valid AST-based PSI elements
+    // in current file.
+    // For other cases it's safer to use PsiTreeUtil.isAncestor(), because PsiElement.getContext() can skip some parents.
     if (ancestor instanceof StubBasedPsiElementBase && ((StubBasedPsiElementBase<?>)ancestor).getStub() != null ||
         element instanceof StubBasedPsiElementBase && ((StubBasedPsiElementBase<?>)element).getStub() != null) {
       return ancestor.getContainingFile() == element.getContainingFile() && PsiTreeUtil.isContextAncestor(ancestor, element, true);

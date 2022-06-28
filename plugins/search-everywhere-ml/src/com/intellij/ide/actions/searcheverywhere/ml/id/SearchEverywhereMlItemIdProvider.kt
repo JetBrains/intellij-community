@@ -6,11 +6,9 @@ internal class SearchEverywhereMlItemIdProvider {
   private var idCounter = AtomicInteger(1)
   private val itemToId = hashMapOf<Any, Int>()
 
-  fun isElementSupported(element: Any) = ElementKeyForIdProvider.isElementSupported(element)
-
   @Synchronized
-  fun getId(element: Any): Int {
-    val key = ElementKeyForIdProvider.getKey(element)
+  fun getId(element: Any): Int? {
+    val key = ElementKeyForIdProvider.getKeyOrNull(element) ?: return null
     return itemToId.computeIfAbsent(key) { idCounter.getAndIncrement() }
   }
 }

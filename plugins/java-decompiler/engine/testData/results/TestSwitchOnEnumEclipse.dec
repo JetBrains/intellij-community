@@ -1,0 +1,101 @@
+package pkg;
+
+import java.util.concurrent.TimeUnit;
+
+public class TestSwitchOnEnumEclipse {
+   int myInt;
+
+   public int testSOE(TimeUnit t) {
+      switch (t) {// 11
+         case MICROSECONDS:
+            return 2;// 13
+         case MILLISECONDS:
+         default:
+            return 0;// 17
+         case SECONDS:
+            return 1;// 15
+      }
+   }
+
+   static class Example {
+      void test(A a, B b) {
+         switch (a) {// 27
+            case A1:
+               System.out.println("A1");// 29
+               break;// 30
+            case A2:
+               System.out.println("A2");// 32
+         }
+
+         switch (b) {// 35
+            case B1:
+               System.out.println("B1");// 37
+               break;// 38
+            case B2:
+               System.out.println("B2");// 40
+         }
+
+      }// 43
+
+      static enum A {
+         A1,
+         A2;
+      }
+
+      static enum B {
+         B1,
+         B2;
+      }
+   }
+}
+
+class 'pkg/TestSwitchOnEnumEclipse' {
+   method 'testSOE (Ljava/util/concurrent/TimeUnit;)I' {
+      8      8
+      24      10
+      25      10
+      26      15
+      27      15
+      28      13
+      29      13
+   }
+}
+
+class 'pkg/TestSwitchOnEnumEclipse$Example' {
+   method 'test (Lpkg/TestSwitchOnEnumEclipse$Example$A;Lpkg/TestSwitchOnEnumEclipse$Example$B;)V' {
+      8      21
+      20      23
+      23      23
+      25      23
+      28      24
+      2b      26
+      2e      26
+      30      26
+      3b      29
+      50      31
+      53      31
+      55      31
+      58      32
+      5b      34
+      5e      34
+      60      34
+      63      37
+   }
+}
+
+Lines mapping:
+11 <-> 9
+13 <-> 11
+15 <-> 16
+17 <-> 14
+27 <-> 22
+29 <-> 24
+30 <-> 25
+32 <-> 27
+35 <-> 30
+37 <-> 32
+38 <-> 33
+40 <-> 35
+43 <-> 38
+Not mapped:
+34

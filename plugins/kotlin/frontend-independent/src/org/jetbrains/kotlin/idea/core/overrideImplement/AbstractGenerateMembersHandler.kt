@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.ide.util.MemberChooser
 import com.intellij.lang.LanguageCodeInsightActionHandler
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -22,6 +21,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 abstract class AbstractGenerateMembersHandler<T : ClassMember> : LanguageCodeInsightActionHandler {
 
     abstract fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<T>
+
+    abstract val toImplement: Boolean
 
     @NlsContexts.DialogTitle
     protected abstract fun getChooserTitle(): String
@@ -46,6 +47,10 @@ abstract class AbstractGenerateMembersHandler<T : ClassMember> : LanguageCodeIns
         val memberArray = members.toTypedArray<ClassMember>() as Array<T>
         val chooser = MemberChooser(memberArray, true, true, project)
         chooser.title = getChooserTitle()
+        if (toImplement) {
+            chooser.selectElements(memberArray)
+        }
+
         chooser.show()
         if (chooser.exitCode != DialogWrapper.OK_EXIT_CODE) return null
         return chooser

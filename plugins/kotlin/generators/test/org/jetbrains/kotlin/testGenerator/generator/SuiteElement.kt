@@ -8,10 +8,12 @@ import org.jetbrains.kotlin.testGenerator.generator.methods.RunTestMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.SetUpMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.TestCaseMethod
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.junit.runner.RunWith
 import java.io.File
 import java.util.*
 import javax.lang.model.element.Modifier
+import kotlin.collections.ArrayList
 
 fun File.toRelativeStringSystemIndependent(base: File): String {
     val path = this.toRelativeString(base)
@@ -45,7 +47,7 @@ class SuiteElement private constructor(
 
             for (file in rootFile.listFiles().orEmpty()) {
                 if (depth > 0 && file.isDirectory && file.name !in model.excludedDirectories) {
-                    val nestedClassName = file.toJavaIdentifier().capitalize()
+                    val nestedClassName = file.toJavaIdentifier().capitalizeAsciiOnly()
                     val nestedModel = model.copy(
                         path = file.toRelativeStringSystemIndependent(group.testDataRoot),
                         testClassName = nestedClassName,
@@ -73,35 +75,51 @@ class SuiteElement private constructor(
                 )
             }
 
+            fun createElement(
+                className: String,
+                isNested: Boolean,
+                testCaseMethods: List<TestMethod>,
+                nestedSuites: List<SuiteElement> = emptyList()
+            ): SuiteElement {
+                val allMethods = testCaseMethods + getMiscMethods(group, model, testCaseMethods)
+                return SuiteElement(group, suite, model, className, isNested, allMethods, nestedSuites)
+            }
+
             if (methods.isNotEmpty()) {
-                if (model.testPerClass) {
-                    nestedSuites += methods.map {
-                        val nestedClassName = it.methodName.capitalize()
-                        listOf(it).wrapToNestedClass(
-                            group,
-                            suite,
-                            model,
-                            nestedClassName,
-                        )
+                if (model.classPerTest) {
+                    for (method in methods) {
+                        val nestedClassName = method.methodName.capitalizeAsciiOnly()
+                        nestedSuites += createElement(nestedClassName, isNested = true, listOf(method))
                     }
                     methods.clear()
-                } else {
-                    if (nestedSuites.isNotEmpty()) {
-                        nestedSuites += methods.wrapToNestedClass(
-                            group,
-                            suite,
-                            model,
-                        )
-
-                        methods.clear()
-                    } else {
-                        methods += RunTestMethod(model)
+                } else if (model.bucketSize != null) {
+                    // Bucket classes are created even if `methods.size < bucketSize` to preserve stable test order when new tests appear
+                    for ((index, methodsForBucket) in methods.chunked(model.bucketSize).withIndex()) {
+                        val nestedClassName = "TestBucket${"%03d".format(index + 1)}"
+                        nestedSuites += createElement(nestedClassName, isNested = true, methodsForBucket)
                     }
+                    methods.clear()
                 }
             }
 
-            if (methods.isNotEmpty() && group.isCompilerTestData) {
-                methods += SetUpMethod(
+            if (methods.isNotEmpty() && nestedSuites.isNotEmpty()) {
+                nestedSuites += createElement("Uncategorized", isNested = true, methods)
+                methods.clear()
+            }
+
+            return createElement(className, isNested, methods, nestedSuites)
+        }
+
+        private fun getMiscMethods(group: TGroup, model: TModel, testCaseMethods: List<TestMethod>): List<TestMethod> {
+            if (testCaseMethods.isEmpty()) {
+                return emptyList()
+            }
+
+            val result = ArrayList<TestMethod>(2)
+            result += RunTestMethod(model)
+
+            if (group.isCompilerTestData) {
+                result += SetUpMethod(
                     listOf(
                         "${AdditionalKotlinArtifacts::compilerTestData.name}(\"${
                             File(
@@ -114,60 +132,7 @@ class SuiteElement private constructor(
                 )
             }
 
-            val suiteElement = SuiteElement(group, suite, model, className, isNested, methods, nestedSuites)
-            return if (model.bucketSize != null) {
-                suiteElement.chunked(model.bucketSize)
-            } else {
-                suiteElement
-            }
-        }
-
-        private fun List<TestMethod>.wrapToNestedClass(
-            group: TGroup,
-            suite: TSuite,
-            model: TModel,
-            name: String = "Uncategorized",
-        ): SuiteElement = SuiteElement(
-            group = group,
-            suite = suite,
-            model = model.copy(testClassName = name),
-            className = name,
-            isNested = true,
-            methods = this.takeIf { methods -> methods.none { it.methodName == "runTest" } }?.plus(RunTestMethod(model)) ?: this,
-            nestedSuites = emptyList(),
-        )
-
-        private fun SuiteElement.chunked(bucketSize: Int): SuiteElement {
-            val size = methods.size - 1
-            val newNestedClasses = if (size > bucketSize) {
-
-                methods.asSequence()
-                    .filter { it.methodName != "runTest" }
-                    .chunked(bucketSize)
-                    .mapIndexed { index: Int, testMethods: List<TestMethod> ->
-                        testMethods.wrapToNestedClass(
-                            group,
-                            suite,
-                            model,
-                            "TestBucket${"%03d".format(index + 1)}",
-                        )
-                    }
-                    .toList()
-            } else {
-                emptyList()
-            }
-
-            if (nestedSuites.isEmpty() && newNestedClasses.isEmpty()) return this
-
-            return SuiteElement(
-                group,
-                suite,
-                model,
-                className,
-                isNested,
-                if (newNestedClasses.isEmpty()) methods else emptyList(),
-                nestedSuites.map { it.chunked(bucketSize) } + newNestedClasses,
-            )
+            return result
         }
 
         private fun flatten(element: SuiteElement): List<TestMethod> {
@@ -181,7 +146,7 @@ class SuiteElement private constructor(
         private fun getTestMethodNameBase(path: String): String {
             return path
                 .split(File.pathSeparator)
-                .joinToString(File.pathSeparator) { makeJavaIdentifier(it).capitalize() }
+                .joinToString(File.pathSeparator) { makeJavaIdentifier(it).capitalizeAsciiOnly() }
         }
     }
 

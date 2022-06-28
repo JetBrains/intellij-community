@@ -10,7 +10,7 @@ import java.net.URI
 
 fun URI.addPathSuffix(suffix: String): URI {
   val currentPath = path
-  if (currentPath == null || currentPath.isEmpty()) {
+  if (currentPath.isNullOrEmpty()) {
     error("Expected URI path to be present: $this")
   }
   return withPath(currentPath + suffix)

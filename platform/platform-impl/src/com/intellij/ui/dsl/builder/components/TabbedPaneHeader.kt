@@ -5,44 +5,38 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTabbedPaneUI
 import com.intellij.ui.components.JBTabbedPane
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
-import java.awt.Graphics
 
 @ApiStatus.Internal
 internal class TabbedPaneHeader : JBTabbedPane() {
-
-  private var preferredSizeCalculation = false
 
   init {
     setUI(HeaderTabbedPaneUI())
   }
 
-  override fun getSize(): Dimension {
-    return if (preferredSizeCalculation) Dimension(2000, 100) else super.getSize()
+  override fun getPreferredSize(): Dimension {
+    val insets = insets
+    val tabbedPaneUI = ui as HeaderTabbedPaneUI
+    return Dimension(tabbedPaneUI.getTabsWidth() + insets.left + insets.right,
+                     tabbedPaneUI.getTabHeight() + insets.top + insets.bottom)
   }
 
-  override fun getPreferredSize(): Dimension {
-    // Allow aligning tabs in large area
-    preferredSizeCalculation = true
-    try {
-      val lastTabBounds = getBoundsAt(tabCount - 1)
-      return Dimension(lastTabBounds.x + lastTabBounds.width, (ui as HeaderTabbedPaneUI).getTabHeight(tabPlacement))
-    }
-    finally {
-      preferredSizeCalculation = false
-    }
+  override fun getMinimumSize(): Dimension {
+    return preferredSize
   }
 }
 
 private class HeaderTabbedPaneUI : DarculaTabbedPaneUI() {
 
-  fun getTabHeight(tabPlacement: Int): Int {
-    return calculateMaxTabHeight(tabPlacement) + OFFSET.get()
+  fun getTabsWidth(): Int {
+    val metrics = tabPane.getFontMetrics(tabPane.font)
+    return (0 until tabPane.tabCount).sumOf { calculateTabWidth(tabPane.tabPlacement, it, metrics) }
   }
 
-  override fun paintContentBorderTopEdge(g: Graphics?, tabPlacement: Int, selectedIndex: Int, x: Int, y: Int, w: Int, h: Int) {
-    // DarculaTabbedPaneUI doesn't use paintContentBorderXXXEdge methods, use it for fill background with correct color
-    // see javax.swing.plaf.basic.BasicTabbedPaneUI.paintContentBorder
-    g!!.color = tabPane.background
-    g.fillRect(x, y, w, h)
+  fun getTabHeight(): Int {
+    return calculateMaxTabHeight(tabPane.tabPlacement)
+  }
+
+  override fun getOffset(): Int {
+    return 0
   }
 }

@@ -28,6 +28,7 @@ public interface Control {
 
     Control.Painter DEFAULT = new ClassicPainter(null, null, null, null);
     Control.Painter COMPACT = new ClassicPainter(null, null, 0, null);
+    Control.Painter LEAF_WITHOUT_INDENT = new ClassicPainter(null, null, null, 0);
 
     JBColor LINE_COLOR = JBColor.namedColor("Tree.hash", new JBColor(0xE6E6E6, 0x505355));
 

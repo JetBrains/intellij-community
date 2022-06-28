@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.debugger.breakpoints
 
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.ui.breakpoints.LineBreakpoint
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.sun.jdi.ReferenceType
+import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.idea.debugger.isDexDebug
 import org.jetbrains.kotlin.idea.debugger.safeSourceName
@@ -20,7 +22,7 @@ import org.jetbrains.kotlin.util.containingNonLocalDeclaration
 class KotlinLineBreakpoint(
     project: Project?,
     xBreakpoint: XBreakpoint<out XBreakpointProperties<*>>?
-) : KotlinLineBreakpointBase(project, xBreakpoint) {
+) : LineBreakpoint<JavaLineBreakpointProperties>(project, xBreakpoint, false) {
     override fun processClassPrepare(debugProcess: DebugProcess?, classType: ReferenceType?) {
         val sourcePosition = runReadAction { xBreakpoint?.sourcePosition }
 

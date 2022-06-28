@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.UIFormXmlConstants;
@@ -10,10 +9,10 @@ import org.jdom.Element;
 import java.awt.*;
 
 public class GridLayoutSerializer extends LayoutSerializer {
-  protected GridLayoutSerializer() {
+  GridLayoutSerializer() {
   }
 
-  public static GridLayoutSerializer INSTANCE = new GridLayoutSerializer();
+  public static final GridLayoutSerializer INSTANCE = new GridLayoutSerializer();
 
   @Override
   void readLayout(Element element, LwContainer container) {

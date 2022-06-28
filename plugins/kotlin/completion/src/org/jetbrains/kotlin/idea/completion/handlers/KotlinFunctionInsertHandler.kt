@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.handlers
 
@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 class GenerateLambdaInfo(val lambdaType: KotlinType, val explicitParameters: Boolean)
 
@@ -106,7 +107,7 @@ fun createNormalFunctionInsertHandler(
                 noLambdaCaseInsideBracketOffset = 1
             }
             val shouldPlaceCaretInBrackets = inputValueArguments || lambdaInfo != null
-            if (!insertTypeArguments) {
+            if (!inputTypeArguments) {
                 // no need to insert typeParams, may move cursor around valueParams
                 if (shouldPlaceCaretInBrackets) {
                     builder.offsetToPutCaret += noLambdaCaseInsideBracketOffset + lambdaCaseInsideBracketOffset
@@ -214,6 +215,7 @@ fun createNormalFunctionInsertHandler(
                                     normalizedBeforeFunctionOffset,
                                     "`"
                                 )
+
                                 else -> operation.copy(newText = operation.newText + '`')
                             }
                         }
@@ -271,6 +273,20 @@ fun createNormalFunctionInsertHandler(
 
                 KotlinCallableInsertHandler.addImport(forkedContext, item, callType)
 
+                if (insertLambda && lambdaInfo!!.explicitParameters) {
+                    val charsSequence = forkedDocument.charsSequence
+                    val tailOffset = forkedContext.tailOffset
+                    val startIndex = forkedContext.startOffset
+
+                    val startOffset = charsSequence.indexOfSkippingSpace('{', tailOffset)
+                        ?: throwElementIsNotFound(charsSequence, startIndex, tailOffset)
+
+                    val endOffset = charsSequence.indexOfSkippingSpace('}', startOffset + 1)
+                        ?: throwElementIsNotFound(charsSequence, startIndex, tailOffset)
+
+                    insertLambdaSignatureTemplate(startOffset, endOffset, lambdaInfo.lambdaType, forkedContext, context)
+                }
+
                 // hack for KT-31902
                 if (callType == CallType.DEFAULT) {
                     val psiDocumentManager = PsiDocumentManager.getInstance(forkedContext.project)
@@ -295,6 +311,39 @@ fun createNormalFunctionInsertHandler(
         handlers = lazyHandlers, fallbackInsertHandler = fallbackHandler,
         isLambda = lambdaInfo != null, inputValueArguments = inputValueArguments,
         inputTypeArguments = inputTypeArguments
+    )
+}
+
+private fun throwElementIsNotFound(charsSequence: CharSequence, startOffset: Int, tailOffset: Int): Nothing {
+    throw KotlinExceptionWithAttachments("brace is not found").apply {
+        withAttachment("element.kt", charsSequence.subSequence(startOffset, tailOffset))
+        withAttachment(
+            "tail.kt",
+            charsSequence.subSequence(tailOffset, minOf(tailOffset + 10, charsSequence.length - 1)),
+        )
+    }
+}
+
+private fun insertLambdaSignatureTemplate(
+    openBraceOffset: Int,
+    closeBraceOffset: Int,
+    lambdaType: KotlinType,
+    currentContext: InsertionContext,
+    originalContext: InsertionContext,
+) {
+    val placeholderRange = TextRange(openBraceOffset, closeBraceOffset + 1)
+    val explicitParameterTypes = LambdaSignatureTemplates.explicitParameterTypesRequired(
+        currentContext,
+        placeholderRange,
+        lambdaType,
+    )
+
+    LambdaSignatureTemplates.insertTemplate(
+        originalContext,
+        placeholderRange,
+        lambdaType,
+        explicitParameterTypes,
+        signatureOnly = false,
     )
 }
 
@@ -442,20 +491,7 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
             }
 
             if (insertLambda && lambdaInfo!!.explicitParameters) {
-                val placeholderRange = TextRange(openingBracketOffset, closeBracketOffset!! + 1)
-                val explicitParameterTypes = LambdaSignatureTemplates.explicitParameterTypesRequired(
-                    context,
-                    placeholderRange,
-                    lambdaInfo.lambdaType,
-                )
-
-                LambdaSignatureTemplates.insertTemplate(
-                    context,
-                    placeholderRange,
-                    lambdaInfo.lambdaType,
-                    explicitParameterTypes,
-                    signatureOnly = false
-                )
+                insertLambdaSignatureTemplate(openingBracketOffset, closeBracketOffset!!, lambdaInfo.lambdaType, context, context)
                 return
             }
 

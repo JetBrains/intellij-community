@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Nls
 import java.awt.Image
-import java.util.function.Consumer
 import java.util.function.Supplier
 
 @Experimental
@@ -50,19 +49,8 @@ sealed interface DocumentationResult {
 
     /**
      * Same as asynchronous overload, but blocking.
-     * To support cancellation [com.intellij.openapi.progress.ProgressManager.checkCanceled] must be called regularly inside [updates].
-     *
-     * Example usage:
-     * ```
-     * DocumentationResult.documentation(...).updates(updateConsumer -> {
-     *   // do blocking stuff with ProgressManager.checkCanceled()
-     *   updateConsumer.consume(DocumentationContent.content(updatedHtml1);
-     *   // do more blocking stuff with ProgressManager.checkCanceled()
-     *   updateConsumer.consume(DocumentationContent.content(updatedHtml2, updatedImages2);
-     * });
-     * ```
      */
-    fun updates(updates: Consumer<in Consumer<in DocumentationContent>>): Data
+    fun updates(updater: DocumentationContentUpdater): Data
   }
 
   companion object {

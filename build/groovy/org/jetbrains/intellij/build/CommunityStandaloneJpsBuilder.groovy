@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -21,10 +21,10 @@ final class CommunityStandaloneJpsBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  void processJpsLayout(String targetDir, String buildNumber, ProjectStructureMapping projectStructureMapping,
+  void processJpsLayout(Path targetDir, String buildNumber, ProjectStructureMapping projectStructureMapping,
                         boolean copyFiles, @DelegatesTo(LayoutBuilder.LayoutSpec) Closure additionalJars) {
     BuildContext context = buildContext
-    new LayoutBuilder(buildContext).process(targetDir, projectStructureMapping, copyFiles) {
+    new LayoutBuilder(buildContext).process(targetDir.toString(), projectStructureMapping, copyFiles) {
       zip(getZipName(buildNumber)) {
         jar("util.jar") {
           module("intellij.platform.util")
@@ -32,6 +32,7 @@ final class CommunityStandaloneJpsBuilder {
           module("intellij.platform.util.text.matching")
           module("intellij.platform.util.base")
           module("intellij.platform.util.xmlDom")
+          module("intellij.platform.util.jdom")
           module("intellij.platform.tracing.rt")
           module("intellij.platform.util.diff")
           module("intellij.platform.util.rt.java8")
@@ -68,7 +69,7 @@ final class CommunityStandaloneJpsBuilder {
           jar("jps-javac-rt-rpc.jar") {
             module("intellij.platform.jps.build.javac.rt.rpc")
           }
-          moduleLibrary("intellij.platform.jps.build.javac.rt.rpc", "protobuf-java6")
+          moduleLibrary("intellij.platform.jps.build.javac.rt.rpc", "protobuf-java6", n -> n.startsWith("protobuf-java-") && n.endsWith(".jar")? "protobuf-java6.jar" : n)
         }
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
         jar("groovy-jps.jar") { module("intellij.groovy.jps") }
@@ -90,7 +91,7 @@ final class CommunityStandaloneJpsBuilder {
         jar("space-java-jps.jar") { module("intellij.space.java.jps") }
 
         for (String name in List.of(
-          "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
+          "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
           "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
           "jetbrains-annotations-java5", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib-jdk8",
           "commons-lang3", "maven-resolver-provider", "netty-buffer", "aalto-xml"
@@ -111,7 +112,7 @@ final class CommunityStandaloneJpsBuilder {
         moduleTests("intellij.platform.jps.model.serialization.tests")
       }
     }
-    buildContext.notifyArtifactWasBuilt(Path.of(targetDir).normalize().toAbsolutePath())
+    buildContext.notifyArtifactWasBuilt(targetDir)
   }
 
   static String getZipName(String buildNumber) {

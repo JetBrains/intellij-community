@@ -20,7 +20,6 @@ import com.intellij.lang.folding.CustomFoldingProvider;
 
 /**
  * Custom folding provider for <a href="http://ui.netbeans.org/docs/ui/code_folding/cf_uispec.html#menus">NetBeans folding conventions.</a>
- * @author Rustam Vishnyakov
  */
 public class NetBeansCustomFoldingProvider extends CustomFoldingProvider {
   @Override

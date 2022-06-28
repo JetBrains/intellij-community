@@ -2198,4 +2198,10 @@ new File('').withWriter('utf-8') {
 <error>class Foo extends Foo</error> {} 
 """
   }
+
+  void 'test legal colon in name'() {
+    testHighlighting """
+def "foo:bar"() {}
+"""
+  }
 }

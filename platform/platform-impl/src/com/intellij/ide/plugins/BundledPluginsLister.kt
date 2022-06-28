@@ -51,6 +51,7 @@ internal class BundledPluginsLister : ApplicationStarter {
             }
           }
         }
+        extensions.sort()
         writer.obj {
           writeList(writer, "modules", modules.sorted())
           writeList(writer, "plugins", pluginIds)

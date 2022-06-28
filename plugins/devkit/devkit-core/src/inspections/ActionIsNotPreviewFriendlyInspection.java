@@ -9,10 +9,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UField;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.*;
 
 import java.util.Set;
 
@@ -30,7 +27,13 @@ public class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBa
     String.class.getName(),
     Class.class.getName(),
     Integer.class.getName(),
-    Boolean.class.getName()
+    Boolean.class.getName(),
+    Long.class.getName(),
+    Byte.class.getName(),
+    Short.class.getName(),
+    Float.class.getName(),
+    Double.class.getName(),
+    Character.class.getName()
   );
 
   public ActionIsNotPreviewFriendlyInspection() {
@@ -49,26 +52,52 @@ public class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBa
     // PSI mirror of FileModifier#getFileModifierForPreview implementation
     for (PsiField field : psiClass.getFields()) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-      if (field.hasAnnotation(FileModifier.SafeFieldForPreview.class.getCanonicalName())) continue;
-      PsiType type = field.getType().getDeepComponentType();
-      if (type instanceof PsiPrimitiveType) continue;
-      if (type instanceof PsiClassType) {
-        PsiClass fieldClass = ((PsiClassType)type).resolve();
-        if (fieldClass == null) continue;
-        if (fieldClass.isEnum()) continue;
-        String name = fieldClass.getQualifiedName();
-        if (name != null && ALLOWED_FIELD_TYPES.contains(name)) continue;
-        UField uField = UastContextKt.toUElement(field, UField.class);
-        if (uField == null) continue;
-        UElement anchor = uField.getUastAnchor();
-        if (anchor == null) continue;
-        PsiElement psiAnchor = anchor.getSourcePsi();
-        if (psiAnchor == null) continue;
+      boolean safeType = hasSafeType(field);
+      PsiAnnotation annotation = field.getAnnotation(FileModifier.SafeFieldForPreview.class.getCanonicalName());
+      boolean hasSafeFieldAnnotation = annotation != null;
+      if (hasSafeFieldAnnotation != safeType) continue;
+      PsiElement psiAnchor = getAnchor(field);
+      if (psiAnchor == null) continue;
+      if (safeType) {
+        PsiElement anchor = getAnchor(annotation);
+        if (anchor != null) {
+          holder.registerProblem(anchor, DevKitBundle.message("inspection.message.unnecessary.safe.field.annotation"),
+                                 new RemoveAnnotationQuickFix(annotation, field));
+        }
+      } else {
         holder.registerProblem(psiAnchor,
                                DevKitBundle.message("inspection.message.field.may.prevent.intention.preview.to.work.properly"));
       }
     }
     return holder.getResultsArray();
+  }
+
+  @Nullable
+  private static PsiElement getAnchor(PsiField field) {
+    UField uField = UastContextKt.toUElement(field, UField.class);
+    if (uField == null) return null;
+    UElement anchor = uField.getUastAnchor();
+    if (anchor == null) return null;
+    return anchor.getSourcePsi();
+  }
+
+  @Nullable
+  private static PsiElement getAnchor(PsiAnnotation field) {
+    UAnnotation uAnnotation = UastContextKt.toUElement(field, UAnnotation.class);
+    if (uAnnotation == null) return null;
+    return uAnnotation.getSourcePsi();
+  }
+
+  private static boolean hasSafeType(PsiField field) {
+    PsiType type = field.getType().getDeepComponentType();
+    if (type instanceof PsiPrimitiveType) return true;
+    if (!(type instanceof PsiClassType)) return false;
+    PsiClass fieldClass = ((PsiClassType)type).resolve();
+    if (fieldClass == null) return true;
+    if (fieldClass.isEnum()) return true;
+    if (fieldClass.hasAnnotation(FileModifier.SafeTypeForPreview.class.getCanonicalName())) return true;
+    String name = fieldClass.getQualifiedName();
+    return name != null && ALLOWED_FIELD_TYPES.contains(name);
   }
 
   private static boolean hasCustomPreviewStrategy(PsiClass psiClass) {

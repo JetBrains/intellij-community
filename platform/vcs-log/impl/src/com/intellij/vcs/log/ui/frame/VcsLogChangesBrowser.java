@@ -59,7 +59,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES;
 
 /**
- * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
+ * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
 public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
@@ -105,9 +105,11 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
     init();
 
+    setEditorDiffPreview(isWithEditorDiffPreview && VcsLogUiUtil.isDiffPreviewInEditor(myProject));
     if (isWithEditorDiffPreview) {
-      setEditorDiffPreview();
-      EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::setEditorDiffPreview);
+      EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, () -> {
+        setEditorDiffPreview(VcsLogUiUtil.isDiffPreviewInEditor(myProject));
+      });
     }
 
     hideViewerBorder();
@@ -399,9 +401,8 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return ChangeDiffRequestProducer.create(project, change, context);
   }
 
-  private void setEditorDiffPreview() {
+  public void setEditorDiffPreview(boolean isWithEditorDiffPreview) {
     EditorDiffPreview preview = myEditorDiffPreview;
-    boolean isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
 
     if (isWithEditorDiffPreview && preview == null) {
       preview = new VcsLogEditorDiffPreview(myProject, this);

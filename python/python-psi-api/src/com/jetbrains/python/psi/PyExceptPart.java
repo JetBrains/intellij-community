@@ -30,4 +30,6 @@ public interface PyExceptPart extends PyElement, StubBasedPsiElement<PyExceptPar
 
   @Nullable
   PyExpression getTarget();
+
+  boolean isStar();
 }

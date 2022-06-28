@@ -87,7 +87,10 @@ public final class ThreadDumper {
     Arrays.sort(threads, Comparator
       .comparing((ThreadInfo threadInfo) -> !isEDT(threadInfo.getThreadName())) // show EDT first
       .thenComparing(threadInfo -> threadInfo.getThreadState() != Thread.State.RUNNABLE) // then all runnable
-      .thenComparingInt(threadInfo -> -threadInfo.getStackTrace().length) // show meaningful stacktraces first
+      .thenComparingInt(threadInfo -> {
+        StackTraceElement[] trace = threadInfo.getStackTrace();
+        return trace == null ? 0 : -trace.length;
+      }) // show meaningful stacktraces first
       .thenComparing(threadInfo -> threadInfo.getThreadName()) // sorted by name among same stacktraces
     );
     return threads;

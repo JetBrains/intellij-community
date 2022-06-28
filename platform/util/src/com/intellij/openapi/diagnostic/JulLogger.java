@@ -44,6 +44,16 @@ public class JulLogger extends Logger {
   }
 
   @Override
+  public void trace(String message) {
+    myLogger.log(java.util.logging.Level.FINER, message);
+  }
+
+  @Override
+  public void trace(@Nullable Throwable t) {
+    myLogger.log(java.util.logging.Level.FINER, "", t);
+  }
+
+  @Override
   public void info(String message) {
     myLogger.log(java.util.logging.Level.INFO, message);
   }
@@ -114,11 +124,34 @@ public class JulLogger extends Logger {
       logger.removeHandler(handler);
     }
   }
+
   public static void configureLogFileAndConsole(@NotNull Path logFilePath,
                                                 boolean appendToFile,
                                                 boolean showDateInConsole,
                                                 @Nullable Runnable onRotate) {
-    RollingFileHandler fileHandler = new RollingFileHandler(logFilePath, 10_000_000, 12, appendToFile, onRotate);
+    long limit = 10_000_000;
+    String limitProp = System.getProperty("idea.log.limit");
+    if (limitProp != null) {
+      try {
+        limit = Long.parseLong(limitProp);
+      }
+      catch (NumberFormatException e) {
+        // ignore
+      }
+    }
+
+    int count = 12;
+    String countProp = System.getProperty("idea.log.count");
+    if (countProp != null) {
+      try {
+        count = Integer.parseInt(countProp);
+      }
+      catch (NumberFormatException e) {
+        // ignore
+      }
+    }
+
+    RollingFileHandler fileHandler = new RollingFileHandler(logFilePath, limit, count, appendToFile, onRotate);
     fileHandler.setLevel(java.util.logging.Level.FINEST);
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
     fileHandler.setFormatter(layout);

@@ -334,9 +334,10 @@ public final class JavacMain {
 
       if (processors != null) {
         return Iterators.map(processors, new Function<Processor, Processor>() {
+          final APIWrappers.ProcessingEnvironmentProvider envProvider = new APIWrappers.ProcessingEnvironmentProvider(fileManager);
           @Override
           public Processor fun(Processor processor) {
-            return APIWrappers.newProcessorWrapper(processor, fileManager);
+            return APIWrappers.newProcessorWrapper(processor, envProvider);
           }
         });
       }

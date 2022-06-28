@@ -812,6 +812,13 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         addElementOffsetLater(elseBranch, true);
       }
     }
+
+    myStartJumpRoles.pop();
+    myEndJumpRoles.pop();
+
+    myStartStatementStack.popStatement();
+    myEndStatementStack.popStatement();
+
     if (thenBranch != null) {
       thenBranch.accept(this);
     }
@@ -821,12 +828,6 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
       addElementOffsetLater(statement, false);
       elseBranch.accept(this);
     }
-
-    myStartJumpRoles.pop();
-    myEndJumpRoles.pop();
-
-    myStartStatementStack.popStatement();
-    myEndStatementStack.popStatement();
   }
 
   @Override

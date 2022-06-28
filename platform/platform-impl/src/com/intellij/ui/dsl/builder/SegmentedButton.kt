@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -37,6 +38,11 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
   fun items(items: Collection<T>): SegmentedButton<T>
 
   fun bind(property: ObservableMutableProperty<T>): SegmentedButton<T>
+
+  fun whenItemSelected(parentDisposable: Disposable? = null, listener: (T) -> Unit): SegmentedButton<T>
+
+  @ApiStatus.Experimental
+  fun whenItemSelectedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit): SegmentedButton<T>
 
   /**
    * Maximum number of buttons in segmented button. The component automatically turned into ComboBox if exceeded.

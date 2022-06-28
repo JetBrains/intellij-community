@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.local;
 
 import com.intellij.openapi.components.Service;
@@ -21,21 +21,20 @@ public final class ActionsGlobalSummaryManager {
   private static final Logger LOG = Logger.getInstance(ActionsGlobalSummaryManager.class);
   private static final @NotNull CharFilter QUOTE_FILTER = ch -> ch != '"';
 
-  private final int myUpdatedStatisticsVersion;
+  private static final int myUpdatedStatisticsVersion = 1;
   private final Map<String, ActionGlobalUsageInfo> myStatisticsMap;
   private final Map<String, ActionGlobalUsageInfo> myUpdatedStatisticsMap;
   private final ActionsGlobalTotalSummary mySummary;
   private final ActionsGlobalTotalSummary myUpdatedSummary;
 
   public ActionsGlobalSummaryManager() {
-    myUpdatedStatisticsVersion = 1;
     myStatisticsMap = loadStatistics("/statistics/actionsUsages.csv");
     myUpdatedStatisticsMap = loadStatistics("/statistics/actionsUsagesV1.csv");
     mySummary = calculateTotalSummary(myStatisticsMap);
     myUpdatedSummary = calculateTotalSummary(myUpdatedStatisticsMap);
   }
 
-  public int getUpdatedStatisticsVersion() { return myUpdatedStatisticsVersion; }
+  public static int getUpdatedStatisticsVersion() { return myUpdatedStatisticsVersion; }
 
   @Nullable
   public ActionGlobalUsageInfo getActionStatistics(String actionID) {

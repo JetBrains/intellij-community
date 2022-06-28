@@ -25,7 +25,7 @@ import java.io.FileFilter;
 /**
  * @author Eugene Zhuravlev
  */
-public class MavenResourceRootDescriptor extends BuildRootDescriptor {
+public final class MavenResourceRootDescriptor extends BuildRootDescriptor {
   private final MavenResourcesTarget myTarget;
   private final ResourceRootConfiguration myConfig;
   private final File myFile;

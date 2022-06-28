@@ -9,6 +9,7 @@ import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.concurrent.CompletableFuture
 
 object DownloadArtifactBuildIssue {
@@ -34,7 +35,7 @@ class ForceUpdateSnapshotsImportQuickFix() : BuildIssueQuickFix {
   override val id: String = ID
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    MavenServerManager.getInstance().shutdown(false)
+    MavenUtil.restartMavenConnectors(project, false)
     MavenProjectsManager.getInstance(project).setForceUpdateSnapshots(true)
     MavenProjectsManager.getInstance(project).forceUpdateProjects()
     return CompletableFuture.completedFuture(null)

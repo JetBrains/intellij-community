@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.resolve.lazy.data.KtClassOrObjectInfo
 import org.jetbrains.kotlin.resolve.lazy.data.KtScriptInfo
 import org.jetbrains.kotlin.resolve.lazy.declarations.PackageMemberDeclarationProvider
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
-import java.util.*
 
 class StubBasedPackageMemberDeclarationProvider(
     private val fqName: FqName,
@@ -29,7 +28,7 @@ class StubBasedPackageMemberDeclarationProvider(
         val fqNameAsString = fqName.asString()
         val result = ArrayList<KtDeclaration>()
 
-        fun addFromIndex(index: AbstractStringStubIndexExtension<out KtNamedDeclaration>) {
+        fun addFromIndex(index: KotlinStringStubIndexExtension<out KtNamedDeclaration>) {
             index.processElements(fqNameAsString, project, searchScope) {
                 if (nameFilter(it.nameAsSafeName)) {
                     result.add(it)
@@ -39,16 +38,16 @@ class StubBasedPackageMemberDeclarationProvider(
         }
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.CLASSIFIERS_MASK)) {
-            addFromIndex(KotlinTopLevelClassByPackageIndex.getInstance())
-            addFromIndex(KotlinTopLevelTypeAliasByPackageIndex.getInstance())
+            addFromIndex(KotlinTopLevelClassByPackageIndex)
+            addFromIndex(KotlinTopLevelTypeAliasByPackageIndex)
         }
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.FUNCTIONS_MASK)) {
-            addFromIndex(KotlinTopLevelFunctionByPackageIndex.getInstance())
+            addFromIndex(KotlinTopLevelFunctionByPackageIndex)
         }
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.VARIABLES_MASK)) {
-            addFromIndex(KotlinTopLevelPropertyByPackageIndex.getInstance())
+            addFromIndex(KotlinTopLevelPropertyByPackageIndex)
         }
 
         return result
@@ -65,25 +64,25 @@ class StubBasedPackageMemberDeclarationProvider(
     override fun getDeclarationNames() = declarationNames_
 
     override fun getClassOrObjectDeclarations(name: Name): Collection<KtClassOrObjectInfo<*>> = runReadAction {
-        KotlinFullClassNameIndex.getInstance().get(childName(name), project, searchScope)
+        KotlinFullClassNameIndex.get(childName(name), project, searchScope)
             .map { KtClassInfoUtil.createClassOrObjectInfo(it) }
     }
 
     override fun getScriptDeclarations(name: Name): Collection<KtScriptInfo> = runReadAction {
-        KotlinScriptFqnIndex.instance.get(childName(name), project, searchScope)
+        KotlinScriptFqnIndex.get(childName(name), project, searchScope)
             .map(::KtScriptInfo)
     }
 
 
     override fun getFunctionDeclarations(name: Name): Collection<KtNamedFunction> {
         return runReadAction {
-            KotlinTopLevelFunctionFqnNameIndex.getInstance().get(childName(name), project, searchScope)
+            KotlinTopLevelFunctionFqnNameIndex.get(childName(name), project, searchScope)
         }
     }
 
     override fun getPropertyDeclarations(name: Name): Collection<KtProperty> {
         return runReadAction {
-            KotlinTopLevelPropertyFqnNameIndex.getInstance().get(childName(name), project, searchScope)
+            KotlinTopLevelPropertyFqnNameIndex.get(childName(name), project, searchScope)
         }
     }
 
@@ -92,7 +91,7 @@ class StubBasedPackageMemberDeclarationProvider(
     }
 
     override fun getAllDeclaredSubPackages(nameFilter: (Name) -> Boolean): Collection<FqName> {
-        return PackageIndexUtil.getSubPackageFqNames(fqName, searchScope, project, nameFilter)
+        return PackageIndexUtil.getSubPackageFqNames(fqName, searchScope, nameFilter)
     }
 
     override fun getPackageFiles(): Collection<KtFile> {
@@ -104,7 +103,7 @@ class StubBasedPackageMemberDeclarationProvider(
     }
 
     override fun getTypeAliasDeclarations(name: Name): Collection<KtTypeAlias> {
-        return KotlinTopLevelTypeAliasFqNameIndex.getInstance().get(childName(name), project, searchScope)
+        return KotlinTopLevelTypeAliasFqNameIndex.get(childName(name), project, searchScope)
     }
 
     private fun childName(name: Name): String {

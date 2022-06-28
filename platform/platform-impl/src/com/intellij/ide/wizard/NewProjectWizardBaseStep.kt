@@ -2,6 +2,8 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logLocationChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logNameChanged
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -95,6 +97,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
           .applyIf(!context.isCreatingNewProject) { validation(CHECK_MODULE_PATH(context.project, locationProperty)) }
           .focused()
           .gap(RightGap.SMALL)
+          .whenTextChangedFromUi { logNameChanged() }
         installNameGenerators(getBuilderId(), nameProperty)
       }.bottomGap(BottomGap.SMALL)
 
@@ -110,6 +113,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
           .comment(commentProperty.get(), 100)
           .apply { commentProperty.afterChange { comment?.text = it } }
+          .whenTextChangedFromUi { logLocationChanged() }
       }
 
       if (bottomGap) {

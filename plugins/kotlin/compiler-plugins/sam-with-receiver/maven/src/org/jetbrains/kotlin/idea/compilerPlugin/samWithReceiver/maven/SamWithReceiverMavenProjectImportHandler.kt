@@ -6,6 +6,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor
 
 class SamWithReceiverMavenProjectImportHandler : AbstractMavenImportHandler() {
@@ -16,7 +17,7 @@ class SamWithReceiverMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val compilerPluginId = SamWithReceiverCommandLineProcessor.PLUGIN_ID
     override val pluginName = "samWithReceiver"
     override val mavenPluginArtifactName = "kotlin-maven-sam-with-receiver"
-    override val pluginJarFileFromIdea = KotlinArtifacts.instance.samWithReceiverCompilerPlugin
+    override val pluginJarFileFromIdea = KotlinArtifacts.instance.samWithReceiverCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
 
     override fun getOptions(
         mavenProject: MavenProject,

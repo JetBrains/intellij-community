@@ -1,11 +1,12 @@
 // "Create enum constant 'A'" "false"
+// ACTION: Convert to block body
 // ACTION: Create annotation 'A'
 // ACTION: Create class 'A'
-// ACTION: Create interface 'A'
 // ACTION: Create enum 'A'
-// ACTION: Convert to block body
-// ACTION: Remove explicit type specification
+// ACTION: Create interface 'A'
 // ACTION: Create type parameter 'A' in function 'foo'
+// ACTION: Do not show return expression hints
+// ACTION: Remove explicit type specification
 // ERROR: Unresolved reference: A
 package p
 

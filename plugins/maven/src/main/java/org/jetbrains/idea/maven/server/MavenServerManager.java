@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,6 +32,7 @@ import org.apache.commons.lang.SystemUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
@@ -40,6 +42,8 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.MavenWslUtil;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.impl.BundledMavenDownloader;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +69,7 @@ public final class MavenServerManager implements Disposable {
     return set;
   }
 
-  public void cleanUp(MavenServerConnector connector) {
+  void cleanUp(MavenServerConnector connector) {
     synchronized (myMultimoduleDirToConnectorMap) {
       myMultimoduleDirToConnectorMap.entrySet().removeIf(e -> e.getValue() == connector);
     }
@@ -113,7 +117,7 @@ public final class MavenServerManager implements Disposable {
       public void onProjectTrusted(@NotNull Project project) {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
         if (manager.isMavenizedProject()) {
-          MavenUtil.restartMavenConnectors(project);
+          MavenUtil.restartMavenConnectors(project, true);
         }
       }
 
@@ -139,7 +143,7 @@ public final class MavenServerManager implements Disposable {
     else {
       if (!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
         MavenLog.LOG.info("[connector] " + connector + " is incompatible, restarting");
-        connector.shutdown(false);
+        shutdownConnector(connector, false);
         connector = this.doGetOrCreateConnector(project, multimoduleDirectory, jdk);
         connector.connect();
       }
@@ -206,11 +210,7 @@ public final class MavenServerManager implements Disposable {
 
   private void registerDisposable(Project project, MavenServerConnector connector) {
     Disposer.register(MavenDisposable.getInstance(project), () -> {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        synchronized (myMultimoduleDirToConnectorMap) {
-          connector.shutdown(false);
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> shutdownConnector(connector, true));
     });
   }
 
@@ -257,16 +257,31 @@ public final class MavenServerManager implements Disposable {
 
   @Override
   public void dispose() {
+    shutdown(true);
   }
 
 
-  public synchronized void shutdown(boolean wait) {
+  public boolean shutdownConnector(MavenServerConnector connector, boolean wait) {
+    synchronized (myMultimoduleDirToConnectorMap) {
+      if (!myMultimoduleDirToConnectorMap.values().remove(connector)) {
+        return false;
+      }
+    }
+    connector.stop(wait);
+    return true;
+  }
+
+  /**
+   *
+   * use MavenUtil.restartMavenConnectors
+   */
+  public void shutdown(boolean wait) {
     Collection<MavenServerConnector> values;
     synchronized (myMultimoduleDirToConnectorMap) {
       values = new ArrayList<>(myMultimoduleDirToConnectorMap.values());
     }
 
-    values.forEach(c -> c.shutdown(wait));
+    values.forEach(c -> shutdownConnector(c, wait));
   }
 
   public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
@@ -391,6 +406,9 @@ public final class MavenServerManager implements Disposable {
   }
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
+    BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
+    BundledMavenDownloader.downloadMavenCommonLibs(communityRoot);
+
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));
     File parentFile = MavenUtil.getMavenPluginParentFile();
@@ -470,7 +488,7 @@ public final class MavenServerManager implements Disposable {
       protected synchronized void cleanup() {
         super.cleanup();
         if (myConnector != null) {
-          myConnector.shutdown(false);
+          shutdownConnector(myConnector, false);
         }
       }
     };

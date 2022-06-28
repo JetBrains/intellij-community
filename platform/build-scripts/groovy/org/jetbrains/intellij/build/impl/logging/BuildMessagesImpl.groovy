@@ -15,6 +15,7 @@ import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.LogMessage
+import org.jetbrains.intellij.build.impl.LayoutBuilder
 import org.jetbrains.intellij.build.impl.TracerManager
 import org.jetbrains.intellij.build.impl.TracerProviderManager
 
@@ -84,7 +85,9 @@ final class BuildMessagesImpl implements BuildMessages {
     log(level, null, message, thrown)
   }
 
-  static BuildMessagesImpl create(Project antProject) {
+  static BuildMessagesImpl create() {
+    Project antProject = LayoutBuilder.ant.project
+
     String key = "IntelliJBuildMessages"
     def registered = antProject.getReference(key)
     if (registered != null) return registered as BuildMessagesImpl

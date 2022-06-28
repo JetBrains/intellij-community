@@ -38,7 +38,7 @@ class LightJavadocGeneratorTest : LightJavaCodeInsightFixtureTestCase() {
   private fun doTestLink(link: String, expected: String) {
     doTestClass(
       "package a.b;\n/** A <a href=\"${link}\">link</a>. */\ninterface I { }",
-      "<div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">interface</span> <span style=\"color:#000000;\">I</span></pre></div><div class='content'> A <a href=\"$expected\">link</a>. </div>")
+      "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Package\"> <code><span style=\"color:#000000;\">a.b</span></code></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">interface</span> <span style=\"color:#000000;\">I</span></pre></div><div class='content'> A <a href=\"$expected\">link</a>. </div>")
   }
 
   private fun doTestClass(text: String, expected: String) {

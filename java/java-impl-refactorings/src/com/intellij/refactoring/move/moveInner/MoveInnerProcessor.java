@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -124,10 +124,13 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     return usageInfos.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  private void preprocessUsages(ArrayList<UsageInfo> results) {
+  private static void preprocessUsages(ArrayList<UsageInfo> results) {
     Set<Language> languages = new HashSet<>();
     for (UsageInfo result : results) {
-      languages.add(result.getElement().getLanguage());
+      PsiElement element = result.getElement();
+      if (element != null) {
+        languages.add(element.getLanguage());
+      }
     }
     for (Language language : languages) {
       List<MoveInnerHandler> handlers = MoveInnerHandler.EP_NAME.allForLanguage(language);
@@ -173,7 +176,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         field = createOuterField(factory);
         field = addOuterField(field);
         myInnerClass = field.getContainingClass();
-        addFieldInitializationToConstructors(myInnerClass, field, myParameterNameOuterClass);
+        addFieldInitializationToConstructors(Objects.requireNonNull(myInnerClass), field, myParameterNameOuterClass);
       }
 
       ChangeContextUtil.encodeContextInfo(myInnerClass, false);
@@ -217,10 +220,12 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       for (UsageInfo usage : usages) {
         if (usage.isNonCodeUsage) continue;
         PsiElement refElement = usage.getElement();
-        PsiReference[] references = refElement.getReferences();
-        for (PsiReference reference : references) {
-          if (reference.isReferenceTo(myInnerClass)) {
-            referencesToRebind.add(reference);
+        if (refElement != null) {
+          PsiReference[] references = refElement.getReferences();
+          for (PsiReference reference : references) {
+            if (reference.isReferenceTo(myInnerClass)) {
+              referencesToRebind.add(reference);
+            }
           }
         }
       }
@@ -264,7 +269,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       if (field != null) {
         final PsiExpression paramAccessExpression = factory.createExpressionFromText(myParameterNameOuterClass, null);
         for (final PsiMethod constructor : newClass.getConstructors()) {
-          final PsiStatement[] statements = constructor.getBody().getStatements();
+          final PsiStatement[] statements = Objects.requireNonNull(constructor.getBody()).getStatements();
           if (statements.length > 0) {
             if (statements[0] instanceof PsiExpressionStatement) {
               PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.BrowserUtil;
@@ -124,7 +124,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       UIUtil.doNotScrollToCaret(viewer);
       viewer.addHyperlinkListener(new HyperlinkAdapter() {
         @Override
-        protected void hyperlinkActivated(HyperlinkEvent e) {
+        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
           final URL url = e.getURL();
           if (url != null) {
             BrowserUtil.browse(url);

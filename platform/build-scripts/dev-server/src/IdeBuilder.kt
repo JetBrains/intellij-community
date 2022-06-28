@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.devServer
 
@@ -7,10 +7,11 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry.LibraryFileEntry
+import org.jetbrains.intellij.build.impl.PluginLayoutGroovy
+import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -64,8 +65,8 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
   val platformPrefix = productProperties.platformPrefix ?: "idea"
   val runDir = createRunDirForProduct(homePath, platformPrefix)
 
-  val buildContext = BuildContext.createContext(getCommunityHomePath(homePath).toString(), homePath.toString(), productProperties,
-                                                ProprietaryBuildTools.DUMMY, createBuildOptions(runDir))
+  val buildContext = BuildContextImpl.createContext(getCommunityHomePath(homePath).toString(), homePath.toString(), productProperties,
+                                                    ProprietaryBuildTools.DUMMY, createBuildOptions(runDir))
   val pluginsDir = runDir.resolve("plugins")
 
   val mainModuleToNonTrivialPlugin = HashMap<String, BuildItem>(bundledMainModuleNames.size)
@@ -82,12 +83,12 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
     // (old module names are not supported)
     var item = mainModuleToNonTrivialPlugin.get(mainModuleName)
     if (item == null) {
-      val pluginLayout = PluginLayout.plugin(mainModuleName)
+      val pluginLayout = PluginLayoutGroovy.plugin(mainModuleName)
       val pluginDir = pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(pluginLayout, buildContext))
-      item = BuildItem(pluginDir, PluginLayout.plugin(mainModuleName))
+      item = BuildItem(pluginDir, PluginLayoutGroovy.plugin(mainModuleName))
     }
     else {
-      for (entry in item.layout.jarToIncludedModuleNames) {
+      for (entry in item.layout.getJarToIncludedModuleNames()) {
         if (!entry.key.contains('/')) {
           for (name in entry.value) {
             moduleNameToPlugin.put(name, item)

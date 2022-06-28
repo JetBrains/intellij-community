@@ -25,6 +25,6 @@ public class ViewToolbarAction extends ToggleAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabledAndVisible(!ExperimentalUI.isNewToolbar());
+    e.getPresentation().setEnabledAndVisible(!ExperimentalUI.isNewUI());
   }
 }

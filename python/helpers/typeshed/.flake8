@@ -22,6 +22,9 @@
 #       Y027 Disallow importing typing.ContextManager, typing.OrderedDict &
 #            typing_extensions.OrderedDict (cannot be globally enabled while typeshed
 #            still contains stubs supporting Python 2).
+#       Y034 Detect common errors where certain methods are annotated as having a fixed
+#            return type, despite returning self at runtime (temporarily disabled for
+#            typing.pyi, enabled elsewhere).
 
 [flake8]
 per-file-ignores =
@@ -34,7 +37,7 @@ per-file-ignores =
   stubs/*.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822, Y026, Y027
   stdlib/@python2/*.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822, Y026, Y027
   stdlib/@python2/typing.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822, Y026, Y027
-  stdlib/typing.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822, Y026
+  stdlib/typing.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822, Y026, Y034
 
 # We are checking with Python 3 but many of the stubs are Python 2 stubs.
 builtins = buffer,file,long,raw_input,unicode,xrange

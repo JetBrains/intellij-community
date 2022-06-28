@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
@@ -29,7 +29,7 @@ class GitDirectoryVirtualFile(
 
     val tree = GitIndexUtil.listTreeForRawPaths(repo, listOf(dirPath), gitRevisionNumber)
     val result = tree.map {
-      when(it) {
+      when (it) {
         is GitIndexUtil.StagedDirectory -> GitDirectoryVirtualFile(repo, this, it.path.name, commit)
         else -> VcsVirtualFile(this, it.path.name,
                                GitFileRevision(repo.project, repo.root, it.path, gitRevisionNumber),
@@ -37,7 +37,7 @@ class GitDirectoryVirtualFile(
 
       }
     }
-     result.toTypedArray<VirtualFile>()
+    result.toTypedArray<VirtualFile>()
   }
 
   override fun getChildren(): Array<VirtualFile> = cachedChildren

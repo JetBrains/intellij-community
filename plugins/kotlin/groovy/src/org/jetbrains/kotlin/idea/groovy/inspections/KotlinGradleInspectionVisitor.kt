@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.groovy.inspections
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
@@ -10,6 +9,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
@@ -37,10 +37,15 @@ abstract class KotlinGradleInspectionVisitor : BaseInspectionVisitor() {
     }
 }
 
-fun getResolvedKotlinGradleVersion(file: PsiFile) =
-    ModuleUtilCore.findModuleForFile(file.virtualFile, file.project)?.let { getResolvedKotlinGradleVersion(it) }
+fun findResolvedKotlinGradleVersion(file: PsiFile): IdeKotlinVersion? =
+    ModuleUtilCore.findModuleForFile(file.virtualFile, file.project)?.let { findResolvedKotlinGradleVersion(it) }
 
+@Deprecated("Use findResolvedKotlinGradleVersion() instead.", ReplaceWith("findResolvedKotlinGradleVersion(module)?.rawVersion"))
 fun getResolvedKotlinGradleVersion(module: Module): String? {
+    return findResolvedKotlinGradleVersion(module)?.rawVersion
+}
+
+fun findResolvedKotlinGradleVersion(module: Module): IdeKotlinVersion? {
     val projectStructureNode = findGradleProjectStructure(module) ?: return null
     val gradleFacade = KotlinGradleFacade.instance ?: return null
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection.MethodReferenceCandidate;
@@ -81,7 +81,7 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
                   final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
                   ProblemHighlightType type;
                   if (methodReferenceCandidate.mySafeQualifier && methodReferenceCandidate.myConformsCodeStyle) {
-                    type = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+                    type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
                   }
                   else {
                     if (!isOnTheFly) return;

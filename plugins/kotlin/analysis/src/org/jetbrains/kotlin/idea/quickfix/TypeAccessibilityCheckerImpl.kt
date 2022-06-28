@@ -79,7 +79,7 @@ class TypeAccessibilityCheckerImpl(
     private fun FqName?.canFindClassInModule(): Boolean {
         val name = this?.asString() ?: return false
         return name in existingTypeNames
-                || KotlinFullClassNameIndex.getInstance()[name, project, scope].isNotEmpty()
+                || KotlinFullClassNameIndex.get(name, project, scope).isNotEmpty()
                 || builtInsModule?.resolveClassByFqName(this, NoLookupLocation.FROM_BUILTINS) != null
     }
 }

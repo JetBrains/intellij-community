@@ -5,18 +5,18 @@ package org.jetbrains.kotlin.idea.configuration.ui
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationsConfiguration
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.project.getAndCacheLanguageLevelByDependencies
 import org.jetbrains.kotlin.idea.project.isKotlinLanguageVersionConfigured
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -41,6 +41,9 @@ class KotlinConfigurationCheckerService(val project: Project) {
                 val kotlinLanguageVersionConfigured = runReadAction { project.isKotlinLanguageVersionConfigured() }
 
                 val ktModules = if (kotlinLanguageVersionConfigured) {
+                    // we already have `.idea/kotlinc` so it's ok to add the jps version there
+                    KotlinJpsPluginSettings.validateSettings(project)
+
                     // pick up modules with kotlin faces those use custom (non project) settings
                     val modulesWithKotlinFacets = runReadAction {
                         project.allModules()
@@ -55,6 +58,11 @@ class KotlinConfigurationCheckerService(val project: Project) {
                     getModulesWithKotlinFiles(project, modulesWithKotlinFacets)
                 } else {
                     getModulesWithKotlinFiles(project)
+                }
+
+                if (ktModules.isEmpty()) return
+                if (!kotlinLanguageVersionConfigured) {
+                    KotlinJpsPluginSettings.validateSettings(project)
                 }
 
                 indicator.isIndeterminate = false
@@ -86,7 +94,7 @@ class KotlinConfigurationCheckerService(val project: Project) {
     companion object {
         const val CONFIGURE_NOTIFICATION_GROUP_ID = "Configure Kotlin in Project"
 
-        fun getInstance(project: Project): KotlinConfigurationCheckerService = project.getServiceSafe()
+        fun getInstance(project: Project): KotlinConfigurationCheckerService = project.service()
 
     }
 }

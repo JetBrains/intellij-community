@@ -3,18 +3,25 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.util.indexing.IndexingFlag
+import com.intellij.util.indexing.UnindexedFilesUpdater
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.rootManager
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.File
@@ -54,6 +61,20 @@ fun JavaCodeInsightTestFixture.dumpErrorLines(): List<String> {
     if (InTextDirectivesUtils.isDirectiveDefined(file.text, "// DISABLE-ERRORS")) return emptyList()
     return doHighlighting().filter { it.severity == HighlightSeverity.ERROR }.map {
         "// ERROR: ${it.description.replace('\n', ' ')}"
+    }
+}
+
+fun Project.waitIndexingComplete(indexingReason: String? = null) {
+    val project = this
+    UIUtil.dispatchAllInvocationEvents()
+    invokeAndWaitIfNeeded {
+        // TODO: [VD] a dirty hack to reindex created android project
+        IndexingFlag.cleanupProcessedFlag()
+        with(DumbService.getInstance(project)) {
+            queueTask(UnindexedFilesUpdater(project, indexingReason))
+            completeJustSubmittedTasks()
+        }
+        UIUtil.dispatchAllInvocationEvents()
     }
 }
 

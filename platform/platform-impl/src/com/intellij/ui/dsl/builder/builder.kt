@@ -15,13 +15,13 @@ internal annotation class LayoutDslMarker
  */
 fun panel(init: Panel.() -> Unit): DialogPanel {
   val dialogPanelConfig = DialogPanelConfig()
-  val panel = PanelImpl(dialogPanelConfig, null)
+  val panel = PanelImpl(dialogPanelConfig, IntelliJSpacingConfiguration(), null)
   panel.init()
   dialogPanelConfig.context.postInit()
 
   val layout = GridLayout()
   val result = DialogPanel(layout = layout)
-  val builder = PanelBuilder(panel.rows, dialogPanelConfig, result, layout.rootGrid)
+  val builder = PanelBuilder(panel.rows, dialogPanelConfig, panel.spacingConfiguration, result, layout.rootGrid)
   builder.build()
   initPanel(dialogPanelConfig, result)
   return result

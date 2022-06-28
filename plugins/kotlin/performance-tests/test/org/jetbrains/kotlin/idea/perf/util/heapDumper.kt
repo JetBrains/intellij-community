@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.perf.util
 
 import com.intellij.openapi.util.io.FileUtilRt
 import com.sun.management.HotSpotDiagnosticMXBean
+import org.jetbrains.kotlin.idea.performance.tests.utils.TeamCity
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import java.lang.management.ManagementFactory
 import java.nio.file.Path
 import java.text.SimpleDateFormat

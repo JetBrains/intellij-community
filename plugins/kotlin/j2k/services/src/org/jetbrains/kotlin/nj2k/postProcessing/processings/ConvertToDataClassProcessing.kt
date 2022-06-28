@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.postProcessing.processings
 
@@ -105,6 +105,14 @@ class ConvertToDataClassProcessing : ElementsBasedPostProcessing() {
                 }
             }
         }
+
+        val typeReference = property.typeReference
+        if (typeReference != null) {
+            for (annotationEntry in typeReference.annotationEntries) {
+                constructorParameter.typeReference?.addAnnotationEntry(annotationEntry)
+            }
+        }
+
         property.delete()
         propertyCommentSaver.restore(constructorParameter, forceAdjustIndent = false)
     }

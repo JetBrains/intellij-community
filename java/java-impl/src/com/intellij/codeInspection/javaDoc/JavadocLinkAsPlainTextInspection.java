@@ -29,7 +29,7 @@ public class JavadocLinkAsPlainTextInspection extends LocalInspectionTool {
         if (comment.getOwner() == null) return;
         for (PsiReference reference : ReferenceProvidersRegistry.getReferencesFromProviders(comment)) {
           if (!(reference instanceof WebReference)) continue;
-          String url = ((WebReference)reference).getUrl();
+          String url = ((WebReference)reference).getValue();
           if (!url.startsWith(URLUtil.HTTP_PROTOCOL) && !url.startsWith(URLUtil.HTTPS_PROTOCOL)) return;
           String commentText = comment.getText();
           Pattern pattern = Pattern.compile("\n\\s*\\*");

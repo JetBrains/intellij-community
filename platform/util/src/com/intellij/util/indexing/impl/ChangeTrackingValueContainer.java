@@ -49,21 +49,29 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
       merged.addValue(inputId, value);
     }
 
-    if (myAdded == null) myAdded = new ValueContainerImpl<>();
+    if (myAdded == null) {
+      myAdded = new ValueContainerImpl<>();
+    }
     myAdded.addValue(inputId, value);
   }
 
   @Override
-  public void removeAssociatedValue(int inputId) {
+  public boolean removeAssociatedValue(int inputId) {
     ValueContainerImpl<Value> merged = myMerged;
     if (merged != null) {
       merged.removeAssociatedValue(inputId);
     }
 
-    if (myAdded != null) myAdded.removeAssociatedValue(inputId);
+    if (removeFromAdded(inputId)) {
+      return true;
+    }
 
     if (myInvalidated == null) myInvalidated = new IntOpenHashSet(1);
     myInvalidated.add(inputId);
+    return true;
+  }
+  protected boolean removeFromAdded(int inputId) {
+    return myAdded != null && myAdded.removeAssociatedValue(inputId);
   }
 
   @Override
@@ -94,43 +102,45 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
         return merged;
       }
 
-      FileId2ValueMapping<Value> fileId2ValueMapping = null;
-      final ValueContainer<Value> fromDisk = myInitializer.compute();
-      final ValueContainerImpl<Value> newMerged;
+      ValueContainer<Value> fromDisk = myInitializer.compute();
+      ValueContainerImpl<Value> newMerged = fromDisk instanceof ValueContainerImpl
+                                            ? ((ValueContainerImpl<Value>)fromDisk).clone()
+                                            : ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().clone();
 
-      if (fromDisk instanceof ValueContainerImpl) {
-        newMerged = ((ValueContainerImpl<Value>)fromDisk).clone();
-      } else {
-        newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().clone();
-      }
-
+      FileId2ValueMapping<Value> fileId2ValueMapping;
       if ((myAdded != null || myInvalidated != null) &&
           (newMerged.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD ||
            (myAdded != null && myAdded.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD))) {
         // Calculate file ids that have Value mapped to avoid O(NumberOfValuesInMerged) during removal
         fileId2ValueMapping = new FileId2ValueMapping<>(newMerged);
       }
-      final FileId2ValueMapping<Value> finalFileId2ValueMapping = fileId2ValueMapping;
+      else {
+        fileId2ValueMapping = null;
+      }
+
       if (myInvalidated != null) {
         myInvalidated.forEach(inputId -> {
-          if (finalFileId2ValueMapping != null) finalFileId2ValueMapping.removeFileId(inputId);
-          else newMerged.removeAssociatedValue(inputId);
+          if (fileId2ValueMapping != null) {
+            fileId2ValueMapping.removeFileId(inputId);
+          }
+          else {
+            newMerged.removeAssociatedValue(inputId);
+          }
         });
       }
 
       if (myAdded != null) {
-        if (fileId2ValueMapping != null) {
-          // there is no sense for value per file validation because we have fileId -> value mapping and we are enforcing it here
-          fileId2ValueMapping.disableOneValuePerFileValidation();
-        }
-
         myAdded.forEach((inputId, value) -> {
           // enforcing "one-value-per-file for particular key" invariant
-          if (finalFileId2ValueMapping != null) finalFileId2ValueMapping.removeFileId(inputId);
-          else newMerged.removeAssociatedValue(inputId);
+          if (fileId2ValueMapping != null) {
+            fileId2ValueMapping.removeFileId(inputId);
+            fileId2ValueMapping.associateFileIdToValue(inputId, value);
+          }
+          else {
+            newMerged.removeAssociatedValue(inputId);
+            newMerged.addValue(inputId, value);
+          }
 
-          newMerged.addValue(inputId, value);
-          if (finalFileId2ValueMapping != null) finalFileId2ValueMapping.associateFileIdToValue(inputId, value);
           return true;
         });
       }

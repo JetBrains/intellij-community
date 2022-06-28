@@ -150,20 +150,8 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
         continue;
       }
 
-      final T instance;
-      try {
-        instance = bean.getInstance();
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (ExtensionNotApplicableException ignore) {
-        continue;
-      }
-      catch (Exception | LinkageError e) {
-        LOG.error(e);
-        continue;
-      }
+      final T instance = instantiate(bean);
+      if (instance == null) continue;
 
       if (result == null) {
         result = new SmartList<>();
@@ -171,6 +159,22 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       result.add(instance);
     }
     return result;
+  }
+
+  public static <T> @Nullable T instantiate(KeyedLazyInstance<T> bean) {
+    try {
+      return bean.getInstance();
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (ExtensionNotApplicableException ignore) {
+      return null;
+    }
+    catch (Exception | LinkageError e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   protected @NotNull List<T> buildExtensions(@NotNull Set<String> keys) {

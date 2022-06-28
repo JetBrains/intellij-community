@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
 import com.intellij.openapi.application.WriteAction;
@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SkipSlowTestLocally
@@ -78,8 +77,7 @@ public class UnivocityTest extends BaseUnivocityTest {
           env1.logMessage("Open " + file.getVirtualFile().getPath() + " in editor");
           if ("Example.java".equals(file.getName())) {
             env1.logMessage("OutputTester class: " + facade.findClass("com.univocity.test.OutputTester", allScope));
-            env1.logMessage("OutputTester files: " + Arrays.toString(
-              FilenameIndex.getFilesByName(myProject, "OutputTester.java", allScope)));
+            env1.logMessage("OutputTester files: " + FilenameIndex.getVirtualFilesByName("OutputTester.java", allScope));
             env1.logMessage("content roots: " + Arrays.toString(
               ModuleRootManager.getInstance(ModuleManager.getInstance(myProject).getModules()[0]).getSourceRoots(true)));
           }

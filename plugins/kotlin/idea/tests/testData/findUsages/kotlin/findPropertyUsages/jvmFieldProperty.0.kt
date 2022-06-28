@@ -8,3 +8,5 @@ class A {
         var <caret>foo: String = "foo"
     }
 }
+
+// FIR_COMPARISON

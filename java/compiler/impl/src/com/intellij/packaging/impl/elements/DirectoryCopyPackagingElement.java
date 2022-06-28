@@ -28,7 +28,7 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
   @NotNull
   @Override
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new DirectoryCopyPresentation(myFilePath);
+    return new DirectoryCopyPresentation(getMyFilePath());
   }
 
   @Override
@@ -58,6 +58,6 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
 
   @Override
   public String toString() {
-    return "dir:" + myFilePath;
+    return "dir:" + getMyFilePath();
   }
 }

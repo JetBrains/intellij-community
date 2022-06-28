@@ -14,6 +14,7 @@ import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -196,7 +197,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     ActionManager manager = ActionManager.getInstance();
 
     List<String> failures = new ArrayList<>();
-    for (String id : manager.getActionIdList("")) {
+    for (String id : ContainerUtil.sorted(manager.getActionIdList(""))) {
       if (ACTION_WITHOUT_TEXT_AND_DESCRIPTION.equals(id)) {
         continue;
       }

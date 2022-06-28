@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BoxingBoxedValueInspection extends BaseInspection {
+public class BoxingBoxedValueInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NonNls
   static final Map<String, String> boxedPrimitiveMap =

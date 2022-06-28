@@ -1,17 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.ide.actions.SearchEverywhereClassifier;
-import com.intellij.ide.util.gotoByName.GotoActionModel;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.CellRendererPanel;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.SeparatorComponent;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,34 +36,13 @@ class GroupedListFactory extends SEResultsListFactory {
       @Override
       public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value == SearchListModel.MORE_ELEMENT) {
-          Component component = myMoreRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
-          return component;
+          return getMoreElementRenderer(list, index, isSelected, cellHasFocus);
         }
 
-        SearchEverywhereContributor<Object> contributor = groupedModel.getContributorForIndex(index);
-        Component component = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(
-          list, value, index, isSelected, cellHasFocus);
-        if (component == null) {
-          assert contributor != null : "Null contributor is not allowed here";
-          ListCellRenderer<? super Object> renderer = myRenderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
-          component = renderer.getListCellRendererComponent(list, value, index, isSelected, true);
-        }
-
-        if (component instanceof JComponent) {
-          Border border = ((JComponent)component).getBorder();
-          if (border != GotoActionModel.GotoActionListCellRenderer.TOGGLE_BUTTON_BORDER) {
-            ((JComponent)component).setBorder(JBUI.Borders.empty(1, 2));
-          }
-        }
-        AppUIUtil.targetToDevice(component, list);
-        component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
-
-        if (!isSelected && component.getBackground() == UIUtil.getListBackground()) {
-          PopupUtil.applyNewUIBackground(component);
-        }
+        Component component = getNonMoreElementRenderer(list, value, index, isSelected, cellHasFocus, groupedModel, myRenderersCache);
 
         if (!header.getSelectedTab().isSingleContributor() && groupedModel.isGroupFirstItem(index)) {
+          SearchEverywhereContributor<Object> contributor = groupedModel.getContributorForIndex(index);
           //noinspection ConstantConditions
           component = myGroupTitleRenderer.withDisplayedData(contributor.getFullGroupName(), component);
         }

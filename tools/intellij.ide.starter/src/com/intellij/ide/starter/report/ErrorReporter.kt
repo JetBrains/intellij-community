@@ -26,7 +26,7 @@ object ErrorReporter {
         val stacktraceFile = errorDir.resolve("stacktrace.txt").toFile()
 
         if (messageFile.exists() && stacktraceFile.exists()) {
-          val messageText = messageFile.readText().trim()
+          val messageText = generifyErrorMessage(messageFile.readText().trim())
           val stackTraceContent = stacktraceFile.readText().trim()
 
           var testName: String

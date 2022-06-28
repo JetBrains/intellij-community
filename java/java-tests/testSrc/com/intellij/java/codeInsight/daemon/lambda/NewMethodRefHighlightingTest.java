@@ -7,8 +7,11 @@ import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspec
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class NewMethodRefHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newMethodRef/";
@@ -60,13 +63,13 @@ class NewMethodRefHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 
   @Test void testIncorrectArrayCreationSignature() { doTest(); }
   @Test void testRawTargetType() { doTest(); }
   @Test void testReturnTypeCheckForRawReceiver() { doTest(); }
-  @Test void testStaticNonStaticReferenceTypeAmbiguity() { 
+  @Test void testStaticNonStaticReferenceTypeAmbiguity() {
     doTest();
     getFixture().doHighlighting()
       .stream()
       .filter(info -> info.type == HighlightInfoType.ERROR)
-      .forEach(info -> Assert.assertEquals("<html>Reference to 'm' is ambiguous, both 'm(Test, String)' and 'm(String)' match</html>",
-                                           info.getToolTip()));
+      .forEach(info -> assertEquals("<html>Reference to 'm' is ambiguous, both 'm(Test, String)' and 'm(String)' match</html>",
+                                               info.getToolTip()));
   }
   @Test void testStaticWithVarargsNonStaticReferenceTypeAmbiguity() { doTest(); }
   @Test void testStaticNonStaticWithVarargsReferenceTypeAmbiguity() { doTest(); }

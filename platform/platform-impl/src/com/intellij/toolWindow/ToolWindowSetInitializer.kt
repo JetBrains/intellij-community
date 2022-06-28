@@ -50,7 +50,7 @@ private inline fun Logger.debug(project: Project, lazyMessage: (project: String)
 internal class InitToolWindowSetActivity : StartupActivity {
   override fun runActivity(project: Project) {
     val app = ApplicationManager.getApplication()
-    if (app.isHeadlessEnvironment) {
+    if (app.isHeadlessEnvironment || app.isUnitTestMode) {
       return
     }
 
@@ -194,6 +194,8 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
           LOG.error(PluginException("Cannot init toolwindow ${task.contentFactory}", e, task.pluginDescriptor?.pluginId))
         }
       }
+
+      toolWindowPane.buttonManager.initMoreButton()
 
       project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries, manager)
       toolWindowPane.buttonManager.revalidateNotEmptyStripes()

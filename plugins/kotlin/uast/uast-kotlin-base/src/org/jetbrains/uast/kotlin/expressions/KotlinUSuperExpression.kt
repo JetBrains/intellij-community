@@ -2,12 +2,14 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.USuperExpression
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
+@ApiStatus.Internal
 class KotlinUSuperExpression(
     override val sourcePsi: KtSuperExpression,
     givenParent: UElement?

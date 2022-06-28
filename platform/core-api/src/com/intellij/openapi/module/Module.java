@@ -172,6 +172,23 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
 
   /**
+   * @return scope including only production sources.
+   */
+  @NotNull
+  default GlobalSearchScope getModuleProductionSourceScope() {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  /**
+   * @return scope including only test sources.
+   */
+  @NotNull
+  default GlobalSearchScope getModuleTestSourceScope() {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+
+  /**
    * This method isn't supposed to be used from plugins. If you really need to determine the type of a module, use
    * {@link com.intellij.openapi.module.ModuleType#get(Module) ModuleType.get}. However, it would be better to make your functionality work regardless
    * of type of the module, see {@link com.intellij.openapi.module.ModuleType ModuleType}'s javadoc for details.

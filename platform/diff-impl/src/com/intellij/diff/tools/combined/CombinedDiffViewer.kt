@@ -16,6 +16,7 @@ import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.tools.util.side.OnesideTextDiffViewer
+import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
@@ -123,6 +124,9 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
 
     if (insertIndex != -1 && insertIndex < diffBlocks.size) {
       contentPanel.add(diffBlock.component, insertIndex)
+      for (index in insertIndex until  diffBlocks.size) {
+        getBlockId(index)?.let { id -> diffBlocksPositions[id] = index + 1 }
+      }
       diffBlocks[blockId] = diffBlock
       diffViewers[blockId] = viewer
       diffBlocksPositions[blockId] = insertIndex
@@ -235,7 +239,7 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
 
   fun getAllBlocks() = diffBlocks.values.asSequence()
 
-  fun getBlock(viewer: DiffViewer) = diffViewers.entries.find { it == viewer }?.key?.let { blockId -> diffBlocks[blockId] }
+  fun getBlock(viewer: DiffViewer) = diffViewers.entries.find { it.value == viewer }?.key?.let { blockId -> diffBlocks[blockId] }
 
   fun getViewer(id: CombinedBlockId) = diffViewers[id]
 
@@ -314,7 +318,7 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
   }
 
   private val foldingModels: List<FoldingModelSupport>
-    get() = diffViewers.mapNotNull { viewer ->
+    get() = diffViewers.values.mapNotNull { viewer ->
       when (viewer) {
         is SimpleDiffViewer -> viewer.foldingModel
         is UnifiedDiffViewer -> viewer.foldingModel
@@ -373,6 +377,7 @@ val DiffViewer.editor: EditorEx?
   get() = when (this) {
     is OnesideTextDiffViewer -> editor
     is TwosideTextDiffViewer -> currentEditor
+    is ThreesideTextDiffViewer -> currentEditor
     is UnifiedDiffViewer -> editor
     else -> null
   }
@@ -381,6 +386,7 @@ val DiffViewer.editors: List<EditorEx>
   get() = when (this) {
     is OnesideTextDiffViewer -> editors
     is TwosideTextDiffViewer -> editors
+    is ThreesideTextDiffViewer -> editors
     is UnifiedDiffViewer -> listOf(editor)
     else -> emptyList()
   }

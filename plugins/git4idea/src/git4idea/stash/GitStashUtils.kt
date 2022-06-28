@@ -113,7 +113,7 @@ object GitStashOperations {
     val panel = LoadingCommittedChangeListPanel(project)
     panel.loadChangesInBackground {
       val changes = GitChangeUtils.getRevisionChanges(project, GitUtil.getRootForFile(project, stash.root), stash.hash.asString(),
-        true, compareWithLocal, false)
+                                                      true, compareWithLocal, false)
       ChangelistData(changes, null)
     }
 
@@ -180,7 +180,7 @@ object GitStashOperations {
         handler.addLineListener(localChangesDetector)
 
         val activity = GitStashUsageCollector.logStashPop(project)
-        val result = Git.getInstance().runCommand { handler }
+        val result = Git.getInstance().runCommand(handler)
         activity.finished()
 
         if (hash != null) refreshUnstashedChanges(project, hash, root)
@@ -188,7 +188,8 @@ object GitStashOperations {
 
         if (indexConflictDetector.hasHappened()) {
           // index conflicts could only be resolved manually
-          VcsNotifier.getInstance(project).notifyError(UNSTASH_FAILED, GitBundle.message("notification.title.unstash.failed.index.conflict"),
+          VcsNotifier.getInstance(project).notifyError(UNSTASH_FAILED,
+                                                       GitBundle.message("notification.title.unstash.failed.index.conflict"),
                                                        result.errorOutputAsHtmlString, true)
           return false
         }

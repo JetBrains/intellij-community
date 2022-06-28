@@ -18,7 +18,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xml.DomElement;
@@ -30,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager {
   static final Object LOCK = new Object();
@@ -72,7 +72,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   };
 
-  private final Map<XmlTag, DomElementsProblemsHolderImpl> myHolders = CollectionFactory.createWeakMap();
+  private final Map<XmlTag, DomElementsProblemsHolderImpl> myHolders = new WeakHashMap<>();
 
   public DomElementAnnotationsManagerImpl(@NotNull Project project) {
     MessageBusConnection connection = project.getMessageBus().connect();

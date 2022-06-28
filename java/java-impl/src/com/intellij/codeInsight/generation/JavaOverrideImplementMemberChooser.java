@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -138,8 +139,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
   @Override
   public void resetElements(PsiMethodMember[] elements) {
     super.resetElements(elements);
-    if (myOptionControls.length > 0) {
-      //noinspection DialogTitleCapitalization
+    if (myOptionControls.length > 0 && myFile.getLanguage().is(JavaLanguage.INSTANCE)) {
       myGenerateJavadocCheckBox = new JBCheckBox(JavaBundle.message("methods.to.override.generate.javadoc"));
       myGenerateJavadocCheckBox.setSelected(isGenerateJavadoc());
       myOptionControls = ArrayUtil.insert(super.getOptionControls(), 1, myGenerateJavadocCheckBox);
@@ -202,7 +202,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     group.add(myMergeAction);
   }
 
-  private static @NlsContexts.DialogTitle String getChooserTitle(final boolean toImplement, final boolean merge) {
+  static @NlsContexts.DialogTitle String getChooserTitle(final boolean toImplement, final boolean merge) {
     return toImplement
            ? JavaBundle.message("methods.to.implement.chooser.title")
            : merge
@@ -274,4 +274,10 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     }
   }
 
+  public OverrideOrImplementOptions getOptions(){
+    return new OverrideOrImplementOptions()
+      .copyJavadoc(isCopyJavadoc())
+      .generateJavadoc(isGenerateJavadoc())
+      .insertOverrideWherePossible(isInsertOverrideAnnotation());
+  }
 }

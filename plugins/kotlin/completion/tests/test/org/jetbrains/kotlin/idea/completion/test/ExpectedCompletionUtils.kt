@@ -286,7 +286,7 @@ object ExpectedCompletionUtils {
             }
         }
 
-        if (leftItems != null && leftItems.isNotEmpty()) {
+        if (!leftItems.isNullOrEmpty()) {
             Assert.fail("No items not mentioned in EXIST directives expected but some found:\n" + listToString(leftItems))
         }
     }

@@ -88,6 +88,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
       return s -> s;
     }
     Properties staticProperties = MavenPropertyResolver.collectPropertiesFromDOM(mavenProject, domModel);
+    Properties modelProperties = mavenProject.getProperties();
     String jaCoCoConfigProperty = getJaCoCoArgLineProperty(mavenProject);
     ParametersList vmParameters = javaParameters.getVMParametersList();
     return name -> {
@@ -98,6 +99,10 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
       String staticPropertyValue = staticProperties.getProperty(name);
       if (staticPropertyValue != null) {
         return MavenPropertyResolver.resolve(staticPropertyValue, domModel);
+      }
+      String modelPropertyValue = modelProperties.getProperty(name);
+      if (modelPropertyValue != null) {
+        return modelPropertyValue;
       }
       if (name.equals(jaCoCoConfigProperty)) {
         return "";

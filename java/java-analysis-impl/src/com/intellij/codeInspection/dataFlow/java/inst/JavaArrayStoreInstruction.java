@@ -51,9 +51,7 @@ public class JavaArrayStoreInstruction extends ArrayStoreInstruction {
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     DfaControlTransferValue transfer = myOutOfBoundsTransfer == null ? null : myOutOfBoundsTransfer.bindToFactory(factory);
     DfaVariableValue staticVariable = myStaticVariable == null ? null : myStaticVariable.bindToFactory(factory);
-    var instruction = new JavaArrayStoreInstruction(myExpression, myValueExpression, transfer, staticVariable);
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new JavaArrayStoreInstruction(myExpression, myValueExpression, transfer, staticVariable);
   }
 
   @Override

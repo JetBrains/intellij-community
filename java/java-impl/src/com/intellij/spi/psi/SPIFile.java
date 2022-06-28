@@ -22,7 +22,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.spi.SPIFileType;
 import com.intellij.util.IncorrectOperationException;
@@ -46,9 +45,6 @@ public class SPIFile extends PsiFileBase {
 
   @Override
   public PsiReference @NotNull [] getReferences() {
-    PsiReference[] references = ReferenceProvidersRegistry.getReferencesFromProviders(this);
-    if (references.length > 0) return references;
-
     return ReadAction.compute(() -> {
 
       final List<PsiReference> refs = new ArrayList<>();

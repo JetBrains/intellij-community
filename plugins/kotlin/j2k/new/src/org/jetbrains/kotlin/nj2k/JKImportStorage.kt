@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
 
 import com.intellij.psi.CommonClassNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
@@ -35,7 +35,7 @@ class JKImportStorage(languageSettings: LanguageVersionSettings) {
 
     fun getImports(): Set<FqName> = imports
 
-    fun isImportNeeded(fqName: FqName, allowSingleIdentifierImport: Boolean = false): Boolean {
+    private fun isImportNeeded(fqName: FqName, allowSingleIdentifierImport: Boolean = false): Boolean {
         if (!allowSingleIdentifierImport && fqName.asString().count { it == '.' } < 1) return false
         if (fqName in NULLABILITY_ANNOTATIONS) return false
         if (fqName in defaultImports) return false

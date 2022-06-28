@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Retrieves plain text file type from open projects' configurations.
  *
- * @author Rustam Vishnyakov
  * @deprecated use {@link OverrideFileTypeManager} instead
  */
 @Deprecated(forRemoval = true)

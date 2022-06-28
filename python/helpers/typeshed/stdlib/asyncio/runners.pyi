@@ -1,6 +1,7 @@
 import sys
 from typing import Awaitable, TypeVar
 
+__all__ = ("run",)
 _T = TypeVar("_T")
 if sys.version_info >= (3, 8):
     def run(main: Awaitable[_T], *, debug: bool | None = ...) -> _T: ...

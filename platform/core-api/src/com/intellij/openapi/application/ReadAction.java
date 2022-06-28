@@ -76,7 +76,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * <p>
    * The {@code task} might be executed several times, it may be cancelled on write action,
    * and then restarted again once write action is finished.
-   * If the client doesn’t expect a result, then the task is mutating some outer state,
+   * If the client doesn't expect a result, then the task is mutating some outer state,
    * which greatly lowers its probability of being idempotent,
    * which in turn may cause delayed bugs in unrelated places and races.
    */

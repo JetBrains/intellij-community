@@ -15,7 +15,6 @@ import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -71,7 +70,7 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
 
   private <T> T iterate(Producer<? extends T> processor, T defaultValue, @Nullable FileType fileType, boolean ignorePCE) {
     for (PositionManager positionManager : myPositionManagers) {
-      if (fileType != null && fileType != UnknownFileType.INSTANCE) {
+      if (fileType != null) {
         Set<? extends FileType> types = positionManager.getAcceptedFileTypes();
         if (types != null && !types.contains(fileType)) {
           continue;

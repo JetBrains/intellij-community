@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logDslChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.project.ProjectData
@@ -10,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -17,10 +21,7 @@ import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.*
 import com.intellij.util.lang.JavaVersion
 import icons.GradleIcons
@@ -48,17 +49,25 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
           .validationOnApply { validateGradleVersion() }
           .columns(COLUMNS_MEDIUM)
+          .whenItemSelectedFromUi { logSdkChanged(sdk) }
       }.bottomGap(BottomGap.SMALL)
       row(GradleBundle.message("gradle.dsl.new.project.wizard")) {
-        segmentedButton(listOf(false, true)) {
+        val renderer: (Boolean) -> String = {
           when (it) {
             true -> GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")
             else -> GradleBundle.message("gradle.dsl.new.project.wizard.groovy")
           }
-        }.bind(useKotlinDslProperty)
+        }
+        segmentedButton(listOf(false, true), renderer)
+          .bind(useKotlinDslProperty)
+          .whenItemSelectedFromUi { logDslChanged(it) }
       }.bottomGap(BottomGap.SMALL)
     }
     super.setupUI(builder)
+  }
+
+  override fun setupProject(project: Project) {
+    logSdkFinished(sdk)
   }
 
   override fun findAllParents(): List<ProjectData> {

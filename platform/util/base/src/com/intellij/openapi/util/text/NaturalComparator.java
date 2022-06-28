@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 
 /**
- * Implementation of <a href="http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html">
- * "Sorting for Humans: Natural Sort Order"</a>
+ * Implementation of
+ * <a href="http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html">"Sorting for Humans: Natural Sort Order"</a>.
  *
  * @author Bas Leijdekkers
  */
@@ -50,7 +50,7 @@ public final class NaturalComparator implements Comparator<String> {
         final int fullLengthDiff = (end1 - i) - (end2 - j);
         if (fullLengthDiff != 0) return fullLengthDiff;
 
-        // numbers are same, compare leading spaces and zeroes
+        // the numbers are the same; compare leading spaces and zeroes
         final int leadingDiff = compareCharRange(s1, s2, i, j, start1);
         if (leadingDiff != 0) return leadingDiff;
 
@@ -62,14 +62,14 @@ public final class NaturalComparator implements Comparator<String> {
         if (diff != 0) return diff;
       }
     }
-    // After the loop the end of one of the strings might not have been reached, if the other
-    // string ends with a number and the strings are equal until the end of that number. When
-    // there are more characters in the string, then it is greater.
+    // After the loop, the end of one of the strings might not have been reached if the other
+    // string ends with a number and the strings are equal until the end of that number.
+    // When there are more characters in the string, then it is greater.
     if (i < length1) return +1;
     if (j < length2) return -1;
     if (length1 != length2) return length1 - length2;
 
-    // do case sensitive compare if case insensitive strings are equal
+    // do case-sensitive compare if case-insensitive strings are equal
     return ignoreCase ? naturalCompare(s1, s2, length1, length2, false) : 0;
   }
 

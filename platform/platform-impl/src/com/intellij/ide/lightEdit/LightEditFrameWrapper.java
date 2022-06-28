@@ -165,7 +165,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
                                                  @Nullable FrameInfo frameInfo,
                                                  @NotNull BooleanSupplier closeHandler) {
     return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(project, () -> {
-      return new LightEditFrameWrapper(project, ProjectFrameAllocatorKt.createNewProjectFrame(false, frameInfo), closeHandler);
+      return new LightEditFrameWrapper(project, ProjectFrameAllocatorKt.createNewProjectFrame(frameInfo), closeHandler);
     });
   }
 

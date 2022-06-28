@@ -17,10 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiPolyadicExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -60,7 +57,22 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiPolyadicExpression expression = (PsiPolyadicExpression)descriptor.getPsiElement();
+      PsiElement element = descriptor.getPsiElement();
+      if (element instanceof PsiPolyadicExpression) {
+        doReplacePolyadicExpression((PsiPolyadicExpression)element);
+      }
+      else if (element instanceof PsiAssignmentExpression) {
+        PsiElement assignmentExpression = PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression((PsiAssignmentExpression)element);
+        if (assignmentExpression instanceof PsiAssignmentExpression) {
+          PsiExpression expression = ((PsiAssignmentExpression)assignmentExpression).getRExpression();
+          if (expression instanceof PsiPolyadicExpression) {
+            doReplacePolyadicExpression((PsiPolyadicExpression)expression);
+          }
+        }
+      }
+    }
+
+    private static void doReplacePolyadicExpression(PsiPolyadicExpression expression) {
       final IElementType tokenType = expression.getOperationTokenType();
       final String operandText = getShortCircuitOperand(tokenType);
       final PsiExpression[] operands = expression.getOperands();
@@ -95,10 +107,24 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
+      IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.AND) && !tokenType.equals(JavaTokenType.OR)) {
         return;
       }
+      doCheck(expression);
+    }
+
+    @Override
+    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      super.visitAssignmentExpression(expression);
+      IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.ANDEQ) && !tokenType.equals(JavaTokenType.OREQ)) {
+        return;
+      }
+      doCheck(expression);
+    }
+
+    private void doCheck(PsiExpression expression) {
       final PsiType type = expression.getType();
       if (type == null) {
         return;

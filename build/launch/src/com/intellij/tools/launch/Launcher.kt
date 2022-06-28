@@ -65,7 +65,9 @@ object Launcher {
       "-XX:HeapDumpPath=${paths.tempFolder.canonicalPath}",
       "-XX:MaxJavaStackTraceDepth=10000",
       "-XX:ReservedCodeCacheSize=240m",
-      "-XX:SoftRefLRUPolicyMSPerMB=50"
+      "-XX:SoftRefLRUPolicyMSPerMB=50",
+      "--jbr-illegal-access",
+      "-XX:+IgnoreUnrecognizedVMOptions"
     )
 
     if (options.platformPrefix != null) {

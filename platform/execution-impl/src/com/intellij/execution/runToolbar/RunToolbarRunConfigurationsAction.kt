@@ -25,6 +25,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
 import java.beans.PropertyChangeEvent
@@ -93,6 +94,10 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
         override fun getFont(): Font {
           return UIUtil.getToolbarFont()
         }
+
+        override fun getForeground(): Color {
+          return UIUtil.getLabelForeground()
+        }
       }
 
       private val arrow = ComboBoxArrowComponent().getView()
@@ -115,6 +120,8 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
         arrow.isVisible = isEnabled
 
         toolTipText = presentation.description
+        setting.toolTipText = presentation.description
+        arrow.toolTipText = presentation.description
       }
 
       private fun fill() {

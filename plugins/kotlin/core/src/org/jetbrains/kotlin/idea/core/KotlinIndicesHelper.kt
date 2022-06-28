@@ -10,10 +10,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.caches.IDEKotlinBinaryClassCache
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
@@ -68,8 +68,8 @@ class KotlinIndicesHelper(
 
     fun getTopLevelCallablesByName(name: String): Collection<CallableDescriptor> {
         val declarations = LinkedHashSet<KtNamedDeclaration>()
-        declarations.addTopLevelNonExtensionCallablesByName(KotlinFunctionShortNameIndex.getInstance(), name)
-        declarations.addTopLevelNonExtensionCallablesByName(KotlinPropertyShortNameIndex.getInstance(), name)
+        declarations.addTopLevelNonExtensionCallablesByName(KotlinFunctionShortNameIndex, name)
+        declarations.addTopLevelNonExtensionCallablesByName(KotlinPropertyShortNameIndex, name)
         return declarations
             .flatMap { it.resolveToDescriptors<CallableDescriptor>() }
             .filter { descriptorFilter(it) }
@@ -84,7 +84,7 @@ class KotlinIndicesHelper(
     }
 
     fun getTopLevelExtensionOperatorsByName(name: String): Collection<FunctionDescriptor> {
-        return KotlinFunctionShortNameIndex.getInstance().get(name, project, scope)
+        return KotlinFunctionShortNameIndex.get(name, project, scope)
             .filter { it.parent is KtFile && it.receiverTypeReference != null && it.hasModifier(KtTokens.OPERATOR_KEYWORD) }
             .flatMap { it.resolveToDescriptors<FunctionDescriptor>() }
             .filter { descriptorFilter(it) && it.extensionReceiverParameter != null }
@@ -92,7 +92,7 @@ class KotlinIndicesHelper(
     }
 
     fun getMemberOperatorsByName(name: String): Collection<FunctionDescriptor> {
-        return KotlinFunctionShortNameIndex.getInstance().get(name, project, scope)
+        return KotlinFunctionShortNameIndex.get(name, project, scope)
             .filter { it.parent is KtClassBody && it.receiverTypeReference == null && it.hasModifier(KtTokens.OPERATOR_KEYWORD) }
             .flatMap { it.resolveToDescriptors<FunctionDescriptor>() }
             .filter { descriptorFilter(it) && it.extensionReceiverParameter == null }
@@ -113,9 +113,9 @@ class KotlinIndicesHelper(
         }
 
         val filter: (String) -> Boolean = { key -> nameFilter(key.substringAfterLast('.', key)) }
-        KotlinTopLevelFunctionFqnNameIndex.getInstance().processAllElements(project, scope, filter, callableDeclarationProcessor)
 
-        KotlinTopLevelPropertyFqnNameIndex.getInstance().processAllElements(project, scope, filter, callableDeclarationProcessor)
+        KotlinTopLevelFunctionFqnNameIndex.processAllElements(project, scope, filter, callableDeclarationProcessor)
+        KotlinTopLevelPropertyFqnNameIndex.processAllElements(project, scope, filter, callableDeclarationProcessor)
     }
 
     fun getCallableTopLevelExtensions(
@@ -148,7 +148,7 @@ class KotlinIndicesHelper(
         if (receiverTypes.isEmpty()) return emptyList()
 
         val suitableTopLevelExtensions = mutableListOf<CallableDescriptor>()
-        KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.processSuitableExtensions(
+        KotlinTopLevelExtensionsByReceiverTypeIndex.processSuitableExtensions(
             receiverTypes,
             nameFilter,
             declarationFilter,
@@ -179,7 +179,7 @@ class KotlinIndicesHelper(
     ) {
         if (receiverTypes.isEmpty()) return
 
-        KotlinExtensionsInObjectsByReceiverTypeIndex.INSTANCE.processSuitableExtensions(
+        KotlinExtensionsInObjectsByReceiverTypeIndex.processSuitableExtensions(
             receiverTypes,
             nameFilter,
             declarationFilter,
@@ -191,12 +191,11 @@ class KotlinIndicesHelper(
     fun resolveTypeAliasesUsingIndex(type: KotlinType, originalTypeName: String): Set<TypeAliasDescriptor> {
         val typeConstructor = type.constructor
 
-        val index = KotlinTypeAliasByExpansionShortNameIndex.INSTANCE
         val out = LinkedHashMap<FqName, TypeAliasDescriptor>()
 
         fun searchRecursively(typeName: String) {
             ProgressManager.checkCanceled()
-            index[typeName, project, scope].asSequence()
+            KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope].asSequence()
                 .filter { it in scope }
                 .flatMap { it.resolveToDescriptors<TypeAliasDescriptor>().asSequence() }
                 .filter { it.expandedType.constructor == typeConstructor }
@@ -244,12 +243,11 @@ class KotlinIndicesHelper(
     }
 
     private fun possibleTypeAliasExpansionNames(originalTypeName: String): Set<String> {
-        val index = KotlinTypeAliasByExpansionShortNameIndex.INSTANCE
         val out = mutableSetOf<String>()
 
         fun searchRecursively(typeName: String) {
             ProgressManager.checkCanceled()
-            index[typeName, project, scope].asSequence()
+            KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope].asSequence()
                 .filter { it in scope }
                 .mapNotNull(KtTypeAlias::getName)
                 .filter(out::add)
@@ -284,7 +282,7 @@ class KotlinIndicesHelper(
     }
 
     fun getKotlinEnumsByName(name: String): Collection<DeclarationDescriptor> {
-        return KotlinClassShortNameIndex.getInstance()[name, project, scope]
+        return KotlinClassShortNameIndex.get(name, project, scope)
             .filter { it is KtEnumEntry && it in scope }
             .flatMap { it.resolveToDescriptors<DeclarationDescriptor>() }
             .filter(descriptorFilter)
@@ -412,7 +410,7 @@ class KotlinIndicesHelper(
             true
         }
 
-        KotlinSubclassObjectNameIndex.getInstance().processAllElements(project, scope, processor = objectDeclarationProcessor)
+        KotlinSubclassObjectNameIndex.processAllElements(project, scope, processor = objectDeclarationProcessor)
     }
 
     /**
@@ -450,8 +448,8 @@ class KotlinIndicesHelper(
         filter: (KtNamedDeclaration) -> Boolean,
         processor: (CallableDescriptor) -> Unit
     ) {
-        val functions: Sequence<KtCallableDeclaration> = KotlinFunctionShortNameIndex.getInstance().get(name, project, scope).asSequence()
-        val properties: Sequence<KtNamedDeclaration> = KotlinPropertyShortNameIndex.getInstance().get(name, project, scope).asSequence()
+        val functions: Sequence<KtCallableDeclaration> = KotlinFunctionShortNameIndex.get(name, project, scope).asSequence()
+        val properties: Sequence<KtNamedDeclaration> = KotlinPropertyShortNameIndex.get(name, project, scope).asSequence()
         val processed = HashSet<CallableDescriptor>()
         for (declaration in functions + properties) {
             ProgressManager.checkCanceled()
@@ -481,8 +479,7 @@ class KotlinIndicesHelper(
             }
             true
         }
-        KotlinFullClassNameIndex.getInstance()
-            .processAllElements(project, scope, { nameFilter(it.substringAfterLast('.')) }, classOrObjectProcessor)
+        KotlinFullClassNameIndex.processAllElements(project, scope, { nameFilter(it.substringAfterLast('.')) }, classOrObjectProcessor)
     }
 
     fun processTopLevelTypeAliases(nameFilter: (String) -> Boolean, processor: (TypeAliasDescriptor) -> Unit) {
@@ -495,7 +492,7 @@ class KotlinIndicesHelper(
             }
             true
         }
-        KotlinTopLevelTypeAliasFqNameIndex.getInstance()
+        KotlinTopLevelTypeAliasFqNameIndex
             .processAllElements(project, scope, { nameFilter(it.substringAfterLast('.')) }, typeAliasProcessor)
     }
 
@@ -520,10 +517,10 @@ class KotlinIndicesHelper(
         }
 
         if (descriptorKindFilter.kindMask.and(DescriptorKindFilter.FUNCTIONS_MASK) != 0) {
-            KotlinFunctionShortNameIndex.getInstance().processAllElements(project, scope, nameFilter, namedDeclarationProcessor)
+            KotlinFunctionShortNameIndex.processAllElements(project, scope, nameFilter, namedDeclarationProcessor)
         }
         if (descriptorKindFilter.kindMask.and(DescriptorKindFilter.VARIABLES_MASK) != 0) {
-            KotlinPropertyShortNameIndex.getInstance().processAllElements(project, scope, nameFilter, namedDeclarationProcessor)
+            KotlinPropertyShortNameIndex.processAllElements(project, scope, nameFilter, namedDeclarationProcessor)
         }
     }
 
@@ -595,7 +592,7 @@ class KotlinIndicesHelper(
                 KotlinExceptionWithAttachments("KtElement not inside KtFile ($ktFile, is valid: ${ktFile.isValid})")
                     .withAttachment("file", ktFile)
                     .withAttachment("virtualFile", containingFile.virtualFile)
-                    .withAttachment("compiledFile", IDEKotlinBinaryClassCache.getInstance().isKotlinJvmCompiledFile(containingFile.virtualFile))
+                    .withAttachment("compiledFile", ClsKotlinBinaryClassCache.getInstance().isKotlinJvmCompiledFile(containingFile.virtualFile))
                     .withAttachment("element", this)
                     .withAttachment("type", javaClass)
                     .withPsiAttachment("file.kt", ktFile)

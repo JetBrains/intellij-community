@@ -61,7 +61,7 @@ open class TemporaryDirectory : ExternalResource() {
     fun createVirtualFile(parent: VirtualFile, exactFileName: String, data: String?): VirtualFile {
       return WriteAction.computeAndWait<VirtualFile, IOException> {
         val result = parent.createChildData(TemporaryDirectory::class.java, exactFileName)
-        if (data != null && data.isNotEmpty()) {
+        if (!data.isNullOrEmpty()) {
           result.setBinaryContent(data.toByteArray(Charsets.UTF_8))
         }
         result
@@ -70,7 +70,7 @@ open class TemporaryDirectory : ExternalResource() {
   }
 
   override fun apply(base: Statement, description: Description): Statement {
-    before(description.methodName)
+    before(description.methodName ?: description.className)
     return super.apply(base, description)
   }
 

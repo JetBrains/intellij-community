@@ -223,7 +223,6 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     if (!anchor.isPhysical()) return null;
     return manager.createProblemDescriptor(anchor,
                                            JavaBundle.message("inspection.same.parameter.problem.descriptor",
-                                                              name,
                                                               StringUtil.unquoteString(shortName)),
                                            suggestFix ? createFix(name, stringPresentation.startsWith("\"\"")
                                                                         ? stringPresentation

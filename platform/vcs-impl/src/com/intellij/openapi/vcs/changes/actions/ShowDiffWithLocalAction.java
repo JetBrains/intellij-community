@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
@@ -16,17 +20,16 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.ListSelection;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import static com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction.showDiffForChange;
 
 // via openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider
 // Extending AnAction is left for compatibility with plugins that instantiate this class directly (instead of using ActionManager).
@@ -55,11 +58,8 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
     ListSelection<Change> selection = e.getRequiredData(VcsDataKeys.CHANGES_SELECTION);
 
-    ListSelection<Change> changesToLocal = selection.map(change -> getChangeWithLocal(change, myUseBeforeVersion));
-
-    if (!changesToLocal.isEmpty()) {
-      showDiffForChange(project, changesToLocal);
-    }
+    DiffRequestChain chain = new WithLocalRequestChain(project, selection, myUseBeforeVersion);
+    DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT);
   }
 
   @Override
@@ -100,6 +100,25 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
   public static class ShowDiffBeforeWithLocalAction extends ShowDiffWithLocalAction {
     public ShowDiffBeforeWithLocalAction() {
       super(true);
+    }
+  }
+
+  private static class WithLocalRequestChain extends ChangeDiffRequestChain.Async {
+    private final Project myProject;
+    private final ListSelection<Change> myChanges;
+    private final boolean myUseBeforeVersion;
+
+    private WithLocalRequestChain(@NotNull Project project, @NotNull ListSelection<Change> changes, boolean useBeforeVersion) {
+      myProject = project;
+      myChanges = changes;
+      myUseBeforeVersion = useBeforeVersion;
+    }
+
+    @Override
+    protected @NotNull ListSelection<? extends ChangeDiffRequestChain.Producer> loadRequestProducers() {
+      return myChanges
+        .map(change -> getChangeWithLocal(change, myUseBeforeVersion))
+        .map(change -> ChangeDiffRequestProducer.create(myProject, change));
     }
   }
 }

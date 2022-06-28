@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -74,7 +74,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
           final PsiElement lBrace = aClass.getLBrace();
           LOG.assertTrue(lBrace != null);
           final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
-          ProblemHighlightType type = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+          ProblemHighlightType type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           if (isOnTheFly && !reportNotAnnotatedInterfaces) {
             final PsiClass baseClass = aClass.getBaseClassType().resolve();
             LOG.assertTrue(baseClass != null);

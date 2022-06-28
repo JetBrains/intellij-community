@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayController
+import org.jetbrains.plugins.notebooks.visualization.outputs.collapsingComponents
 import java.awt.event.MouseEvent
 
 internal class NotebookOutputCollapseAllAction private constructor() : ToggleAction(), DumbAware {

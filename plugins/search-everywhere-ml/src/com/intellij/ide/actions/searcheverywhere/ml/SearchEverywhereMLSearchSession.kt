@@ -4,19 +4,21 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCacheDataProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereStatisticianService
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
 import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTracker
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
 
 internal class SearchEverywhereMLSearchSession(project: Project?, private val sessionId: Int) {
   val itemIdProvider = SearchEverywhereMlItemIdProvider()
   private val sessionStartTime: Long = System.currentTimeMillis()
-  private val providersCaches: Map<Class<out SearchEverywhereElementFeaturesProvider>, Any>
+  private val providersCache = FeaturesProviderCacheDataProvider().getDataToCache(project)
   private val modelProviderWithCache: SearchEverywhereModelProvider = SearchEverywhereModelProvider()
 
   // context features are calculated once per Search Everywhere session
@@ -28,13 +30,6 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector()
 
   private val performanceTracker = PerformanceTracker()
-
-  init {
-    providersCaches = SearchEverywhereElementFeaturesProvider.getFeatureProviders()
-      .associate { it::class.java to it.getDataToCache(project) }
-      .mapNotNull { it.value?.let { value -> it.key to value } }
-      .toMap()
-  }
 
   fun onSearchRestart(project: Project?,
                       experimentStrategy: SearchEverywhereMlExperiment,
@@ -54,7 +49,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
 
       SearchEverywhereMlSearchState(
         sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped,
-        searchQuery, modelProviderWithCache, providersCaches
+        searchQuery, modelProviderWithCache, providersCache
       )
     }
 
@@ -75,7 +70,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     val state = getCurrentSearchState()
     if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
       if (project != null) {
-        val statisticianService = SearchEverywhereStatisticianService.getInstance(project)
+        val statisticianService = service<SearchEverywhereStatisticianService>()
         selectedItems.forEach { statisticianService.increaseUseCount(it) }
       }
 
@@ -112,8 +107,10 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double {
     val state = getCurrentSearchState()
     if (state != null && SearchEverywhereTabWithMl.findById(state.tabId) != null) {
-      val id = itemIdProvider.getId(element)
-      return state.getMLWeight(id, element, contributor, cachedContextInfo, matchingDegree)
+      val elementId = itemIdProvider.getId(element)
+      if (elementId != null) {
+        return state.getMLWeight(elementId, element, contributor, cachedContextInfo, matchingDegree)
+      }
     }
     return -1.0
   }
@@ -126,7 +123,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
 }
 
 internal class SearchEverywhereMLContextInfo(project: Project?) {
-  val features: Map<String, Any> by lazy {
+  val features: List<EventPair<*>> by lazy {
     val featuresProvider = SearchEverywhereContextFeaturesProvider()
     return@lazy featuresProvider.getContextFeatures(project)
   }

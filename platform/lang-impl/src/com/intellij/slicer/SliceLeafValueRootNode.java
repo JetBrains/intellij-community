@@ -96,7 +96,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
     PsiFile file = element.getContainingFile();
     List<TextChunk> result = new ArrayList<>();
     ChunkExtractor.getExtractor(element.getContainingFile())
-      .createTextChunks(usage, file.getText(), element.getTextOffset(), element.getTextRange().getEndOffset(),
+      .appendTextChunks(usage, file.getText(), element.getTextOffset(), element.getTextRange().getEndOffset(),
                         false, result);
 
     for (TextChunk chunk : result) {

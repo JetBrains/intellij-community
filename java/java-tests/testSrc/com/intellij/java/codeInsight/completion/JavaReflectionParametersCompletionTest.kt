@@ -27,7 +27,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.indexing.DumbModeAccessType
-import com.intellij.util.indexing.FileBasedIndex
 
 /**
  * @author Pavel.Dolgov
@@ -50,6 +49,7 @@ class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() 
 
   fun testDeclaredAnnotationsByType() = doTest(0, "Foo.class", "Bar.class")
 
+  @NeedsIndex.SmartMode(reason = "Ordering requires smart mode")
   fun testConstructor() {
     addConstructors()
     doTest(1, "Construct()", "Construct(int n,java.lang.String s)", "Construct(int n)", "Construct(java.lang.String s)")

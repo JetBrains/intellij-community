@@ -540,7 +540,7 @@ public final class PsiTypesUtil {
     return mentionsTypeParametersOrUnboundedWildcard(type, typeParameters::contains);
   }
 
-  public static boolean mentionsTypeParameters(@Nullable PsiType type, @NotNull Predicate<PsiTypeParameter> wantedTypeParameter) {
+  public static boolean mentionsTypeParameters(@Nullable PsiType type, @NotNull Predicate<? super PsiTypeParameter> wantedTypeParameter) {
     return mentionsTypeParametersOrUnboundedWildcard(type, wantedTypeParameter);
   }
 
@@ -570,7 +570,7 @@ public final class PsiTypesUtil {
   }
 
   private static boolean mentionsTypeParametersOrUnboundedWildcard(@Nullable PsiType type,
-                                                                   final Predicate<PsiTypeParameter> wantedTypeParameter) {
+                                                                   final Predicate<? super PsiTypeParameter> wantedTypeParameter) {
     if (type == null) return false;
     return type.accept(new PsiTypeVisitor<Boolean>() {
       @Override

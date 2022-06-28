@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -29,8 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance(RefreshQueueImpl.class);
@@ -66,7 +64,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   private void queueSessionSync(@NotNull RefreshSessionImpl session) {
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
-    executeRefreshSession(session, -1L);
+    executeRefreshSession(session);
     fireEventsSync(session);
   }
 
@@ -75,17 +73,14 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private void queueSessionAsync(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
-    long queuedAt = System.nanoTime();
-    myQueue.execute(() -> executeSession(session, modality, queuedAt));
+    myQueue.execute(() -> executeSession(session, modality));
     myEventCounter.eventHappened(session);
   }
 
-  private void executeSession(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality, long queuedAt) {
-    long timeInQueue = NANOSECONDS.toMillis(System.nanoTime() - queuedAt);
+  private void executeSession(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
     startRefreshActivity();
     try {
-      String title = IdeCoreBundle.message("progress.title.doing.file.refresh.0", session);
-      HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, title, () -> executeRefreshSession(session, timeInQueue));
+      HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, IdeCoreBundle.message("progress.title.doing.file.refresh.0", session), ()-> executeRefreshSession(session));
     }
     finally {
       finishRefreshActivity();
@@ -153,10 +148,10 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     return () -> session.fireEvents(events, appliers, true);
   }
 
-  private void executeRefreshSession(@NotNull RefreshSessionImpl session, long timeInQueue) {
+  private void executeRefreshSession(@NotNull RefreshSessionImpl session) {
     try {
       updateSessionMap(session, true);
-      session.scan(timeInQueue);
+      session.scan();
     }
     finally {
       updateSessionMap(session, false);

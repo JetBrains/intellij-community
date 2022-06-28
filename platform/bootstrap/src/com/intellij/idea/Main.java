@@ -54,9 +54,9 @@ public final class Main {
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme",
+    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme","inspectopedia-generator",
     "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "appcodeClangModulesDiff", "appcodeClangModulesPrinter");
-  private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
+  private static final List<String> GUI_COMMANDS = List.of("diff", "merge", "project-with-shared-caches");
 
   private static boolean isHeadless;
   private static boolean isCommandLine;

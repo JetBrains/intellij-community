@@ -6,14 +6,14 @@ import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 class MarkdownCodeFenceErrorHighlightingTest : BasePlatformTestCase() {
-  private var oldHideErrorsSetting = false
+  private var oldShowErrorsSetting = false
 
   private val settings
     get() = MarkdownSettings.getInstance(project)
 
   override fun setUp() {
     super.setUp()
-    oldHideErrorsSetting = settings.hideErrorsInCodeBlocks
+    oldShowErrorsSetting = settings.showProblemsInCodeBlocks
   }
 
   override fun getTestDataPath(): String {
@@ -21,18 +21,18 @@ class MarkdownCodeFenceErrorHighlightingTest : BasePlatformTestCase() {
   }
 
   fun testSimpleCodeFenceError() {
-    settings.hideErrorsInCodeBlocks = false
+    settings.showProblemsInCodeBlocks = true
     myFixture.testHighlighting(true, false, false, getTestName(true) + ".md")
   }
 
   fun testSimpleCodeFenceNoErrors() {
-    settings.hideErrorsInCodeBlocks = true
+    settings.showProblemsInCodeBlocks = true
     myFixture.testHighlighting(true, false, false, getTestName(true) + ".md")
   }
 
   override fun tearDown() {
     try {
-      settings.hideErrorsInCodeBlocks = oldHideErrorsSetting
+      settings.showProblemsInCodeBlocks = oldShowErrorsSetting
     }
     finally {
       super.tearDown()

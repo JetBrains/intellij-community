@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.modality
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedClassSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -50,7 +49,7 @@ class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : Recursive
         val type = (method.returnType.type as? JKClassType)
             ?.takeIf { it.classReference.name == "String" }
             ?.updateNullability(Nullability.NotNull) ?: return false
-        method.returnType = JKTypeElement(type)
+        method.returnType = JKTypeElement(type, method.returnType::annotationList.detached())
         return true
     }
 
@@ -60,7 +59,7 @@ class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : Recursive
         val type = (method.returnType.type as? JKClassType)
             ?.takeIf { it.classReference.name == "Object" }
             ?.updateNullability(Nullability.NotNull) ?: return false
-        method.returnType = JKTypeElement(type)
+        method.returnType = JKTypeElement(type, method.returnType::annotationList.detached())
         return true
     }
 

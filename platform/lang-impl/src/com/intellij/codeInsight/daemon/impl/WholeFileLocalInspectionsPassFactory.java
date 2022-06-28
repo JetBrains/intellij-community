@@ -34,7 +34,7 @@ final class WholeFileLocalInspectionsPassFactory implements TextEditorHighlighti
   public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
                                                                @NotNull Document document,
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    return createPass(file, LocalInspectionsPass.EMPTY_PRIORITY_RANGE, document);
+    return createPass(file, TextRange.EMPTY_RANGE, document);
   }
 
   static final class MyRegistrar implements TextEditorHighlightingPassFactoryRegistrar {

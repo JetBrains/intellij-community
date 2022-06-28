@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -11,6 +11,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
@@ -23,6 +24,7 @@ import java.util.*;
  * @author gregsh
  */
 public final class ShuffleNamesAction extends AnAction {
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -36,8 +38,15 @@ public final class ShuffleNamesAction extends AnAction {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (editor == null || file == null) return;
     final Project project = file.getProject();
+
+    if (!ReadonlyStatusHandler.ensureFilesWritable(project, file.getVirtualFile())) return;
+
     CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessorEx.getInstance();
-    CommandToken commandToken = commandProcessor.startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
+    CommandToken commandToken =
+      commandProcessor.startCommand(project,
+                                    e.getPresentation().getText(),
+                                    e.getPresentation().getText(),
+                                    UndoConfirmationPolicy.DEFAULT);
     try {
       WriteAction.run(() -> shuffleIds(file, editor));
     }
@@ -59,12 +68,14 @@ public final class ShuffleNamesAction extends AnAction {
           String text = element.getText();
           if (text.isEmpty()) return;
 
-          for (int i=0, len=text.length(); i<len/2; i++) {
+          for (int i = 0, len = text.length(); i < len / 2; i++) {
             char c = text.charAt(i);
-            if (c == text.charAt(len-i-1) && !Character.isLetter(c)) {
+            if (c == text.charAt(len - i - 1) && !Character.isLetter(c)) {
               quote.append(c);
             }
-            else break;
+            else {
+              break;
+            }
           }
 
           boolean isQuoted = quote.length() > 0;
@@ -73,7 +84,8 @@ public final class ShuffleNamesAction extends AnAction {
               (isNumber = text.matches("[0-9]+"))) {
             String replacement = map.get(text);
             if (replacement == null) {
-              split.addAll(Arrays.asList((isQuoted? text.substring(quote.length(), text.length()-quote.length()).replace("''", "") : text).split("")));
+              split.addAll(Arrays.asList(
+                (isQuoted ? text.substring(quote.length(), text.length() - quote.length()).replace("''", "") : text).split("")));
               if (!isNumber) {
                 for (ListIterator<String> it = split.listIterator(); it.hasNext(); ) {
                   String s = it.next();
@@ -84,7 +96,7 @@ public final class ShuffleNamesAction extends AnAction {
                   int c = s.charAt(0);
                   int cap = c & 32;
                   c &= ~cap;
-                  c = (char) ((c >= 'A') && (c <= 'Z') ? ((c - 'A' + 7) % 26 + 'A') : c) | cap;
+                  c = (char)((c >= 'A') && (c <= 'Z') ? ((c - 'A' + 7) % 26 + 'A') : c) | cap;
                   it.set(String.valueOf((char)c));
                 }
               }

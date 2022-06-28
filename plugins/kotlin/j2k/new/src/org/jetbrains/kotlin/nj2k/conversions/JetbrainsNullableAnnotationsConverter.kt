@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
@@ -33,12 +33,11 @@ class JetbrainsNullableAnnotationsConverter(context: NewJ2kConverterContext) : R
     }
 
     private fun JKAnnotation.annotationNullability(): Nullability? =
-        when {
-            classSymbol.fqName in nullableAnnotationsFqNames -> Nullability.Nullable
-            classSymbol.fqName in notNullAnnotationsFqNames -> Nullability.NotNull
-            else -> null
+        when (classSymbol.fqName) {
+          in nullableAnnotationsFqNames -> Nullability.Nullable
+          in notNullAnnotationsFqNames -> Nullability.NotNull
+          else -> null
         }
-
 
     companion object {
         val nullableAnnotationsFqNames =

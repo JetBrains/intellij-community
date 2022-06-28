@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -37,7 +37,7 @@ public final class Attachment {
   }
 
   public Attachment(@NotNull String path, @NotNull String content) {
-    this(path, content, content.getBytes(StandardCharsets.UTF_8), null);
+    this(path, content, null, null);
   }
 
   public Attachment(@NotNull String path, byte @NotNull [] bytes, @NotNull String displayText) {
@@ -53,7 +53,6 @@ public final class Attachment {
   }
 
   private Attachment(String path, String displayText, byte @Nullable [] bytes, @Nullable Path temporaryFile) {
-    assert bytes != null || temporaryFile != null;
     myPath = path;
     myDisplayText = displayText;
     myBytes = bytes;
@@ -90,6 +89,10 @@ public final class Attachment {
       }
     }
 
+    if (myDisplayText != null) {
+      return myDisplayText.getBytes(StandardCharsets.UTF_8);
+    }
+
     return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
@@ -105,6 +108,10 @@ public final class Attachment {
       catch (IOException e) {
         LOG.error("Failed to read attachment content from temp. file " + myTemporaryFile, e);
       }
+    }
+
+    if (myDisplayText != null) {
+      return new ByteArrayInputStream(myDisplayText.getBytes(StandardCharsets.UTF_8));
     }
 
     return new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY);

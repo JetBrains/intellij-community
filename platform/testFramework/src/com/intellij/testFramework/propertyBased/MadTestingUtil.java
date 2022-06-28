@@ -415,19 +415,14 @@ public final class MadTestingUtil {
      */
     for (boolean roulette : new boolean[]{true, false}) {
       out.println("Testing " + (roulette ? "roulette" : "plain") + " generator");
-      ObjectIntHashMap<String> fileMap = new ObjectIntHashMap<>();
+      ObjectIntMap<String> fileMap = new ObjectIntHashMap<>();
       Generator<File> generator = randomFiles(root.getPath(), filter, roulette);
       MadTestingAction action = env -> {
         long lastTime = System.nanoTime(), startTime = lastTime;
         for (int iteration = 1; iteration <= iterationCount; iteration++) {
           File file = env.generateValue(generator, null);
           assert filter.accept(file);
-          if (!fileMap.containsKey(file.getPath())) {
-            fileMap.put(file.getPath(), 1);
-          }
-          else {
-            fileMap.increment(file.getPath());
-          }
+          fileMap.put(file.getPath(), fileMap.getOrDefault(file.getPath(), 0)+1);
           long curTime = System.nanoTime();
           if (iteration <= 10) {
             out.print("#" + iteration + " = " + (curTime - lastTime) / 1_000_000 + "ms");
@@ -450,7 +445,7 @@ public final class MadTestingUtil {
   }
 
   @NotNull
-  private static String getHistogramReport(ObjectIntHashMap<String> fileMap, int iteration) {
+  private static String getHistogramReport(ObjectIntMap<String> fileMap, int iteration) {
     long[] stops = {1, 2, 3, 5, 10, 20, 30, 50, 100, 200, Long.MAX_VALUE};
     int[] histogram = new int[stops.length];
     for (ObjectIntMap.Entry<String> entry : fileMap.entries()) {

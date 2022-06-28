@@ -55,6 +55,33 @@ class JBCefBrowserJsCallTest {
     doTest("""2+2""", "4")
   }
 
+  // IDEA-290310, IDEA-292709
+  @Test
+  fun `obtain a stringified JSON with emoji`() {
+    doTest(javaScript = """
+          let json = JSON.stringify({ "a": "foo", "cookie": "🍪"})
+          return json;
+        """.trimIndent(), expectedResult = """{"a":"foo","cookie":"🍪"}""")
+  }
+
+  // IDEA-290310, IDEA-292709
+  @Test
+  fun `obtain a string with emoji`() {
+    doTest(javaScript = """
+          let emoji = `🍪`
+          return emoji;
+        """.trimIndent(), expectedResult = """🍪""")
+  }
+
+  // IDEA-288813
+  @Test
+  fun `obtain a string decoded from base64`() {
+    doTest(javaScript = """
+          let decoded_string = atob("U29tZSB0ZXh0INC4INC60LDQutC+0Lkt0YLQviDRgtC10LrRgdGC");
+          return decoded_string;
+        """.trimIndent(), expectedResult = """Some text и какой-то текст""")
+  }
+
   @Test
   fun `execute multiline expression`() {
     val js = """

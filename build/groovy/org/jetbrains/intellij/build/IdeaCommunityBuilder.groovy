@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 
+import java.nio.file.Path
 import java.nio.file.Paths
 
 @CompileStatic
@@ -11,7 +13,7 @@ final class IdeaCommunityBuilder {
   private final BuildContext buildContext
 
   IdeaCommunityBuilder(String home, BuildOptions options = new BuildOptions(), String projectHome = home) {
-    buildContext = BuildContext.createContext(home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY, options)
+    this(BuildContextImpl.createContext(home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY, options))
   }
 
   IdeaCommunityBuilder(BuildContext buildContext) {
@@ -27,7 +29,7 @@ final class IdeaCommunityBuilder {
 
   void buildFullUpdater() {
     def tasks = BuildTasks.create(buildContext)
-    tasks.compileModules(["updater"])
+    tasks.compileModules(List.of("updater"))
     tasks.buildFullUpdaterJar()
   }
 
@@ -41,11 +43,10 @@ final class IdeaCommunityBuilder {
     def tasks = BuildTasks.create(buildContext)
     tasks.buildDistributions()
     buildContext.messages.block("Build standalone JPS") {
-      String jpsArtifactDir = "$buildContext.paths.artifacts/jps"
-      new CommunityStandaloneJpsBuilder(buildContext).processJpsLayout(jpsArtifactDir, buildContext.fullBuildNumber, new ProjectStructureMapping(),
-                                                                       true, {})
+      Path jpsArtifactDir = buildContext.paths.artifactDir.resolve("jps")
+      new CommunityStandaloneJpsBuilder(buildContext)
+        .processJpsLayout(jpsArtifactDir, buildContext.fullBuildNumber, new ProjectStructureMapping(), true, {})
     }
-    tasks.buildUpdaterJar()
   }
 
   void buildUnpackedDistribution(String targetDirectory) {

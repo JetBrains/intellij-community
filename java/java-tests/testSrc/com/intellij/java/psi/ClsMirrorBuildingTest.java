@@ -59,6 +59,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testRecordTestCustomHash() { doTest(); }
   public void testInheritFromDollar() { doTest(); }
   public void testInheritFromDollar$1() { doTest(); }
+  public void testSealed() { doTest(); }
 
   public void testTextPsiMismatch() {
     CommonCodeStyleSettings.IndentOptions options = CodeStyle.getSettings(getProject()).getIndentOptions(JavaFileType.INSTANCE);

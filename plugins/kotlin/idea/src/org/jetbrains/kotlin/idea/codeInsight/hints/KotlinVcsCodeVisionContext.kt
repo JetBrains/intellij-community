@@ -16,6 +16,7 @@ class KotlinVcsCodeVisionContext : VcsCodeVisionLanguageContext {
             is KtNamedFunction -> element.isTopLevel || isAcceptedClassOrObject(element.containingClassOrObject)
             is KtSecondaryConstructor -> true
             is KtClassInitializer -> true
+            is KtProperty -> element.accessors.isNotEmpty()
             else -> false
         }
     }

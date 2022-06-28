@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+# Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 # ---------------------------------------------------------------------
 # __product_full__ startup script.
@@ -140,7 +140,7 @@ __class_path__
 # ---------------------------------------------------------------------
 IFS="$(printf '\n\t')"
 # shellcheck disable=SC2086
-"$JAVA_BIN" \
+exec "$JAVA_BIN" \
   -classpath "$CLASS_PATH" \
   ${VM_OPTIONS} \
   "-XX:ErrorFile=$HOME/java_error_in___vm_options___%p.log" \

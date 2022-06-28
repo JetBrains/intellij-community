@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -50,7 +50,7 @@ fun getDataFlowAwareTypes(
     if (originalType == null) return emptyList()
     val dataFlowInfo = bindingContext.getDataFlowInfoAfter(expression)
 
-    val dataFlowValueFactory = expression.getResolutionFacade().getDataFlowValueFactory()
+    val dataFlowValueFactory = expression.getResolutionFacade().dataFlowValueFactory
     val expressionType = bindingContext.getType(expression) ?: return listOf(originalType)
     val dataFlowValue = dataFlowValueFactory.createDataFlowValue(
         expression, expressionType, bindingContext, expression.getResolutionFacade().moduleDescriptor

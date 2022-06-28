@@ -2,11 +2,13 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtDoWhileExpression
 import org.jetbrains.uast.UDoWhileExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 
+@ApiStatus.Internal
 class KotlinUDoWhileExpression(
     override val sourcePsi: KtDoWhileExpression,
     givenParent: UElement?

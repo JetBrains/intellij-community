@@ -575,19 +575,20 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       return myFromUnknown;
     }
 
+    public boolean isAlwaysNull(@NotNull Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
+      PsiExpression expression = PsiUtil.skipParenthesizedExprDown(getDereferencedExpression());
+      return expression != null &&
+             (ExpressionUtils.isNullLiteral(expression) || expressions.get(expression) == DataFlowInspectionBase.ConstantResult.NULL);
+    }
+
     @NotNull
-    public @InspectionMessage String getMessage(Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
+    public @InspectionMessage String getMessage(@NotNull Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
       if (myKind.myAlwaysNullMessage == null || myKind.myNormalMessage == null) {
         throw new IllegalStateException("This problem kind has no message associated: " + myKind);
       }
       String suffix = myFromUnknown ? JavaAnalysisBundle.message("dataflow.message.unknown.nullability") : "";
-      PsiExpression expression = PsiUtil.skipParenthesizedExprDown(getDereferencedExpression());
-      if (expression != null) {
-        if (ExpressionUtils.isNullLiteral(expression) || expressions.get(expression) == DataFlowInspectionBase.ConstantResult.NULL) {
-          return myKind.myAlwaysNullMessage.get() + suffix;
-        }
-      }
-      return myKind.myNormalMessage.get() + suffix;
+      Supplier<@Nls String> msg = isAlwaysNull(expressions) ? myKind.myAlwaysNullMessage : myKind.myNormalMessage;
+      return msg.get() + suffix;
     }
 
     @NotNull

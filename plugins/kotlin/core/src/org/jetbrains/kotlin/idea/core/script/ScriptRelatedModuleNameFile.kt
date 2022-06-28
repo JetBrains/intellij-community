@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.util.*
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import java.io.DataInputStream
 import java.io.DataOutputStream
 
@@ -18,10 +18,12 @@ class ScriptRelatedModuleNameFile: AbstractFileAttributePropertyService<String>(
     write = DataOutputStream::writeString
 ) {
     companion object {
-        operator fun get(project: Project, file: VirtualFile) = project.getServiceSafe<ScriptRelatedModuleNameFile>()[file]
+        operator fun get(project: Project, file: VirtualFile): String? {
+            return project.service<ScriptRelatedModuleNameFile>()[file]
+        }
 
         operator fun set(project: Project, file: VirtualFile, newValue: String?) {
-            project.getServiceSafe<ScriptRelatedModuleNameFile>()[file] = newValue
+            project.service<ScriptRelatedModuleNameFile>()[file] = newValue
         }
     }
 }

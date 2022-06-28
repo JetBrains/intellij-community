@@ -3,6 +3,7 @@ package com.intellij.ide.ui.customization
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.customization.CustomizeActionGroupPanel.Companion.showDialog
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil
@@ -243,9 +244,13 @@ class CustomizeActionGroupPanel(
 
   private class MyListCellRender : ColoredListCellRenderer<Any>() {
     override fun customizeCellRenderer(list: JList<out Any>, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
-      CustomizationUtil.acceptObjectIconAndText(value) { t, i ->
-        SpeedSearchUtil.appendFragmentsForSpeedSearch(list, t, SimpleTextAttributes.REGULAR_ATTRIBUTES, selected, this)
-        icon = i
+      CustomizationUtil.acceptObjectIconAndText(value) { text, description, icon ->
+        SpeedSearchUtil.appendFragmentsForSpeedSearch(list, text, SimpleTextAttributes.REGULAR_ATTRIBUTES, selected, this)
+        if (description != null) {
+          append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false)
+          append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        }
+        setIcon(icon)
       }
     }
   }

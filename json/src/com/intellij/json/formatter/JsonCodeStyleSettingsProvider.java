@@ -54,4 +54,9 @@ public class JsonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
     return new JsonCodeStyleSettings(settings);
   }
+
+  @Override
+  public @Nullable Language getLanguage() {
+    return JsonLanguage.INSTANCE;
+  }
 }

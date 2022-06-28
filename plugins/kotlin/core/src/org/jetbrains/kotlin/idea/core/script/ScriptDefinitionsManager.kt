@@ -9,6 +9,7 @@ import com.intellij.ide.script.IdeConsoleRootType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -31,7 +32,6 @@ import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfig
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.util.writeWithCheckCanceled
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import org.jetbrains.kotlin.script.ScriptTemplatesProvider
@@ -301,7 +301,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     companion object {
         fun getInstance(project: Project): ScriptDefinitionsManager =
-            project.getServiceSafe<ScriptDefinitionProvider>() as ScriptDefinitionsManager
+            project.service<ScriptDefinitionProvider>() as ScriptDefinitionsManager
     }
 }
 

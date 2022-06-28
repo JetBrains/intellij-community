@@ -6,10 +6,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class ObjectUtilsRt {
   /**
-   * They promise in http://mail.openjdk.java.net/pipermail/core-libs-dev/2018-February/051312.html that
-   * the object reference won't be removed by JIT and GC-ed until this call.
+   * They promised in <a href="http://mail.openjdk.java.net/pipermail/core-libs-dev/2018-February/051312.html">core-dev mailing list</a> that
+   * the object reference won't be removed by JIT and GC-ed until this method execution is finished.
    * <p>
-   * In Java 11 compatible modules use {@link java.lang.ref.Reference#reachabilityFence(Object)} instead.
+   * In Java 9+ compatible modules use {@link java.lang.ref.Reference#reachabilityFence(Object)} instead.
    */
   @ReviseWhenPortedToJDK("9")
   public static void reachabilityFence(@SuppressWarnings("unused") @NotNull Object o) { }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,11 +49,13 @@ public class PackageInMultipleModulesInspection extends PackageGlobalInspection 
     final PsiPackage aPackage = ReadAction.compute(() -> JavaPsiFacade.getInstance(project).findPackage(refPackage.getQualifiedName()));
     if (aPackage == null)  return null;
     final PsiFile @NotNull [] files = ReadAction.compute(() -> aPackage.getFiles(GlobalSearchScope.projectScope(project)));
-    final Set<Module> modules = new HashSet<>();
+    final Set<@NotNull Module> modules = new HashSet<>();
     final ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     for (PsiFile file : files) {
       final Module module = index.getModuleForFile(file.getVirtualFile());
-      modules.add(module);
+      if (module != null) {
+        modules.add(module);
+      }
     }
     final int moduleCount = modules.size();
     if (moduleCount <= 1) {
@@ -63,17 +65,18 @@ public class PackageInMultipleModulesInspection extends PackageGlobalInspection 
     final String errorString;
     if (moduleCount == 2) {
       errorString = InspectionGadgetsBundle.message(
-        "package.in.multiple.modules.problem.descriptor2", refPackage.getQualifiedName(), moduleList.get(0), moduleList.get(1));
+        "package.in.multiple.modules.problem.descriptor2", refPackage.getQualifiedName(),
+        moduleList.get(0).getName(), moduleList.get(1).getName());
     }
     else if (moduleCount == 3) {
       errorString = InspectionGadgetsBundle.message(
         "package.in.multiple.modules.problem.descriptor3", aPackage.getQualifiedName(),
-        moduleList.get(0), moduleList.get(1), moduleList.get(2));
+        moduleList.get(0).getName(), moduleList.get(1).getName(), moduleList.get(2).getName());
     }
     else {
       errorString = InspectionGadgetsBundle.message(
         "package.in.multiple.modules.problem.descriptor.many", aPackage.getQualifiedName(),
-        moduleList.get(0), moduleList.get(1), moduleCount - 2);
+        moduleList.get(0).getName(), moduleList.get(1).getName(), moduleCount - 2);
     }
 
     return new CommonProblemDescriptor[]{

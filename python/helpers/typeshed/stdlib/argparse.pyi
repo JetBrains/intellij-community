@@ -1,17 +1,76 @@
 import sys
-from typing import IO, Any, Callable, Generator, Generic, Iterable, NoReturn, Pattern, Protocol, Sequence, TypeVar, overload
+from typing import (
+    IO,
+    Any,
+    Callable,
+    Generator,
+    Generic,
+    Iterable,
+    NewType,
+    NoReturn,
+    Pattern,
+    Protocol,
+    Sequence,
+    TypeVar,
+    overload,
+)
+from typing_extensions import Literal
+
+if sys.version_info >= (3, 9):
+    __all__ = [
+        "ArgumentParser",
+        "ArgumentError",
+        "ArgumentTypeError",
+        "BooleanOptionalAction",
+        "FileType",
+        "HelpFormatter",
+        "ArgumentDefaultsHelpFormatter",
+        "RawDescriptionHelpFormatter",
+        "RawTextHelpFormatter",
+        "MetavarTypeHelpFormatter",
+        "Namespace",
+        "Action",
+        "ONE_OR_MORE",
+        "OPTIONAL",
+        "PARSER",
+        "REMAINDER",
+        "SUPPRESS",
+        "ZERO_OR_MORE",
+    ]
+else:
+    __all__ = [
+        "ArgumentParser",
+        "ArgumentError",
+        "ArgumentTypeError",
+        "FileType",
+        "HelpFormatter",
+        "ArgumentDefaultsHelpFormatter",
+        "RawDescriptionHelpFormatter",
+        "RawTextHelpFormatter",
+        "MetavarTypeHelpFormatter",
+        "Namespace",
+        "Action",
+        "ONE_OR_MORE",
+        "OPTIONAL",
+        "PARSER",
+        "REMAINDER",
+        "SUPPRESS",
+        "ZERO_OR_MORE",
+    ]
 
 _T = TypeVar("_T")
 _ActionT = TypeVar("_ActionT", bound=Action)
 _ArgumentParserT = TypeVar("_ArgumentParserT", bound=ArgumentParser)
 _N = TypeVar("_N")
 
-ONE_OR_MORE: str
-OPTIONAL: str
-PARSER: str
-REMAINDER: str
-SUPPRESS: str
-ZERO_OR_MORE: str
+ONE_OR_MORE: Literal["+"]
+OPTIONAL: Literal["?"]
+PARSER: Literal["A..."]
+REMAINDER: Literal["..."]
+_SUPPRESS_T = NewType("_SUPPRESS_T", str)
+SUPPRESS: _SUPPRESS_T | str  # not using Literal because argparse sometimes compares SUPPRESS with is
+# the | str is there so that foo = argparse.SUPPRESS; foo = "test" checks out in mypy
+ZERO_OR_MORE: Literal["*"]
 _UNRECOGNIZED_ARGS_ATTR: str  # undocumented
 
 class ArgumentError(Exception):
@@ -47,8 +106,11 @@ class _ActionsContainer:
     def add_argument(
         self,
         *name_or_flags: str,
-        action: str | type[Action] = ...,
-        nargs: int | str = ...,
+        action: Literal[
+            "store", "store_const", "store_true", "store_false", "append", "append_const", "count", "help", "version", "extend"
+        ]
+        | type[Action] = ...,
+        nargs: int | Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="] | _SUPPRESS_T = ...,
         const: Any = ...,
         default: Any = ...,
         type: Callable[[str], _T] | FileType = ...,
@@ -322,8 +384,9 @@ if sys.version_info >= (3, 9):
 class Namespace(_AttributeHolder):
     def __init__(self, **kwargs: Any) -> None: ...
     def __getattr__(self, name: str) -> Any: ...
-    def __setattr__(self, name: str, value: Any) -> None: ...
+    def __setattr__(self, __name: str, __value: Any) -> None: ...
     def __contains__(self, key: str) -> bool: ...
+    def __eq__(self, other: object) -> bool: ...
 
 class FileType:
     # undocumented

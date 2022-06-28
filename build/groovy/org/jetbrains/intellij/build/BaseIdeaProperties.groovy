@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BaseLayout
+import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PlatformLayout
-import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
 import java.nio.file.Files
@@ -111,11 +111,11 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/junit/lib/junit5-rt.jar"                       : "1.8",
     "plugins/gradle/lib/gradle-tooling-extension-api.jar"   : "1.6",
     "plugins/gradle/lib/gradle-tooling-extension-impl.jar"  : "1.6",
-    "plugins/maven/lib/maven-server-api.jar"                : "1.6",
-    "plugins/maven/lib/maven2-server.jar"                   : "1.6",
-    "plugins/maven/lib/maven3-server-common.jar"            : "1.6",
-    "plugins/maven/lib/maven30-server.jar"                  : "1.6",
-    "plugins/maven/lib/maven3-server.jar"                   : "1.6",
+    "plugins/maven/lib/maven-server-api.jar"                : "1.8",
+    "plugins/maven/lib/maven2-server.jar"                   : "1.8",
+    "plugins/maven/lib/maven3-server-common.jar"            : "1.8",
+    "plugins/maven/lib/maven30-server.jar"                  : "1.8",
+    "plugins/maven/lib/maven3-server.jar"                   : "1.8",
     "plugins/maven/lib/artifact-resolver-m2.jar"            : "1.6",
     "plugins/maven/lib/artifact-resolver-m3.jar"            : "1.6",
     "plugins/maven/lib/artifact-resolver-m31.jar"           : "1.6",
@@ -158,9 +158,9 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
         //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
         layout.withModule("intellij.java.rt", "idea_rt.jar")
         // for compatibility with users' projects which take these libraries from IDEA installation
-        layout.withProjectLibrary("jetbrains-annotations", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
+        layout.withProjectLibrary("jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
         // for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
-        layout.withProjectLibrary("JUnit3", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
+        layout.withProjectLibrary("JUnit3", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
         layout.withProjectLibrary("commons-net")
 
         layout.withoutProjectLibrary("Ant")
@@ -181,7 +181,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
 
-    isAntRequired = true
+    antRequired = true
   }
 
   @Override

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,9 @@ import static com.intellij.history.integration.LocalHistoryUtil.findRevisionInde
 
 public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   private static final String DAYS_TO_KEEP = "localHistory.daysToKeep";
+
   private int myDaysToKeep = AdvancedSettings.getInt(DAYS_TO_KEEP);
+  private boolean myDisabled;
   private ChangeList myChangeList;
   private LocalHistoryFacade myVcs;
   private IdeaGateway myGateway;
@@ -55,6 +58,13 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   private void init() {
     Application app = ApplicationManager.getApplication();
     if (!app.isUnitTestMode() && app.isHeadlessEnvironment()) {
+      return;
+    }
+
+    // too early for Registry
+    if (SystemProperties.getBooleanProperty("lvcs.disable.local.history", false)) {
+      LocalHistoryLog.LOG.warn("Local history is disabled");
+      myDisabled = true;
       return;
     }
 
@@ -187,6 +197,10 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     return isInitialized.get();
   }
 
+  public boolean isDisabled() {
+    return myDisabled;
+  }
+
   @Nullable
   public LocalHistoryFacade getFacade() {
     return myVcs;
@@ -197,7 +211,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     return myGateway;
   }
 
-  private void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, @NotNull LabelImpl impl) throws LocalHistoryException{
+  private void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, @NotNull LabelImpl impl) throws LocalHistoryException {
     HistoryDialogModel dirHistoryModel = f.isDirectory()
                                          ? new DirectoryHistoryDialogModel(project, myGateway, myVcs, f)
                                          : new EntireFileHistoryDialogModel(project, myGateway, myVcs, f);

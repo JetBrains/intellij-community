@@ -20,9 +20,9 @@ abstract class SavedPatchesEditorDiffPreview(diffProcessor: SavedPatchesDiffPrev
     Disposer.register(diffProcessor, Disposable { lastFocusOwner = null })
   }
 
-  override fun openPreview(requestFocus: Boolean): Boolean {
+  override fun openPreview(focusEditor: Boolean): Boolean {
     lastFocusOwner = IdeFocusManager.getInstance(project).focusOwner
-    return super.openPreview(requestFocus)
+    return super.openPreview(focusEditor)
   }
 
   override fun returnFocusToTree() {
@@ -31,7 +31,7 @@ abstract class SavedPatchesEditorDiffPreview(diffProcessor: SavedPatchesDiffPrev
     focusMainComponent(focusOwner)
   }
 
-  override fun updateDiffAction(event: AnActionEvent) {
+  override fun updateAvailability(event: AnActionEvent) {
     event.presentation.isVisible = true
     event.presentation.isEnabled = !changeViewProcessor.allChanges.isEmpty()
   }

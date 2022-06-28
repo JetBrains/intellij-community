@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
+import org.jetbrains.kotlin.asJava.isSyntheticValuesOrValueOfMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.*
@@ -60,7 +61,7 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -664,6 +665,8 @@ fun createJavaClass(klass: KtClass, targetClass: PsiClass?, forcePlainClass: Boo
     }
 
     for (method in template.methods) {
+        if (isSyntheticValuesOrValueOfMethod(method)) continue
+
         val hasParams = method.parameterList.parametersCount > 0
         val needSuperCall = !template.isEnum &&
                 (template.superClass?.constructors ?: PsiMethod.EMPTY_ARRAY).all {
@@ -803,9 +806,7 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
         }
     }
 
-    if (commonCount == 0) return originalList.listReplacer(newList)
-
-    val lastOriginalParameter = oldParameters.last()
+    if (commonCount == 0 && !keepComments) return originalList.listReplacer(newList)
 
     if (oldCount > commonCount) {
         if (keepComments) {
@@ -820,9 +821,10 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
                 oldParameter.delete()
             }
         } else {
-            originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, lastOriginalParameter)
+            originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, oldParameters.last())
         }
     } else if (newCount > commonCount) {
+        val lastOriginalParameter = oldParameters.last()
         val psiBeforeLastParameter = lastOriginalParameter.prevSibling
         val withMultiline =
             (psiBeforeLastParameter is PsiWhiteSpace || psiBeforeLastParameter is PsiComment) && psiBeforeLastParameter.textContains('\n')

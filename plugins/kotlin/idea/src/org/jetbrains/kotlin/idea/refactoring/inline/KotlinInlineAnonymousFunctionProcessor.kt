@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.codeInliner.CodeInliner
 import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
 import org.jetbrains.kotlin.idea.intentions.LambdaToAnonymousFunctionIntention
 import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -82,7 +82,7 @@ class KotlinInlineAnonymousFunctionProcessor(
                 KotlinBundle.message("refactoring.the.invocation.cannot.be.resolved")
             )
 
-            val languageVersionSettings = invokeCallExpression.getResolutionFacade().getLanguageVersionSettings()
+            val languageVersionSettings = invokeCallExpression.getResolutionFacade().languageVersionSettings
             CodeInliner(
                 languageVersionSettings,
                 usageExpression = null,

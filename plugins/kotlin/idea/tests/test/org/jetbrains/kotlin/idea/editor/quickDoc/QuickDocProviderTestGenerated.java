@@ -153,6 +153,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/MethodFromStdLib.kt");
     }
 
+    @TestMetadata("OnClassDeclarationWithComplexKDoc.kt")
+    public void testOnClassDeclarationWithComplexKDoc() throws Exception {
+        runTest("testData/editor/quickDoc/OnClassDeclarationWithComplexKDoc.kt");
+    }
+
     @TestMetadata("OnClassDeclarationWithNoPackage.kt")
     public void testOnClassDeclarationWithNoPackage() throws Exception {
         runTest("testData/editor/quickDoc/OnClassDeclarationWithNoPackage.kt");
@@ -276,6 +281,16 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("OnMethodUsageWithTypeParameter.kt")
     public void testOnMethodUsageWithTypeParameter() throws Exception {
         runTest("testData/editor/quickDoc/OnMethodUsageWithTypeParameter.kt");
+    }
+
+    @TestMetadata("OnPrimaryConstructorAnnotatedWithConstructorTag.kt")
+    public void testOnPrimaryConstructorAnnotatedWithConstructorTag() throws Exception {
+        runTest("testData/editor/quickDoc/OnPrimaryConstructorAnnotatedWithConstructorTag.kt");
+    }
+
+    @TestMetadata("OnPropertyUsageDocumentedWithPropertyTag.kt")
+    public void testOnPropertyUsageDocumentedWithPropertyTag() throws Exception {
+        runTest("testData/editor/quickDoc/OnPropertyUsageDocumentedWithPropertyTag.kt");
     }
 
     @TestMetadata("renderAnnotatedExtensionFunctionType.kt")

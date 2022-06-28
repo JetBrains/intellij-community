@@ -15,15 +15,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * @author Eugene.Kudelevsky
- */
 @State(
   name = "MultiLanguageDuplocatorSettings",
   storages = @Storage("duplocatorSettings.xml"),
   category = SettingsCategory.CODE
 )
-public class MultilanguageDuplocatorSettings implements PersistentStateComponent<Element> {
+public final class MultilanguageDuplocatorSettings implements PersistentStateComponent<Element> {
   private final Map<String, DefaultDuplocatorState> mySettingsMap = new TreeMap<>();
 
   public static MultilanguageDuplocatorSettings getInstance() {

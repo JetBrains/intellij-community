@@ -2,41 +2,59 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.psi.PsiFileSystemItem
 
-class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java) {
+internal class SearchEverywhereVcsFileFeaturesProvider
+  : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java) {
   companion object {
-    private const val IS_IGNORED_DATA_KEY = "isIgnored"
-    private const val IS_CHANGED_DATA_KEY = "isChanged"
-    private const val FILE_STATUS_DATA_KEY = "fileStatus"
+    internal val IS_IGNORED_DATA_KEY = EventFields.Boolean("isIgnored")
+    internal val IS_CHANGED_DATA_KEY = EventFields.Boolean("isChanged")
+    internal val FILE_STATUS_DATA_KEY = EventFields.String(
+      "fileStatus",
+      listOf(
+        "NOT_CHANGED", "NOT_CHANGED_IMMEDIATE", "NOT_CHANGED_RECURSIVE",
+        "DELETED", "MODIFIED", "ADDED", "MERGED", "UNKNOWN",
+        "IDEA_FILESTATUS_IGNORED", "HIJACKED",
+        "IDEA_FILESTATUS_MERGED_WITH_CONFLICTS", "IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS",
+        "IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS", "IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM",
+        "SWITCHED", "OBSOLETE", "SUPPRESSED"
+      )
+    )
+  }
+
+  override fun getFeaturesDeclarations(): List<EventField<*>> {
+    return listOf(IS_IGNORED_DATA_KEY, IS_CHANGED_DATA_KEY, FILE_STATUS_DATA_KEY)
   }
 
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): Map<String, Any> {
+                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
     val item = when (element) {
-      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as? PsiFileSystemItem) ?: return emptyMap()
+      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as? PsiFileSystemItem) ?: return emptyList()
       is PsiFileSystemItem -> element
-      else -> return emptyMap()
+      else -> return emptyList()
     }
 
     return getFileFeatures(item)
   }
 
-  private fun getFileFeatures(item: PsiFileSystemItem): Map<String, Any> {
+  private fun getFileFeatures(item: PsiFileSystemItem): List<EventPair<*>> {
     if (item.isDirectory) {
-      return emptyMap()
+      return emptyList()
     }
 
     val changeListManager = ChangeListManager.getInstance(item.project)
 
-    return hashMapOf(
-      IS_CHANGED_DATA_KEY to changeListManager.isFileAffected(item.virtualFile),
-      IS_IGNORED_DATA_KEY to changeListManager.isIgnoredFile(item.virtualFile),
-      FILE_STATUS_DATA_KEY to changeListManager.getStatus(item.virtualFile).id
+    return arrayListOf(
+      IS_CHANGED_DATA_KEY.with(changeListManager.isFileAffected(item.virtualFile)),
+      IS_IGNORED_DATA_KEY.with(changeListManager.isIgnoredFile(item.virtualFile)),
+      FILE_STATUS_DATA_KEY.with(changeListManager.getStatus(item.virtualFile).id)
     )
   }
 }

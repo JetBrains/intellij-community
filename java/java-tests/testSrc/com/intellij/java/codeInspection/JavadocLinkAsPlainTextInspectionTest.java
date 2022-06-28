@@ -4,20 +4,25 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.javaDoc.JavadocLinkAsPlainTextInspection;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.vcs.IssueNavigationConfiguration;
+import com.intellij.openapi.vcs.IssueNavigationLink;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class JavadocLinkAsPlainTextInspectionTest extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/inspection/javadocLinkAsPlainText/";
-
-
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new JavadocLinkAsPlainTextInspection()};
   }
 
+  @NotNull
+  private String getFilePath() {
+    return "/inspection/javadocLinkAsPlainText/" + getTestName(false) + ".java";
+  }
+
   private void doTest() {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+    doTest(getFilePath(), true, false);
   }
 
   public void testLeadingAsterisks() {
@@ -26,5 +31,18 @@ public class JavadocLinkAsPlainTextInspectionTest extends LightDaemonAnalyzerTes
 
   public void testNoLeadingAsterisks() {
     doTest();
+  }
+
+  public void testIssueLinksInJavaDoc() {
+    IssueNavigationConfiguration configuration = IssueNavigationConfiguration.getInstance(getProject());
+    List<IssueNavigationLink> oldLinks = configuration.getLinks();
+    try {
+      configuration.setLinks(List.of(new IssueNavigationLink("IDEA-\\d+", "https://youtrack.jetbrains.com/issue/$0")));
+      configureByFile(getFilePath());
+      doTestConfiguredFile(true, false, null);
+    }
+    finally {
+      configuration.setLinks(oldLinks);
+    }
   }
 }

@@ -33,6 +33,4 @@ public interface JBTerminalWidgetListener {
   }
 
   default void gotoNextSplitTerminal(boolean forward) {}
-
-  default void onTerminalRenamed() {}
 }

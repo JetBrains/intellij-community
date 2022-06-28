@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.script.IDE;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
@@ -93,7 +94,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
              Collection<LineMarkerProvider> providers = getMarkerProviders(language, myProject);
              List<LineMarkerProvider> providersList = new ArrayList<>(providers);
 
-             queryProviders(elements.inside, root, providersList, (element, info) -> {
+             queryProviders(elements.inside, root, providersList, (__, info) -> {
                lineMarkers.add(info);
                ApplicationManager.getApplication().invokeLater(() -> {
                  if (isValid()) {
@@ -101,7 +102,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
                  }
                }, myProject.getDisposed());
              });
-             queryProviders(elements.outside, root, providersList, (element, info) -> lineMarkers.add(info));
+             queryProviders(elements.outside, root, providersList, (__, info) -> lineMarkers.add(info));
              return true;
            });
     }
@@ -152,10 +153,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
                                                        || settings.isEnabled((LineMarkerProviderDescriptor)provider));
   }
 
-  private static void queryProviders(@NotNull List<? extends PsiElement> elements,
-                                     @NotNull PsiFile containingFile,
-                                     @NotNull List<? extends LineMarkerProvider> providers,
-                                     @NotNull PairConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
+  private void queryProviders(@NotNull List<? extends PsiElement> elements,
+                              @NotNull PsiFile containingFile,
+                              @NotNull List<? extends LineMarkerProvider> providers,
+                              @NotNull PairConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Set<PsiFile> visitedInjectedFiles = new HashSet<>();
     //noinspection ForLoopReplaceableByForEach
@@ -179,6 +180,12 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
           continue;
         }
         if (info != null) {
+          if (info.endOffset > getDocument().getTextLength()) {
+            Exception exception = new IllegalStateException(provider + " (" + provider.getClass() + ")" +
+                        " generated invalid LineMarker " + info + " for element " + element + " (" + element.getClass() + ")." +
+                        " document length: " + getDocument().getTextLength());
+            LOG.error(PluginException.createByClass(exception, provider.getClass()));
+          }
           consumer.consume(element, info);
         }
       }
@@ -220,10 +227,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     }
   }
 
-  private static void queryLineMarkersForInjected(@NotNull PsiElement element,
-                                                  @NotNull PsiFile containingFile,
-                                                  @NotNull Set<? super PsiFile> visitedInjectedFiles,
-                                                  @NotNull PairConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
+  private void queryLineMarkersForInjected(@NotNull PsiElement element,
+                                           @NotNull PsiFile containingFile,
+                                           @NotNull Set<? super PsiFile> visitedInjectedFiles,
+                                           @NotNull PairConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(containingFile.getProject());
     if (manager.isInjectedFragment(containingFile)) return;
 

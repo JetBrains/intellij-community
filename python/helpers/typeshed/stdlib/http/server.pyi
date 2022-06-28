@@ -5,6 +5,11 @@ import sys
 from _typeshed import StrPath, SupportsRead, SupportsWrite
 from typing import Any, AnyStr, BinaryIO, ClassVar, Mapping, Sequence
 
+if sys.version_info >= (3, 7):
+    __all__ = ["HTTPServer", "ThreadingHTTPServer", "BaseHTTPRequestHandler", "SimpleHTTPRequestHandler", "CGIHTTPRequestHandler"]
+else:
+    __all__ = ["HTTPServer", "BaseHTTPRequestHandler", "SimpleHTTPRequestHandler", "CGIHTTPRequestHandler"]
+
 class HTTPServer(socketserver.TCPServer):
     server_name: str
     server_port: int

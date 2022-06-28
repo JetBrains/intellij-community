@@ -4,6 +4,7 @@ package com.intellij.toolWindow
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.MnemonicHelper.DISABLE_MNEMONIC_PROCESSING
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
@@ -49,6 +50,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
   init {
     isFocusable = false
     border = JBUI.Borders.empty(5, 5, 0, 5)
+    putClientProperty(DISABLE_MNEMONIC_PROCESSING, true)
     addActionListener {
       val id = toolWindow.id
       val manager = toolWindow.toolWindowManager
@@ -158,15 +160,10 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
       if (pressedPoint == null || isWithinDeadZone(e)) {
         return
       }
-      dragPane = findLayeredPane(e)
-      if (dragPane == null) {
-        return
-      }
-      val image = ToolWindowDragHelper.createDragImage(this) ?: return
+      dragPane = findLayeredPane(e) ?: return
+      val image = ToolWindowDragHelper.createDragImage(this)
       val dragButtonImage = object : JLabel(IconUtil.createImageIcon((image as Image))) {
-        override fun toString(): String {
-          return "Image for: " + this@StripeButton
-        }
+        override fun toString() = "Image for: " + this@StripeButton
       }
       this.dragButtonImage = dragButtonImage
       dragButtonImage.addMouseListener(object : MouseAdapter() {

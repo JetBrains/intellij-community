@@ -76,6 +76,21 @@
     <line>29</line>
     <description>Variable &lt;code&gt;i3&lt;/code&gt; is never used</description>
   </problem>
+  <problem>
+    <file>Lambda.java</file>
+    <line>38</line>
+    <description>Variable &lt;code&gt;r&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>Lambda.java</file>
+    <line>41</line>
+    <description>Variable &lt;code&gt;s&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>Lambda.java</file>
+    <line>42</line>
+    <description>Variable &lt;code&gt;t&lt;/code&gt; is never used</description>
+  </problem>
 
   <problem>
     <file>AnonymousClass.java</file>

@@ -86,5 +86,6 @@
     <orderEntry type="library" scope="TEST" name="Velocity" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper.rt" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
   </component>
 </module>

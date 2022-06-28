@@ -41,7 +41,7 @@ import static org.jetbrains.idea.maven.indices.MavenArchetypeManager.loadUserArc
 
 /**
  * Main api class for work with maven indices.
- *
+ * <p>
  * Get current index state, schedule update index list, check MavenId in index, add data to index.
  */
 public final class MavenIndicesManager implements Disposable {
@@ -128,7 +128,8 @@ public final class MavenIndicesManager implements Disposable {
 
     projectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
-      public void resolutionCompleted() {
+      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                  @Nullable NativeMavenProjectHolder nativeMavenProject) {
         scheduleUpdateIndicesList(null);
       }
     }, this);
@@ -167,6 +168,7 @@ public final class MavenIndicesManager implements Disposable {
 
   /**
    * Add artifact info to index async.
+   *
    * @param mavenId
    * @param artifactFile
    */
@@ -183,7 +185,8 @@ public final class MavenIndicesManager implements Disposable {
    * Schedule update all indices content async.
    */
   public void scheduleUpdateContentAll() {
-    myIndexUpdateManager.scheduleUpdateContent(myProject, ContainerUtil.map(myMavenIndices.getIndices(), MavenIndex::getRepositoryPathOrUrl));
+    myIndexUpdateManager.scheduleUpdateContent(myProject,
+                                               ContainerUtil.map(myMavenIndices.getIndices(), MavenIndex::getRepositoryPathOrUrl));
   }
 
   /**

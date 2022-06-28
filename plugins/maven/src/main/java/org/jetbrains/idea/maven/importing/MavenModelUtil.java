@@ -3,12 +3,14 @@ package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.text.VersionComparatorUtil;
+import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,8 +18,11 @@ import org.jetbrains.idea.maven.importing.tree.MavenJavaVersionHolder;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -195,6 +200,33 @@ public final class MavenModelUtil {
     if (isTestModule(moduleName)) {
       return StringUtil.trimEnd(moduleName, TEST_SUFFIX);
     }
+    return moduleName;
+  }
+
+  @NotNull
+  public static String getModuleName(@NotNull MavenProject mavenProject, @NotNull Project project) {
+    MavenProjectsTree projectsTree = MavenProjectsManager.getInstance(project).getProjectsTree();
+    return projectsTree != null ? getModuleName(mavenProject, projectsTree, new HashMap<>()) : StringUtils.EMPTY;
+  }
+
+  @NotNull
+  public static String getModuleName(@NotNull MavenProject project,
+                                      @NotNull MavenProjectsTree projectsTree,
+                                      @NotNull Map<MavenProject, String> moduleNameMap) {
+    String moduleName = moduleNameMap.get(project);
+    if (moduleName != null) return moduleName;
+    moduleName = project.getMavenId().getArtifactId();
+    if (moduleName == null) return StringUtils.EMPTY;
+    if (project.getParentId() != null) {
+      MavenProject parentProject = projectsTree.findProject(project.getParentId());
+      if (parentProject != null) {
+        String parentName = getModuleName(parentProject, projectsTree, moduleNameMap);
+        if (StringUtil.isNotEmpty(parentName)) {
+          moduleName = parentName + "." + moduleName;
+        }
+      }
+    }
+    moduleNameMap.put(project, moduleName);
     return moduleName;
   }
 }

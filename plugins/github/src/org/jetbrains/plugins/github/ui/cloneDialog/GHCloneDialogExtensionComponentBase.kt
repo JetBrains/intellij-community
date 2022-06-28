@@ -5,9 +5,9 @@ import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.dvcs.repo.ClonePathProvider
-import com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsBundle.message
+import com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.IdeActions
@@ -283,7 +283,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   }
 
   private fun loadUserDetails(account: GithubAccount,
-                              executor: GithubApiRequestExecutor.WithTokenAuth) {
+                              executor: GithubApiRequestExecutor) {
     progressManager.run(object : Task.Backgroundable(project, GithubBundle.message("progress.title.not.visible")) {
       lateinit var user: GithubAuthenticatedUser
       lateinit var iconProvider: GHAvatarIconsProvider
@@ -311,8 +311,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     })
   }
 
-  private fun loadRepositories(account: GithubAccount,
-                               executor: GithubApiRequestExecutor.WithTokenAuth) {
+  private fun loadRepositories(account: GithubAccount, executor: GithubApiRequestExecutor) {
     repositoriesByAccount.remove(account)
     errorsByAccount.remove(account)
 

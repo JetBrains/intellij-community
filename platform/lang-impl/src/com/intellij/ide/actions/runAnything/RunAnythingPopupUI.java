@@ -34,6 +34,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
@@ -45,15 +46,13 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -633,11 +633,25 @@ public class RunAnythingPopupUI extends BigPopupUI {
           myMainPanel.add(RunAnythingUtil.createTitle(" " + title, list.getBackground()), BorderLayout.NORTH);
         }
       }
-      JPanel wrapped = new JPanel(new BorderLayout());
-      wrapped.setBackground(bg);
+      SelectablePanel wrapped = SelectablePanel.wrap(cmp, list.getBackground());
+      wrapped.setSelectionColor(bg);
       wrapped.setForeground(foreground);
-      wrapped.setBorder(RENDERER_BORDER);
-      wrapped.add(cmp, BorderLayout.CENTER);
+      if (ExperimentalUI.isNewUI()) {
+        wrapped.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+        JBInsets insets = JBInsets.create(3, 0);
+        Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+        wrapped.setBorder(JBUI.Borders.empty(innerInsets.top + insets.top,
+                                             innerInsets.left,
+                                             innerInsets.bottom + insets.bottom,
+                                             innerInsets.right));
+        int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
+        //noinspection UseDPIAwareBorders
+        myMainPanel.setBorder(new EmptyBorder(0, leftRightInset, 0, leftRightInset));
+      }
+      else {
+        wrapped.setBorder(RENDERER_BORDER);
+      }
+      myMainPanel.setBackground(list.getBackground());
       myMainPanel.add(wrapped, BorderLayout.CENTER);
       if (cmp instanceof Accessible) {
         myMainPanel.setAccessible((Accessible)cmp);
@@ -790,12 +804,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
     toolbarComponent.setOpaque(false);
 
     if (ExperimentalUI.isNewUI()) {
-      Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().getUnscaled();
-      myTextFieldTitle.setBorder(BorderFactory.createEmptyBorder(headerInsets.top, 0, headerInsets.bottom, 0));
+      myTextFieldTitle.setBorder(PopupUtil.getComplexPopupVerticalHeaderBorder());
       toolbarComponent.setBorder(null);
       result.setBorder(JBUI.Borders.compound(
         JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
-        BorderFactory.createEmptyBorder(0, headerInsets.left, 0, headerInsets.right)));
+        PopupUtil.getComplexPopupHorizontalHeaderBorder()));
     }
     else {
       result.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));

@@ -10,9 +10,9 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 
 class BreakpointsUsageCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("debugger.breakpoints.usage", 3)
+    private val GROUP = EventLogGroup("debugger.breakpoints.usage", 4)
     private val WITHIN_SESSION_FIELD = EventFields.Boolean("within_session")
-    val TYPE_FIELD = EventFields.StringValidatedByCustomRule("type", "breakpoint")
+    val TYPE_FIELD = EventFields.StringValidatedByCustomRule("type", BreakpointsUtilValidator::class.java)
     private val BREAKPOINT_ADDED = GROUP.registerVarargEvent("breakpoint.added", WITHIN_SESSION_FIELD,
                                                              EventFields.PluginInfo, TYPE_FIELD)
     private val BREAKPOINT_VERIFIED = GROUP.registerEvent("breakpoint.verified", EventFields.Long("time"))

@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.perf.util.ExternalProject
 import org.jetbrains.kotlin.idea.perf.util.OutputConfig
 import org.jetbrains.kotlin.idea.perf.util.lastPathSegment
 import org.jetbrains.kotlin.idea.testFramework.Fixture
-import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction
 
 data class CursorConfig(
     val fixture: Fixture,

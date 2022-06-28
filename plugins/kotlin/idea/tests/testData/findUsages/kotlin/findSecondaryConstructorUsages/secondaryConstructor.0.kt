@@ -24,4 +24,4 @@ fun test() {
     B("")
 }
 
-// FIR_IGNORE
+// FIR_COMPARISON

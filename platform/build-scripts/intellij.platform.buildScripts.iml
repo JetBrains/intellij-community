@@ -44,5 +44,9 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
     <orderEntry type="module" module-name="intellij.tools.jps.antTasks" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="library" name="networknt.json.schema.validator" level="project" />
   </component>
 </module>

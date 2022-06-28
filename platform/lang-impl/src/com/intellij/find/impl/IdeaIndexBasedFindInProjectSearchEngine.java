@@ -127,12 +127,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
     }
 
     private static boolean hasTrigrams(@NotNull String text) {
-      return !TrigramBuilder.processTrigrams(text, new TrigramBuilder.TrigramProcessor() {
-        @Override
-        public boolean test(int value) {
-          return false;
-        }
-      });
+      return !TrigramBuilder.getTrigrams(text).isEmpty();
     }
 
     @NotNull

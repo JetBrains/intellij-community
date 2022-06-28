@@ -3,3 +3,5 @@ class O
 class P
 
 fun test(b: Boolean): O = if (b) O() else P()<caret>
+
+/* IGNORE_FIR */

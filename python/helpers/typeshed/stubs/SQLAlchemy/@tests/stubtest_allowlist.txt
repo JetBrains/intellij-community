@@ -130,3 +130,10 @@ sqlalchemy.sql.expression.quoted_name.upper
 sqlalchemy.sql.quoted_name.lower
 sqlalchemy.sql.quoted_name.upper
 sqlalchemy.util.callable
+
+sqlalchemy.dialects.mssql.base.MSExecutionContext.get_result_cursor_strategy
+sqlalchemy.dialects.postgresql.base.PGDDLCompiler.visit_foreign_key_constraint
+sqlalchemy.engine.ExecutionContext.get_result_cursor_strategy
+sqlalchemy.engine.interfaces.ExecutionContext.get_result_cursor_strategy
+sqlalchemy.orm.ColumnProperty.Comparator.__clause_element__
+sqlalchemy.orm.properties.ColumnProperty.Comparator.__clause_element__

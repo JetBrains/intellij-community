@@ -13,6 +13,7 @@ import com.intellij.structuralsearch.StructuralSearchUtil
 import com.intellij.structuralsearch.impl.matcher.MatchContext
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
+import com.intellij.util.castSafelyTo
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.core.resolveType
@@ -47,7 +48,7 @@ class KotlinExprTypePredicate(
         val type = when {
             node is KtDeclaration -> node.resolveKotlinType()
             node is KtExpression -> try {
-                node.resolveType()
+                node.resolveType() ?: node.parent?.castSafelyTo<KtDotQualifiedExpression>()?.resolveType()
             } catch (e: Exception) {
                 if (e is ControlFlowException) throw e
                 null
@@ -170,10 +171,10 @@ class KotlinExprTypePredicate(
 
             // Kotlin indexes
             when {
-                fq -> if (KotlinFullClassNameIndex.getInstance()[className, project, scope].any {
+                fq -> if (KotlinFullClassNameIndex.get(className, project, scope).any {
                         it.getKotlinFqName() == type.fqName
                     }) return true
-                else -> if (KotlinClassShortNameIndex.getInstance()[className, project, scope].any {
+                else -> if (KotlinClassShortNameIndex.get(className, project, scope).any {
                         it.getKotlinFqName() == type.fqName
                     }) return true
             }

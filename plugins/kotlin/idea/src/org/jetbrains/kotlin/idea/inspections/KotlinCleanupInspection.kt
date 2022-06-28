@@ -10,23 +10,28 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.highlighter.AbstractKotlinHighlightVisitor
 import org.jetbrains.kotlin.idea.quickfix.CleanupFix
 import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.ReplaceObsoleteLabelSyntaxFix
-import org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+import org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFixBase
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 
 class KotlinCleanupInspection : LocalInspectionTool(), CleanupLocalInspectionTool {
@@ -47,7 +52,7 @@ class KotlinCleanupInspection : LocalInspectionTool(), CleanupLocalInspectionToo
 
         val problemDescriptors = arrayListOf<ProblemDescriptor>()
 
-        val importsToRemove = DeprecatedSymbolUsageFix.importDirectivesToBeRemoved(file)
+        val importsToRemove = importDirectivesToBeRemoved(file)
         for (import in importsToRemove) {
             val removeImportFix = RemoveImportFix(import)
             val problemDescriptor = createProblemDescriptor(import, removeImportFix.text, listOf(removeImportFix), manager)
@@ -66,6 +71,33 @@ class KotlinCleanupInspection : LocalInspectionTool(), CleanupLocalInspectionToo
         }
 
         return problemDescriptors.toTypedArray()
+    }
+
+    private fun importDirectivesToBeRemoved(file: KtFile): List<KtImportDirective> {
+        if (file.hasAnnotationToSuppressDeprecation()) return emptyList()
+        return file.importDirectives.filter { isImportToBeRemoved(it) }
+    }
+
+    private fun KtFile.hasAnnotationToSuppressDeprecation(): Boolean {
+        val suppressAnnotationEntry = annotationEntries.firstOrNull {
+            it.shortName?.asString() == "Suppress"
+                    && it.resolveToCall()?.resultingDescriptor?.containingDeclaration?.fqNameSafe == StandardNames.FqNames.suppress
+        } ?: return false
+        return suppressAnnotationEntry.valueArguments.any {
+            val text = (it.getArgumentExpression() as? KtStringTemplateExpression)?.entries?.singleOrNull()?.text ?: return@any false
+            text.equals("DEPRECATION", ignoreCase = true)
+        }
+    }
+
+    private fun isImportToBeRemoved(import: KtImportDirective): Boolean {
+        if (import.isAllUnder) return false
+
+        val targetDescriptors = import.targetDescriptors()
+        if (targetDescriptors.isEmpty()) return false
+
+        return targetDescriptors.all {
+            DeprecatedSymbolUsageFixBase.fetchReplaceWithPattern(it, import.project, null, false) != null
+        }
     }
 
     private fun Diagnostic.isCleanup() = factory in cleanupDiagnosticsFactories || isObsoleteLabel()

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -217,13 +217,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     Disposable disposable = ObjectUtils.notNull(parentDisposable, this);
     myFirstDivider = new Divider(true, onePixelDividers, disposable);
     myLastDivider = new Divider(false, onePixelDividers, disposable);
-
     myDividerWidth = onePixelDividers ? 1 : 7;
-    if (onePixelDividers) {
-      Color bg = UIUtil.CONTRAST_BORDER_COLOR;
-      myFirstDivider.setBackground(bg);
-      myLastDivider.setBackground(bg);
-    }
+
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     setOpaque(false);
@@ -676,6 +671,11 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
           releaseGlassPane();
         }
       }));
+    }
+
+    @Override
+    public Color getBackground() {
+      return myIsOnePixel ? UIUtil.CONTRAST_BORDER_COLOR : super.getBackground();
     }
 
     private boolean isInside(Point p) {

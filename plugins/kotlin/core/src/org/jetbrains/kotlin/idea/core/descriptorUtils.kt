@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.*
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -39,7 +39,7 @@ fun DeclarationDescriptorWithVisibility.isVisible(
 ): Boolean {
     val resolutionScope = context.getResolutionScope(bindingContext, resolutionFacade)
     val from = resolutionScope.ownerDescriptor
-    return isVisible(from, receiverExpression, bindingContext, resolutionScope, resolutionFacade.getLanguageVersionSettings())
+    return isVisible(from, receiverExpression, bindingContext, resolutionScope, resolutionFacade.languageVersionSettings)
 }
 
 private fun DeclarationDescriptorWithVisibility.isVisible(

@@ -4,7 +4,7 @@ from . import elements
 
 REQUIRED: Any
 
-class _multiparam_column(elements.ColumnElement):
+class _multiparam_column(elements.ColumnElement[Any]):
     index: Any
     key: Any
     original: Any

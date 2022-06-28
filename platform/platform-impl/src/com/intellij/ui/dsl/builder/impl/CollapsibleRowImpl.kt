@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.UiSwitcher
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.Expandable
 import com.intellij.ui.dsl.builder.CollapsibleRow
@@ -25,11 +26,11 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
   private val collapsibleTitledSeparator = CollapsibleTitledSeparator(title)
 
   override var expanded by collapsibleTitledSeparator::expanded
-  
+
   override fun setText(@NlsContexts.Separator text: String) {
     collapsibleTitledSeparator.text = text
   }
-  
+
   override fun addExpandedListener(action: (Boolean) -> Unit) {
     collapsibleTitledSeparator.expandedProperty.afterChange { action(it) }
   }
@@ -45,9 +46,11 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
       override fun expand() {
         expanded = true
       }
+
       override fun collapse() {
         expanded = false
       }
+
       override fun isExpanded(): Boolean {
         return expanded
       }
@@ -57,16 +60,37 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
     action.registerCustomShortcutSet(ActionUtil.getShortcutSet("CollapsiblePanel-toggle"), collapsibleTitledSeparator.label)
 
     val collapsibleTitledSeparator = this.collapsibleTitledSeparator
+    lateinit var expandablePanel: Panel
     panel {
       row {
         cell(collapsibleTitledSeparator).horizontalAlign(HorizontalAlign.FILL)
       }
-      val expandablePanel = panel {
+      expandablePanel = panel {
         init()
       }
       collapsibleTitledSeparator.onAction {
         expandablePanel.visible(it)
       }
+    }
+    applyUiSwitcher(expandablePanel as PanelImpl, CollapsibleRowUiSwitcher(this))
+  }
+
+  private fun applyUiSwitcher(panel: PanelImpl, uiSwitcher: UiSwitcher) {
+    for (row in panel.rows) {
+      for (cell in row.cells) {
+        when (cell) {
+          is CellImpl<*> -> UiSwitcher.append(cell.viewComponent, uiSwitcher)
+          is PanelImpl -> applyUiSwitcher(cell, uiSwitcher)
+        }
+      }
+    }
+  }
+
+  private class CollapsibleRowUiSwitcher(private val collapsibleRow: CollapsibleRowImpl) : UiSwitcher {
+
+    override fun show(): Boolean {
+      collapsibleRow.expanded = true
+      return true
     }
   }
 }

@@ -70,7 +70,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
   private val eventsScheme: Map<String, String> = createEventsScheme(generatedScheme)
 
   init {
-    groupIdTextField = TextFieldWithCompletion(project, createCompletionProvider(productionGroups), initialGroup.groupId, true, true, false)
+    groupIdTextField = TextFieldWithCompletion(project, createCompletionProvider(productionGroups), initialGroup.groupId, true, true, true)
     groupIdTextField.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
         currentGroup.groupId = groupIdTextField.text

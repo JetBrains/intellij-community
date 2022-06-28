@@ -1,5 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.template.postfix.templates;
+
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
@@ -9,23 +24,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Provides information about expressions available in the current postfix template context.
- *
- * @see PostfixTemplateWithExpressionSelector
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/advanced-postfix-templates.html">Advanced Postfix Templates (IntelliJ Platform Docs)</a>
+ * Interface provides method used in {@link PostfixTemplateWithExpressionSelector}
  */
 public interface PostfixTemplateExpressionSelector {
 
   /**
-   * Checks whether the current context contains applicable expression that can be selected.
+   * Check that we can select not-null expression(PsiElement) in current context
    */
   boolean hasExpression(@NotNull PsiElement context,
                         @NotNull Document copyDocument,
                         int newOffset);
 
   /**
-   * Returns the list of all expressions applicable in the current context.
-   * If the list size is greater than 1, then expression chooser popup is shown to a user.
+   * Return list of all possible expressions in the current position.
+   * Postfix template implementation shows popup chooser (if size > 1)
    */
   @NotNull
   List<PsiElement> getExpressions(@NotNull PsiElement context,
@@ -33,8 +45,8 @@ public interface PostfixTemplateExpressionSelector {
                                   int offset);
 
   /**
-   * Returns a renderer for expressions returned from the {@link #getExpressions} method,
-   * which is used to render template item in the expression chooser popup.
+   * returns renderer for expressions from  {@link #getExpressions}.
+   * Renderer is used for showing popup chooser
    */
   @NotNull
   Function<PsiElement, String> getRenderer();

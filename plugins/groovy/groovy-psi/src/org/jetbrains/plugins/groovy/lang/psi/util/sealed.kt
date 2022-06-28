@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("SealedUtil")
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.psi.PsiAnnotationMemberValue
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -14,7 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.SealedHelper.inferReferencedClass
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 internal fun getAllSealedElements(typeDef : GrTypeDefinition) : List<PsiElement> {
   val modifier = typeDef.modifierList?.getModifier(GrModifier.SEALED)
@@ -43,8 +43,7 @@ fun getAllPermittedClassElements(typeDef : GrTypeDefinition) : List<PsiElement> 
     }
   }
   if (isTypeDefSealed) {
-    val ownerType = typeDef.type()
-    return (typeDef.containingFile as? GroovyFile)?.classes?.filter { ownerType in it.extendsListTypes || ownerType in it.implementsListTypes }
+    return (typeDef.containingFile as? GroovyFile)?.classes?.filter { typeDef in (it.extendsListTypes + it.implementsListTypes).mapNotNull(PsiClassType::resolve) }
            ?: emptyList()
   }
   return emptyList()

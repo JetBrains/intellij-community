@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +39,7 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
   }
 
   @Override
-  protected void initialize() {
+  protected synchronized void initialize() {
     final VirtualFile vFile = getVirtualFile();
     if (vFile == null) return;
     final VirtualFile parentDirectory = vFile.getParent();

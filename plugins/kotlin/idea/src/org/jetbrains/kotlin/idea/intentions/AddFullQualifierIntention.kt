@@ -10,6 +10,7 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -55,6 +56,11 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
                 val prevSibling = prevElement?.getPrevSiblingIgnoringWhitespaceAndComments()
                 if (prevSibling is KtNameReferenceExpression || prevSibling is KtDotQualifiedExpression) return false
             }
+
+            val file = referenceExpression.containingKtFile
+            val identifier = referenceExpression.getIdentifier()?.text
+            val fqName = resultDescriptor.importableFqName
+            if (file.importDirectives.any { it.aliasName == identifier && it.importedFqName == fqName }) return false
 
             return true
         }
@@ -127,7 +133,9 @@ private fun replaceExpressionWithQualifier(
 
 private val DeclarationDescriptor.isInRoot: Boolean get() = importableFqName?.thisOrParentIsRoot() != false
 
-private val DeclarationDescriptor.isTopLevelCallable: Boolean get() = this is CallableMemberDescriptor && containingDeclaration is PackageFragmentDescriptor
+private val DeclarationDescriptor.isTopLevelCallable: Boolean
+    get() = safeAs<CallableMemberDescriptor>()?.containingDeclaration is PackageFragmentDescriptor ||
+            safeAs<ConstructorDescriptor>()?.containingDeclaration?.containingDeclaration is PackageFragmentDescriptor
 
 private fun KtNameReferenceExpression.prevElementWithoutSpacesAndComments(): PsiElement? = prevLeaf {
     it.elementType !in KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET

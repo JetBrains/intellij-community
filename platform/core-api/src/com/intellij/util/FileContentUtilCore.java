@@ -47,6 +47,8 @@ public final class FileContentUtilCore {
       List<VFileEvent> eventList = Collections.unmodifiableList(new ArrayList<>(events));
       publisher.before(eventList);
       publisher.after(eventList);
+
+      ForcefulReparseModificationTracker.increment();
     });
   }
 }

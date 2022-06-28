@@ -2,7 +2,7 @@
 class A {
   private String s;
 
-    public String getS() {
+    String getS() {
         return s;
     }
 }

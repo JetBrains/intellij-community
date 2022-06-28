@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,8 +16,15 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class RecentProjectsManager {
+  public static final Topic<RecentProjectsChange> RECENT_PROJECTS_CHANGE_TOPIC =
+    Topic.create("Change of recent projects", RecentProjectsChange.class);
+
   public static RecentProjectsManager getInstance() {
     return ApplicationManager.getApplication().getService(RecentProjectsManager.class);
+  }
+
+  public static void fireChangeEvent() {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(RECENT_PROJECTS_CHANGE_TOPIC).change();
   }
 
   public abstract @Nullable @SystemIndependent String getLastProjectCreationLocation();
@@ -61,6 +69,12 @@ public abstract class RecentProjectsManager {
   public void removeGroup(@NotNull ProjectGroup group) {
   }
 
+  public void moveProjectToGroup(@NotNull String projectPath, @NotNull ProjectGroup from, @NotNull ProjectGroup to) {
+  }
+
+  public void removeProjectFromGroup(@NotNull String projectPath, @NotNull ProjectGroup from) {
+  }
+
   public boolean hasPath(@SystemIndependent String path) {
     return false;
   }
@@ -71,4 +85,8 @@ public abstract class RecentProjectsManager {
   public abstract CompletableFuture<Boolean> reopenLastProjectsOnStart();
 
   public abstract @NotNull String suggestNewProjectLocation();
+
+  public interface RecentProjectsChange {
+    void change();
+  }
 }

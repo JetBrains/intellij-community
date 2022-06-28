@@ -51,27 +51,27 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
   @Override
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new FileCopyPresentation(myFilePath, getOutputFileName());
+    return new FileCopyPresentation(getMyFilePath(), getOutputFileName());
   }
 
   public String getOutputFileName() {
-    return myRenamedOutputFileName != null ? myRenamedOutputFileName : PathUtil.getFileName(myFilePath);
+    return getMyRenamedOutputFileName() != null ? getMyRenamedOutputFileName() : PathUtil.getFileName(getMyFilePath());
   }
 
   @NonNls @Override
   public String toString() {
-    return "file:" + myFilePath + (myRenamedOutputFileName != null ? ",rename to:" + myRenamedOutputFileName : "");
+    return "file:" + getMyFilePath() + (getMyRenamedOutputFileName() != null ? ",rename to:" + getMyRenamedOutputFileName() : "");
   }
 
   public boolean isDirectory() {
-    return new File(FileUtil.toSystemDependentName(myFilePath)).isDirectory();
+    return new File(FileUtil.toSystemDependentName(getMyFilePath())).isDirectory();
   }
 
 
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
     return element instanceof FileCopyPackagingElement && super.isEqualTo(element)
-           && Objects.equals(myRenamedOutputFileName, ((FileCopyPackagingElement)element).getRenamedOutputFileName());
+           && Objects.equals(getMyRenamedOutputFileName(), ((FileCopyPackagingElement)element).getRenamedOutputFileName());
   }
 
   @Override
@@ -88,15 +88,15 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
   @Nullable
   @Attribute(OUTPUT_FILE_NAME_ATTRIBUTE)
   public String getRenamedOutputFileName() {
-    return myRenamedOutputFileName;
+    return getMyRenamedOutputFileName();
   }
 
   public void setRenamedOutputFileName(String renamedOutputFileName) {
-    String renamedBefore = myRenamedOutputFileName;
+    String renamedBefore = getMyRenamedOutputFileName();
     this.update(
       () -> myRenamedOutputFileName = renamedOutputFileName,
       (builder, entity) -> {
-        if (renamedBefore == renamedOutputFileName) return;
+        if (Objects.equals(renamedBefore, renamedOutputFileName)) return;
 
         builder.modifyEntity(ModifiableFileCopyPackagingElementEntity.class, entity, ent -> {
           ent.setRenamedOutputFileName(renamedOutputFileName);
@@ -118,7 +118,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
 
   @Override
   public void rename(@NotNull String newName) {
-    String updatedName = newName.equals(PathUtil.getFileName(myFilePath)) ? null : newName;
+    String updatedName = newName.equals(PathUtil.getFileName(getMyFilePath())) ? null : newName;
     this.update(
       () -> myRenamedOutputFileName = updatedName,
       (builder, entity) -> {
@@ -156,5 +156,19 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     }
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;
+  }
+
+  @Nullable
+  private String getMyRenamedOutputFileName() {
+    if (myStorage == null) {
+      return myRenamedOutputFileName;
+    } else {
+      FileCopyPackagingElementEntity entity = (FileCopyPackagingElementEntity)getThisEntity();
+      String path = entity.getRenamedOutputFileName();
+      if (!Objects.equals(myRenamedOutputFileName, path)) {
+        myRenamedOutputFileName = path;
+      }
+      return path;
+    }
   }
 }

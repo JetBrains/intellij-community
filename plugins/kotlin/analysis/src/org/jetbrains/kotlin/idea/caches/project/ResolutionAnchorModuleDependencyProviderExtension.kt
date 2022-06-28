@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.project
 
@@ -13,6 +13,10 @@ import org.jetbrains.kotlin.idea.project.libraryToSourceAnalysisEnabled
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 
 class ResolutionAnchorModuleDependencyProviderExtension(private val project: Project) : ModuleDependencyProviderExtension {
+    @Deprecated(
+        "Use #processAdditionalDependencyModules",
+        replaceWith = ReplaceWith("processAdditionalDependencyModules(module, processor)"),
+    )
     override fun getAdditionalDependencyModules(module: Module): Collection<Module> {
         val modules = HashSet<Module>()
         processAdditionalDependencyModules(module, CommonProcessors.CollectProcessor(modules))

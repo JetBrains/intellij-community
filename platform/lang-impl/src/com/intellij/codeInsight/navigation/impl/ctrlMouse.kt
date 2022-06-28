@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
+@Suppress("DEPRECATION")
+@Deprecated("Unused in v2 implementation")
 internal fun TargetData.ctrlMouseInfo(): CtrlMouseInfo? {
   val targets = this.targets
   if (targets.isEmpty()) {

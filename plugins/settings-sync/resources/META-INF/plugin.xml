@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <name>Settings Sync</name>
   <id>com.jetbrains.settingsSync</id>
   <category>IDE Settings</category>
@@ -8,11 +8,15 @@
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.SettingsSyncBundle</resource-bundle>
 
+  <depends optional="true" config-file="settingsSyncWithGit.xml">Git4Idea</depends>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncMain"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncSettings"/>
+    <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncEvents"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.plugins.SettingsSyncPluginManager"/>
-    <applicationInitializedListener implementation="com.intellij.settingsSync.plugins.SettingsSyncPluginManager$StartupInitializer"/>
+    <!--suppress PluginXmlDynamicPlugin -->
+    <applicationInitializedListener implementation="com.intellij.settingsSync.SettingsSynchronizer"/>
     <applicationConfigurable id="settings.sync"
                              key="title.settings.sync"
                              bundle="messages.SettingsSyncBundle"
@@ -35,15 +39,13 @@
   <applicationListeners>
     <listener class="com.intellij.settingsSync.SettingsSynchronizer" topic="com.intellij.ide.FrameStateListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
-    <listener class="com.intellij.settingsSync.SettingsSynchronizer" topic="com.intellij.settingsSync.SettingsSyncEnabledStateListener"
-              activeInTestMode="false" activeInHeadlessMode="false" />
   </applicationListeners>
 
   <actions>
     <group id="SettingsSync">
       <action class="com.intellij.settingsSync.ManualSyncAction" id="settingsSync.manualUpdate" icon="AllIcons.Chooser.Bottom"/>
       <action class="com.intellij.settingsSync.ManualPushAction" id="settingsSync.manualPush" icon="AllIcons.Chooser.Top" internal="true"/>
-      <action class="com.intellij.settingsSync.DownloadSnapshotAction" id="settingsSync.downloadSnapshot" icon="AllIcons.Actions.Download"/>
+      <action class="com.intellij.settingsSync.SettingsSyncTroubleshootingAction" id="settingsSync.troubleShoot" icon="AllIcons.General.Settings"/>
     </group>
 
     <action id="SettingsSyncStatusAction" class="com.intellij.settingsSync.config.SettingsSyncStatusAction">

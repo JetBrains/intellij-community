@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -18,7 +18,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.PathKt;
 import org.jdom.Element;
 
@@ -77,8 +76,8 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       configurable.reset();
       FileTemplate template = configurable.createTemplate("foo", "bar", "hey", false);
       assertTrue(configurable.isModified());
-      FileTemplate[] templates = configurable.getTabs()[0].getTemplates();
-      assertTrue(ArrayUtil.contains(template, templates));
+      List<FileTemplate> templates = configurable.getTabs()[0].getTemplates();
+      assertTrue(templates.contains(template));
       configurable.changeScheme(myTemplateManager.getProjectScheme());
       assertTrue(configurable.isModified());
 //      assertEquals(templates.length, configurable.getTabs()[0].getTemplates().length);

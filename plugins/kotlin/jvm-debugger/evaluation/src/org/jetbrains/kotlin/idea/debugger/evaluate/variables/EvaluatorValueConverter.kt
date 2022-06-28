@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder.Resu
 import org.jetbrains.kotlin.idea.debugger.isSubtype
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
-import org.jetbrains.org.objectweb.asm.Type as AsmType
-import com.sun.jdi.Type as JdiType
 import kotlin.jvm.internal.Ref
+import com.sun.jdi.Type as JdiType
+import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 @Suppress("SpellCheckingInspection")
 class EvaluatorValueConverter(val context: ExecutionContext) {
@@ -26,6 +26,20 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
             "java/lang/Long" to "longValue",
             "java/lang/Double" to "doubleValue"
         )
+
+        fun unref(value: Value?): Value? {
+            if (value !is ObjectReference) {
+                return value
+            }
+
+            val type = value.type()
+            if (type !is ClassType || !type.signature().startsWith("L" + AsmTypes.REF_TYPE_PREFIX)) {
+                return value
+            }
+
+            val field = type.fieldByName("element") ?: return value
+            return value.getValue(field)
+        }
     }
 
     // Nearly accurate: doesn't do deep checks for Ref wrappers. Use `coerce()` for more precise check.
@@ -186,20 +200,6 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
 
             return wrapRef(value, refTypeClass)
         }
-    }
-
-    fun unref(value: Value?): Value? {
-        if (value !is ObjectReference) {
-            return value
-        }
-
-        val type = value.type()
-        if (type !is ClassType || !type.signature().startsWith("L" + AsmTypes.REF_TYPE_PREFIX)) {
-            return value
-        }
-
-        val field = type.fieldByName("element") ?: return value
-        return value.getValue(field)
     }
 }
 

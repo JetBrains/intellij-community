@@ -9,6 +9,7 @@ import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
+import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.application.ApplicationManager
@@ -46,6 +47,7 @@ class JavaReferencesCodeVisionProvider : JavaCodeVisionProviderBase() {
     private val elementPointer = SmartPointerManager.createPointer(element)
 
     override fun invoke(event: MouseEvent?, editor: Editor) {
+      if (isInlaySettingsEditor(editor)) return
       val element = elementPointer.element ?: return
       JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.project)
       GotoDeclarationAction.startFindUsages(editor, element.project, element, if (event == null) null else RelativePoint(event))

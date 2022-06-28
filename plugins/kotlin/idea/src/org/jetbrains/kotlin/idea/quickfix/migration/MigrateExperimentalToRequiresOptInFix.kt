@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix.migration
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.base.fe10.analysis.getEnumValue
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATION
 import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATION_ERROR
@@ -17,9 +18,7 @@ import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.annotations.argumentValue
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
-import org.jetbrains.kotlin.resolve.constants.EnumValue
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
@@ -67,13 +66,7 @@ class MigrateExperimentalToRequiresOptInFix(
                 if (annotationOwner.findAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) != null)
                     return RemoveAnnotationFix(KotlinBundle.message("fix.opt_in.migrate.experimental.annotation.remove"), annotationEntry)
 
-                val requiresOptInInnerText = when (
-                    annotationDescriptor
-                        .argumentValue("level")
-                        ?.safeAs<EnumValue>()
-                        ?.enumEntryName
-                        ?.asString()
-                ) {
+                val requiresOptInInnerText = when (annotationDescriptor.getEnumValue("level")?.enumEntryName?.asString()) {
                     "ERROR" -> "level = RequiresOptIn.Level.ERROR"
                     "WARNING" -> "level = RequiresOptIn.Level.WARNING"
                     else -> null

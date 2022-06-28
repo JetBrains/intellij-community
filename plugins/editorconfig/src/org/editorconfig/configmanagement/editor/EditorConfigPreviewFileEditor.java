@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,10 +33,11 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
   public EditorConfigPreviewFileEditor(@NotNull Editor editor, @NotNull EditorConfigPreviewFile previewFile) {
     myEditor = editor;
     myPreviewFile = previewFile;
+    JComponent headerComponent = getHeaderComponent();
     if (myEditor instanceof EditorEx) {
-      ((EditorEx)myEditor).setPermanentHeaderComponent(getHeaderComponent());
+      ((EditorEx)myEditor).setPermanentHeaderComponent(headerComponent);
     }
-    myEditor.setHeaderComponent(getHeaderComponent());
+    myEditor.setHeaderComponent(headerComponent);
     final EditorSettings editorSettings = myEditor.getSettings();
     editorSettings.setWhitespacesShown(true);
     editorSettings.setGutterIconsShown(false);
@@ -97,12 +97,6 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
-  }
-
-  @Nullable
-  @Override
-  public FileEditorLocation getCurrentLocation() {
-    return null;
   }
 
   @Override

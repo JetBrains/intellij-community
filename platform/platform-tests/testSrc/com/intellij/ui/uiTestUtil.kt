@@ -85,7 +85,7 @@ internal suspend fun changeLafIfNeeded(lafName: String) {
     if (lafName == "Darcula") {
       // static init it is hell - UIUtil static init is called too early, so, call it to init properly
       // (otherwise null stylesheet added, and it leads to NPE on set comment text)
-      UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", GlobalStyleSheetHolder.getInstance().getGlobalStyleSheet())
+      UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet())
     }
 
     UIManager.setLookAndFeel(MetalLookAndFeel())

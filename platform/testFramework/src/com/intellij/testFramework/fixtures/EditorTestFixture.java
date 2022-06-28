@@ -251,7 +251,7 @@ public class EditorTestFixture {
     final LookupImpl lookup = getLookup();
     assertNotNull("No lookup is shown", lookup);
 
-    final JList list = lookup.getList();
+    final JList<LookupElement> list = lookup.getList();
     List<String> strings = getLookupElementStrings();
     assertNotNull(strings);
     final List<String> actual = ContainerUtil.getFirstItems(strings, expected.length);

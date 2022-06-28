@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForScript
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class KotlinUClass(
     psi: KtLightClass,
     givenParent: UElement?
@@ -34,7 +36,9 @@ class KotlinUClass(
 
     override fun getContainingFile(): PsiFile = unwrapFakeFileForLightClass(psi.containingFile)
 
-    override val uastAnchor by lazy { getIdentifierSourcePsi()?.let { KotlinUIdentifier(nameIdentifier, it, this) } }
+    override val uastAnchor: UIdentifier? by lz {
+        getIdentifierSourcePsi()?.let { KotlinUIdentifier(nameIdentifier, it, this) }
+    }
 
     private fun getIdentifierSourcePsi(): PsiElement? {
         ktClass?.nameIdentifier?.let { return it }

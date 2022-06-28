@@ -4,7 +4,6 @@ package com.intellij.openapi.progress.impl;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -20,6 +19,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Supplier;
 
 public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(CoreProgressManager.class);
@@ -47,6 +48,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private final AtomicInteger myUnsafeProgressCount = new AtomicInteger(0);
 
   public static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
+  
   private static CheckCanceledHook ourCheckCanceledHook;
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
@@ -66,7 +68,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private enum CheckCanceledBehavior {NONE, ONLY_HOOKS, INDICATOR_PLUS_HOOKS}
 
   /**
-   * active (i.e. which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
+   * active (i.e., which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
    * which are not inherited from {@link StandardProgressIndicator}.
    * for them an extra processing thread (see {@link #myCheckCancelledFuture}) has to be run
    * to call their non-standard {@link ProgressIndicator#checkCanceled()} method periodically.
@@ -131,7 +133,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
-    if (!isInNonCancelableSection()) {
+    if (Cancellation.isCancelled() && !isInNonCancelableSection()) {
       Cancellation.checkCancelled();
     }
 
@@ -208,9 +210,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           LOG.error("This thread is already running under this indicator, starting/stopping it here might be a data race");
         }
         else {
-          StringWriter dump = new StringWriter();
-          ThreadDumper.dumpCallStack(other, dump, other.getStackTrace());
-          LOG.error("Other thread is already running under this indicator, starting/stopping it here might be a data race. Its thread dump:\n" + dump);
+          StringWriter stackTrace = new StringWriter();
+          ThreadDumper.dumpCallStack(other, stackTrace, other.getStackTrace());
+          LOG.error("Other (" + other +") is already running under this indicator (" + progress+", " + progress.getClass()+ ")," +
+                    " starting/stopping it here might be a data race. Its stack trace:\n" + stackTrace);
         }
       }
     }
@@ -337,7 +340,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    * Different places in IntelliJ codebase behaves differently in case of headless mode.
    * <p>
    * Often, they're trying to make async parts synchronous to make it more predictable or controllable.
-   * E.g. in tests or IntelliJ-based command line tools this is the usual code:
+   * E.g., in tests or IntelliJ-based command line tools this is the usual code:
    * <p>
    * ```
    * if (ApplicationManager.getApplication().isHeadless()) {
@@ -517,7 +520,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   }
 
-  // ASSERT IS EDT->UI bg or calling if cant
+  // ASSERT IS EDT->UI bg or calling if can't
   // NEW: no assert; bg or calling ...
   protected boolean runProcessWithProgressSynchronously(@NotNull Task task) {
     Ref<Throwable> exceptionRef = new Ref<>();
@@ -867,19 +870,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private boolean isCurrentThreadEffectivelyPrioritized() {
-    Thread current = Thread.currentThread();
-    for (Thread prioritized : myEffectivePrioritizedThreads) {
-      if (prioritized == current) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.indexOfIdentity(myEffectivePrioritizedThreads, Thread.currentThread()) != -1;
   }
 
   private boolean checkLowPriorityReallyApplicable() {
     long time = System.nanoTime() - myPrioritizingStarted;
     if (time < 5_000_000) {
-      return false; // don't sleep when activities are very short (e.g. empty processing of mouseMoved events)
+      return false; // don't sleep when activities are very short (e.g., empty processing of mouseMoved events)
     }
 
     if (avoidBlockingPrioritizingThread()) {
@@ -964,19 +961,16 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @Override
-  public @NotNull AccessToken silenceGlobalIndicator() {
+  public <X> X silenceGlobalIndicator(@NotNull Supplier<X> computable) {
     long id = Thread.currentThread().getId();
     ProgressIndicator indicator = currentIndicators.get(id);
     setCurrentIndicator(id, null);
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        if (currentIndicators.containsKey(id)) {
-          throw new IllegalStateException("Indicator was not reset correctly");
-        }
-        setCurrentIndicator(id, indicator);
-      }
-    };
+    try {
+      return computable.get();
+    }
+    finally {
+      setCurrentIndicator(id, indicator);
+    }
   }
 
   @FunctionalInterface

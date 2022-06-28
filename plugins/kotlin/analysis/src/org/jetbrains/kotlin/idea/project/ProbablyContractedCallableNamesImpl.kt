@@ -14,9 +14,7 @@ class ProbablyContractedCallableNamesImpl(project: Project) : ProbablyContracted
     private val functionNames = CachedValuesManager.getManager(project).createCachedValue(
         {
             CachedValueProvider.Result.create(
-                project.runReadActionInSmartMode {
-                    KotlinProbablyContractedFunctionShortNameIndex.getInstance().getAllKeys(project)
-                },
+                project.runReadActionInSmartMode { KotlinProbablyContractedFunctionShortNameIndex.getAllKeys(project) },
                 KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
             )
         },

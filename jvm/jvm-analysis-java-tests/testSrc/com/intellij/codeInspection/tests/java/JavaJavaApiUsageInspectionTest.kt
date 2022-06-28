@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase
+import com.intellij.codeInspection.tests.ULanguage
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry

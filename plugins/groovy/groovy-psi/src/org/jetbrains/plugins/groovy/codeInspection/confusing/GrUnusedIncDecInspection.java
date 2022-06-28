@@ -104,13 +104,11 @@ public class GrUnusedIncDecInspection extends BaseInspection {
         if (expression.isPostfix() && PsiUtil.isExpressionUsed(expression)) {
           registerError(expression.getOperationToken(),
                         GroovyBundle.message("unused.0", expression.getOperationToken().getText()),
-                        new LocalQuickFix[]{new ReplacePostfixIncWithPrefixFix(expression), new RemoveIncOrDecFix(expression)},
-                        ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+                        new LocalQuickFix[]{new ReplacePostfixIncWithPrefixFix(expression), new RemoveIncOrDecFix(expression)}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
         else if (!PsiUtil.isExpressionUsed(expression)) {
           registerError(expression.getOperationToken(),
-                        GroovyBundle.message("unused.0", expression.getOperationToken().getText()), LocalQuickFix.EMPTY_ARRAY,
-                        ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+                        GroovyBundle.message("unused.0", expression.getOperationToken().getText()), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
     }

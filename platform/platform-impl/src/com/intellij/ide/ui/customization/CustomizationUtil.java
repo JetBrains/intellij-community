@@ -3,6 +3,7 @@ package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -33,6 +34,7 @@ import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +47,10 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -77,11 +81,11 @@ public final class CustomizationUtil {
   }
 
 
-  static AnAction [] getReordableChildren(ActionGroup group,
-                                          CustomActionsSchema schema,
-                                          String defaultGroupName,
-                                          String rootGroupName,
-                                          AnActionEvent e) {
+  static AnAction[] getReordableChildren(ActionGroup group,
+                                         CustomActionsSchema schema,
+                                         String defaultGroupName,
+                                         String rootGroupName,
+                                         AnActionEvent e) {
     String text = group.getTemplatePresentation().getText();
     ActionManager actionManager = ActionManager.getInstance();
     final ArrayList<AnAction> reorderedChildren = new ArrayList<>();
@@ -197,8 +201,8 @@ public final class CustomizationUtil {
     }
   }
 
-  public static TreePath getPathByUserObjects(JTree tree, TreePath treePath){
-    List<String>  path = new ArrayList<>();
+  public static TreePath getPathByUserObjects(JTree tree, TreePath treePath) {
+    List<String> path = new ArrayList<>();
     for (int i = 0; i < treePath.getPath().length; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
       if (o instanceof Group) {
@@ -208,14 +212,14 @@ public final class CustomizationUtil {
     return getTreePath(0, path, tree.getModel().getRoot());
   }
 
-  public static ActionUrl getActionUrl(final TreePath treePath, int actionType) {
+  public static ActionUrl getActionUrl(final TreePath treePath,
+                                       @MagicConstant(intValues = {ActionUrl.ADDED, ActionUrl.DELETED, ActionUrl.MOVE}) int actionType) {
     ActionUrl url = new ActionUrl();
     for (int i = 0; i < treePath.getPath().length - 1; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
       if (o instanceof Group) {
         url.getGroupPath().add(((Group)o).getName());
       }
-
     }
 
     final DefaultMutableTreeNode component = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
@@ -315,8 +319,9 @@ public final class CustomizationUtil {
    *
    * @throws IllegalArgumentException if {@code obj} has wrong type
    */
-  public static void acceptObjectIconAndText(@Nullable Object obj, BiConsumer<@Nls @NotNull String, @Nullable Icon> consumer) {
+  public static void acceptObjectIconAndText(@Nullable Object obj, @NotNull CustomPresentationConsumer consumer) {
     @NotNull String text;
+    @Nullable String description = null;
     Icon icon = null;
     if (obj instanceof Group) {
       Group group = (Group)obj;
@@ -324,6 +329,9 @@ public final class CustomizationUtil {
       @NlsSafe String id = group.getId();
       text = name != null ? name : ObjectUtils.notNull(id, IdeBundle.message("action.group.name.unnamed.group"));
       icon = ObjectUtils.notNull(group.getIcon(), AllIcons.Nodes.Folder);
+      if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        description = id;
+      }
     }
     else if (obj instanceof String) {
       String actionId = (String)obj;
@@ -336,6 +344,9 @@ public final class CustomizationUtil {
           icon = actionIcon;
         }
       }
+      if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        description = actionId;
+      }
     }
     else if (obj instanceof Pair) {
       String actionId = (String)((Pair<?, ?>)obj).first;
@@ -347,12 +358,19 @@ public final class CustomizationUtil {
         actionIcon = action.getTemplatePresentation().getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON);
       }
       icon = actionIcon;
+      if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        description = actionId;
+      }
     }
     else if (obj instanceof Separator) {
       text = "-------------";
     }
     else if (obj instanceof QuickList) {
-      text = ((QuickList)obj).getDisplayName();
+      QuickList quickList = (QuickList)obj;
+      text = quickList.getDisplayName();
+      if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        description = quickList.getActionId();
+      }
     }
     else if (obj == null) {
       //noinspection HardCodedStringLiteral
@@ -361,19 +379,17 @@ public final class CustomizationUtil {
     else {
       throw new IllegalArgumentException("unknown obj: " + obj);
     }
-    consumer.accept(text, icon);
+    consumer.accept(text, description, icon);
   }
 
   /**
    * Returns {@code schema} actions for the group with {@code groupId}.
    *
    * @param groupId action group ID
-   * @param schema schema where actions are
+   * @param schema  schema where actions are
    * @return list of objects
-   *
-   * @see CustomizationUtil#acceptObjectIconAndText(Object, BiConsumer)
-   *
    * @throws IllegalStateException if group is not found
+   * @see CustomizationUtil#acceptObjectIconAndText(Object, BiConsumer)
    */
   public static @NotNull List<Object> getGroupActions(@NotNull String groupId, @NotNull CustomActionsSchema schema) {
     var group = getGroup(groupId, schema);
@@ -387,7 +403,7 @@ public final class CustomizationUtil {
    * Returns {@link  Group} for specified {@code schema}.
    *
    * @param groupId action group ID
-   * @param schema schema where group is
+   * @param schema  schema where group is
    * @return {@link Group} or {@code null} if group isn't found
    */
   public static @Nullable Group getGroup(@NotNull String groupId, @NotNull CustomActionsSchema schema) {
@@ -543,13 +559,14 @@ public final class CustomizationUtil {
         public void actionPerformed(@NotNull AnActionEvent e) {
           resetToDefaults();
         }
+
         @Override
         public void update(@NotNull AnActionEvent e) {
           CustomActionsSchema cleanScheme = new CustomActionsSchema();
           updateLocalSchema(cleanScheme);
           e.getPresentation().setEnabled(mySelectedSchema.isModified(cleanScheme));
         }
-      }){
+      }) {
         {
           getTemplatePresentation().setPopupGroup(true);
           getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
@@ -560,7 +577,8 @@ public final class CustomizationUtil {
         public void update(@NotNull AnActionEvent e) {
           CustomActionsSchema cleanScheme = new CustomActionsSchema();
           updateLocalSchema(cleanScheme);
-          e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()) || mySelectedSchema.isModified(cleanScheme));
+          e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()) ||
+                                         mySelectedSchema.isModified(cleanScheme));
         }
       };
     }
@@ -626,5 +644,9 @@ public final class CustomizationUtil {
         }
       });
     }
+  }
+
+  public interface CustomPresentationConsumer {
+    void accept(@NotNull @Nls String text, @Nullable @Nls String description, @Nullable Icon icon);
   }
 }

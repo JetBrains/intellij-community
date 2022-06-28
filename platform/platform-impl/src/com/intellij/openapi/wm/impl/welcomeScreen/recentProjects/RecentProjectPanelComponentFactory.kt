@@ -1,0 +1,49 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
+
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
+import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.Alarm
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
+
+internal object RecentProjectPanelComponentFactory {
+  private const val UPDATE_INTERVAL = 1_000 // 1 sec
+
+  @JvmStatic
+  fun createComponent(parentDisposable: Disposable): RecentProjectFilteringTree {
+    ProjectDetector.runDetectors {} // Run detectors that will add projects to the RecentProjectsManagerBase
+
+    val tree = Tree()
+    val filteringTree = RecentProjectFilteringTree(tree, parentDisposable).apply {
+      installSearchField()
+    }
+
+    ApplicationManager.getApplication().messageBus.connect(parentDisposable).apply {
+      subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, RecentProjectsChange { filteringTree.searchModel.updateStructure() })
+      subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
+        override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) = filteringTree.searchModel.updateStructure()
+        override fun onCloneRemoved() = filteringTree.searchModel.updateStructure()
+      })
+    }
+
+    val updateQueue = MergingUpdateQueue("Welcome screen UI updater", UPDATE_INTERVAL, true, null,
+                                         parentDisposable, tree, Alarm.ThreadToUse.SWING_THREAD)
+    updateQueue.queue(Update.create(filteringTree, Runnable { updateProgressBars(updateQueue, filteringTree) }))
+
+    return filteringTree
+  }
+
+  private fun updateProgressBars(updateQueue: MergingUpdateQueue, filteringTree: RecentProjectFilteringTree) {
+    filteringTree.component.repaint()
+    updateQueue.queue(Update.create(filteringTree, Runnable { updateProgressBars(updateQueue, filteringTree) }))
+  }
+}

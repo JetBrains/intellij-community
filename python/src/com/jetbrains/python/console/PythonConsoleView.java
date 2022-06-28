@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -80,6 +79,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -88,6 +88,7 @@ import static com.jetbrains.python.console.PydevConsoleRunner.CONSOLE_COMMUNICAT
 
 public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
   public static final Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
+  private static final Key<Map<Integer, Integer>> COUNTER_LINE_NUMBER = new Key<>("PYDEV_COUNTER_LINE_NUMBER");
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
   private final boolean myTestMode;
 
@@ -95,7 +96,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private PyConsoleSourceHighlighter mySourceHighlighter;
   private boolean myIsIPythonOutput;
   private final PyHighlighter myPyHighlighter;
-  private final EditorColorsScheme myScheme;
   private boolean myHyperlink;
 
   private XStandaloneVariablesView mySplitView;
@@ -127,6 +127,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     // Mark editor as console one, to prevent autopopup completion
     getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
     getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
+    getHistoryViewer().putUserData(COUNTER_LINE_NUMBER, new HashMap<>());
     super.setPrompt(null);
     setUpdateFoldingsEnabled(false);
     LanguageLevel languageLevel = LanguageLevel.getDefault();
@@ -138,7 +139,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       mySdkHomePath = sdk.getHomePath();
     }
     myPyHighlighter = new PyHighlighter(languageLevel);
-    myScheme = getConsoleEditor().getColorsScheme();
     addToolwindowPositionListener(project);
   }
 
@@ -657,5 +657,21 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     final Content content = window.getContentManager().getSelectedContent();
     if (content == null) return null;
     return content.getDisplayName();
+  }
+
+  public void storeExecutionCounterLineNumber(int counter, int lineNumber) {
+    Map<Integer, Integer> counterMap = getHistoryViewer().getUserData(COUNTER_LINE_NUMBER);
+    if (counterMap != null) {
+      counterMap.put(counter, lineNumber);
+    }
+  }
+
+  @Nullable
+  public Integer getExecutionCounterLineNumber(int counter) {
+    Map<Integer, Integer> counterMap = getHistoryViewer().getUserData(COUNTER_LINE_NUMBER);
+    if (counterMap != null) {
+      return counterMap.getOrDefault(counter, null);
+    }
+    return null;
   }
 }

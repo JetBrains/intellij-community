@@ -1,0 +1,21 @@
+// FIR_IDENTICAL
+interface <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>FunctionLike<!> {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>operator<!> fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>invoke<!>() {
+    }
+}
+
+var <!HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>global<!> : () -> <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Unit<!> = {}
+
+val <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>ext<!> : () -> <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Unit<!>
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>get<!>() {
+        return {}
+    }
+
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>a<!> : () -> <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Unit<!>, <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>functionLike<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>FunctionLike<!>) {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>a<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_CALL'")!>invoke<!>()
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>functionLike<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_CALL'")!>invoke<!>()
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>global<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_CALL'")!>invoke<!>()
+    1.<!HIGHLIGHTING("textAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>ext<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_CALL'")!>invoke<!>();
+
+    {}.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_CALL'")!>invoke<!>()
+}

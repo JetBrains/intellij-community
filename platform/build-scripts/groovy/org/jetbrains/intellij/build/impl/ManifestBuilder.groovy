@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -51,7 +50,6 @@ final class ManifestBuilder {
     writeHashes(hashes, file)
   }
 
-  @CompileDynamic
   private void updateHashes(Map<String, byte[]> hashes, List<String> paths, @Nullable Function<String, String> mapper) {
     for (path in paths) {
       Path root = new File(path).toPath()

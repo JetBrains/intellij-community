@@ -1,4 +1,4 @@
-// "Convert to ThreadLocal" "true"
+// "Convert to 'ThreadLocal'" "true"
 import java.lang.annotation.*;
 
 @Target(value = ElementType.TYPE_USE)

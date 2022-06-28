@@ -17,49 +17,49 @@ class MockBuildMessages : BuildMessages {
   override fun log(level: System.Logger.Level?, bundle: ResourceBundle?, format: String?, vararg params: Any?) {
   }
 
-  override fun info(message: String?) {
+  override fun info(message: String) {
   }
 
-  override fun debug(message: String?) {
+  override fun debug(message: String) {
   }
 
-  override fun warning(message: String?) {
+  override fun warning(message: String) {
   }
 
-  override fun error(message: String?) {
+  override fun error(message: String) {
     throw AssertionFailedError(message)
   }
 
-  override fun error(message: String?, cause: Throwable?) {
+  override fun error(message: String, cause: Throwable) {
     throw AssertionFailedError(message)
   }
 
-  override fun compilationError(compilerName: String?, message: String?) {
+  override fun compilationError(compilerName: String, message: String) {
   }
 
-  override fun compilationErrors(compilerName: String?, messages: MutableList<String>?) {
+  override fun compilationErrors(compilerName: String, messages: List<String>) {
   }
 
-  override fun progress(message: String?) {
+  override fun progress(message: String) {
   }
 
-  override fun buildStatus(message: String?) {
+  override fun buildStatus(message: String) {
   }
 
-  override fun setParameter(parameterName: String?, value: String?) {
+  override fun setParameter(parameterName: String, value: String) {
   }
 
-  override fun <V : Any?> block(blockName: String, task: Supplier<V>) = task.get()
+  override fun <V> block(blockName: String, task: Supplier<V>): V = task.get()
 
-  override fun <V : Any?> block(spanBuilder: SpanBuilder, task: Supplier<V>) = task.get()
+  override fun <V> block(spanBuilder: SpanBuilder, task: Supplier<V>): V = task.get()
 
-  override fun artifactBuilt(relativeArtifactPath: String?) {
+  override fun artifactBuilt(relativeArtifactPath: String) {
   }
 
-  override fun reportStatisticValue(key: String?, value: String?) {
+  override fun reportStatisticValue(key: String, value: String) {
   }
 
-  override fun forkForParallelTask(taskName: String?): BuildMessages {
+  override fun forkForParallelTask(taskName: String): BuildMessages {
     throw UnsupportedOperationException()
   }
 

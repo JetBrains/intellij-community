@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor
 import com.intellij.codeInspection.dataFlow.lang.DfaListener
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem
+import com.intellij.codeInspection.dataFlow.lang.ir.DataFlowIRProvider
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
@@ -355,7 +356,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         holder: ProblemsHolder,
         states: Collection<DfaMemoryState>
     ) {
-        val flow = KtControlFlowBuilder(factory, body).buildFlow() ?: return
+        val flow = DataFlowIRProvider.forElement(body, factory) ?: return
         val listener = KotlinDfaListener()
         val interpreter = StandardDataFlowInterpreter(flow, listener)
         if (interpreter.interpret(states.map { s -> DfaInstructionState(flow.getInstruction(0), s) }) != RunnerResult.OK) return

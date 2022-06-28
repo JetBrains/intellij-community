@@ -4,6 +4,7 @@
 package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.DocumentationBrowserFacade
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
@@ -18,14 +19,12 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.JComponent
 
 @JvmField
@@ -56,38 +55,29 @@ internal fun registerBackForwardActions(component: JComponent) {
   ), component)
 }
 
-@VisibleForTesting
-fun documentationTargets(dc: DataContext): List<DocumentationTarget> {
-  try {
-    return documentationTargetsInner(dc)
-  }
-  catch (ignored: IndexNotReadyException) {
-    return emptyList()
+class DocumentationTargetsDataRule : GetDataRule {
+  override fun getData(dataProvider: DataProvider): List<DocumentationTarget> {
+    return documentationTargetsInner(dataProvider)
   }
 }
 
-private fun documentationTargetsInner(dc: DataContext): List<DocumentationTarget> {
-  val contextTargets = dc.getData(DOCUMENTATION_TARGETS)
-  if (contextTargets != null) {
-    return contextTargets
-  }
-  val project = dc.getData(CommonDataKeys.PROJECT)
-                ?: return emptyList()
-  val editor = dc.getData(CommonDataKeys.EDITOR)
+private fun documentationTargetsInner(dataProvider: DataProvider): List<DocumentationTarget> {
+  val project = CommonDataKeys.PROJECT.getData(dataProvider) ?: return emptyList()
+  val editor = CommonDataKeys.EDITOR.getData(dataProvider)
   if (editor != null) {
     val editorTargets = targetsFromEditor(project, editor, editor.caretModel.offset)
     if (editorTargets != null) {
       return editorTargets
     }
   }
-  val symbols = dc.getData(CommonDataKeys.SYMBOLS)
+  val symbols = CommonDataKeys.SYMBOLS.getData(dataProvider)
   if (!symbols.isNullOrEmpty()) {
     val symbolTargets = symbolDocumentationTargets(project, symbols)
     if (symbolTargets.isNotEmpty()) {
       return symbolTargets
     }
   }
-  val targetElement = dc.getData(CommonDataKeys.PSI_ELEMENT)
+  val targetElement = CommonDataKeys.PSI_ELEMENT.getData(dataProvider)
   if (targetElement != null) {
     return listOf(psiDocumentationTarget(targetElement, null))
   }

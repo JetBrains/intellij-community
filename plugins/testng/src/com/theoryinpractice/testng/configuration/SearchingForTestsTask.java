@@ -171,7 +171,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   }
 
   /**
-   * Old testng versions (< 7.0.0) would load dtd from internet iff the dtd is not exactly https://testng.org/testng-1.0.dtd
+   * Old testng versions (< 7.0.0) would load dtd from internet iff the dtd is not exactly <a href="https://testng.org/testng-1.0.dtd">testng-1.0.dtd</a>
    * Detect version from manifest is not possible now because manifest doesn't provide this information unfortunately
    */
   private boolean requireToDowngradeToHttp() {
@@ -220,7 +220,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
         FileUtil.writeToFile(myTempFile, path.getBytes(StandardCharsets.UTF_8), true);
         return;
       }
-      final Parser parser = new Parser(myData.getSuiteName());
+      final Parser parser = new Parser(new FileInputStream(myData.getSuiteName()));
       parser.setLoadClasses(false);
       final Collection<XmlSuite> suites = parser.parse();
       for (XmlSuite suite : suites) {

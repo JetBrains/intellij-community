@@ -5,9 +5,6 @@ import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditorInfo;
 import com.intellij.ide.lightEdit.LightEditorInfoImpl;
 import com.intellij.ide.lightEdit.LightEditorListener;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -32,10 +29,6 @@ public abstract class LightEditAbstractPopupWidgetWrapper
 
   protected LightEditAbstractPopupWidgetWrapper(@NotNull Project project) {
     myProject = project;
-  }
-
-  protected DataContext getEditorDataContext(@NotNull DataContext originalContext) {
-    return myEditor == null ? originalContext : SimpleDataContext.getSimpleContext(CommonDataKeys.EDITOR, myEditor, originalContext);
   }
 
   @Nullable

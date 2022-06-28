@@ -1,47 +1,27 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.facet
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsTracker
 
 class KotlinFacetSettingsProviderImpl(private val project: Project) : KotlinFacetSettingsProvider {
-    companion object {
-        private var Module.facetSettingsCache: KotlinFacetSettings? by UserDataProperty(Key.create("FACET_SETTINGS_CACHE"))
-    }
-
-    init {
-        project.messageBus.connect().subscribe(
-            ProjectTopics.PROJECT_ROOTS,
-            object : ModuleRootListener {
-                override fun rootsChanged(event: ModuleRootEvent) {
-                    ModuleManager.getInstance(project).modules.forEach { it.facetSettingsCache = null }
-                }
-            }
-        )
-    }
-
     override fun getSettings(module: Module) = KotlinFacet.get(module)?.configuration?.settings
 
-    override fun getInitializedSettings(module: Module): KotlinFacetSettings {
-        getSettings(module)?.let {
-            it.initializeIfNeeded(module, null)
-            return it
+    override fun getInitializedSettings(module: Module): KotlinFacetSettings =
+        CachedValuesManager.getManager(project).getCachedValue(module) {
+            val kotlinFacetSettings = getSettings(module) ?: KotlinFacetSettings()
+            kotlinFacetSettings.initializeIfNeeded(module, null)
+            CachedValueProvider.Result.create(
+                kotlinFacetSettings,
+                KotlinCompilerSettingsTracker.getInstance(project),
+                ProjectRootModificationTracker.getInstance(project),
+            )
         }
-
-        module.facetSettingsCache?.let { return it }
-
-        return KotlinFacetSettings().apply {
-            initializeIfNeeded(module, null)
-            module.facetSettingsCache = this
-        }
-    }
 }

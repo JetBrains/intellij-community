@@ -4,7 +4,6 @@ package com.intellij.vcs.log.ui.frame
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
-import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
@@ -108,7 +107,11 @@ abstract class EditorDiffPreview(protected val project: Project,
     }
   }
 
-  override fun openPreview(requestFocus: Boolean): Boolean {
+  override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
+    if (isPreviewVisible) openPreviewInEditor(focus) else closePreview()
+  }
+
+  fun openPreviewInEditor(focusEditor: Boolean) {
     val currentFocusOwner = IdeFocusManager.getInstance(project).focusOwner
     val escapeHandler = Runnable {
       closePreview()
@@ -117,11 +120,10 @@ abstract class EditorDiffPreview(protected val project: Project,
     }
 
     registerEscapeHandler(previewFile, escapeHandler)
-    EditorTabPreview.openPreview(project, previewFile, requestFocus)
-    return true
+    EditorTabPreview.openPreview(project, previewFile, focusEditor)
   }
 
-  override fun closePreview() {
+  fun closePreview() {
     if (previewFileDelegate.isInitialized()) {
       FileEditorManager.getInstance(project).closeFile(previewFile)
     }
@@ -168,18 +170,6 @@ class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsL
     val producers = VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer).map {
       changesBrowser.getDiffRequestProducer(it, false)
     }
-    return SimpleDiffRequestChain.fromProducers(producers)
-  }
-
-  override fun performDiffAction(): Boolean {
-    if (ExternalDiffTool.isEnabled()) {
-      val diffProducers = VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer)
-        .map { change -> changesBrowser.getDiffRequestProducer(change, false) }
-      if (EditorTabPreview.showExternalToolIfNeeded(project, diffProducers)) {
-        return true
-      }
-    }
-
-    return super.performDiffAction()
+    return SimpleDiffRequestChain.fromProducers(producers.list, producers.selectedIndex)
   }
 }

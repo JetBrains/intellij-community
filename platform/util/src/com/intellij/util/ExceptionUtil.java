@@ -117,7 +117,7 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     return result;
   }
 
-  public static void rethrowUnchecked(@Nullable Throwable t) {
+  public static void rethrowUnchecked(@Nullable Throwable t) throws RuntimeException, Error {
     ExceptionUtilRt.rethrowUnchecked(t);
   }
 
@@ -127,13 +127,13 @@ public final class ExceptionUtil extends ExceptionUtilRt {
   }
 
   @Contract("_->fail")
-  public static void rethrow(@Nullable Throwable throwable) {
+  public static void rethrow(@Nullable Throwable throwable) throws RuntimeException, Error {
     rethrowUnchecked(throwable);
     throw new RuntimeException(throwable);
   }
 
   @Contract("!null->fail")
-  public static void rethrowAllAsUnchecked(@Nullable Throwable t) {
+  public static void rethrowAllAsUnchecked(@Nullable Throwable t) throws RuntimeException, Error {
     if (t != null) {
       rethrow(t);
     }

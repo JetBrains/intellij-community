@@ -7,12 +7,36 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
 import com.intellij.util.containers.ContainerUtil
 
 open class RecentProjectListActionProvider {
   companion object {
     @JvmStatic
     fun getInstance() = service<RecentProjectListActionProvider>()
+  }
+
+  fun collectProjects(): List<RecentProjectTreeItem> {
+    val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
+    val allRecentProjectPaths = LinkedHashSet(recentProjectManager.getRecentPaths())
+    val openedPaths = ProjectUtil.getOpenProjects().mapNotNull { openProject ->
+      recentProjectManager.getProjectPath(openProject)
+    }.toSet()
+
+    val recentProjects = mutableListOf<RecentProjectTreeItem>()
+    val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths)
+    val groups = recentProjectManager.groups.sortedWith(ProjectGroupComparator(allRecentProjectPaths))
+    groups.forEach { projectGroup ->
+      val children = projectGroup.projects.map { recentProject -> createRecentProject(recentProject, duplicates) }
+      allRecentProjectPaths.removeAll(projectGroup.projects.toSet())
+      recentProjects.add(ProjectsGroupItem(projectGroup, children))
+    }
+
+    allRecentProjectPaths.forEach { recentProject -> recentProjects.add(createRecentProject(recentProject, duplicates)) }
+
+    return recentProjects
   }
 
   @JvmOverloads
@@ -30,25 +54,7 @@ open class RecentProjectListActionProvider {
     val duplicates = getDuplicateProjectNames(openedPaths, paths)
     val groups = recentProjectManager.groups.toMutableList()
     if (useGroups) {
-      val projectPaths = paths.toMutableList()
-      groups.sortWith(object : Comparator<ProjectGroup> {
-        override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
-          val ind1 = getGroupIndex(o1)
-          val ind2 = getGroupIndex(o2)
-          return if (ind1 == ind2) StringUtil.naturalCompare(o1.name, o2.name) else ind1 - ind2
-        }
-
-        private fun getGroupIndex(group: ProjectGroup): Int {
-          var index = Integer.MAX_VALUE
-          for (path in group.projects) {
-            val i = projectPaths.indexOf(path)
-            if (i in 0 until index) {
-              index = i
-            }
-          }
-          return index
-        }
-      })
+      groups.sortWith(ProjectGroupComparator(paths))
 
       for (group in groups) {
         paths.removeAll(group.projects)
@@ -108,6 +114,11 @@ open class RecentProjectListActionProvider {
     return ReopenProjectAction(path, projectName, displayName)
   }
 
+  private fun createRecentProject(path: String, duplicates: Set<String>): RecentProjectItem {
+    val reopenProjectAction = createOpenAction(path, duplicates) as ReopenProjectAction
+    return RecentProjectItem(reopenProjectAction.projectPath, reopenProjectAction.projectName, reopenProjectAction.projectNameToDisplay ?: "")
+  }
+
   /**
    * Returns true if action corresponds to specified project
    */
@@ -127,5 +138,24 @@ open class RecentProjectListActionProvider {
       }
     }
     return duplicates
+  }
+
+  private class ProjectGroupComparator(private val projectPaths: Set<String>) : Comparator<ProjectGroup> {
+    override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
+      val ind1 = getGroupIndex(o1)
+      val ind2 = getGroupIndex(o2)
+      return if (ind1 == ind2) StringUtil.naturalCompare(o1.name, o2.name) else ind1 - ind2
+    }
+
+    private fun getGroupIndex(group: ProjectGroup): Int {
+      var index = Integer.MAX_VALUE
+      for (path in group.projects) {
+        val i = projectPaths.indexOf(path)
+        if (i in 0 until index) {
+          index = i
+        }
+      }
+      return index
+    }
   }
 }

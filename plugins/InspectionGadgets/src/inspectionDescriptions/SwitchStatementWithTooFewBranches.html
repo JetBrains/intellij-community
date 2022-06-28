@@ -1,8 +1,7 @@
 <html>
 <body>
 Reports <code>switch</code> statements and expressions with too few <code>case</code> labels, and suggests rewriting them as <code>if</code>
-and
-<code>else if</code> statements.
+and <code>else if</code> statements.
 <p>Example (minimum branches == 3):</p>
 <pre><code>
   switch (expression) {
@@ -18,6 +17,10 @@ and
     bar();
   }
 </code></pre>
+<p>Exhaustive switch expressions (Java 14+) or pattern switch statements (Java 17 preview) without the 'default' branch are not reported.
+  That's because compile-time exhaustiveness check will be lost when the <code>switch</code> is converted to <code>if</code>
+  which might be undesired.
+</p>
 <!-- tooltip end -->
 <p>Configure the inspection:</p>
 <p>Use the <b>Minimum number of branches</b> field to specify the minimum expected number of <code>case</code> labels.</p>

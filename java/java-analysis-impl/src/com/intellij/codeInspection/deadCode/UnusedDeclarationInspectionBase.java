@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -20,7 +20,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -28,6 +27,7 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.Stack;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -571,24 +571,20 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     });
 
     for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
-      try {
-        if (Objects.requireNonNull(context.getUserData(PHASE_KEY)) == 1) {
-          codeScanner.needToLog = true;
-        }
-        entry.accept(codeScanner);
-      }
-      catch (StackOverflowPreventedException e) {
-        LOG.warn(e.getMessage());
-      }
-      finally {
-        codeScanner.clearLogs();
-        codeScanner.needToLog = false;
-      }
+      entry.accept(codeScanner);
+    }
+
+    while (!codeScanner.myNextRound.isEmpty()) {
+      codeScanner.myNextRound.pop().accept(codeScanner);
     }
 
     while (codeScanner.newlyInstantiatedClassesCount() != 0) {
       codeScanner.cleanInstantiatedClassesCount();
       codeScanner.processDelayedMethods();
+
+      while (!codeScanner.myNextRound.isEmpty()) {
+        codeScanner.myNextRound.pop().accept(codeScanner);
+      }
     }
   }
 
@@ -602,23 +598,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     private int myInstantiatedClassesCount;
     private final Set<RefMethod> myProcessedMethods = new HashSet<>();
     private final Set<RefFunctionalExpression> myProcessedFunctionalExpressions = new HashSet<>();
-
-    // todo to be deleted
-    private boolean needToLog = false;
-    private final List<List<RefElement>> paths = new ArrayList<>();
-    private int temporaryDepth = 0;
-    private static int MAX_DEPTH = 400;
-
-    private void clearLogs() {
-      temporaryDepth = 0;
-      paths.clear();
-    }
-
-    static String log(@NotNull RefElement element) {
-      RefEntity owner = element.getOwner();
-      return String.format("%s %s (owner: %s %s)", element.getClass().getSimpleName(), element.getName(),
-                           owner.getClass().getSimpleName(), owner.getName());
-    }
+    private final Stack<RefElement> myNextRound = new Stack<>();
 
     @Override
     public void visitMethod(@NotNull RefMethod method) {
@@ -637,7 +617,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
           }
           myProcessedMethods.add(method);
           makeContentReachable((RefJavaElementImpl)method);
-          makeClassInitializersReachable(methodOwnerClass);
+          makeReachable(methodOwnerClass);
         }
         else {
           if (methodOwnerClass == null || isClassInstantiated(methodOwnerClass)) {
@@ -673,7 +653,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
       if (!alreadyActive) {
         // Process class's static initializers.
-        makeClassInitializersReachable(refClass);
+        makeReachable(refClass);
       }
 
       addInstantiatedClass(refClass);
@@ -683,7 +663,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       // Process class's static initializers.
       if (!field.isReachable()) {
         makeContentReachable((RefJavaElementImpl)field);
-        makeClassInitializersReachable(field.getOwnerClass());
+        makeReachable(field.getOwnerClass());
       }
     }
 
@@ -707,43 +687,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       makeReachable(refElement);
     }
 
-    private void makeClassInitializersReachable(@Nullable RefClass refClass) {
-      makeReachable(refClass);
-    }
-
     private void makeReachable(@Nullable RefElement refElement) {
       if (refElement == null) return;
-      if (needToLog) {
-        if (temporaryDepth == 0) {
-          paths.add(new ArrayList<>());
-        }
-        List<RefElement> lastPath = paths.get(paths.size() - 1);
-        if (lastPath.contains(refElement)) {
-          return;
-        }
-        else {
-          lastPath.add(refElement);
-        }
-        if (lastPath.size() > MAX_DEPTH) {
-          throw new StackOverflowPreventedException("Stack frames limit is exceeded");
-        }
-
-        int counter = 0;
-        for (RefElement refCallee : refElement.getOutReferences()) {
-          if (++counter > 1 && !(refCallee instanceof RefParameter)) {
-            ArrayList<RefElement> copy = new ArrayList<>(lastPath.subList(0, temporaryDepth + 1));
-            paths.add(copy);
-          }
-          temporaryDepth++;
-          refCallee.accept(this);
-          temporaryDepth--;
-        }
-      }
-      else {
-        for (RefElement refCallee : refElement.getOutReferences()) {
-          refCallee.accept(this);
-        }
-      }
+      myNextRound.addAll(refElement.getOutReferences());
     }
 
     private void addDelayedMethod(@NotNull RefMethod refMethod, @NotNull RefClass ownerClass) {

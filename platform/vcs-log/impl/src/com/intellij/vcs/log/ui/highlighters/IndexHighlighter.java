@@ -33,7 +33,7 @@ public class IndexHighlighter implements VcsLogHighlighter {
 
   @NotNull
   @Override
-  public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails details, boolean isSelected) {
+  public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails details, int column, boolean isSelected) {
     if (isSelected || !Registry.is("vcs.log.highlight.not.indexed")) return VcsCommitStyle.DEFAULT;
     VcsLogIndex index = myLogData.getIndex();
     if (!index.isIndexed(commitId)) {

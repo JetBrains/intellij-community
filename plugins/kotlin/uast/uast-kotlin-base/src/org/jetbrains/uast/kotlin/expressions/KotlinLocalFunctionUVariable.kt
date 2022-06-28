@@ -4,10 +4,12 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiVariable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
+@ApiStatus.Internal
 class KotlinLocalFunctionUVariable(
     val function: KtFunction,
     override val javaPsi: PsiVariable,

@@ -265,11 +265,10 @@
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
-    <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenImportCollector"/>
     <statistics.counterUsagesCollector groupId="build.maven.packagesearch" version="2"/>
 
-    <registryKey key="maven.new.import" defaultValue="false"
-                 description="new maven import"/>
+    <registryKey key="maven.linear.import" defaultValue="false"
+                 description="linear maven import process"/>
 
     <registryKey key="maven.import.to.workspace.model" defaultValue="false"
                  description="Enable experimental implementation of Maven import which writes to workspace model directly. Only basic features are supported for now, this mode may work incorrecly for many projects. See IDEA-284414 for details."/>
@@ -598,7 +597,7 @@
 
     <action id="Maven.ToggleSkipTests"
             class="org.jetbrains.idea.maven.project.actions.ToggleSkipTestsAction"
-            icon="AllIcons.Nodes.ExceptionClass">
+            icon="AllIcons.RunConfigurations.ShowIgnored">
     </action>
 
     <action id="Maven.ExpandAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$ExpandAll"
@@ -609,7 +608,7 @@
             use-shortcut-of="CollapseAll"/>
 
     <action id="Maven.ExecuteGoal" class="org.jetbrains.idea.maven.navigator.actions.MavenExecuteGoalAction"
-            icon="MavenIcons.ExecuteMavenGoal">
+            icon="AllIcons.Actions.Run_anything">
     </action>
 
     <action id="Maven.GroupProjects"

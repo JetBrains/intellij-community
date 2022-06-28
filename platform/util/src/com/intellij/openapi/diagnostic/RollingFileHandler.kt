@@ -10,20 +10,16 @@ import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.StreamHandler
 
-
 class RollingFileHandler @JvmOverloads constructor(
   val logPath: Path,
   val limit: Long,
   val count: Int,
   val append: Boolean,
-  val onRotate: Runnable? = null
+  private val onRotate: Runnable? = null
 ) : StreamHandler() {
   @Volatile private lateinit var meter: MeteredOutputStream
 
-  private class MeteredOutputStream(
-    private val delegate: OutputStream,
-    @Volatile var written: Long,
-  ) : OutputStream() {
+  private class MeteredOutputStream(private val delegate: OutputStream, @Volatile var written: Long) : OutputStream() {
     override fun write(b: Int) {
       delegate.write(b)
       written++
@@ -39,13 +35,9 @@ class RollingFileHandler @JvmOverloads constructor(
       written += len
     }
 
-    override fun close() {
-      delegate.close()
-    }
+    override fun close() = delegate.close()
 
-    override fun flush() {
-      delegate.flush()
-    }
+    override fun flush() = delegate.flush()
   }
 
   init {
@@ -55,9 +47,8 @@ class RollingFileHandler @JvmOverloads constructor(
 
   private fun open(append: Boolean) {
     Files.createDirectories(logPath.parent)
-    val fout = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
-    val bout = BufferedOutputStream(fout)
-    meter = MeteredOutputStream(bout, if (append) Files.size(logPath) else 0)
+    val delegate = BufferedOutputStream(Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND))
+    meter = MeteredOutputStream(delegate, if (append) Files.size(logPath) else 0)
     setOutputStream(meter)
   }
 
@@ -74,9 +65,9 @@ class RollingFileHandler @JvmOverloads constructor(
     }
   }
 
-
   private fun rotate() {
     onRotate?.run()
+
     try {
       Files.deleteIfExists(logPathWithIndex(count))
       for (i in count-1 downTo 1) {
@@ -88,17 +79,25 @@ class RollingFileHandler @JvmOverloads constructor(
     }
     catch (e: IOException) {
       // rotate failed, keep writing to existing log
-      super.publish(LogRecord(Level.SEVERE, "Log rotate failed: ${e.message}"))
+      super.publish(LogRecord(Level.SEVERE, "Log rotate failed: ${e.message}").also { it.thrown = e })
       return
     }
+
     close()
-    try {
-      Files.move(logPath, logPathWithIndex(1))
+
+    val e = try {
+      Files.move(logPath, logPathWithIndex(1), StandardCopyOption.ATOMIC_MOVE)
+      null
     }
     catch (e: IOException) {
-      // ignore?
+      e
     }
+
     open(false)
+
+    if (e != null) {
+      super.publish(LogRecord(Level.SEVERE, "Log rotate failed: ${e.message}").also { it.thrown = e })
+    }
   }
 
   private fun logPathWithIndex(index: Int): Path {

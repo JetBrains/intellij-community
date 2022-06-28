@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2020 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,20 +36,37 @@ class RegistrationIndexer {
   private void process(IdeaPlugin ideaPlugin) {
     processActions(ideaPlugin);
 
-    processComponents(ideaPlugin.getApplicationComponents(), components -> components.getComponents(),
-                      RegistrationEntry.RegistrationType.APPLICATION_COMPONENT);
-    processComponents(ideaPlugin.getProjectComponents(), components -> components.getComponents(),
-                      RegistrationEntry.RegistrationType.PROJECT_COMPONENT);
-    processComponents(ideaPlugin.getModuleComponents(), components -> components.getComponents(),
-                      RegistrationEntry.RegistrationType.MODULE_COMPONENT);
+    processElements(ideaPlugin.getApplicationComponents(),
+                    ApplicationComponents::getComponents,
+                    Component::getImplementationClass,
+                    RegistrationEntry.RegistrationType.APPLICATION_COMPONENT);
+    processElements(ideaPlugin.getProjectComponents(),
+                    ProjectComponents::getComponents,
+                    Component::getImplementationClass,
+                    RegistrationEntry.RegistrationType.PROJECT_COMPONENT);
+    processElements(ideaPlugin.getModuleComponents(),
+                    ModuleComponents::getComponents,
+                    Component::getImplementationClass,
+                    RegistrationEntry.RegistrationType.MODULE_COMPONENT);
+
+    processElements(ideaPlugin.getApplicationListeners(),
+                    Listeners::getListeners,
+                    Listeners.Listener::getListenerClassName,
+                    RegistrationEntry.RegistrationType.APPLICATION_LISTENER);
+    processElements(ideaPlugin.getProjectListeners(),
+                    Listeners::getListeners,
+                    Listeners.Listener::getListenerClassName,
+                    RegistrationEntry.RegistrationType.PROJECT_LISTENER);
   }
 
-  private <T extends DomElement> void processComponents(List<T> componentWrappers,
-                                                        Function<T, List<? extends Component>> componentGetter,
-                                                        RegistrationEntry.RegistrationType type) {
-    for (T wrapper : componentWrappers) {
-      for (Component component : componentGetter.fun(wrapper)) {
-        addEntry(component, component.getImplementationClass(), type);
+  private <T extends DomElement, U extends DomElement>
+  void processElements(List<T> elementContainer,
+                       Function<T, List<? extends U>> elementGetter,
+                       Function<U, GenericDomValue<PsiClass>> psiClassGetter,
+                       RegistrationEntry.RegistrationType type) {
+    for (T wrapper : elementContainer) {
+      for (U element : elementGetter.fun(wrapper)) {
+        addEntry(element, psiClassGetter.fun(element), type);
       }
     }
   }

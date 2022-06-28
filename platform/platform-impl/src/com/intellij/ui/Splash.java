@@ -53,7 +53,7 @@ public final class Splash extends Dialog {
   private final Image image;
 
   public Splash(@NotNull ApplicationInfoEx info) {
-    super((Frame)null, "splash");
+    super((Frame)null);
     setUndecorated(true);
 
     progressSlidePainter = info.getProgressSlides().isEmpty() ? null : new ProgressSlidePainter(info);

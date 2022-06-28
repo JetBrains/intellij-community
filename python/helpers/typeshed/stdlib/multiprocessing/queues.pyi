@@ -5,6 +5,8 @@ from typing import Any, Generic, TypeVar
 if sys.version_info >= (3, 9):
     from types import GenericAlias
 
+__all__ = ["Queue", "SimpleQueue", "JoinableQueue"]
+
 _T = TypeVar("_T")
 
 class Queue(queue.Queue[_T]):

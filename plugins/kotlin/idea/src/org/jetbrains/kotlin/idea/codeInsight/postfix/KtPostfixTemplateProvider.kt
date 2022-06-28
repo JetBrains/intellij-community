@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.postfix
 
@@ -128,6 +128,8 @@ private class KtExpressionPostfixTemplateSelector(
 
     private fun filterElement(element: PsiElement): Boolean {
         if (element !is KtExpression) return false
+
+        if (element.parent is KtThisExpression) return false
 
         // Can't be independent expressions
         if (element.isSelector || element.parent is KtUserType || element.isOperationReference || element is KtBlockExpression) return false

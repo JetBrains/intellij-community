@@ -385,4 +385,29 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       TestCase.assertTrue(fromTestContext != null)
     }
   }
+
+  @Test
+  fun `test class and method producers require different contexts`() {
+    val projectData = generateAndImportTemplateProject()
+
+    runReadActionAndWait {
+      val classContext = getContextByLocation(projectData["project"]["TestCase"].element)
+      val methodContext = getContextByLocation(projectData["project"]["TestCase"]["test1"].element)
+
+      val classConfigProducer = getConfigurationProducer<TestClassGradleConfigurationProducer>()
+      val methodConfigProducer = getConfigurationProducer<TestMethodGradleConfigurationProducer>()
+
+      val classConfiguration = classConfigProducer.createConfigurationFromContext(classContext)?.configuration as GradleRunConfiguration
+      val methodConfiguration = methodConfigProducer.createConfigurationFromContext(methodContext)?.configuration as GradleRunConfiguration
+
+      assertTrue(classConfigProducer.isConfigurationFromContext(classConfiguration, classContext))
+      assertTrue(methodConfigProducer.isConfigurationFromContext(methodConfiguration, methodContext))
+
+      assertNull(classConfigProducer.createConfigurationFromContext(methodContext))
+      assertNull(methodConfigProducer.createConfigurationFromContext(classContext))
+
+      assertFalse(classConfigProducer.isConfigurationFromContext(classConfiguration, methodContext))
+      assertFalse(methodConfigProducer.isConfigurationFromContext(methodConfiguration, classContext))
+    }
+  }
 }

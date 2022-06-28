@@ -6,6 +6,14 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
+/**
+ * Weak keys hash map.
+ * Custom HashingStrategy is supported.
+ * Null keys are NOT allowed
+ * Null values are allowed
+ * Use only when you need custom HashingStrategy. Otherwise {@link java.util.WeakHashMap} is good enough
+ * @see CollectionFactory#createWeakMap(int, float, HashingStrategy)
+ */
 final class WeakHashMap<K, V> extends RefHashMap<K, V> {
   WeakHashMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy) {
     super(initialCapacity, loadFactor, strategy);

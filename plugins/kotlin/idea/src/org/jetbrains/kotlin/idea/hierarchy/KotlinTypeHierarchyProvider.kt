@@ -49,7 +49,7 @@ class KotlinTypeHierarchyProvider : JavaTypeHierarchyProvider() {
         project: Project,
         editor: Editor,
         module: Module?
-    ): PsiElement? {
+    ): PsiClass? {
         val target = TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().allAccepted)
 
         return when (target) {
@@ -62,7 +62,7 @@ class KotlinTypeHierarchyProvider : JavaTypeHierarchyProvider() {
                 val type = functionDescriptor.returnType ?: return null
                 val returnTypeText = DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type)
                 if (returnTypeText != functionName) return null
-                val classOrObject = KotlinClassShortNameIndex.getInstance()[functionName, project, project.allScope()].singleOrNull()
+                val classOrObject = KotlinClassShortNameIndex.get(functionName, project, project.allScope()).singleOrNull()
                     ?: return null
                 getOriginalPsiClassOrCreateLightClass(classOrObject, module)
             }
@@ -70,14 +70,14 @@ class KotlinTypeHierarchyProvider : JavaTypeHierarchyProvider() {
         }
     }
 
-    private fun getTargetByContainingElement(editor: Editor, file: PsiFile): PsiElement? {
+    private fun getTargetByContainingElement(editor: Editor, file: PsiFile): PsiClass? {
         val offset = editor.caretModel.offset
         val element = file.findElementAt(offset) ?: return null
         val classOrObject = element.getNonStrictParentOfType<KtClassOrObject>() ?: return null
         return getOriginalPsiClassOrCreateLightClass(classOrObject, file.module)
     }
 
-    override fun getTarget(dataContext: DataContext): PsiElement? {
+    override fun getTarget(dataContext: DataContext): PsiClass? {
         val project = PlatformDataKeys.PROJECT.getData(dataContext) ?: return null
 
         val editor = PlatformDataKeys.EDITOR.getData(dataContext)

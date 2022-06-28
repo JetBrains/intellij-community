@@ -56,7 +56,7 @@ object ExecUtil {
     val stream = loader.getResourceAsStream(templateName) ?: throw IOException("Template '$templateName' not found by $loader")
 
     val template = FileUtil.loadTextAndClose(InputStreamReader(stream, Charsets.UTF_8))
-    if (variables == null || variables.isEmpty()) {
+    if (variables.isNullOrEmpty()) {
       return template
     }
 

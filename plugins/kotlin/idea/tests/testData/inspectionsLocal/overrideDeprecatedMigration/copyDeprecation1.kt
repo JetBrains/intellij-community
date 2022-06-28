@@ -1,0 +1,10 @@
+// WITH_STDLIB
+
+open class Base {
+    @Deprecated("Don't use")
+    open fun foo() {}
+}
+
+class Derived : Base() {
+    override fun <caret>foo() {}
+}

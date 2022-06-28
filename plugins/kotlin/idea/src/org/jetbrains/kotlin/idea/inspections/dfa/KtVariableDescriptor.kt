@@ -73,6 +73,8 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
         return variable !is KtProperty || !variable.isVar
     }
 
+    override fun getPsiElement(): KtCallableDeclaration = variable
+
     override fun getDfType(qualifier: DfaVariableValue?): DfType = variable.type().toDfType(variable)
 
     override fun equals(other: Any?): Boolean = other is KtVariableDescriptor && other.variable == variable

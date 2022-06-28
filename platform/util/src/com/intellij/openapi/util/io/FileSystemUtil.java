@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
@@ -379,7 +379,8 @@ public final class FileSystemUtil {
           try {
             attributes = Files.readAttributes(path, schema);
           }
-          catch (NoSuchFileException e) {
+          catch (FileSystemException e) {
+            LOG.debug(pathStr, e);
             return FileAttributes.BROKEN_SYMLINK;
           }
         }
@@ -418,7 +419,8 @@ public final class FileSystemUtil {
       try {
         return Paths.get(path).toRealPath().toString();
       }
-      catch (NoSuchFileException e) {
+      catch (FileSystemException e) {
+        LOG.debug(path, e);
         return null;
       }
     }

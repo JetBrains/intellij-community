@@ -1045,6 +1045,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("testData/handlers/basic/KT36306.kt");
         }
 
+        @TestMetadata("LocalClassNameWithPackageLevelConflict.kt")
+        public void testLocalClassNameWithPackageLevelConflict() throws Exception {
+            runTest("testData/handlers/basic/LocalClassNameWithPackageLevelConflict.kt");
+        }
+
         @TestMetadata("LocalFunction.kt")
         public void testLocalFunction() throws Exception {
             runTest("testData/handlers/basic/LocalFunction.kt");
@@ -1053,6 +1058,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("NestedClassNameWithFileLevelConflict.kt")
         public void testNestedClassNameWithFileLevelConflict() throws Exception {
             runTest("testData/handlers/basic/NestedClassNameWithFileLevelConflict.kt");
+        }
+
+        @TestMetadata("NestedClassNameWithPackageLevelConflict.kt")
+        public void testNestedClassNameWithPackageLevelConflict() throws Exception {
+            runTest("testData/handlers/basic/NestedClassNameWithPackageLevelConflict.kt");
         }
 
         @TestMetadata("NestedTypeArg.kt")

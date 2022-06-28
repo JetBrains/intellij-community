@@ -3,3 +3,4 @@
 public interface <caret>A {
 
 }
+// FIR_COMPARISON

@@ -243,6 +243,11 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression element = myPointer.getElement();
       if (element == null) return;

@@ -32,10 +32,11 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 65);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 67);
   public static final IntEventField ALTERNATIVE_JRE_VERSION = EventFields.Int("alternative_jre_version");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
-  private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor", "run_config_executor");
+  private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor",
+                                                                                           RunConfigurationExecutorUtilValidator.class);
   /**
    * The type of the target the run configuration is being executed with. {@code null} stands for the local machine target.
    * <p>
@@ -43,7 +44,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
    * configuration.
    */
   private static final StringEventField TARGET =
-    EventFields.StringValidatedByCustomRule("target", RunConfigurationUsageTriggerCollector.RunTargetValidator.RULE_ID);
+    EventFields.StringValidatedByCustomRule("target", RunTargetValidator.class);
   private static final EnumEventField<RunConfigurationFinishType> FINISH_TYPE =
     EventFields.Enum("finish_type", RunConfigurationFinishType.class);
 
@@ -118,10 +119,10 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   }
 
   public static class RunConfigurationExecutorUtilValidator extends CustomValidationRule {
-
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "run_config_executor".equals(ruleId);
+    public String getRuleId() {
+      return "run_config_executor";
     }
 
     @NotNull
@@ -140,9 +141,10 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   public static class RunTargetValidator extends CustomValidationRule {
     public static final String RULE_ID = "run_target";
 
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return RULE_ID.equals(ruleId);
+    public String getRuleId() {
+      return RULE_ID;
     }
 
     @NotNull

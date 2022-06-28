@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
@@ -736,6 +737,13 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
     if (element instanceof PsiMethodCallExpression) {
       return getMethodCandidateInfo((PsiMethodCallExpression)element);
+    }
+
+    if (element instanceof FakePsiElement) {
+      PsiDocCommentBase docCommentBase = PsiTreeUtil.getParentOfType(originalElement, PsiDocCommentBase.class);
+      if (docCommentBase != null) {
+        element = docCommentBase.getOwner();
+      }
     }
 
     // Try hard for documentation of incomplete new Class instantiation

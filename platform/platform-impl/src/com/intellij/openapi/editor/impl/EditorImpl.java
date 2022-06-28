@@ -1006,46 +1006,60 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myTraceableDisposable.throwDisposalError(msg);
   }
 
+  private final Object NON_RELEASABLE_BLOCK_GUARD = ObjectUtils.sentinel("NON_RELEASABLE_BLOCK_GUARD");
+  /**
+   * During execution of this method, the {@link #release()} call from the other thread is not allowed to run.
+   * Can be useful when you need to guarantee the editor is still alive at some point.
+   */
+  @ApiStatus.Internal
+  public void executeNonCancelableBlock(@NotNull Runnable runnable) {
+    synchronized (NON_RELEASABLE_BLOCK_GUARD) {
+      runnable.run();
+    }
+  }
+  
   // EditorFactory.releaseEditor should be used to release editor
   void release() {
     assertIsDispatchThread();
-    if (isReleased) {
-      throwDisposalError("Double release of editor:");
-    }
-    myTraceableDisposable.kill(null);
+    executeNonCancelableBlock(()->{
+      if (isReleased) {
+        throwDisposalError("Double release of editor:");
+      }
+      myTraceableDisposable.kill(null);
 
-    isReleased = true;
-    mySizeAdjustmentStrategy.cancelAllRequests();
-    cancelAutoResetForMouseSelectionState();
+      isReleased = true;
+      mySizeAdjustmentStrategy.cancelAllRequests();
+      cancelAutoResetForMouseSelectionState();
 
-    myFoldingModel.dispose();
-    mySoftWrapModel.release();
-    myMarkupModel.dispose();
+      myFoldingModel.dispose();
+      mySoftWrapModel.release();
+      myMarkupModel.dispose();
 
-    myScrollingModel.dispose();
-    myGutterComponent.dispose();
-    myMousePressedEvent = null;
-    myMouseMovedEvent = null;
-    Disposer.dispose(myCaretModel);
-    Disposer.dispose(mySoftWrapModel);
-    Disposer.dispose(myView);
-    clearCaretThread();
+      myScrollingModel.dispose();
+      myGutterComponent.dispose();
+      myMousePressedEvent = null;
+      myMouseMovedEvent = null;
+      Disposer.dispose(myCaretModel);
+      Disposer.dispose(mySoftWrapModel);
+      Disposer.dispose(myView);
+      clearCaretThread();
 
-    myFocusListeners.clear();
-    myMouseListeners.clear();
-    myMouseMotionListeners.clear();
+      myFocusListeners.clear();
+      myMouseListeners.clear();
+      myMouseMotionListeners.clear();
 
-    myEditorComponent.removeFocusListener(this);
+      myEditorComponent.removeFocusListener(this);
 
-    myEditorComponent.removeMouseListener(myMouseListener);
-    myGutterComponent.removeMouseListener(myMouseListener);
-    myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
-    myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
+      myEditorComponent.removeMouseListener(myMouseListener);
+      myGutterComponent.removeMouseListener(myMouseListener);
+      myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
+      myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
-    CodeStyleSettingsManager.removeListener(myProject, this);
+      CodeStyleSettingsManager.removeListener(myProject, this);
 
-    Disposer.dispose(myDisposable);
-    myVerticalScrollBar.setPersistentUI(JBScrollBar.createUI(null)); // clear error panel's cached image
+      Disposer.dispose(myDisposable);
+      myVerticalScrollBar.setPersistentUI(JBScrollBar.createUI(null)); // clear error panel's cached image
+    });
   }
 
   private void clearCaretThread() {
@@ -1972,7 +1986,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setHeaderComponent(JComponent header) {
     myHeaderPanel.removeAll();
-    header = header == null ? getPermanentHeaderComponent() : header;
+    JComponent permanentHeader = getPermanentHeaderComponent();
+    if (header == null) {
+      header = permanentHeader;
+    }
+    else if (permanentHeader != null && header != permanentHeader) {
+      JPanel headerPanel = new JPanel(new BorderLayout());
+      headerPanel.add(permanentHeader, BorderLayout.NORTH);
+      headerPanel.add(header, BorderLayout.SOUTH);
+      header = headerPanel;
+    }
     if (header != null) {
       myHeaderPanel.add(header);
     }
@@ -3264,7 +3287,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public boolean isCopyVisible(@NotNull DataContext dataContext) {
       Caret caret = dataContext.getData(CommonDataKeys.CARET);
-      return PlatformUtils.isDataGrip() && caret != null
+      return caret != null
              ? isCaretInsideSelection(caret)
              : getSelectionModel().hasSelection(true);
     }
@@ -3283,7 +3306,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public boolean isCutVisible(@NotNull DataContext dataContext) {
       Caret caret = dataContext.getData(CommonDataKeys.CARET);
       return isCutEnabled(dataContext) &&
-             (PlatformUtils.isDataGrip() && caret != null
+             (caret != null
               ? isCaretInsideSelection(caret)
               : getSelectionModel().hasSelection(true));
     }

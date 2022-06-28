@@ -80,7 +80,7 @@ public class ChangesBrowser extends JPanel implements DataProvider, TypeSafeData
       MyUseCase.LOCAL_CHANGES.equals(useCase) ? RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator() : null;
 
     myViewer = new ChangesTreeList<>(myProject, changes, capableOfExcludingChanges,
-                                     highlightProblems, inclusionListener, decorator) {
+                                                         highlightProblems, inclusionListener, decorator) {
       @Override
       protected DefaultTreeModel buildTreeModel(final List<Change> changes11, ChangeNodeDecorator changeNodeDecorator) {
         return ChangesBrowser.this.buildTreeModel(changes11, changeNodeDecorator, isShowFlatten());
@@ -244,13 +244,11 @@ public class ChangesBrowser extends JPanel implements DataProvider, TypeSafeData
   private ListSelection<Change> getChangesSelection() {
     final Change leadSelection = myViewer.getLeadSelection();
     List<Change> changes = getSelectedChanges();
-    boolean explicitSelection = true;
 
     if (changes.size() < 2) {
       List<Change> allChanges = myViewer.getChanges();
       if (allChanges.size() > 1 || changes.isEmpty()) {
         changes = allChanges;
-        explicitSelection = false;
       }
     }
 
@@ -258,8 +256,7 @@ public class ChangesBrowser extends JPanel implements DataProvider, TypeSafeData
       return ListSelection.createSingleton(leadSelection);
     }
 
-    return ListSelection.create(changes, leadSelection)
-      .withExplicitSelection(explicitSelection);
+    return ListSelection.create(changes, leadSelection);
   }
 
   protected void afterDiffRefresh() {

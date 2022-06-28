@@ -80,11 +80,13 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         if (file.isScript()) {
             // Scripts support seem to modify some of the important aspects via file user data without triggering PsiModificationTracker.
             // If in doubt, run ScriptDefinitionsOrderTestGenerated
-            return getFacadeToAnalyzeFile(file, TargetPlatformDetector.getPlatform(file))
+            val settings = file.getModuleInfo().platformSettings(TargetPlatformDetector.getPlatform(file))
+            return getFacadeToAnalyzeFile(file, settings)
         } else {
             return CachedValuesManager.getCachedValue(file) {
+                val settings = file.getModuleInfo().platformSettings(TargetPlatformDetector.getPlatform(file))
                 CachedValueProvider.Result(
-                    getFacadeToAnalyzeFile(file, TargetPlatformDetector.getPlatform(file)),
+                    getFacadeToAnalyzeFile(file, settings),
                     PsiModificationTracker.MODIFICATION_COUNT
                 )
             }
@@ -538,10 +540,9 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         return getResolutionFacadeByModuleInfoAndSettings(moduleInfo, settings).createdFor(emptyList(), moduleInfo, settings)
     }
 
-    private fun getFacadeToAnalyzeFile(file: KtFile, platform: TargetPlatform): ResolutionFacade {
+    private fun getFacadeToAnalyzeFile(file: KtFile, settings: PlatformAnalysisSettings): ResolutionFacade {
         val moduleInfo = file.getModuleInfo()
         val specialFile = file.filterNotInProjectSource(moduleInfo)
-        val settings = file.getModuleInfo().platformSettings(platform)
 
         specialFile?.filterScript()?.let { script ->
             val scripts = setOf(script)
@@ -555,7 +556,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             return ModuleResolutionFacadeImpl(projectFacade, moduleInfo).createdFor(specialFiles, moduleInfo, settings)
         }
 
-        return getResolutionFacadeByModuleInfo(moduleInfo, platform).createdFor(emptyList(), moduleInfo, settings)
+        return getResolutionFacadeByModuleInfoAndSettings(moduleInfo, settings).createdFor(emptyList(), moduleInfo, settings)
     }
 
     override fun getResolutionFacadeByFile(file: PsiFile, platform: TargetPlatform): ResolutionFacade? {

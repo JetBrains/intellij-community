@@ -7,10 +7,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.idea.ActionsBundle
-import com.intellij.notification.ActionCenter
-import com.intellij.notification.EventLog
-import com.intellij.notification.LogModel
-import com.intellij.notification.Notification
+import com.intellij.notification.*
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.notification.impl.widget.IdeNotificationArea
 import com.intellij.openapi.Disposable
@@ -175,6 +172,14 @@ internal class NotificationContent(val project: Project,
     searchField.textEditor.border = null
     searchField.border = JBUI.Borders.customLineBottom(JBColor.border())
     searchField.isVisible = false
+
+    if (ExperimentalUI.isNewUI()) {
+      searchController.background = JBUI.CurrentTheme.ToolWindow.background()
+      searchField.textEditor.background = searchController.background
+    }
+    else {
+      searchController.background = UIUtil.getTextFieldBackground()
+    }
 
     searchController.searchField = searchField
 
@@ -378,6 +383,7 @@ private class SearchController(private val mainContent: NotificationContent,
                                private val suggestions: NotificationGroupComponent,
                                private val timeline: NotificationGroupComponent) {
   lateinit var searchField: SearchTextField
+  lateinit var background: Color
 
   fun startSearch() {
     mainContent.clearEmptyState()
@@ -391,7 +397,7 @@ private class SearchController(private val mainContent: NotificationContent,
     val query = searchField.text
 
     if (query.isEmpty()) {
-      searchField.textEditor.background = UIUtil.getTextFieldBackground()
+      searchField.textEditor.background = background
       clearSearch()
       return
     }
@@ -404,7 +410,7 @@ private class SearchController(private val mainContent: NotificationContent,
     }
     suggestions.iterateComponents(function)
     timeline.iterateComponents(function)
-    searchField.textEditor.background = if (result) UIUtil.getTextFieldBackground() else LightColors.RED
+    searchField.textEditor.background = if (result) background else LightColors.RED
     mainContent.fullRepaint()
   }
 
@@ -709,7 +715,13 @@ private class NotificationComponent(val project: Project,
                                     val singleSelectionHandler: SingleTextSelectionHandler) : JPanel() {
 
   companion object {
-    val BG_COLOR = UIUtil.getListBackground()
+    val BG_COLOR: Color
+      get() {
+        if (ExperimentalUI.isNewUI()) {
+          return JBUI.CurrentTheme.ToolWindow.background()
+        }
+        return UIUtil.getListBackground()
+      }
     val INFO_COLOR = JBColor.namedColor("Label.infoForeground", JBColor(Gray.x80, Gray.x8C))
     internal const val NEW_COLOR_NAME = "NotificationsToolwindow.newNotification.background"
     internal val NEW_DEFAULT_COLOR = JBColor(0xE6EEF7, 0x45494A)
@@ -727,11 +739,12 @@ private class NotificationComponent(val project: Project,
   private var myRoundColor = BG_COLOR
   private lateinit var myDoNotAskHandler: (Boolean) -> Unit
   private lateinit var myRemoveCallback: Consumer<Notification>
-  private var myLafUpdater: Runnable? = null
 
   private var myMorePopup: JBPopup? = null
   var myMoreAwtPopup: JPopupMenu? = null
   var myDropDownPopup: JPopupMenu? = null
+
+  private var myLafUpdater: Runnable? = null
 
   init {
     isOpaque = true
@@ -770,6 +783,7 @@ private class NotificationComponent(val project: Project,
 
     val centerPanel = JPanel(VerticalLayout(JBUI.scale(8)))
     centerPanel.isOpaque = false
+    centerPanel.border = JBUI.Borders.emptyRight(10)
 
     var titlePanel: JPanel? = null
 
@@ -816,25 +830,22 @@ private class NotificationComponent(val project: Project,
     }
 
     if (notification.hasContent()) {
-      val textContent = NotificationsUtil.buildHtml(notification, null, true, null, null)
-      val text = createTextComponent(textContent)
+      val textContent = NotificationsUtil.buildFullContent(notification)
+      val textComponent = createTextComponent(textContent)
 
-      NotificationsManagerImpl.setTextAccessibleName(text, textContent)
+      NotificationsManagerImpl.setTextAccessibleName(textComponent, textContent)
 
-      singleSelectionHandler.add(text, true)
+      singleSelectionHandler.add(textComponent, true)
 
       if (!notification.hasTitle() && !notification.isSuggestionType) {
         titlePanel = JPanel(BorderLayout())
         titlePanel.isOpaque = false
-        titlePanel.add(text)
+        titlePanel.add(textComponent)
         centerPanel.add(titlePanel)
       }
       else {
-        centerPanel.add(text)
+        centerPanel.add(textComponent)
       }
-    }
-    else {
-      myLafUpdater = Runnable(::updateColor)
     }
 
     val actions = notification.actions
@@ -881,6 +892,11 @@ private class NotificationComponent(val project: Project,
         val helpLabel = ContextHelpLabel.create(StringUtil.defaultIfEmpty(presentation.text, ""), presentation.description)
         helpLabel.foreground = UIUtil.getLabelDisabledForeground()
         actionPanel.add(helpLabel)
+      }
+      if (!notification.hasTitle() && !notification.hasContent() && !notification.isSuggestionType) {
+        titlePanel = JPanel(BorderLayout())
+        titlePanel.isOpaque = false
+        actionPanel.add(titlePanel, HorizontalLayout.RIGHT)
       }
       centerPanel.add(actionPanel)
     }
@@ -1000,7 +1016,10 @@ private class NotificationComponent(val project: Project,
   }
 
   private fun createAction(action: AnAction): JComponent {
-    return LinkLabel(action.templateText, action.templatePresentation.icon, { link, _action -> runAction(_action, link) }, action)
+    return object : LinkLabel<AnAction>(action.templateText, action.templatePresentation.icon,
+                                        { link, _action -> runAction(_action, link) }, action) {
+      override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
+    }
   }
 
   private fun doShowSettings() {
@@ -1056,7 +1075,7 @@ private class NotificationComponent(val project: Project,
     component.isOpaque = false
     component.border = null
 
-    NotificationsUtil.configureHtmlEditorKit(component)
+    NotificationsUtil.configureHtmlEditorKit(component, false)
 
     if (myNotificationWrapper.notification!!.listener != null) {
       component.addHyperlinkListener { e ->
@@ -1081,12 +1100,10 @@ private class NotificationComponent(val project: Project,
     }
 
     myLafUpdater = Runnable {
-      NotificationsUtil.configureHtmlEditorKit(component)
+      NotificationsUtil.configureHtmlEditorKit(component, false)
       component.text = text
       component.revalidate()
       component.repaint()
-
-      updateColor()
     }
 
     return component
@@ -1094,6 +1111,7 @@ private class NotificationComponent(val project: Project,
 
   fun updateLaf() {
     myLafUpdater?.run()
+    updateColor()
   }
 
   fun setDoNotAskHandler(handler: (Boolean) -> Unit) {
@@ -1216,6 +1234,8 @@ private class MoreAction(val notificationComponent: NotificationComponent, actio
 
     Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
   }
+
+  override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
 }
 
 private class MyDropDownAction(val notificationComponent: NotificationComponent) : NotificationsManagerImpl.DropDownAction(null, null) {
@@ -1246,6 +1266,8 @@ private class MyDropDownAction(val notificationComponent: NotificationComponent)
 
     Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
   }
+
+  override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
 }
 
 private class NotificationWrapper(notification: Notification) {

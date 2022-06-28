@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.groovy.inspections
 
@@ -8,13 +8,13 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.configuration.MigrationInfo
 import org.jetbrains.kotlin.idea.configuration.getWholeModuleGroup
-import org.jetbrains.kotlin.idea.configuration.isLanguageVersionUpdate
 import org.jetbrains.kotlin.idea.extensions.gradle.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
 import org.jetbrains.kotlin.idea.inspections.ReplaceStringInDocumentFix
 import org.jetbrains.kotlin.idea.inspections.migration.DEPRECATED_COROUTINES_LIBRARIES_INFORMATION
 import org.jetbrains.kotlin.idea.inspections.migration.DeprecatedForKotlinLibInfo
+import org.jetbrains.kotlin.idea.migration.MigrationInfo
+import org.jetbrains.kotlin.idea.migration.isLanguageVersionUpdate
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.idea.versions.LibInfo
@@ -55,7 +55,7 @@ class GradleKotlinxCoroutinesDeprecationInspection : BaseInspection(), CleanupLo
                     }
 
                     val libVersion =
-                        DifferentStdlibGradleVersionInspection.getResolvedLibVersion(
+                        DifferentStdlibGradleVersionInspection.getRawResolvedLibVersion(
                             dependencyStatement.containingFile, outdatedInfo.lib.groupId, listOf(outdatedInfo.lib.name)
                         ) ?: DeprecatedGradleDependencyInspection.libraryVersionFromOrderEntry(
                             dependencyStatement.containingFile,

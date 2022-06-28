@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions.branch
 
+import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -21,6 +22,8 @@ class GitNewBranchAction
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    createOrCheckoutNewBranch(e.project!!, e.getRequiredData(REPOSITORIES_KEY), GitUtil.HEAD)
+    val repositories = e.getRequiredData(REPOSITORIES_KEY)
+    createOrCheckoutNewBranch(e.project!!, repositories, GitUtil.HEAD,
+                              initialName = repositories.getCommonCurrentBranch())
   }
 }

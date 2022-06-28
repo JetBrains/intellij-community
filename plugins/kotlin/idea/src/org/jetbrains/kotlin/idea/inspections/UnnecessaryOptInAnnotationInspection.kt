@@ -12,6 +12,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -31,12 +32,12 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.SINCE_KOTLIN_FQ_NAME
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
+import org.jetbrains.kotlin.resolve.checkers.OptInNames.OPT_IN_FQ_NAMES
 import org.jetbrains.kotlin.resolve.constants.ArrayValue
 import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.*
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.util.aliasImportMap
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
@@ -75,24 +76,19 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
     )
 
     // Short names for `kotlin.OptIn` and `kotlin.UseExperimental` for faster comparison without name resolution
-    private val USE_EXPERIMENTAL_SHORT_NAMES = OptInNames.USE_EXPERIMENTAL_FQ_NAMES.map { it.shortName().asString() }.toSet()
+    private val OPT_IN_SHORT_NAMES = OPT_IN_FQ_NAMES.map { it.shortName().asString() }.toSet()
 
     /**
      * Main inspection visitor to traverse all annotation entries.
      */
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        val optInAliases = holder.file.safeAs<KtFile>()
-            ?.aliasImportMap()
-            ?.entries()
-            ?.filter { it.value in USE_EXPERIMENTAL_SHORT_NAMES }
-            ?.mapNotNull { it.key }
-            ?.toSet()
-            ?: emptySet()
+        val file = holder.file
+        val optInAliases = if (file is KtFile) KotlinPsiHeuristics.getImportAliases(file, OPT_IN_SHORT_NAMES) else emptySet()
 
         return annotationEntryVisitor { annotationEntry  ->
             // Fast check if the annotation may be `@OptIn`/`@UseExperimental` or any of their import aliases
             val entryShortName = annotationEntry.shortName?.asString()
-            if (entryShortName != null && entryShortName !in USE_EXPERIMENTAL_SHORT_NAMES && entryShortName !in optInAliases)
+            if (entryShortName != null && entryShortName !in OPT_IN_SHORT_NAMES && entryShortName !in optInAliases)
                 return@annotationEntryVisitor
 
             // Resolve the candidate annotation entry. If it is an `@OptIn`/`@UseExperimental` annotation,

@@ -1,4 +1,4 @@
-// "Wrap using 'Arrays.stream()'" "true"
+// "Adapt using 'Arrays.stream()'" "true"
 import java.util.*;
 import java.util.stream.Stream;
 

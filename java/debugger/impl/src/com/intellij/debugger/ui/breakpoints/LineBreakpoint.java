@@ -50,12 +50,19 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class LineBreakpoint<P extends JavaBreakpointProperties> extends BreakpointWithHighlighter<P> {
+  private final boolean myIgnoreSameLineLocations;
+
   static final Logger LOG = Logger.getInstance(LineBreakpoint.class);
 
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
 
   protected LineBreakpoint(Project project, XBreakpoint xBreakpoint) {
+    this(project, xBreakpoint, true);
+  }
+
+  protected LineBreakpoint(Project project, XBreakpoint xBreakpoint, boolean ignoreSameLineLocations) {
     super(project, xBreakpoint);
+    myIgnoreSameLineLocations = ignoreSameLineLocations;
   }
 
   @Override
@@ -108,7 +115,11 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
                       "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && loc.method().isObsolete()));
           }
         }).filter(l -> acceptLocation(debugProcess, classType, l)).toList();
-        locations = MethodBytecodeUtil.removeSameLineLocations(locations);
+
+        if (myIgnoreSameLineLocations) {
+          locations = MethodBytecodeUtil.removeSameLineLocations(locations);
+        }
+
         for (Location loc : locations) {
           createLocationBreakpointRequest(this, loc, debugProcess);
           if (LOG.isDebugEnabled()) {

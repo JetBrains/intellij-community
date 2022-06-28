@@ -22,6 +22,7 @@ import training.learn.ActionsRecorder
 import training.learn.course.KLesson
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
+import training.statistic.LearningInternalProblems
 import training.statistic.StatisticBase
 import training.ui.LearningUiUtil
 import training.util.WeakReferenceDelegator
@@ -94,6 +95,8 @@ internal class LessonExecutor(val lesson: KLesson,
 
   private var continueHighlighting: Ref<Boolean> = Ref(true)
 
+  internal val internalProblems: MutableSet<LearningInternalProblems> = mutableSetOf()
+
   // Is used from ui detection pooled thread
   @Volatile
   var hasBeenStopped = false
@@ -148,7 +151,7 @@ internal class LessonExecutor(val lesson: KLesson,
     ApplicationManager.getApplication().assertIsDispatchThread()
     val lessonPassed = currentTaskIndex == taskActions.size
     val visualIndex = if(lessonPassed) currentVisualIndex else (taskActions[currentTaskIndex].taskVisualIndex ?: 0)
-    lesson.onStop(project, lessonPassed, currentTaskIndex, visualIndex)
+    lesson.onStop(project, lessonPassed, currentTaskIndex, visualIndex, internalProblems)
     continueHighlighting.set(false)
     clearRestore()
     disposeRecorders()

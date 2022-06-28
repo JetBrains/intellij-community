@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Pair;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
- * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
+ * Attaches the block of the latest commits, which was read from the VCS, to the existing log structure.
  *
  * @author Stanislav Erokhin
  * @author Kirill Likhodedov
@@ -20,7 +20,7 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
   @NonNls public final static String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
 
   /**
-   * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
+   * Attaches the block of the latest commits, which was read from the VCS, to the existing log structure.
    *
    * @param savedLog     currently available part of the log.
    * @param previousRefs references saved from the previous refresh.

@@ -44,6 +44,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   protected RefJavaElementImpl(UDeclaration elem, PsiElement psi, RefManager manager) {
     super(getName(elem), psi, manager);
+    assert (!(psi instanceof UElement));
 
     PsiModifierListOwner javaPsi = Objects.requireNonNull(ObjectUtils.tryCast(elem.getJavaPsi(), PsiModifierListOwner.class));
     setAccessModifier(RefJavaUtil.getInstance().getAccessModifier(javaPsi));

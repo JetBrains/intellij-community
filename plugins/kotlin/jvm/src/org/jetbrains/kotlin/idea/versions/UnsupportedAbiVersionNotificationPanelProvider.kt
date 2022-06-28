@@ -28,6 +28,7 @@ import com.intellij.ui.EditorNotificationProvider.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.*
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.util.application.invokeLater
@@ -50,11 +51,16 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
         val answer = ErrorNotificationPanel(fileEditor)
         val badRootFiles = badVersionedRoots.map { it.file }
 
-        val kotlinLibraries = findAllUsedLibraries(project).keySet()
-        val badRuntimeLibraries = kotlinLibraries.filter { library ->
-            val runtimeJar = LibraryJarDescriptor.STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
-            val jsLibJar = LibraryJarDescriptor.JS_STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
-            badRootFiles.contains(runtimeJar) || badRootFiles.contains(jsLibJar)
+        val badRuntimeLibraries: List<Library> = ArrayList<Library>().also { list ->
+            project.forEachAllUsedLibraries { library ->
+                val runtimeJar = LibraryJarDescriptor.STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
+                val jsLibJar = LibraryJarDescriptor.JS_STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
+                if (badRootFiles.contains(runtimeJar) || badRootFiles.contains(jsLibJar)) {
+                    list.add(library)
+                    return@forEachAllUsedLibraries true
+                }
+                return@forEachAllUsedLibraries true
+            }
         }
 
         val isPluginOldForAllRoots = badVersionedRoots.all { it.supportedVersion < it.version }
@@ -93,7 +99,8 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
 
                 answer.createActionLabel(actionLabelText) {
                     ApplicationManager.getApplication().invokeLater {
-                        updateLibraries(project, KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort, badRuntimeLibraries)
+                        val newArtifactVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion
+                        updateLibraries(project, newArtifactVersion, badRuntimeLibraries)
                     }
                 }
             }
@@ -162,7 +169,7 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
                 assert(!badVersionedRoots.isEmpty()) { "This action should only be called when bad roots are present" }
 
                 val listPopupModel = LibraryRootsPopupModel(
-                    KotlinJvmBundle.message("unsupported.format.plugin.version.0", KotlinPluginUtil.getPluginVersion()),
+                    KotlinJvmBundle.message("unsupported.format.plugin.version.0", KotlinIdePlugin.version),
                     project,
                     badVersionedRoots
                 )

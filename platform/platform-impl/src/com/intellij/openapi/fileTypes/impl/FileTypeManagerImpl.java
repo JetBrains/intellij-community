@@ -42,10 +42,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.lang.reflect.Field;
@@ -87,7 +84,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final ThreadLocal<Pair<VirtualFile, FileType>> FILE_TYPE_FIXED_TEMPORARILY = new ThreadLocal<>();
 
   private final Set<FileTypeWithDescriptor> myDefaultTypes = CollectionFactory.createSmallMemoryFootprintSet();
-  private final FileTypeDetectionService myDetectionService;
+  final FileTypeDetectionService myDetectionService;
   private FileTypeIdentifiableByVirtualFile[] mySpecialFileTypes = FileTypeIdentifiableByVirtualFile.EMPTY_ARRAY;
 
   FileTypeAssocTable<FileTypeWithDescriptor> myPatternsTable = new FileTypeAssocTable<>();
@@ -211,7 +208,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (extension.implementationClass != null) {
           FileType fileType = findFileTypeByName(extension.name);
           if (fileType != null) {
-            doUnregisterFileType(fileType);
+            doUnregisterFileType(fileType, pluginDescriptor);
           }
         }
         else {
@@ -259,7 +256,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     @Override
     public String toString() {
-      return fileType +" from '"+(pluginDescriptor==WILD_CARD ? "*" : pluginDescriptor)+"'";
+      return fileType + " from '" + (pluginDescriptor==WILD_CARD ? "*" : PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId())
+                                                                         ? "CORE" : pluginDescriptor) + "'";
     }
 
     // equals to all FileTypeWithDescriptor with this fileType
@@ -638,6 +636,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return getFileTypeOrUnknown(ftd);
   }
 
+  public void removePlainTextAssociationsForFile(@NotNull CharSequence fileName) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myPendingInitializationLock.writeLock().lock();
+    try {
+      makeFileTypesChange("removePlainTextAssociationsForFile("+fileName+")", () ->
+        myPatternsTable.removeAssociationsForFile(fileName, FileTypeWithDescriptor.allFor(PlainTextFileType.INSTANCE)));
+    }
+    finally {
+      myPendingInitializationLock.writeLock().unlock();
+    }
+  }
+
   @Override
   public void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable) {
     FileType fileType = file.isDirectory() ? null : file.getFileType();
@@ -704,7 +714,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       return PlainTextFileType.INSTANCE.equals(requestedFileType);
     }
     if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
-      FileType detected = myDetectionService.getOrDetectFromContent(file, null, false);
+      FileType detected = myDetectionService.getOrDetectFromContent(file, null, fileType);
       if (detected == UnknownFileType.INSTANCE && fileType == DetectedByContentFileType.INSTANCE) {
         return DetectedByContentFileType.INSTANCE.equals(requestedFileType);
       }
@@ -727,18 +737,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     else if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
-      FileType detected = detectFileTypeByFile(file, content);
-      if (detected == UnknownFileType.INSTANCE && fileType == DetectedByContentFileType.INSTANCE) {
-        return DetectedByContentFileType.INSTANCE;
-      }
-      return detected;
+      fileType = internalContinueToDetectFileTypeByFile(file, content, fileType);
     }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
   }
 
-  protected @NotNull FileType detectFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
+  // do not use
+  @ApiStatus.Internal
+  protected @NotNull FileType internalContinueToDetectFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content, @Nullable FileType fileTypeByName) {
     // should run detectors for 'DetectedByContentFileType' type and if failed, return text
-    return myDetectionService.getOrDetectFromContent(file, content);
+    return myDetectionService.getOrDetectFromContent(file, content, fileTypeByName);
   }
 
   // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
@@ -857,10 +865,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
-  public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations, @NotNull Disposable disposable) {
+  public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations, @NotNull Disposable disposable,
+                               @NotNull PluginDescriptor pluginDescriptor) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
     doRegisterFileType(type, defaultAssociations);
-    Disposer.register(disposable, () -> doUnregisterFileType(type));
+    Disposer.register(disposable, () -> doUnregisterFileType(type, pluginDescriptor));
   }
 
   private void doRegisterFileType(FileType type, List<? extends FileNameMatcher> defaultAssociations) {
@@ -872,12 +881,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
-  public void unregisterFileType(@NotNull FileType fileType) {
+  public void unregisterFileType(@NotNull FileType fileType, @NotNull PluginDescriptor pluginDescriptor) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
-    doUnregisterFileType(fileType);
+    doUnregisterFileType(fileType, pluginDescriptor);
   }
 
-  private void doUnregisterFileType(FileType fileType) {
+  private void doUnregisterFileType(@NotNull FileType fileType, @NotNull PluginDescriptor pluginDescriptor) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
       unregisterFileTypeWithoutNotification(fileType);
@@ -885,7 +894,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (fileType instanceof LanguageFileType) {
         Language language = ((LanguageFileType)fileType).getLanguage();
         if (fileType.getClass().getClassLoader().equals(language.getClass().getClassLoader())) {
-          Language.unregisterLanguage(language);
+          language.unregisterLanguage(pluginDescriptor);
         }
       }
       fireFileTypesChanged(null, fileType);

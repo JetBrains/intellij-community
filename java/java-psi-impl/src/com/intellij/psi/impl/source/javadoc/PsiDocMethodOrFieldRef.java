@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.Constants;
@@ -16,7 +17,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
-import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
@@ -213,9 +213,26 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return candidates.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  public static PsiMethod @NotNull [] getAllMethods(PsiElement scope, PsiElement place) {
+  public static PsiMethod @NotNull [] getAllMethods(PsiClass scope, PsiElement place) {
     final SmartList<PsiMethod> result = new SmartList<>();
-    scope.processDeclarations(new FilterScopeProcessor<>(ElementClassFilter.METHOD, result), ResolveState.initial(), null, place);
+    scope.processDeclarations(new FilterScopeProcessor<>(new ElementFilter() {
+      @Override
+      public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+        if (element instanceof PsiMethod) {
+          if (!scope.isInterface()) {
+            return true;
+          }
+          PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+          return containingClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName());
+        }
+        return false;
+      }
+
+      @Override
+      public boolean isClassAcceptable(Class hintClass) {
+        return true;
+      }
+    }, result), ResolveState.initial(), null, place);
     return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 

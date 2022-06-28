@@ -58,7 +58,23 @@ open class FirUastResolveApiTest : AbstractFirUastTest() {
         }
     }
 
-    @TestMetadata("../uast-kotlin/testData")
+    @TestMetadata("plugins/uast-kotlin-fir/testData/type")
+    @TestDataPath("\$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners::class)
+    class Type : FirUastResolveApiTest(), UastResolveApiTestBase {
+        override val isFirUastPlugin: Boolean = true
+
+        override fun check(filePath: String, file: UFile) {
+            // Bogus
+        }
+
+        @TestMetadata("threadSafe.kt")
+        fun testThreadSafe() {
+            doCheck("uast-kotlin-fir/testData/type/threadSafe.kt", ::checkThreadSafe)
+        }
+    }
+
+    @TestMetadata("../uast-kotlin/tests/testData")
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
     class Legacy : FirUastResolveApiTest(), UastResolveApiTestBase {
@@ -70,16 +86,16 @@ open class FirUastResolveApiTest : AbstractFirUastTest() {
 
         @TestMetadata("MethodReference.kt")
         fun testMethodReference() {
-            doCheck("uast-kotlin/testData/MethodReference.kt", ::checkCallbackForMethodReference)
+            doCheck("uast-kotlin/tests/testData/MethodReference.kt", ::checkCallbackForMethodReference)
         }
 
         @TestMetadata("Imports.kt")
         fun testImports() {
-            doCheck("uast-kotlin/testData/Imports.kt", ::checkCallbackForImports)
+            doCheck("uast-kotlin/tests/testData/Imports.kt", ::checkCallbackForImports)
         }
 
         fun testReceiverFun() {
-            doCheck("uast-kotlin/testData/ReceiverFun.kt", ::checkCallbackForReceiverFun)
+            doCheck("uast-kotlin/tests/testData/ReceiverFun.kt", ::checkCallbackForReceiverFun)
         }
     }
 }

@@ -124,6 +124,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testOverriddenViaMethodReference() { doTest(); }
+  public void testMethodReferenceListOf() { doTest(); }
   public void testOverridingExternalNotNull() { doTest(); }
 
   public void testIgnoreExternalNotNull() {
@@ -297,10 +298,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
-  }
-
-  public void testAnnotateQuickFixOnMethodReference() {
-    doTestWithFix("Annotate");
   }
 
   public void testAnnotateOverridingParametersOnNotNullMethod() {

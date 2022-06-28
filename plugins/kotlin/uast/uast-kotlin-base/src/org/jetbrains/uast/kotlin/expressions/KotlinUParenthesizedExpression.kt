@@ -2,10 +2,12 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UParenthesizedExpression
 
+@ApiStatus.Internal
 class KotlinUParenthesizedExpression(
     override val sourcePsi: KtParenthesizedExpression,
     givenParent: UElement?

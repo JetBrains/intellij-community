@@ -12,7 +12,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -157,6 +160,7 @@ public class ID<K, V> extends IndexId<K,V> {
     return ourIdToRegistrationStackTrace.get(this);
   }
 
+  @ApiStatus.Internal
   public int getUniqueId() {
     return myUniqueId;
   }
@@ -167,8 +171,10 @@ public class ID<K, V> extends IndexId<K,V> {
     return ourIdToPluginId.get(this);
   }
 
+  @ApiStatus.Internal
   public static ID<?, ?> findById(int id) {
-    return ourIdObjects.get(ourNameToIdRegistry.valueOf(id));
+    String key = ourNameToIdRegistry.valueOf(id);
+    return key == null ? null : ourIdObjects.get(key);
   }
 
   @ApiStatus.Internal

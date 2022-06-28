@@ -86,7 +86,6 @@ interface CodeVisionProvider<T> {
   @Deprecated("use getPlaceholderCollector")
   fun collectPlaceholders(editor: Editor): List<TextRange> = emptyList()
 
-  @JvmDefault
   fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?) : CodeVisionPlaceholderCollector? = null
 
   /**

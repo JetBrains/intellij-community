@@ -34,9 +34,11 @@ import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
+import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
@@ -52,8 +54,6 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.util.isRunningInCidrIde
-import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
@@ -167,7 +167,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         return JavaDocExternalFilter.filterInternalDocInfo(result.toString())
     }
 
-    override fun getCustomDocumentationElement(editor: Editor, fil: PsiFile, contextElement: PsiElement?): PsiElement? {
+    override fun getCustomDocumentationElement(editor: Editor, file: PsiFile, contextElement: PsiElement?, targetOffset: Int): PsiElement? {
         return if (contextElement.isModifier()) contextElement else null
     }
 
@@ -241,6 +241,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         return null
     }
 
+    @Deprecated("Deprecated in Java")
     override fun hasDocumentationFor(element: PsiElement?, originalElement: PsiElement?): Boolean {
         return CompositeDocumentationProvider.hasUrlsFor(this, element, originalElement)
     }
@@ -588,7 +589,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 if (!quickNavigation) {
                     description {
                         declarationDescriptor.findKDoc { DescriptorToSourceUtilsIde.getAnyDeclaration(ktElement.project, it) }?.let {
-                            renderKDoc(it)
+                            renderKDoc(it.contentTag, it.sections)
                             return@description
                         }
                         if (declarationDescriptor is ClassConstructorDescriptor && !declarationDescriptor.isPrimary) {
@@ -598,7 +599,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                                     it
                                 )
                             }?.let {
-                                renderKDoc(it)
+                                renderKDoc(it.contentTag, it.sections)
                                 return@description
                             }
                         }
@@ -730,7 +731,10 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
             element: PsiElement,
             originalElement: PsiElement?
         ): String? {
-            if (isRunningInCidrIde) return null // no Java support in CIDR
+            if (KotlinPlatformUtils.isCidr) {
+                // No Java support in CIDR
+                return null
+            }
 
             val originalInfo = JavaDocumentationProvider().getQuickNavigateInfo(element, originalElement)
             if (originalInfo != null) {

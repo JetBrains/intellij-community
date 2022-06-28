@@ -5,20 +5,21 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 import org.jetbrains.kotlin.types.typeUtil.isUnit
@@ -58,16 +59,21 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
             if (!isSameArguments(superCallElement, function)) return
 
             val context = function.analyze()
-            val functionDescriptor = context[BindingContext.FUNCTION, function]
-            val functionParams = functionDescriptor?.valueParameters.orEmpty()
-            val superCallFunctionParams = superCallElement.resolveToCall()?.resultingDescriptor?.valueParameters.orEmpty()
+            val functionDescriptor = context[BindingContext.FUNCTION, function] ?: return
+            val functionParams = functionDescriptor.valueParameters
+            val superCallDescriptor = superCallElement.resolveToCall()?.resultingDescriptor ?: return
+            val superCallFunctionParams = superCallDescriptor.valueParameters
             if (functionParams.size == superCallFunctionParams.size
                 && functionParams.zip(superCallFunctionParams).any { it.first.type != it.second.type }
             ) return
 
             if (function.hasDerivedProperty(functionDescriptor, context)) return
-            val overriddenDescriptors = functionDescriptor?.original?.overriddenDescriptors
-            if (overriddenDescriptors?.any { it is JavaMethodDescriptor && it.visibility == JavaDescriptorVisibilities.PACKAGE_VISIBILITY } == true) return
+            val overriddenDescriptors = functionDescriptor.original.overriddenDescriptors
+            if (overriddenDescriptors.any { it is JavaMethodDescriptor && it.visibility == JavaDescriptorVisibilities.PACKAGE_VISIBILITY }) return
+            if (overriddenDescriptors.any { it.modality == Modality.ABSTRACT }) {
+                if (superCallDescriptor.fqNameSafe in METHODS_OF_ANY) return
+                if (superCallDescriptor.isOverridingMethodOfAny() && !superCallDescriptor.isImplementedInContainingClass()) return
+            }
             if (function.isAmbiguouslyDerived(overriddenDescriptors, context)) return
 
             val descriptor = holder.manager.createProblemDescriptor(
@@ -94,6 +100,12 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
         val superCallMethodName = superSelectorExpression.getCallNameExpression()?.text ?: return false
         return function.name == superCallMethodName
     }
+
+    private fun CallableDescriptor.isOverridingMethodOfAny() =
+        (this as? CallableMemberDescriptor)?.getDeepestSuperDeclarations().orEmpty().any { it.fqNameSafe in METHODS_OF_ANY }
+
+    private fun CallableDescriptor.isImplementedInContainingClass() =
+        (containingDeclaration as? LazyClassDescriptor)?.declaredCallableMembers.orEmpty().any { it == this }
 
     private fun KtNamedFunction.hasDerivedProperty(functionDescriptor: FunctionDescriptor?, context: BindingContext): Boolean {
         if (functionDescriptor == null) return false
@@ -125,6 +137,7 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
 
     companion object {
         private val MODIFIER_EXCLUDE_OVERRIDE = KtTokens.MODIFIER_KEYWORDS_ARRAY.asList() - KtTokens.OVERRIDE_KEYWORD
+        private val METHODS_OF_ANY = listOf("equals", "hashCode", "toString").map { FqName("kotlin.Any.$it") }
     }
 }
 

@@ -7,6 +7,9 @@ from typing import Any
 if sys.version_info >= (3, 7):
     from importlib.abc import ResourceReader
 
+if sys.version_info >= (3, 8):
+    __all__ = ["ZipImportError", "zipimporter"]
+
 class ZipImportError(ImportError): ...
 
 class zipimporter:

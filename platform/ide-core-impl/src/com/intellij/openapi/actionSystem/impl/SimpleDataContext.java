@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -26,16 +25,7 @@ public final class SimpleDataContext implements DataContext {
 
   @Override
   public Object getData(@NotNull String dataId) {
-    Object result = getDataFromSelfOrParent(dataId);
-
-    if (result == null) {
-      GetDataRule rule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(dataId);
-      if (rule != null) {
-        return rule.getData(this::getDataFromSelfOrParent);
-      }
-    }
-
-    return result;
+    return ((DataManagerImpl)DataManager.getInstance()).getDataSimple(dataId, this::getDataFromSelfOrParent);
   }
 
   private Object getDataFromSelfOrParent(@NotNull String dataId) {

@@ -15,7 +15,12 @@ import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.StrictSuccess
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.WeakSuccess
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult
+import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.util.isMultiLine
 import org.jetbrains.kotlin.idea.inspections.PublicApiImplicitTypeInspection
@@ -32,8 +37,6 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.*
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.UnificationResult.StronglyMatched
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.UnificationResult.WeaklyMatched
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -185,7 +188,7 @@ class DuplicateInfo(
 )
 
 fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo> {
-    fun processWeakMatch(match: WeaklyMatched, newControlFlow: ControlFlow): Boolean {
+    fun processWeakMatch(match: WeakSuccess<*>, newControlFlow: ControlFlow): Boolean {
         val valueCount = controlFlow.outputValues.size
 
         val weakMatches = HashMap(match.weakMatches)
@@ -215,7 +218,7 @@ fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo> {
         return currentValuesToNew.size == valueCount && weakMatches.isEmpty()
     }
 
-    fun getControlFlowIfMatched(match: UnificationResult.Matched): ControlFlow? {
+    fun getControlFlowIfMatched(match: KotlinPsiUnificationResult.Success<*>): ControlFlow? {
         val analysisResult = extractionData.copy(originalRange = match.range).performAnalysis()
         if (analysisResult.status != AnalysisResult.Status.SUCCESS) return null
 
@@ -224,8 +227,8 @@ fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo> {
         if (controlFlow.outputValues.size != newControlFlow.outputValues.size) return null
 
         val matched = when (match) {
-            is StronglyMatched -> true
-            is WeaklyMatched -> processWeakMatch(match, newControlFlow)
+            is StrictSuccess -> true
+            is WeakSuccess -> processWeakMatch(match, newControlFlow)
             else -> throw AssertionError("Unexpected unification result: $match")
         }
 
@@ -294,13 +297,13 @@ private fun makeCall(
         return anchor.replaced(wrappedCall)
     }
 
-    if (rangeToReplace !is KotlinPsiRange.ListRange) return
+    if (rangeToReplace.isEmpty) return
 
-    val anchor = rangeToReplace.startElement
+    val anchor = rangeToReplace.elements.first()
     val anchorParent = anchor.parent!!
 
     anchor.nextSibling?.let { from ->
-        val to = rangeToReplace.endElement
+        val to = rangeToReplace.elements.last()
         if (to != anchor) {
             anchorParent.deleteChildRange(from, to)
         }
@@ -680,7 +683,10 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
         if (generatorOptions.delayInitialOccurrenceReplacement) {
             put(descriptor.extractionData.originalRange, replaceInitialOccurrence)
         }
-        putAll(duplicates.map { it.range to { makeCall(descriptor, declaration, it.controlFlow, it.range, it.arguments) } })
+        putAll(duplicates.map {
+            val smartListRange = KotlinPsiRange.SmartListRange(it.range.elements)
+            smartListRange to { makeCall(descriptor, declaration, it.controlFlow, smartListRange, it.arguments) }
+        })
     }
 
     if (descriptor.typeParameters.isNotEmpty()) {

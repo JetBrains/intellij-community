@@ -21,6 +21,9 @@ import org.languagetool.ResultCache
 import org.languagetool.Tag
 import org.languagetool.rules.CategoryId
 import org.languagetool.rules.IncorrectExample
+import org.languagetool.rules.Rule
+import org.languagetool.rules.patterns.AbstractPatternRule
+import org.languagetool.rules.patterns.PatternToken
 import org.languagetool.rules.spelling.hunspell.Hunspell
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -129,10 +132,32 @@ object LangTool : GrazieStateLifecycle {
         rule.correctExamples = emptyList()
         rule.errorTriggeringExamples = emptyList()
         rule.incorrectExamples = removeVerySimilarExamples(rule.incorrectExamples)
+        if (Lang.shouldDisableChunker(jLanguage)) {
+          prepareForNoChunkTags(rule)
+        }
       }
 
       this.language.disambiguator
     }
+  }
+
+  private fun prepareForNoChunkTags(rule: Rule) {
+    @Suppress("TestOnlyProblems")
+    fun relaxChunkConditions(token: PatternToken, positive: Boolean) {
+      if (token.negation == positive && token.chunkTag != null) {
+        token.chunkTag = null
+      }
+
+      token.andGroup.forEach { relaxChunkConditions(it, positive) }
+      token.orGroup.forEach { relaxChunkConditions(it, positive) }
+      (token.exceptionList ?: emptyList()).forEach { relaxChunkConditions(it, !positive) }
+    }
+
+    if (rule is AbstractPatternRule) {
+      rule.patternTokens?.forEach { relaxChunkConditions(it, positive = true) }
+    }
+
+    rule.antiPatterns.forEach { it.patternTokens?.forEach { token -> relaxChunkConditions(token, positive = false) } }
   }
 
   private fun removeVerySimilarExamples(examples: List<IncorrectExample>): List<IncorrectExample> {

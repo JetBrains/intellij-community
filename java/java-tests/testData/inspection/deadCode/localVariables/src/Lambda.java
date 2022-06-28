@@ -35,6 +35,16 @@ class Test {
       System.out.println(lambda2);
       return false;
     });
+    java.util.function.IntSupplier r = () ->
+      switch (args[0]) {
+        default -> {
+          String s = "";
+          String t;
+          String u = "";
+          System.out.println(u);
+          yield 1;
+        }
+      };
   }
 
   static void bar(Unused unused) {

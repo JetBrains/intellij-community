@@ -83,7 +83,7 @@ public final class Maven3AetherModelConverter extends MavenModelConverter {
         Artifact winnerArtifact = toArtifact(winnerNode.getDependency());
         relatedArtifact = convertArtifact(winnerArtifact, nativeToConvertedMap, localRepository);
         nativeToConvertedMap.put(winnerArtifact, relatedArtifact);
-        if (!Comparing.equal(each.getVersion().toString(), winnerNode.getVersion().toString())) {
+        if (!Objects.equals(each.getVersion().toString(), winnerNode.getVersion().toString())) {
           state = MavenArtifactState.CONFLICT;
         }
         else {

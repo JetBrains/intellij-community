@@ -14,7 +14,6 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
-import com.intellij.util.application
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
@@ -48,10 +47,9 @@ internal object MarkdownActionUtil {
   fun findMarkdownTextEditor(event: AnActionEvent): Editor? {
     val splitEditor = findSplitEditor(event)
     if (splitEditor == null) {
-      // This fallback is used primarily for testing
       val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return null
-      return when {
-        psiFile.language == MarkdownLanguage.INSTANCE && application.isUnitTestMode -> event.getData(CommonDataKeys.EDITOR)
+      return when (psiFile.language) {
+        MarkdownLanguage.INSTANCE -> event.getData(CommonDataKeys.EDITOR)
         else -> null
       }
     }

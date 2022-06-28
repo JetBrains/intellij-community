@@ -1,0 +1,11 @@
+<foo>
+  <bar>
+
+  </bar>
+
+  <!-- Some comment
+  before tag -->
+<selection>  <caret><bar>
+
+  </bar>
+</selection></foo>

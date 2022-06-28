@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.config.VersionView
 import org.jetbrains.kotlin.config.apiVersionView
 import org.jetbrains.kotlin.config.languageVersionView
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.KotlinWithLibraryConfigurator
 import org.jetbrains.kotlin.idea.configuration.createConfigureKotlinNotificationCollector
 import org.jetbrains.kotlin.idea.configuration.getConfiguratorByName
@@ -52,8 +53,9 @@ abstract class CustomLibraryDescriptorWithDeferredConfig(
 
         if (isNewProject) {
             KotlinCommonCompilerArgumentsHolder.getInstance(module.project).update {
-                languageVersionView = VersionView.Specific(LanguageVersion.LATEST_STABLE)
-                apiVersionView = VersionView.Specific(LanguageVersion.LATEST_STABLE)
+                val bundledLanguageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+                languageVersionView = VersionView.Specific(bundledLanguageVersion)
+                apiVersionView = VersionView.Specific(bundledLanguageVersion)
             }
         }
 

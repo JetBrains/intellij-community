@@ -232,7 +232,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   open fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
                               app: Application?,
                               precomputedExtensionModel: PrecomputedExtensionModel?,
-                              listenerCallbacks: List<Runnable>?) {
+                              listenerCallbacks: MutableList<in Runnable>?) {
     val activityNamePrefix = activityNamePrefix()
 
     var newComponentConfigCount = 0
@@ -318,7 +318,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   }
 
   private fun registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel: PrecomputedExtensionModel,
-                                                                    listenerCallbacks: List<Runnable>?) {
+                                                                    listenerCallbacks: MutableList<in Runnable>?) {
     assert(extensionArea.extensionPoints.isEmpty())
     val n = precomputedExtensionModel.pluginDescriptors.size
     if (n == 0) {
@@ -796,10 +796,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
       val adapter = LightServiceComponentAdapter(instance)
       val key = adapter.componentKey
       componentKeyToAdapter.put(key, adapter)
-      Disposer.register(parentDisposable, Disposable {
+      Disposer.register(parentDisposable) {
         componentKeyToAdapter.remove(key)
         serviceInstanceHotCache.remove(serviceInterface)
-      })
+      }
       serviceInstanceHotCache.put(serviceInterface, instance)
     }
     else {
@@ -1100,7 +1100,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   fun startDispose() {
     stopServicePreloading()
 
-    Disposer.disposeChildren(this, null)
+    Disposer.disposeChildren(this, { _ -> true})
 
     val messageBus = messageBus
     // There is a chance that someone will try to connect to the message bus and will get NPE because of disposed connection disposable,
@@ -1145,6 +1145,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     isServicePreloadingCancelled = true
   }
 
+  @Deprecated("Deprecated in Java")
   @Suppress("DEPRECATION")
   final override fun getComponent(name: String): BaseComponent? {
     checkState()

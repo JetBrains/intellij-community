@@ -3,19 +3,15 @@ import sys
 import types
 from _typeshed import Self
 from typing import Any, Iterable, Union
+from typing_extensions import SupportsIndex
 
-if sys.version_info >= (3, 8):
-    from typing import SupportsIndex
+__all__ = ["Client", "Listener", "Pipe", "wait"]
 
 # https://docs.python.org/3/library/multiprocessing.html#address-formats
 _Address = Union[str, tuple[str, int]]
 
 class _ConnectionBase:
-    if sys.version_info >= (3, 8):
-        def __init__(self, handle: SupportsIndex, readable: bool = ..., writable: bool = ...) -> None: ...
-    else:
-        def __init__(self, handle: int, readable: bool = ..., writable: bool = ...) -> None: ...
-
+    def __init__(self, handle: SupportsIndex, readable: bool = ..., writable: bool = ...) -> None: ...
     @property
     def closed(self) -> bool: ...  # undocumented
     @property

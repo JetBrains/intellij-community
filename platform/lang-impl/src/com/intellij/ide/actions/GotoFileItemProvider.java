@@ -179,18 +179,16 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       PsiFileSystemItem item = descriptor.getItem();
       ProgressManager.checkCanceled();
 
-      String fullName = myModel.getFullName(item);
-      if (fullName != null && isSubpath(fullName, completePattern)) {
-        matching.add(new FoundItemDescriptor<>(item, EXACT_MATCH_DEGREE));
-        continue;
-      }
-
       String qualifier = Objects.requireNonNull(getParentPath(item));
       FList<TextRange> fragments = qualifierMatcher.matchingFragments(qualifier);
       if (fragments != null) {
         int gapPenalty = fragments.isEmpty() ? 0 : qualifier.length() - fragments.get(fragments.size() - 1).getEndOffset();
-        int qualifierDegree = qualifierMatcher.matchingDegree(qualifier, false, fragments) - gapPenalty;
+        int exactMatchScore = isExactMatch(item, completePattern) ? EXACT_MATCH_DEGREE : 0;
+        int qualifierDegree = qualifierMatcher.matchingDegree(qualifier, false, fragments) - gapPenalty + exactMatchScore;
         matching.add(new FoundItemDescriptor<>(item, qualifierDegree));
+      }
+      else if (isExactMatch(item, completePattern)) {
+        matching.add(new FoundItemDescriptor<>(item, EXACT_MATCH_DEGREE));
       }
     }
     if (matching.size() > 1) {
@@ -199,6 +197,11 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       matching.sort(comparator);
     }
     return matching;
+  }
+
+  private boolean isExactMatch(@NotNull PsiFileSystemItem item, @NotNull String completePattern) {
+    String fullName = myModel.getFullName(item);
+    return fullName != null && isSubpath(fullName, completePattern);
   }
 
   private boolean isSubpath(@NotNull String path, String subpath) {

@@ -31,8 +31,10 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     return new MyGroup(annotation);
   }
 
-  private static void resetAllAnnotations(@NotNull Project project) {
-    ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache().clearAnnotations();
+  public static void resetAllAnnotations(@NotNull Project project, boolean clearCaches) {
+    if (clearCaches) {
+      ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache().clearAnnotations();
+    }
     ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().reloadAnnotationsForVcs(GitVcs.getKey());
   }
 
@@ -95,7 +97,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
       SETTINGS.setIgnoreWhitespaces(enabled);
-      resetAllAnnotations(myProject);
+      resetAllAnnotations(myProject, true);
     }
   }
 
@@ -121,7 +123,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
       else {
         SETTINGS.setAnnotateDetectMovementsOption(AnnotateDetectMovementsOption.NONE);
       }
-      resetAllAnnotations(myProject);
+      resetAllAnnotations(myProject, true);
     }
   }
 
@@ -146,7 +148,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
       else {
         SETTINGS.setAnnotateDetectMovementsOption(AnnotateDetectMovementsOption.INNER);
       }
-      resetAllAnnotations(myProject);
+      resetAllAnnotations(myProject, true);
     }
   }
 }

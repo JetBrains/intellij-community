@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -37,6 +36,7 @@ class RedundantExplicitTypeInspection : AbstractKotlinInspection() {
         fun hasRedundantType(property: KtProperty): Boolean {
             if (!property.isLocal) return false
             val typeReference = property.typeReference ?: return false
+            if (typeReference.annotationEntries.isNotEmpty()) return false
             val initializer = property.initializer ?: return false
 
             val type = property.resolveToDescriptorIfAny()?.type ?: return false

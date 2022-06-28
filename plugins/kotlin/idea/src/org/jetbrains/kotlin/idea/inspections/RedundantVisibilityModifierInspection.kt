@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyPublicApi
-import org.jetbrains.kotlin.util.firstNotNullResult
 
 class RedundantVisibilityModifierInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -73,7 +72,7 @@ class RedundantVisibilityModifierInspection : AbstractKotlinInspection(), Cleanu
         }
         return (descriptor as? CallableMemberDescriptor)
             ?.overriddenDescriptors
-            ?.firstNotNullResult { (it as? PropertyDescriptor)?.setter }
+            ?.firstNotNullOfOrNull { (it as? PropertyDescriptor)?.setter }
             ?.visibility
     }
 }

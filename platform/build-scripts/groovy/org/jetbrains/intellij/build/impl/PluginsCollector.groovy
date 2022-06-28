@@ -97,7 +97,7 @@ final class PluginsCollector {
 
       PluginLayout pluginLayout = nonTrivialPlugins.get(moduleName)?.first()
       if (pluginLayout == null) {
-        pluginLayout = PluginLayout.plugin(moduleName)
+        pluginLayout = PluginLayoutGroovy.plugin(moduleName)
       }
 
       Element xml = JDOMUtil.load(pluginXml)

@@ -62,7 +62,10 @@ class DeepComparator(private val project: Project,
     Disposer.register(parent, this)
   }
 
-  override fun getStyle(commitId: Int, commitDetails: VcsShortCommitDetails, isSelected: Boolean): VcsLogHighlighter.VcsCommitStyle {
+  override fun getStyle(commitId: Int,
+                        commitDetails: VcsShortCommitDetails,
+                        column: Int,
+                        isSelected: Boolean): VcsLogHighlighter.VcsCommitStyle {
     if (nonPickedCommits == null || nonPickedCommits!!.contains(commitId)) return VcsLogHighlighter.VcsCommitStyle.DEFAULT
     else return VcsCommitStyleFactory.foreground(MergeCommitsHighlighter.MERGE_COMMIT_FOREGROUND)
   }

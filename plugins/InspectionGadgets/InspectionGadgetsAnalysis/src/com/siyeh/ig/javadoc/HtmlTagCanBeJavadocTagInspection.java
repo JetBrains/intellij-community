@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.javadoc;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Document;
@@ -40,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
+public class HtmlTagCanBeJavadocTagInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

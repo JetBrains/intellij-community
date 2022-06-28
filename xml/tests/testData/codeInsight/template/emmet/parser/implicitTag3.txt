@@ -1,0 +1,7 @@
+>
+  Template(table)
+  >
+    *
+      Template(tr{id=row$})
+      4
+    Template(td{colspan=2})

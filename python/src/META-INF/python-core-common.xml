@@ -410,7 +410,7 @@
     <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryConfigLoader" order="last"/>
 
     <!-- Targets API -->
-    <registryKey key="python.use.targets.api" defaultValue="false" description="Switches Python support to Targets API." />
+    <registryKey key="python.use.targets.api" defaultValue="true" description="Switches Python support to Targets API." />
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle" key="debug.notification.group"/>
     <notificationGroup id="Python SDK Updater" displayType="BALLOON" bundle="messages.PyBundle" key="python.sdk.updater.notifications.group.title"/>
     <notificationGroup id="Sync Python requirements" displayType="BALLOON" bundle="messages.PyBundle" key="python.requirements.balloon"/>
@@ -430,6 +430,9 @@
     <vcs.envCustomizer implementation="com.jetbrains.python.sdk.PyVirtualEnvVcsCustomizer"/>
 
     <executionTargetLanguageRuntimeType implementation="com.jetbrains.python.target.PythonLanguageRuntimeType"/>
+
+  <!--  Code vision -->
+    <vcs.codeVisionLanguageContext language="Python" implementationClass="com.jetbrains.python.vcs.PyVcsContextProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -519,6 +522,7 @@
     <pyAnnotator implementation="com.jetbrains.python.validation.FStringsAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyPatternAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
 
     <!--stdlib-->
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>

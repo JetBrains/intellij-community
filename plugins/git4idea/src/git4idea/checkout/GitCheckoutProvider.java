@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -21,6 +20,10 @@ import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneResult;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTaskInfo;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -34,9 +37,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.GitNotificationIdsHolder.CLONE_FAILED;
 
@@ -77,23 +80,26 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
     clone(project, Git.getInstance(), listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory);
   }
 
-  public static void clone(final Project project, @NotNull final Git git, final Listener listener, final VirtualFile destinationParent,
-                           final String sourceRepositoryURL, final String directoryName, final String parentDirectory) {
+  public static void clone(@NotNull final Project project, @NotNull final Git git, final Listener listener,
+                           final VirtualFile destinationParent, final String sourceRepositoryURL,
+                           final String directoryName, final String parentDirectory) {
+    String projectAbsolutePath = Paths.get(parentDirectory, directoryName).toAbsolutePath().toString();
+    String projectPath = PathUtil.toSystemDependentName(projectAbsolutePath);
+    CloneTaskInfo cloneTaskInfo = new CloneTaskInfo(DvcsBundle.message("cloning.repository", sourceRepositoryURL),
+                                                    DvcsBundle.message("cloning.repository.cancel", sourceRepositoryURL));
 
-    final AtomicBoolean cloneResult = new AtomicBoolean();
-    new Task.Backgroundable(project, DvcsBundle.message("cloning.repository", sourceRepositoryURL)) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        cloneResult.set(doClone(project, git, directoryName, parentDirectory, sourceRepositoryURL));
-      }
-
-      @Override
-      public void onSuccess() {
-        boolean success = cloneResult.get();
+    CloneableProjectsService.getInstance().runCloneTask(
+      projectPath, cloneTaskInfo,
+      indicator -> {
+        return doClone(project, git, indicator, directoryName, parentDirectory, sourceRepositoryURL)
+               ? CloneResult.DOWNLOADED
+               : CloneResult.FAILURE;
+      },
+      cloneResult -> {
         File directory = new File(parentDirectory, directoryName);
-        LOG.debug(String.format("Cloned into %s with success=%s", directory, success));
-        if (!success) {
-          return;
+        LOG.debug(String.format("Cloned into %s with success=%s", directory, cloneResult));
+        if (cloneResult != CloneResult.DOWNLOADED) {
+          return CloneResult.FAILURE;
         }
 
         DvcsUtil.addMappingIfSubRoot(project, directory.getPath(), GitVcs.NAME);
@@ -105,15 +111,21 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
 
         listener.directoryCheckedOut(directory, GitVcs.getKey());
         listener.checkoutCompleted();
+        return CloneResult.SUCCESS;
       }
-    }.queue();
+    );
   }
 
   public static boolean doClone(@NotNull Project project, @NotNull Git git,
                                 @NotNull String directoryName, @NotNull String parentDirectory, @NotNull String sourceRepositoryURL) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    indicator.setIndeterminate(false);
-    GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(indicator);
+    return doClone(project, git, indicator, directoryName, parentDirectory, sourceRepositoryURL);
+  }
+
+  private static boolean doClone(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator progressIndicator,
+                                @NotNull String directoryName, @NotNull String parentDirectory, @NotNull String sourceRepositoryURL) {
+    progressIndicator.setIndeterminate(false);
+    GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(progressIndicator);
     GitCommandResult result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, progressListener);
     if (result.success()) {
       return true;

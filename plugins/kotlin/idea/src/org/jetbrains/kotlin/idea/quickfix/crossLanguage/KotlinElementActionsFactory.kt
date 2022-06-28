@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
@@ -31,7 +31,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.appendModifier
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
-import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
+import org.jetbrains.kotlin.idea.quickfix.MakeFieldPublicFix
+import org.jetbrains.kotlin.idea.quickfix.MakeMemberStaticFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -148,9 +150,10 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             .getElementFactory(project)
             .createParameterList(
                 parameters.map { it.semanticNames.firstOrNull() }.toTypedArray(),
-                parameters.map {
-                    it.expectedTypes.firstOrNull()?.theType
-                        ?.let { JvmPsiConversionHelper.getInstance(project).convertType(it) } ?: return null
+                parameters.map { param ->
+                    param.expectedTypes.firstOrNull()?.theType?.let { type ->
+                        JvmPsiConversionHelper.getInstance(project).convertType(type)
+                    } ?: return null
                 }.toTypedArray()
             )
             .parameters
@@ -164,6 +167,14 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         val modifier = request.modifier
         val shouldPresent = request.shouldBePresent()
+
+        if (modifier == JvmModifier.PUBLIC && shouldPresent && kModifierOwner is KtProperty) {
+            return listOf(MakeFieldPublicFix(kModifierOwner))
+        }
+        if (modifier == JvmModifier.STATIC && shouldPresent && kModifierOwner is KtNamedDeclaration) {
+            return listOf(MakeMemberStaticFix(kModifierOwner))
+        }
+
         //TODO: make similar to `createAddMethodActions`
         val (kToken, shouldPresentMapped) = when {
             modifier == JvmModifier.FINAL -> KtTokens.OPEN_KEYWORD to !shouldPresent
@@ -175,10 +186,11 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         }
         if (kToken == null) return emptyList()
 
-        val action = if (shouldPresentMapped)
+        val action = if (shouldPresentMapped) {
             AddModifierFixFE10.createIfApplicable(kModifierOwner, kToken)
-        else
-            RemoveModifierFix(kModifierOwner, kToken, false)
+        } else {
+            RemoveModifierFixBase(kModifierOwner, kToken, false)
+        }
         return listOfNotNull(action)
     }
 
@@ -414,7 +426,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             if (!request.isValid) return
             val target = pointer.element ?: return
             val oldType = target.typeReference
-            val typeName = request.qualifiedName ?: target.typeName() ?: return
+            val typeName = primitiveTypeMapping.getOrDefault(request.qualifiedName, request.qualifiedName ?: target.typeName() ?: return)
             val psiFactory = KtPsiFactory(target)
             val annotations = request.annotations.joinToString(" ") { "@${renderAnnotation(target, it, psiFactory)}" }
             val newType = psiFactory.createType("$annotations $typeName".trim())
@@ -434,6 +446,28 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             val returnType = descriptor.returnType ?: return null
             return IdeDescriptorRenderers.SOURCE_CODE.renderType(returnType)
         }
+
+        companion object {
+            private val primitiveTypeMapping = mapOf(
+                PsiType.VOID.name to "kotlin.Unit",
+                PsiType.BOOLEAN.name to "kotlin.Boolean",
+                PsiType.BYTE.name to "kotlin.Byte",
+                PsiType.CHAR.name to "kotlin.Char",
+                PsiType.SHORT.name to "kotlin.Short",
+                PsiType.INT.name to "kotlin.Int",
+                PsiType.FLOAT.name to "kotlin.Float",
+                PsiType.LONG.name to "kotlin.Long",
+                PsiType.DOUBLE.name to "kotlin.Double",
+                "${PsiType.BOOLEAN.name}[]" to "kotlin.BooleanArray",
+                "${PsiType.BYTE.name}[]" to "kotlin.ByteArray",
+                "${PsiType.CHAR.name}[]" to "kotlin.CharArray",
+                "${PsiType.SHORT.name}[]" to "kotlin.ShortArray",
+                "${PsiType.INT.name}[]" to "kotlin.IntArray",
+                "${PsiType.FLOAT.name}[]" to "kotlin.FloatArray",
+                "${PsiType.LONG.name}[]" to "kotlin.LongArray",
+                "${PsiType.DOUBLE.name}[]" to "kotlin.DoubleArray"
+            )
+        }
     }
 }
 
@@ -450,8 +484,7 @@ internal fun addAnnotationEntry(
             FqName(request.qualifiedName), NoLookupLocation.FROM_IDE
         ) ?: return@prefixEvaluation ""
 
-        val applicableTargetSet =
-            AnnotationChecker.applicableTargetSet(annotationClassDescriptor) ?: KotlinTarget.DEFAULT_TARGET_SET
+        val applicableTargetSet = AnnotationChecker.applicableTargetSet(annotationClassDescriptor)
 
         if (KotlinTarget.PROPERTY !in applicableTargetSet) return@prefixEvaluation ""
 

@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Formats;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +97,7 @@ final class IdeStartupScripts implements StartupActivity.DumbAware {
       try {
         logger.info(pair.first.toString());
 
-        String scriptText = PathKt.readText(pair.first);
+        String scriptText = Files.readString(pair.first);
         IdeConsoleScriptBindings.ensureIdeIsBound(project, pair.second);
 
         long start = System.currentTimeMillis();

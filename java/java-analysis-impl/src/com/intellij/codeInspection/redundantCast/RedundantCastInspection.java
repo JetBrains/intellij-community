@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInspection.*;
@@ -77,9 +77,8 @@ public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool
       }
     }
 
-    String message = JavaAnalysisBundle.message("inspection.redundant.cast.problem.descriptor",
-                                               "<code>" + PsiExpressionTrimRenderer.render(operand) + "</code>", "<code>#ref</code> #loc");
-    return manager.createProblemDescriptor(castType, message, myQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, onTheFly);
+    String message = JavaAnalysisBundle.message("inspection.redundant.cast.problem.descriptor", PsiExpressionTrimRenderer.render(operand));
+    return manager.createProblemDescriptor(castType, message, myQuickFixAction, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly);
   }
 
 

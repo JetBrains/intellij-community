@@ -1,5 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
+
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -9,14 +10,6 @@ import java.nio.file.Path
 
 @CompileStatic
 abstract class BuildTasks {
-  /**
-   * Builds sources.zip archive containing the project source files keeping the original layout.
-   * @deprecated it makes little sense to produce an archive which content is just a subset of files in Git repository. Archives produced
-   * by {@link #zipSourcesOfModules} are more suitable to be attached as sources to other projects, because they put source files according to
-   * their packages, not locations in Git repository.
-   */
-  abstract void zipProjectSources()
-
   /**
    * Builds archive containing production source roots of the project modules. If {@code includeLibraries} is {@code true}, the produced
    * archive also includes sources of project-level libraries on which platform API modules from {@code modules} list depend on.
@@ -45,11 +38,11 @@ abstract class BuildTasks {
    * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
    * @see org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
    */
-  abstract void generateProjectStructureMapping(File targetFile)
+  abstract void generateProjectStructureMapping(@NotNull Path targetFile)
 
   abstract void compileProjectAndTests(List<String> includingTestsInModules)
 
-  abstract void compileModules(Collection<String> moduleNames, List<String> includingTestsInModules = [])
+  abstract void compileModules(Collection<String> moduleNames, List<String> includingTestsInModules = List.of())
 
   abstract void buildUpdaterJar()
 
@@ -66,6 +59,8 @@ abstract class BuildTasks {
   abstract void runTestBuild()
 
   abstract void buildUnpackedDistribution(@NotNull Path targetDirectory, boolean includeBinAndRuntime)
+
+  abstract void buildDmg(Path macZipDir)
 
   static BuildTasks create(BuildContext context) {
     return new BuildTasksImpl(context)

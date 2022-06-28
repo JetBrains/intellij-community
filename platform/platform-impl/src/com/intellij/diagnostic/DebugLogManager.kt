@@ -13,7 +13,7 @@ import java.util.logging.Logger
  * Applies these custom categories on startup.
  */
 class DebugLogManager {
-  enum class DebugLogLevel { DEBUG, TRACE }
+  enum class DebugLogLevel { DEBUG, TRACE, ALL }
 
   data class Category(val category: String, val level: DebugLogLevel)
 
@@ -32,13 +32,15 @@ class DebugLogManager {
     // add categories from system properties (e.g. for tests on CI server)
     categories.addAll(fromString(System.getProperty(LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.DEBUG))
     categories.addAll(fromString(System.getProperty(LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.TRACE))
+    categories.addAll(fromString(System.getProperty(LOG_ALL_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.ALL))
     applyCategories(categories)
   }
 
   fun getSavedCategories(): List<Category> {
     val properties = PropertiesComponent.getInstance()
     return ContainerUtil.concat(fromString(properties.getValue(LOG_DEBUG_CATEGORIES), DebugLogLevel.DEBUG),
-                                fromString(properties.getValue(LOG_TRACE_CATEGORIES), DebugLogLevel.TRACE))
+                                fromString(properties.getValue(LOG_TRACE_CATEGORIES), DebugLogLevel.TRACE),
+                                fromString(properties.getValue(LOG_ALL_CATEGORIES), DebugLogLevel.ALL))
   }
 
   fun clearCategories(categories: List<Category>) {
@@ -51,6 +53,7 @@ class DebugLogManager {
   fun applyCategories(categories: List<Category>) {
     applyCategories(categories, DebugLogLevel.DEBUG, Level.FINE)
     applyCategories(categories, DebugLogLevel.TRACE, Level.FINER)
+    applyCategories(categories, DebugLogLevel.ALL, Level.ALL)
   }
 
   private fun applyCategories(categories: List<Category>, level: DebugLogLevel, loggerLevel: Level) {
@@ -69,6 +72,7 @@ class DebugLogManager {
     val properties = PropertiesComponent.getInstance()
     properties.setValue(LOG_DEBUG_CATEGORIES, toString(categories, DebugLogLevel.DEBUG), null)
     properties.setValue(LOG_TRACE_CATEGORIES, toString(categories, DebugLogLevel.TRACE), null)
+    properties.setValue(LOG_ALL_CATEGORIES, toString(categories, DebugLogLevel.ALL), null)
   }
 
   private fun fromString(text: String?, level: DebugLogLevel): List<Category> {
@@ -92,7 +96,9 @@ class DebugLogManager {
 
 private const val LOG_DEBUG_CATEGORIES = "log.debug.categories"
 private const val LOG_TRACE_CATEGORIES = "log.trace.categories"
+private const val LOG_ALL_CATEGORIES = "log.all.categories"
 private const val LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_DEBUG_CATEGORIES"
 private const val LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_TRACE_CATEGORIES"
+private const val LOG_ALL_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_ALL_CATEGORIES"
 
 private val LOG = logger<DebugLogManager>()

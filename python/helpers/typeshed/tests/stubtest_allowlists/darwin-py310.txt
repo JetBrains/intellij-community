@@ -3,6 +3,5 @@ _curses.color_pair
 curses.color_pair
 
 # Exists at runtime, but missing from stubs
-asyncio.PidfdChildWatcher
-asyncio.unix_events.PidfdChildWatcher
 mmap.MADV_FREE
+distutils.util.__warningregistry__

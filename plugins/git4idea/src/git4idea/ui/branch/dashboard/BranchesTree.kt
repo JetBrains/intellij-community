@@ -16,6 +16,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.FixingLayoutMatcher
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -418,19 +419,31 @@ internal class FilteringBranchesTree(
   }
 
   private fun runPreservingTreeState(loadSaved: Boolean, runnable: () -> Unit) {
-    val treeState = if (loadSaved) treeStateHolder.getInitialTreeState() else TreeState.createOn(tree, root)
-    runnable()
-    if (treeState != null) {
-      treeState.applyTo(tree)
-    }
-    else {
-      // expanding lots of nodes is a slow operation (and result is not very useful)
-      if (TreeUtil.hasManyNodes(tree, 30000)) {
-        TreeUtil.collapseAll(tree, 1)
+    if (Registry.`is`("git.branches.panel.persist.tree.state")) {
+      val treeState = if (loadSaved) treeStateHolder.getInitialTreeState() else TreeState.createOn(tree, root)
+      runnable()
+      if (treeState != null) {
+        treeState.applyTo(tree)
       }
       else {
-        TreeUtil.expandAll(tree)
+        initDefaultTreeExpandState()
       }
+    }
+    else {
+      runnable()
+      if (loadSaved) {
+        initDefaultTreeExpandState()
+      }
+    }
+  }
+
+  private fun initDefaultTreeExpandState() {
+    // expanding lots of nodes is a slow operation (and result is not very useful)
+    if (TreeUtil.hasManyNodes(tree, 30000)) {
+      TreeUtil.collapseAll(tree, 1)
+    }
+    else {
+      TreeUtil.expandAll(tree)
     }
   }
 
@@ -511,14 +524,16 @@ internal class BranchesTreeStateProvider(tree: FilteringBranchesTree, disposable
     }
   }
 
-  fun getState(): TreeState {
+  fun getState(): TreeState? {
     persistTreeState()
-    return state!!
+    return state
   }
 
   private fun persistTreeState() {
-    tree?.let {
-      state = TreeState.createOn(it.tree, it.root)
+    if (Registry.`is`("git.branches.panel.persist.tree.state")) {
+      tree?.let {
+        state = TreeState.createOn(it.tree, it.root)
+      }
     }
   }
 }

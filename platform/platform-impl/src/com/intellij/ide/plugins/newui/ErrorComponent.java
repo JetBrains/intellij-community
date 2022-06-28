@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,7 +36,7 @@ final class ErrorComponent extends JEditorPane {
 
     addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         Object callback = getClientProperty(KEY);
         if (callback instanceof Runnable) {
           ApplicationManager.getApplication().invokeLater((Runnable)callback, ModalityState.any());

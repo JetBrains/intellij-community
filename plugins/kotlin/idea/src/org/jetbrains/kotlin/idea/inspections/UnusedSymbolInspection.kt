@@ -623,7 +623,11 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         return list
     }
 
-    private fun KtParameter.isInlineClassProperty() = hasValOrVar() && containingClassOrObject?.hasModifier(KtTokens.INLINE_KEYWORD) == true
+    private fun KtParameter.isInlineClassProperty(): Boolean {
+        if (!hasValOrVar()) return false
+        return containingClassOrObject?.hasModifier(KtTokens.INLINE_KEYWORD) == true ||
+                containingClassOrObject?.hasModifier(KtTokens.VALUE_KEYWORD) == true
+    }
 }
 
 class SafeDeleteFix(declaration: KtDeclaration) : LocalQuickFix {

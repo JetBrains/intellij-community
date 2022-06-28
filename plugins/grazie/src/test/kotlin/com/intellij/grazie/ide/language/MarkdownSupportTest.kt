@@ -12,9 +12,9 @@ class MarkdownSupportTest : GrazieTestBase() {
   }
 
   fun `test replacement with markup inside`() {
-    myFixture.configureByText("a.md", "<warning>First </warning>[<warning>of all</warning>, it's a great](url) sentence.")
+    myFixture.configureByText("a.md", "Please, <caret><warning>gather </warning>[<warning>up</warning> the](url) documentation.")
     myFixture.checkHighlighting()
-    myFixture.launchAction(myFixture.findSingleIntention("First"))
-    myFixture.checkResult("First[, it's a great](url) sentence.") // the result could be different, but the markup should still be preserved
+    myFixture.launchAction(myFixture.findSingleIntention("gather"))
+    myFixture.checkResult("Please, gather[ the](url) documentation.") // the result could be different, but the markup should still be preserved
   }
 }

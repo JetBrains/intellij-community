@@ -31,6 +31,8 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
            ?: gotoDeclarationOrUsages(file, offset)
   }
 
+  @Suppress("DEPRECATION")
+  @Deprecated("Unused in v2 implementation")
   @JvmStatic
   fun getCtrlMouseInfo(editor: Editor, file: PsiFile, offset: Int): CtrlMouseInfo? {
     return gotoDeclarationOrUsages(file.project, editor, file, offset)?.ctrlMouseInfo()

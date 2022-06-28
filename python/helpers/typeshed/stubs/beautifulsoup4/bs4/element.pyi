@@ -1,6 +1,6 @@
 from _typeshed import Self
 from collections.abc import Iterator
-from typing import Any, Callable, Generic, Iterable, Mapping, Pattern, TypeVar, Union, overload
+from typing import Any, Callable, Generic, Iterable, Pattern, TypeVar, Union, overload
 
 from . import BeautifulSoup
 from .builder import TreeBuilder
@@ -234,7 +234,7 @@ class Tag(PageElement):
     sourceline: int | None
     sourcepos: int | None
     known_xml: bool | None
-    attrs: Mapping[str, str]
+    attrs: dict[str, str]
     contents: list[PageElement]
     hidden: bool
     can_be_empty_element: bool | None
@@ -247,7 +247,7 @@ class Tag(PageElement):
         name: str | None = ...,
         namespace: str | None = ...,
         prefix: str | None = ...,
-        attrs: Mapping[str, str] | None = ...,
+        attrs: dict[str, str] | None = ...,
         parent: Tag | None = ...,
         previous: PageElement | None = ...,
         is_xml: bool | None = ...,

@@ -69,6 +69,11 @@ public final class ProjectProblemUtils {
     return new MenuOnClickPresentation(problemsPresentation, project, () -> ProjectProblemHintProvider.getPopupActions());
   }
 
+  /**
+   * Show broken usages in tool window. If there's only one broken usage - just navigate to it.
+   *
+   * @param member member with broken usages
+   */
   public static void showProblems(@NotNull Editor editor, @NotNull PsiMember member) {
     JavaCodeVisionUsageCollector.RELATED_PROBLEMS_CLICKED_EVENT_ID.log(member.getProject());
     Map<PsiMember, Set<Problem>> problems = getReportedProblems(editor);
@@ -171,7 +176,7 @@ public final class ProjectProblemUtils {
     editor.putUserData(MODIFICATION_COUNT, file.getManager().getModificationTracker().getModificationCount());
   }
 
-  public static boolean containsJvmLanguage(@NotNull VirtualFile file) {
+  static boolean containsJvmLanguage(@NotNull VirtualFile file) {
     FileTypeRegistry fileTypeRegistry = FileTypeRegistry.getInstance();
     LanguageFileType languageFileType = tryCast(fileTypeRegistry.getFileTypeByFileName(file.getName()), LanguageFileType.class);
     return languageFileType != null && languageFileType.getLanguage() instanceof JvmLanguage;

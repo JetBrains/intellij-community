@@ -288,7 +288,7 @@ public final class WelcomeScreenComponentFactory {
 
   @NotNull
   public static Component createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
-    ActionLink actionLink = new ActionLink(linkText, AllIcons.Ide.Notification.NoEvents, new AnAction() {
+    ActionLink actionLink = new ActionLink(linkText, AllIcons.Ide.Notification.NoEvents, new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();

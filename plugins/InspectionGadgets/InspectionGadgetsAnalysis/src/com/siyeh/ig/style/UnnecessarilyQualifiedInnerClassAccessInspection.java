@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -125,7 +125,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       if (referenceClass == null) {
         return;
       }
-      ProblemHighlightType highlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+      ProblemHighlightType highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       if (!referenceClass.equals(qualifierTarget) || !ClassUtils.isInsideClassBody(reference, referenceClass)) {
         if (ignoreReferencesNeedingImport &&
             (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget, true) ||

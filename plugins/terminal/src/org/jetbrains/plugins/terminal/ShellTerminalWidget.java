@@ -11,6 +11,7 @@ import com.intellij.terminal.TerminalSplitAction;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
 import com.jediterm.terminal.TextStyle;
@@ -133,6 +134,16 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     } else {
       myPendingActionsToExecute.add(consumer);
     }
+  }
+
+  @Override
+  public String getSessionName() {
+    ProcessTtyConnector connector = getProcessTtyConnector();
+    if (connector instanceof PtyProcessTtyConnector) {
+      // use name from settings for local terminal
+      return TerminalOptionsProvider.getInstance().getTabName();
+    }
+    return super.getSessionName();
   }
 
   @Override

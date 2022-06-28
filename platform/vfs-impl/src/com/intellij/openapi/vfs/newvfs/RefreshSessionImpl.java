@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
@@ -12,7 +12,10 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.AsyncFileListener;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -24,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 final class RefreshSessionImpl extends RefreshSession {
   @SuppressWarnings("LoggerInitializedWithForeignClass") private static final Logger LOG = Logger.getInstance(RefreshSession.class);
@@ -114,7 +115,7 @@ final class RefreshSessionImpl extends RefreshSession {
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }
 
-  void scan(long timeInQueue) {
+  void scan() {
     List<VirtualFile> workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<>();
     boolean forceRefresh = !myIsRecursive && !myIsAsync;  // shallow sync refresh (e.g. project config files on open)
@@ -127,7 +128,7 @@ final class RefreshSessionImpl extends RefreshSession {
 
       if (LOG.isTraceEnabled()) LOG.trace("scanning " + workQueue);
 
-      long t = System.nanoTime();
+      long t = System.currentTimeMillis();
       PerformanceWatcher.Snapshot snapshot = null;
       Map<String, Integer> types = null;
       if (DURATION_REPORT_THRESHOLD_MS > 0) {
@@ -166,14 +167,7 @@ final class RefreshSessionImpl extends RefreshSession {
       }
       while (!myCancelled && myIsRecursive && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
 
-      t = NANOSECONDS.toMillis(System.nanoTime() - t);
-      int localRoots = 0, archiveRoots = 0, otherRoots = 0;
-      for (VirtualFile file : workQueue) {
-        if (file.getFileSystem() instanceof LocalFileSystem) localRoots++;
-        else if (file.getFileSystem() instanceof ArchiveFileSystem) archiveRoots++;
-        else otherRoots++;
-      }
-      VfsUsageCollector.logRefreshSession(myIsRecursive, localRoots, archiveRoots, otherRoots, myCancelled, timeInQueue, t, count);
+      t = System.currentTimeMillis() - t;
       if (LOG.isTraceEnabled()) {
         LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, tries " + count + ", events " + myEvents);
       }
@@ -263,6 +257,7 @@ final class RefreshSessionImpl extends RefreshSession {
 
   @Override
   public String toString() {
-    return myWorkQueue.size() <= 1 ? "" : myWorkQueue.size() + " roots in the queue.";
+    int size = myWorkQueue.size();
+    return "RefreshSessionImpl: " + size + " roots in the queue" + (size == 0 ? "" : ": "+ContainerUtil.getFirstItem(myWorkQueue)) + (size>=2 ? ", ..." : "");
   }
 }

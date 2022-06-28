@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
@@ -15,20 +14,12 @@ import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlin.Triple
-import org.apache.tools.ant.types.FileSet
-import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
-import org.jetbrains.intellij.build.tasks.ArchiveKt
-import org.jetbrains.intellij.build.tasks.AsmKt
-import org.jetbrains.intellij.build.tasks.BrokenPluginsKt
-import org.jetbrains.intellij.build.tasks.JarBuilder
-import org.jetbrains.intellij.build.tasks.KeymapPluginKt
-import org.jetbrains.intellij.build.tasks.ReorderJarsKt
-import org.jetbrains.intellij.build.tasks.Source
+import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.model.JpsCompositeElement
 import org.jetbrains.jps.model.JpsElementReference
 import org.jetbrains.jps.model.artifact.JpsArtifact
@@ -53,6 +44,7 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAllDir}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAllDir distAll}/plugins directory) and zip archives with
@@ -69,6 +61,7 @@ final class DistributionJARsBuilder {
   private static final Comparator<PluginLayout> PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE = new Comparator<PluginLayout>() {
     @Override
     int compare(PluginLayout o1, PluginLayout o2) {
+      //noinspection ChangeToOperator
       return o1.mainModule.compareTo(o2.mainModule)
     }
   }
@@ -93,7 +86,7 @@ final class DistributionJARsBuilder {
   static PlatformLayout createPlatformLayout(Set<PluginLayout> pluginsToPublish, BuildContext context) {
     ProductModulesLayout productLayout = context.productProperties.productLayout
     Set<String> enabledPluginModules = getEnabledPluginModules(pluginsToPublish, context.productProperties)
-    Set<ProjectLibraryData> projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(context, enabledPluginModules)
+    SortedSet<ProjectLibraryData> projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(context, enabledPluginModules)
     return PlatformModules.createPlatformLayout(productLayout,
                                                 hasPlatformCoverage(productLayout, enabledPluginModules, context),
                                                 projectLibrariesUsedByPlugins,
@@ -135,7 +128,7 @@ final class DistributionJARsBuilder {
     return false
   }
 
-  private static Set<ProjectLibraryData> computeProjectLibsUsedByPlugins(BuildContext context, Set<String> enabledPluginModules) {
+  private static SortedSet<ProjectLibraryData> computeProjectLibsUsedByPlugins(BuildContext context, Set<String> enabledPluginModules) {
     ObjectLinkedOpenHashSet<ProjectLibraryData> result = new ObjectLinkedOpenHashSet<>()
 
     for (PluginLayout plugin : getPluginsByModules(context, enabledPluginModules)) {
@@ -150,9 +143,14 @@ final class DistributionJARsBuilder {
             }
 
             String name = library.name
-            ProjectLibraryData.PackMode packMode = PlatformModules.CUSTOM_PACK_MODE.getOrDefault(name, ProjectLibraryData.PackMode.MERGED)
-            result.addOrGet(new ProjectLibraryData(name, "", packMode))
-              .dependentModules.computeIfAbsent(Objects.requireNonNull(plugin.directoryName), PlatformModules.LIST_PRODUCER).add(moduleName)
+            LibraryPackMode packMode = PlatformModules.CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED)
+            result.addOrGet(new ProjectLibraryData(name, packMode))
+              .dependentModules.computeIfAbsent(Objects.requireNonNull(plugin.directoryName), new Function<String, List<String>>() {
+              @Override
+              List<String> apply(String s) {
+                return new ArrayList<String>()
+              }
+            }).add(moduleName)
           }
         })
       }
@@ -253,21 +251,20 @@ final class DistributionJARsBuilder {
   ProjectStructureMapping buildJARs(BuildContext context, boolean isUpdateFromSources = false) {
     validateModuleStructure(context)
 
-    ForkJoinTask<?> svgPrebuildTask = SVGPreBuilder.createPrebuildSvgIconsTask(context)?.fork()
+    ForkJoinTask<?> svgPrebuildTask = SVGPreBuilder.INSTANCE.createPrebuildSvgIconsTask(context)?.fork()
     ForkJoinTask<?> brokenPluginsTask = createBuildBrokenPluginListTask(context)?.fork()
 
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.createSkippableTask(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, context) {
-      buildSearchableOptions(context, getModulesForPluginsToPublish())
+    BuildHelper.createSkippableTask(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, context) {
+      buildSearchableOptions(context)
     }?.fork()?.join()
 
     Set<PluginLayout> pluginLayouts = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
 
-    Path antDir = context.productProperties.isAntRequired ? context.paths.distAllDir.resolve("lib/ant") : null
+    Path antDir = context.productProperties.isAntRequired() ? context.paths.distAllDir.resolve("lib/ant") : null
     Path antTargetFile = antDir == null ? null : antDir.resolve("lib/ant.jar")
 
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
-    ForkJoinTask<List<DistributionFileEntry>> buildPlatformTask = buildHelper.createTask(
+    ForkJoinTask<List<DistributionFileEntry>> buildPlatformTask = TraceKt.createTask(
       spanBuilder("build platform lib"),
       new Supplier<List<DistributionFileEntry>>() {
         @Override
@@ -281,7 +278,7 @@ final class DistributionJARsBuilder {
 /* Android Studio: do not patch ApplicationNamesInfo yet
           ForkJoinTask.invokeAll(Arrays.asList(
             StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context),
-            buildHelper.createTask(spanBuilder("write patched app info")) {
+            TraceKt.createTask(spanBuilder("write patched app info")) {
               Path moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
               String relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
               byte[] result = AsmKt.injectAppInfo(
@@ -326,12 +323,12 @@ Android Studio: do not patch ApplicationNamesInfo yet */
     if (!additionalPluginPaths.isEmpty()) {
       Path pluginDir = context.paths.distAllDir.resolve("plugins")
       for (Path sourceDir : additionalPluginPaths) {
-        buildHelper.copyDir(sourceDir, pluginDir.resolve(sourceDir.fileName))
+        BuildHelper.copyDir(sourceDir, pluginDir.resolve(sourceDir.fileName))
       }
     }
 
     List<ForkJoinTask<?>> tasks = new ArrayList<ForkJoinTask<?>>(3)
-    tasks.add(buildHelper.createTask(spanBuilder("generate content report"), new Supplier<Void>() {
+    tasks.add(TraceKt.createTask(spanBuilder("generate content report"), new Supplier<Void>() {
       @Override
       Void get() {
         Files.createDirectories(context.paths.artifactDir)
@@ -379,16 +376,15 @@ Android Studio: do not patch ApplicationNamesInfo yet */
   private static ForkJoinTask<List<DistributionFileEntry>> copyAnt(@NotNull Path antDir,
                                                                    @NotNull Path antTargetFile,
                                                                    @NotNull BuildContext context) {
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    return buildHelper.createTask(
+    return TraceKt.createTask(
       spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()),
       new Supplier<List<DistributionFileEntry>>() {
         @Override
         List<DistributionFileEntry> get() {
           List<Source> sources = new ArrayList<>()
           List<DistributionFileEntry> result = new ArrayList<>()
-          ProjectLibraryData libraryData = new ProjectLibraryData("Ant", "", ProjectLibraryData.PackMode.MERGED)
-          buildHelper.copyDir(
+          ProjectLibraryData libraryData = new ProjectLibraryData("Ant", LibraryPackMode.MERGED)
+          BuildHelper.copyDir(
             context.paths.communityHomeDir.resolve("lib/ant"), antDir,
             new Predicate<Path>() {
               @Override
@@ -442,8 +438,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
   private static ForkJoinTask<?> createBuildBrokenPluginListTask(@NotNull BuildContext context) {
     String buildString = context.fullBuildNumber
     Path targetFile = context.paths.tempDir.resolve("brokenPlugins.db")
-    BuildHelper helper = BuildHelper.getInstance(context)
-    return helper.createSkippableTask(
+    return BuildHelper.createSkippableTask(
       spanBuilder("build broken plugin list")
         .setAttribute("buildNumber", buildString)
         .setAttribute("path", targetFile.toString()),
@@ -489,34 +484,24 @@ Android Studio: do not patch ApplicationNamesInfo yet */
    * Build index which is used to search options in the Settings dialog.
    */
   @Nullable
-  static Path buildSearchableOptions(BuildContext buildContext,
-                                     @NotNull Collection<String> modulesForPluginsToPublish,
-                                     @Nullable UnaryOperator<Set<String>> classpathCustomizer = null,
-                                     Map<String, Object> systemProperties = Collections.emptyMap()) {
+  Path buildSearchableOptions(BuildContext buildContext,
+                              @Nullable UnaryOperator<Set<String>> classpathCustomizer = null,
+                              Map<String, Object> systemProperties = Collections.emptyMap()) {
     Span span = Span.current()
     if (buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       span.addEvent("skip building searchable options index")
       return null
     }
-
-    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
-    Set<String> modulesToIndex = new LinkedHashSet<>()
-    modulesToIndex.addAll(productLayout.mainModules)
-    modulesToIndex.addAll(getModulesToCompile(buildContext))
-    modulesToIndex.addAll(modulesForPluginsToPublish)
-    modulesToIndex.remove("intellij.ruby.lsp")
-
+    LinkedHashSet<String> ideClasspath = createIdeClassPath(buildContext)
     Path targetDirectory = JarPackager.getSearchableOptionsDir(buildContext)
     BuildMessages messages = buildContext.messages
-    span.setAttribute(AttributeKey.longKey("moduleCount"), (long)modulesToIndex.size())
-    span.setAttribute(AttributeKey.stringArrayKey("modules"), List.copyOf(modulesToIndex))
     NioFiles.deleteRecursively(targetDirectory)
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
     // It'll process all UI elements in Settings dialog and build index for them.
     //noinspection SpellCheckingInspection
     BuildHelper.runApplicationStarter(buildContext,
                                       buildContext.paths.tempDir.resolve("searchableOptions"),
-                                      modulesToIndex, List.of("traverseUI", targetDirectory.toString(), "true"),
+                                      ideClasspath, List.of("traverseUI", targetDirectory.toString(), "true"),
                                       systemProperties,
                                       List.of(),
                                       TimeUnit.MINUTES.toMillis(10L), classpathCustomizer)
@@ -589,7 +574,38 @@ Android Studio: do not patch ApplicationNamesInfo yet */
     BuildTasks.create(context).zipSourcesOfModules(modulesFromCommunity, context.paths.artifactDir.resolve(archiveName), true)
   }
 
-  void generateProjectStructureMapping(@NotNull Path targetFile, @NotNull BuildContext context) {
+  LinkedHashSet<String> createIdeClassPath(@NotNull BuildContext context) {
+    // for some reasons maybe duplicated paths - use set
+    LinkedHashSet<String> classPath = new LinkedHashSet<String>()
+    Files.createDirectories(context.paths.tempDir)
+    Path pluginLayoutRoot = Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
+    List<DistributionFileEntry> nonPluginsEntries = new ArrayList<>()
+    List<DistributionFileEntry> pluginsEntries = new ArrayList<>()
+    for(e in (generateProjectStructureMapping(context, pluginLayoutRoot))) {
+      if (e.getPath().startsWith(pluginLayoutRoot)) {
+        Path relPath = pluginLayoutRoot.relativize(e.path)
+        // For plugins our classloader load jars only from lib folder
+        if (relPath.parent?.parent == null && relPath.parent?.toString() == "lib") {
+          pluginsEntries.add(e)
+        }
+      } else {
+        nonPluginsEntries.add(e)
+      }
+    }
+
+    for (entry in nonPluginsEntries + pluginsEntries) {
+      if (entry instanceof ModuleOutputEntry) {
+        classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
+      } else if (entry instanceof LibraryFileEntry) {
+        classPath.add(entry.libraryFile.toString())
+      } else {
+        throw new UnsupportedOperationException("Entry $entry is not supported")
+      }
+    }
+    return classPath
+  }
+
+  List<DistributionFileEntry> generateProjectStructureMapping(@NotNull BuildContext context, @NotNull Path pluginLayoutRoot) {
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
     ForkJoinTask<List<DistributionFileEntry>> libDirLayout = processLibDirectoryLayout(moduleOutputPatcher, platform, context, false).fork()
     Set<PluginLayout> allPlugins = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
@@ -598,14 +614,14 @@ Android Studio: do not patch ApplicationNamesInfo yet */
       .filter(new Predicate<PluginLayout>() {
         @Override
         boolean test(PluginLayout plugin) {
-          return satisfiesBundlingRequirements(plugin, null, context)
+          return satisfiesBundlingRequirements(plugin, null, null, context)
         }
       })
       .forEach(new Consumer<PluginLayout>() {
         @Override
         void accept(PluginLayout plugin) {
           entries.addAll(layout(plugin,
-                                context.paths.tempDir,
+                                pluginLayoutRoot,
                                 false,
                                 moduleOutputPatcher,
                                 plugin.moduleJars,
@@ -613,14 +629,17 @@ Android Studio: do not patch ApplicationNamesInfo yet */
         }
       })
     entries.addAll(libDirLayout.join())
+    return entries
+  }
 
-    ProjectStructureMapping.writeReport(entries, targetFile, context.paths)
+  void generateProjectStructureMapping(@NotNull Path targetFile, @NotNull BuildContext context, @NotNull Path pluginLayoutRoot) {
+    ProjectStructureMapping.writeReport(generateProjectStructureMapping(context, pluginLayoutRoot), targetFile, context.paths)
   }
 
   @Nullable
   private static ForkJoinTask<?> buildThirdPartyLibrariesList(@NotNull ProjectStructureMapping projectStructureMapping,
                                                               @NotNull BuildContext context) {
-    return BuildHelper.getInstance(context).createSkippableTask(
+    return BuildHelper.createSkippableTask(
       spanBuilder("generate table of licenses for used third-party libraries"),
       BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP,
       context,
@@ -678,7 +697,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
                                                                              PlatformLayout platform,
                                                                              BuildContext context,
                                                                              boolean copyFiles) {
-    return BuildHelper.getInstance(context).createTask(
+    return TraceKt.createTask(
       spanBuilder("layout").setAttribute("path", context.paths.buildOutputDir.relativize(context.paths.distAllDir).toString()),
       new Supplier<List<DistributionFileEntry>>() {
         @Override
@@ -693,7 +712,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
                                                                          ForkJoinTask<?> buildPlatformTask,
                                                                          @NotNull BuildContext context) {
     Set<String> pluginDirectoriesToSkip = context.options.bundledPluginDirectoriesToSkip
-    return BuildHelper.getInstance(context).createTask(
+    return TraceKt.createTask(
       spanBuilder("build bundled plugins")
         .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), List.copyOf(pluginDirectoriesToSkip))
         .setAttribute("count", plugins.size()),
@@ -702,7 +721,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
         List<DistributionFileEntry> get() {
           List<PluginLayout> pluginsToBundle = new ArrayList<PluginLayout>(plugins.size())
           for (PluginLayout plugin : plugins) {
-            if (satisfiesBundlingRequirements(plugin, null, context) && !pluginDirectoriesToSkip.contains(plugin.directoryName)) {
+            if (satisfiesBundlingRequirements(plugin, null, null, context) && !pluginDirectoriesToSkip.contains(plugin.directoryName)) {
               pluginsToBundle.add(plugin)
             }
           }
@@ -718,22 +737,37 @@ Android Studio: do not patch ApplicationNamesInfo yet */
     )
   }
 
-  private static boolean satisfiesBundlingRequirements(PluginLayout plugin, @Nullable OsFamily osFamily, @NotNull BuildContext context) {
+  private static boolean satisfiesBundlingRequirements(PluginLayout plugin, @Nullable OsFamily osFamily, @Nullable JvmArchitecture arch, @NotNull BuildContext context) {
     PluginBundlingRestrictions bundlingRestrictions = plugin.bundlingRestrictions
-    if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
+
+    if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP()) {
       return false
     }
-    return osFamily == null
-      ? bundlingRestrictions.supportedOs == OsFamily.ALL
-      : bundlingRestrictions.supportedOs != OsFamily.ALL && bundlingRestrictions.supportedOs.contains(osFamily)
+
+    if (osFamily == null && bundlingRestrictions.supportedOs != OsFamily.ALL) {
+      return false
+    }
+
+    if (osFamily != null && (bundlingRestrictions.supportedOs == OsFamily.ALL || !bundlingRestrictions.supportedOs.contains(osFamily))) {
+      return false
+    }
+
+    if (arch == null && bundlingRestrictions.supportedArch != JvmArchitecture.ALL) {
+      return false
+    }
+
+    if (arch != null && !bundlingRestrictions.supportedArch.contains(arch)) {
+      return false
+    }
+
+    return true
   }
 
   private ForkJoinTask<List<DistributionFileEntry>> createBuildOsSpecificBundledPluginsTask(@NotNull Set<PluginLayout> pluginLayouts,
                                                                                             boolean isUpdateFromSources,
                                                                                             @Nullable ForkJoinTask<?> buildPlatformTask,
                                                                                             @NotNull BuildContext context) {
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.createTask(spanBuilder("build os-specific bundled plugins")
+    TraceKt.createTask(spanBuilder("build os-specific bundled plugins")
                              .setAttribute("isUpdateFromSources", isUpdateFromSources), new Supplier<List<DistributionFileEntry>>() {
       @Override
       List<DistributionFileEntry> get() {
@@ -750,7 +784,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
 
           List<PluginLayout> osSpecificPlugins = new ArrayList<PluginLayout>()
           for (PluginLayout pluginLayout : pluginLayouts) {
-            if (satisfiesBundlingRequirements(pluginLayout, osFamily, context)) {
+            if (satisfiesBundlingRequirements(pluginLayout, osFamily, arch, context)) {
               osSpecificPlugins.add(pluginLayout)
             }
           }
@@ -762,7 +796,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
             ? context.paths.distAllDir.resolve("plugins")
             : getOsAndArchSpecificDistDirectory(osFamily, arch, context).resolve("plugins")
 
-          return buildHelper.createTask(spanBuilder("build bundled plugins")
+          return TraceKt.createTask(spanBuilder("build bundled plugins")
                                           .setAttribute("os", osFamily.osName)
                                           .setAttribute("arch", arch.name())
                                           .setAttribute("count", osSpecificPlugins.size())
@@ -824,7 +858,6 @@ Android Studio: do not patch ApplicationNamesInfo yet */
     }
   }
 
-  // compressPluginArchive also means that blockmap for plugin archive will be built
   @Nullable
   ForkJoinTask<List<DistributionFileEntry>> createBuildNonBundledPluginsTask(@NotNull Set<PluginLayout> pluginsToPublish,
                                                                              boolean compressPluginArchive,
@@ -834,7 +867,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
       return null
     }
 
-    return BuildHelper.getInstance(context).createTask(
+    return TraceKt.createTask(
       spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size()),
       new Supplier<List<DistributionFileEntry>>() {
         @Override
@@ -894,9 +927,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
               }
             }
           )
-
-          BuildHelper buildHelper = BuildHelper.getInstance(context)
-          buildHelper.bulkZipWithPrefix(stageDir, dirToJar, compressPluginArchive)
+          BlockmapKt.bulkZipWithPrefix(stageDir, dirToJar, compressPluginArchive)
 
           PluginLayout helpPlugin = BuiltInHelpPlugin.helpPlugin(context, defaultPluginVersion)
           if (helpPlugin != null) {
@@ -978,7 +1009,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
         }
 
         int result = layout.mainModule.hashCode()
-        result = 31 * result + layout.bundlingRestrictions.supportedOs.hashCode()
+        result = 31 * result + layout.bundlingRestrictions.hashCode()
         return result
       }
 
@@ -990,7 +1021,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
         if (a == null || b == null) {
           return false
         }
-        return a.mainModule == b.mainModule && a.bundlingRestrictions.supportedOs == b.bundlingRestrictions.supportedOs
+        return a.mainModule == b.mainModule && a.bundlingRestrictions == b.bundlingRestrictions
       }
     })
     for (String moduleName : modules) {
@@ -1032,11 +1063,8 @@ Android Studio: do not patch ApplicationNamesInfo yet */
     boolean isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
 
     List<ForkJoinTask<?>> scrambleTasks = new ArrayList<>()
-
     List<ForkJoinTask<List<DistributionFileEntry>>> tasks = new ArrayList<>()
 
-
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
     // must be as a closure, dont' use "for in" here - to capture supplier variables.
     plugins.each { PluginLayout plugin ->
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
@@ -1048,7 +1076,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
       String directoryName = getActualPluginDirectoryName(plugin, context)
       Path pluginDir = targetDirectory.resolve(directoryName)
 
-      tasks.add(buildHelper.createTask(
+      tasks.add(TraceKt.createTask(
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()),
         new Supplier<List<DistributionFileEntry>>() {
           @Override
@@ -1095,7 +1123,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
     if (!scrambleTasks.isEmpty()) {
       // scrambling can require classes from platform
       if (buildPlatformTask != null) {
-        buildHelper.span(spanBuilder("wait for platform lib for scrambling"), new Runnable() {
+        BuildHelper.span(spanBuilder("wait for platform lib for scrambling"), new Runnable() {
           @Override
           void run() {
             buildPlatformTask.join()
@@ -1142,11 +1170,14 @@ Android Studio: do not patch ApplicationNamesInfo yet */
   private static boolean containsFileInOutput(@NotNull String moduleName, String filePath, Collection<String> excludes, BuildContext buildContext) {
     Path moduleOutput = buildContext.getModuleOutputDir(buildContext.findRequiredModule(moduleName))
     Path fileInOutput = moduleOutput.resolve(filePath)
-    return Files.exists(fileInOutput) && (excludes == null || excludes.every {
-      createFileSet(it, moduleOutput, buildContext).iterator().every {
-        !(it instanceof FileProvider && FileUtil.pathsEqual(((FileProvider)it).file.toString(), fileInOutput.toString()))
-      }
-    })
+
+    if (!Files.exists(fileInOutput)) {
+      return false
+    }
+
+    FileSet set = new FileSet(moduleOutput).include(filePath)
+    excludes.each { set.exclude(it) }
+    return !set.isEmpty()
   }
 
   /**
@@ -1180,7 +1211,6 @@ Android Studio: do not patch ApplicationNamesInfo yet */
                                             ModuleOutputPatcher moduleOutputPatcher,
                                             MultiMap<String, String> moduleJars,
                                             BuildContext context) {
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
     if (copyFiles) {
       checkModuleExcludes(layout.moduleExcludes, context)
     }
@@ -1190,7 +1220,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
     // patchers must be executed _before_ pack because patcher patches module output
     if (copyFiles && layout instanceof PluginLayout && !layout.patchers.isEmpty()) {
       List<BiConsumer<ModuleOutputPatcher, BuildContext>> patchers = layout.patchers
-      buildHelper.span(spanBuilder("execute custom patchers").setAttribute("count", patchers.size()), new Runnable() {
+      BuildHelper.span(spanBuilder("execute custom patchers").setAttribute("count", patchers.size()), new Runnable() {
         @Override
         void run() {
           for (BiConsumer<ModuleOutputPatcher, BuildContext> patcher : patchers) {
@@ -1200,7 +1230,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
       })
     }
 
-    tasks.add(buildHelper.createTask(spanBuilder("pack"), new Supplier<Collection<DistributionFileEntry>>() {
+    tasks.add(TraceKt.createTask(spanBuilder("pack"), new Supplier<Collection<DistributionFileEntry>>() {
       @Override
       Collection<DistributionFileEntry> get() {
         Map<String, List<String>> actualModuleJars = new TreeMap<>()
@@ -1219,17 +1249,17 @@ Android Studio: do not patch ApplicationNamesInfo yet */
     }))
 
     if (copyFiles && (!layout.resourcePaths.isEmpty() || (layout instanceof PluginLayout && !layout.resourceGenerators.isEmpty()))) {
-      tasks.add(buildHelper.createTask(spanBuilder("pack additional resources"), new Supplier<Collection<DistributionFileEntry>>() {
+      tasks.add(TraceKt.createTask(spanBuilder("pack additional resources"), new Supplier<Collection<DistributionFileEntry>>() {
         @Override
         Collection<DistributionFileEntry> get() {
-          layoutAdditionalResources(layout, context, targetDirectory, buildHelper)
+          layoutAdditionalResources(layout, context, targetDirectory)
           return Collections.<DistributionFileEntry> emptyList()
         }
       }))
     }
 
     if (!layout.includedArtifacts.isEmpty()) {
-      tasks.add(buildHelper.createTask(spanBuilder("pack artifacts"), new Supplier<Collection<DistributionFileEntry>>() {
+      tasks.add(TraceKt.createTask(spanBuilder("pack artifacts"), new Supplier<Collection<DistributionFileEntry>>() {
         @Override
         Collection<DistributionFileEntry> get() {
           return layoutArtifacts(layout, context, copyFiles, targetDirectory)
@@ -1241,8 +1271,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
 
   private static void layoutAdditionalResources(BaseLayout layout,
                                                 BuildContext context,
-                                                Path targetDirectory,
-                                                BuildHelper buildHelper) {
+                                                Path targetDirectory) {
     for (ModuleResourceData resourceData in layout.resourcePaths) {
       Path source = basePath(context, resourceData.moduleName).resolve(resourceData.resourcePath).normalize()
       Path target = targetDirectory.resolve(resourceData.relativeOutputPath)
@@ -1263,7 +1292,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
           BuildHelper.copyFileToDir(source, target)
         }
         else {
-          buildHelper.copyDir(source, target)
+          BuildHelper.copyDir(source, target)
         }
       }
     }
@@ -1274,7 +1303,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
 
     List<Pair<BiFunction<Path, BuildContext, Path>, String>> resourceGenerators = layout.resourceGenerators
     if (!resourceGenerators.isEmpty()) {
-      buildHelper.span(spanBuilder("generate and pack resources"), new Runnable() {
+      BuildHelper.span(spanBuilder("generate and pack resources"), new Runnable() {
         @Override
         void run() {
           for (Pair<BiFunction<Path, BuildContext, Path>, String> item : resourceGenerators) {
@@ -1288,7 +1317,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
               BuildHelper.copyFileToDir(resourceFile, target)
             }
             else {
-              buildHelper.copyDir(resourceFile, target)
+              BuildHelper.copyDir(resourceFile, target)
             }
           }
         }
@@ -1300,7 +1329,6 @@ Android Studio: do not patch ApplicationNamesInfo yet */
                                                                    BuildContext context,
                                                                    boolean copyFiles,
                                                                    Path targetDirectory) {
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
     Span span = Span.current()
     Collection<DistributionFileEntry> entries = new ArrayList<>()
     for (Map.Entry<String, String> entry in layout.includedArtifacts.entrySet()) {
@@ -1319,7 +1347,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
         Path source = Path.of(artifact.outputPath)
         artifactFile = targetDirectory.resolve("lib").resolve(relativePath)
         if (copyFiles) {
-          buildHelper.copyDir(source, targetDirectory.resolve("lib").resolve(relativePath))
+          BuildHelper.copyDir(source, targetDirectory.resolve("lib").resolve(relativePath))
         }
       }
       else {
@@ -1352,7 +1380,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
           entries.add(new ModuleLibraryFileEntry(artifactFile, ((JpsModuleReference)parentReference).moduleName, null, 0))
         }
         else {
-          ProjectLibraryData libraryData = new ProjectLibraryData(library.name, "", ProjectLibraryData.PackMode.MERGED)
+          ProjectLibraryData libraryData = new ProjectLibraryData(library.name, LibraryPackMode.MERGED)
           entries.add(new ProjectLibraryEntry(artifactFile, libraryData, null, 0))
         }
       }
@@ -1371,14 +1399,6 @@ Android Studio: do not patch ApplicationNamesInfo yet */
         }
       }
     }
-  }
-
-  private static FileSet createFileSet(String pattern, Path baseDir, BuildContext context) {
-    FileSet fileSet = new FileSet()
-    fileSet.setProject(context.ant.antProject)
-    fileSet.setDir(baseDir.toFile())
-    fileSet.createInclude().setName(pattern)
-    return fileSet
   }
 
   static Path basePath(BuildContext buildContext, String moduleName) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.diagnostic.PluginException;
@@ -108,7 +108,9 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Rebind cannot be performed for " + getClass());
+    Class<?> aClass = getClass();
+    throw new IncorrectOperationException("Rebind cannot be performed for " + aClass, 
+                                          (Throwable) PluginException.createByClass("", null, aClass));
   }
 
   @Override

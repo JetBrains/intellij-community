@@ -26,11 +26,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("annoationsOnEnumEntry.java")
-        public void testAnnoationsOnEnumEntry() throws Exception {
-            runTest("testData/newJ2k/annotations/annoationsOnEnumEntry.java");
-        }
-
         @TestMetadata("annotationArrayArgument.java")
         public void testAnnotationArrayArgument() throws Exception {
             runTest("testData/newJ2k/annotations/annotationArrayArgument.java");
@@ -79,6 +74,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("annotationsOnAnnotationMethod.java")
         public void testAnnotationsOnAnnotationMethod() throws Exception {
             runTest("testData/newJ2k/annotations/annotationsOnAnnotationMethod.java");
+        }
+
+        @TestMetadata("annotationsOnEnumEntry.java")
+        public void testAnnotationsOnEnumEntry() throws Exception {
+            runTest("testData/newJ2k/annotations/annotationsOnEnumEntry.java");
+        }
+
+        @TestMetadata("forLoopParameter.java")
+        public void testForLoopParameter() throws Exception {
+            runTest("testData/newJ2k/annotations/forLoopParameter.java");
         }
 
         @TestMetadata("java9Deprecated.java")
@@ -2721,6 +2726,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("operationsWithChar.java")
         public void testOperationsWithChar() throws Exception {
             runTest("testData/newJ2k/implicitCasts/operationsWithChar.java");
+        }
+
+        @TestMetadata("ternary.java")
+        public void testTernary() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/ternary.java");
         }
 
         @TestMetadata("unary.java")

@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public class JpsGradleModelSerializationExtension extends JpsModelSerializerExtension {
+public final class JpsGradleModelSerializationExtension extends JpsModelSerializerExtension {
   private static final String PRODUCTION_ON_TEST_ATTRIBUTE = "production-on-test";
   private static final String GRADLE_SYSTEM_ID = "GRADLE";
 

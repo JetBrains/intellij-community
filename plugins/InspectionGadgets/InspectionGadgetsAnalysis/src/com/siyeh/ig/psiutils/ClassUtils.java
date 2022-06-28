@@ -152,9 +152,8 @@ public final class ClassUtils {
     return aClass.hasModifierProperty(PsiModifier.FINAL) &&
            Arrays.stream(aClass.getAllFields())
              .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
-             .allMatch(field -> field.hasModifierProperty(PsiModifier.FINAL) &&
-                                (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) ||
-                                 immutableTypes.contains(field.getType().getCanonicalText())));
+             .map(field -> field.getType())
+             .allMatch(type -> TypeConversionUtil.isPrimitiveAndNotNull(type) || immutableTypes.contains(type.getCanonicalText()));
   }
 
   public static boolean inSamePackage(@Nullable PsiElement element1, @Nullable PsiElement element2) {

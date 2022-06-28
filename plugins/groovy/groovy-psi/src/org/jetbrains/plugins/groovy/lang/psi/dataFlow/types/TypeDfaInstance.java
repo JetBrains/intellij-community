@@ -102,6 +102,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private TypeDfaState handleFunctionalExpression(@NotNull TypeDfaState state) {
     ClosureFrame currentClosureFrame = state.getTopClosureFrame();
+    if (currentClosureFrame == null) {
+      return state;
+    }
     if (currentClosureFrame.getStartInstructionState() == state || hasNoChanges(currentClosureFrame.getStartInstructionState(), state.getRawVarTypes())) {
       return currentClosureFrame.getStartInstructionState().withRemovedBindings(state.getRemovedBindings());
     }

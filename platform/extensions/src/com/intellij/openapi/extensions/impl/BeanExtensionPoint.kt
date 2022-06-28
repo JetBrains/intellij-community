@@ -27,9 +27,8 @@ internal class BeanExtensionPoint<T>(name: String,
 
   override fun unregisterExtensions(componentManager: ComponentManager,
                                     pluginDescriptor: PluginDescriptor,
-                                    elements: List<ExtensionDescriptor>,
-                                    priorityListenerCallbacks: List<Runnable>,
-                                    listenerCallbacks: List<Runnable>) {
+                                    priorityListenerCallbacks: MutableList<in Runnable>,
+                                    listenerCallbacks: MutableList<in Runnable>) {
     unregisterExtensions(false, priorityListenerCallbacks, listenerCallbacks) { it.pluginDescriptor !== pluginDescriptor }
   }
 }

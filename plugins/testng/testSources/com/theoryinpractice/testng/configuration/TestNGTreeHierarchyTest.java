@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -6,6 +6,7 @@ import com.intellij.rt.testng.IDEATestNGRemoteListener;
 import com.intellij.util.ArrayUtilRt;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.testng.*;
 import org.testng.internal.TestResult;
@@ -225,6 +226,22 @@ public class TestNGTreeHierarchyTest {
     String message = buf.toString();
     String expectedFailureMessage =
       "##teamcity[testFailed name='ATest.testFoo' message='java.lang.AssertionError: ' expected='expected|nnewline' actual='actual|nnewline'";
+    Assert.assertTrue(message, message.contains(expectedFailureMessage));
+    
+  }
+  
+  @Test
+  public void testExplicitComparisonFailure() {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    final String className = "a.ATest";
+    AssertionError throwable = new ComparisonFailure("[there is an unexpected value]", "1", "0");
+    MockTestNGResult foo = new MockTestNGResult(className, "testFoo",
+                                                throwable, new Object[0]);
+    listener.onTestFailure(foo);
+    String message = buf.toString();
+    String expectedFailureMessage =
+      "##teamcity[testFailed name='ATest.testFoo' message='org.junit.ComparisonFailure: |[there is an unexpected value|] ' expected='1' actual='0' ";
     Assert.assertTrue(message, message.contains(expectedFailureMessage));
     
   }

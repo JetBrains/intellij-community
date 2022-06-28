@@ -5,6 +5,7 @@ fun foo(i: Int, j: Int) {
         } else {
             "2"
         }
+
         1 -> "3"
         else -> "4"
     }

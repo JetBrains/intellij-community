@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -742,6 +742,9 @@ public final class PsiUtil {
 
   @Nullable
   public static PsiType getSmartReturnType(@NotNull PsiMethod method) {
+    if (GdkMethodUtil.isMacro(method)) {
+      return null;
+    }
     if (method instanceof GrMethod) {
       return ((GrMethod)method).getInferredReturnType();
     }

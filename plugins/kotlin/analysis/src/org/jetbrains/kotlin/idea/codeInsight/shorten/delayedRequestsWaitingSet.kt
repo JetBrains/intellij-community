@@ -111,7 +111,7 @@ private val LOG = Logger.getInstance(Project::class.java.canonicalName)
 
 fun prepareDelayedRequests(project: Project) {
     val requests = project.delayedRefactoringRequests
-    if (project.ensureNoRefactoringRequestsBeforeRefactoring && requests != null && requests.isNotEmpty()) {
+    if (project.ensureNoRefactoringRequestsBeforeRefactoring && !requests.isNullOrEmpty()) {
         LOG.warn("Waiting set for reference shortening is not empty")
         project.delayedRefactoringRequests = null
     }

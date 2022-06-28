@@ -17,10 +17,10 @@ package com.intellij.compiler.actions;
 
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import org.jetbrains.annotations.NotNull;
 
-public class DebugBuildProcessToggleAction extends ToggleAction {
+public class DebugBuildProcessToggleAction extends DumbAwareToggleAction {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return BuildManager.getInstance().isBuildProcessDebuggingEnabled();

@@ -1390,12 +1390,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public static ProperTextRange makeEditorWindowVisible(@NotNull Point viewPosition, @NotNull Editor editor) {
-    ((EditorImpl)editor).getScrollPane().getViewport().setSize(1000, 1000);
+    EditorImpl impl = (EditorImpl)editor;
+    impl.getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    ((EditorImpl)editor).getScrollPane().getViewport().setViewPosition(viewPosition);
-    ((EditorImpl)editor).getScrollPane().getViewport().setExtentSize(new Dimension(100, ((EditorImpl)editor).getPreferredHeight() - viewPosition.y));
+    impl.getScrollPane().getViewport().setViewPosition(viewPosition);
+    impl.getScrollPane().getViewport().setExtentSize(new Dimension(100, impl.getPreferredHeight() - viewPosition.y));
+    UIUtil.markAsFocused(impl.getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
+
     return VisibleHighlightingPassFactory.calculateVisibleRange(editor);
   }
 
@@ -1960,6 +1963,48 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       finally {
         runHeavyProcessing = false;
       }
+    });
+  }
+
+  public void testDaemonMustDisableItselfDuringDocumentBulkModification() {
+    runWithReparseDelay(0, () -> {
+      configureByText(PlainTextFileType.INSTANCE, "");
+      Editor editor = getEditor();
+
+      Set<Editor> applied = Collections.synchronizedSet(new HashSet<>());
+      Set<Editor> collected = Collections.synchronizedSet(new HashSet<>());
+      DocumentUtil.executeInBulk(editor.getDocument(), () -> {
+        registerFakePass(applied, collected);
+
+        EditorTracker editorTracker = EditorTracker.getInstance(myProject);
+        editorTracker.setActiveEditors(Collections.singletonList(editor));
+        assertTrue(editorTracker.getActiveEditors().contains(editor));
+        assertSame(editor, FileEditorManager.getInstance(myProject).getSelectedTextEditor());
+
+        applied.clear();
+        collected.clear();
+
+        myDaemonCodeAnalyzer.restart(); // try to restart daemon
+
+        long start = System.currentTimeMillis();
+        while (System.currentTimeMillis() < start + 5000) {
+          assertEmpty(applied);  // it must not restart
+          assertEmpty(collected);
+          UIUtil.dispatchAllInvocationEvents();
+        }
+      });
+
+      applied.clear();
+      collected.clear();
+
+      myDaemonCodeAnalyzer.restart(); // try to restart daemon
+
+      long start = System.currentTimeMillis();
+      while (System.currentTimeMillis() < start + 5000 && applied.isEmpty()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      assertNotEmpty(applied);  // it must restart outside bulk
+      assertNotEmpty(collected);
     });
   }
 
@@ -3237,6 +3282,83 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     if (violation.get() != null) {
       throw violation.get();
     }
+  }
+
+  static class EmptyPassFactory implements TextEditorHighlightingPassFactory {
+    @Override
+    public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+      return new EmptyPass(file.getProject(), editor.getDocument());
+    }
+
+    static class EmptyPass extends TextEditorHighlightingPass {
+      private EmptyPass(Project project, @NotNull Document document) {
+        super(project, document, false);
+      }
+
+      @Override
+      public void doCollectInformation(@NotNull ProgressIndicator progress) {
+      }
+
+      @Override
+      public void doApplyInformationToEditor() {
+      }
+    }
+  }
+
+  public void testTextEditorHighlightingPassRegistrarMustNotAllowCyclesInPassDeclarationsOrCrazyPassIdsOmgMurphyLawStrikesAgain() {
+    configureByText(JavaFileType.INSTANCE, "class C{}");
+    TextEditorHighlightingPassRegistrarImpl registrar = (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(getProject());
+    int F2 = Pass.EXTERNAL_TOOLS;
+    int forcedId1 = 256;
+    int forcedId2 = 257;
+    int forcedId3 = 258;
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not intersect
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, new int[]{F2}, false, -1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain forcedId
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId1}, null, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain forcedId
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), null, new int[]{forcedId1}, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain crazy ids
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{0}, new int[]{F2}, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain crazy ids
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{-1}, new int[]{F2}, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain crazy ids
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, new int[]{0}, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain crazy ids
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, new int[]{-1}, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain crazy ids
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{32134}, new int[]{F2}, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain crazy ids
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, new int[]{982314}, false, forcedId1));
+
+    assertThrows(IllegalArgumentException.class, () -> {
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId2}, null, false, forcedId1);
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId1}, null, false, forcedId2);
+      assertEmpty(highlightErrors());
+    });
+    // non-direct cycle
+    assertThrows(IllegalArgumentException.class, () -> {
+      registrar.reRegisterFactories(); // clear caches from incorrect factories above
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId2}, null, false, forcedId1);
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId3}, null, false, forcedId2);
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId1}, null, false, forcedId3);
+      assertEmpty(highlightErrors());
+    });
+
+    registrar.reRegisterFactories(); // clear caches from incorrect factories above
+    registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), null, null, false, forcedId1);
+    registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId1}, null, false, forcedId3);
+    registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId3}, null, false, forcedId2);
+    assertEmpty(highlightErrors());
   }
 }
 

@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,11 +15,6 @@ import java.util.Map;
 import static org.jetbrains.plugins.textmate.plist.PListValue.value;
 
 public class JsonPlistReader implements PlistReader {
-  @Override
-  public Plist read(@NotNull File file) throws IOException {
-    return read(new FileInputStream(file));
-  }
-
   @Override
   public Plist read(@NotNull InputStream inputStream) throws IOException {
     return internalRead(new Gson().fromJson(new InputStreamReader(inputStream, StandardCharsets.UTF_8), Object.class));

@@ -8,6 +8,7 @@ import com.intellij.diff.editor.DiffEditorTabFilesManager;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.MergeTool;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -74,6 +75,8 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   //
   // DiffContext
   //
+
+  Key<ActionToolbar> LEFT_TOOLBAR = Key.create("Diff.LeftToolbar");
 
   /**
    * Add panel to the bottom of diff window.

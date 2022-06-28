@@ -39,7 +39,7 @@ public class TableLayout extends TabLayout {
       return data;
     }
     boolean singleRow = myTabs.isSingleRow();
-    boolean showPinnedTabsSeparately = UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
+    boolean showPinnedTabsSeparately = showPinnedTabsSeparately();
     boolean scrollable = UISettings.getInstance().getHideTabsIfNeeded() && singleRow;
     int titleWidth = myTabs.myTitleWrapper.getPreferredSize().width;
 
@@ -132,7 +132,7 @@ public class TableLayout extends TabLayout {
 
   private void calculateLengths(TablePassInfo data) {
     boolean compressible = isCompressible();
-    boolean showPinnedTabsSeparately = UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
+    boolean showPinnedTabsSeparately = showPinnedTabsSeparately();
 
     int standardLengthToFit = data.moreRect.x - (data.titleRect.x + data.titleRect.width);
     if (compressible || showPinnedTabsSeparately) {
@@ -217,11 +217,10 @@ public class TableLayout extends TabLayout {
   }
 
   private void calculateRawLengths(List<TabInfo> list, TablePassInfo data) {
-    boolean showPinnedTabsSeparately = UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
     for (TabInfo info : list) {
       TabLabel eachLabel = myTabs.getTabLabel(info);
       Dimension size =
-        eachLabel.isPinned() && showPinnedTabsSeparately ? eachLabel.getNotStrictPreferredSize() : eachLabel.getPreferredSize();
+        eachLabel.isPinned() && showPinnedTabsSeparately() ? eachLabel.getNotStrictPreferredSize() : eachLabel.getPreferredSize();
       data.lengths.put(info, Math.max(getMinTabWidth(), size.width + myTabs.getTabHGap()));
     }
   }
@@ -408,7 +407,7 @@ public class TableLayout extends TabLayout {
         || data == null
         || data.lengths.isEmpty()
         || myTabs.isHideTabs()
-        || !UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow()) {
+        || !showPinnedTabsSeparately()) {
       return;
     }
 

@@ -123,6 +123,16 @@ public final class Utils {
   }
 
   @ApiStatus.Internal
+  public static CancellablePromise<List<AnAction>> expandActionGroupAsync(@NotNull ActionGroup group,
+                                                                          @NotNull PresentationFactory presentationFactory,
+                                                                          @NotNull DataContext context,
+                                                                          @NotNull String place,
+                                                                          boolean isToolbarAction) {
+    return new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction)
+      .expandActionGroupAsync(group, group instanceof CompactActionGroup);
+  }
+
+  @ApiStatus.Internal
   public static List<AnAction> expandActionGroupWithTimeout(@NotNull ActionGroup group,
                                                             @NotNull PresentationFactory presentationFactory,
                                                             @NotNull DataContext context,
@@ -191,8 +201,7 @@ public final class Utils {
         throw new ProcessCanceledException();
       }
       IdeEventQueue queue = IdeEventQueue.getInstance();
-      CancellablePromise<List<AnAction>> promise = expander.expandActionGroupAsync(
-        project, context, place, group, group instanceof CompactActionGroup, updater::expandActionGroupAsync);
+      CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
       if (onProcessed != null) {
         promise.onSuccess(__ -> onProcessed.run());
         promise.onError(ex -> {

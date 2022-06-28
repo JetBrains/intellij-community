@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.impl.DialogPanelConfig
 import com.intellij.ui.dsl.gridLayout.Gaps
@@ -86,8 +87,9 @@ private class ButtonSelector(
 
   override fun getPreferredSize(): Dimension {
     val preferredSize = super.getPreferredSize()
-    return Dimension(preferredSize.width + config.spacing.segmentedButtonHorizontalGap * 2,
-                     preferredSize.height + config.spacing.segmentedButtonVerticalGap * 2)
+    val spacing = IntelliJSpacingConfiguration()
+    return Dimension(preferredSize.width + spacing.segmentedButtonHorizontalGap * 2,
+                     preferredSize.height + spacing.segmentedButtonVerticalGap * 2)
   }
 }
 

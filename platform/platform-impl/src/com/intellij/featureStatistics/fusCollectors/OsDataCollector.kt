@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -7,8 +7,8 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByRegexp
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector
+import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -44,7 +44,7 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
   private val OS_SHELL = String("shell", SHELLS)
   private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ, OS_SHELL)
   @ApiStatus.ScheduledForRemoval(inVersion = "2024.1")
-  @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi")
+  @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi", "ScheduledForRemovalWithVersion")
   private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexp("value", "time_zone"))  // backward compatibility
   private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"), EventFields.Boolean("wsl"))
   private val WINDOWS = GROUP.registerEvent("windows", EventFields.Long("build"))
@@ -56,7 +56,6 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
     val metrics = mutableSetOf(
       OS.metric(OS_NAME.with(getOSName()), Version.with(SystemInfo.OS_VERSION), OS_LANG.with(getLanguage()), OS_TZ.with(tz), OS_SHELL.with(getShell())),
       TIMEZONE.metric(tz))
-
     when {
       SystemInfo.isLinux -> {
         val (distro, release) = getReleaseData()
@@ -64,8 +63,7 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
         metrics += LINUX.metric(distro, release, isUnderWsl)
       }
       SystemInfo.isWin10OrNewer -> {
-        // -1 is unknown
-        metrics += WINDOWS.metric(SystemInfo.getWinBuildNumber() ?: -1)
+        metrics += WINDOWS.metric(SystemInfo.getWinBuildNumber() ?: -1)  // `-1` is unknown
       }
     }
     return metrics

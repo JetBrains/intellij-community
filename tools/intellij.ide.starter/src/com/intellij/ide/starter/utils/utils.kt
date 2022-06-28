@@ -194,6 +194,64 @@ fun takeScreenshot(logsDir: Path) {
   }
 }
 
+fun startProfileNativeThreads(pid: String) {
+  if (!SystemInfo.isWindows) {
+    val toolsDir = di.direct.instance<GlobalPaths>().getCacheDirectoryFor("tools")
+    val toolName = "async-profiler-2.7-macos"
+    val profiler = toolsDir / toolName
+    downloadAsyncProfilerIfNeeded(profiler, toolsDir)
+    givePermissionsToExecutables(profiler)
+    exec(
+      presentablePurpose = "start-profile",
+      workDir = profiler,
+      timeout = Duration.seconds(15),
+      args = mutableListOf("./profiler.sh", "start", pid)
+    )
+  }
+}
+
+private fun givePermissionsToExecutables(profiler: Path) {
+  exec(
+    presentablePurpose = "give-permissions-to-jattach",
+    workDir = profiler.resolve("build"),
+    timeout = Duration.seconds(10),
+    args = mutableListOf("chmod", "+x", "jattach")
+  )
+  exec(
+    presentablePurpose = "give-permissions-to-profiler",
+    workDir = profiler,
+    timeout = Duration.seconds(10),
+    args = mutableListOf("chmod", "+x", "profiler.sh")
+  )
+}
+
+fun stopProfileNativeThreads(pid: String, fileToStoreInfo: String) {
+  if (!SystemInfo.isWindows) {
+    val toolsDir = di.direct.instance<GlobalPaths>().getCacheDirectoryFor("tools")
+    val toolName = "async-profiler-2.7-macos"
+    val profiler = toolsDir / toolName
+    exec(
+      presentablePurpose = "stop-profile",
+      workDir = profiler,
+      timeout = Duration.seconds(15),
+      args = mutableListOf("./profiler.sh", "stop", pid, "-f", fileToStoreInfo)
+    )
+  }
+}
+
+private fun downloadAsyncProfilerIfNeeded(profiler: Path, toolsDir: Path) {
+  if (!File(profiler.toString()).exists()) {
+    val profilerFileName = when {
+      SystemInfo.isMac -> "async-profiler-2.7-macos.zip"
+      SystemInfo.isLinux -> "async-profiler-2.7-linux-x64.tar.gz"
+      else -> error("Current OS is not supported")
+    }
+    val archivePath = toolsDir / profilerFileName
+    HttpClient.download("https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.7/$profilerFileName",
+                        archivePath)
+    FileSystem.unpack(archivePath, toolsDir)
+  }
+}
 
 fun pathInsideJarFile(
   jarFile: Path,

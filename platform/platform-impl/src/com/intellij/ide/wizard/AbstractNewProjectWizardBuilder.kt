@@ -5,8 +5,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.nameProperty
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.pathProperty
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
@@ -34,13 +32,6 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
 
   final override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep {
     val wizardStep = createStep(context)
-    wizardStep.pathProperty.afterChange {
-      NewProjectWizardCollector.logLocationChanged(context, this::class.java)
-    }
-    wizardStep.nameProperty.afterChange {
-      NewProjectWizardCollector.logNameChanged(context, this::class.java)
-    }
-
     panel = NewProjectWizardStepPanel(wizardStep)
     return BridgeStep(panel!!)
   }
@@ -57,8 +48,9 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
     panel = null
   }
 
-  private class BridgeStep(private val panel: NewProjectWizardStepPanel) : ModuleWizardStep(),
-                                                                           NewProjectWizardStep by panel.step {
+  private class BridgeStep(private val panel: NewProjectWizardStepPanel) :
+    ModuleWizardStep(),
+    NewProjectWizardStep by panel.step {
 
     override fun validate() = panel.validate()
 

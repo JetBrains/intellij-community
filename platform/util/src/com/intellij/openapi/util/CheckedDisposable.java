@@ -16,7 +16,8 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.NonExtendable
 public interface CheckedDisposable extends Disposable {
   /**
-   * @return true when this instance is disposed (i.e. {@link Disposer#dispose(Disposable)} was called on this, or it was registered in the dispose hierarchy with {@link Disposer#register(Disposable, Disposable)} and its parent was disposed)
+   * @return true when this instance is disposed (i.e. {@link Disposer#dispose(Disposable)} was called on this,
+   * or it was registered in the {@link Disposer} hierarchy with {@link Disposer#register(Disposable, Disposable)} and its parent was disposed)
    */
   boolean isDisposed();
 }

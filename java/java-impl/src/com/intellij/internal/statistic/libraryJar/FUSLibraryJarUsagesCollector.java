@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.libraryJar;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -13,6 +16,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,15 +26,15 @@ import static com.intellij.internal.statistic.libraryJar.LibraryJarUtilKt.findJa
  * @author Andrey Cheptsov
  */
 public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "javaLibraryJars";
-  }
+  private static final EventLogGroup GROUP = new EventLogGroup("javaLibraryJars", 3);
+  private static final EventId2<String, String>
+    USED_LIBRARY = GROUP.registerEvent("used.library",
+                                       EventFields.Version,
+                                       EventFields.String("library", Collections.emptyList())); // TODO: workaround. Fix after IDEA-279202
 
   @Override
-  public int getVersion() {
-    return 2;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @NotNull
@@ -48,8 +52,7 @@ public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
         for (PsiClass psiClass : psiClasses) {
           String version = findJarVersion(psiClass);
           if (StringUtil.isNotEmpty(version)) {
-            final FeatureUsageData data = new FeatureUsageData().addVersionByString(version).addData("library", descriptor.myName);
-            return new MetricEvent("used.library", data);
+            return USED_LIBRARY.metric(version, descriptor.myName);
           }
         }
         return null;

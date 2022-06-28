@@ -141,6 +141,15 @@ abstract class NonModalCommitPanel(
     val commitOptionsPopup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(commitOptionsPanel, focusComponent)
       .setRequestFocus(true)
+      .addListener(object : JBPopupListener {
+        override fun beforeShown(event: LightweightWindowEvent) {
+          options.restoreState()
+        }
+
+        override fun onClosed(event: LightweightWindowEvent) {
+          options.saveState()
+        }
+      })
       .createPopup()
 
     showCommitOptions(commitOptionsPopup, isFromToolbar, dataContext)

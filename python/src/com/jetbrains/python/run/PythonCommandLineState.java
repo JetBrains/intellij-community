@@ -123,10 +123,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private Boolean myMultiprocessDebug = null;
   private boolean myRunWithPty = PtyCommandLine.isEnabled();
 
-  public boolean isRunWithPty() {
-    return myRunWithPty;
-  }
-
   public boolean isDebug() {
     return PyDebugRunner.PY_DEBUG_RUNNER.equals(getEnvironment().getRunner().getRunnerId());
   }
@@ -171,8 +167,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return execute(executor, getDefaultPythonProcessStarter(), patchers);
   }
 
-  @NotNull
-  public ExecutionResult execute(Executor executor) throws ExecutionException {
+  public @Nullable ExecutionResult execute(@NotNull Executor executor) throws ExecutionException {
     return execute(executor, (targetEnvironmentRequest, pythonScript) -> pythonScript);
   }
 
@@ -220,9 +215,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return (ConsoleView)consoleRef.get();
   }
 
-  @NotNull
-  public ExecutionResult execute(/*TODO @NotNull ?*/Executor executor,
-                                                    @NotNull PythonScriptTargetedCommandLineBuilder converter) throws ExecutionException {
+  /**
+   * Please do not overuse {@code null} return value. {@code null} value is utilized by {@link PythonScriptCommandLineState} when starting
+   * Python run configurations with "Run with Python Console" flag. It is more a workaround, so please annotate the overridden methods with
+   * {@link NotNull} where possible.
+   */
+  public @Nullable ExecutionResult execute(@NotNull Executor executor,
+                                           @NotNull PythonScriptTargetedCommandLineBuilder converter) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(converter);
     final ConsoleView console = createAndAttachConsoleInEDT(myConfig.getProject(), processHandler, executor);
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
@@ -243,7 +242,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
   protected void addTracebackFilter(Project project, ConsoleView consoleView, ProcessHandler processHandler) {
     // TODO workaround
     if (PythonSdkUtil.isRemote(myConfig.getSdk()) && processHandler instanceof ProcessControlWithMappings) {
-      assert processHandler instanceof ProcessControlWithMappings;
       consoleView
         .addMessageFilter(new PyRemoteTracebackFilter(project, myConfig.getWorkingDirectory(), (ProcessControlWithMappings)processHandler));
     }
@@ -330,7 +328,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     List<String> interpreterParameters = getConfiguredInterpreterParameters();
     TargetedCommandLine targetedCommandLine =
-      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, myConfig.getSdk(), interpreterParameters);
+      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, interpreterParameters, myRunWithPty);
 
     // TODO [Targets API] `myConfig.isPassParentEnvs` must be handled (at least for the local case)
     ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator, isDebug());
@@ -358,7 +356,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * {@link PythonCommandLineState}. The working directory is resolved within
    * the uploads that are registered in the provided request.
    *
-   * @param targetEnvironment the environment to explore for the working directory upload
+   * @param targetEnvironmentRequest the environment to explore for the working directory upload
    * @return the promise to the working directory path
    */
   protected @Nullable Function<TargetEnvironment, String> getPythonExecutionWorkingDir(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {

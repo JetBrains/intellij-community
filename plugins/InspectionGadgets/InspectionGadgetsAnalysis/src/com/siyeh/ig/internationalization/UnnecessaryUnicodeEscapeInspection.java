@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -100,7 +100,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     return new UnnecessaryUnicodeEscapeVisitor();
   }
 
-  private class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
+  private static class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitFile(@NotNull PsiFile file) {
@@ -174,11 +174,11 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
             continue;
           }
           final PsiElement element = file.findElementAt(i);
-          if (element != null && isSuppressedFor(element)) {
+          if (element == null) {
             return;
           }
           final RangeMarker rangeMarker = document.createRangeMarker(i, escapeEnd);
-          registerErrorAtOffset(file, i, escapeEnd - i, Character.valueOf(d), rangeMarker);
+          registerErrorAtOffset(element, i - element.getTextRange().getStartOffset(), escapeEnd - i, Character.valueOf(d), rangeMarker);
         }
       }
     }

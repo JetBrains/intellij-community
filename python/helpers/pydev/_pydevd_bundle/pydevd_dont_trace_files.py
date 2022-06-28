@@ -82,7 +82,6 @@ DONT_TRACE = {
     'pydevd_concurrency_logger.py': PYDEV_FILE,
     'pydevd_console.py': PYDEV_FILE,
     'pydevd_console_integration.py': PYDEV_FILE,
-    'pydevd_console_output.py': PYDEV_FILE,
     'pydevd_console_pytest.py': PYDEV_FILE,
     'pydevd_constants.py': PYDEV_FILE,
     'pydevd_custom_frames.py': PYDEV_FILE,
@@ -123,12 +122,11 @@ DONT_TRACE = {
     'pydevd_trace_dispatch_regular.py': PYDEV_FILE,
     'pydevd_traceproperty.py': PYDEV_FILE,
     'pydevd_tracing.py': PYDEV_FILE,
-    'pydevd_user_type_renderers.py': PYDEV_FILE,
-    'pydevd_user_type_renderers_utils.py': PYDEV_FILE,
     'pydevd_utils.py': PYDEV_FILE,
     'pydevd_vars.py': PYDEV_FILE,
     'pydevd_vm_type.py': PYDEV_FILE,
     'pydevd_xml.py': PYDEV_FILE,
+    'pydevd_console_output.py': PYDEV_FILE,
 }
 
 DONT_TRACE['pydev_jupyter_plugin.py'] = PYDEV_FILE

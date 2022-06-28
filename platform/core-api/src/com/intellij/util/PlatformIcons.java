@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
@@ -6,9 +6,6 @@ import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
-/**
- * @author Konstantin Bulenkov
- */
 public interface PlatformIcons {
   Icon PUBLIC_ICON = AllIcons.Nodes.C_public;
   Icon LOCKED_ICON = AllIcons.Nodes.Locked;
@@ -93,16 +90,13 @@ public interface PlatformIcons {
   Icon EXPORT_ICON = AllIcons.ToolbarDecorator.Export;
   Icon IMPORT_ICON = AllIcons.ToolbarDecorator.Import;
 
-  /**
-   * @deprecated use {@link #FOLDER_ICON}
-   */
+  /** @deprecated use {@link #FOLDER_ICON} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   Icon DIRECTORY_CLOSED_ICON = FOLDER_ICON;
 
-  /**
-   * @deprecated use {@link #FOLDER_ICON}
-   */
+  /** @deprecated use {@link #FOLDER_ICON} */
   @Deprecated
-    @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval
   Icon DIRECTORY_OPEN_ICON = FOLDER_ICON;
 }

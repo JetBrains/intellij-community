@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradle.native
 
 import org.jetbrains.kotlin.ide.konan.hasKotlinNativeRuntimeInScope
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.configuration.ModuleSourceRootGroup
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 
 open class KotlinNativeGradleConfigurator : KotlinWithGradleConfigurator() {
@@ -26,9 +26,6 @@ open class KotlinNativeGradleConfigurator : KotlinWithGradleConfigurator() {
     override val name: String get() = NAME
 
     override val targetPlatform get() = NativePlatforms.unspecifiedNativePlatform
-
-    @Suppress("DEPRECATION_ERROR")
-    override fun getTargetPlatform() = NativePlatforms.CompatNativePlatform
 
     override val presentableText get() = PRESENTABLE_TEXT
 

@@ -33,6 +33,7 @@ private const val DEFAULT_INLAY_HEIGHT = 200
 interface OutputListener {
   fun beforeOutputCreated(editor: Editor, line: Int) {}
   fun outputCreated(editor: Editor, line: Int) {}
+  fun outputSizeUpdated(editor: Editor, line: Int?) {}
 }
 val OUTPUT_LISTENER: Topic<OutputListener> = Topic.create("OutputAdded", OutputListener::class.java)
 
@@ -194,7 +195,7 @@ class NotebookOutputInlayController private constructor(
     val collapsingComponent = CollapsingComponent(
       editor,
       newComponent.component,
-      newComponent.limitHeight,
+      newComponent.resizable,
       newComponent.collapsedTextSupplier,
     )
 

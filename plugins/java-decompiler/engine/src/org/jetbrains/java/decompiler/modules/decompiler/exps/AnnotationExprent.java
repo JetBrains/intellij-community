@@ -4,10 +4,10 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.List;
+import java.util.Objects;
 
 public class AnnotationExprent extends Exprent {
   public static final int ANNOTATION_NORMAL = 1;
@@ -84,13 +84,18 @@ public class AnnotationExprent extends Exprent {
   }
 
   @Override
+  public int hashCode() {
+    return Objects.hash(className, parNames, parValues);
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (!(o instanceof AnnotationExprent)) return false;
 
     AnnotationExprent ann = (AnnotationExprent)o;
     return className.equals(ann.className) &&
-           InterpreterUtil.equalLists(parNames, ann.parNames) &&
-           InterpreterUtil.equalLists(parValues, ann.parValues);
+           parNames.equals(ann.parNames) &&
+           parValues.equals(ann.parValues);
   }
 }

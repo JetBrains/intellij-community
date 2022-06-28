@@ -68,7 +68,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
       identifier,
       JavaBundle.message("inspection.parameter.can.be.local.problem.descriptor"),
       true,
-      ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
       isOnTheFly,
       new ConvertParameterToLocalQuickFix()
     );

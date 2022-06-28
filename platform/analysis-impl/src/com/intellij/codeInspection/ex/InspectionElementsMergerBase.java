@@ -18,12 +18,12 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
     final Element sourceElement = new Element(InspectionProfileImpl.INSPECTION_TOOL_TAG);
     sourceElement.setAttribute(InspectionProfileImpl.CLASS_TAG, sourceToolName);
     sourceElement.setAttribute(ToolsImpl.ENABLED_ATTRIBUTE, String.valueOf(isEnabledByDefault(sourceToolName)));
-    sourceElement.setAttribute(ToolsImpl.LEVEL_ATTRIBUTE, getDefaultSeverityLevel(sourceToolName));
+    sourceElement.setAttribute(ToolsImpl.LEVEL_ATTRIBUTE, getDefaultSeverityLevel());
     sourceElement.setAttribute(ToolsImpl.ENABLED_BY_DEFAULT_ATTRIBUTE, String.valueOf(isEnabledByDefault(sourceToolName)));
     return sourceElement;
   }
 
-  private static String getDefaultSeverityLevel(@NotNull String sourceToolName) {
+  private static String getDefaultSeverityLevel() {
     return HighlightSeverity.WARNING.getName();
   }
 
@@ -80,7 +80,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
           enabledByDefault |= isEnabledByDefault(sourceToolName);
           enabled |= enabledByDefault;
           if (level == null) {
-            level = getDefaultSeverityLevel(sourceToolName);
+            level = getDefaultSeverityLevel();
           }
         }
       }
@@ -103,9 +103,9 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
       }
       toolElement.setAttribute(ToolsImpl.ENABLED_BY_DEFAULT_ATTRIBUTE, String.valueOf(enabledByDefault));
 
-      for (String scopeName : scopes.keySet()) {
-        Element scopeEl = scopes.get(scopeName);
-        Set<String> toolsWithScope = mentionedTools.get(scopeName);
+      for (Map.Entry<String, Element> entry : scopes.entrySet()) {
+        Element scopeEl = entry.getValue();
+        Set<String> toolsWithScope = mentionedTools.get(entry.getKey());
         //copy default settings if tool has no such scope defined
         for (String sourceToolName : getSourceToolNames()) {
           if (!toolsWithScope.contains(sourceToolName)) {

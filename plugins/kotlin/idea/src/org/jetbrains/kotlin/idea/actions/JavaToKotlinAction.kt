@@ -32,6 +32,7 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures
@@ -43,7 +44,6 @@ import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.isRunningInCidrIde
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.FilesResult
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
@@ -263,7 +263,7 @@ class JavaToKotlinAction : AnAction() {
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
-        if (isRunningInCidrIde) return false
+        if (KotlinPlatformUtils.isCidr) return false
         val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return false
         val project = e.project ?: return false
         e.getData(PlatformCoreDataKeys.MODULE) ?: return false

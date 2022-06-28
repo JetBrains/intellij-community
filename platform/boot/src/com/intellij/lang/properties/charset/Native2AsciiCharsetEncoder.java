@@ -11,7 +11,7 @@ import java.nio.charset.CoderResult;
 
 final class Native2AsciiCharsetEncoder extends CharsetEncoder {
   private static final char ANCHOR = Boolean.getBoolean("idea.native2ascii.lowercase") ? 'a' : 'A';
-  
+
   private final Charset myBaseCharset;
 
   Native2AsciiCharsetEncoder(Native2AsciiCharset charset) {

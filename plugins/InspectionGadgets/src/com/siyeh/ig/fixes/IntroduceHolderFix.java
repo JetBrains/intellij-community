@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -134,12 +135,16 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
     }
 
     final PsiExpression holderReference = elementFactory.createExpressionFromText(holderName + "." + fieldName, field);
-    for (PsiReference reference : ReferencesSearch.search(field).findAll()) {
-      reference.getElement().replace(holderReference);
+    final PsiClass containingClass = PsiUtil.getTopLevelClass(field);
+    if (containingClass == null) return;
+    // Search references within top-level class only.
+    // If there are other references, the fix should not be created, see isStaticAndAssignedOnce
+    for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(field, containingClass)) {
+      reference.replace(holderReference);
     }
     field.delete();
 
-    if (isOnTheFly()) {
+    if (isOnTheFly() && containingClass.isPhysical()) {
       invokeInplaceRename(holderClass, holderName, suggestHolderName(field));
     }
   }

@@ -6,6 +6,7 @@ import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.feedback.kotlinRejecters.recordKotlinPluginDisabling
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -154,6 +155,8 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
     )
 
     PluginManagerUsageCollector.pluginsStateChanged(descriptors, action, project)
+    recordKotlinPluginDisabling(descriptors, action)
+
     return when (action) {
       PluginEnableDisableAction.ENABLE_GLOBALLY -> {
         state.stopTracking(pluginIds)

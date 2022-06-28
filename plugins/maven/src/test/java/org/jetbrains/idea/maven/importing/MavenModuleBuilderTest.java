@@ -15,15 +15,17 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import com.intellij.testFramework.RunAll;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -32,12 +34,21 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder;
 import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.List;
 
 public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
   private AbstractMavenModuleBuilder myBuilder;
+
+  @Override
+  protected void tearDown() throws Exception {
+    RunAll.runAll(
+      () -> stopMavenImportManager(),
+      () -> super.tearDown()
+    );
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -314,6 +325,7 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testSameFolderAsParent() throws Exception {
+    Assume.assumeFalse(Registry.is("maven.linear.import"));
     VirtualFile customPomXml = createProjectSubFile("custompom.xml", createPomXml(
       "<groupId>test</groupId>" +
       "<artifactId>project</artifactId>" +

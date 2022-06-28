@@ -52,7 +52,9 @@ public class ScanSourceCommentsAction extends AnAction {
     final Project p = e.getProject();
     final String file =
       Messages.showInputDialog(p, "Enter path to the file comments will be extracted to", "Comments File Path", Messages.getQuestionIcon());
-
+    if (file  == null) {
+      return;
+    }
     try (final PrintStream stream = new PrintStream(file)){
       stream.println("Comments in " + p.getName());
 

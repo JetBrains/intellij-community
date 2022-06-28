@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.codeInspection.unused;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.Disposable;
@@ -126,6 +126,11 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return PsiElementVisitor.EMPTY_VISITOR;
 
+    if (InjectedLanguageManager.getInstance(module.getProject()).isInjectedFragment(holder.getFile())) {
+      // Properties inside injected fragments cannot be normally referenced
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
     final UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module);
 
     final Set<PsiElement> propertiesBeingCommitted = getBeingCommittedProperties(file);
@@ -147,8 +152,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
         LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix();
         holder.registerProblem(key, isOnTheFly ? PropertiesBundle.message("unused.property.problem.descriptor.name")
                                                : PropertiesBundle
-                                      .message("unused.property.problem.descriptor.name.offline", property.getUnescapedKey()),
-                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
+                                      .message("unused.property.problem.descriptor.name.offline", property.getUnescapedKey()), fix);
       }
     };
   }

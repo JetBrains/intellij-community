@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ResizeableMappedFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -283,7 +282,7 @@ public final class PersistentFSRecordsStorage {
       myFile.force();
       return myFile.readChannel(ch -> {
         ByteBuffer buffer = ByteBuffer.allocateDirect(RECORD_SIZE * 1024);
-        if (IOUtil.useNativeByteOrderForByteBuffers()) buffer.order(ByteOrder.nativeOrder());
+        if (myFile.isNativeBytesOrder()) buffer.order(ByteOrder.nativeOrder());
         try {
           int id = 1, limit, offset;
           while ((limit = ch.read(buffer)) >= RECORD_SIZE) {

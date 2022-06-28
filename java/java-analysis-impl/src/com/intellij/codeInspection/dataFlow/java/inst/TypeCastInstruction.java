@@ -57,10 +57,7 @@ public class TypeCastInstruction extends ExpressionPushingInstruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myTransferValue == null) return this;
-    var instruction = new TypeCastInstruction(getDfaAnchor(), myCasted, myCastTo,
-                                              myTransferValue.bindToFactory(factory));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new TypeCastInstruction(getDfaAnchor(), myCasted, myCastTo, myTransferValue.bindToFactory(factory));
   }
 
   public PsiExpression getCasted() {

@@ -2,7 +2,6 @@
 
 package com.intellij.ide.util.gotoByName;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.BundleBase;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
@@ -537,10 +536,15 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return getFirstGroupName();
     }
 
+    @Nullable
+    public List<ActionGroup> getFirstGroup() {
+      return ContainerUtil.getFirstItem(myPaths);
+    }
+
     @Nls
     @Nullable
     private String getFirstGroupName() {
-      List<ActionGroup> path = ContainerUtil.getFirstItem(myPaths);
+      List<ActionGroup> path = getFirstGroup();
       return path != null ? getPathName(path) : null;
     }
 
@@ -649,6 +653,11 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @NotNull
     public MatchMode getMode() {
       return myMode;
+    }
+
+    @Nullable
+    public GroupMapping getGroupMapping() {
+      return myGroupMapping;
     }
 
     public int compareWeights(@NotNull ActionWrapper o) {
@@ -830,12 +839,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
             descriptorBg = ColorUtil.brighter(UIUtil.getListBackground(), 1);
           }
           else {
-            if (ExperimentalUI.isNewUI()) {
-              Color color = JBUI.CurrentTheme.Popup.BACKGROUND;
-              descriptorBg = ColorUtil.isDark(color) ? ColorUtil.brighter(color, 1) : ColorUtil.darker(color, 1);
-            } else {
-              descriptorBg = LightColors.SLIGHTLY_GRAY;
-            }
+            descriptorBg = JBUI.CurrentTheme.BigPopup.LIST_SETTINGS_BACKGROUND;
           }
           panel.setBackground(descriptorBg);
           nameComponent.setBackground(descriptorBg);

@@ -36,23 +36,21 @@ class PluginRepositoryAuthService {
 
     val domain = getDomainFromUrl(url) ?: return cancelWithWarning("Can't get domain from url: $url")
 
-    if (allContributors.isEmpty())
+    val domainMatchingContributors = allContributors.filter { it.canHandleSafe(domain) }
+
+    if (domainMatchingContributors.isEmpty())
       return emptyMap()
-    if (!hasNoOrSingleContributor(domain, allContributors))
+    if (domainMatchingContributors.size > 1)
       return cancelWithWarning("Multiple contributors found for domain: $domain")
-    if (allContributors.any { !handlesSingleDomain(it, domain) })
-      return cancelWithWarning(
-        "Contributor ${allContributors.find { !handlesSingleDomain(it, domain) }} tried to inject into multiple domains")
 
-    val matchingContributor = allContributors.find { it.canHandleSafe(domain) }
-    return matchingContributor
-             ?.also { contributor -> updateCaches(domain, contributor) }
-             ?.getCustomHeadersSafe(url)
-           ?: emptyMap()
-  }
+    val primeCandidate = domainMatchingContributors.first()
 
-  private fun hasNoOrSingleContributor(@NotNull domain: String, @NotNull contributors: List<PluginRepositoryAuthProvider>): Boolean {
-    return contributors.count { it.canHandleSafe(domain) } <= 1
+    if (!handlesSingleDomain(primeCandidate, domain))
+      return cancelWithWarning("Contributor $primeCandidate tried to inject into multiple domains")
+
+    return primeCandidate
+             .also { contributor -> updateCaches(domain, contributor) }
+             .getCustomHeadersSafe(url)
   }
 
   private fun handlesSingleDomain(@NotNull contributor: PluginRepositoryAuthProvider, @NotNull domain: String): Boolean {

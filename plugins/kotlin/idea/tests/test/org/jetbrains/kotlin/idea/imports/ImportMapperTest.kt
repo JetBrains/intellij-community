@@ -19,18 +19,16 @@ class ImportMapperTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
 
     private val javaFullClassNameIndex get() = JavaFullClassNameIndex.getInstance()
-    private val kotlinFullClassNameIndex get() = KotlinFullClassNameIndex.getInstance()
-    private val kotlinTypeAliasShortNameIndex get() = KotlinTypeAliasShortNameIndex.getInstance()
 
     private fun findInIndex(fqName: FqName, scope: GlobalSearchScope): PsiElement? =
         javaFullClassNameIndex.get(fqName.asString(), project, scope)?.firstOrNull()
-            ?: kotlinFullClassNameIndex.get(fqName.asString(), project, scope).firstOrNull()
+            ?: KotlinFullClassNameIndex.get(fqName.asString(), project, scope).firstOrNull()
 
     fun test() {
         val scope = GlobalSearchScope.everythingScope(project)
         val importsMap = ImportMapper.getImport2AliasMap()
         for ((oldName, aliasFqName) in importsMap) {
-            val aliases = kotlinTypeAliasShortNameIndex.get(aliasFqName.shortName().asString(), project, scope).map {
+            val aliases = KotlinTypeAliasShortNameIndex.get(aliasFqName.shortName().asString(), project, scope).map {
                 it.getTypeReference() ?: error("Type reference is not found: ${it.text}")
             }.distinctBy { it.text }
 

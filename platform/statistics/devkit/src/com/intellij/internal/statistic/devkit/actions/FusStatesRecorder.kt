@@ -4,6 +4,9 @@ package com.intellij.internal.statistic.devkit.actions
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.EventLogListenersManager
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
+import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
@@ -24,7 +27,7 @@ internal object FusStatesRecorder {
   private var isRecordingInProgress = AtomicBoolean(false)
   private val lock = Any()
 
-  fun recordStateAndWait(project: Project, indicator: ProgressIndicator): List<LogEvent>? {
+  fun recordStateAndWait(project: Project, indicator: ProgressIndicator, recorderId: String): List<LogEvent>? {
     synchronized(lock) {
       state.clear()
       isRecordingInProgress.getAndSet(true)
@@ -33,16 +36,20 @@ internal object FusStatesRecorder {
           recordEvent(validatedEvent)
         }
       }
-      val recorderId = StatisticsDevKitUtil.DEFAULT_RECORDER
       service<EventLogListenersManager>().subscribe(subscriber, recorderId)
       try {
         val logApplicationStatesFuture = statesLogger.logApplicationStates()
         val logProjectStatesFuture = statesLogger.logProjectStates(project, indicator)
         val settingsFuture = CompletableFuture.allOf(
           *FeatureUsageStateEventTracker.EP_NAME.extensions.map { it.reportNow() }.toTypedArray())
-
         CompletableFuture.allOf(logApplicationStatesFuture, logProjectStatesFuture, settingsFuture)
-          .thenCompose { FeatureUsageLogger.flush() }
+          .thenCompose { val logger = getEventLogProvider(recorderId).logger
+            if (logger is StatisticsFileEventLogger) {
+              logger.flush()
+            } else {
+              CompletableFuture.completedFuture(null)
+            }
+          }
           .get(30, TimeUnit.SECONDS)
       }
       catch (e: Exception) {

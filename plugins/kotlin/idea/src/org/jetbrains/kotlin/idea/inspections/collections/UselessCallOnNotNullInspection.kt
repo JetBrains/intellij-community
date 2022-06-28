@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
@@ -78,7 +78,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
 
     private fun KtExpression.isNotNullType(context: BindingContext): Boolean {
         val type = getType(context) ?: return false
-        val dataFlowValueFactory = getResolutionFacade().getDataFlowValueFactory()
+        val dataFlowValueFactory = getResolutionFacade().dataFlowValueFactory
         val dataFlowValue = dataFlowValueFactory.createDataFlowValue(this, type, context, findModuleDescriptor())
         val stableNullability = context.getDataFlowInfoBefore(this).getStableNullability(dataFlowValue)
         return !stableNullability.canBeNull()

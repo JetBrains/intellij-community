@@ -2,12 +2,14 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.uast.UBlockExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.getContainingUClass
 
+@ApiStatus.Internal
 open class KotlinUBlockExpression(
     override val sourcePsi: KtBlockExpression,
     givenParent: UElement?

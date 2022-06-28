@@ -47,6 +47,13 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   @Override
+  @Nullable
+  @CalledInAny
+  public T getRepositoryForRootQuick(@Nullable FilePath rootPath) {
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRootQuick(rootPath));
+  }
+
+  @Override
   public void addExternalRepository(@NotNull VirtualFile root, @NotNull T repository) {
     myGlobalRepositoryManager.addExternalRepository(root, repository);
   }

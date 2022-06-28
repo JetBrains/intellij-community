@@ -20,10 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
-import com.jetbrains.python.psi.PyParenthesizedExpression;
-import com.jetbrains.python.psi.PyStarExpression;
-import com.jetbrains.python.psi.PyTupleExpression;
-import com.jetbrains.python.psi.PyYieldExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 

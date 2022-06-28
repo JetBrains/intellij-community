@@ -2,6 +2,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -34,6 +35,8 @@ class TextSearchRenderer extends JPanel implements ListCellRenderer<UsageInfo2Us
         TextChunk textChunk = text[i];
         myUsageRenderer.append(textChunk.getText(), getAttributes(textChunk, selected));
       }
+
+      myUsageRenderer.setIcon(AllIcons.Nodes.TextArea);
       setBorder(null);
     }
 

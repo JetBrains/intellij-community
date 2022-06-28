@@ -130,7 +130,7 @@ class FilePartNode {
 
   @Override
   public String toString() {
-    return getName() + (children.length == 0 ? "" : " -> "+children.length);
+    return "FilePartNode: '" + getName() + "'; children: " + children.length + "; fs=" + myFS + "; myFileOrUrl=" + myFileOrUrl +"; "+myFileOrUrl.getClass();
   }
 
   static int getNameId(@NotNull VirtualFile file) {
@@ -202,7 +202,7 @@ class FilePartNode {
         String myUrl = myUrl();
         String expectedUrl = StringUtil.trimEnd(urlFromRoot, '/');
         String actualUrl = StringUtil.trimEnd(myUrl, '/');
-        assert FileUtil.namesEqual(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'";
+        assert FileUtil.namesEqual(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'; parent="+parent+"; name="+name+"; urlFromParent="+urlFromRoot;
       }
       else {
         assert Comparing.equal(getParentThroughJar(myFile, myFS), parent) :

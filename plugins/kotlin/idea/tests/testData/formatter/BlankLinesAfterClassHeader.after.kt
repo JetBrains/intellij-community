@@ -42,7 +42,7 @@ class FooN : IFoo {
 }
 
 class FooC(
-        val x: String
+    val x: String
 ) {
 
     fun bar()

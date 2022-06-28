@@ -19,12 +19,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.*
+import java.util.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
@@ -544,6 +546,11 @@ private abstract class ColorDocument(internal val src: JTextField) : PlainDocume
     val source = str.toCharArray()
     val selected = src.selectionEnd - src.selectionStart
     val newLen = src.text.length - selected + str.length
+    if (this is HexColorDocument && selected == 0 && ColorUtil.fromHex(str, null) != null) {
+      super.remove(0, src.text.length)
+      super.insertString(0, StringUtil.trimStart(str, "#").uppercase(Locale.getDefault()), a)
+      return
+    }
     if (newLen > src.columns) {
       return
     }

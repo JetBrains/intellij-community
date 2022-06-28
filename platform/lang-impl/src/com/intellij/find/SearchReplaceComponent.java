@@ -201,7 +201,9 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
         closeLabel.addMouseListener(new MouseAdapter() {
           @Override
           public void mousePressed(final MouseEvent e) {
-            close();
+            if (!e.isPopupTrigger() && SwingUtilities.isLeftMouseButton(e)) {
+              close();
+            }
           }
         });
         closeLabel.setToolTipText(FindBundle.message("tooltip.close.search.bar.escape"));
@@ -213,7 +215,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     mySearchActionsToolbar.setForceShowFirstComponent(true);
     searchPair.add(mySearchActionsToolbar, BorderLayout.CENTER);
 
-    if (ExperimentalUI.isNewEditorTabs()) {
+    if (ExperimentalUI.isNewUI()) {
       mySearchActionsToolbar.setBackground(EDITOR_BACKGROUND);
       searchPair.setBackground(EDITOR_BACKGROUND);
     }
@@ -257,7 +259,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
-      if (ExperimentalUI.isNewEditorTabs()) {
+      if (ExperimentalUI.isNewUI()) {
         mySearchActionsToolbar.setBackground(EDITOR_BACKGROUND);
         mySplitter.setBackground(EDITOR_BACKGROUND);
         mySplitter.setOpaque(true);
@@ -623,11 +625,15 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     return true;
   }
 
+  private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
+                                         IconManager.getInstance().getIcon("expui/general/close.svg", AllIcons.class) :
+                                         AllIcons.Actions.Close;
+
   private class CloseAction extends DumbAwareAction implements LightEditCompatible, RightAlignedToolbarAction {
     private final ShortcutSet shortcut = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE);
     private CloseAction() {
-      getTemplatePresentation().setText(FindBundle.message("find.close.close.button.name"));
-      getTemplatePresentation().setIcon(AllIcons.Actions.Close);
+      getTemplatePresentation().setText(FindBundle.message("find.close.button.name"));
+      getTemplatePresentation().setIcon(CLOSE_ICON);
     }
 
     @Override

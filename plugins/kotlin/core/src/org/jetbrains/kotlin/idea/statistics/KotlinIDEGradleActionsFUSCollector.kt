@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
 class KotlinIDEGradleActionsFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
@@ -14,7 +14,7 @@ class KotlinIDEGradleActionsFUSCollector : CounterUsagesCollector() {
     companion object {
         private val GROUP = EventLogGroup("kotlin.ide.gradle", 1)
 
-        private val pluginInfo = getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID)
+        private val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
 
         private val allowedTargets = listOf(
             "kotlin-android",

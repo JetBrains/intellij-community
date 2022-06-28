@@ -4,7 +4,7 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.ReviseWhenPortedToJDK
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -56,7 +56,7 @@ object RuntimeChooserJreValidator {
     }
 
     val javaVersion = JavaVersion.tryParse(version) ?: return false
-    javaVersion.feature >= minJdkFeatureVersion && !WslDistributionManager.isWslPath(home)
+    javaVersion.feature >= minJdkFeatureVersion && !WslPath.isWslUncPath(home)
   }.getOrDefault(false)
 
   fun <R> testNewJdkUnderProgress(
@@ -81,7 +81,7 @@ object RuntimeChooserJreValidator {
       return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.error.mac.bundle", homeDir))
     }
 
-    if (SystemInfo.isWindows && WslDistributionManager.isWslPath(homeDir.toString())) {
+    if (SystemInfo.isWindows && WslPath.isWslUncPath(homeDir.toString())) {
       LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. macOS Bundle layout is expected")
       callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.version.error.wsl", homeDir))
     }

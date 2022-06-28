@@ -42,7 +42,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     Disposer.register(parentDisposable, this)
   }
 
-  override fun initialize(): Boolean {
+  override fun initialize() {
     val dotGit = settingsSyncStorage.resolve(".git")
     repository = FileRepositoryBuilder.create(dotGit.toFile())
     git = Git(repository)
@@ -52,14 +52,15 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       LOG.info("Initializing new Git repository for Settings Sync at $settingsSyncStorage")
       repository.create()
       initRepository(repository)
-      copyExistingSettings(repository)
     }
 
     createBranchIfNeeded(MASTER_REF_NAME, newRepository)
     createBranchIfNeeded(CLOUD_REF_NAME, newRepository)
     createBranchIfNeeded(IDE_REF_NAME, newRepository)
+  }
 
-    return newRepository
+  override fun logExistingSettings() {
+    copyExistingSettings()
   }
 
   private fun createBranchIfNeeded(name: String, newRepository: Boolean) {
@@ -73,8 +74,10 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
   }
 
-  private fun copyExistingSettings(repository: Repository) {
+  private fun copyExistingSettings() {
     LOG.info("Copying existing settings from $rootConfigPath to $settingsSyncStorage")
+    git.checkout().setName(IDE_REF_NAME).call()
+
     val copiedFileSpecs = mutableListOf<String>()
 
     val filesToExport = collectFilesToExportFromSettings()
@@ -94,13 +97,12 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
 
     if (copiedFileSpecs.isNotEmpty()) {
-      val git = Git(repository)
       val addCommand = git.add()
       for (fileSpec in copiedFileSpecs) {
         addCommand.addFilepattern(fileSpec)
       }
       addCommand.call()
-      git.commit().setMessage("Copy existing configs").call()
+      commit("Copy existing configs")
     }
   }
 
@@ -165,6 +167,11 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       addCommand.addFilepattern(fileState.file)
     }
     addCommand.call()
+
+    commit(message)
+  }
+
+  private fun commit(message: String) {
     // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
     try {
       git.commit().setMessage(message).setAllowEmpty(false).call()
@@ -175,7 +182,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   override fun dispose() {
-    repository.close()   // todo synchronize
+    if (this::repository.isInitialized) {
+      repository.close()   // todo synchronize
+    }
   }
 
   override fun collectCurrentSnapshot(): SettingsSnapshot {

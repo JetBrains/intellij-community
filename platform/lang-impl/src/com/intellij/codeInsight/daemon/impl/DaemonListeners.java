@@ -138,6 +138,20 @@ public final class DaemonListeners implements Disposable {
           UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
         }
       }
+
+      @Override
+      public void bulkUpdateStarting(@NotNull Document document) {
+        if (worthBothering(document, myProject)) {
+          stopDaemon(false, "Document bulk modifications started");
+        }
+      }
+
+      @Override
+      public void bulkUpdateFinished(@NotNull Document document) {
+        if (worthBothering(document, myProject)) {
+          stopDaemon(true, "Document bulk modifications finished");
+        }
+      }
     }, this);
 
     eventMulticaster.addCaretListener(new CaretListener() {
@@ -468,7 +482,7 @@ public final class DaemonListeners implements Disposable {
       stopDaemon(false, "Command start");
     }
 
-    private @Nullable Document extractDocumentFromCommand(@NotNull CommandEvent event) {
+    private Document extractDocumentFromCommand(@NotNull CommandEvent event) {
       Document affectedDocument = event.getDocument();
       if (affectedDocument != null) return affectedDocument;
       Object id = event.getCommandGroupId();

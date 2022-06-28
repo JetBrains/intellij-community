@@ -28,8 +28,7 @@ internal open class XmlExtensionAdapter(implementationClassName: String,
 
   override fun <T : Any> createInstance(componentManager: ComponentManager): T? {
     @Suppress("UNCHECKED_CAST")
-    val instance = extensionInstance as T?
-    return if (instance == null) doCreateInstance(componentManager) else instance.takeIf { it !== NOT_APPLICABLE }
+    return (extensionInstance as T?)?.takeIf { it !== NOT_APPLICABLE } ?: doCreateInstance(componentManager)
   }
 
   @Synchronized

@@ -41,15 +41,6 @@ public abstract class MergeRequest implements UserDataHolder {
   @RequiresEdt
   public abstract void applyResult(@NotNull MergeResult result);
 
-  /**
-   * Called when merge request life cycle is retargeted to another one.
-   * <p>
-   * In this case, {@link #applyResult} will never be called for this request.
-   * The caller should appropriately transfer {@link MergeCallback}.
-   */
-  public void resultRetargeted() {
-  }
-
   @RequiresEdt
   public void onAssigned(boolean assigned) {
   }

@@ -1,28 +1,38 @@
 package com.intellij.settingsSync
 
+import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.FrameStateListener
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledStateListener {
+internal class SettingsSynchronizer : ApplicationInitializedListener, FrameStateListener, SettingsSyncEnabledStateListener {
 
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("Settings Sync Update", 1)
   private val autoSyncDelay get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
 
   private var scheduledFuture: ScheduledFuture<*>? = null // accessed only from the EDT
 
-  override fun onFrameActivated() {
-    if (!isSettingsSyncEnabledByKey() ||
-        !isSettingsSyncEnabledInSettings()) {
+  override fun componentsInitialized() {
+    if (!isSettingsSyncEnabledByKey()) {
       return
     }
 
-    if (!SettingsSyncMain.isAvailable()) {
+    SettingsSyncPluginManager.getInstance()
+    SettingsSyncEvents.getInstance().addEnabledStateChangeListener(this)
+
+    if (isSettingsSyncEnabledInSettings()) {
       executorService.schedule(initializeSyncing(), 0, TimeUnit.SECONDS)
+      return
+    }
+  }
+
+  override fun onFrameActivated() {
+    if (!isSettingsSyncEnabledByKey() || !isSettingsSyncEnabledInSettings() || !SettingsSyncMain.isAvailable()) {
       return
     }
 
@@ -41,20 +51,14 @@ internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledSta
 
   private fun initializeSyncing(): Runnable = Runnable {
     LOG.info("Initializing settings sync")
-    SettingsSyncMain.getInstance().syncSettings()
+    val settingsSyncMain = SettingsSyncMain.getInstance()
+    settingsSyncMain.controls.bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
+    settingsSyncMain.syncSettings()
   }
 
   override fun enabledStateChanged(syncEnabled: Boolean) {
-    if (syncEnabled) {
-      if (!SettingsSyncMain.isAvailable()) {
-        executorService.schedule(initializeSyncing(), 0, TimeUnit.SECONDS)
-      }
-      else {
-        SettingsSyncMain.getInstance().enableSyncing()
-        scheduleSyncing("Syncing settings after enabling")
-      }
-    }
-    else {
+    // syncEnabled part is handled inside SettingsSyncEnabler
+    if (!syncEnabled) {
       stopSyncingByTimer()
       SettingsSyncMain.getInstance().disableSyncing()
     }

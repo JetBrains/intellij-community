@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceGetOrSet")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
@@ -29,7 +29,8 @@ import java.util.concurrent.TimeUnit
 
 internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityImpl>>,
                                    private val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
-                                   threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager, StartUpPerformanceReporter.VERSION) {
+                                   threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager,
+                                                                                            StartUpPerformanceReporter.VERSION) {
   val publicStatMetrics = Object2IntOpenHashMap<String>()
 
   init {
@@ -184,6 +185,10 @@ private fun writeServiceStats(writer: JsonGenerator) {
   writer.array("plugins") {
     for (plugin in pluginSet.enabledPlugins) {
       val classLoader = plugin.pluginClassLoader as? PluginAwareClassLoader ?: continue
+      if (classLoader.loadedClassCount == 0L) {
+        continue
+      }
+
       writer.obj {
         writer.writeStringField("id", plugin.pluginId.idString)
         writer.writeNumberField("classCount", classLoader.loadedClassCount)

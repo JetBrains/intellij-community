@@ -19,11 +19,13 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.annotation.Inherited;
 
 /**
  * Mark {@link com.intellij.testFramework.UsefulTestCase} implementations using this annotation if they require UI environment to run
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+@Inherited
 public @interface SkipInHeadlessEnvironment {
 }

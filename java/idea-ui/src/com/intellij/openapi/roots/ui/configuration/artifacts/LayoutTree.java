@@ -116,7 +116,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     myTreeModel.invalidate(elementNode, true);
   }
 
-  public TreeVisitor createVisitorCompositeNodeChild(String parentPath, Predicate<PackagingElementNode<?>> childFilter) {
+  public TreeVisitor createVisitorCompositeNodeChild(String parentPath, Predicate<? super PackagingElementNode<?>> childFilter) {
     List<Predicate<PackagingElementNode<?>>> parentElementFilters = ContainerUtil.map(StringUtil.split(parentPath, "/"),
                                                                                       LayoutTree::createCompositeNodeByNameFilter);
     TreePath predicatesPath = TreePathUtil.convertCollectionToTreePath(ContainerUtil.append(parentElementFilters, childFilter));

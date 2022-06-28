@@ -55,8 +55,16 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkLocalResolve(myFixture)
     }
 
+    fun testResolveLocalDefaultConstructor() {
+        checkResolveLocalDefaultConstructor(myFixture)
+    }
+
     fun testResolveCompiledAnnotation() {
         checkResolveCompiledAnnotation(myFixture)
+    }
+
+    fun testResolveSyntheticMethod() {
+        checkResolveSyntheticMethod(myFixture)
     }
 
     fun testAssigningArrayElementType() {
@@ -69,5 +77,9 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testDetailsOfDeprecatedHidden() {
         checkDetailsOfDeprecatedHidden(myFixture)
+    }
+
+    fun testSyntheticEnumMethods() {
+        checkSyntheticEnumMethods(myFixture)
     }
 }

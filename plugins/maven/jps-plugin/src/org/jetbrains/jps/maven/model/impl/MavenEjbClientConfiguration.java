@@ -18,10 +18,8 @@ package org.jetbrains.jps.maven.model.impl;
 /**
  * @author Sergey Evdokimov
  */
-public class MavenEjbClientConfiguration extends FilePattern {
-
+public final class MavenEjbClientConfiguration extends FilePattern {
   public boolean isEmpty() {
     return includes.isEmpty() && excludes.isEmpty();
   }
-
 }

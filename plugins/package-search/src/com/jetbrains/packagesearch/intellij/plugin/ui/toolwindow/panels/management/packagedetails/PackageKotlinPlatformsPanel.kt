@@ -31,7 +31,7 @@ internal class PackageKotlinPlatformsPanel : HtmlEditorPane() {
                 HtmlChunk.li().addText(displayName).let { element ->
                     val canHaveTargets = type == PlatformType.JS || type == PlatformType.NATIVE
                     val targets = platform.targets
-                    if (canHaveTargets && targets != null && targets.isNotEmpty()) {
+                    if (canHaveTargets && !targets.isNullOrEmpty()) {
                         element.children(
                             HtmlChunk.br(),
                             HtmlChunk.span("font-style: italic;").addText(

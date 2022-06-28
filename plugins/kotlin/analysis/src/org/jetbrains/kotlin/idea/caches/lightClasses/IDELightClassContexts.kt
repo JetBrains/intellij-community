@@ -62,7 +62,8 @@ import org.jetbrains.kotlin.resolve.lazy.declarations.FileBasedDeclarationProvid
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.storage.StorageManager
-import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorTypeKind
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.WrappedTypeFactory
@@ -308,7 +309,7 @@ internal object IDELightClassContexts {
     private fun anyInternalMembersWithThisName(name: String, project: Project): Boolean {
         var result = false
         StubIndex.getInstance().processElements(
-            KotlinOverridableInternalMembersShortNameIndex.Instance.key, name, project,
+            KotlinOverridableInternalMembersShortNameIndex.key, name, project,
             EverythingGlobalScope(project), KtCallableDeclaration::class.java
         ) {
             result = true
@@ -392,7 +393,7 @@ internal object IDELightClassContexts {
 
                 override fun createRecursionIntolerantDeferredType(trace: BindingTrace, computation: () -> KotlinType) = errorType()
 
-                private fun errorType() = ErrorUtils.createErrorType("Error type in ad hoc resolve for lighter classes")
+                private fun errorType() = ErrorUtils.createErrorType(ErrorTypeKind.AD_HOC_ERROR_TYPE_FOR_LIGHTER_CLASSES_RESOLVE)
             })
 
             IdeaEnvironment.configure(this)

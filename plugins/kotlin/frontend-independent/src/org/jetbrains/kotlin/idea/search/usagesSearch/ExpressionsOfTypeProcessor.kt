@@ -186,7 +186,7 @@ class ExpressionsOfTypeProcessor(
         }
 
         val qualifiedName = runReadAction { psiClass.qualifiedName }
-        if (qualifiedName == null || qualifiedName.isEmpty()) {
+        if (qualifiedName.isNullOrEmpty()) {
             return false
         }
 

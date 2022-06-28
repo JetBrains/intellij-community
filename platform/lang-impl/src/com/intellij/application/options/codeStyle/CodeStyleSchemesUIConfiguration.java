@@ -2,7 +2,10 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-/**
- * @author Rustam Vishnyakov
- */
 @State(
   name = "CodeStyleSchemesUIConfiguration",
   storages = {@Storage(value = "other.xml", roamingType = RoamingType.DISABLED)}

@@ -64,6 +64,8 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
     return result(elementTypeTargets(editor, offset, listOf(fromLookup)))
   }
 
+  @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
+  @Deprecated("Unused in v2 implementation")
   @JvmStatic
   fun getCtrlMouseInfo(file: PsiFile, offset: Int): CtrlMouseInfo? {
     return gotoTypeDeclaration(file, offset)?.ctrlMouseInfo()

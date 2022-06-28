@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
@@ -128,7 +127,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private final ActionGroup myActionGroup;
   private final @NotNull String myPlace;
   private List<? extends AnAction> myVisibleActions;
-  private final PresentationFactory myPresentationFactory = new PresentationFactory();
+  private final PresentationFactory myPresentationFactory = new ActionToolbarPresentationFactory();
   private final boolean myDecorateButtons;
 
   private final ToolbarUpdater myUpdater;
@@ -1344,7 +1343,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       Dimension pSize = p.getSize();
       if (myOrientation == SwingConstants.HORIZONTAL && pSize.height - availSize.height > 8 ||
           myOrientation == SwingConstants.VERTICAL && pSize.width - availSize.width > 8) {
-        if (availSize.width == 0 && availSize.height == 0) result = p;
         break;
       }
       result = p;
@@ -1493,7 +1491,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         return toClose;
       })
       .setCancelOnMouseOutCallback(event -> {
-        Window window = UIUtil.getWindow(popupToolbar);
+        Window window = ComponentUtil.getWindow(popupToolbar);
         if (window != null && Window.Type.POPUP == window.getType()) {
           Component parent = UIUtil.uiParents(event.getComponent(), false).find(window::equals);
           if (parent != null) return false; // mouse over a child popup

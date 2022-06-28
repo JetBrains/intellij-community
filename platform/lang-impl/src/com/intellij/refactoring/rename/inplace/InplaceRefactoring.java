@@ -970,16 +970,20 @@ public abstract class InplaceRefactoring {
     ourShowBalloonInHeadlessMode = showBalloonInHeadlessMode;
   }
 
-  protected final void initPopupOptionsAdvertisement() {
+  public static @NotNull @NlsContexts.PopupAdvertisement String getPopupOptionsAdvertisement(){
     Shortcut shortcut = KeymapUtil.getPrimaryShortcut("SelectVirtualTemplateElement");
     if (shortcut != null) {
-      setAdvertisementText(RefactoringBundle.message("inplace.refactoring.tab.advertisement.text", KeymapUtil.getShortcutText(shortcut)));
+      return RefactoringBundle.message("inplace.refactoring.tab.advertisement.text", KeymapUtil.getShortcutText(shortcut));
     }
     else {
       String enterShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM);
       String tabShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
-      setAdvertisementText(LangBundle.message("popup.advertisement.press.or.to.replace", enterShortcut, tabShortcut));
+      return LangBundle.message("popup.advertisement.press.or.to.replace", enterShortcut, tabShortcut);
     }
+  }
+
+  protected final void initPopupOptionsAdvertisement() {
+    setAdvertisementText(getPopupOptionsAdvertisement());
   }
 
   private static class TextAttributesWithKey extends TextAttributes {

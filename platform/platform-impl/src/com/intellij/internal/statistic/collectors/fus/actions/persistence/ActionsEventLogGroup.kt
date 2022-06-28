@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
+import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -12,16 +13,16 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     const val ACTION_FINISHED_EVENT_ID = "action.finished"
 
     @JvmField
-    val GROUP = EventLogGroup("actions", 66)
+    val GROUP = EventLogGroup("actions", 67)
 
     @JvmField
-    val ACTION_ID = EventFields.StringValidatedByCustomRule("action_id", "action")
+    val ACTION_ID = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
 
     @JvmField
-    val ACTION_CLASS = EventFields.StringValidatedByCustomRule("class", "class_name")
+    val ACTION_CLASS = EventFields.StringValidatedByCustomRule("class", ClassNameRuleValidator::class.java)
 
     @JvmField
-    val ACTION_PARENT = EventFields.StringValidatedByCustomRule("parent", "class_name")
+    val ACTION_PARENT = EventFields.StringValidatedByCustomRule("parent", ClassNameRuleValidator::class.java)
 
     @JvmField
     val TOGGLE_ACTION = EventFields.Boolean("enable")
@@ -73,7 +74,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     @JvmField
     val CUSTOM_ACTION_INVOKED = GROUP.registerEvent(
       "custom.action.invoked",
-      EventFields.StringValidatedByCustomRule("action_id", "action"),
+      EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java),
       EventFields.InputEvent)
   }
 }

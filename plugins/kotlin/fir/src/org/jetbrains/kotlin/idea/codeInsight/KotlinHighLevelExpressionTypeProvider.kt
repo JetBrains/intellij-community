@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.analysis.api.analyseInModalWindow
+import org.jetbrains.kotlin.analysis.api.analyse
 import org.jetbrains.kotlin.psi.KtExpression
 
 class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
@@ -13,13 +13,11 @@ class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
         return true /* TODO */
     }
 
-    override fun getInformationHint(element: KtExpression): String = analyseInModalWindow(
-        element,
-        KotlinBundle.message("dialog.title.getting.expression.type")
-    ) {
-        @NlsSafe
+    // this method gets called from the non-blocking read action
+    override fun getInformationHint(element: KtExpression): String = analyse(element) {
         val ktType = element.getKtType()
-            ?: return@analyseInModalWindow KotlinBundle.message("type.provider.unknown.type")
+            ?: return@analyse KotlinBundle.message("type.provider.unknown.type")
+        @NlsSafe
         val rendered = ktType.render()
         StringUtil.escapeXmlEntities(rendered)
     }

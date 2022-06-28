@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -11,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public final class PathExecLazyValue {
-  private PathExecLazyValue() {
-  }
+  private PathExecLazyValue() { }
 
   public static @NotNull NotNullLazyValue<Boolean> create(@NlsSafe @NotNull String name) {
     if (Strings.containsAnyChar(name, "/\\")) {

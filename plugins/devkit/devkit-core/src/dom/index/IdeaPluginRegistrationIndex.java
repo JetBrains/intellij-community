@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2020 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -37,8 +23,7 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.index.RegistrationEntry.RegistrationType;
 
 import java.io.DataInput;
@@ -46,9 +31,19 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * Class FQN or ID -> entry in {@code plugin.xml}.
+ * <p>
+ * <ul>
+ *   <li>Application/Project/Module-component class - {@link Component#getImplementationClass()}</li>
+ *   <li>Action/ActionGroup class - {@link Action#getClazz()}/{@link Group#getClazz()}</li>
+ *   <li>Action/ActionGroup ID - {@link ActionOrGroup#getId()}</li>
+ *   <li>Application/Project Listener class - {@link Listeners.Listener#getListenerClassName()}</li>
+ * </ul>
+ */
 public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
-  private static final int INDEX_VERSION = 3;
+  private static final int INDEX_VERSION = 4;
 
   private static final ID<String, List<RegistrationEntry>> NAME = ID.create("IdeaPluginRegistrationIndex");
 
@@ -116,6 +111,24 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     return isRegistered(psiClass, scope, RegistrationType.ACTION);
   }
 
+  public static boolean processListener(@NotNull Project project,
+                                        PsiClass listenerClass,
+                                        GlobalSearchScope scope,
+                                        Processor<? super Listeners.Listener> processor) {
+    final String key = listenerClass.getQualifiedName();
+    assert key != null : listenerClass;
+
+    List<XmlTag> tags = collectTags(project, key, scope,
+                                    EnumSet.of(RegistrationType.APPLICATION_LISTENER, RegistrationType.PROJECT_LISTENER));
+
+    return ContainerUtil.process(tags, tag -> {
+      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
+
+      if (!(domElement instanceof Listeners.Listener)) return true;
+      return processor.process((Listeners.Listener)domElement);
+    });
+  }
+
   private static boolean isRegistered(PsiClass psiClass, GlobalSearchScope scope, RegistrationType type) {
     final String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null) {
@@ -164,8 +177,23 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
                                                 GlobalSearchScope scope,
                                                 EnumSet<RegistrationType> types,
                                                 Processor<? super ActionOrGroup> processor) {
+    List<XmlTag> tags = collectTags(project, actionOrGroupId, scope, types);
+
+    return ContainerUtil.process(tags, tag -> {
+      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
+
+      if (!(domElement instanceof ActionOrGroup)) return true;
+      return processor.process((ActionOrGroup)domElement);
+    });
+  }
+
+  @NotNull
+  private static List<XmlTag> collectTags(@NotNull Project project,
+                                          @NotNull String key,
+                                          GlobalSearchScope scope,
+                                          EnumSet<RegistrationType> types) {
     List<XmlTag> tags = new SmartList<>();
-    FileBasedIndex.getInstance().processValues(NAME, actionOrGroupId, null, (file, value) -> {
+    FileBasedIndex.getInstance().processValues(NAME, key, null, (file, value) -> {
       for (RegistrationEntry entry : value) {
         if (!types.contains(entry.getRegistrationType())) {
           continue;
@@ -180,12 +208,6 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
       }
       return true;
     }, scope);
-
-    return ContainerUtil.process(tags, tag -> {
-      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
-
-      if (!(domElement instanceof ActionOrGroup)) return true;
-      return processor.process((ActionOrGroup)domElement);
-    });
+    return tags;
   }
 }

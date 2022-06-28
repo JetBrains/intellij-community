@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.nj2k.*
-import org.jetbrains.kotlin.nj2k.symbols.*
+import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
+import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.isArrayType
 import org.jetbrains.kotlin.nj2k.types.isStringType
@@ -149,7 +151,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 is JKCallExpression -> {
                     val arguments = from.arguments::arguments.detached()
                     JKQualifiedExpression(
-                        arguments.first()::value.detached().parenthesizeIfBinaryExpression(),
+                        arguments.first()::value.detached().parenthesizeIfCompoundExpression(),
                         JKCallExpressionImpl(
                             symbolProvider.provideMethodSymbol(fqName),
                             JKArgumentList(arguments.drop(1)),
@@ -592,7 +594,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private fun JKExpression.callOn(symbol: JKMethodSymbol, arguments: List<JKArgument> = emptyList()) =
         JKQualifiedExpression(
-            this.parenthesizeIfBinaryExpression(),
+            this.parenthesizeIfCompoundExpression(),
             JKCallExpressionImpl(
                 symbol,
                 JKArgumentList(arguments),

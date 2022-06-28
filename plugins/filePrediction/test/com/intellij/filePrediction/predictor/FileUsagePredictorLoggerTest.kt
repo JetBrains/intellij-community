@@ -126,7 +126,7 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
 
     setCustomCandidateProviderModel(testRootDisposable, FilePredictionReferenceProvider(), FilePredictionNeighborFilesProvider())
     val predictor = predictorProvider.invoke(testRootDisposable)
-    val events = collectLogEvents {
+    val events = collectLogEvents(testRootDisposable) {
       ApplicationManager.getApplication().executeOnPooledThread{
         predictor.onSessionStarted(myFixture.project, file!!)
         predictor.onSessionStarted(myFixture.project, nextFile!!)

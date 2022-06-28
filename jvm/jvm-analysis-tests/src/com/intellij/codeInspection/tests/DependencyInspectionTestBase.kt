@@ -9,26 +9,27 @@ import com.intellij.psi.search.scope.packageSet.PackageSetFactory
 abstract class DependencyInspectionTestBase : UastInspectionTestBase() {
   override val inspection = DependencyInspection()
 
-  protected val javaFoo = "JavaFoo.java"
+  protected val javaFooFile = "JavaFoo.java"
 
-  protected val kotlinFoo = "KotlinFoo.kt"
+  protected val kotlinFooFile = "KotlinFoo.kt"
 
   override fun setUp() {
     super.setUp()
-    myFixture.addFileToProject("pkg/api/$javaFoo", """
+    myFixture.addFileToProject("pkg/api/$javaFooFile", """
       package pkg.api;
       
       public class JavaFoo() { };
     """.trimIndent())
-    myFixture.addFileToProject("pkg/api/$kotlinFoo", """
+    myFixture.addFileToProject("pkg/api/$kotlinFooFile", """
       package pkg.api
       
       public class KotlinFoo()
     """.trimIndent())
   }
 
-  protected fun dependencyViolationTest(fromFile: String, toFile: String, toFileText: String) {
+  protected fun dependencyViolationTest(fromFile: String, toFile: String, toFileText: String, skipImports: Boolean = false) {
     val dependencyValidationManager = DependencyValidationManager.getInstance(project)
+    dependencyValidationManager.setSkipImportStatements(skipImports)
     myFixture.addFileToProject("pkg/client/$toFile", toFileText)
     val fromScopeId = fromFile.substringBefore(".")
     val fromScope = dependencyValidationManager.getScope(fromScopeId) ?: NamedScope(

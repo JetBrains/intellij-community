@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.stubindex.resolve
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -10,10 +11,7 @@ import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.projectSourceModules
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
-import org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
-import org.jetbrains.kotlin.idea.stubindex.SubpackagesIndexService
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.data.KtClassLikeInfo
@@ -74,21 +72,19 @@ class PluginDeclarationProviderFactory(
     }
 
     override fun diagnoseMissingPackageFragment(fqName: FqName, file: KtFile?) {
-        val subpackagesIndex = SubpackagesIndexService.getInstance(project)
         val moduleSourceInfo = moduleInfo as? ModuleSourceInfo
-        val packageExists = PackageIndexUtil.packageExists(fqName, indexedFilesScope, project)
-        val spiPackageExists = subpackagesIndex.packageExists(fqName)
+        val packageExists = PackageIndexUtil.packageExists(fqName, indexedFilesScope)
+        val spiPackageExists = PackageIndexUtil.packageExists(fqName, project)
         val oldPackageExists = oldPackageExists(fqName)
         val cachedPackageExists =
-            moduleSourceInfo?.let { project.getServiceSafe<PerModulePackageCacheService>().packageExists(fqName, it) }
+            moduleSourceInfo?.let { project.service<PerModulePackageCacheService>().packageExists(fqName, it) }
         val moduleModificationCount = moduleSourceInfo?.createModificationTracker()?.modificationCount
 
         val common = """
                 packageExists = $packageExists, cachedPackageExists = $cachedPackageExists,
                 oldPackageExists = $oldPackageExists,
-                SPI.packageExists = $spiPackageExists, SPI = $subpackagesIndex,
+                SPI.packageExists = $spiPackageExists,
                 OOCB count = ${KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker.modificationCount}
-                PT count = ${KotlinPackageModificationListener.getInstance(project).packageTracker.modificationCount}
                 moduleModificationCount = $moduleModificationCount
             """.trimIndent()
 
@@ -135,7 +131,7 @@ class PluginDeclarationProviderFactory(
     }
 
     private fun oldPackageExists(packageFqName: FqName): Boolean =
-        PackageIndexUtil.containsFilesWithPartialPackage(packageFqName, indexedFilesScope)
+        PackageIndexUtil.packageExists(packageFqName, indexedFilesScope)
 
     private fun debugInfo(): String {
         if (nonIndexedFiles.isEmpty()) return "-no synthetic files-\n"

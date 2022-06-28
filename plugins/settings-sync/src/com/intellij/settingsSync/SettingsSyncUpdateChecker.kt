@@ -11,7 +11,7 @@ internal class SettingsSyncUpdateChecker(private val application: Application,
     val updateResult = remoteCommunicator.receiveUpdates()
     if (updateResult is UpdateResult.Success) {
       val snapshot = updateResult.settingsSnapshot
-      application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.CloudChange(snapshot))
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CloudChange(snapshot))
     }
     return updateResult
   }

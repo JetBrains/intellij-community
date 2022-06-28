@@ -20,6 +20,7 @@ private fun __dummyTestFun__(a: Int, b: Int) {
         a > 0 -> {
             bar(a)
         }
+
         else -> {
             b
         }

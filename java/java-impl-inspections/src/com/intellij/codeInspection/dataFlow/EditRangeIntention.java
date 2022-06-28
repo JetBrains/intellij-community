@@ -121,13 +121,11 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
     panel.add(Messages.configureMessagePaneUi(new JTextPane(), JavaBundle.message("edit.range.dialog.message")), c.nextLine().next().coverLine());
 
     JLabel fromLabel = new JLabel(JavaBundle.message("label.from.inclusive"));
-    fromLabel.setDisplayedMnemonic('f');
     fromLabel.setLabelFor(minText);
     panel.add(fromLabel, c.nextLine().next());
     panel.add(minText, c.next());
 
     JLabel toLabel = new JLabel(JavaBundle.message("label.to.inclusive"));
-    toLabel.setDisplayedMnemonic('t');
     toLabel.setLabelFor(maxText);
     panel.add(toLabel, c.nextLine().next());
     panel.add(maxText, c.next());

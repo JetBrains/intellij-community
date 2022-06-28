@@ -9,16 +9,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Rename input validator with the ability to provide custom error messages.
+ * Adds ability to provide custom error message.
  */
 public interface RenameInputValidatorEx extends RenameInputValidator {
 
   /**
-   * Called only if all {@link RenameInputValidator}s accept
+   * Called only if all input validators ({@link RenameInputValidator}) accept
    * the new name in {@link #isInputValid(String, PsiElement, ProcessingContext)}
    * and name is a valid identifier for the language of the element.
    *
-   * @return {@code null} if {@code newName} is a valid name, custom error message otherwise
+   * @return {@code null} if newName is a valid name, custom error message otherwise
    */
   @Nullable
   @DialogMessage String getErrorMessage(@NotNull String newName, @NotNull Project project);

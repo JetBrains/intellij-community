@@ -101,21 +101,21 @@ internal class StatisticBase : CounterUsagesCollector() {
     var isLearnProjectCloseLogged = false
 
     // FIELDS
-    private val lessonIdField = EventFields.StringValidatedByCustomRule(LESSON_ID, LESSON_ID)
-    private val languageField = EventFields.StringValidatedByCustomRule(LANGUAGE, LANGUAGE)
+    private val lessonIdField = EventFields.StringValidatedByCustomRule(LESSON_ID, IdeFeaturesTrainerRuleValidator::class.java)
+    private val languageField = EventFields.StringValidatedByCustomRule(LANGUAGE, SupportedLanguageRuleValidator::class.java)
     private val completedCountField = EventFields.Int(COMPLETED_COUNT)
     private val courseSizeField = EventFields.Int(COURSE_SIZE)
-    private val moduleNameField = EventFields.StringValidatedByCustomRule(MODULE_NAME, MODULE_NAME)
-    private val taskIdField = EventFields.StringValidatedByCustomRule(TASK_ID, TASK_ID)
-    private val actionIdField = EventFields.StringValidatedByCustomRule(ACTION_ID, ACTION_ID)
-    private val keymapSchemeField = EventFields.StringValidatedByCustomRule(KEYMAP_SCHEME, KEYMAP_SCHEME)
+    private val moduleNameField = EventFields.StringValidatedByCustomRule(MODULE_NAME, IdeFeaturesTrainerModuleRuleValidator::class.java)
+    private val taskIdField = EventFields.StringValidatedByCustomRule(TASK_ID, TaskIdRuleValidator::class.java)
+    private val actionIdField = EventFields.StringValidatedByCustomRule(ACTION_ID, ActionIdRuleValidator::class.java)
+    private val keymapSchemeField = EventFields.StringValidatedByCustomRule(KEYMAP_SCHEME, KeymapSchemeRuleValidator::class.java)
     private val versionField = EventFields.Version
     private val inputEventField = EventFields.InputEvent
     private val learnProjectOpeningWayField = EventFields.Enum<LearnProjectOpeningWay>(LEARN_PROJECT_OPENING_WAY)
     private val reasonField = EventFields.Enum<LessonStopReason>(REASON)
     private val newLessonsCount = EventFields.Int(NEW_LESSONS_COUNT)
     private val showNewLessonsState = EventFields.Boolean(SHOULD_SHOW_NEW_LESSONS)
-    private val tipFilenameField = EventFields.StringValidatedByCustomRule(TIP_FILENAME, TipInfoValidationRule.RULE_ID)
+    private val tipFilenameField = EventFields.StringValidatedByCustomRule(TIP_FILENAME, TipInfoValidationRule::class.java)
     private val lessonStartingWayField = EventFields.Enum<LessonStartingWay>(LESSON_STARTING_WAY)
     private val feedbackEntryPlace = EventFields.Enum<FeedbackEntryPlace>(FEEDBACK_ENTRY_PLACE)
     private val feedbackHasBeenSent = EventFields.Boolean(FEEDBACK_HAS_BEEN_SENT)

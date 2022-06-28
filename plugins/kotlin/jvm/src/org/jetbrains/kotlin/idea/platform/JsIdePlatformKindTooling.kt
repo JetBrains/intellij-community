@@ -47,27 +47,29 @@ class JsIdePlatformKindTooling : IdePlatformKindTooling() {
         JsLibraryStdDetectionUtil.getJsLibraryStdVersion(library, project)
     }
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? {
-        return getGenericTestIcon(declaration, descriptorProvider) {
-            val contexts by lazy { computeConfigurationContexts(declaration) }
+    override fun getTestIcon(
+        declaration: KtNamedDeclaration,
+        descriptorProvider: () -> DeclarationDescriptor?,
+        includeSlowProviders: Boolean?
+    ): Icon? = getGenericTestIcon(declaration, descriptorProvider) {
+        val contexts by lazy { computeConfigurationContexts(declaration) }
 
-            val runConfigData = RunConfigurationProducer
-                .getProducers(declaration.project)
-                .asSequence()
-                .filterIsInstance<KotlinJSRunConfigurationDataProvider<*>>()
-                .filter { it.isForTests }
-                .flatMap { provider -> contexts.map { context -> provider.getConfigurationData(context) } }
-                .firstOrNull { it != null }
-                ?: return@getGenericTestIcon null
+        val runConfigData = RunConfigurationProducer
+            .getProducers(declaration.project)
+            .asSequence()
+            .filterIsInstance<KotlinJSRunConfigurationDataProvider<*>>()
+            .filter { it.isForTests }
+            .flatMap { provider -> contexts.map { context -> provider.getConfigurationData(context) } }
+            .firstOrNull { it != null }
+            ?: return@getGenericTestIcon null
 
-            val location = if (runConfigData is KotlinJSRunConfigurationData) {
-                FileUtil.toSystemDependentName(runConfigData.jsOutputFilePath)
-            } else {
-                declaration.containingKtFile.packageFqName.asString()
-            }
-
-            return@getGenericTestIcon SmartList(location)
+        val location = if (runConfigData is KotlinJSRunConfigurationData) {
+            FileUtil.toSystemDependentName(runConfigData.jsOutputFilePath)
+        } else {
+            declaration.containingKtFile.packageFqName.asString()
         }
+
+        return@getGenericTestIcon SmartList(location)
     }
 
     override fun acceptsAsEntryPoint(function: KtFunction): Boolean {

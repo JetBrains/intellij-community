@@ -176,8 +176,4 @@ abstract class TargetEnvironment(
     fun runBatchUpload(uploads: List<Pair<UploadableVolume, String>>,
                        targetProgressIndicator: TargetProgressIndicator)
   }
-
-  interface PtyTargetEnvironment {
-    fun isWithPty(): Boolean
-  }
 }

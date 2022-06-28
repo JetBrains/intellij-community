@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -27,6 +27,7 @@ import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -131,15 +132,15 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull
   private VcsLogStorage createStorage() {
-    VcsLogStorage hashMap;
+    VcsLogStorage vcsLogStorage;
     try {
-      hashMap = new VcsLogStorageImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
+      vcsLogStorage = new VcsLogStorageImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
     }
     catch (IOException e) {
-      hashMap = new InMemoryStorage();
+      vcsLogStorage = new InMemoryStorage();
       LOG.error("Falling back to in-memory hashes", e);
     }
-    return hashMap;
+    return vcsLogStorage;
   }
 
   public void initialize() {
@@ -298,7 +299,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   /**
    * Makes the log perform refresh for the given root.
-   * This refresh can be optimized, i. e. it can query VCS just for the part of the log.
+   * This refresh can be optimized, i.e. it can query VCS just for the part of the log.
    */
   public void refresh(@NotNull Collection<VirtualFile> roots) {
     initialize();
@@ -364,9 +365,11 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull
   public VcsLogIndex getIndex() {
+    //noinspection TestOnlyProblems
     return getModifiableIndex();
   }
 
+  @TestOnly
   @NotNull
   VcsLogModifiableIndex getModifiableIndex() {
     return myIndex;

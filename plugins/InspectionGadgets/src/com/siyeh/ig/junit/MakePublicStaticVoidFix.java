@@ -19,25 +19,27 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-class MakePublicStaticVoidFix extends InspectionGadgetsFix {
+public class MakePublicStaticVoidFix extends InspectionGadgetsFix {
   private final @IntentionName String myName;
   private final boolean myMakeStatic;
   private final String myNewVisibility;
 
-  MakePublicStaticVoidFix(PsiMethod method, boolean makeStatic) {
+  public MakePublicStaticVoidFix(PsiMethod method, boolean makeStatic) {
     this(method, makeStatic, PsiModifier.PUBLIC);
   }
 
-  MakePublicStaticVoidFix(PsiMethod method, boolean makeStatic, @PsiModifier.ModifierConstant String newVisibility) {
+  public MakePublicStaticVoidFix(PsiMethod method, boolean makeStatic, @Nullable @PsiModifier.ModifierConstant String newVisibility) {
     final int formatOptions = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_MODIFIERS
                               | PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_TYPE;
     final String methodBefore = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, formatOptions, PsiFormatUtilBase.SHOW_TYPE);
 
-    String presentableVisibility = VisibilityUtil.getVisibilityString(newVisibility);
+    String presentableVisibility = "";
+    if (newVisibility != null) presentableVisibility = VisibilityUtil.getVisibilityString(newVisibility);
     final @NonNls String methodAfter = (presentableVisibility.isEmpty() ? presentableVisibility : presentableVisibility + " ") +
                                        (makeStatic ? "static " : "") +
                                        "void " + method.getName() + "()";

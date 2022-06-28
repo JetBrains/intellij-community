@@ -16,7 +16,7 @@ class TabsLayoutSettingsHolder {
   val installedInfos = generateInstalledInfos(defaultInfo)
 
   fun getInfoWithId(id: String?): TabsLayoutInfo? {
-    if (id == null || id.isEmpty()) {
+    if (id.isNullOrEmpty()) {
       return null
     }
     for (info in installedInfos) {

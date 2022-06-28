@@ -1330,31 +1330,4 @@ public final class IdeEventQueue extends EventQueue {
   public void addPostEventListener(@NotNull PostEventHook listener, @NotNull Disposable parentDisposable) {
     myPostEventListeners.addListener(listener, parentDisposable);
   }
-
-  private static final class Holder {
-    // JBSDK only
-    private static final Method unsafeNonBlockingExecuteRef =
-      ReflectionUtil.getDeclaredMethod(SunToolkit.class, "unsafeNonblockingExecute", Runnable.class);
-  }
-
-  /**
-   * Must be called on the Event Dispatching thread.
-   * Executes the runnable so that it can perform a non-blocking invocation on the toolkit thread.
-   * Not for general-purpose usage.
-   *
-   * @param r the runnable to execute
-   */
-  public static void unsafeNonblockingExecute(@NotNull Runnable r) {
-    assert EventQueue.isDispatchThread();
-    // The method is available in JBSDK.
-    if (Holder.unsafeNonBlockingExecuteRef != null) {
-      try {
-        Holder.unsafeNonBlockingExecuteRef.invoke(Toolkit.getDefaultToolkit(), r);
-        return;
-      }
-      catch (Exception ignore) {
-      }
-    }
-    r.run();
-  }
 }

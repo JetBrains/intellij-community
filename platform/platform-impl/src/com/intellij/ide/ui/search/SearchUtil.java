@@ -408,7 +408,7 @@ public final class SearchUtil {
   }
 
   public static String markup(@NotNull String textToMarkup, @Nullable String filter) {
-    return markup(textToMarkup, filter, Color.white, ColorUtil.fromHex("1d5da7"));
+    return markup(textToMarkup, filter, new JBColor(Gray._50, Gray._0), JBColor.namedColor("SearchMatch.startBackground", ColorUtil.fromHex("1d5da7")));
   }
 
   public static String markup(@NotNull String textToMarkup, @Nullable String filter, Color textColor, Color backgroundColor) {

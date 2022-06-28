@@ -3,7 +3,7 @@ package com.intellij.codeInspection.tests.java
 import com.intellij.codeInspection.tests.DependencyInspectionTestBase
 
 class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
-  fun `test illegal imported dependency Java API`() = dependencyViolationTest(javaFoo, "ImportClientJava.java", """
+  fun `test illegal imported dependency Java API`() = dependencyViolationTest(javaFooFile, "ImportClientJava.java", """
       package pkg.client;
       
       import <error descr="Dependency rule 'Deny usages of scope 'JavaFoo' in scope 'ImportClientJava'.' is violated">pkg.api.JavaFoo</error>;
@@ -15,36 +15,24 @@ class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
       }            
     """.trimIndent())
 
-  // TODO, Kotlin code is not resolved?
-  fun `ignore test illegal imported dependency Kotlin API`() = dependencyViolationTest(kotlinFoo, "ImportClientKotlin.java", """
+  fun `test illegal imported dependency skip imports`() = dependencyViolationTest(javaFooFile, "ImportClientJava.java", """
       package pkg.client;
       
-      import pkg.api.KotlinFoo;
+      import pkg.api.JavaFoo;
 
       class Client {
         public static void main(String[] args) {
-          new KotlinFoo();
+          new <error descr="Dependency rule 'Deny usages of scope 'JavaFoo' in scope 'ImportClientJava'.' is violated">JavaFoo</error>();
         } 
-      }    
-    """.trimIndent())
+      }            
+    """.trimIndent(), skipImports = true)
 
-  fun `test illegal fully qualified dependency Java API`() = dependencyViolationTest(javaFoo, "FqClientJava.java", """
+  fun `test illegal fully qualified dependency Java API`() = dependencyViolationTest(javaFooFile, "FqClientJava.java", """
       package pkg.client;
       
       class Client {
         public static void main(String[] args) {
           new <error descr="Dependency rule 'Deny usages of scope 'JavaFoo' in scope 'FqClientJava'.' is violated">pkg.api.JavaFoo</error>();
-        } 
-      }      
-    """.trimIndent())
-
-  // TODO, Kotlin code is not resolved?
-  fun `ignore test illegal fully qualified dependency Kotlin API`() = dependencyViolationTest(kotlinFoo, "FqClientKotlin.java", """
-      package pkg.client;
-      
-      class Client {
-        public static void main(String[] args) {
-          new pkg.api.KotlinFoo();
         } 
       }      
     """.trimIndent())

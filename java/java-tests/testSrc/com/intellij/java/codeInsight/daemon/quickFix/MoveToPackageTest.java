@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.psi.PsiClass;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public class MoveToPackageTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_16;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   public void testSimple() {

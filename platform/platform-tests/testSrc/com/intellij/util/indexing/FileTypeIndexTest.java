@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -49,7 +50,8 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
       @Override public @NotNull String getName() { return name; }
       @Override public @NotNull String getDescription() { return name; }
     };
-    ((FileTypeManagerImpl)FileTypeManager.getInstance()).registerFileType(foo, List.of(), parent);
+    ((FileTypeManagerImpl)FileTypeManager.getInstance()).registerFileType(foo, List.of(), parent,
+                                                                          PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
     return foo;
   }
 }

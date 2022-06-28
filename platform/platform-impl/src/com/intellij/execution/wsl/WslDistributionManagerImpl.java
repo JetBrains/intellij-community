@@ -79,7 +79,8 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
       return Collections.emptyList();
     }
     if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
-      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + output);
+      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + output +
+                            ", done in " + TimeoutUtil.getDurationMillis(startNano) + " ms");
     }
     List<WslDistributionAndVersion> versions = parseWslVerboseListOutput(output.getStdoutLines());
     LOG.info("Fetched WSL distributions: " + versions +

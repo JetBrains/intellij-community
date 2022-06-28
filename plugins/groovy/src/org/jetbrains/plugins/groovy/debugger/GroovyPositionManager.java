@@ -16,8 +16,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -40,7 +38,6 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -52,7 +49,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class GroovyPositionManager extends PositionManagerEx {
   private static final Logger LOG = Logger.getInstance(PositionManagerImpl.class);
@@ -98,31 +98,26 @@ public class GroovyPositionManager extends PositionManagerEx {
 
   @Override
   public @Nullable XStackFrame createStackFrame(@NotNull StackFrameDescriptorImpl descriptor) {
-    if (isInGroovyFile(descriptor.getLocation()) != ThreeState.YES) {
+    if (!isInGroovyFile(descriptor.getLocation())) {
       return null;
     }
     return new GroovyStackFrame(descriptor, true);
   }
 
-  private static ThreeState isInGroovyFile(@Nullable Location location) {
+  private static boolean isInGroovyFile(@Nullable Location location) {
     if (location != null) {
       var refType = location.declaringType();
       try {
         String safeName = refType.sourceName();
         FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(safeName);
-        if (fileType == UnknownFileType.INSTANCE) {
-          return ThreeState.UNSURE;
+        if (fileType != GroovyFileType.GROOVY_FILE_TYPE) {
+          return false;
         }
-        if (fileType instanceof LanguageFileType) {
-          LanguageFileType languageFileType = (LanguageFileType)fileType;
-          if (languageFileType.getLanguage() == GroovyLanguage.INSTANCE) {
-            return ThreeState.YES;
-          }
-        }
-      } catch (AbsentInformationException ignore) {
+      } catch (AbsentInformationException e) {
+        return false;
       }
     }
-    return ThreeState.NO;
+    return true;
   }
 
   @Nullable
@@ -289,7 +284,7 @@ public class GroovyPositionManager extends PositionManagerEx {
   @Override
   public SourcePosition getSourcePosition(@Nullable final Location location) throws NoDataException {
     if (location == null) throw NoDataException.INSTANCE;
-    if (isInGroovyFile(location) == ThreeState.NO) throw NoDataException.INSTANCE;
+    if (!isInGroovyFile(location)) throw NoDataException.INSTANCE;
 
     int lineNumber = calcLineIndex(location);
     if (lineNumber < 0) throw NoDataException.INSTANCE;
@@ -485,9 +480,6 @@ public class GroovyPositionManager extends PositionManagerEx {
   @NotNull
   @Override
   public Set<? extends FileType> getAcceptedFileTypes() {
-    var result = new HashSet<FileType>();
-    ScriptPositionManagerHelper.EP_NAME.forEachExtensionSafe(ext -> result.addAll(ext.getAcceptedFileTypes()));
-    result.addAll(ourFileTypes);
-    return result;
+    return ourFileTypes;
   }
 }

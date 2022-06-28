@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
@@ -30,6 +31,7 @@ class RemoveRedundantCallsOfConversionMethodsIntention : SelfTargetingRangeInten
 ) {
 
     @ExperimentalUnsignedTypes
+    @delegate:SafeFieldForPreview
     private val targetClassMap: Map<String, String?> by lazy {
         mapOf(
             "toString()" to String::class.qualifiedName,

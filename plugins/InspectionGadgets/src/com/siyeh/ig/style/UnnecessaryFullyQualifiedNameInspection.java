@@ -277,7 +277,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
             elementToHighlight = aReference;
           }
           else {
-            highlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+            highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           }
 
           final boolean inSameFile = aClass.getContainingFile() == containingFile ||

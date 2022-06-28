@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Image
-import java.util.function.Consumer
 
 @VisibleForTesting
 data class DocumentationResultData internal constructor(
@@ -43,7 +42,7 @@ data class DocumentationResultData internal constructor(
     return copy(updates = updates as Flow<DocumentationContentData>)
   }
 
-  override fun updates(updates: Consumer<in Consumer<in DocumentationContent>>): Data {
-    return updates(updates.asFlow())
+  override fun updates(updater: DocumentationContentUpdater): Data {
+    return updates(updater.asFlow())
   }
 }

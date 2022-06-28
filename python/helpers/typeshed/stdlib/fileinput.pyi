@@ -2,6 +2,21 @@ import sys
 from _typeshed import Self, StrOrBytesPath
 from typing import IO, Any, AnyStr, Callable, Generic, Iterable, Iterator
 
+__all__ = [
+    "input",
+    "close",
+    "nextfile",
+    "filename",
+    "lineno",
+    "filelineno",
+    "fileno",
+    "isfirstline",
+    "isstdin",
+    "FileInput",
+    "hook_compressed",
+    "hook_encoded",
+]
+
 if sys.version_info >= (3, 9):
     from types import GenericAlias
 

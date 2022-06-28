@@ -1,12 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards
 
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logArtifactIdChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logGroupIdChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
@@ -23,11 +19,14 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
+
   override val name = MAVEN
+
+  override val ordinal = 100
 
   override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
@@ -45,10 +44,13 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       builder.row {
         checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
           .bindSelected(addSampleCodeProperty)
+          .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
       }.topGap(TopGap.SMALL)
     }
 
     override fun setupProject(project: Project) {
+      super.setupProject(project)
+
       val builder = InternalMavenModuleBuilder().apply {
         moduleJdk = sdk
         name = parentStep.name
@@ -63,16 +65,6 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
       ExternalProjectsManagerImpl.setupCreatedProject(project)
       builder.commit(project)
-
-      logSdkFinished(sdk)
-    }
-
-    init {
-      sdkProperty.afterChange { logSdkChanged(it) }
-      parentProperty.afterChange { logParentChanged(!it.isPresent) }
-      groupIdProperty.afterChange { logGroupIdChanged() }
-      artifactIdProperty.afterChange { logArtifactIdChanged() }
-      versionProperty.afterChange { logVersionChanged() }
     }
   }
 
@@ -86,10 +78,5 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         withJavaSampleCodeAsset("src/main/java", parent.groupId)
       }
     }
-  }
-
-  companion object {
-    @JvmField
-    val MAVEN = MavenUtil.SYSTEM_ID.readableName
   }
 }

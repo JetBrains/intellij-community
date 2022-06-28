@@ -30,7 +30,7 @@ class EditorTabPainterAdapter : TabPainterAdapter {
       paintBorders(g2d, label, tabs)
     }
     else {
-      if (ExperimentalUI.isNewEditorTabs() && isHovered) {
+      if (ExperimentalUI.isNewUI() && isHovered) {
         rect.height -= 1
       }
       painter.paintTab(tabs.position, g2d, rect, tabs.borderThickness, info.tabColor, tabs.isActiveTabs(info), isHovered)

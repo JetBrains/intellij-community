@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.DEFAULT_GRADLE_PLUGIN_REPOSITORY
 import org.jetbrains.kotlin.idea.configuration.LAST_SNAPSHOT_VERSION
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
-import org.jetbrains.kotlin.idea.util.isSnapshot
 import org.jetbrains.kotlin.idea.versions.*
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider
@@ -78,11 +78,11 @@ abstract class GradleKotlinFrameworkSupportProvider(
         module: Module,
         sdk: Sdk?,
         specifyPluginVersionIfNeeded: Boolean,
-        explicitPluginVersion: String? = null
+        explicitPluginVersion: IdeKotlinVersion? = null
     ) {
-        var kotlinVersion = explicitPluginVersion ?: KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort
+        var kotlinVersion = explicitPluginVersion ?: KotlinPluginLayout.instance.standaloneCompilerVersion
         val additionalRepository = getRepositoryForVersion(kotlinVersion)
-        if (isSnapshot(kotlinVersion)) {
+        if (kotlinVersion.isSnapshot) {
             kotlinVersion = LAST_SNAPSHOT_VERSION
         }
 
@@ -103,7 +103,7 @@ abstract class GradleKotlinFrameworkSupportProvider(
             }
 
             buildScriptData.addPluginDefinitionInPluginsGroup(
-                getPluginExpression() + if (specifyPluginVersionIfNeeded) " version '$kotlinVersion'" else ""
+                getPluginExpression() + if (specifyPluginVersionIfNeeded) " version '${kotlinVersion.artifactVersion}'" else ""
             )
         } else {
             if (additionalRepository != null) {
@@ -117,7 +117,7 @@ abstract class GradleKotlinFrameworkSupportProvider(
             buildScriptData
                 .addPluginDefinition(KotlinWithGradleConfigurator.getGroovyApplyPluginDirective(getPluginId()))
                 .addBuildscriptRepositoriesDefinition("mavenCentral()")
-                .addBuildscriptPropertyDefinition("ext.kotlin_version = '$kotlinVersion'")
+                .addBuildscriptPropertyDefinition("ext.kotlin_version = '${kotlinVersion.artifactVersion}'")
         }
 
         buildScriptData.addRepositoriesDefinition("mavenCentral()")
@@ -176,14 +176,16 @@ open class GradleKotlinJavaFrameworkSupportProvider(
     override fun getPluginId() = KotlinGradleModuleConfigurator.KOTLIN
     override fun getPluginExpression() = "id 'org.jetbrains.kotlin.jvm'"
 
-    override fun getDependencies(sdk: Sdk?) = listOf(getStdlibArtifactId(sdk, KotlinPluginLayout.instance.standaloneCompilerVersion))
+    override fun getDependencies(sdk: Sdk?): List<String> {
+        return listOf(getStdlibArtifactId(sdk, KotlinPluginLayout.instance.standaloneCompilerVersion))
+    }
 
     override fun addSupport(
         buildScriptData: BuildScriptDataBuilder,
         module: Module,
         sdk: Sdk?,
         specifyPluginVersionIfNeeded: Boolean,
-        explicitPluginVersion: String?
+        explicitPluginVersion: IdeKotlinVersion?
     ) {
         super.addSupport(buildScriptData, module, sdk, specifyPluginVersionIfNeeded, explicitPluginVersion)
         val jvmTarget = getDefaultJvmTarget(sdk, KotlinPluginLayout.instance.standaloneCompilerVersion)
@@ -209,7 +211,7 @@ abstract class GradleKotlinJSFrameworkSupportProvider(
         module: Module,
         sdk: Sdk?,
         specifyPluginVersionIfNeeded: Boolean,
-        explicitPluginVersion: String?
+        explicitPluginVersion: IdeKotlinVersion?
     ) {
         super.addSupport(buildScriptData, module, sdk, specifyPluginVersionIfNeeded, explicitPluginVersion)
 
@@ -267,7 +269,7 @@ open class GradleKotlinJSBrowserFrameworkSupportProvider(
         module: Module,
         sdk: Sdk?,
         specifyPluginVersionIfNeeded: Boolean,
-        explicitPluginVersion: String?
+        explicitPluginVersion: IdeKotlinVersion?
     ) {
         super.addSupport(buildScriptData, module, sdk, specifyPluginVersionIfNeeded, explicitPluginVersion)
         addBrowserSupport(module)
@@ -311,7 +313,7 @@ open class GradleKotlinMPPSourceSetsFrameworkSupportProvider : GradleKotlinMPPFr
         module: Module,
         sdk: Sdk?,
         specifyPluginVersionIfNeeded: Boolean,
-        explicitPluginVersion: String?
+        explicitPluginVersion: IdeKotlinVersion?
     ) {
         super.addSupport(buildScriptData, module, sdk, specifyPluginVersionIfNeeded, explicitPluginVersion)
 

@@ -28,7 +28,7 @@ internal class StatisticsEventLogConsole(private val project: Project, model: Lo
       val groupIdToLine = ReadAction.compute<HashMap<String, Int>, Throwable> {
         computeLineNumbers(schemeFile)
       }
-      if (groupIdToLine != null && groupIdToLine.isNotEmpty()) {
+      if (!groupIdToLine.isNullOrEmpty()) {
         console?.addMessageFilter(StatisticsEventLogFilter(schemeFile, groupIdToLine))
       }
     }

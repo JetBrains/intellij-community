@@ -400,7 +400,7 @@ public class PyBlock implements ASTBlock {
     }
     else if (parentType == PyElementTypes.REFERENCE_EXPRESSION) {
       if (child != myNode.getFirstChildNode()) {
-        childIndent = Indent.getNoneIndent();
+        childIndent = Indent.getNormalIndent();
         if (hasLineBreaksBeforeInSameParent(child, 1)) {
           if (isInControlStatement()) {
             childIndent = Indent.getContinuationIndent();

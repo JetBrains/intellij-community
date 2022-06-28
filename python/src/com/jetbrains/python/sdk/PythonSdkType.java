@@ -113,11 +113,14 @@ public final class PythonSdkType extends SdkType {
 
   /**
    * @return name of builtins skeleton file; for Python 2.x it is '{@code __builtins__.py}'.
+   * @deprecated use com.jetbrains.python.sdk.PySdkUtil#getBuiltinsFileName(com.intellij.openapi.projectRoots.Sdk) instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   @NonNls
   public static String getBuiltinsFileName(@NotNull Sdk sdk) {
-    return PyBuiltinCache.getBuiltinsFileName(getLanguageLevelForSdk(sdk));
+    return PySdkUtil.getBuiltinsFileName(sdk);
   }
 
   @Override
@@ -590,15 +593,14 @@ public final class PythonSdkType extends SdkType {
     return null;
   }
 
+  /**
+   * @deprecated use {@link PySdkUtil#getLanguageLevelForSdk(com.intellij.openapi.projectRoots.Sdk)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public static LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
-    if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
-      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
-      if (flavor != null) {
-        return flavor.getLanguageLevel(sdk);
-      }
-    }
-    return LanguageLevel.getDefault();
+    return PySdkUtil.getLanguageLevelForSdk(sdk);
   }
 
   @Nullable

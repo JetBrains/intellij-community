@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerHandler
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerHandler.Companion.determinePhasePath
 import org.jetbrains.kotlin.idea.perf.profilers.doOrThrow
-import org.jetbrains.kotlin.idea.perf.util.logMessage
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.lang.management.ManagementFactory

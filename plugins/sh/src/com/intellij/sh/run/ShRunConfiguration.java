@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
@@ -73,7 +74,7 @@ public final class ShRunConfiguration extends LocatableConfigurationBase impleme
       }
       if (StringUtil.isNotEmpty(myInterpreterPath) || !new File(myScriptPath).canExecute()) {
         // WSL can be used as an interpreter
-        if (myInterpreterPath.endsWith("sh") && getWSLDistributionIfNeeded() != null) return;
+        if (myInterpreterPath.endsWith("sh") && getWSLDistributionIfNeeded(myInterpreterPath, myScriptPath) != null) return;
         if (!FileUtil.exists(myInterpreterPath)) {
           throw new RuntimeConfigurationError(message("sh.run.interpreter.not.found"));
         }
@@ -236,23 +237,18 @@ public final class ShRunConfiguration extends LocatableConfigurationBase impleme
     myInterpreterOptions = interpreterOptions.trim();
   }
 
-  private static WSLDistribution getWSLDistributionIfNeeded() {
-    return getWSLDistributionIfNeeded(null, null);
-  }
-
   public static WSLDistribution getWSLDistributionIfNeeded(@Nullable String interpreterPath, @Nullable @NlsSafe String scriptPath) {
-    if (!Experiments.getInstance().isFeatureEnabled("com.intellij.sh.run.with.wsl")) {
-      return null;
+    if (!WSLUtil.isSystemCompatible()) return null;
+    if (EnvironmentUtil.getValue("SHELL") != null) return null;
+    if (scriptPath != null && (scriptPath.endsWith("cmd") || scriptPath.endsWith("bat"))) return null;
+    if (interpreterPath != null) {
+      String path = toSystemDependentName(interpreterPath);
+      if (path.startsWith(WslConstants.UNC_PREFIX)) return ContainerUtil.getFirstItem(WSLUtil.getAvailableDistributions());
     }
-
-    if (interpreterPath != null && new File(interpreterPath).canExecute()
-        || scriptPath != null && (scriptPath.endsWith("cmd") || scriptPath.endsWith("bat"))) {
-      return null;
+    if (scriptPath != null) {
+      String path = toSystemDependentName(scriptPath);
+      if (path.startsWith(WslConstants.UNC_PREFIX)) return ContainerUtil.getFirstItem(WSLUtil.getAvailableDistributions());
     }
-    if (EnvironmentUtil.getValue("SHELL") != null) {
-      return null;
-    }
-
-    return ContainerUtil.getFirstItem(WSLUtil.getAvailableDistributions());
+    return null;
   }
 }

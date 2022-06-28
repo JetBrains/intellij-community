@@ -297,20 +297,21 @@ public final class PsiTestUtil {
   public static void addLibrary(@NotNull Disposable parent, @NotNull Module module, String libName, @NotNull String libPath, String @NotNull ... jarArr) {
     Ref<Library> ref = new Ref<>();
     ModuleRootModificationUtil.updateModel(module, model -> ref.set(addLibrary(model, libName, libPath, jarArr)));
-    Disposer.register(parent, () -> {
-      Library library = ref.get();
-      ModuleRootModificationUtil.updateModel(module, model -> {
-        LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
-        if (entry != null) {
-          model.removeOrderEntry(entry);
-        }
-      });
-      WriteCommandAction.runWriteCommandAction(null, ()-> {
-        LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
-        LibraryTable.ModifiableModel model = table.getModifiableModel();
-        model.removeLibrary(library);
-        model.commit();
-      });
+    Disposer.register(parent, () -> removeLibrary(module, ref.get()));
+  }
+
+  public static void removeLibrary(@NotNull Module module, @NotNull Library library) {
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
+      if (entry != null) {
+        model.removeOrderEntry(entry);
+      }
+    });
+    WriteCommandAction.runWriteCommandAction(null, ()-> {
+      LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
+      LibraryTable.ModifiableModel model = table.getModifiableModel();
+      model.removeLibrary(library);
+      model.commit();
     });
   }
 

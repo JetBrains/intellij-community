@@ -2,17 +2,14 @@
 
 package org.jetbrains.kotlin.idea.core.quickfix;
 
-import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.descriptors.CallableDescriptor;
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor;
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
-import org.jetbrains.kotlin.diagnostics.Diagnostic;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers;
 import org.jetbrains.kotlin.name.FqName;
@@ -20,8 +17,6 @@ import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.renderer.DescriptorRenderer;
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
-import org.jetbrains.kotlin.resolve.calls.util.CallUtilKt;
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
 import org.jetbrains.kotlin.types.DeferredType;
 import org.jetbrains.kotlin.types.KotlinType;
@@ -31,20 +26,11 @@ public class QuickFixUtil {
     private QuickFixUtil() {
     }
 
-    public static boolean removePossiblyWhiteSpace(ASTDelegatePsiElement element, PsiElement possiblyWhiteSpace) {
-        if (possiblyWhiteSpace instanceof PsiWhiteSpace) {
-            element.deleteChildInternal(possiblyWhiteSpace.getNode());
-            return true;
-        }
-        return false;
-    }
-
+    /**
+     * @deprecated Avoid using unsafe resolution methods and unwrapping 'DeferredType's.
+     */
     @Nullable
-    public static <T extends PsiElement> T getParentElementOfType(Diagnostic diagnostic, Class<T> aClass) {
-        return PsiTreeUtil.getParentOfType(diagnostic.getPsiElement(), aClass, false);
-    }
-
-    @Nullable
+    @Deprecated
     public static KotlinType getDeclarationReturnType(KtNamedDeclaration declaration) {
         PsiFile file = declaration.getContainingFile();
         if (!(file instanceof KtFile)) return null;
@@ -80,15 +66,6 @@ public class QuickFixUtil {
         //do not create fix if descriptor has more than one overridden declaration
         if (descriptor == null || descriptor.getOverriddenDescriptors().size() > 1) return null;
         return DescriptorToSourceUtils.descriptorToDeclaration(descriptor);
-    }
-
-    @Nullable
-    public static KtParameter getParameterDeclarationForValueArgument(
-            @NotNull ResolvedCall<?> resolvedCall,
-            @Nullable ValueArgument valueArgument
-    ) {
-        PsiElement declaration = safeGetDeclaration(CallUtilKt.getParameterForArgument(resolvedCall, valueArgument));
-        return declaration instanceof KtParameter ? (KtParameter) declaration : null;
     }
 
     private static boolean equalOrLastInBlock(KtExpression block, KtExpression expression) {

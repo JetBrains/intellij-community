@@ -95,7 +95,7 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
                 )
             }
 
-            if (targets != null && targets.isNotEmpty()) {
+            if (!targets.isNullOrEmpty()) {
                 for (target in targets) {
                     if (!isWithJavaEnabled(target)) {
                         continue

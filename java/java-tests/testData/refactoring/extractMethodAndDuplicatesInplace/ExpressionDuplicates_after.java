@@ -6,7 +6,7 @@ public class Test {
     }
 
     @NotNull
-    private String getR(String p) {
+    private static String getR(String p) {
         return p.toLowerCase();
     }
 

@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 @RunFirst
@@ -101,7 +102,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     }
   }
 
-  private static void joinWithTimeout(Future<?>... threads) throws TimeoutException {
+  private static void joinWithTimeout(Future<?> @NotNull ... threads) throws TimeoutException {
     for (Future<?> thread : threads) {
       try {
         thread.get(20, TimeUnit.SECONDS);
@@ -115,12 +116,12 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       }
     }
   }
-  private static void waitWithTimeout(List<? extends Job<?>> threads) throws TimeoutException {
+  private static void waitWithTimeout(@NotNull List<? extends Job<?>> threads) throws TimeoutException {
     for (Job<?> thread : threads) {
       try {
         thread.waitForCompletion(20_000);
       }
-      catch (ExecutionException | InterruptedException e) {
+      catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
       if (!thread.isDone()) {
@@ -673,5 +674,72 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   public void testWriteCommandActionMustThrowRelevantException() {
     assertThrows(IOException.class, () -> WriteCommandAction.runWriteCommandAction(getProject(),
                                           (ThrowableComputable<ThrowableRunnable<?>, IOException>)() -> { throw new IOException("aaaah"); }));
+  }
+
+  public void testMustNotAllowStartingWriteActionFromWithinWriteActionListener() {
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      AtomicInteger nestingCount = new AtomicInteger();
+      ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
+      application.addApplicationListener(new ApplicationListener() {
+        @Override
+        public void beforeWriteActionStart(@NotNull Object action) {
+          nestingCount.incrementAndGet();
+          assertTrue(application.isWriteThread());
+          assertEquals(nestingCount.get() > 1, application.isWriteAccessAllowed());
+          assertTrue(application.isWriteActionPending());
+          assertThrows(IllegalStateException.class,()->application.runWriteAction(() -> {}));
+        }
+
+        @Override
+        public void writeActionStarted(@NotNull Object action) {
+          assertTrue(application.isWriteThread());
+          assertTrue(application.isWriteActionInProgress());
+          assertTrue(application.isWriteAccessAllowed());
+          assertFalse(application.isWriteActionPending());
+          // jury is still out on whether we should allow starting write action from here
+          //assertThrows(IllegalStateException.class,()->application.runWriteAction(() -> {}));
+        }
+
+        @Override
+        public void writeActionFinished(@NotNull Object action) {
+          assertTrue(application.isWriteThread());
+          assertTrue(application.isWriteAccessAllowed());
+          assertTrue(application.isWriteActionInProgress());
+          assertFalse(application.isWriteActionPending());
+          if (nestingCount.get() < 2) {
+            // strange to allow it but this is how reformat works
+            application.runWriteAction(() -> { });
+          }
+        }
+
+        @Override
+        public void afterWriteActionFinished(@NotNull Object action) {
+          assertTrue(application.isWriteThread());
+          assertFalse(application.isWriteAccessAllowed());
+          assertFalse(application.isWriteActionInProgress());
+          assertFalse(application.isWriteActionPending());
+          if (nestingCount.get() < 2) {
+            // strange to allow it but this is how a lot of code is
+            application.runWriteAction(() -> { });
+          }
+        }
+      }, disposable);
+      application.runWriteAction(() -> {
+        assertTrue(application.isWriteThread());
+        assertTrue(application.isWriteAccessAllowed());
+        assertFalse(application.isWriteActionPending());
+        if (nestingCount.get() < 2) {
+          application.runWriteAction(() -> {
+            assertTrue(application.isWriteThread());
+            assertTrue(application.isWriteAccessAllowed());
+            assertFalse(application.isWriteActionPending());
+          });
+        }
+      });
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
   }
 }

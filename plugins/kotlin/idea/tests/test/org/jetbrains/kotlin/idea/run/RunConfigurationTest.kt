@@ -22,9 +22,9 @@ import org.jdom.Element
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.checkers.languageVersionSettingsFromText
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.project.withLanguageVersionSettings
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration.Companion.findMainClassFile
 import org.jetbrains.kotlin.idea.search.allScope
@@ -52,8 +52,8 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
         configureProject()
         val configuredModule = defaultConfiguredModule
 
-        val languageVersion = LanguageVersionSettingsImpl.DEFAULT.languageVersion
-        withCustomLanguageAndApiVersion(project, module, languageVersion.versionString, apiVersion = null) {
+        val languageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+        withCustomLanguageAndApiVersion(project, module, languageVersion, apiVersion = null) {
             val runConfiguration = createConfigurationFromMain(project, "some.main")
             val javaParameters = getJavaRunParameters(runConfiguration)
 
@@ -80,10 +80,26 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                             }
                         }
                     )
+                    val foundMainCandidates = functionCandidates?.isNotEmpty() ?: false
                     TestCase.assertTrue(
                         "function candidates expected to be found for $file",
-                        functionCandidates?.isNotEmpty() ?: false
+                        foundMainCandidates
                     )
+
+                    val foundMainFileContainer = EntryPointContainerFinder.find(ktFile)
+
+                    if (functionCandidates?.any { it.isMainFunction(languageVersionSettings) } == true) {
+                        assertNotNull(
+                            "$file: Kotlin configuration producer should produce configuration for $file",
+                            foundMainFileContainer
+                        )
+                    } else {
+                        assertNull(
+                            "$file: Kotlin configuration producer shouldn't produce configuration for $file",
+                            foundMainFileContainer
+                        )
+                    }
+
                 }
             }
         }
@@ -158,7 +174,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
 
         val runConfiguration = createConfigurationFromObject("renameTest.Foo")
 
-        val obj = KotlinFullClassNameIndex.getInstance().get("renameTest.Foo", project, project.allScope()).single()
+        val obj = KotlinFullClassNameIndex.get("renameTest.Foo", project, project.allScope()).single()
         val rename = RefactoringFactory.getInstance(project).createRename(obj, "Bar")
         rename.run()
 
@@ -231,12 +247,15 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
     }
 
     private fun createConfigurationFromObject(@Suppress("SameParameterValue") objectFqn: String): KotlinRunConfiguration {
-        val obj = KotlinFullClassNameIndex.getInstance().get(objectFqn, project, project.allScope()).single()
+        val obj = KotlinFullClassNameIndex.get(objectFqn, project, project.allScope()).single()
         val mainFunction = obj.declarations.single { it is KtFunction && it.getName() == "main" }
         return createConfigurationFromElement(mainFunction, true) as KotlinRunConfiguration
     }
 
     companion object {
+        fun KtNamedFunction.isMainFunction(languageSettings: LanguageVersionSettings) =
+            MainFunctionDetector(languageSettings) { it.resolveToDescriptorIfAny() }.isMain(this)
+
         private fun functionVisitor(fileLanguageSettings: LanguageVersionSettings, function: KtNamedFunction): List<KtNamedFunction> {
             val project = function.project
             val file = function.containingKtFile
@@ -254,11 +273,8 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                 val assertIsMain = "yes" in options
                 val assertIsNotMain = "no" in options
 
-                fun isMainFunction(f: KtNamedFunction) =
-                    MainFunctionDetector(fileLanguageSettings) { it.resolveToDescriptorIfAny() }.isMain(f)
-
-                val isMainFunction = isMainFunction(function)
-                val functionCandidatesAreMain = functionCandidates.map(::isMainFunction)
+                val isMainFunction = function.isMainFunction(fileLanguageSettings)
+                val functionCandidatesAreMain = functionCandidates.map { it.isMainFunction(fileLanguageSettings) }
                 val anyFunctionCandidatesAreMain = functionCandidatesAreMain.any { it }
                 val allFunctionCandidatesAreNotMain = functionCandidatesAreMain.none { it }
 
@@ -303,7 +319,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
 
                     assertNotNull(
                         "$file: Kotlin configuration producer should produce configuration for ${function.fqName?.asString()}",
-                        foundMainContainer,
+                        foundMainContainer
                     )
                 } else {
                     try {
@@ -327,17 +343,18 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     }
                 }
             }
+
             return functionCandidates
         }
 
         private fun createConfigurationFromMain(project: Project, mainFqn: String): KotlinRunConfiguration {
             val scope = project.allScope()
             val mainFunction =
-                KotlinTopLevelFunctionFqnNameIndex.getInstance().get(mainFqn, project, scope).firstOrNull()
+                KotlinTopLevelFunctionFqnNameIndex.get(mainFqn, project, scope).firstOrNull()
                     ?: run {
                         val className = StringUtil.getPackageName(mainFqn)
                         val shortName = StringUtil.getShortName(mainFqn)
-                        KotlinFullClassNameIndex.getInstance().get(className, project, scope)
+                        KotlinFullClassNameIndex.get(className, project, scope)
                             .flatMap { it.declarations }
                             .filterIsInstance<KtNamedFunction>()
                             .firstOrNull { it.name == shortName }

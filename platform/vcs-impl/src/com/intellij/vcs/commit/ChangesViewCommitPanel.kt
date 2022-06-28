@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangesViewManager.isEditorPreview
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
@@ -197,7 +198,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
 
   private fun closeEditorPreviewIfEmpty() {
     val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
-    if (!ChangesViewManager.isEditorPreview(project)) return
+    if (!isEditorPreview(project)) return
 
     refreshData()
     changesViewManager.closeEditorPreview(true)

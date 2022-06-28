@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class BreakpointManager
@@ -167,6 +167,9 @@ public class BreakpointManager {
     }
     else if (ExceptionBreakpoint.CATEGORY.toString().equals(category.toString())) {
       typeCls = JavaExceptionBreakpointType.class;
+    }
+    else if (CollectionBreakpoint.CATEGORY.toString().equals(category.toString())) {
+      typeCls = JavaCollectionBreakpointType.class;
     }
     if (typeCls != null) {
       XBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
@@ -423,6 +426,9 @@ public class BreakpointManager {
     }
     else if (category.equals(ExceptionBreakpoint.CATEGORY.toString())) {
       xBreakpoint = createXBreakpoint(JavaExceptionBreakpointType.class);
+    }
+    else if (category.equals(CollectionBreakpoint.CATEGORY.toString())) {
+      xBreakpoint = createXBreakpoint(JavaCollectionBreakpointType.class);
     }
     if (xBreakpoint == null) {
       throw new IllegalStateException("Unknown breakpoint category " + category);

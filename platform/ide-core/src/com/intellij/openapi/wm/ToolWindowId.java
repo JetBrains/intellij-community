@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 public interface ToolWindowId {
@@ -31,7 +31,6 @@ public interface ToolWindowId {
   String TASKS = "Time Tracking";
   String DATABASE_VIEW = "Database";
   String PREVIEW = "Preview";
-  String RUN_DASHBOARD = "Run Dashboard";
   String SERVICES = "Services";
   String ENDPOINTS = "Endpoints";
 }

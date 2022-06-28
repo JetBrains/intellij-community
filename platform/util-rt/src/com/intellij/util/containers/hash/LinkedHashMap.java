@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers.hash;
 
 
@@ -224,6 +210,11 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     return top != null ? top.value : null;
   }
 
+  @Nullable
+  public K getFirstKey() {
+    return back != null ? back.key :  null;
+  }
+
   private void moveToTop(final Entry<K, V> e) {
     if (!accessOrder) {
       return;
@@ -295,14 +286,17 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
       this.value = value;
     }
 
+    @Override
     public K getKey() {
       return key;
     }
 
+    @Override
     public V getValue() {
       return value;
     }
 
+    @Override
     public V setValue(final V value) {
       final V result = this.value;
       this.value = value;
@@ -315,10 +309,12 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     private LinkedHashMap.Entry<K, V> e = back;
     private LinkedHashMap.Entry<K, V> last;
 
+    @Override
     public boolean hasNext() {
       return e != null;
     }
 
+    @Override
     public void remove() {
       if (last == null) {
         throw new IllegalStateException();
@@ -340,6 +336,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     @Override
     public Iterator<Map.Entry<K, V>> iterator() {
       return new LinkedHashIterator<Map.Entry<K, V>>() {
+        @Override
         public Map.Entry<K, V> next() {
           return nextEntry();
         }
@@ -382,6 +379,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     @Override
     public Iterator<K> iterator() {
       return new LinkedHashIterator<K>() {
+        @Override
         public K next() {
           return nextEntry().key;
         }
@@ -415,6 +413,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     @Override
     public Iterator<V> iterator() {
       return new LinkedHashIterator<V>() {
+        @Override
         public V next() {
           return nextEntry().value;
         }

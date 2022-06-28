@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
@@ -12,7 +13,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.AbstractButton
+import javax.swing.JCheckBox
 import kotlin.reflect.KMutableProperty0
+import com.intellij.openapi.observable.util.whenStateChangedFromUi as whenStateChangedFromUiImpl
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
@@ -50,4 +53,9 @@ val Cell<AbstractButton>.selected
 
 private fun <T : AbstractButton> Cell<T>.bindSelected(prop: MutableProperty<Boolean>): Cell<T> {
   return bind(AbstractButton::isSelected, AbstractButton::setSelected, prop)
+}
+
+@ApiStatus.Experimental
+fun <T : JCheckBox> Cell<T>.whenStateChangedFromUi(parentDisposable: Disposable? = null, listener: (Boolean) -> Unit): Cell<T> {
+  return applyToComponent { whenStateChangedFromUiImpl(parentDisposable, listener) }
 }

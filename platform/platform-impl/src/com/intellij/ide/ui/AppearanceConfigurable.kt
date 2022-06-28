@@ -243,7 +243,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield({ checkBox(cdUseCompactTreeIndents) })
           yield({ checkBox(cdEnableMenuMnemonics) })
           yield({ checkBox(cdEnableControlsMnemonics) })
-          if (SystemInfo.isWindows && ExperimentalUI.isNewToolbar()) {
+          if (SystemInfo.isWindows && ExperimentalUI.isNewUI()) {
             yield({ checkBox(cdSeparateMainMenu) })
           }
         }
@@ -420,7 +420,7 @@ private fun Row.fontSizeComboBox(prop: MutableProperty<String?>): Cell<ComboBox<
 }
 
 private fun getIntValue(text: String?, defaultValue: Int): Int {
-  if (text != null && text.isNotBlank()) {
+  if (!text.isNullOrBlank()) {
     val value = text.toIntOrNull()
     if (value != null && value > 0) return value
   }
@@ -428,7 +428,7 @@ private fun getIntValue(text: String?, defaultValue: Int): Int {
 }
 
 private fun getFloatValue(text: String?, defaultValue: Float): Float {
-  if (text != null && text.isNotBlank()) {
+  if (!text.isNullOrBlank()) {
     val value = text.toFloatOrNull()
     if (value != null && value > 0) return value
   }

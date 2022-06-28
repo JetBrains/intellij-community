@@ -1,4 +1,5 @@
 from . import client, connection, exceptions, sentinel, utils
+from .cluster import RedisCluster as RedisCluster
 
 __all__ = [
     "AuthenticationError",

@@ -62,7 +62,7 @@ public class EmptySynchronizedStatementInspection extends BaseInspection {
       if (!ControlFlowUtils.isEmptyCodeBlock(body)) {
         return;
       }
-      registerStatementError(statement);
+      registerError(statement.getFirstChild());
     }
   }
 }

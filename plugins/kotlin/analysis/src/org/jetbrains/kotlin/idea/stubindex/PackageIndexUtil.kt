@@ -3,62 +3,65 @@
 package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
-import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 
 object PackageIndexUtil {
-    fun getKotlinSubPackageFqNames(
-        packageFqName: FqName,
-        scope: GlobalSearchScope,
-        project: Project,
-        targetPlatform: TargetPlatform,
-        nameFilter: (Name) -> Boolean
-    ) = sequence {
-        if (targetPlatform.isJvm()) {
-            val javaPackage = JavaPsiFacade.getInstance(project).findPackage(packageFqName.asString())
-            if (javaPackage != null) {
-                for (psiPackage in javaPackage.getSubPackages(scope)) {
-                    val fqName = psiPackage.getKotlinFqName() ?: continue
-                    if (nameFilter(fqName.shortName())) {
-                        yield(fqName)
-                    }
-                }
-            }
-        }
-    }
-
-    @JvmStatic
     fun getSubPackageFqNames(
         packageFqName: FqName,
         scope: GlobalSearchScope,
-        project: Project,
         nameFilter: (Name) -> Boolean
-    ): Collection<FqName> = SubpackagesIndexService.getInstance(project).getSubpackages(packageFqName, scope, nameFilter)
+    ): Collection<FqName> = getSubpackages(packageFqName, scope, nameFilter)
 
-    @JvmStatic
     fun findFilesWithExactPackage(
         packageFqName: FqName,
         searchScope: GlobalSearchScope,
         project: Project
-    ): Collection<KtFile> = KotlinExactPackagesIndex.getInstance().get(packageFqName.asString(), project, searchScope)
+    ): Collection<KtFile> = KotlinExactPackagesIndex.get(packageFqName.asString(), project, searchScope)
 
-    @JvmStatic
+    /**
+     * Return true if exists package with exact [fqName] OR there are some subpackages of [fqName]
+     */
+    fun packageExists(fqName: FqName, project: Project): Boolean =
+        packageExists(fqName, GlobalSearchScope.allScope(project))
+
+    /**
+     * Return true if package [packageFqName] exists or some subpackages of [packageFqName] exist in [searchScope]
+     */
     fun packageExists(
         packageFqName: FqName,
-        searchScope: GlobalSearchScope,
-        project: Project
-    ): Boolean = SubpackagesIndexService.getInstance(project).packageExists(packageFqName, searchScope)
+        searchScope: GlobalSearchScope
+    ): Boolean = !FileBasedIndex.getInstance().processValues(
+        KotlinPartialPackageNamesIndex.KEY,
+        packageFqName,
+        null,
+        FileBasedIndex.ValueProcessor { _, _ -> false },
+        searchScope
+    )
 
-    @JvmStatic
-    fun containsFilesWithPartialPackage(partialFqName: FqName, searchScope: GlobalSearchScope): Boolean =
-        KotlinPartialPackageNamesIndex.hasSomethingInPackage(partialFqName, searchScope)
+    /**
+     * Return all direct subpackages of package [fqName].
+     *
+     * I.e. if there are packages `a.b`, `a.b.c`, `a.c`, `a.c.b` for `fqName` = `a` it returns
+     * `a.b` and `a.c`
+     *
+     * Follow the contract of [com.intellij.psi.PsiElementFinder#getSubPackages]
+     */
+    fun getSubpackages(fqName: FqName, scope: GlobalSearchScope, nameFilter: (Name) -> Boolean): Collection<FqName> {
+        val result = hashSetOf<FqName>()
 
+        FileBasedIndex.getInstance().processValues(KotlinPartialPackageNamesIndex.KEY, fqName, null,
+                                                   FileBasedIndex.ValueProcessor { _, subPackageName ->
+                                                       if (subPackageName != null && nameFilter(subPackageName)) {
+                                                           result.add(fqName.child(subPackageName))
+                                                       }
+                                                       true
+                                                   }, scope)
+
+        return result
+    }
 }

@@ -21,6 +21,7 @@ fun runJava(mainClass: String,
             args: Iterable<String>,
             jvmArgs: Iterable<String>,
             classPath: Iterable<String>,
+            javaExe: Path,
             logger: Logger = System.getLogger(mainClass),
             timeoutMillis: Long = Timeout.DEFAULT,
             workingDir: Path? = null) {
@@ -37,7 +38,7 @@ fun runJava(mainClass: String,
     .use { span ->
       try {
         val classPathStringBuilder = createClassPathFile(classPath, classpathFile)
-        val processArgs = createProcessArgs(jvmArgs = jvmArgs, classpathFile = classpathFile, mainClass = mainClass, args = args)
+        val processArgs = createProcessArgs(javaExe = javaExe, jvmArgs = jvmArgs, classpathFile = classpathFile, mainClass = mainClass, args = args)
         span.setAttribute(AttributeKey.stringArrayKey("processArgs"), processArgs)
         val process = ProcessBuilder(processArgs).directory(workingDir?.toFile()).start()
 
@@ -81,6 +82,7 @@ internal fun runJavaWithOutputToFile(mainClass: String,
                                      args: Iterable<String>,
                                      jvmArgs: Iterable<String>,
                                      classPath: Iterable<String>,
+                                     javaExe: Path,
                                      timeoutMillis: Long = Timeout.DEFAULT,
                                      outputFile: Path,
                                      workingDir: Path? = null) {
@@ -99,7 +101,7 @@ internal fun runJavaWithOutputToFile(mainClass: String,
     .use { span ->
       try {
         createClassPathFile(classPath, classpathFile)
-        val processArgs = createProcessArgs(jvmArgs = jvmArgs, classpathFile = classpathFile, mainClass = mainClass, args = args)
+        val processArgs = createProcessArgs(javaExe = javaExe, jvmArgs = jvmArgs, classpathFile = classpathFile, mainClass = mainClass, args = args)
         span.setAttribute(AttributeKey.stringArrayKey("processArgs"), processArgs)
         val process = ProcessBuilder(processArgs)
           .directory(workingDir?.toFile())
@@ -108,7 +110,7 @@ internal fun runJavaWithOutputToFile(mainClass: String,
           .start()
 
         fun javaRunFailed(reason: String) {
-          val message = "Cannot execute $mainClass, see details in ${outputFile.fileName} (args=$args, vmOptions=$jvmArgs): $reason"
+          val message = "Cannot execute $mainClass, see details in ${outputFile.fileName} (published to TeamCity build artifacts) (args=$args, vmOptions=$jvmArgs): $reason"
           span.setStatus(StatusCode.ERROR, message)
           if (Files.exists(outputFile)) {
             span.setAttribute("processOutput", Files.readString(outputFile))
@@ -132,13 +134,14 @@ internal fun runJavaWithOutputToFile(mainClass: String,
     }
 }
 
-private fun createProcessArgs(jvmArgs: Iterable<String>,
+private fun createProcessArgs(javaExe: Path,
+                              jvmArgs: Iterable<String>,
                               classpathFile: Path?,
                               mainClass: String,
                               args: Iterable<String>): MutableList<String> {
   val processArgs = mutableListOf<String>()
   // FIXME: enforce JBR
-  processArgs.add(ProcessHandle.current().info().command().orElseThrow())
+  processArgs.add(javaExe.toString())
   @Suppress("SpellCheckingInspection")
   processArgs.add("-Djava.awt.headless=true")
   processArgs.add("-Dapple.awt.UIElement=true")
@@ -163,25 +166,31 @@ private fun createClassPathFile(classPath: Iterable<String>, classpathFile: Path
 
 @JvmOverloads
 fun runProcess(vararg args: String, workingDir: Path? = null,
-               logger: Logger = System.getLogger(args.joinToString(separator = " ")),
+               logger: Logger? = null,
                timeoutMillis: Long = Timeout.DEFAULT) {
   runProcess(args.toList(), workingDir, logger, timeoutMillis)
 }
 
 @JvmOverloads
-fun runProcess(args: List<String>, workingDir: Path? = null,
-               logger: Logger = System.getLogger(args.joinToString(separator = " ")),
-               timeoutMillis: Long = Timeout.DEFAULT) {
+fun runProcess(args: List<String>,
+               workingDir: Path? = null,
+               logger: Logger? = null,
+               timeoutMillis: Long = Timeout.DEFAULT,
+               additionalEnvVariables: Map<String, String> = emptyMap()) {
   tracer.spanBuilder("runProcess")
     .setAttribute(AttributeKey.stringArrayKey("args"), args)
     .setAttribute("timeoutMillis", timeoutMillis)
     .startSpan()
     .use {
       val timeout = Timeout(timeoutMillis)
-      val process = ProcessBuilder(args).directory(workingDir?.toFile()).start()
-      val errorReader = readErrorOutput(process, timeout, logger)
+      val process = ProcessBuilder(args)
+        .directory(workingDir?.toFile())
+        .also { builder -> additionalEnvVariables.entries.forEach { (k, v) -> builder.environment()[k] = v } }
+        .let { if (logger == null) it.inheritIO() else it }
+        .start()
+      val errorReader = logger?.let { readErrorOutput(process, timeout, it) }
       try {
-        readOutputAndBlock(process, timeout, logger)
+        if (logger != null) readOutputAndBlock(process, timeout, logger)
 
         if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
           process.destroyForcibly().waitFor()
@@ -194,7 +203,7 @@ fun runProcess(args: List<String>, workingDir: Path? = null,
         }
       }
       finally {
-        errorReader.join()
+        errorReader?.join()
       }
     }
 }

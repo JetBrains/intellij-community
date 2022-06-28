@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -713,7 +713,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (typeElement.isInferredType()) {
       // replace inferred type with explicit type if possible
       final PsiType type = typeElement.getType();
-      if (type == PsiType.NULL || type instanceof PsiLambdaParameterType) {
+      if (type == PsiType.NULL || type instanceof PsiLambdaParameterType || type instanceof PsiLambdaExpressionType) {
         return typeElement;
       }
       final String canonicalText = type.getCanonicalText();
@@ -938,22 +938,24 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     return index == -1 ? result : result.substring(0, index);
   }
 
-  private boolean matchWithinHierarchy(@NotNull PsiElement patternElement, PsiElement matchElement, SubstitutionHandler handler) {
-    patternElement = StructuralSearchUtil.getParentIfIdentifier(patternElement);
+  private boolean matchWithinHierarchy(@Nullable PsiElement patternElement, PsiElement matchElement, SubstitutionHandler handler) {
     boolean includeInterfaces = true;
     boolean includeClasses = true;
-    final PsiElement patternParent = patternElement.getParent();
+    if (patternElement != null) {
+      patternElement = StructuralSearchUtil.getParentIfIdentifier(patternElement);
+      final PsiElement patternParent = patternElement.getParent();
 
-    if (patternParent instanceof PsiReferenceList) {
-      final PsiElement patternGrandParent = patternParent.getParent();
+      if (patternParent instanceof PsiReferenceList) {
+        final PsiElement patternGrandParent = patternParent.getParent();
 
-      if (patternGrandParent instanceof PsiClass) {
-        final PsiClass psiClass = (PsiClass)patternGrandParent;
-        if (patternParent == psiClass.getExtendsList()) {
-          includeInterfaces = psiClass.isInterface();
-        }
-        else if (patternParent == psiClass.getImplementsList()) {
-          includeClasses = false;
+        if (patternGrandParent instanceof PsiClass) {
+          final PsiClass psiClass = (PsiClass)patternGrandParent;
+          if (patternParent == psiClass.getExtendsList()) {
+            includeInterfaces = psiClass.isInterface();
+          }
+          else if (patternParent == psiClass.getImplementsList()) {
+            includeClasses = false;
+          }
         }
       }
     }
@@ -1004,7 +1006,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final PsiTypeElement typeElement1 = var.getTypeElement();
       if (typeElement1 != null) {
         PsiTypeElement typeElement2 = other.getTypeElement();
-        if (typeElement2 == null) { // e.g. lambda parameter without explicit type
+        if (typeElement2 == null) { // e.g., lambda parameter without explicit type
           typeElement2 = JavaPsiFacade.getElementFactory(other.getProject()).createTypeElement(other.getType());
           final MatchingHandler matchingHandler = context.getPattern().getHandler(typeElement1);
           if (matchingHandler instanceof SubstitutionHandler) {
@@ -1074,7 +1076,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     return true;
   }
 
-  private static boolean matchImplicitQualifier(@NotNull PsiExpression qualifier, @NotNull PsiElement reference, @NotNull MatchContext context) {
+  private boolean matchImplicitQualifier(@NotNull PsiExpression qualifier, @NotNull PsiElement reference, @NotNull MatchContext context) {
     final PsiElement target = reference instanceof PsiMethodCallExpression
                               ? ((PsiMethodCallExpression)reference).resolveMethod()
                               : ((PsiReference)reference).resolve();
@@ -1082,17 +1084,22 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       return !((PsiMember)target).hasModifierProperty(PsiModifier.STATIC) &&
              (target instanceof PsiField || target instanceof PsiMethod);
     }
-    final MatchingHandler matchingHandler = context.getPattern().getHandler(qualifier);
-    if (!(matchingHandler instanceof SubstitutionHandler)) {
+    final SubstitutionHandler handler = ObjectUtils.tryCast(context.getPattern().getHandler(qualifier), SubstitutionHandler.class);
+    if (handler == null) {
       return false;
     }
-    final SubstitutionHandler substitutionHandler = (SubstitutionHandler)matchingHandler;
     if (target instanceof PsiModifierListOwner && ((PsiModifierListOwner)target).hasModifierProperty(PsiModifier.STATIC)) {
-      return substitutionHandler.validate(PsiTreeUtil.getParentOfType(target, PsiClass.class), context);
-    } else {
+      final PsiClass containingClass = target instanceof PsiMember
+                                       ? PsiTreeUtil.getParentOfType(target, PsiClass.class)
+                                       : ((PsiMember)target).getContainingClass();
+      return handler.isSubtype() || handler.isStrictSubtype()
+             ? matchWithinHierarchy(null, containingClass, handler)
+             : handler.validate(containingClass, context);
+    }
+    else {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(reference.getProject());
       final PsiExpression implicitReference = factory.createExpressionFromText("this", reference);
-      return substitutionHandler.validate(implicitReference, context);
+      return handler.validate(implicitReference, context);
     }
   }
 
@@ -1195,14 +1202,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final Object value1 = expression.getValue();
       final Object value2 = other.getValue();
       if ((value1 instanceof String || value1 instanceof Character) && (value2 instanceof String || value2 instanceof Character)) {
-        String patternValue = value1.toString();
-        if (!patternValue.isEmpty() && patternValue.equals(patternValue.trim())) {
-          myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(patternValue),
-                                                                  StructuralSearchUtil.normalize(value2.toString())));
-        }
-        else {
-          myMatchingVisitor.setResult(myMatchingVisitor.matchText(patternValue, value2.toString()));
-        }
+        myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(value1.toString()),
+                                                                StructuralSearchUtil.normalize(value2.toString())));
       }
       else if (value1 != null && value2 != null) {
         myMatchingVisitor.setResult(value1.equals(value2));
@@ -1743,7 +1744,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   private boolean matchAnnotations(@NotNull PsiElement pattern, PsiElement matched) {
-    // can't use PsiAnnotationOwner api because it is not implemented completely yet (see e.g. ClsTypeParameterImpl)
+    // can't use PsiAnnotationOwner api because it is not implemented completely yet (see e.g., ClsTypeParameterImpl)
     final PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(pattern, PsiAnnotation.class);
     if (annotations == null) {
       return true;

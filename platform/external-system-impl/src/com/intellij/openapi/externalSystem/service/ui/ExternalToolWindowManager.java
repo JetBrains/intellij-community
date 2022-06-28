@@ -39,6 +39,11 @@ final class ExternalToolWindowManager implements ExternalSystemSettingsListenerE
   public void onProjectsLinked(@NotNull Project project,
                                @NotNull ExternalSystemManager<?, ?, ?, ?, ?> manager,
                                @NotNull Collection<? extends ExternalProjectSettings> __) {
+    // https://youtrack.jetbrains.com/issue/IDEA-289729
+    if (project.isDefault()) {
+      return;
+    }
+
     StartupManager startupManager = StartupManager.getInstance(project);
     // show tool window, but only if linked after start-up
     boolean showToolWindow = startupManager.postStartupActivityPassed();

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -89,6 +90,12 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                        node,
                                        new ReplaceExceptPartQuickFix());
       }
+    }
+    PsiElement star = PyPsiUtils.getFirstChildOfType(node, PyTokenTypes.MULT);
+    if (star != null) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON311),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.starred.except.part"),
+                                     star);
     }
   }
 
@@ -354,10 +361,10 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyPrintStatement(node);
 
     final PsiElement[] arguments = node.getChildren();
-    final Predicate<PsiElement> nonParenthesesPredicate =
+    final Condition<PsiElement> nonParenthesesPredicate =
       element -> !(element instanceof PyParenthesizedExpression || element instanceof PyTupleExpression);
 
-    if (arguments.length == 0 || Arrays.stream(arguments).anyMatch(nonParenthesesPredicate)) {
+    if (arguments.length == 0 || ContainerUtil.exists(arguments, nonParenthesesPredicate)) {
       registerForAllMatchingVersions(level -> level.isPy3K() && registerForLanguageLevel(level),
                                      PyPsiBundle.message("INSP.compatibility.feature.support.print.statement"),
                                      node,

@@ -2,6 +2,8 @@ from _typeshed import SupportsWrite
 from email.message import Message
 from email.policy import Policy
 
+__all__ = ["Generator", "DecodedGenerator", "BytesGenerator"]
+
 class Generator:
     def clone(self, fp: SupportsWrite[str]) -> Generator: ...
     def write(self, s: str) -> None: ...

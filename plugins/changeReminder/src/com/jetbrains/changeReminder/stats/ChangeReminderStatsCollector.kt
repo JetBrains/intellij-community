@@ -1,73 +1,76 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.changeReminder.stats
 
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.changeReminder.predict.PredictionData
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.DISPLAYED_PREDICTION
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.EMPTY_REASON
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.GROUP
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.PREDICTION_FOR_FILES
 import java.util.*
+import kotlin.collections.ArrayList
 
-internal data class ChangeReminderAnonymousPath(val value: String)
-
-internal enum class ChangeReminderEventType {
-  CHANGELIST_CHANGED,
-  CHANGES_COMMITTED,
-  NODE_EXPANDED;
-
-  override fun toString() = name.toLowerCase(Locale.ENGLISH)
+internal fun Collection<VirtualFile>.anonymizeVirtualFileCollection(): List<String> = this.map {
+  EventLogConfiguration.getInstance().getOrCreate(GROUP.recorder).anonymize(it.path)
 }
 
-internal enum class ChangeReminderEventDataKey {
-  COMMITTED_FILES,
-  DISPLAYED_PREDICTION,
-  CUR_MODIFIED_FILES,
-  PREV_MODIFIED_FILES,
-  PREDICTION_FOR_FILES,
-  EMPTY_REASON;
-
-  override fun toString() = name.toLowerCase(Locale.ENGLISH)
+internal fun Collection<FilePath>.anonymizeFilePathCollection(): List<String> = this.map {
+  EventLogConfiguration.getInstance().getOrCreate(GROUP.recorder).anonymize(it.path)
 }
 
-internal fun VirtualFile.anonymize(): ChangeReminderAnonymousPath {
-  return ChangeReminderAnonymousPath(EventLogConfiguration.getInstance().anonymize(path))
-}
-
-internal fun FilePath.anonymize(): ChangeReminderAnonymousPath {
-  return ChangeReminderAnonymousPath(EventLogConfiguration.getInstance().anonymize(path))
-}
-
-internal fun Collection<VirtualFile>.anonymizeVirtualFileCollection(): Collection<ChangeReminderAnonymousPath> = this.map { it.anonymize() }
-
-internal fun Collection<FilePath>.anonymizeFilePathCollection(): Collection<ChangeReminderAnonymousPath> = this.map { it.anonymize() }
-
-internal fun FeatureUsageData.addPredictionData(predictionData: PredictionData) {
+internal fun getPredictionData(predictionData: PredictionData): List<EventPair<*>> {
+  val data = ArrayList<EventPair<*>>()
   when (predictionData) {
     is PredictionData.Prediction -> {
-      addChangeReminderLogData(
-        ChangeReminderEventDataKey.DISPLAYED_PREDICTION,
-        predictionData.predictionToDisplay.anonymizeVirtualFileCollection()
-      )
-      addChangeReminderLogData(
-        ChangeReminderEventDataKey.PREDICTION_FOR_FILES,
-        predictionData.requestedFiles.anonymizeFilePathCollection()
-      )
+      data.add(DISPLAYED_PREDICTION.with(predictionData.predictionToDisplay.anonymizeVirtualFileCollection()))
+      data.add(PREDICTION_FOR_FILES.with(predictionData.requestedFiles.anonymizeFilePathCollection()))
     }
     is PredictionData.EmptyPrediction -> {
-      addData(ChangeReminderEventDataKey.EMPTY_REASON.toString(), predictionData.reason.toString())
+      data.add(EMPTY_REASON.with(predictionData.reason))
     }
   }
+  return data
 }
 
-internal fun FeatureUsageData.addChangeReminderLogData(key: ChangeReminderEventDataKey, value: Collection<ChangeReminderAnonymousPath>) {
-  addData(key.toString(), value.map { it.value })
-}
+class ChangeReminderStatsCollector : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
 
-internal fun logEvent(project: Project, event: ChangeReminderUserEvent) {
-  val logData = FeatureUsageData()
-  event.addToLogData(logData)
+  companion object {
+    internal val GROUP = EventLogGroup("vcs.change.reminder", 3)
+    internal val COMMITTED_FILES = EventFields.StringListValidatedByRegexp("committed_files", "hash")
+    internal val DISPLAYED_PREDICTION = EventFields.StringListValidatedByRegexp("displayed_prediction", "hash")
+    internal val CUR_MODIFIED_FILES = EventFields.StringListValidatedByRegexp("cur_modified_files", "hash")
+    internal val PREV_MODIFIED_FILES = EventFields.StringListValidatedByRegexp("prev_modified_files", "hash")
+    internal val PREDICTION_FOR_FILES = EventFields.StringListValidatedByRegexp("prediction_for_files", "hash")
+    internal val EMPTY_REASON = EventFields.Enum<PredictionData.EmptyPredictionReason>("empty_reason") {
+      it.name.lowercase(Locale.ENGLISH)
+    }
 
-  FUCounterUsageLogger.getInstance().logEvent(project, "vcs.change.reminder", event.eventType.toString(), logData)
+    internal val CHANGELIST_CHANGED = GROUP.registerVarargEvent("changelist_changed",
+                                                                PREV_MODIFIED_FILES,
+                                                                DISPLAYED_PREDICTION,
+                                                                PREDICTION_FOR_FILES,
+                                                                EMPTY_REASON,
+                                                                CUR_MODIFIED_FILES)
+
+    internal val CHANGES_COMMITTED = GROUP.registerVarargEvent("changes_committed",
+                                                               CUR_MODIFIED_FILES,
+                                                               COMMITTED_FILES,
+                                                               DISPLAYED_PREDICTION,
+                                                               PREDICTION_FOR_FILES,
+                                                               EMPTY_REASON)
+
+    internal val NODE_EXPANDED = GROUP.registerVarargEvent("node_expanded",
+                                                           DISPLAYED_PREDICTION,
+                                                           PREDICTION_FOR_FILES,
+                                                           EMPTY_REASON)
+
+  }
 }

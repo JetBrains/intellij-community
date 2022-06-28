@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.smart
 
@@ -24,7 +24,7 @@ object LambdaSignatureItems {
         collection: MutableCollection<LookupElement>,
         position: KtExpression,
         bindingContext: BindingContext,
-        resolutionFacade: ResolutionFacade
+        resolutionFacade: ResolutionFacade,
     ) {
         val block = position.parent as? KtBlockExpression ?: return
         if (position != block.statements.first()) return
@@ -36,6 +36,7 @@ object LambdaSignatureItems {
             .mapNotNull { it.fuzzyType?.type }
             .filter { it.isFunctionOrSuspendFunctionType }
             .toSet()
+
         for (functionType in expectedFunctionTypes) {
             if (functionType.getValueParameterTypesFromFunctionType().isEmpty()) continue
 
@@ -44,7 +45,7 @@ object LambdaSignatureItems {
                     createLookupElement(
                         functionType,
                         LambdaSignatureTemplates.SignaturePresentation.NAMES_OR_TYPES,
-                        explicitParameterTypes = true
+                        explicitParameterTypes = true,
                     )
                 )
             } else {
@@ -52,14 +53,15 @@ object LambdaSignatureItems {
                     createLookupElement(
                         functionType,
                         LambdaSignatureTemplates.SignaturePresentation.NAMES,
-                        explicitParameterTypes = false
+                        explicitParameterTypes = false,
                     )
                 )
+
                 collection.add(
                     createLookupElement(
                         functionType,
                         LambdaSignatureTemplates.SignaturePresentation.NAMES_AND_TYPES,
-                        explicitParameterTypes = true
+                        explicitParameterTypes = true,
                     )
                 )
             }
@@ -69,24 +71,22 @@ object LambdaSignatureItems {
     private fun createLookupElement(
         functionType: KotlinType,
         signaturePresentation: LambdaSignatureTemplates.SignaturePresentation,
-        explicitParameterTypes: Boolean
+        explicitParameterTypes: Boolean,
     ): LookupElement {
         val lookupString = LambdaSignatureTemplates.signaturePresentation(functionType, signaturePresentation)
         val priority = if (explicitParameterTypes)
             SmartCompletionItemPriority.LAMBDA_SIGNATURE_EXPLICIT_PARAMETER_TYPES
         else
             SmartCompletionItemPriority.LAMBDA_SIGNATURE
+
         return LookupElementBuilder.create(lookupString)
             .withInsertHandler { context, _ ->
-                val offset = context.startOffset
-                val placeholder = "{}"
-                context.document.replaceString(offset, context.tailOffset, placeholder)
                 LambdaSignatureTemplates.insertTemplate(
                     context,
-                    TextRange(offset, offset + placeholder.length),
+                    TextRange(context.startOffset, context.tailOffset),
                     functionType,
                     explicitParameterTypes,
-                    signatureOnly = true
+                    signatureOnly = true,
                 )
             }
             .suppressAutoInsertion()

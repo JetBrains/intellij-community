@@ -242,6 +242,7 @@ public final class GitLogUtil {
 
   /**
    * Sends hashes to process's stdin (without closing it on Windows).
+   *
    * @see GitHandlerInputProcessorUtil#writeLines(Collection, String, Charset, boolean)
    */
   public static void sendHashesToStdin(@NotNull Collection<String> hashes, @NotNull GitHandler handler) {

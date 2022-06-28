@@ -44,7 +44,7 @@ open class GHOpenInBrowserActionGroup
 
   override fun update(e: AnActionEvent) {
     val data = getData(e.dataContext)
-    e.presentation.isEnabledAndVisible = data != null && data.isNotEmpty()
+    e.presentation.isEnabledAndVisible = !data.isNullOrEmpty()
     e.presentation.isPerformGroup = data?.size == 1
     e.presentation.isPopupGroup = true
   }

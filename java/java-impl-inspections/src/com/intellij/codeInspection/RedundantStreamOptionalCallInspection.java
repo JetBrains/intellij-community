@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -119,7 +119,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
               !isIdentityMapping(qualifierCall.getArgumentList().getExpressions()[0], false)) {
             String message = JavaBundle.message("inspection.redundant.stream.optional.call.message", name) +
                              ": " + JavaBundle.message("inspection.redundant.stream.optional.call.explanation.map.flatMap");
-            holder.registerProblem(call, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, getRange(call),
+            holder.registerProblem(call, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getRange(call),
                                    new RemoveCallFix(name, "flatMap"));
           }
         }
@@ -237,7 +237,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
         String message = explanation != null
                          ? JavaBundle.message("inspection.redundant.stream.optional.call.message.with.explanation", methodName, explanation)
                          : JavaBundle.message("inspection.redundant.stream.optional.call.message", methodName);
-        holder.registerProblem(call, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, getRange(call),
+        holder.registerProblem(call, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getRange(call),
                                ArrayUtil.prepend(new RemoveCallFix(methodName), additionalFixes));
       }
     };

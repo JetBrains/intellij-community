@@ -22,6 +22,9 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
 import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.error.*
+import org.jetbrains.kotlin.types.typeUtil.isUnresolvedType
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.ArrayList
 
@@ -107,13 +110,13 @@ class HintsTypeRenderer private constructor(override val options: HintsDescripto
     }
 
     private fun SimpleType.renderSimpleTypeTo(list: MutableList<InlayInfoDetail>) {
-        if (this == TypeUtils.CANT_INFER_FUNCTION_PARAM_TYPE || TypeUtils.isDontCarePlaceholder(this)) {
+        if (this == TypeUtils.CANNOT_INFER_FUNCTION_PARAM_TYPE || TypeUtils.isDontCarePlaceholder(this)) {
             list.append("???")
             return
         }
-        if (ErrorUtils.isUninferredParameter(this)) {
+        if (ErrorUtils.isUninferredTypeVariable(this)) {
             if (options.uninferredTypeParameterAsName) {
-                list.append(renderError((this.constructor as ErrorUtils.UninferredParameterTypeConstructor).typeParameterDescriptor.name.toString()))
+                list.append(renderError((this.constructor as ErrorTypeConstructor).getParam(0)))
             } else {
                 list.append("???")
             }
@@ -143,11 +146,11 @@ class HintsTypeRenderer private constructor(override val options: HintsDescripto
         renderAnnotationsTo(list)
 
         if (this.isError) {
-            if (this is UnresolvedType && options.presentableUnresolvedTypes) {
-                list.append(this.presentableName)
+            if (isUnresolvedType(this) && options.presentableUnresolvedTypes) {
+                list.append(this.debugMessage)
             } else {
                 if (this is ErrorType && !options.informativeErrorType) {
-                    list.append(this.presentableName)
+                    list.append(this.debugMessage)
                 } else {
                     list.append(this.constructor.toString()) // Debug name of an error type is more informative
                 }

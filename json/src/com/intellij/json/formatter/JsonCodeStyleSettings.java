@@ -35,9 +35,10 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
   @MagicConstant(flags = {
     CommonCodeStyleSettings.DO_NOT_WRAP,
     CommonCodeStyleSettings.WRAP_ALWAYS,
-    CommonCodeStyleSettings.WRAP_AS_NEEDED, 
+    CommonCodeStyleSettings.WRAP_AS_NEEDED,
     CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
   })
+  @CommonCodeStyleSettings.WrapConstant
   public int OBJECT_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
   
   // This was default policy for array elements wrapping in JavaScript's JSON.
@@ -48,6 +49,7 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
     CommonCodeStyleSettings.WRAP_AS_NEEDED, 
     CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
   })
+  @CommonCodeStyleSettings.WrapConstant
   public int ARRAY_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
 
   public JsonCodeStyleSettings(CodeStyleSettings container) {

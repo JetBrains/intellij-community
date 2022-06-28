@@ -12,17 +12,21 @@ import com.intellij.psi.codeStyle.PackageEntryTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
-public class EclipseCodeStylePropertiesImporter extends EclipseFormatterOptionsHandler {
+public class EclipseCodeStylePropertiesImporter implements EclipseFormatterOptions {
 
   public void importProperties(@NotNull Properties eclipseProperties, @NotNull CodeStyleSettings settings) throws SchemeImportException {
+    Map<String, String> eclipseStringPropsMap = new HashMap<>();
     for (String key : eclipseProperties.stringPropertyNames()) {
       String value = eclipseProperties.getProperty(key);
       if (value != null) {
-        setCodeStyleOption(settings, key, value);
+        eclipseStringPropsMap.put(key, value);
       }
     }
+    EclipseCodeStyleSchemeImporter.importCodeStyleSettings(eclipseStringPropsMap, settings);
   }
 
   public void importOptimizeImportsSettings(@NotNull Properties uiPreferences, @NotNull CodeStyleSettings settings) {

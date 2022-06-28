@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl.navigation
 
 import com.intellij.navigation.areOriginsEqual
@@ -7,8 +7,11 @@ import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.createOrLoadProject
+import com.intellij.testFramework.use
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -47,7 +50,7 @@ class JBNavigateCommandTest: NavigationTestBase() {
     assertThat(currentElement.name).isEqualTo("A.java")
   }
 
-  @Test fun pathOpenProject() = runBlocking {
+  @Test fun pathOpenProject(): Unit = runBlocking {
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
       withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
         setUpProject(project)

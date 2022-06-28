@@ -1,6 +1,7 @@
 <html>
 <body>
 Reports fields in <code>LocalQuickFix</code> implementations that prevent intention preview action from functioning properly.
+Additionally, excessive <code>@SafeFieldForPreview</code> annotations are reported on fields whose types are known to be safe.
 <p>
   Intention preview is an IntelliJ platform feature that displays how quick-fix or intention action
   will change the current file when applied. To implement this, <code>LocalQuickFix.generatePreview()</code>
@@ -17,7 +18,8 @@ Reports fields in <code>LocalQuickFix</code> implementations that prevent intent
 <ol>
   <li>
     If the field does not actually store any PSI reference, or that PSI is used only for reading,
-    you may annotate the field with <code>@SafeFieldForPreview</code>
+    you may annotate the field with <code>@SafeFieldForPreview</code>. You can also use
+    <code>@SafeTypeForPreview</code> if the field type can never store any writable PSI reference.
   </li>
   <li>
     You may override <code>getFileModifierForPreview()</code> method and create a copy of the quick-fix

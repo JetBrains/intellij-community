@@ -12,6 +12,7 @@ import training.learn.CourseManager
 import training.learn.lesson.LessonListener
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
+import training.statistic.LearningInternalProblems
 import training.statistic.LessonStartingWay
 import training.util.LessonEndInfo
 import training.util.filterUnseenLessons
@@ -67,9 +68,13 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
     lessonListeners.forEach { it.lessonStarted(this, way) }
   }
 
-  internal fun onStop(project: Project, lessonPassed: Boolean, currentTaskIndex: Int, currentVisualIndex: Int) {
+  internal fun onStop(project: Project,
+                      lessonPassed: Boolean,
+                      currentTaskIndex: Int,
+                      currentVisualIndex: Int,
+                      internalProblems: Set<LearningInternalProblems>) {
     lessonListeners.forEach { it.lessonStopped(this) }
-    onLessonEnd(project, LessonEndInfo(lessonPassed, currentTaskIndex, currentVisualIndex))
+    onLessonEnd(project, LessonEndInfo(lessonPassed, currentTaskIndex, currentVisualIndex, internalProblems))
   }
 
   internal fun pass() {

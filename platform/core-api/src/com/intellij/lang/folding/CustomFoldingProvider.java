@@ -12,8 +12,6 @@ import java.util.List;
 
 /**
  * Base class and extension point for custom folding providers.
- *
- * @author Rustam Vishnyakov
  */
 public abstract class CustomFoldingProvider {
   public static final ExtensionPointName<CustomFoldingProvider> EP_NAME = ExtensionPointName.create("com.intellij.customFoldingProvider");

@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiFile
 import icons.GradleIcons
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradle.configuration.GradleVersionProviderImpl
 import org.jetbrains.kotlin.idea.extensions.gradle.*
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
@@ -34,12 +35,12 @@ object KotlinGradleFacadeImpl : KotlinGradleFacade {
         return GradleProjectSettings.isDelegatedBuildEnabled(module)
     }
 
-    override fun findKotlinPluginVersion(node: DataNode<ModuleData>): String? {
+    override fun findKotlinPluginVersion(node: DataNode<ModuleData>): IdeKotlinVersion? {
         val buildScriptClasspathData = node.findAll(BuildScriptClasspathData.KEY).firstOrNull()?.data ?: return null
         return findKotlinPluginVersion(buildScriptClasspathData)
     }
 
-    fun findKotlinPluginVersion(classpathData: BuildScriptClasspathData): String? {
+    fun findKotlinPluginVersion(classpathData: BuildScriptClasspathData): IdeKotlinVersion? {
         for (classPathEntry in classpathData.classpathEntries.asReversed()) {
             for (path in classPathEntry.classesFile) {
                 val uniformedPath = path.replace('\\', '/')
@@ -47,13 +48,13 @@ object KotlinGradleFacadeImpl : KotlinGradleFacade {
                 if (uniformedPath.contains(KOTLIN_PLUGIN_PATH_MARKER)) {
                     val versionSubstring = uniformedPath.substringAfter(KOTLIN_PLUGIN_PATH_MARKER).substringBefore('/', "<error>")
                     if (versionSubstring != "<error>") {
-                        return versionSubstring
+                        return IdeKotlinVersion.opt(versionSubstring)
                     }
                 } else if (uniformedPath.contains(KOTLIN_PLUGIN_PATH_MARKER_FOR_MAVEN_LOCAL_REPO)) {
                     val versionSubstring =
                         uniformedPath.substringAfter(KOTLIN_PLUGIN_PATH_MARKER_FOR_MAVEN_LOCAL_REPO).substringBefore('/', "<error>")
                     if (versionSubstring != "<error>") {
-                        return versionSubstring
+                        return IdeKotlinVersion.opt(versionSubstring)
                     }
                 }
             }

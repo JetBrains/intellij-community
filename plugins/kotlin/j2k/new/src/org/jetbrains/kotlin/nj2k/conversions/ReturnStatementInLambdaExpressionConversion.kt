@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.asStatement
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.types.JKClassType
 
 
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -30,19 +31,20 @@ class ReturnStatementInLambdaExpressionConversion(context : NewJ2kConverterConte
             }
         }
         val parentMethodName = element.parent?.parent?.parent.safeAs<JKCallExpression>()?.identifier?.name
-        if (parentMethodName == null) {
-            val atLeastOneReturnStatementExists = applyLabelToAllReturnStatements(statement, element, DEFAULT_LABEL_NAME)
-            return if (atLeastOneReturnStatementExists) {
-                JKLabeledExpression(
-                    recurse(element.copyTreeAndDetach()).asStatement(),
-                    listOf(JKNameIdentifier(DEFAULT_LABEL_NAME))
-                )
-            } else recurse(element)
+        val samTypeName = element.functionalType.type.safeAs<JKClassType>()?.classReference?.name
+        val implicitLabel = parentMethodName ?: samTypeName
+        if (implicitLabel != null) {
+            applyLabelToAllReturnStatements(statement, element, implicitLabel)
+            return recurse(element)
         }
-        applyLabelToAllReturnStatements(statement, element, parentMethodName)
-        return recurse(element)
+        val atLeastOneReturnStatementExists = applyLabelToAllReturnStatements(statement, element, DEFAULT_LABEL_NAME)
+        return if (atLeastOneReturnStatementExists) {
+            JKLabeledExpression(
+                recurse(element.copyTreeAndDetach()).asStatement(),
+                listOf(JKNameIdentifier(DEFAULT_LABEL_NAME))
+            )
+        } else recurse(element)
     }
-
 
     private fun applyLabelToAllReturnStatements(
         statement: JKStatement,

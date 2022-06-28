@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
@@ -54,11 +55,13 @@ interface UastCommentLogTestBase : UastPluginSelection, UastFileComparisonTestBa
                 }
             }
 
+            private val UElement.nameIfAvailable: String
+                get() = (javaPsi as? PsiNamedElement)?.name?.takeIf { it.isNotBlank() } ?: "<no name provided>"
 
             override fun visitElement(node: UElement): Boolean {
                 if (node is UDeclaration || node is UFile) {
                     printIndent()
-                    appendLine("${node::class.java.simpleName}(")
+                    appendLine("${node::class.java.simpleName}:${node.nameIfAvailable}(")
                     level++
                     if (node is KotlinUElementWithComments) renderComments(node.comments)
                 }

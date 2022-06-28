@@ -16,7 +16,6 @@
 
 package org.jetbrains.idea.maven.model;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -25,10 +24,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Objects;
 
 public class MavenArtifact implements Serializable, MavenCoordinate {
 
-  static long serialVersionUID = 6389627095309274357L;
+  static final long serialVersionUID = 6389627095309274357L;
 
   public static final String MAVEN_LIB_PREFIX = "Maven: ";
 
@@ -48,15 +48,11 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
   private final boolean myResolved;
   private final boolean myStubbed;
 
+  private transient volatile boolean myFileUnresolved;
   private transient volatile String myLibraryNameCache;
-
   private transient volatile long myLastFileCheckTimeStamp; // File.exists() is a slow operation, don't run it more than once a second
-  private static final Condition<File> ourDefaultFileExists = new Condition<File>() {
-    @Override
-    public boolean value(File f) {
-      return f.exists();
-    }
-  };
+
+  private static final Condition<File> ourDefaultFileExists = File::exists;
 
   public MavenArtifact(String groupId,
                        String artifactId,
@@ -239,7 +235,7 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
   public String getPathForExtraArtifact(@Nullable String extraArtifactClassifier, @Nullable String customExtension) {
     String path = getPath();
 
-    if (extraArtifactClassifier == null && customExtension == null && Comparing.equal(myVersion, myBaseVersion)) {
+    if (extraArtifactClassifier == null && customExtension == null && Objects.equals(myVersion, myBaseVersion)) {
       return path;
     }
 
@@ -344,6 +340,14 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     return getLibraryName().substring(MAVEN_LIB_PREFIX.length());
   }
 
+  public boolean isFileUnresolved() {
+    return myFileUnresolved;
+  }
+
+  public void setFileUnresolved(boolean fileUnresolved) {
+    myFileUnresolved = fileUnresolved;
+  }
+
   public static boolean isMavenLibrary(@Nullable String libraryName) {
     return libraryName != null && libraryName.startsWith(MAVEN_LIB_PREFIX);
   }
@@ -360,17 +364,15 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
 
     MavenArtifact that = (MavenArtifact)o;
 
-    if (myGroupId != null ? !myGroupId.equals(that.myGroupId) : that.myGroupId != null) return false;
-    if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
-    if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
-    if (myBaseVersion != null ? !myBaseVersion.equals(that.myBaseVersion) : that.myBaseVersion != null) return false;
-    if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
-    if (myClassifier != null ? !myClassifier.equals(that.myClassifier) : that.myClassifier != null) return false;
-    if (myScope != null ? !myScope.equals(that.myScope) : that.myScope != null) return false;
-    if (myExtension != null ? !myExtension.equals(that.myExtension) : that.myExtension != null) return false;
-    if (myFile != null ? !myFile.equals(that.myFile) : that.myFile != null) return false;
-
-    return true;
+    return Objects.equals(myGroupId, that.myGroupId) &&
+           Objects.equals(myArtifactId, that.myArtifactId) &&
+           Objects.equals(myVersion, that.myVersion) &&
+           Objects.equals(myBaseVersion, that.myBaseVersion) &&
+           Objects.equals(myType, that.myType) &&
+           Objects.equals(myClassifier, that.myClassifier) &&
+           Objects.equals(myScope, that.myScope) &&
+           Objects.equals(myExtension, that.myExtension) &&
+           Objects.equals(myFile, that.myFile);
   }
 
   @Override

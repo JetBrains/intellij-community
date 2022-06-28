@@ -3,7 +3,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputData;
@@ -17,7 +16,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, Input, Object> {
+final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, Input, Void> {
   private final ReadWriteLock myLock = new ReentrantReadWriteLock();
   private final IndexExtension<Key, Value, Input> myExtension;
 
@@ -41,16 +40,12 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   }
 
   @Override
-  public @NotNull Object instantiateFileData() {
-    return ObjectUtils.NULL;
+  public Void getFileIndexMetaData(@NotNull IndexedFile file) {
+    return null;
   }
 
   @Override
-  public void writeData(@NotNull Object data, @NotNull IndexedFile file) {
-  }
-
-  @Override
-  public void setIndexedStateForFileOnCachedData(int fileId, @NotNull Object data) {
+  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void data) {
   }
 
   @Override

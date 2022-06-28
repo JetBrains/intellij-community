@@ -1,19 +1,13 @@
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.module.Module;
 import com.intellij.util.PairConsumer;
 import org.jdom.Element;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectChanges;
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class can not be moved to org.jetbrains.idea.maven.plugins.groovy package because it's used from 'Eclipse Groovy Compiler Plugin'
@@ -21,22 +15,6 @@ import java.util.Map;
 public abstract class GroovyImporter extends MavenImporter {
   public GroovyImporter(String pluginGroupID, String pluginArtifactID) {
     super(pluginGroupID, pluginArtifactID);
-  }
-
-  @Override
-  public void preProcess(Module module,
-                         MavenProject mavenProject,
-                         MavenProjectChanges changes,
-                         IdeModifiableModelsProvider modifiableModelsProvider) {
-  }
-
-  @Override
-  public void process(IdeModifiableModelsProvider modifiableModelsProvider, Module module, MavenRootModelAdapter rootModel,
-                      MavenProjectsTree mavenModel,
-                      MavenProject mavenProject,
-                      MavenProjectChanges changes,
-                      Map<MavenProject, String> mavenProjectToModuleName,
-                      List<MavenProjectsProcessorTask> postTasks) {
   }
 
   @Override

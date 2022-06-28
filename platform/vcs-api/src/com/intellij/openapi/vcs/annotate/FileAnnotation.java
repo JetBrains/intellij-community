@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -98,8 +99,13 @@ public abstract class FileAnnotation {
   /**
    * This method is invoked when the file annotation is no longer used.
    * NB: method might be invoked multiple times
+   *
+   * @deprecated Historically ignored by users of {@link AnnotationProvider}.
+   * Implementations should not rely on this method to remove listeners, as it might cause memory leaks.
    */
-  public abstract void dispose();
+  @Deprecated
+  public void dispose() {
+  }
 
   /**
    * Get annotation aspects.

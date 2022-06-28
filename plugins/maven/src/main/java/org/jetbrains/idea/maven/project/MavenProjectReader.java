@@ -419,7 +419,7 @@ public final class MavenProjectReader {
       return connector.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Exception e) {
-      connector.shutdown(false);
+      MavenServerManager.getInstance().shutdownConnector(connector, false);
       return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString())
         .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
@@ -546,7 +546,8 @@ public final class MavenProjectReader {
             new MavenExplicitProfiles(projectData.activatedProfiles, explicitProfiles.getDisabledProfiles()),
             projectData.nativeMavenProject,
             result.problems,
-            result.unresolvedArtifacts));
+            result.unresolvedArtifacts,
+            result.unresolvedProblems));
         }
       }
 

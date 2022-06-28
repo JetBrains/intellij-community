@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfo
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.Version
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import org.intellij.lang.annotations.Language as InjectedLanguage
 
 @Suppress("FunctionName")
 object EventFields {
@@ -41,9 +43,20 @@ object EventFields {
    * @param customRuleId ruleId that is accepted by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule.acceptRuleId],
    * e.g "class_name" for "{util#class_name}"
    */
+  @kotlin.Deprecated("Please use EventFields.StringValidatedByCustomRule(String, Class<out CustomValidationRule>)",
+                     ReplaceWith("EventFields.StringValidatedByCustomRule(name, customValidationRule)"))
   @JvmStatic
   fun StringValidatedByCustomRule(@NonNls name: String, @NonNls customRuleId: String): StringEventField =
     StringEventField.ValidatedByCustomRule(name, customRuleId)
+
+  /**
+   * Creates a field that will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
+   * @param name  name of the field
+   * @param customValidationRule inheritor of [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule],
+   */
+  @JvmStatic
+  fun StringValidatedByCustomRule(@NonNls name: String, @NonNls customValidationRule: Class<out CustomValidationRule>): StringEventField =
+    StringEventField.ValidatedByCustomValidationRule(name, customValidationRule)
 
   /**
    * Creates a field that allows only a specific list of values
@@ -64,7 +77,7 @@ object EventFields {
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */
   @JvmStatic
-  fun RegexpInt(@NonNls name: String, @NonNls regexp: String): RegexpIntEventField =
+  fun RegexpInt(@NonNls name: String, @InjectedLanguage("RegExp") @NonNls regexp: String): RegexpIntEventField =
     RegexpIntEventField(name, regexp)
 
   /**
@@ -112,9 +125,20 @@ object EventFields {
    * @param customRuleId ruleId that is accepted by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule.acceptRuleId],
    * e.g "class_name" for "{util#class_name}"
    */
+  @kotlin.Deprecated("Please use EventFields.StringListValidatedByCustomRule(String, Class<out CustomValidationRule>)",
+                     ReplaceWith("EventFields.StringListValidatedByCustomRule(name, customValidationRule)"))
   @JvmStatic
   fun StringListValidatedByCustomRule(@NonNls name: String, @NonNls customRuleId: String): StringListEventField =
     StringListEventField.ValidatedByCustomRule(name, customRuleId)
+
+  /**
+   * Creates a field for a list, each element of which will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
+   * @param name  name of the field
+   * @param customValidationRule inheritor of [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
+   */
+  @JvmStatic
+  fun StringListValidatedByCustomRule(@NonNls name: String, @NonNls customValidationRule: Class<out CustomValidationRule>): StringListEventField =
+    StringListEventField.ValidatedByCustomValidationRule(name, customValidationRule)
 
   /**
    * Creates a field for a list, each element of which will be validated by global enum rule
@@ -146,18 +170,21 @@ object EventFields {
   @JvmStatic
   fun LongList(@NonNls name: String): LongListEventField = LongListEventField(name)
 
+  @JvmStatic
+  fun IntList(@NonNls name: String): IntListEventField = IntListEventField(name)
+
   /**
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */
   @JvmStatic
-  fun StringValidatedByInlineRegexp(@NonNls name: String, @NonNls regexp: String): StringEventField =
+  fun StringValidatedByInlineRegexp(@NonNls name: String, @InjectedLanguage("RegExp") @NonNls regexp: String): StringEventField =
     StringEventField.ValidatedByInlineRegexp(name, regexp)
 
   /**
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */
   @JvmStatic
-  fun StringListValidatedByInlineRegexp(@NonNls name: String, @NonNls regexp: String): StringListEventField =
+  fun StringListValidatedByInlineRegexp(@NonNls name: String, @InjectedLanguage("RegExp") @NonNls regexp: String): StringListEventField =
     StringListEventField.ValidatedByInlineRegexp(name, regexp)
 
   @JvmField
@@ -417,7 +444,7 @@ object EventFields {
   @JvmStatic
   fun createAdditionalDataField(groupId: String, eventId: String): ObjectEventField {
     val additionalFields = mutableListOf<EventField<*>>()
-    for (ext in FeatureUsageCollectorExtension.EP_NAME.extensions) {
+    for (ext in FeatureUsageCollectorExtension.EP_NAME.extensionsIfPointIsRegistered) {
       if (ext.groupId == groupId && ext.eventId == eventId) {
         for (field in ext.extensionFields) {
           if (field != null) {

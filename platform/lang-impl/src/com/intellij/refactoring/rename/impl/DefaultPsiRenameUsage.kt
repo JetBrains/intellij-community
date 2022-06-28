@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.find.usages.api.PsiUsage
@@ -13,7 +13,6 @@ internal class DefaultPsiRenameUsage(
 
   override fun createPointer(): Pointer<out DefaultPsiRenameUsage> = Pointer.delegatingPointer(
     psiUsage.createPointer(),
-    DefaultPsiRenameUsage::class.java,
     ::DefaultPsiRenameUsage
   )
 

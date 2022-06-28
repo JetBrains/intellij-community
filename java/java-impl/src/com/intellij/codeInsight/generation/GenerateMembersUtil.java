@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
@@ -380,11 +381,12 @@ public final class GenerateMembersUtil {
                                                           @NotNull PsiTypeParameter typeParameter,
                                                           @NotNull PsiSubstitutor substitutor,
                                                           @NotNull PsiMethod sourceMethod) {
-    final PsiElement copy = ObjectUtils.notNull(typeParameter instanceof PsiCompiledElement ? ((PsiCompiledElement)typeParameter).getMirror() : typeParameter, typeParameter).copy();
-    if (copy == null) {
+    if (typeParameter instanceof LightElement) {
       List<PsiClassType> substitutedSupers = ContainerUtil.map(typeParameter.getSuperTypes(), t -> ObjectUtils.notNull(toClassType(substitutor.substitute(t)), t));
       return factory.createTypeParameter(Objects.requireNonNull(typeParameter.getName()), substitutedSupers.toArray(PsiClassType.EMPTY_ARRAY));
     }
+    final PsiElement copy = ObjectUtils.notNull(typeParameter instanceof PsiCompiledElement ? ((PsiCompiledElement)typeParameter).getMirror() : typeParameter, typeParameter).copy();
+    LOG.assertTrue(copy != null, typeParameter);
     final Map<PsiElement, PsiElement> replacementMap = new HashMap<>();
     copy.accept(new JavaRecursiveElementVisitor() {
       @Override
@@ -764,13 +766,13 @@ public final class GenerateMembersUtil {
     String visibility = javaSettings.VISIBILITY;
 
     @PsiModifier.ModifierConstant String newVisibility;
+    final PsiClass containingClass = member.getContainingClass();
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) {
-      PsiClass aClass = member instanceof PsiClass ? (PsiClass)member : member.getContainingClass();
-      newVisibility = PsiUtil.getMaximumModifierForMember(aClass, false);
+      PsiClass aClass = member instanceof PsiClass ? (PsiClass)member : containingClass;
+      newVisibility = PsiUtil.getSuitableModifierForMember(aClass, prototype.isConstructor());
     }
     else {
-      //noinspection MagicConstant
-      newVisibility = visibility;
+      newVisibility = (containingClass != null && containingClass.isRecord()) ? PsiModifier.PUBLIC : visibility;
     }
     VisibilityUtil.setVisibility(prototype.getModifierList(), newVisibility);
 

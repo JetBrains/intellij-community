@@ -17,7 +17,6 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -78,7 +77,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends B
         return;
       }
       if (ImportUtils.isAlreadyStaticallyImported(reference)) {
-        registerError(Objects.requireNonNull(reference.getQualifier()), ProblemHighlightType.LIKE_UNUSED_SYMBOL, reference.resolve());
+        registerError(Objects.requireNonNull(reference.getQualifier()), reference.resolve());
       }
     }
   }

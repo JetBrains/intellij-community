@@ -197,4 +197,13 @@ interface UastResolveApiTestBase : UastPluginSelection {
             checkRetentionAndResolve(rebuiltAnnotation)
         }
     }
+
+    fun checkThreadSafe(uFilePath: String, uFile: UFile) {
+        val safeClass = uFile.classes.find { it.name == "SafeClass" }
+            ?: throw IllegalStateException("Target class not found at ${uFile.asRefNames()}")
+        val k_delegate = safeClass.fields.find { it.name == "k\$delegate" }
+            ?: throw IllegalStateException("Target field not found at ${safeClass.name}")
+        // Without retrieving delegate expression type, it would be just "Lazy" (w/o type argument).
+        TestCase.assertEquals("PsiType:Lazy<? extends SimpleSafeClass>", k_delegate.type.toString())
+    }
 }

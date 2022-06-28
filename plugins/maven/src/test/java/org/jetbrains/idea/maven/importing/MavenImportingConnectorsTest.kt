@@ -142,7 +142,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
       assertEquals(1, MavenServerManager.getInstance().allConnectors.size);
 
-      assertUnorderedElementsAreEqual(
+      assertContainsElements(
         MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
           FileUtil.getRelativePath(myDir, File(it))
         },

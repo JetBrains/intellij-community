@@ -3,3 +3,5 @@ class O
 class P
 
 val foo: O get() = if (true) O() else P()<caret>
+
+/* IGNORE_FIR */

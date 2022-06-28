@@ -67,6 +67,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testForIncrementExpressionAndBody() { doTest(); }
   public void testEmptyBeforeReturn() { doTest(); }
   public void testIf() { doTest(); }
+  public void testIfWithComment() { doTest(); }
   public void testIfWithoutParentheses() { doTest(); }
   public void testBeforeStatement() { doTest(); }
   public void testTry1() { doTest(); }
@@ -74,6 +75,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testBlock1() { doTest(); }
   public void testAfterFor() { doTest(); }
   public void testBeforeFor() { doTest(); }
+  public void testForSingleStatementInBody() { doTest(); }
+  public void testForEachSingleStatementInBody() { doTest(); }
   public void testAtBlockEnd() { doTest(); }
   public void testForceBlock() { doTest(); }
   public void testElseIf() { doTest(); }
@@ -81,6 +84,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testIncompleteElseIf() { doTest(); }
   public void testField() { doTest(); }
   public void testMethod() { doTest(); }
+  public void testLikelyField() { doTest(); }
+  public void testVoidMethodIncomplete() { doTest(); }
+  public void testFieldWithEquals() { doTest(); }
   public void testClass() { doTest(); }
   public void testInnerEnumBeforeMethod() { doTest(); }
   public void testInnerEnumBeforeMethodWithSpace() { doTest(); }

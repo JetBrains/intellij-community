@@ -3,7 +3,6 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
-import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.Disposable
@@ -50,24 +49,6 @@ class RunToolbarComponentService(val project: Project): Disposable {
               terminated(env)
             }
           }
-        }
-      })
-
-      extraSlots.addListener(object : ActiveListener {
-        override fun enabled() {
-          val environments = ExecutionManagerImpl.getAllDescriptors(project)
-            .mapNotNull { it.environment() }
-            .filter { it.contentToReuse?.processHandler?.isProcessTerminated == false }
-
-          if (RunToolbarProcess.logNeeded) LOG.info("ENABLED. put data ${environments.map { "$it (${it.executionId}); " }} RunToolbar")
-          environments.forEach {
-            extraSlots.processStarted(it)
-          }
-        }
-
-        override fun disabled() {
-          if (RunToolbarProcess.logNeeded) LOG.info("DISABLED RunToolbar")
-          super.disabled()
         }
       })
     }

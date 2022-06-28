@@ -15,3 +15,5 @@ fun test() {
     A()
     <caret>A(1)
 }
+
+// FIR_COMPARISON

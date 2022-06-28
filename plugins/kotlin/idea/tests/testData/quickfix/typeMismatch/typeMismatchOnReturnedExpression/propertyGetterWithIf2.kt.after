@@ -6,3 +6,5 @@ val foo: Any
     get() {
         return if (true) O() else P()
     }
+
+/* IGNORE_FIR */

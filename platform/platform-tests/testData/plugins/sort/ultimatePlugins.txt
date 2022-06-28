@@ -4,6 +4,7 @@
 + -org-jetbrains-plugins-textmate-
 + -org-jetbrains-plugins-terminal-
 + -org-jetbrains-plugins-go-template-
++ -org-jetbrains-plugins-clangConfig-
 + -org-editorconfig-editorconfigjetbrains-
 + -hg4idea-
 + -gherkin-

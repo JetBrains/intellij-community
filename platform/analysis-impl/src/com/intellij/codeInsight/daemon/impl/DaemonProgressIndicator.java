@@ -134,4 +134,10 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   final boolean isDisposed() {
     return myDisposed;
   }
+
+  @Override
+  public boolean isIndeterminate() {
+    // to avoid silly exceptions "this progress is indeterminate" on storing/restoring wrapper states in JobLauncher
+    return false;
+  }
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -27,13 +28,14 @@ public class PrepareFailedException extends Exception {
   private final PsiFile myContainingFile;
   private final TextRange myTextRange;
 
-  public PrepareFailedException(@NlsContexts.DialogMessage String message, PsiElement errorElement) {
+  public PrepareFailedException(@NotNull @NlsContexts.DialogMessage String message, @NotNull PsiElement errorElement) {
     super(message);
     myContainingFile = errorElement.getContainingFile();
     myTextRange = errorElement.getTextRange();
   }
 
   @Override
+  @NotNull
   public @NlsContexts.DialogMessage String getMessage() {
     //noinspection HardCodedStringLiteral
     return super.getMessage();

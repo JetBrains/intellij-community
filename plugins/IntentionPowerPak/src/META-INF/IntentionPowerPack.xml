@@ -168,12 +168,6 @@
     </intentionAction>
 
     <intentionAction>
-      <className>com.siyeh.ipp.comment.ReplaceWithJavadocIntention</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.comments</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.comment.MoveCommentToSeparateLineIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.comments</categoryKey>

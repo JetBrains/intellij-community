@@ -2,8 +2,10 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UExpression
 
+@ApiStatus.Internal
 interface KotlinEvaluatableUElement : UExpression {
     val baseResolveProviderService: BaseKotlinUastResolveProviderService
 

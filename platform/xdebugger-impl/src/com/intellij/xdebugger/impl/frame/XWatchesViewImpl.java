@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.icons.AllIcons;
@@ -71,6 +71,9 @@ import java.util.List;
 import java.util.*;
 
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
+  private static final JBColor EVALUATE_FIELD_BACKGROUND_COLOR =
+    JBColor.namedColor("Debugger.EvaluateExpression.background", new JBColor(0xFFFFFF, 0x45494A));
+
   protected WatchesRootNode myRootNode;
   private XDebuggerExpressionComboBox myEvaluateComboBox;
 
@@ -123,7 +126,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         ActionPlaces.DEBUGGER_TOOLBAR,
         DebuggerSessionTabBase.getCustomizedActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP),
         !vertical);
-      toolbar.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0,
+      toolbar.setBorder(new CustomLineBorder(0, 0,
                                              vertical ? 0 : 1,
                                              vertical ? 1 : 0));
       toolbar.setTargetComponent(tree);
@@ -269,6 +272,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           }
         }
       });
+      editorComponent.setBackground(EVALUATE_FIELD_BACKGROUND_COLOR);
+
       myEvaluateComboBox.getComboBox().addPopupMenuListener(new PopupMenuListenerAdapter() {
         private int selectedIndexOnPopupOpen = -1;
 

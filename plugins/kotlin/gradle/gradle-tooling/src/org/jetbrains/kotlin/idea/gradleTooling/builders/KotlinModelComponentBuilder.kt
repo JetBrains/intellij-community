@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinProjectModelImportingContext
 import org.jetbrains.kotlin.idea.gradleTooling.MultiplatformModelImportingContext
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 
@@ -21,9 +20,6 @@ interface KotlinMultiplatformComponentBuilder<TOrigin, TRet> :
 
 interface KotlinMultiplatformComponentBuilderBase<TRet> :
     KotlinModelComponentBuilder<Any, MultiplatformModelImportingContext, TRet>
-
-interface KotlinProjectModelComponentBuilder<TOrigin, TRet> :
-    KotlinModelComponentBuilder<TOrigin, KotlinProjectModelImportingContext, TRet>
 
 /**
  * Returns only those dependencies with RUNTIME scope which are not present with compile scope

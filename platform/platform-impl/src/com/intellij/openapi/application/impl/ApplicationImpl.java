@@ -72,7 +72,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
 
   /**
-   * This boolean controls whether to use thread(s) other than EDT for acquiring IW lock (i.e. running write actions) or not.
+   * This boolean controls whether to use thread(s) other than EDT for acquiring IW lock (i.e., running write actions) or not.
    * If value is {@code false}, IW lock will be granted on EDT at all times, guaranteeing the same execution model as before
    * IW lock introduction.
    */
@@ -186,9 +186,11 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
+
+    preventAwtAutoShutdown(this);
   }
 
-  public static void preventAwtAutoShutdown(@NotNull Disposable parentDisposable) {
+  private static void preventAwtAutoShutdown(@NotNull Disposable parentDisposable) {
     // Instantiate `AppDelayQueue` which starts "periodic tasks thread" which we'll mark busy to prevent this EDT from dying.
     // That thread was chosen because we know for sure it's running.
     Thread thread = AppScheduledExecutorService.getPeriodicTasksThread();
@@ -201,7 +203,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   /**
    * Executes a {@code runnable} in an "impatient" mode.
    * In this mode any attempt to call {@link #runReadAction(Runnable)}
-   * would fail (i.e. throw {@link ApplicationUtil.CannotRunReadActionException})
+   * would fail (i.e., throw {@link ApplicationUtil.CannotRunReadActionException})
    * if there is a pending write action.
    */
   @Override
@@ -393,8 +395,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
   }
 
-  private static <T> @NotNull Condition<T> cancelIfExpired(@NotNull Condition<T> expiredCondition, @NotNull Job childJob) {
-    return (t) -> {
+  private static <T> @NotNull Condition<T> cancelIfExpired(@NotNull Condition<? super T> expiredCondition, @NotNull Job childJob) {
+    return t -> {
       boolean expired = expiredCondition.value(t);
       if (expired) {
         // Cancel to avoid a hanging child job which will prevent completion of the parent one.
@@ -562,15 +564,17 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public final void restart(boolean exitConfirmed) {
-    int flags = SAVE;
-    if (exitConfirmed) {
-      flags |= EXIT_CONFIRMED;
-    }
-    exit(flags, true, ArrayUtilRt.EMPTY_STRING_ARRAY);
+    restart(exitConfirmed, false);
   }
 
   @Override
   public final void restart(boolean exitConfirmed, boolean elevate) {
+    restart(exitConfirmed, elevate, false);
+  }
+
+  private void restart(boolean exitConfirmed,
+                       boolean elevate,
+                       boolean force) {
     int flags = SAVE;
     if (exitConfirmed) {
       flags |= EXIT_CONFIRMED;
@@ -578,12 +582,15 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     if (elevate) {
       flags |= ELEVATE;
     }
-    exit(flags, true, ArrayUtilRt.EMPTY_STRING_ARRAY);
+    if (force) {
+      flags |= FORCE_EXIT;
+    }
+    restart(flags, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   /**
    * There are two ways we can get an exit notification.
-   *  1. From user input i.e. ExitAction
+   *  1. From user input i.e., ExitAction
    *  2. From the native system.
    *  We should not process any quit notifications if we are handling another one
    *
@@ -846,6 +853,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     return true;
   }
 
+  @ApiStatus.Internal
   public boolean isCurrentWriteOnEdt() {
     return EDT.isEdt(myLock.writeThread);
   }
@@ -1081,17 +1089,16 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertIsDispatchThread() {
-    if (isDispatchThread()) return;
-    if (ShutDownTracker.isShutdownHookRunning()) return;
-    throwThreadAccessException("Access is allowed from event dispatch thread only");
+    if (!isDispatchThread()) {
+      throwThreadAccessException("Access is allowed from event dispatch thread only");
+    }
   }
 
   @Override
   public void assertIsNonDispatchThread() {
-    if (isUnitTestMode() || isHeadlessEnvironment()) return;
-    if (!isDispatchThread()) return;
-    if (ShutDownTracker.isShutdownHookRunning()) return;
-    throwThreadAccessException("Access from event dispatch thread is not allowed.");
+    if (!isUnitTestMode() && !isHeadlessEnvironment() && isDispatchThread()) {
+      throwThreadAccessException("Access from event dispatch thread is not allowed");
+    }
   }
 
   private static void throwThreadAccessException(@NotNull String message) {
@@ -1105,14 +1112,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertIsWriteThread() {
-    if (isWriteThread()) return;
-    if (ShutDownTracker.isShutdownHookRunning()) return;
-    throw new RuntimeExceptionWithAttachments(
-      "Access is allowed from write thread only.",
-      "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
-      "\nCurrent thread: " + describe(Thread.currentThread()) +
-      "\nWrite thread: " + describe(myLock.writeThread),
-      new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
+    if (!isWriteThread()) {
+      throwThreadAccessException("Access is allowed from write thread only");
+    }
   }
 
   @Override
@@ -1194,17 +1196,21 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   private void startWrite(@NotNull Class<?> clazz) {
     assertIsWriteThread();
-    boolean writeActionPending = myWriteActionPending;
+    assertNotInsideListener();
     myWriteActionPending = true;
     try {
       ActivityTracker.getInstance().inc();
       fireBeforeWriteActionStart(clazz);
 
+      // otherwise (when myLock is locked) there's a nesting write action:
+      // - allow it,
+      // - fire listeners for it (somebody can rely on having listeners fired for each write action)
+      // - but do not re-acquire any locks because it could be deadlock-level dangerous
       if (!myLock.isWriteLocked()) {
         int delay = Holder.ourDumpThreadsOnLongWriteActionWaiting;
         Future<?> reportSlowWrite = delay <= 0 ? null :
-                                    AppExecutorUtil.getAppScheduledExecutorService()
-                                      .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
+           AppExecutorUtil.getAppScheduledExecutorService()
+           .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
                                                               delay, delay, TimeUnit.MILLISECONDS);
         long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
         myLock.writeLock();
@@ -1220,11 +1226,17 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       }
     }
     finally {
-      myWriteActionPending = writeActionPending;
+      myWriteActionPending = false;
     }
 
     myWriteActionsStack.push(clazz);
     fireWriteActionStarted(clazz);
+  }
+
+  private void assertNotInsideListener() {
+    if (myWriteActionPending) {
+      throw new IllegalStateException("Must not start write action from inside write action listener");
+    }
   }
 
   private void endWrite(@NotNull Class<?> clazz) {
@@ -1336,7 +1348,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   /**
-   * If called inside a write-action, executes the given code under modal progress with write-lock released (e.g. to allow for read-action parallelization).
+   * If called inside a write-action, executes the given code under modal progress with write-lock released (e.g., to allow for read-action parallelization).
    * It's the caller's responsibility to invoke this method only when the model is in an internally consistent state,
    * so that background threads with read actions don't see half-baked PSI/VFS/etc. The runnable may perform write-actions itself;
    * callers should be ready for those.
@@ -1427,11 +1439,20 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public String toString() {
-    return "Application (containerState=" + getContainerStateName() + ") " +
-           (isUnitTestMode() ? " (Unit test)" : "") +
-           (isInternal() ? " (Internal)" : "") +
-           (isHeadlessEnvironment() ? " (Headless)" : "") +
-           (isCommandLine() ? " (Command line)" : "");
+    boolean writeActionPending = isWriteActionPending();
+    boolean writeActionInProgress = isWriteActionInProgress();
+    boolean writeAccessAllowed = isWriteAccessAllowed();
+    return "Application "
+           + (getContainerState().get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState "+getContainerStateName() + ") ")
+           + (isUnitTestMode() ? " (unit test)" : "")
+           + (isInternal() ? " (internal)" : "")
+           + (isHeadlessEnvironment() ? " (headless)" : "")
+           + (isCommandLine() ? " (command line)" : "")
+           + (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" + (writeActionPending ? " pending" : "") + (writeActionInProgress ? " inProgress" : "") + (writeAccessAllowed ? " allowed" : "") + ")" : "")
+           + (isReadAccessAllowed() ? " (RA allowed)" : "")
+           + (isInImpatientReader() ? " (impatient reader)" : "")
+           + (isExitInProgress() ? " (exit in progress)" : "")
+      ;
   }
 
   @Override

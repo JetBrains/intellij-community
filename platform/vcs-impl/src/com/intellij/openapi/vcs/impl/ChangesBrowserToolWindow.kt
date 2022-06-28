@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -14,7 +15,10 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.IconManager
 import com.intellij.ui.content.Content
+import javax.swing.Icon
 
 object ChangesBrowserToolWindow {
   const val TOOLWINDOW_ID: String = "VcsChanges" // NON-NLS
@@ -56,10 +60,16 @@ object ChangesBrowserToolWindow {
       anchor = ToolWindowAnchor.LEFT,
       canCloseContent = true,
       canWorkInDumbMode = true,
-      stripeTitle = { VcsBundle.message("ChangesBrowserToolWindow.toolwindow.name") }
+      stripeTitle = { VcsBundle.message("ChangesBrowserToolWindow.toolwindow.name") },
+      icon = getIcon() // Toolwindow icon won't update without restarting IDE
     ))
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
     ContentManagerWatcher.watchContentManager(toolWindow, toolWindow.contentManager)
     return toolWindow
+  }
+
+  private fun getIcon(): Icon? = when {
+    ExperimentalUI.isNewUI() -> IconManager.getInstance().getIcon("expui/toolwindow/changes.svg", AllIcons::class.java)
+    else -> null
   }
 }

@@ -58,10 +58,6 @@ public abstract class JavaTestFramework implements TestFramework {
    */
   protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
     String markerClassFQName = getMarkerClassFQName();
-    return isFrameworkApplicable(clazz, markerClassFQName);
-  }
-
-  protected static boolean isFrameworkApplicable(@NotNull PsiElement clazz, String markerClassFQName) {
     if (markerClassFQName == null) return true;
     return CachedValuesManager.<ConcurrentMap<String, PsiClass>>getCachedValue(clazz, () -> {
       var project = clazz.getProject();
@@ -71,7 +67,7 @@ public abstract class JavaTestFramework implements TestFramework {
         ProjectRootManager.getInstance(project));
     }).get(markerClassFQName) != null;
   }
-
+  
   @Override
   public boolean isTestClass(@NotNull PsiElement clazz) {
     return clazz instanceof PsiClass && isFrameworkAvailable(clazz) && isTestClass((PsiClass)clazz, false);

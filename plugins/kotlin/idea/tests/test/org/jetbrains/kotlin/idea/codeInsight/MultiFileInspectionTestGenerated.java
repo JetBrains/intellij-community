@@ -43,6 +43,11 @@ public class MultiFileInspectionTestGenerated extends AbstractMultiFileInspectio
         runTest("testData/multiFileInspections/kotlinInternalInJava/kotlinInternalInJava.test");
     }
 
+    @TestMetadata("kotlinJvmAnnotationInJava/kotlinJvmAnnotationInJava.test")
+    public void testKotlinJvmAnnotationInJava_KotlinJvmAnnotationInJava() throws Exception {
+        runTest("testData/multiFileInspections/kotlinJvmAnnotationInJava/kotlinJvmAnnotationInJava.test");
+    }
+
     @TestMetadata("kotlinSealedInJavaTest/kotlinSealedInJavaTest.test")
     public void testKotlinSealedInJavaTest_KotlinSealedInJavaTest() throws Exception {
         runTest("testData/multiFileInspections/kotlinSealedInJavaTest/kotlinSealedInJavaTest.test");

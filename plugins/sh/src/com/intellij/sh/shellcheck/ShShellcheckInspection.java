@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.sh.shellcheck;
 
 import com.intellij.codeInspection.InspectionProfile;
@@ -24,7 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class ShShellcheckInspection extends LocalInspectionTool implements ExternalAnnotatorBatchInspection {
+public final class ShShellcheckInspection extends LocalInspectionTool implements ExternalAnnotatorBatchInspection {
   @NonNls public static final String SHORT_NAME = "ShellCheck";
   @NonNls private static final String SHELLCHECK_SETTINGS_TAG = "shellcheck_settings";
   private static final String DELIMITER = ",";

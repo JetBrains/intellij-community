@@ -59,6 +59,11 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
     result.put("ul", MarkdownHighlighterColors.UNORDERED_LIST_ATTR_KEY);
     result.put("ol", MarkdownHighlighterColors.ORDERED_LIST_ATTR_KEY);
 
+    result.put("dl", MarkdownHighlighterColors.DEFINITION_LIST_ATTR_KEY);
+    result.put("dd", MarkdownHighlighterColors.DEFINITION_ATTR_KEY);
+    result.put("dt", MarkdownHighlighterColors.TERM_ATTR_KEY);
+    result.put("dm", MarkdownHighlighterColors.DEFINITION_LIST_MARKER_ATTR_KEY);
+
     return result;
   }
 
@@ -150,6 +155,11 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
       put("markdown.editor.colors.list_item", MarkdownHighlighterColors.LIST_ITEM_ATTR_KEY);
       put("markdown.editor.colors.html_block", MarkdownHighlighterColors.HTML_BLOCK_ATTR_KEY);
       put("markdown.editor.colors.inline_html", MarkdownHighlighterColors.INLINE_HTML_ATTR_KEY);
+
+      put("markdown.editor.colors.definition_list", MarkdownHighlighterColors.DEFINITION_LIST_ATTR_KEY);
+      put("markdown.editor.colors.definition_list_marker", MarkdownHighlighterColors.DEFINITION_LIST_MARKER_ATTR_KEY);
+      put("markdown.editor.colors.definition", MarkdownHighlighterColors.DEFINITION_ATTR_KEY);
+      put("markdown.editor.colors.term", MarkdownHighlighterColors.TERM_ATTR_KEY);
     }
 
     public AttributesDescriptor @NotNull [] get() {

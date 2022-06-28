@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-class DefaultUndoReportHandler implements UndoReportHandler {
+public class DefaultUndoReportHandler implements UndoReportHandler {
   private static final Logger LOG = Logger.getInstance(DefaultUndoReportHandler.class);
 
   @Override

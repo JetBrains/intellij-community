@@ -95,20 +95,30 @@ fun edt(runnable: () -> Unit) {
 
 val Editor.textWithCarets: String
   get() {
-    val tags = extractCarets(this)
+    val tags = extractCarets(this, withPrimary = false)
     return insertTags(document.text, tags)
   }
 
-private fun extractCarets(editor: Editor): List<Pair<String, Int>> {
+val Editor.textWithCaretsAndPrimary: String
+  get() {
+    val tags = extractCarets(this, withPrimary = true)
+    return insertTags(document.text, tags)
+  }
+
+private fun extractCarets(editor: Editor, withPrimary: Boolean): List<Pair<String, Int>> {
   val tags = SmartList<Pair<String, Int>>()
 
   for (caret in editor.caretModel.allCarets) {
+    val currentCaretToken =
+      if (withPrimary && editor.caretModel.primaryCaret === caret) primaryCaretToken
+      else caretToken
+
     if (caret.hasSelection()) {
       tags.add(Pair(selectionBegin, caret.selectionStart))
-      tags.add(Pair(caretToken, caret.offset))
+      tags.add(Pair(currentCaretToken, caret.offset))
       tags.add(Pair(selectionEnd, caret.selectionEnd))
     }
-    else tags.add(Pair(caretToken, caret.offset))
+    else tags.add(Pair(currentCaretToken, caret.offset))
   }
 
   return tags

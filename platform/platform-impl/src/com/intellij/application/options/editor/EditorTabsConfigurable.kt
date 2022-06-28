@@ -65,7 +65,7 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
           row(TAB_PLACEMENT + ":") {
             myEditorTabPlacement = tabPlacementComboBox().component
           }
-          if (ExperimentalUI.isNewEditorTabs()) {
+          if (ExperimentalUI.isNewUI()) {
             row {
               checkBox(hideTabsIfNeeded)
                 .enabledIf(myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP })
@@ -84,7 +84,8 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
               }
             }
           }
-          row { checkBox(showPinnedTabsInASeparateRow).enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)) }
+          row { checkBox(showPinnedTabsInASeparateRow).enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)
+                                                                   and AdvancedSettingsPredicate("editor.keep.pinned.tabs.on.left", disposable!!)) }
         }
         row { checkBox(useSmallFont).enableIfTabsVisible() }.visible(!ExperimentalUI.isNewUI())
         row { checkBox(showFileIcon).enableIfTabsVisible() }
@@ -138,7 +139,6 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
   private fun <T : JComponent> Cell<T>.enableIfTabsVisible() {
     enabledIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE })
   }
-
   override fun apply() {
     val uiSettingsChanged = isModified
     super.apply()

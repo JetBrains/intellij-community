@@ -11,6 +11,15 @@ import org.jetbrains.uast.test.common.kotlin.UastResolveEverythingTestBase
 abstract class AbstractFirUastResolveEverythingTest : AbstractFirUastTest(), UastResolveEverythingTestBase {
     override val isFirUastPlugin: Boolean = true
 
+    private val failingTests: Set<String> = setOf(
+        // caused by KT-51491
+        "/uast-kotlin/tests/testData/BrokenGeneric.kt",
+    )
+
+    override fun isExpectedToFail(filePath: String, fileContent: String): Boolean {
+        return failingTests.any { filePath.endsWith(it) } || super.isExpectedToFail(filePath, fileContent)
+    }
+
     override fun check(filePath: String, file: UFile) {
         super.check(filePath, file)
     }

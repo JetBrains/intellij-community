@@ -9,11 +9,13 @@ import com.intellij.util.ExceptionUtil
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.TracerManager
 import org.jetbrains.intellij.build.impl.TracerProviderManager
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.junit.AssumptionViolatedException
 import java.net.http.HttpConnectTimeoutException
+import org.jetbrains.intellij.build.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -29,6 +31,24 @@ private val initializeTracer by lazy {
   }
 }
 
+fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: ProductProperties, skipDependencySetup: Boolean = false) {
+  options.skipDependencySetup = skipDependencySetup
+  options.isTestBuild = true
+  options.buildStepsToSkip.addAll(listOf(
+    BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP,
+    BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP,
+    BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP,
+    BuildOptions.WIN_SIGN_STEP,
+    BuildOptions.MAC_SIGN_STEP,
+  ))
+  options.buildDmgWithBundledJre = false
+  options.buildDmgWithoutBundledJre = false
+  options.buildUnixSnaps = false
+  options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).absolutePath
+  options.useCompiledClassesFromProjectOutput = true
+  options.compilationLogEnabled = false
+}
+
 fun createBuildContext(
   homePath: String, productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
@@ -37,14 +57,9 @@ fun createBuildContext(
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
   val options = BuildOptions()
-  options.isSkipDependencySetup = skipDependencySetup
-  options.isIsTestBuild = true
-  options.buildStepsToSkip.add(BuildOptions.getTEAMCITY_ARTIFACTS_PUBLICATION())
-  options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).absolutePath
-  options.isUseCompiledClassesFromProjectOutput = true
-  options.compilationLogEnabled = false
+  customizeBuildOptionsForTest(options, productProperties, skipDependencySetup)
   buildOptionsCustomizer(options)
-  return BuildContext.createContext(communityHomePath, homePath, productProperties, buildTools, options)
+  return BuildContextImpl.createContext(communityHomePath, homePath, productProperties, buildTools, options)
 }
 
 fun runTestBuild(
@@ -53,8 +68,38 @@ fun runTestBuild(
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: String = "$homePath/community",
   traceSpanName: String? = null,
-  verifier: (paths: BuildPaths) -> Unit = {},
-  buildOptionsCustomizer: (BuildOptions) -> Unit = {},
+  onFinish: (context: BuildContext) -> Unit = {},
+  buildOptionsCustomizer: (BuildOptions) -> Unit = {}
+) {
+  val buildArtifactsReproducibilityTest = BuildArtifactsReproducibilityTest()
+  if (!buildArtifactsReproducibilityTest.isEnabled) {
+    testBuild(homePath, productProperties, buildTools, communityHomePath, traceSpanName, onFinish, buildOptionsCustomizer)
+  }
+  else {
+    testBuild(homePath, productProperties, buildTools, communityHomePath, traceSpanName, buildOptionsCustomizer = {
+      buildOptionsCustomizer(it)
+      buildArtifactsReproducibilityTest.configure(it)
+    }, onFinish = { firstIteration ->
+      onFinish(firstIteration)
+      testBuild(homePath, productProperties, buildTools, communityHomePath, traceSpanName, buildOptionsCustomizer = {
+        buildOptionsCustomizer(it)
+        buildArtifactsReproducibilityTest.configure(it)
+      }, onFinish = { nextIteration ->
+        onFinish(nextIteration)
+        buildArtifactsReproducibilityTest.compare(firstIteration, nextIteration)
+      })
+    })
+  }
+}
+
+private fun testBuild(
+  homePath: String,
+  productProperties: ProductProperties,
+  buildTools: ProprietaryBuildTools,
+  communityHomePath: String,
+  traceSpanName: String?,
+  onFinish: (context: BuildContext) -> Unit,
+  buildOptionsCustomizer: (BuildOptions) -> Unit,
 ) {
   val buildContext = createBuildContext(
     homePath = homePath,
@@ -68,14 +113,15 @@ fun runTestBuild(
   runTestBuild(
     buildContext = buildContext,
     traceSpanName = traceSpanName,
-    verifier = verifier,
+    onFinish = onFinish,
   )
 }
 
+// FIXME: test reproducibility
 fun runTestBuild(
   buildContext: BuildContext,
   traceSpanName: String? = null,
-  verifier: (paths: BuildPaths) -> Unit = {},
+  onFinish: (context: BuildContext) -> Unit = {},
 ) {
   initializeTracer
 
@@ -93,7 +139,7 @@ fun runTestBuild(
     val messages = buildContext.messages as BuildMessagesImpl
     try {
       BuildTasks.create(buildContext).runTestBuild()
-      verifier(buildContext.paths)
+      onFinish(buildContext)
     }
     catch (e: Throwable) {
       if (e !is FileComparisonFailure) {

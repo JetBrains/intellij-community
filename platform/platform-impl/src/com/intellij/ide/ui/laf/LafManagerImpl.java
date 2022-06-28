@@ -277,12 +277,42 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           lafInfo.uninstallTheme();
         }
         myLafInfosToUnload.clear();
+        if (isNewUIPlugin(pluginDescriptor)) {
+          Registry.get("ide.experimental.ui").setValue(false);
+          Registry.get("debugger.new.tool.window.layout").setValue(false);
+          if (getCurrentLookAndFeel().getName().equals("Dark") || getCurrentLookAndFeel().getName().equals("Light")) {
+            setCurrentLookAndFeel(JBColor.isBright() ? getDefaultLightLaf() : getDefaultDarkLaf());
+          }
+          ApplicationManager.getApplication().invokeLater(() -> RegistryBooleanOptionDescriptor.suggestRestart(null),
+                                                          ModalityState.NON_MODAL);
+        }
       }
 
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
         isUpdatingPlugin = false;
         themeIdBeforePluginUpdate = null;
+        if (isNewUIPlugin(pluginDescriptor)) {
+          enableExpUI();
+        }
+      }
+
+      private boolean isNewUIPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        return pluginDescriptor.getPluginId().getIdString().equals("com.intellij.plugins.expui");
+      }
+
+      private void enableExpUI() {
+        if (!Registry.is("ide.experimental.ui")) {
+          Registry.get("ide.experimental.ui").setValue(true);
+          Registry.get("debugger.new.tool.window.layout").setValue(true);
+          UISettings.getInstance().setOpenInPreviewTabIfPossible(true);
+          String name = JBColor.isBright() ? "Light" : "Dark";
+          Optional<UIManager.LookAndFeelInfo> laf = Arrays.stream(getInstalledLookAndFeels())
+                                                          .filter(x -> x.getName().equals(name))
+                                                          .findFirst();
+          laf.ifPresent(info -> setCurrentLookAndFeel(info));
+          RegistryBooleanOptionDescriptor.suggestRestart(null);
+        }
       }
     });
   }
@@ -459,8 +489,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     List<LafReference> result = new ArrayList<>();
     boolean addSeparator = false;
     Map<String, Integer> lafNameOrder = UiThemeProviderListManager.Companion.getLafNameOrder();
+    List<String> excludedThemes = UiThemeProviderListManager.Companion.getExcludedThemes();
     int maxNameOrder = Collections.max(lafNameOrder.values());
     for (UIManager.LookAndFeelInfo info : lafList.getValue()) {
+      if (excludedThemes.contains(info.getName())) continue;
       if (addSeparator) {
         result.add(SEPARATOR);
         addSeparator = false;
@@ -1004,14 +1036,20 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     //  }
     //} else
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.getOverrideLafFonts()) {
+    if (uiSettings.getOverrideLafFonts() || useInterFont()) {
       storeOriginalFontDefaults(uiDefaults);
-      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize2D()));
+      String fontFace = uiSettings.getOverrideLafFonts() ? uiSettings.getFontFace() : "Inter";
+      float fontSize = uiSettings.getOverrideLafFonts() ? uiSettings.getFontSize2D() : 13f;
+      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(fontFace, Font.PLAIN, fontSize));
       JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(uiSettings.getFontSize2D()));
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
     }
+  }
+
+  private static boolean useInterFont() {
+    return ExperimentalUI.isNewUI() && SystemInfo.isJetBrainsJvm && Runtime.version().feature() >= 17;
   }
 
   private void restoreOriginalFontDefaults(UIDefaults defaults) {

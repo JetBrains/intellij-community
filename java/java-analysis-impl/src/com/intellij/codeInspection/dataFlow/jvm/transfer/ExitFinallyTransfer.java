@@ -28,7 +28,7 @@ public class ExitFinallyTransfer implements DfaControlTransferValue.TransferTarg
   }
 
   @Override
-  public @NotNull List<DfaInstructionState> dispatch(DfaMemoryState state,
+  public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
                                                      @NotNull DataFlowInterpreter interpreter) {
     return ((DfaControlTransferValue)state.pop()).dispatch(state, interpreter);
   }

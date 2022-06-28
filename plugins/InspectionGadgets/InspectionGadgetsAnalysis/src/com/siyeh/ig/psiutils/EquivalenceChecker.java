@@ -131,8 +131,21 @@ public class EquivalenceChecker {
     if (statement1 == null || statement2 == null) {
       return Match.exact(statement1 == statement2);
     }
+    if (statement1 == statement2) {
+      return EXACT_MATCH;
+    }
     if (statement1.getClass() != statement2.getClass()) {
-        return EXACT_MISMATCH;
+      if (statement1 instanceof PsiLabeledStatement) {
+        statement1 = ((PsiLabeledStatement)statement1).getStatement();
+        markDeclarationsAsEquivalent(statement1, statement2);
+        return statementsMatch(statement1, statement2);
+      }
+      else if (statement2 instanceof PsiLabeledStatement) {
+        statement2 = ((PsiLabeledStatement)statement2).getStatement();
+        markDeclarationsAsEquivalent(statement1, statement2);
+        return statementsMatch(statement1, statement2);
+      }
+      return EXACT_MISMATCH;
     }
     if (statement1 instanceof PsiAssertStatement) {
       return assertStatementsMatch((PsiAssertStatement)statement1, (PsiAssertStatement)statement2);
@@ -404,8 +417,8 @@ public class EquivalenceChecker {
   protected Match breakStatementsMatch(@NotNull PsiBreakStatement statement1, @NotNull PsiBreakStatement statement2) {
     final PsiIdentifier identifier1 = statement1.getLabelIdentifier();
     final PsiIdentifier identifier2 = statement2.getLabelIdentifier();
-    if (identifier1 == null || identifier2 == null) {
-      return Match.exact(identifier1 == identifier2);
+    if (identifier1 == null && identifier2 == null) {
+      return EXACT_MATCH;
     }
     return Match.exact(equivalentDeclarations(statement1.findExitedStatement(), statement2.findExitedStatement()));
   }
@@ -413,8 +426,8 @@ public class EquivalenceChecker {
   protected Match continueStatementsMatch(@NotNull PsiContinueStatement statement1, @NotNull PsiContinueStatement statement2) {
     final PsiIdentifier identifier1 = statement1.getLabelIdentifier();
     final PsiIdentifier identifier2 = statement2.getLabelIdentifier();
-    if (identifier1 == null || identifier2 == null) {
-      return Match.exact(identifier1 == identifier2);
+    if (identifier1 == null && identifier2 == null) {
+      return EXACT_MATCH;
     }
     return Match.exact(equivalentDeclarations(statement1.findContinuedStatement(), statement2.findContinuedStatement()));
   }
@@ -810,12 +823,12 @@ public class EquivalenceChecker {
     PsiClass target2 = getQualifierTarget(referenceExpression2);
     if (target1 != null || target2 != null) {
       if (target1 == null || target2 == null) return EXACT_MISMATCH;
-      return equivalentDeclarations(target1, target2) ? EXACT_MATCH : EXACT_MISMATCH;
+      return Match.exact(equivalentDeclarations(target1, target2));
     }
     final PsiExpression qualifier1 = PsiUtil.skipParenthesizedExprDown(referenceExpression1.getQualifierExpression());
     final PsiExpression qualifier2 = PsiUtil.skipParenthesizedExprDown(referenceExpression2.getQualifierExpression());
     if (qualifier1 == null || qualifier2 == null) {
-      return qualifier1 == null && qualifier2 == null ? EXACT_MATCH : EXACT_MISMATCH;
+      return Match.exact(qualifier1 == qualifier2);
     }
     Match match = expressionsMatch(qualifier1, qualifier2);
     if (!match.isExactMatch() && PsiUtil.isArrayClass(((PsiMember)element1).getContainingClass()) &&
@@ -1120,9 +1133,6 @@ public class EquivalenceChecker {
     final PsiExpression left2 = PsiUtil.skipParenthesizedExprDown(binaryExpression2.getLOperand());
     final PsiExpression right1 = PsiUtil.skipParenthesizedExprDown(binaryExpression1.getROperand());
     final PsiExpression right2 = PsiUtil.skipParenthesizedExprDown(binaryExpression2.getROperand());
-    if (right1 == null || right2 == null) {
-      return Match.exact(right1 == right2);
-    }
     if (!tokenType1.equals(tokenType2)) {
       // process matches like "a < b" and "b > a"
       final RelationType rel1 = DfaPsiUtil.getRelationByToken(tokenType1);
@@ -1239,6 +1249,6 @@ public class EquivalenceChecker {
   protected void markDeclarationsAsEquivalent(PsiElement element1, PsiElement element2) {}
 
   protected boolean equivalentDeclarations(PsiElement element1, PsiElement element2) {
-    return element1 == element2;
+    return element1 == element2 || EquivalentMethodUtil.areEquivalentMethods(element1, element2);
   }
 }

@@ -1,0 +1,2 @@
+# DeletableAPIResource.delete is has a custom classmethod overload
+stripe\..*\.delete

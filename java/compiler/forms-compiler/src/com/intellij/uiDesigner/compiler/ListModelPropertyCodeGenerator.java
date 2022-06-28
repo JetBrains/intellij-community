@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.compiler;
 
@@ -6,12 +6,12 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-public class ListModelPropertyCodeGenerator extends PropertyCodeGenerator {
+public final class ListModelPropertyCodeGenerator extends PropertyCodeGenerator {
   private final Type myListModelType;
   private static final Method ourInitMethod = Method.getMethod("void <init>()");
   private static final Method ourAddElementMethod = Method.getMethod("void addElement(java.lang.Object)");
 
-  public ListModelPropertyCodeGenerator(final Class aClass) {
+  ListModelPropertyCodeGenerator(final Class aClass) {
     myListModelType = Type.getType(aClass);
   }
 

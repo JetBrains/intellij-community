@@ -39,8 +39,7 @@ import javax.swing.*;
  * <p>
  * Inspection to detect redundant parentheses in if/while statement.
  */
-public class PyRedundantParenthesesInspection extends PyInspection {
-
+public final class PyRedundantParenthesesInspection extends PyInspection {
   private final SmartSerializer mySerializer = new SmartSerializer();
 
   public boolean myIgnorePercOperator = false;

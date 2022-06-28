@@ -10,25 +10,15 @@ public class ModuleData {
   @NotNull private final Module module;
   @NotNull private final MavenModuleType type;
   @NotNull private final MavenJavaVersionHolder javaVersionHolder;
-  @Nullable private final Module mainModule;
   private final boolean newModule;
 
   public ModuleData(@NotNull Module module,
                     @NotNull MavenModuleType type,
                     @NotNull MavenJavaVersionHolder javaVersionHolder,
                     boolean newModule) {
-    this(module, type, javaVersionHolder, null, newModule);
-  }
-
-  public ModuleData(@NotNull Module module,
-                    @NotNull MavenModuleType type,
-                    @NotNull MavenJavaVersionHolder javaVersionHolder,
-                    @Nullable Module mainModule,
-                    boolean newModule) {
     this.module = module;
     this.type = type;
     this.javaVersionHolder = javaVersionHolder;
-    this.mainModule = mainModule;
     this.newModule = newModule;
   }
 
@@ -53,11 +43,6 @@ public class ModuleData {
   @NotNull
   public MavenModuleType getType() {
     return type;
-  }
-
-  @Nullable
-  public Module getMainModule() {
-    return mainModule;
   }
 
   public boolean isNewModule() {

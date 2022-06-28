@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.configuration.cache
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader
@@ -11,7 +12,6 @@ import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.util.AbstractFileAttributePropertyService
 import org.jetbrains.kotlin.idea.core.util.readObject
 import org.jetbrains.kotlin.idea.core.util.writeObject
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
@@ -113,10 +113,12 @@ class ScriptConfigurationSnapshotFile : AbstractFileAttributePropertyService<Scr
     write = DataOutputStream::writeObject
 ) {
     companion object {
-        operator fun get(project: Project, file: VirtualFile) = project.getServiceSafe<ScriptConfigurationSnapshotFile>()[file]
+        operator fun get(project: Project, file: VirtualFile): ScriptConfigurationSnapshotForFS? {
+            return project.service<ScriptConfigurationSnapshotFile>()[file]
+        }
 
         operator fun set(project: Project, file: VirtualFile, newValue: ScriptConfigurationSnapshotForFS?) {
-            project.getServiceSafe<ScriptConfigurationSnapshotFile>()[file] = newValue
+            project.service<ScriptConfigurationSnapshotFile>()[file] = newValue
         }
     }
 }

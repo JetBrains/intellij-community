@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.ProfileChangeAdapter;
@@ -195,6 +196,21 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   private static void updateProfile(BaseInspectionProfileManager profileManager, InspectionProfileImpl localProfile) {
     profileManager.addProfile(localProfile);
     profileManager.fireProfileChanged(localProfile);
+  }
+
+  public void testCustomTextAttributes() throws IOException, JDOMException {
+    @Language("XML") String content = "<profile version=\"1.0\">\n" +
+                     "  <option name=\"myName\" value=\"default\" />\n" +
+                     "  <inspection_tool class=\"Convert2Lambda\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" editorAttributes=\"NOT_USED_ELEMENT_ATTRIBUTES\"/>\n" +
+                     "</profile>";
+    InspectionProfileImpl profile = createProfile();
+    readFromXml(profile, content);
+    InspectionToolWrapper tool = profile.getInspectionTool("Convert2Lambda", getProject());
+    assertNotNull(tool);
+    TextAttributesKey editorAttributes = profile.getEditorAttributes("Convert2Lambda", null);
+    assertNotNull(editorAttributes);
+    assertEquals("NOT_USED_ELEMENT_ATTRIBUTES", editorAttributes.getExternalName());
+    assertThat(profile.writeScheme()).isEqualTo(JDOMUtil.load(content));
   }
 
   public void testConvertOldProfile() throws Exception {
@@ -709,7 +725,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     });
     String mergedText = "<profile version=\"1.0\">\n" +
                             "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                            "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" checkParameterExcludingHierarchy=\"false\">\n" +
+                            "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" editorAttributes=\"NOT_USED_ELEMENT_ATTRIBUTES\" checkParameterExcludingHierarchy=\"false\">\n" +
                             "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
                             "    <option name=\"FIELD\" value=\"true\" />\n" +
                             "    <option name=\"METHOD\" value=\"true\" />\n" +

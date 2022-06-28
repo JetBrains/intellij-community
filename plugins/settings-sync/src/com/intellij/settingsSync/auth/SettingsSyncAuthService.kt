@@ -32,6 +32,8 @@ internal class SettingsSyncAuthService {
     }
   }
 
+  fun isLoginAvailable(): Boolean = JBAccountInfoService.getInstance() != null
+
   fun addListener(listener: Listener, disposable: Disposable) {
     evenDispatcher.addListener(listener, disposable)
   }

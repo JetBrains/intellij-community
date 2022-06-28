@@ -111,6 +111,7 @@ public final class FSRecords {
     return writeAndHandleErrors(() -> {
       int nameId = setName(fileId, name, 0);
 
+      // TODO replace with single op
       setTimestamp(fileId, attributes.lastModified);
       setLength(fileId, attributes.isDirectory() ? -1L : attributes.length);
       setFlags(fileId, PersistentFSImpl.fileAttributesToFlags(attributes));
@@ -118,11 +119,6 @@ public final class FSRecords {
 
       return nameId;
     });
-  }
-
-  @Contract("_->fail")
-  static void requestVfsRebuild(@NotNull Throwable e) {
-    handleError(e);
   }
 
   @NotNull
@@ -148,17 +144,25 @@ public final class FSRecords {
   }
 
   static void connect() {
-    ourCurrentVersion = calculateVersion();
-    ourConnection = PersistentFSConnector.connect(getCachesDir(), ourCurrentVersion, useContentHashes);
-    ourContentAccessor = new PersistentFSContentAccessor(useContentHashes, ourConnection);
-    ourAttributeAccessor = new PersistentFSAttributeAccessor(bulkAttrReadSupport, inlineAttributes, ourConnection);
-    ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourConnection);
-    ourRecordAccessor = new PersistentFSRecordAccessor(ourContentAccessor, ourAttributeAccessor, ourConnection);
-    try {
-      ourTreeAccessor.ensureLoaded();
+    if (IOUtil.isSharedCachesEnabled()) {
+      IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
     }
-    catch (IOException e) {
-      handleError(e);
+    try {
+      ourCurrentVersion = calculateVersion();
+      ourConnection = PersistentFSConnector.connect(getCachesDir(), ourCurrentVersion, useContentHashes);
+      ourContentAccessor = new PersistentFSContentAccessor(useContentHashes, ourConnection);
+      ourAttributeAccessor = new PersistentFSAttributeAccessor(bulkAttrReadSupport, inlineAttributes, ourConnection);
+      ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourConnection);
+      ourRecordAccessor = new PersistentFSRecordAccessor(ourContentAccessor, ourAttributeAccessor, ourConnection);
+      try {
+        ourTreeAccessor.ensureLoaded();
+      }
+      catch (IOException e) {
+        handleError(e);
+      }
+    }
+    finally {
+      IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.remove();
     }
   }
 
@@ -194,6 +198,9 @@ public final class FSRecords {
     }
 
     int nameId = ourConnection.getRecords().getNameId(id);
+    if (PersistentFS.isDirectory(getFlags(id))) {
+      ourTreeAccessor.deleteDirectoryRecord(id);
+    }
     ourRecordAccessor.addToFreeRecordsList(id);
     InvertedNameIndex.updateFileName(id, 0, nameId);
   }
@@ -239,7 +246,7 @@ public final class FSRecords {
     writeAndHandleErrors(() -> ourTreeAccessor.deleteRootRecord(fileId));
   }
 
-  static int @NotNull [] listIds(int fileId) {
+  public static int @NotNull [] listIds(int fileId) {
     return readAndHandleErrors(() -> ourTreeAccessor.listIds(fileId));
   }
 
@@ -335,7 +342,7 @@ public final class FSRecords {
   // If everything is still valid (i.e. no one changed the list in the meantime), commit.
   // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
   @NotNull
-  static ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
+  static ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     assert parentId > 0: parentId;
     ListResult children = list(parentId);
     ListResult result = childrenConvertor.apply(children);
@@ -590,17 +597,24 @@ public final class FSRecords {
 
   @NotNull
   static CharSequence getNameSequence(int id) {
-    return readAndHandleErrors(() -> doGetNameSequence(id));
-  }
-
-  @NotNull
-  private static CharSequence doGetNameSequence(int id) throws IOException {
-    int nameId = ourConnection.getRecords().getNameId(id);
-    return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId);
+    int nameId = readAndHandleErrors(() -> ourConnection.getRecords().getNameId(id));
+    try {
+      return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   public static String getNameByNameId(int nameId) {
-    return readAndHandleErrors(() -> doGetNameByNameId(nameId));
+    try {
+      return doGetNameByNameId(nameId);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   private static String doGetNameByNameId(int nameId) throws IOException {
@@ -761,10 +775,6 @@ public final class FSRecords {
   @NotNull
   public static AttributeOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
     return ourAttributeAccessor.writeAttribute(fileId, att);
-  }
-
-  public static @NotNull PersistentFSPaths getPersistentFSPaths() {
-    return new PersistentFSPaths(getCachesDir());
   }
 
   static synchronized void dispose() {

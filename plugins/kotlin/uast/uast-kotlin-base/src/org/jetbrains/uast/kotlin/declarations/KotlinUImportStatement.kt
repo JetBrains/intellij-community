@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -12,6 +13,7 @@ import org.jetbrains.uast.UImportStatement
 import org.jetbrains.uast.USimpleNameReferenceExpression
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
+@ApiStatus.Internal
 class KotlinUImportStatement(
     override val psi: KtImportDirective,
     givenParent: UElement?

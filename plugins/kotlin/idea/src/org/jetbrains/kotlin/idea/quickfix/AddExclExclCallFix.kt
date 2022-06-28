@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isNullExpression
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -64,7 +64,7 @@ fun getAddExclExclCallFix(element: PsiElement?, checkImplicitReceivers: Boolean 
                 context[BindingContext.EXPRESSION_TYPE_INFO, targetElement]?.let {
                     val type = it.type
 
-                    val dataFlowValueFactory = targetElement.getResolutionFacade().getDataFlowValueFactory()
+                    val dataFlowValueFactory = targetElement.getResolutionFacade().dataFlowValueFactory
 
                     if (type != null) {
                         val nullability = it.dataFlowInfo.getStableNullability(

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.perf.util
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 
 object ESUploader {
     var host: String? = null

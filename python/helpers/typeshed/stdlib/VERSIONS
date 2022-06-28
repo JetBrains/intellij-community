@@ -68,6 +68,7 @@ asyncio.exceptions: 3.8-
 asyncio.format_helpers: 3.7-
 asyncio.runners: 3.7-
 asyncio.staggered: 3.8-
+asyncio.taskgroups: 3.11-
 asyncio.threads: 3.9-
 asyncio.trsock: 3.8-
 asyncore: 2.7-
@@ -112,6 +113,7 @@ difflib: 2.7-
 dis: 2.7-
 distutils: 2.7-
 distutils.command.bdist_msi: 2.7-3.10
+distutils.command.bdist_wininst: 2.7-3.9
 doctest: 2.7-
 dummy_threading: 2.7-3.8
 email: 2.7-
@@ -172,6 +174,7 @@ modulefinder: 2.7-
 msilib: 2.7-
 msvcrt: 2.7-
 multiprocessing: 2.7-
+multiprocessing.shared_memory: 3.8-
 netrc: 2.7-
 nis: 2.7-
 nntplib: 2.7-
@@ -259,6 +262,7 @@ timeit: 2.7-
 tkinter: 3.0-
 token: 2.7-
 tokenize: 2.7-
+tomllib: 3.11-
 trace: 2.7-
 traceback: 2.7-
 tracemalloc: 3.4-

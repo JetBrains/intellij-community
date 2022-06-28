@@ -43,9 +43,6 @@ import java.util.List;
 
 import static com.intellij.psi.util.PsiTreeUtil.skipParentsOfType;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
   public final static CustomFoldingSurroundDescriptor INSTANCE = new CustomFoldingSurroundDescriptor();

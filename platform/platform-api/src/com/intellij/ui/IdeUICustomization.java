@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.*;
+
+import java.util.function.Supplier;
 
 /**
  * Allows to apply IDE-specific customizations to the terms used in platform UI features.
@@ -31,6 +32,14 @@ public class IdeUICustomization {
   @NotNull
   public @Nls String projectMessage(@NotNull @PropertyKey(resourceBundle = ProjectConceptBundle.BUNDLE) String key, Object @NotNull ... params) {
     return ProjectConceptBundle.message(key, params);
+  }
+
+  /**
+   * Returns a message which mentions 'project' concept.
+   */
+  @NotNull
+  public Supplier<@Nls String> projectMessagePointer(@NotNull @PropertyKey(resourceBundle = ProjectConceptBundle.BUNDLE) String key, Object @NotNull ... params) {
+    return ProjectConceptBundle.messagePointer(key, params);
   }
 
   /**
@@ -86,12 +95,16 @@ public class IdeUICustomization {
  */
 final class ProjectConceptBundle {
   @NonNls public static final String BUNDLE = "messages.ProjectConceptBundle";
-  private static final DynamicBundle INSTANCE = new DynamicBundle(BUNDLE);
+  private static final DynamicBundle INSTANCE = new DynamicBundle(ProjectConceptBundle.class, BUNDLE);
 
   private ProjectConceptBundle() {
   }
 
   static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return BundleBase.messageOrDefault(INSTANCE.getResourceBundle(ProjectConceptBundle.class.getClassLoader()), key, null, params);
+    return INSTANCE.getMessage(key, params);
+  }
+
+  static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

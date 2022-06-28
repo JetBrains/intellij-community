@@ -1,10 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jrt;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -29,45 +32,45 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class JrtFileSystemImpl extends JrtFileSystem {
+public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
   private final Map<String, ArchiveHandler> myHandlers = Collections.synchronizedMap(CollectionFactory.createFilePathMap());
   private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
 
-  @NotNull
   @Override
-  public String getProtocol() {
+  public void dispose() {
+    myHandlers.forEach((k, handler) -> handler.clearCaches());
+    myHandlers.clear();
+  }
+
+  @Override
+  public @NotNull String getProtocol() {
     return PROTOCOL;
   }
 
-  @Nullable
   @Override
-  protected String normalize(@NotNull String path) {
+  protected @Nullable String normalize(@NotNull String path) {
     int separatorIndex = path.indexOf(SEPARATOR);
     return separatorIndex > 0 ? FileUtil.normalize(path.substring(0, separatorIndex)) + path.substring(separatorIndex) : null;
   }
 
-  @NotNull
   @Override
-  protected String extractLocalPath(@NotNull String rootPath) {
+  protected @NotNull String extractLocalPath(@NotNull String rootPath) {
     return StringUtil.trimEnd(rootPath, SEPARATOR);
   }
 
-  @NotNull
   @Override
-  protected String composeRootPath(@NotNull String localPath) {
+  protected @NotNull String composeRootPath(@NotNull String localPath) {
     return localPath + SEPARATOR;
   }
 
-  @NotNull
   @Override
-  protected String extractRootPath(@NotNull String normalizedPath) {
+  protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
     int separatorIndex = normalizedPath.indexOf(SEPARATOR);
     return separatorIndex > 0 ? normalizedPath.substring(0, separatorIndex + SEPARATOR.length()) : "";
   }
 
-  @NotNull
   @Override
-  protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
+  protected @NotNull ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
     checkSubscription();
 
     String homePath = extractLocalPath(VfsUtilCore.getRootFile(entryFile).getPath());
@@ -85,7 +88,10 @@ public class JrtFileSystemImpl extends JrtFileSystem {
 
     Application app = ApplicationManager.getApplication();
     if (app.isDisposed()) return;  // we might perform a shutdown activity that includes visiting archives (IDEA-181620)
-    app.getMessageBus().connect(app).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+
+    TrackerService tracker = app.getService(TrackerService.class);
+    Disposer.register(tracker, this);
+    app.getMessageBus().connect(tracker).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         Set<VirtualFile> toRefresh = null;
@@ -159,5 +165,10 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     ArchiveHandler handler = myHandlers.remove(localPath);
     if (handler == null) throw new IllegalArgumentException(localPath + " not in " + myHandlers.keySet());
     handler.clearCaches();
+  }
+
+  @Service
+  static final class TrackerService implements Disposable {
+    @Override public void dispose() { }
   }
 }

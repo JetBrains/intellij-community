@@ -377,7 +377,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
             val addKotlinRuntime = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// WITH_STDLIB") != null
             if (addKotlinRuntime) {
-                ConfigLibraryUtil.configureKotlinRuntimeAndSdk(module, IdeaTestUtil.getMockJdk18())
+                ConfigLibraryUtil.configureKotlinRuntimeAndSdk(module, projectDescriptor.sdk!!)
             }
 
             try {
@@ -390,7 +390,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
 
                 if (addKotlinRuntime) {
-                    ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(module, IdeaTestUtil.getMockJdk18())
+                    ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(module, projectDescriptor.sdk!!)
                 }
             }
         }
@@ -496,7 +496,11 @@ fun doExtractFunction(fixture: CodeInsightTestFixture, file: KtFile) {
                     descriptor
                 }
 
-                doRefactor(ExtractionGeneratorConfiguration(newDescriptor, ExtractionGeneratorOptions.DEFAULT), onFinish)
+                fun afterFinish(extraction: ExtractionResult){
+                    processDuplicates(extraction.duplicateReplacers, project, editor)
+                    onFinish(extraction)
+                }
+                doRefactor(ExtractionGeneratorConfiguration(newDescriptor, ExtractionGeneratorOptions.DEFAULT), ::afterFinish)
             }
         }
     )

@@ -8,7 +8,6 @@ import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.io.IOUtils
-import org.jetbrains.intellij.build.io.isWindows
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.io.writeNewZip
@@ -141,7 +140,7 @@ fun crossPlatformZip(macX64DistDir: Path,
 
       val zipFiles = mutableMapOf<String, Path>()
       out.dir(startDir = macX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
-        val p = relativeFile.toString()
+        val p = relativeFile.toString().replace('\\', '/')
         @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
         !p.startsWith("bin/repair") &&
@@ -154,7 +153,7 @@ fun crossPlatformZip(macX64DistDir: Path,
       }, entryCustomizer = entryCustomizer)
 
       out.dir(startDir = macAarch64DistDir, prefix = "", fileFilter = { _, relativeFile ->
-        val p = relativeFile.toString()
+        val p = relativeFile.toString().replace('\\', '/')
         @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
         !p.startsWith("bin/repair") &&
@@ -167,7 +166,7 @@ fun crossPlatformZip(macX64DistDir: Path,
       }, entryCustomizer = entryCustomizer)
 
       out.dir(startDir = linuxX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
-        val p = relativeFile.toString()
+        val p = relativeFile.toString().replace('\\', '/')
         @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
         !p.startsWith("bin/repair") &&
@@ -181,7 +180,7 @@ fun crossPlatformZip(macX64DistDir: Path,
 
       val winExcludes = distFiles.mapTo(HashSet(distFiles.size)) { "${it.value}/${it.key.fileName}" }
       out.dir(startDir = winX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
-        val p = relativeFile.toString()
+        val p = relativeFile.toString().replace('\\', '/')
         @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
         !p.startsWith("bin/repair") &&
@@ -230,16 +229,10 @@ fun consumeDataByPrefix(file: Path, prefixWithEndingSlash: String, consumer: BiC
 
 typealias EntryCustomizer = (entry: ZipArchiveEntry, file: Path, relativeFile: Path) -> Unit
 
-private val fsUnixMode: EntryCustomizer = { entry, file, relativeFile ->
-  if (!relativeFile.toString().endsWith(".jar") && Files.isExecutable(file)) {
-    entry.unixMode = executableFileUnixMode
-  }
-}
-
 internal fun ZipArchiveOutputStream.dir(startDir: Path,
                                         prefix: String,
                                         fileFilter: ((sourceFile: Path, relativeFile: Path) -> Boolean)? = null,
-                                        entryCustomizer: EntryCustomizer = if (isWindows) { _, _, _ ->  } else fsUnixMode) {
+                                        entryCustomizer: EntryCustomizer) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
   val tempList = ArrayList<Path>()

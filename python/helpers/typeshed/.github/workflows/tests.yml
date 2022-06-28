@@ -1,4 +1,4 @@
-name: Check stubs
+name: Test
 
 on:
   workflow_dispatch:
@@ -110,7 +110,11 @@ jobs:
       - name: Update pip
         run: python -m pip install -U pip
       - name: Install dependencies
-        run: pip install $(grep tomli== requirements-tests.txt) $(grep mypy== requirements-tests.txt)
+        # Use pre-release stubtest. Keep the following in sync:
+        # - get_mypy_req in tests/stubtest_third_party.py
+        # - stubtest-stdlib in .github/workflows/daily.yml
+        # - stubtest-stdlib in .github/workflows/tests.yml
+        run: pip install $(grep tomli== requirements-tests.txt) git+git://github.com/python/mypy@c7a81620bef7585cca6905861bb7ef34ec12da2f
       - name: Run stubtest
         run: python tests/stubtest_stdlib.py
 
@@ -129,7 +133,12 @@ jobs:
         run: pip install $(grep tomli== requirements-tests.txt)
       - name: Run stubtest
         run: |
-          STUBS=$(git diff --name-only origin/${{ github.base_ref }} HEAD | egrep ^stubs/ | cut -d "/" -f 2 | sort -u | (while read stub; do [ -d stubs/$stub ] && echo $stub || true; done))
+          STUBS=$(
+            git diff --name-only origin/${{ github.base_ref }} HEAD |
+            # Uncomment the following to (very slowly) run on all third party stubs:
+            # git ls-files |
+            egrep ^stubs/ | cut -d "/" -f 2 | sort -u | (while read stub; do [ -d stubs/$stub ] && echo $stub || true; done)
+          )
           if test -n "$STUBS"; then
             echo "Testing $STUBS..."
             APT_PACKAGES=$(python tests/get_apt_packages.py $STUBS)

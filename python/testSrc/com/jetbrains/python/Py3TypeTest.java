@@ -467,7 +467,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-21692
   public void testSumResult() {
-    doTest("int",
+    doTest("int | Literal[0]",
            "expr = sum([1, 2, 3])");
   }
 
@@ -1363,6 +1363,15 @@ public class Py3TypeTest extends PyTestCase {
            "expr: Foo | None");
   }
 
+  // PY-52930
+  public void testExceptionGroupInExceptStar() {
+    doTest("ExceptionGroup",
+           "try:\n" +
+           "    raise ExceptionGroup(\"asdf\", [Exception(\"fdsa\")])\n" +
+           "except* Exception as expr:\n" +
+           "    pass\n");
+  }
+
   /**
    * @see #testRecursiveDictTopDown()
    * @see PyTypeCheckerInspectionTest#testRecursiveDictAttribute()
@@ -1391,14 +1400,6 @@ public class Py3TypeTest extends PyTestCase {
     assertExpressionType("dict[str, Any]", expr);
     PyExpression dict = myFixture.findElementByText("{'foo': self.foo}", PyExpression.class);
     assertExpressionType("dict[str, Any]", dict);
-  }
-
-  // PY-52656
-  public void testDictValuesType() {
-    doTest("int",
-           "d = {'foo': 42}\n" +
-           "for expr in d.values():\n" +
-           "    pass");
   }
 
   private void doTest(final String expectedType, final String text) {

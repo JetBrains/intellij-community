@@ -3,7 +3,8 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.ExtensionTestUtil
-import org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinDelegatingTestFramework
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
 
 abstract class AbstractLightTestRunLineMarkersTest: AbstractLineMarkersTest() {
     fun doLightTest(path: String) {
@@ -38,14 +39,14 @@ abstract class AbstractLightTestRunLineMarkersTest: AbstractLineMarkersTest() {
     }
 
     private fun doRunTest(lightClass: Boolean, task: () -> Unit) {
-        val extensionList = LightTestFramework.EXTENSION_NAME.extensionList
+        val extensionList = KotlinTestFramework.EXTENSION_NAME.extensionList
         ExtensionTestUtil.maskExtensions(
-            LightTestFramework.EXTENSION_NAME,
-            extensionList.filter {
-                val filter = it.name == "LightClass"
+          KotlinTestFramework.EXTENSION_NAME,
+          extensionList.filter {
+                val filter = it is KotlinDelegatingTestFramework
                 if (lightClass) filter else !filter
              },
-            testRootDisposable
+          testRootDisposable
         )
         task()
     }

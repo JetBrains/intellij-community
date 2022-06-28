@@ -7,7 +7,7 @@ from ...sql import expression
 def Any(other, arrexpr, operator=...): ...
 def All(other, arrexpr, operator=...): ...
 
-class array(expression.ClauseList, expression.ColumnElement):
+class array(expression.ClauseList, expression.ColumnElement[_Any]):
     __visit_name__: str
     stringify_dialect: str
     inherit_cache: bool

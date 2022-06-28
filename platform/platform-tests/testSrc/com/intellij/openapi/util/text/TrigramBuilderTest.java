@@ -1,41 +1,41 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
-import com.intellij.openapi.util.Ref;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntList;
 import junit.framework.TestCase;
 
+import java.util.NoSuchElementException;
+
 public class TrigramBuilderTest extends TestCase {
   public void testBuilder() {
-    final Ref<Integer> trigramCountRef = new Ref<>();
-    final IntList list = new IntArrayList();
-
-    TrigramBuilder.processTrigrams("String$CharData", new TrigramBuilder.TrigramProcessor() {
-      @Override
-      public boolean test(int value) {
-        list.add(value);
-        return true;
-      }
-
-      @Override
-      public boolean consumeTrigramsCount(int count) {
-        trigramCountRef.set(count);
-        return true;
-      }
-    });
-
+    IntList list = new IntArrayList(TrigramBuilder.getTrigrams("String$CharData"));
     list.sort(null);
-    Integer trigramCount = trigramCountRef.get();
-    assertNotNull(trigramCount);
 
     int expectedTrigramCount = 13;
-    assertEquals(expectedTrigramCount, (int)trigramCount);
     assertEquals(expectedTrigramCount, list.size());
 
     int[] expected = {buildTrigram("$Ch"), buildTrigram("arD"), buildTrigram("ata"), 6514785, 6578548, 6759523, 6840690, 6909543, 7235364, 7496801, 7498094, 7566450, 7631465, };
     for (int i = 0; i < expectedTrigramCount; ++i) {
       assertEquals(expected[i], list.getInt(i));
+    }
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  public void testIteratorContract() {
+    IntIterator iterator = TrigramBuilder.getTrigrams("Str").intIterator();
+    assertTrue(iterator.hasNext());
+    assertTrue(iterator.hasNext());
+    assertTrue(iterator.hasNext());
+    assertEquals(7566450, iterator.nextInt());
+    assertFalse(iterator.hasNext());
+    assertFalse(iterator.hasNext());
+    try {
+      iterator.nextInt();
+      fail();
+    } catch (NoSuchElementException ignored) {
+
     }
   }
 

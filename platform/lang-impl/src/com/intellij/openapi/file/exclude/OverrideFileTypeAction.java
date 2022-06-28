@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,7 +75,7 @@ class OverrideFileTypeAction extends DumbAwareAction {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files == null) return VirtualFile.EMPTY_ARRAY;
     return Arrays.stream(files)
-      .filter(file -> file != null && !file.isDirectory())
+      .filter(file -> file != null && ChangeToThisFileTypeAction.isOverridableFile(file))
       .filter(additionalPredicate)
       .toArray(count -> VirtualFile.ARRAY_FACTORY.create(count));
   }
@@ -94,7 +95,7 @@ class OverrideFileTypeAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       for (VirtualFile file : myFiles) {
-        if (file.isValid() && !file.isDirectory() && OverrideFileTypeManager.isOverridable(file.getFileType())) {
+        if (isOverridableFile(file)) {
           OverrideFileTypeManager.getInstance().addFile(file, myType);
         }
       }
@@ -102,8 +103,14 @@ class OverrideFileTypeAction extends DumbAwareAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = ContainerUtil.exists(myFiles, file -> file.isValid() && !file.isDirectory() && OverrideFileTypeManager.isOverridable(file.getFileType()));
+      boolean enabled = ContainerUtil.exists(myFiles, file -> isOverridableFile(file));
       e.getPresentation().setEnabled(enabled);
+    }
+    private static boolean isOverridableFile(@NotNull VirtualFile file) {
+      return file.isValid()
+             && !file.isDirectory()
+             && (file instanceof VirtualFileWithId)
+             && OverrideFileTypeManager.isOverridable(file.getFileType());
     }
   }
 }

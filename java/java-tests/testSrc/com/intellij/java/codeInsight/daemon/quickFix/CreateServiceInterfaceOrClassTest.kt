@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
@@ -60,7 +60,7 @@ class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTes
     myFixture.configureByText("module-info.java", "module foo.bar { requires foo.bar.other; uses foo.bar.other.<caret>MyService; }")
     doAction("foo.bar.other.MyService", otherModuleInfo, otherModuleInfo.containingDirectory)
 
-    myFixture.checkResult("../${OTHER.rootName}/foo/bar/other/MyService.java",
+    myFixture.checkResult("../${OTHER.sourceRootName}/foo/bar/other/MyService.java",
                           "package foo.bar.other;\n\n" +
                           "public class MyService {\n" +
                           "}\n", true)

@@ -4,8 +4,6 @@ package com.intellij.ide.ui.html
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -19,15 +17,10 @@ import javax.swing.text.html.StyleSheet
  * Based on a default swing stylesheet at javax/swing/text/html/default.css
  */
 @Internal
-@Service(Service.Level.APP)
-class GlobalStyleSheetHolder {
+object GlobalStyleSheetHolder {
   private val globalStyleSheet = StyleSheet()
   private var swingStyleSheetHandled = false
   private var currentLafStyleSheet: StyleSheet? = null
-
-  companion object {
-    fun getInstance(): GlobalStyleSheetHolder = service()
-  }
 
   /**
    * Returns a global style sheet that is dynamically updated when LAF changes
@@ -61,9 +54,8 @@ class GlobalStyleSheetHolder {
       }
 
       val newStyle = StyleSheet()
-      val lafCssProvider = service<LafCssProvider>()
-      newStyle.addRule(lafCssProvider.getCssForCurrentLaf())
-      newStyle.addRule(lafCssProvider.getCssForCurrentEditorScheme())
+      newStyle.addRule(LafCssProvider.getCssForCurrentLaf())
+      newStyle.addRule(LafCssProvider.getCssForCurrentEditorScheme())
       currentLafStyleSheet = newStyle
       globalStyleSheet.addStyleSheet(newStyle)
     }
@@ -71,11 +63,11 @@ class GlobalStyleSheetHolder {
 
   internal class UpdateListener : EditorColorsListener, LafManagerListener {
     override fun lookAndFeelChanged(source: LafManager) {
-      getInstance().updateGlobalStyleSheet()
+      updateGlobalStyleSheet()
     }
 
     override fun globalSchemeChange(scheme: EditorColorsScheme?) {
-      getInstance().updateGlobalStyleSheet()
+      updateGlobalStyleSheet()
     }
   }
 }

@@ -4,21 +4,23 @@ package com.intellij.codeInspection.duplicateExpressions;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.HighlightUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -286,81 +288,21 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression expression = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiExpression.class);
-      if (expression == null) return;
-      PsiCodeBlock codeBlock = DuplicateExpressionsContext.findNearestBody(expression);
-      if (codeBlock == null) return;
-      DuplicateExpressionCollector expressionCollector = new DuplicateExpressionCollector(expression);
-      codeBlock.accept(expressionCollector);
-      PsiExpression[] occurrences = expressionCollector.getOccurrences();
-      if (occurrences.length < 2) return;
-      PsiElement anchor = CommonJavaRefactoringUtil.getAnchorElementForMultipleExpressions(occurrences, codeBlock);
-      if (anchor == null) return;
-      PsiElement parent = anchor.getParent();
-      if (parent == null) return;
-      PsiExpression canonicalExpression = expressionCollector.myPattern;
-      PsiDeclarationStatement declaration = createDeclaration(codeBlock, canonicalExpression, anchor);
-      if (declaration == null) return;
-      declaration = addDeclaration(anchor, parent, declaration);
-      PsiVariable declared = (PsiVariable)declaration.getDeclaredElements()[0];
-      String pathVarName = Objects.requireNonNull(declared.getName());
-      PsiReference[] refs = new PsiReference[occurrences.length];
-      for (int i = 0; i < occurrences.length; i++) {
-        PsiExpression occurrence = occurrences[i];
-        refs[i] = (PsiReference)new CommentTracker().replaceAndRestoreComments(occurrence, pathVarName);
-      }
-      HighlightUtils.showRenameTemplate(codeBlock, declared, refs);
-    }
-
-    @NotNull
-    private static PsiDeclarationStatement addDeclaration(PsiElement anchor, @NotNull PsiElement parent, PsiDeclarationStatement declaration) {
-      declaration = (PsiDeclarationStatement)parent.addBefore(declaration, anchor);
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(parent.getProject());
-      declaration = (PsiDeclarationStatement)codeStyleManager.shortenClassReferences(declaration);
-      return declaration;
-    }
-
-    @Nullable
-    private static PsiDeclarationStatement createDeclaration(@NotNull PsiCodeBlock block,
-                                                             @NotNull PsiExpression initializer,
-                                                             @NotNull PsiElement anchor) {
-      PsiType varType = initializer.getType();
-      if (varType == null) return null;
-      String varName = getSuggestedName(varType, initializer, anchor);
-      if (varName == null) return null;
-      PsiElementFactory elementFactory = PsiElementFactory.getInstance(block.getProject());
-      return elementFactory.createVariableDeclarationStatement(varName, varType, initializer);
-    }
-
-    private static @Nullable String getSuggestedName(@NotNull PsiType type,
-                                                     @NotNull PsiExpression initializer,
-                                                     @NotNull PsiElement anchor) {
-      SuggestedNameInfo nameInfo = CommonJavaRefactoringUtil.getSuggestedName(type, initializer, anchor);
-      String[] names = nameInfo.names;
-      return names.length == 0 ? null : names[0];
-    }
-
-    private static class DuplicateExpressionCollector extends JavaRecursiveElementWalkingVisitor {
-
-      private static final ExpressionHashingStrategy HASHING_STRATEGY = new ExpressionHashingStrategy();
-      private final List<PsiExpression> myOccurrences = new ArrayList<>();
-      private final PsiExpression myPattern;
-      private final CanonicalExpressionProvider myCanonicalExpressionProvider = new CanonicalExpressionProvider();
-
-      private DuplicateExpressionCollector(PsiExpression pattern) {
-        myPattern = myCanonicalExpressionProvider.getCanonicalExpression(pattern);
-      }
-
-      @Override
-      public void visitExpression(PsiExpression expression) {
-        super.visitExpression(expression);
-        PsiExpression canonicalExpression = myCanonicalExpressionProvider.getCanonicalExpression(expression);
-        if (HASHING_STRATEGY.equals(canonicalExpression, myPattern)) myOccurrences.add(expression);
-      }
-
-      public PsiExpression @NotNull [] getOccurrences() {
-        return myOccurrences.toArray(PsiExpression.EMPTY_ARRAY);
+      PsiElement element = descriptor.getPsiElement();
+      if (element instanceof PsiExpression) {
+        VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+        Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), true);
+        if (editor != null) {
+          JavaIntroduceVariableHandlerBase handler =
+            (JavaIntroduceVariableHandlerBase)JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
+          handler.invoke(project, editor, (PsiExpression)element);
+        }
       }
     }
   }

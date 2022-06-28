@@ -6,6 +6,7 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.cli.common.repl.replNormalizeLineBreaks
 import org.jetbrains.kotlin.cli.common.repl.replUnescapeLineBreaks
 import org.jetbrains.kotlin.console.actions.logError
@@ -86,6 +87,10 @@ class ReplOutputHandler(
         if (!isBuildInfoChecked) {
             outputProcessor.printBuildInfoWarningIfNeeded()
             isBuildInfoChecked = true
+        }
+        // there are several INITIAL_PROMPT messages, the 1st starts with `Welcome to Kotlin version ...`
+        if (content.startsWith("Welcome")) {
+            outputProcessor.printUserOutput(KotlinIdeaReplBundle.message("repl.is.in.experimental.stage") + "\n")
         }
         outputProcessor.printInitialPrompt(content)
     }

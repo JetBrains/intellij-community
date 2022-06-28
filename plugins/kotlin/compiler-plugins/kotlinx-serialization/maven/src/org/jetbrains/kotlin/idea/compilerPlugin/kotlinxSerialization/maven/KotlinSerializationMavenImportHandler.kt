@@ -12,8 +12,8 @@ class KotlinSerializationMavenImportHandler : AbstractMavenImportHandler() {
     override val compilerPluginId: String = "org.jetbrains.kotlinx.serialization"
     override val pluginName: String = "serialization"
     override val mavenPluginArtifactName: String = "kotlin-maven-serialization"
-    override val pluginJarFileFromIdea: File
-        get() = File(KotlinSerializationImportHandler.PLUGIN_JPS_JAR)
+    override val pluginJarFileFromIdea: String
+        get() = KotlinSerializationImportHandler.PLUGIN_JPS_JAR
 
     override fun getOptions(
         mavenProject: MavenProject,

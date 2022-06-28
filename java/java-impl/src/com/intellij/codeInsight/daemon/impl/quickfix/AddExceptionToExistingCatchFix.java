@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -62,7 +61,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
   }
   private static List<PsiCatchSection> findSuitableSections(List<? extends PsiCatchSection> sections, @NotNull List<? extends PsiClassType> exceptionTypes, boolean isJava7OrHigher) {
     List<PsiCatchSection> finalSections = new ArrayList<>();
-    for (PsiCatchSection section : Lists.reverse(sections)) {
+    for (PsiCatchSection section : ContainerUtil.reverse(sections)) {
       finalSections.add(section);
 
       PsiType sectionType = section.getCatchType();

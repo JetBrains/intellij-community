@@ -210,8 +210,41 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @NotNull
   private JComponent createActionsToolbar() {
+    ActionManager actionManager = ActionManager.getInstance();
+
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(VcsLogActionIds.TOOLBAR_ACTION_GROUP));
+    toolbarGroup.copyFromGroup((DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_ACTION_GROUP));
+
+    DefaultActionGroup mainGroup = new DefaultActionGroup();
+    mainGroup.add(actionManager.getAction(VcsLogActionIds.TEXT_FILTER_SETTINGS_ACTION_GROUP));
+    mainGroup.add(new Separator());
+    mainGroup.add(myFilterUi.createActionGroup());
+    mainGroup.addSeparator();
+    mainGroup.add(toolbarGroup);
+    ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
+    toolbar.setTargetComponent(this);
+
+    Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent());
+    textFilter.setVerticalSizeReferent(toolbar.getComponent());
+    String vcsDisplayName = VcsLogUtil.getVcsDisplayName(myLogData.getProject(), myLogData.getLogProviders().values());
+    textFilter.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.text.filter.accessible.name", vcsDisplayName));
+
+    DefaultActionGroup rightCornerGroup = new DefaultActionGroup();
+    rightCornerGroup.copyFromGroup((DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
+    addIntelliSortAction(rightCornerGroup);
+    ActionToolbar rightCornerToolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, rightCornerGroup, true);
+    rightCornerToolbar.setTargetComponent(this);
+    rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
+
+    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[pref:pref, right]", "center"));
+    GuiUtils.installVisibilityReferent(panel, toolbar.getComponent());
+    panel.add(textFilter);
+    panel.add(toolbar.getComponent());
+    panel.add(rightCornerToolbar.getComponent());
+    return panel;
+  }
+
+  private static void addIntelliSortAction(@NotNull DefaultActionGroup toolbarGroup) {
     if (BekUtil.isBekEnabled()) {
       Constraints constraint = new Constraints(Anchor.BEFORE, VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
       if (BekUtil.isLinearBekEnabled()) {
@@ -220,39 +253,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         // I can of course if linear bek is enabled replace the action on start but why bother
       }
       else {
-        toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_INTELLI_SORT_ACTION),
-                         constraint);
+        toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_INTELLI_SORT_ACTION), constraint);
       }
     }
-
-    DefaultActionGroup mainGroup = new DefaultActionGroup();
-    mainGroup.add(ActionManager.getInstance().getAction(VcsLogActionIds.TEXT_FILTER_SETTINGS_ACTION_GROUP));
-    mainGroup.add(new Separator());
-    mainGroup.add(myFilterUi.createActionGroup());
-    mainGroup.addSeparator();
-    mainGroup.add(toolbarGroup);
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
-    toolbar.setTargetComponent(this);
-
-    Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent());
-    textFilter.setVerticalSizeReferent(toolbar.getComponent());
-    String vcsDisplayName = VcsLogUtil.getVcsDisplayName(myLogData.getProject(), myLogData.getLogProviders().values());
-    textFilter.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.text.filter.accessible.name", vcsDisplayName));
-
-    DefaultActionGroup rightCornerGroup =
-      new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
-    ActionToolbar rightCornerToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE,
-                                                                                       rightCornerGroup, true);
-    rightCornerToolbar.setTargetComponent(this);
-    rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
-    rightCornerToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-
-    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[pref:pref, right]", "center"));
-    GuiUtils.installVisibilityReferent(panel, toolbar.getComponent());
-    panel.add(textFilter);
-    panel.add(toolbar.getComponent());
-    panel.add(rightCornerToolbar.getComponent());
-    return panel;
   }
 
   @Nullable

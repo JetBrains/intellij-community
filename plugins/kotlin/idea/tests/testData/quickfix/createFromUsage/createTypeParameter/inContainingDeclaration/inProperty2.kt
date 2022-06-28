@@ -6,6 +6,7 @@
 // ACTION: Create enum 'T'
 // ACTION: Create interface 'T'
 // ACTION: Create type parameter 'T' in class 'Test'
+// ACTION: Do not show return expression hints
 // ACTION: Move to constructor
 // ACTION: Remove explicit type specification
 // ERROR: Unresolved reference: T

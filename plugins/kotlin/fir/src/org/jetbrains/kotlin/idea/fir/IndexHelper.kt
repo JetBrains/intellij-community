@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir
 
@@ -12,8 +12,8 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.isSyntheticKotlinClass
 import org.jetbrains.kotlin.name.CallableId
@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 */
 class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) {
     fun getClassNamesInPackage(packageFqName: FqName): Set<Name> =
-        KotlinTopLevelClassByPackageIndex.getInstance()
+        KotlinTopLevelClassByPackageIndex
             .get(packageFqName.asStringForIndexes(), project, scope)
             .mapNotNullTo(hashSetOf()) { it.nameAsName }
 
@@ -37,7 +37,7 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
         nameFilter: (Name) -> Boolean,
         psiFilter: (element: KtClassOrObject) -> Boolean = { true }
     ): Collection<KtClassOrObject> {
-        val index = KotlinFullClassNameIndex.getInstance()
+        val index = KotlinFullClassNameIndex
         return index.getAllKeys(project).asSequence()
             .onEach { ProgressManager.checkCanceled() }
             .filter { fqName -> nameFilter(getShortName(fqName)) }
@@ -54,18 +54,18 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
                 .flatMap { fqName -> index[fqName, project, scope] }
                 .filter { it.receiverTypeReference == null }
 
-        val functions = sequenceOfElements(KotlinTopLevelFunctionFqnNameIndex.getInstance())
-        val properties = sequenceOfElements(KotlinTopLevelPropertyFqnNameIndex.getInstance())
+        val functions = sequenceOfElements(KotlinTopLevelFunctionFqnNameIndex)
+        val properties = sequenceOfElements(KotlinTopLevelPropertyFqnNameIndex)
 
         return (functions + properties).toList()
     }
 
     fun getKotlinCallablesByName(name: Name): Collection<KtCallableDeclaration> {
         val functions: Sequence<KtCallableDeclaration> =
-            KotlinFunctionShortNameIndex.getInstance().get(name.asString(), project, scope).asSequence()
+            KotlinFunctionShortNameIndex.get(name.asString(), project, scope).asSequence()
 
         val properties: Sequence<KtNamedDeclaration> =
-            KotlinPropertyShortNameIndex.getInstance().get(name.asString(), project, scope).asSequence()
+            KotlinPropertyShortNameIndex.get(name.asString(), project, scope).asSequence()
 
         return (functions + properties)
             .filterIsInstance<KtCallableDeclaration>()
@@ -73,11 +73,11 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
     }
 
     fun getKotlinClassesByName(name: Name): Collection<KtClassOrObject> {
-        return KotlinClassShortNameIndex.getInstance().get(name.asString(), project, scope)
+        return KotlinClassShortNameIndex.get(name.asString(), project, scope)
     }
 
     fun getTopLevelExtensions(nameFilter: (Name) -> Boolean, receiverTypeNames: Set<String>): Collection<KtCallableDeclaration> {
-        val index = KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE
+        val index = KotlinTopLevelExtensionsByReceiverTypeIndex
 
         return index.getAllKeys(project).asSequence()
             .onEach { ProgressManager.checkCanceled() }
@@ -88,7 +88,7 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
     }
 
     fun getPossibleTypeAliasExpansionNames(originalTypeName: String): Set<String> {
-        val index = KotlinTypeAliasByExpansionShortNameIndex.INSTANCE
+        val index = KotlinTypeAliasByExpansionShortNameIndex
         val out = mutableSetOf<String>()
 
         fun searchRecursively(typeName: String) {

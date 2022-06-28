@@ -3,6 +3,7 @@
 // ACTION: Create enum 'X'
 // ACTION: Create interface 'X'
 // ACTION: Create object 'X'
+// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ERROR: Unresolved reference: X
 

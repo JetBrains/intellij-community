@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -62,7 +63,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
 
     if (srcClass == null) return;
 
-    final Collection<PsiElement> testClasses = TestFinderHelper.findTestsForClass(srcClass);
+    final Collection<PsiElement> testClasses = ContainerUtil.filter(TestFinderHelper.findTestsForClass(srcClass), e -> e.getLanguage() == JavaLanguage.INSTANCE);
 
     if (testClasses.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, JavaBundle.message("generate.missed.tests.action.error.no.tests.found"));

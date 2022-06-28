@@ -1257,7 +1257,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @NotNull
-  private VirtualFilePointer createPointer(String relativePath) {
+  private VirtualFilePointer createPointer(@NotNull String relativePath) {
     return myVirtualFilePointerManager.create(myDir().getUrl()+"/"+relativePath, disposable, null);
   }
 

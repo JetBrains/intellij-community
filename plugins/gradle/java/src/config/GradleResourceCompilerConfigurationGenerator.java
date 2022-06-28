@@ -23,7 +23,10 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.PathMapper;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -118,7 +121,7 @@ public class GradleResourceCompilerConfigurationGenerator {
       }
       FileUtil.createIfDoesntExist(gradleConfigFile);
       try {
-        JdomKt.write(element, gradleConfigFile.toPath());
+        JDOMUtil.write(element, gradleConfigFile.toPath());
         myModulesConfigurationHash.putAll(affectedConfigurationHash);
       }
       catch (IOException e) {

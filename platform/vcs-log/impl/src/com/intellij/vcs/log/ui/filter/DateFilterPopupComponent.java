@@ -43,7 +43,7 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, Fi
       return VcsLogBundle.message("vcs.log.date.filter.until", JBDateFormat.getFormatter().formatDate(before));
     }
     else {
-      return ALL.get();
+      return getEmptyFilterValue();
     }
   }
 

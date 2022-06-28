@@ -18,7 +18,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.analysis.analyzeInContext
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
@@ -271,7 +271,7 @@ class BasicCompletionSession(
                 callTypeAndReceiver.callType.descriptorKindFilter.kindMask.and(DescriptorKindFilter.PACKAGES_MASK) != 0
             ) {
                 //TODO: move this code somewhere else?
-                val packageNames = PackageIndexUtil.getSubPackageFqNames(FqName.ROOT, searchScope, project, prefixMatcher.asNameFilter())
+                val packageNames = PackageIndexUtil.getSubPackageFqNames(FqName.ROOT, searchScope, prefixMatcher.asNameFilter())
                     .toHashSet()
 
                 if (TargetPlatformDetector.getPlatform(parameters.originalFile as KtFile).isJvm()) {

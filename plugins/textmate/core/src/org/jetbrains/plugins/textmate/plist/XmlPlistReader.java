@@ -6,8 +6,6 @@ import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -20,13 +18,6 @@ public class XmlPlistReader implements PlistReader {
   @Override
   public Plist read(@NotNull InputStream inputStream) throws IOException {
     return internalRead(XmlDomReader.readXmlAsModel(inputStream));
-  }
-
-  @Override
-  public Plist read(@NotNull File file) throws IOException {
-    try (FileInputStream fs = new FileInputStream(file)) {
-      return read(fs);
-    }
   }
 
   private static Plist internalRead(@NotNull XmlElement root) throws IOException {

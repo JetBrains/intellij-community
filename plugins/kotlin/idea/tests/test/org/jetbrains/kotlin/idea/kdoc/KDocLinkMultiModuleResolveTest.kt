@@ -73,7 +73,7 @@ class KDocLinkMultiModuleResolveTest : AbstractMultiModuleTest() {
 
         val bindingContext = targetElement.analyze()
         val descriptor = bindingContext[DECLARATION_TO_DESCRIPTOR, targetElement]!!
-        val kdoc = descriptor.findKDoc()!! as KDocSection
+        val kdoc = descriptor.findKDoc()!!.contentTag as KDocSection
         val resolutionFacade = targetElement.getResolutionFacade()
         assertNotEmpty(resolveKDocLink(bindingContext, resolutionFacade, descriptor, kdoc.findTagByName("sample")!!, link.split(".")))
     }

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.JarUtil
 import com.intellij.openapi.vfs.*
 import org.jetbrains.kotlin.caches.resolve.IdePlatformKindResolution
 import org.jetbrains.kotlin.caches.resolve.resolution
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.vfilefinder.KnownLibraryKindForIndex
 import org.jetbrains.kotlin.idea.vfilefinder.getLibraryKindForJar
 import org.jetbrains.kotlin.platform.CommonPlatforms
@@ -76,9 +77,11 @@ fun getLibraryJar(roots: Array<VirtualFile>, jarPattern: Pattern): VirtualFile? 
     return roots.firstOrNull { jarPattern.matcher(it.name).matches() }
 }
 
-fun getLibraryJarVersion(library: Library, jarPattern: Pattern): String? {
+fun getLibraryJarVersion(library: Library, jarPattern: Pattern): IdeKotlinVersion? {
     val libraryJar = getLibraryJar(library.getFiles(OrderRootType.CLASSES), jarPattern) ?: return null
-    return JarUtil.getJarAttribute(VfsUtilCore.virtualToIoFile(libraryJar), Attributes.Name.IMPLEMENTATION_VERSION)
+    return IdeKotlinVersion.fromManifest(libraryJar)
 }
 
-fun getCommonRuntimeLibraryVersion(library: Library) = getLibraryJarVersion(library, PathUtil.KOTLIN_STDLIB_COMMON_JAR_PATTERN)
+fun getCommonRuntimeLibraryVersion(library: Library): IdeKotlinVersion? {
+    return getLibraryJarVersion(library, PathUtil.KOTLIN_STDLIB_COMMON_JAR_PATTERN)
+}

@@ -24,7 +24,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +51,8 @@ public class XmlTextExtractor extends TextExtractor {
   @Override
   protected @Nullable TextContent buildTextContent(@NotNull PsiElement element,
                                                    @NotNull Set<TextContent.TextDomain> allowedDomains) {
-    if (isText(element) && hasSuitableDialect(element)) {
+    IElementType type = PsiUtilCore.getElementType(element);
+    if (isText(type) && hasSuitableDialect(element)) {
       var classifier = tagClassifier(element);
       PsiElement container = SyntaxTraverser.psiApi().parents(element)
         .find(e -> e instanceof XmlDocument || e instanceof XmlTag && classifier.apply((XmlTag)e) != TagKind.Inline);
@@ -60,7 +63,6 @@ public class XmlTextExtractor extends TextExtractor {
       }
     }
 
-    IElementType type = PsiUtilCore.getElementType(element);
     if (type == XmlTokenType.XML_COMMENT_CHARACTERS && allowedDomains.contains(COMMENTS) && hasSuitableDialect(element)) {
       return builder.build(element, COMMENTS);
     }
@@ -103,7 +105,7 @@ public class XmlTextExtractor extends TextExtractor {
           unknownBefore = true;
         }
 
-        if (isText(each)) {
+        if (isText(PsiUtilCore.getElementType(each))) {
           group.add(each);
         }
         super.visitElement(each);
@@ -136,15 +138,7 @@ public class XmlTextExtractor extends TextExtractor {
     return full.excludeRange(new TextRange(range.getEndOffset(), full.length())).excludeRange(new TextRange(0, range.getStartOffset()));
   }
 
-  private static boolean isText(PsiElement leaf) {
-    PsiElement parent = leaf.getParent();
-    if (!(parent instanceof XmlText) &&
-        !(PsiUtilCore.getElementType(parent) == XmlElementType.XML_CDATA && parent.getParent() instanceof XmlText) &&
-        !(parent instanceof XmlDocument)) {
-      return false;
-    }
-
-    IElementType type = PsiUtilCore.getElementType(leaf);
+  private static boolean isText(IElementType type) {
     return type == XmlTokenType.XML_WHITE_SPACE || type == TokenType.WHITE_SPACE ||
            type == XmlTokenType.XML_CHAR_ENTITY_REF || type == XmlTokenType.XML_DATA_CHARACTERS;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions
 
 import com.intellij.ide.actions.CreateElementActionBase
@@ -143,7 +143,7 @@ class NewMessageBundleAction : CreateElementActionBase(), UpdateInBackground {
 }
 
 @Suppress("HardCodedStringLiteral")
-internal fun generateDefaultBundleName(module: Module): String {
+fun generateDefaultBundleName(module: Module): String {
   val nameWithoutPrefix = module.name.removePrefix("intellij.").removeSuffix(".impl")
   val commonGroupNames = listOf("platform", "vcs", "tools", "clouds")
   val commonPrefix = commonGroupNames.find { nameWithoutPrefix.startsWith("$it.") }

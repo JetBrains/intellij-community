@@ -2,9 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
@@ -16,7 +14,6 @@ import org.jetbrains.kotlin.idea.caches.project.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
-import org.jetbrains.kotlin.idea.util.application.getService
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 import org.jetbrains.kotlin.types.typeUtil.closure
 import org.jetbrains.kotlin.utils.addToStdlib.cast
@@ -35,7 +32,7 @@ interface ResolutionAnchorCacheService {
         }
 
         fun getInstance(project: Project): ResolutionAnchorCacheService =
-            project.getService() ?: Default
+            project.serviceOrNull() ?: Default
     }
 }
 

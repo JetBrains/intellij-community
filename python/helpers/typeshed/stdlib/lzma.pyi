@@ -3,6 +3,45 @@ from _typeshed import ReadableBuffer, Self, StrOrBytesPath
 from typing import IO, Any, Mapping, Sequence, TextIO, Union, overload
 from typing_extensions import Literal, final
 
+__all__ = [
+    "CHECK_NONE",
+    "CHECK_CRC32",
+    "CHECK_CRC64",
+    "CHECK_SHA256",
+    "CHECK_ID_MAX",
+    "CHECK_UNKNOWN",
+    "FILTER_LZMA1",
+    "FILTER_LZMA2",
+    "FILTER_DELTA",
+    "FILTER_X86",
+    "FILTER_IA64",
+    "FILTER_ARM",
+    "FILTER_ARMTHUMB",
+    "FILTER_POWERPC",
+    "FILTER_SPARC",
+    "FORMAT_AUTO",
+    "FORMAT_XZ",
+    "FORMAT_ALONE",
+    "FORMAT_RAW",
+    "MF_HC3",
+    "MF_HC4",
+    "MF_BT2",
+    "MF_BT3",
+    "MF_BT4",
+    "MODE_FAST",
+    "MODE_NORMAL",
+    "PRESET_DEFAULT",
+    "PRESET_EXTREME",
+    "LZMACompressor",
+    "LZMADecompressor",
+    "LZMAFile",
+    "LZMAError",
+    "open",
+    "compress",
+    "decompress",
+    "is_check_supported",
+]
+
 _OpenBinaryWritingMode = Literal["w", "wb", "x", "xb", "a", "ab"]
 _OpenTextWritingMode = Literal["wt", "xt", "at"]
 

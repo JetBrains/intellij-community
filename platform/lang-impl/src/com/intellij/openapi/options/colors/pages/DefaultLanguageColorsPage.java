@@ -29,8 +29,6 @@ import java.util.Map;
 
 /**
  * Allows to set default colors for multiple languages.
- *
- * @author Rustam Vishnyakov
  */
 public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable, ColorSettingsPage.PreviewCustomizer {
   private final static TextAttributesKey FAKE_BAD_CHAR =

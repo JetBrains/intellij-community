@@ -5,12 +5,14 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UMultiResolvable
 import org.jetbrains.uast.UQualifiedReferenceExpression
 import org.jetbrains.uast.kotlin.internal.getResolveResultVariants
 
+@ApiStatus.Internal
 class KotlinUSafeQualifiedExpression(
     override val sourcePsi: KtSafeQualifiedExpression,
     givenParent: UElement?

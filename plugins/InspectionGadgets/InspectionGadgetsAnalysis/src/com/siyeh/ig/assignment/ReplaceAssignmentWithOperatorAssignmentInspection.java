@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -36,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspection {
+public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   /**
    * @noinspection PublicField

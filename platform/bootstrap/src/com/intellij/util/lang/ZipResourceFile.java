@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,8 +22,11 @@ import java.util.jar.Manifest;
 @SuppressWarnings("SuspiciousPackagePrivateAccess")
 final class ZipResourceFile implements ResourceFile {
   private final ZipFile zipFile;
+  private final boolean defineClassUsingBytes;
 
-  ZipResourceFile(@NotNull Path file) {
+  ZipResourceFile(@NotNull Path file, boolean defineClassUsingBytes) {
+    this.defineClassUsingBytes = defineClassUsingBytes;
+
     ZipFilePool pool = ZipFilePool.POOL;
     try {
       if (pool == null) {
@@ -101,7 +104,7 @@ final class ZipResourceFile implements ResourceFile {
   @Override
   public @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
     throws IOException {
-    if (classConsumer.isByteBufferSupported(className)) {
+    if (!defineClassUsingBytes && classConsumer.isByteBufferSupported(className)) {
       ByteBuffer buffer = zipFile.getByteBuffer(fileName);
       if (buffer == null) {
         return null;
@@ -150,7 +153,7 @@ final class ZipResourceFile implements ResourceFile {
     public @NotNull URL getURL() {
       URL result = url;
       if (result == null) {
-        URLStreamHandler handler = new MyJarUrlStreamHandler(entry, jarLoader);
+        MyJarUrlStreamHandler handler = new MyJarUrlStreamHandler(entry, jarLoader);
         try {
           result = new URL(jarLoader.url, name, handler);
         }
@@ -158,6 +161,7 @@ final class ZipResourceFile implements ResourceFile {
           throw new RuntimeException(e);
         }
         url = result;
+        handler.original = result;
       }
       return result;
     }
@@ -177,6 +181,8 @@ final class ZipResourceFile implements ResourceFile {
     private @NotNull final ZipResource entry;
     private @NotNull final JarLoader jarLoader;
 
+    private URL original;
+
     private MyJarUrlStreamHandler(@NotNull ZipResource entry, @NotNull JarLoader jarLoader) {
       this.entry = entry;
       this.jarLoader = jarLoader;
@@ -184,24 +190,51 @@ final class ZipResourceFile implements ResourceFile {
 
     @Override
     protected URLConnection openConnection(URL url) throws MalformedURLException {
-      return jarLoader.configuration.mimicJarUrlConnection ? new MyJarUrlConnection(url, entry, jarLoader) : new MyUrlConnection(url, entry);
+      if (jarLoader.configuration.mimicJarUrlConnection) {
+        return new MyJarUrlConnection(url, entry, jarLoader);
+      }
+      else {
+        return new MyUrlConnection(url, url == original || url.equals(original) ? entry : null, jarLoader);
+      }
     }
   }
 
   private static final class MyUrlConnection extends URLConnection {
-    private final ZipResource entry;
+    private ZipResource entry;
+    private final JarLoader jarLoader;
     private byte[] data;
 
-    MyUrlConnection(@NotNull URL url, @NotNull ZipResource entry) {
+    MyUrlConnection(@NotNull URL url, @Nullable ZipResource entry, @NotNull JarLoader jarLoader) {
       super(url);
+
       this.entry = entry;
+      this.jarLoader = jarLoader;
     }
 
     private byte[] getData() throws IOException {
       byte[] result = data;
       if (result == null) {
-        result = entry.getData();
+        result = getEntry().getData();
         data = result;
+      }
+      return result;
+    }
+
+    private ZipResource getEntry() throws IOException {
+      ZipResource result = entry;
+      if (result == null) {
+        String spec = url.getFile();
+        int index = spec.indexOf("!/");
+        if (index != -1) {
+          index += 2;
+        }
+        String entryName = index != -1 && index != spec.length() ? spec.substring(index) : null;
+        Resource resource = entryName == null ? null : jarLoader.zipFile.getResource(entryName, jarLoader);
+        if (resource == null) {
+          throw new NoSuchFileException("Cannot find `" + spec + "` in " + jarLoader.getPath());
+        }
+        result = ((ZipFileResource)resource).entry;
+        entry = result;
       }
       return result;
     }
@@ -217,12 +250,17 @@ final class ZipResourceFile implements ResourceFile {
 
     @Override
     public InputStream getInputStream() throws IOException {
-      return entry.getInputStream();
+      return getEntry().getInputStream();
     }
 
     @Override
     public int getContentLength() {
-      return entry.getUncompressedSize();
+      try {
+        return getEntry().getUncompressedSize();
+      }
+      catch (IOException e) {
+        return -1;
+      }
     }
   }
 

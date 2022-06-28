@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.compiler;
 
@@ -12,10 +12,10 @@ import org.jetbrains.org.objectweb.asm.commons.Method;
  * Layout code generator shared between BorderLayout and CardLayout.
  */
 public class SimpleLayoutCodeGenerator extends LayoutCodeGenerator {
-  protected final Type myLayoutType;
+  final Type myLayoutType;
   private static final Method ourConstructor = Method.getMethod("void <init>(int,int)");
 
-  public SimpleLayoutCodeGenerator(final Type layoutType) {
+  SimpleLayoutCodeGenerator(final Type layoutType) {
     myLayoutType = layoutType;
   }
 

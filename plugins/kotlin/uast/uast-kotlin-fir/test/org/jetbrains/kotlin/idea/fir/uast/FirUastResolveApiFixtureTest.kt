@@ -35,8 +35,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         "MultiInvokableObjectResolve",
         // TODO: multiResolve
         "MultiResolveJvmOverloads",
-        // TODO: local resolution
-        "LocalResolve",
         // TODO: resolve annotation param to annotation ctor ??
         "ResolveCompiledAnnotation",
     )
@@ -111,8 +109,16 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("LocalResolve", ::checkLocalResolve)
     }
 
+    fun testResolveLocalDefaultConstructor() {
+        doCheck("ResolveLocalDefaultConstructor", ::checkResolveLocalDefaultConstructor)
+    }
+
     fun testResolveCompiledAnnotation() {
         doCheck("ResolveCompiledAnnotation", ::checkResolveCompiledAnnotation)
+    }
+
+    fun testResolveSyntheticMethod() {
+        doCheck("ResolveSyntheticMethod", ::checkResolveSyntheticMethod)
     }
 
     fun testAssigningArrayElementType() {
@@ -125,5 +131,9 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testDetailsOfDeprecatedHidden() {
         doCheck("DetailsOfDeprecatedHidden", ::checkDetailsOfDeprecatedHidden)
+    }
+
+    fun testSyntheticEnumMethods() {
+        doCheck("SyntheticEnumMethods", ::checkSyntheticEnumMethods)
     }
 }

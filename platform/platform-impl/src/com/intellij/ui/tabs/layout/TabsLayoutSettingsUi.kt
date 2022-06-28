@@ -31,7 +31,7 @@ class TabsLayoutSettingsUi {
         }
 
         val availableTabsPositions = selectedInfo.availableTabsPositions
-        if (availableTabsPositions == null || availableTabsPositions.isEmpty()) {
+        if (availableTabsPositions.isNullOrEmpty()) {
           tabPlacementComboBoxModel.removeAllElements()
           tabPlacementComboBoxModel.addElement(TOP)
           return@addActionListener

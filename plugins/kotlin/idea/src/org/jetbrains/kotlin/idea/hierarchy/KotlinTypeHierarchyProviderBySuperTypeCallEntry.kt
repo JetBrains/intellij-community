@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 
 class KotlinTypeHierarchyProviderBySuperTypeCallEntry : JavaTypeHierarchyProvider() {
-    override fun getTarget(dataContext: DataContext): PsiElement? {
+    override fun getTarget(dataContext: DataContext): PsiClass? {
         val project = PlatformDataKeys.PROJECT.getData(dataContext) ?: return null
         val editor = PlatformDataKeys.EDITOR.getData(dataContext) ?: return null
 

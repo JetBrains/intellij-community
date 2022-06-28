@@ -26,7 +26,7 @@ internal val TAB_PLACEMENT = ApplicationBundle.message("combobox.editor.tab.plac
 internal val tabPlacementsOptionDescriptors = TAB_PLACEMENTS.map { i -> asOptionDescriptor(i) }
 
 internal fun Row.tabPlacementComboBox(): Cell<ComboBox<Int>> {
-  val model = if (ExperimentalUI.isNewEditorTabs()) DefaultComboBoxModel(EXP_UI_TAB_PLACEMENTS)
+  val model = if (ExperimentalUI.isNewUI()) DefaultComboBoxModel(EXP_UI_TAB_PLACEMENTS)
               else DefaultComboBoxModel(TAB_PLACEMENTS)
   return tabPlacementComboBox(model)
 }

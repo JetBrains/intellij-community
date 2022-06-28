@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.project.implementingModules
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.CommonStandardLibraryDescription
 import org.jetbrains.kotlin.idea.framework.getCommonRuntimeLibraryVersion
@@ -40,7 +41,7 @@ object CommonIdePlatformKindTooling : IdePlatformKindTooling() {
 
     override fun getLibraryDescription(project: Project) = CommonStandardLibraryDescription(project)
 
-    override fun getLibraryVersionProvider(project: Project): (Library) -> String? {
+    override fun getLibraryVersionProvider(project: Project): (Library) -> IdeKotlinVersion? {
         return ::getCommonRuntimeLibraryVersion
     }
 
@@ -50,9 +51,13 @@ object CommonIdePlatformKindTooling : IdePlatformKindTooling() {
             .filter { platform == null || it.kind.isCompatibleWith(platform) }
     }
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? {
+    override fun getTestIcon(
+        declaration: KtNamedDeclaration,
+        descriptorProvider: () -> DeclarationDescriptor?,
+        includeSlowProviders: Boolean?
+    ): Icon? {
         val icons = getRelevantToolings(declaration.module?.platform)
-            .mapNotNull { it.getTestIcon(declaration, descriptorProvider) }
+            .mapNotNull { it.getTestIcon(declaration, descriptorProvider, includeSlowProviders) }
             .distinct()
 
         return when (icons.size) {

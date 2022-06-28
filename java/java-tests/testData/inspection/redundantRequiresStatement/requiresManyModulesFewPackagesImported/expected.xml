@@ -5,13 +5,13 @@
     <line>1</line>
     <entry_point TYPE="java.module" FQNAME="MAIN" />
     <problem_class severity="WARNING">Redundant 'requires' directive in module-info</problem_class>
-    <description>Redundant directive 'requires M7'</description>
+    <description>Redundant directive 'requires M7'. No usages of module packages are found.</description>
   </problem>
   <problem>
     <file>module-info.java</file>
     <line>1</line>
     <entry_point TYPE="java.module" FQNAME="MAIN" />
     <problem_class severity="WARNING">Redundant 'requires' directive in module-info</problem_class>
-    <description>Redundant directive 'requires M4'</description>
+    <description>Redundant directive 'requires M4'. No usages of module packages are found.</description>
   </problem>
 </problems>

@@ -9,13 +9,14 @@ import java.lang.System.Logger
 import java.nio.file.Path
 import java.util.*
 
-fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, logger: Logger) {
+fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, logger: Logger, javaExe: Path) {
   tracer.spanBuilder("index help topics").startSpan().useWithScope {
     runJava(mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
             args = listOf(resourceRoot.resolve("search").toString(), resourceRoot.resolve("topics").toString()),
             jvmArgs = Collections.emptyList(),
             classPath = classPath,
-            logger = logger)
+            logger = logger,
+            javaExe = javaExe)
 
     writeNewZip(assetJar, compress = true) { zipCreator ->
       val archiver = ZipArchiver(zipCreator)

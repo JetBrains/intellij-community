@@ -7,37 +7,48 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 @ApiStatus.Internal
 public final class DirectBufferWrapper {
   @NotNull
   private static final ByteOrder ourNativeByteOrder = ByteOrder.nativeOrder();
+  private static final int RELEASED_CODE = -1;
+
+  private static final AtomicIntegerFieldUpdater<DirectBufferWrapper> REF_UPDATER =
+    AtomicIntegerFieldUpdater.newUpdater(DirectBufferWrapper.class, "myReferences");
 
   private final @NotNull PagedFileStorage myFile;
   private final long myPosition;
-  private final int myLength;
-  private final boolean myReadOnly;
 
   private volatile ByteBuffer myBuffer;
   private volatile boolean myDirty;
-  private volatile boolean myReleased = false;
+  private volatile int myReferences;
+  private volatile int myBufferDataEndPos;
 
-  DirectBufferWrapper(@NotNull PagedFileStorage file, long offset, int length, boolean readOnly) throws IOException {
+  //private final Stack<Throwable> myReferenceTraces = new Stack<>();
+
+  DirectBufferWrapper(@NotNull PagedFileStorage file, long offset) throws IOException {
     myFile = file;
     myPosition = offset;
-    myLength = length;
-    myReadOnly = readOnly;
     myBuffer = DirectByteBufferAllocator.allocate(() -> create());
     myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
   }
 
   private void markDirty() throws IOException {
-    if (myReadOnly) {
-      throw new IOException("Read-only byte buffer can't be modified. File: " + myFile);
-    }
     if (!myDirty) {
+      if (myFile.isReadOnly()) {
+        throw new IOException("Read-only byte buffer can't be modified. File: " + myFile);
+      }
       myDirty = true;
       myFile.markDirty();
+    }
+  }
+
+  private void fileSizeMayChanged(int bufferDataEndPos) {
+    if (bufferDataEndPos > myBufferDataEndPos) {
+      myBufferDataEndPos = bufferDataEndPos;
+      myFile.ensureCachedSizeAtLeast(myPosition + myBufferDataEndPos);
     }
   }
 
@@ -73,12 +84,13 @@ public final class DirectBufferWrapper {
     return myBuffer.getLong(index);
   }
 
-  public ByteBuffer putLong(int index, long value) throws IOException {
+  public void putLong(int index, long value) throws IOException {
     StorageLockContext context = myFile.getStorageLockContext();
     context.checkWriteAccess();
 
     markDirty();
-    return myBuffer.putLong(index, value);
+    myBuffer.putLong(index, value);
+    fileSizeMayChanged(index + 8);
   }
 
   public int getInt(int index) {
@@ -88,12 +100,13 @@ public final class DirectBufferWrapper {
     return myBuffer.getInt(index);
   }
 
-  public ByteBuffer putInt(int index, int value) throws IOException {
+  public void putInt(int index, int value) throws IOException {
     StorageLockContext context = myFile.getStorageLockContext();
     context.checkWriteAccess();
 
     markDirty();
-    return myBuffer.putInt(index, value);
+    myBuffer.putInt(index, value);
+    fileSizeMayChanged(index + 4);
   }
 
   public void position(int newPosition) {
@@ -116,6 +129,7 @@ public final class DirectBufferWrapper {
 
     markDirty();
     myBuffer.put(src);
+    fileSizeMayChanged(myBuffer.position());
   }
 
   public void put(int index, byte b) throws IOException {
@@ -124,14 +138,16 @@ public final class DirectBufferWrapper {
 
     markDirty();
     myBuffer.put(index, b);
+    fileSizeMayChanged(index + 1);
   }
 
   public void readToArray(byte[] dst, int o, int page_offset, int page_len) throws IllegalArgumentException {
     StorageLockContext context = myFile.getStorageLockContext();
     context.checkReadAccess();
 
-    myBuffer.position(page_offset);
-    myBuffer.get(dst, o, page_len);
+    ByteBuffer buf = myBuffer.duplicate();
+    buf.position(page_offset);
+    buf.get(dst, o, page_len);
   }
 
   public void putFromArray(byte[] src, int o, int page_offset, int page_len) throws IOException, IllegalArgumentException {
@@ -139,59 +155,71 @@ public final class DirectBufferWrapper {
     context.checkWriteAccess();
 
     markDirty();
-    myBuffer.position(page_offset);
-    myBuffer.put(src, o, page_len);
+    ByteBuffer buf = myBuffer.duplicate();
+    buf.position(page_offset);
+    buf.put(src, o, page_len);
+    fileSizeMayChanged(buf.position());
   }
 
 
   private ByteBuffer create() throws IOException {
-
-    ByteBuffer buffer = ByteBuffer.allocateDirect(myLength);
+    ByteBuffer buffer = ByteBuffer.allocateDirect(myFile.myPageSize);
+    assert buffer.capacity() > 0;
     return myFile.useChannel(ch -> {
       ch.read(buffer, myPosition);
       return buffer;
-    }, myReadOnly);
+    }, myFile.isReadOnly());
   }
 
-  void release() throws IOException {
-    myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
+  boolean tryRelease(boolean force) throws IOException {
+    boolean releaseState = REF_UPDATER.updateAndGet(this, operand -> operand == 0 ? RELEASED_CODE : operand) == RELEASED_CODE;
+    if (releaseState || force) {
+      myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
 
-    if (isDirty()) force();
-    if (myBuffer != null) {
-      ByteBufferUtil.cleanBuffer(myBuffer);
-      myBuffer = null;
-      myReleased = true;
+      if (isDirty()) force();
+      if (myBuffer != null) {
+        ByteBufferUtil.cleanBuffer(myBuffer);
+        myBuffer = null;
+      }
+
+      if (force && !releaseState) {
+        PagedFileStorage.LOG.error("Page buffer is referenced but was forcibly released for file " + myFile.getFile());
+      }
+
+      return true;
     }
+    return false;
   }
 
   boolean isReleased() {
-    return myReleased;
+    return myReferences == RELEASED_CODE;
   }
 
   void force() throws IOException {
     myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
 
-    assert !myReadOnly;
-    if (!isReleased() && isDirty()) {
-      ByteBuffer buffer = myBuffer;
+    assert !myFile.isReadOnly();
+    if (isDirty()) {
+      ByteBuffer buffer = myBuffer.duplicate();
       buffer.rewind();
+      buffer.limit(myBufferDataEndPos);
 
       myFile.useChannel(ch -> {
         ch.write(buffer, myPosition);
         return null;
-      }, myReadOnly);
+      }, myFile.isReadOnly());
 
       myDirty = false;
     }
   }
 
   int getLength() {
-    return myLength;
+    return myFile.myPageSize;
   }
 
   @Override
   public String toString() {
-    return "Buffer for " + myFile + ", offset:" + myPosition + ", size: " + myLength;
+    return "Buffer for " + myFile + ", offset:" + myPosition + ", size: " + myFile.myPageSize;
   }
 
   public void useNativeByteOrder() {
@@ -204,11 +232,19 @@ public final class DirectBufferWrapper {
     return myFile.getStorageLockContext() == context;
   }
 
-  public static DirectBufferWrapper readWriteDirect(PagedFileStorage file, long offset, int length) throws IOException {
-    return new DirectBufferWrapper(file, offset, length, false);
+  public boolean tryLock() {
+    //myReferenceTraces.add(new Throwable());
+    //assert !isReleased();
+    return REF_UPDATER.updateAndGet(this, operand -> operand >= 0 ? operand + 1 : operand) >= 0;
   }
 
-  public static DirectBufferWrapper readOnlyDirect(PagedFileStorage file, long offset, int length) throws IOException {
-    return new DirectBufferWrapper(file, offset, length, true);
+  public void unlock() {
+    //myReferenceTraces.pop();
+    int currentRefs = REF_UPDATER.decrementAndGet(this);
+    assert currentRefs >= 0;
+  }
+
+  @NotNull PagedFileStorage getFile() {
+    return myFile;
   }
 }

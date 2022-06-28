@@ -611,7 +611,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     @Override
     public void mouseReleased(MouseEvent e) {
-      if (!isActionClick(e) || isMultiSelectionEnabled() && UIUtil.isSelectionButtonDown(e)) return;
+      if (e.isConsumed() || !isActionClick(e) || isMultiSelectionEnabled() && UIUtil.isSelectionButtonDown(e)) return;
       IdeEventQueue.getInstance().blockNextEvents(e); // sometimes, after popup close, MOUSE_RELEASE event delivers to other components
       Object selectedValue = myList.getSelectedValue();
       ListPopupStep<Object> listStep = getListStep();
@@ -716,6 +716,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     @Override
+    public void clearSelection() {
+      super.clearSelection();
+      setAnchorSelectionIndex(-1);
+      setLeadSelectionIndex(-1);
+    }
+
+    @Override
     public void setSelectionInterval(int index0, int index1) {
       if (getSelectionMode() == SINGLE_SELECTION) {
         int index = findSelectableIndex(index0, getLeadSelectionIndex());
@@ -753,21 +760,25 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   @Override
   protected void onSpeedSearchPatternChanged() {
+    Object before = myList.getSelectedValue();
     myListModel.refilter();
     if (myListModel.getSize() > 0) {
       if (!(shouldUseStatistics() && autoSelectUsingStatistics())) {
-        selectBestMatch();
+        selectBestMatch(before);
       }
     }
   }
 
-  private void selectBestMatch() {
+  private void selectBestMatch(Object before) {
     int fullMatchIndex = myListModel.getClosestMatchIndex();
     if (fullMatchIndex != -1 && isSelectableAt(fullMatchIndex)) {
       myList.setSelectedIndex(fullMatchIndex);
     }
-    else {
+
+    if (!myListModel.isVisible(before)) {
       selectFirstSelectableItem();
+    } else {
+      myList.setSelectedValue(before, true);
     }
   }
 

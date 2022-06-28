@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems.pass
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
@@ -50,7 +50,7 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     if (previewProblems != null) {
       val problem = previewProblems.first()
       val lenseColor = getCodeVisionColor()
-      val lensPair = createLensPair(problem.context as PsiMethod, lenseColor, previewProblems) ?: return emptyList()
+      val lensPair = createLensPair(problem.context as PsiMethod, lenseColor, previewProblems)
       return listOf(lensPair)
     }
     val problems = ProjectProblemUtils.getReportedProblems(editor)
@@ -88,7 +88,7 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
         psiMember,
         PsiNameIdentifierOwner::class.java) ?: return@forEach
       val identifier = namedElement.nameIdentifier ?: return@forEach
-      val lensPair = createLensPair(psiMember, lenseColor, memberProblems) ?: return@forEach
+      val lensPair = createLensPair(psiMember, lenseColor, memberProblems)
       lenses.add(lensPair)
       highlighters.add(ProjectProblemUtils.createHighlightInfo(editor, psiMember!!, identifier))
     }
@@ -98,7 +98,7 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     return lenses
   }
 
-  private fun createLensPair(psiMember: PsiMember, lenseColor: Color, memberProblems: Set<Problem?>): Pair<TextRange, ClickableRichTextCodeVisionEntry>? {
+  private fun createLensPair(psiMember: PsiMember, lenseColor: Color, memberProblems: Set<Problem?>): Pair<TextRange, ClickableRichTextCodeVisionEntry> {
     val text = JavaBundle.message("project.problems.hint.text", memberProblems.size)
     val richText = RichText(text)
     richText.setForeColor(lenseColor)
@@ -167,7 +167,7 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
       val memberProblems = collect(
         prevMember,
         curMember)
-      if (memberProblems == null || memberProblems.isEmpty()) {
+      if (memberProblems.isNullOrEmpty()) {
         oldProblems.remove(curMember)
       }
       else {

@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.soap;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,20 +28,18 @@ import java.util.Set;
  *
  * @author Mikhail Golubev
  */
-public class JiraLegacyApi extends JiraRemoteApi {
-
+public final class JiraLegacyApi extends JiraRemoteApi {
   private static final Logger LOG = Logger.getInstance(JiraLegacyApi.class);
 
-  @NonNls private static final String RSS_SEARCH_PATH = "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml";
-  public static final String RSS_ISSUE_PATH = "/si/jira.issueviews:issue-xml/";
+  private static final @NonNls String RSS_SEARCH_PATH = "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml";
+  private static final String RSS_ISSUE_PATH = "/si/jira.issueviews:issue-xml/";
 
   public JiraLegacyApi(@NotNull JiraRepository repository) {
     super(repository);
   }
 
-  @NotNull
   @Override
-  public List<Task> findTasks(@NotNull String query, int max) throws Exception {
+  public @NotNull List<Task> findTasks(@NotNull String query, int max) throws Exception {
 
     // Unfortunately, both SOAP and XML-RPC interfaces of JIRA don't allow fetching *all* tasks from server, but
     // only filtered by some search term (see http://stackoverflow.com/questions/764282/how-can-jira-soap-api-not-have-this-method).
@@ -80,9 +79,8 @@ public class JiraLegacyApi extends JiraRemoteApi {
     return ContainerUtil.emptyList();
   }
 
-  @Nullable
   @Override
-  public Task findTask(@NotNull String key) throws Exception {
+  public @Nullable Task findTask(@NotNull String key) throws Exception {
     try {
       List<Task> tasks = processRSS(new GetMethod(myRepository.getUrl() + RSS_ISSUE_PATH + key + '/' + key + ".xml"));
       return tasks.isEmpty() ? null : tasks.get(0);
@@ -93,15 +91,13 @@ public class JiraLegacyApi extends JiraRemoteApi {
     }
   }
 
-  @NotNull
   @Override
-  public final ApiType getType() {
+  public @NotNull ApiType getType() {
     return ApiType.LEGACY;
   }
 
-  @NotNull
   @Override
-  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+  public @NotNull Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     return Collections.emptySet();
   }
 

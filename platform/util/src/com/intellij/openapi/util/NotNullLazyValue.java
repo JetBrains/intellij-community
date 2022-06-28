@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.SoftReference;
 import java.util.function.Supplier;
 
 /**
@@ -68,6 +69,22 @@ public abstract class NotNullLazyValue<T> implements Supplier<T> {
       @Override
       protected @NotNull T compute() {
         return value.get();
+      }
+    };
+  }
+
+  public static <T> Supplier<T> softLazy(Supplier<? extends T> supplier) {
+    return new Supplier<T>() {
+      private SoftReference<T> ref;
+
+      @Override
+      public T get() {
+        T value = com.intellij.reference.SoftReference.dereference(ref);
+        if (value == null) {
+          value = supplier.get();
+          ref = new SoftReference<T>(value);
+        }
+        return value;
       }
     };
   }

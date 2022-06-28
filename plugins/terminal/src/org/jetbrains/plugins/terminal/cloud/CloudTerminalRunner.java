@@ -15,7 +15,7 @@ import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
 
 import java.awt.*;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalProcess> {
@@ -86,7 +86,7 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
 
   @Override
   protected TtyConnector createTtyConnector(CloudTerminalProcess process) {
-    return new ProcessTtyConnector(process, Charset.defaultCharset()) {
+    return new ProcessTtyConnector(process, StandardCharsets.UTF_8) {
       private Dimension myAppliedTermSize;
 
       @Override

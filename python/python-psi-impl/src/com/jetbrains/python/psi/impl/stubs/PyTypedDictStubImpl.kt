@@ -42,6 +42,10 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
     return myCalleeName
   }
 
+  override fun toString(): String {
+    return "PyTypedDictStub(calleeName=$myCalleeName, name=$name, fields=$fields, isRequired=$isRequired)"
+  }
+
   companion object {
 
     fun create(expression: PyTargetExpression): PyTypedDictStub? {

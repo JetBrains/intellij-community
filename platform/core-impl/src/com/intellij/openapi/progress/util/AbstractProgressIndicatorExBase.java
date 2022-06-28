@@ -190,7 +190,8 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
     }
   }
 
-  private void delegateProgressChange(@NotNull IndicatorAction action) {
+  @ApiStatus.Internal
+  protected void delegateProgressChange(@NotNull IndicatorAction action) {
     delegate(action);
     onProgressChange();
   }

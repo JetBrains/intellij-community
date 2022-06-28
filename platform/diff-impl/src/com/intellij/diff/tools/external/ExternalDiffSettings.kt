@@ -18,10 +18,6 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
     copyFrom(state)
   }
 
-  override fun noStateLoaded() {
-    isSettingsMigrated = true
-  }
-
   @get:OptionTag("MIGRATE_OLD_SETTINGS")
   var isSettingsMigrated by property(false)
 
@@ -100,16 +96,6 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
 
     private val fileTypeManager
       get() = FileTypeManager.getInstance()
-
-    @JvmStatic
-    fun findDefaultDiffTool(): ExternalTool? {
-      val diffToolName = instance.defaultToolConfiguration.diffToolName
-
-      if (diffToolName == ExternalToolConfiguration.BUILTIN_TOOL) return null
-      val diffTools = instance.externalTools[ExternalToolGroup.DIFF_TOOL] ?: return null
-
-      return findTool(diffTools, diffToolName)
-    }
 
     @JvmStatic
     fun findDiffTool(fileType: FileType): ExternalTool? {

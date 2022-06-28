@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
+import com.intellij.completion.ml.ranker.ExperimentModelProvider
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeatureMapper
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.LightPlatformTestCase.assertThrows
-import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import junit.framework.TestCase
 
 class RankingProvidersTest : LightPlatformTestCase() {
@@ -80,7 +80,7 @@ class RankingProvidersTest : LightPlatformTestCase() {
 
   override fun tearDown() {
     try {
-      Language.unregisterLanguage(testLanguage)
+      testLanguage.unregisterLanguage(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!)
     }
     finally {
       super.tearDown()

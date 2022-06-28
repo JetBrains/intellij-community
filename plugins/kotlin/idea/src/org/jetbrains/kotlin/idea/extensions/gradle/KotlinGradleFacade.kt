@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import javax.swing.Icon
 
 interface KotlinGradleFacade {
@@ -22,7 +23,7 @@ interface KotlinGradleFacade {
 
     fun isDelegatedBuildEnabled(module: Module): Boolean
 
-    fun findKotlinPluginVersion(node: DataNode<ModuleData>): String?
+    fun findKotlinPluginVersion(node: DataNode<ModuleData>): IdeKotlinVersion?
 
     fun findLibraryVersionByModuleData(node: DataNode<*>, groupId: String, libraryIds: List<String>): String?
 

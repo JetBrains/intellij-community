@@ -2,6 +2,7 @@
 // "class org.jetbrains.kotlin.idea.quickfix.ImportMemberFix" "false"
 // ERROR: Unresolved reference: foobar
 // ACTION: Create function 'foobar'
+// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 
 //KT-9009

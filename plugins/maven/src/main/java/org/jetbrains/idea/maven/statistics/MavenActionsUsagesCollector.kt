@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.statistics
 
 import com.intellij.execution.Executor
+import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector.RunConfigurationExecutorUtilValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId
@@ -16,8 +17,8 @@ class MavenActionsUsagesCollector : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.maven.actions", 3)
-    private val EXECUTOR_FIELD = EventFields.StringValidatedByCustomRule("executor", "run_config_executor")
+    private val GROUP = EventLogGroup("build.maven.actions", 4)
+    private val EXECUTOR_FIELD = EventFields.StringValidatedByCustomRule("executor", RunConfigurationExecutorUtilValidator::class.java)
     private val CONTEXT_MENU = EventFields.Boolean("context_menu")
 
     @JvmField

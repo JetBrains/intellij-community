@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAware
 
-abstract class SavedPatchesOperationsGroup: DefaultActionGroup(), DumbAware {
+abstract class SavedPatchesOperationsGroup : DefaultActionGroup(), DumbAware {
   protected abstract fun isApplicable(patchObject: SavedPatchesProvider.PatchObject<*>): Boolean
 
   override fun update(e: AnActionEvent) {

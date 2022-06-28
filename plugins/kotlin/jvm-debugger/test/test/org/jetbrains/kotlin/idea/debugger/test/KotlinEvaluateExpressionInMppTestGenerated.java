@@ -87,6 +87,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                     runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/outerMembersNoReflection.kt");
                 }
 
+                @TestMetadata("privateAnnotationCompanionValue.kt")
+                public void testPrivateAnnotationCompanionValue() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/privateAnnotationCompanionValue.kt");
+                }
+
                 @TestMetadata("selfMembers.kt")
                 public void testSelfMembers() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/selfMembers.kt");
@@ -1003,6 +1008,16 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                 runTest("testData/evaluation/singleBreakpoint/inlineFunctionBreakpointVariants.kt");
             }
 
+            @TestMetadata("inlineFunctionDeepInlining.kt")
+            public void testInlineFunctionDeepInlining() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineFunctionDeepInlining.kt");
+            }
+
+            @TestMetadata("inlineFunctionDeepInliningSameFile.kt")
+            public void testInlineFunctionDeepInliningSameFile() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineFunctionDeepInliningSameFile.kt");
+            }
+
             @TestMetadata("inlineMethodsInSignature.kt")
             public void testInlineMethodsInSignature() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/inlineMethodsInSignature.kt");
@@ -1203,6 +1218,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                 runTest("testData/evaluation/singleBreakpoint/privatePropertyWithExplicitDefaultGetter.kt");
             }
 
+            @TestMetadata("privatePropertyWithNonDefaultAccessor.kt")
+            public void testPrivatePropertyWithNonDefaultAccessor() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privatePropertyWithNonDefaultAccessor.kt");
+            }
+
             @TestMetadata("protectedMember.kt")
             public void testProtectedMember() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/protectedMember.kt");
@@ -1266,6 +1286,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
             @TestMetadata("unsafeCall.kt")
             public void testUnsafeCall() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/unsafeCall.kt");
+            }
+
+            @TestMetadata("unusedTransitiveDependencies.kt")
+            public void testUnusedTransitiveDependencies() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/unusedTransitiveDependencies.kt");
             }
 
             @TestMetadata("valueParameterName.kt")
@@ -1378,6 +1403,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                 runTest("testData/evaluation/multipleBreakpoints/inlineStackTrace.kt");
             }
 
+            @TestMetadata("inlineStackTraceWithApply.kt")
+            public void testInlineStackTraceWithApply() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/inlineStackTraceWithApply.kt");
+            }
+
             @TestMetadata("inlineStackTraceWithNestedLambdas.kt")
             public void testInlineStackTraceWithNestedLambdas() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/inlineStackTraceWithNestedLambdas.kt");
@@ -1487,9 +1517,29 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
             KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
         }
 
+        @TestMetadata("diamond.kt")
+        public void testDiamond() throws Exception {
+            runTest("testData/evaluation/multiplatform/diamond.kt");
+        }
+
+        @TestMetadata("differentCommons.kt")
+        public void testDifferentCommons() throws Exception {
+            runTest("testData/evaluation/multiplatform/differentCommons.kt");
+        }
+
         @TestMetadata("evaluateInCommonCode.kt")
         public void testEvaluateInCommonCode() throws Exception {
             runTest("testData/evaluation/multiplatform/evaluateInCommonCode.kt");
+        }
+
+        @TestMetadata("evaluateWithIntermediateJvm.kt")
+        public void testEvaluateWithIntermediateJvm() throws Exception {
+            runTest("testData/evaluation/multiplatform/evaluateWithIntermediateJvm.kt");
+        }
+
+        @TestMetadata("typealiasFromCommonCode.kt")
+        public void testTypealiasFromCommonCode() throws Exception {
+            runTest("testData/evaluation/multiplatform/typealiasFromCommonCode.kt");
         }
     }
 }

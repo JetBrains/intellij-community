@@ -2,6 +2,7 @@
 // ACTION: Create extension function 'Base.foo'
 // ACTION: Create function 'foo'
 // ACTION: Create member function 'Base.foo'
+// ACTION: Do not show return expression hints
 // ERROR: Unresolved reference. None of the following candidates is applicable because of receiver type mismatch: <br>public final fun Other.foo(): Unit defined in p.Base
 package p
 

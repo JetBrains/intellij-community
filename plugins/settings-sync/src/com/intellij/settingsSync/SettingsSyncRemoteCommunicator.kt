@@ -19,6 +19,7 @@ internal interface SettingsSyncRemoteCommunicator {
   @RequiresBackgroundThread
   fun push(snapshot: SettingsSnapshot): SettingsSyncPushResult
 
+  fun delete()
 }
 
 internal sealed class ServerState {

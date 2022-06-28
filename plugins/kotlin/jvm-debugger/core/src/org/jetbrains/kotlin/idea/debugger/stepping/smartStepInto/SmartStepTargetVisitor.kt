@@ -21,11 +21,10 @@ import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.isFromJava
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.annotations.argumentValue
+import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getParentCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.isInlineClassType
@@ -320,15 +319,8 @@ class SmartStepTargetVisitor(
     }
 }
 
-private val JVM_NAME_FQ_NAME = FqName("kotlin.jvm.JvmName")
-
 private fun PropertyAccessorDescriptor.getJvmMethodName(): String {
-    val jvmNameAnnotation = annotations.findAnnotation(JVM_NAME_FQ_NAME)
-    val jvmName = jvmNameAnnotation?.argumentValue(JvmName::name.name)?.value as? String
-    if (jvmName != null) {
-        return jvmName
-    }
-    return JvmAbi.getterName(correspondingProperty.name.asString())
+    return DescriptorUtils.getJvmName(this) ?: JvmAbi.getterName(correspondingProperty.name.asString())
 }
 
 fun DeclarationDescriptor.getMethodName() =

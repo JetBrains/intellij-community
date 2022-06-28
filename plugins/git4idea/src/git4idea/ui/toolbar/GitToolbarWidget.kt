@@ -2,6 +2,8 @@
 package git4idea.ui.toolbar
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.dvcs.repo.Repository
+import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
@@ -17,13 +19,16 @@ import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import git4idea.GitUtil
+import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
+import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.ui.branch.GitBranchPopup
+import icons.DvcsImplIcons
 import java.awt.event.InputEvent
 import java.util.concurrent.Executor
 import javax.swing.Icon
@@ -49,8 +54,8 @@ private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidge
 
   private var repository: GitRepository? = null
 
-  private val INCOMING_CHANGES_ICON = AllIcons.Actions.CheckOut
-  private val OUTGOING_CHANGES_ICON = AllIcons.Vcs.Push
+  private val INCOMING_CHANGES_ICON = DvcsImplIcons.Incoming
+  private val OUTGOING_CHANGES_ICON = DvcsImplIcons.Outgoing
 
   init {
     repository = guessCurrentRepo(project)
@@ -77,9 +82,24 @@ private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidge
   private fun updateWidget() {
     widget.project = project
     widget.repository = repository
-    widget.text = repository?.currentBranchName?.let { cutText(it) } ?: GitBundle.message("git.toolbar.widget.no.repo")
-    widget.toolTipText = repository?.currentBranchName?.let { GitBundle.message("git.toolbar.widget.tooltip", it) } ?: GitBundle.message("git.toolbar.widget.no.repo.tooltip")
+    widget.text = repository?.calcText() ?: GitBundle.message("git.toolbar.widget.no.repo")
+    widget.toolTipText = repository?.calcTooltip() ?: GitBundle.message("git.toolbar.widget.no.repo.tooltip")
     updateIcons()
+  }
+
+  private fun GitRepository.calcText() : String = cutText(GitBranchUtil.getBranchNameOrRev(this))
+
+  private fun GitRepository.calcTooltip() : String {
+    if (state == Repository.State.DETACHED) {
+      return GitBundle.message("git.status.bar.widget.tooltip.detached")
+    }
+
+    var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(), GitBranchUtil.getBranchNameOrRev(this))
+    if (!GitUtil.justOneGitRepository(project)) {
+      message += "\n"
+      message += DvcsBundle.message("tooltip.branch.widget.root.name.text", root.name)
+    }
+    return message
   }
 
   private fun updateIcons() {
@@ -104,8 +124,8 @@ private const val MAX_TEXT_LENGTH = 24
 private const val SHORTENED_BEGIN_PART = 16
 private const val SHORTENED_END_PART = 8
 
-private fun cutText(value: String?): String? {
-  if (value == null || value.length <= MAX_TEXT_LENGTH) return value
+private fun cutText(value: String): String {
+  if (value.length <= MAX_TEXT_LENGTH) return value
 
   val beginRange = IntRange(0, SHORTENED_BEGIN_PART - 1)
   val endRange = IntRange(value.length - SHORTENED_END_PART, value.length - 1)

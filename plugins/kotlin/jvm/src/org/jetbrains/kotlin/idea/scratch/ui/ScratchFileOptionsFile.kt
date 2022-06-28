@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.scratch.ui
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.util.AbstractFileAttributePropertyService
 import org.jetbrains.kotlin.idea.scratch.ScratchFileOptions
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 @Service
 internal class ScratchFileOptionsFile: AbstractFileAttributePropertyService<ScratchFileOptions>(
@@ -21,10 +21,10 @@ internal class ScratchFileOptionsFile: AbstractFileAttributePropertyService<Scra
     }
 ) {
     companion object {
-        operator fun get(project: Project, file: VirtualFile) = project.getServiceSafe<ScratchFileOptionsFile>()[file]
+        operator fun get(project: Project, file: VirtualFile) = project.service<ScratchFileOptionsFile>()[file]
 
         operator fun set(project: Project, file: VirtualFile, newValue: ScratchFileOptions?) {
-            project.getServiceSafe<ScratchFileOptionsFile>()[file] = newValue
+            project.service<ScratchFileOptionsFile>()[file] = newValue
         }
     }
 }

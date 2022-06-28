@@ -11,19 +11,24 @@
   </dependencies>
   <content>
     <module name="intellij.markdown.fenceInjection"/>
+    <module name="intellij.markdown.frontmatter"/>
   </content>
 
   <description><![CDATA[
-<p>Provides the capability to edit Markdown files within the IDE and see the rendered HTML in a live preview.
+<p>Allows editing Markdown files within the IDE and seeing the rendered HTML in a live preview.
 </br>
 </br>
 Includes the following features:</p>
 <ul>
-<li>Document structure view, headers folding, highlighting, TODOs.</li>
-<li>Code completion and navigation for links to project files.</li>
-<li>Embedding fenced code blocks for different languages.</li>
-<li>Visualizing diagrams for the DOT or PlantUML diagramming languages.</li>
-<li>Ability to use custom stylesheets for a live preview.</li>
+<li>Highlighting, Completion, Links navigation, Drag and drop image to markup, and Insert actions (for images, tables, and links).</li>
+<li>Live HTML preview (except Android Studio, see <a href="https://issuetracker.google.com/issues/159933628?pli=1#comment7">issue and workaround</a>).</li>
+<li>Live Table editing.</li>
+<li>Document structure view.</li>
+<li>Full HTML syntax support out of the box.</li>
+<li>Embedded language support inside code blocks.</li>
+<li>Visualizing diagrams for the Mermaid and PlantUML languages.</li>
+<li>Pandoc Converter for HTML, Microsoft Word, and PDF formats.</li>
+<li>Ability to customize stylesheets (CSS) for a live preview.</li>
 </ul>
 ]]></description>
 
@@ -124,6 +129,8 @@ Includes the following features:</p>
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence$Manipulator"/>
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination$Manipulator"/>
+    <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeader"
+                             implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeader$Manipulator"/>
 
     <colorSettingsPage implementation="org.intellij.plugins.markdown.highlighting.MarkdownColorSettingsPage"/>
     <syntaxHighlighter key="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownSyntaxHighlighter"/>
@@ -144,6 +151,7 @@ Includes the following features:</p>
                             implementationClass="org.intellij.plugins.markdown.editor.MarkdownCompletionContributor"/>
 
     <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
+    <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
 
     <customPasteProvider implementation="org.intellij.plugins.markdown.editor.images.MarkdownImagePasteProvider"/>
 
@@ -206,8 +214,9 @@ Includes the following features:</p>
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder"/>
     <enterHandlerDelegate id="MarkdownEnterHandler"
                           implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
-    <highlightErrorFilter
-      implementation="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeFenceHighlightErrorFilter"/>
+
+    <daemon.highlightInfoFilter implementation="org.intellij.plugins.markdown.injection.CodeFenceHighlightInfoFilter"/>
+
     <extendWordSelectionHandler implementation="org.intellij.plugins.markdown.editor.MarkdownCodeSpanExtendWordSelectionHandler"/>
 
     <typedHandler implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListItemCreatingTypedHandlerDelegate"/>
@@ -305,6 +314,11 @@ Includes the following features:</p>
                  description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview).
                               Any opened Markdown editors should be manually reopened.
                               Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multipler."/>
+
+    <registryKey key="markdown.experimental.frontmatter.support.enable"
+                 defaultValue="false"
+                 description="Enables experimental front matter support"
+                 restartRequired="true"/>
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>

@@ -199,6 +199,7 @@ public final class PluginInstallOperation {
       }
       catch (IOException e) {
         String title = IdeBundle.message("title.plugin.error");
+        LOG.warn(e);
         NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("Plugin Error");
         Notifications.Bus.notify(group.createNotification(title, pluginNode.getName() + ": " + e.getMessage(), NotificationType.ERROR));
         return false;

@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
 import org.jetbrains.idea.maven.project.importing.MavenInitialImportContext;
@@ -357,12 +356,12 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
       List<VirtualFile> allFiles = new ArrayList<>(myProjectsManager.getProjectsFiles());
       allFiles.addAll(Arrays.asList(files));
       MavenInitialImportContext initialImportContext =
-        flow.prepareNewImport(myProject, getMavenProgressIndicator(),
+        flow.prepareNewImport(myProject,
                               new FilesList(allFiles),
                               getMavenGeneralSettings(),
                               getMavenImporterSettings(),
                               Collections.emptyList(), Collections.emptyList());
-      MavenReadContext readContext = flow.readMavenFiles(initialImportContext, Collections.emptyList(), Collections.emptyList());
+      MavenReadContext readContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
       flow.updateProjectManager(readContext);
       myNavigator.scheduleStructureUpdate();
 

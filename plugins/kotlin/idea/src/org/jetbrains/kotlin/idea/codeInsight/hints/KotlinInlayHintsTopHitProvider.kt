@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.application.options.editor.CheckboxDescriptor
+import com.intellij.codeInsight.hints.InlayHintsPassFactory
 import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.OptionDescription
@@ -25,7 +26,7 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
             KotlinBundle.message("kotlin.call.chains.hints"),
             KotlinBundle.message("kotlin.lambdas.hints.hints.lambda.receivers.parameters"),
             KotlinBundle.message("kotlin.lambdas.hints.hints.lambda.return"),
-            KotlinBundle.message("kotlin.ranges.hints"),
+            KotlinBundle.message("kotlin.values.hints.kotlin.values.ranges"),
             KotlinBundle.message("microservices.url.path.inlay.hints"),
             KotlinBundle.message("vcs.code.author")
         )
@@ -44,13 +45,15 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
                             with(it) {
                                 isEnabled = newValue
                                 apply()
+                                InlayHintsPassFactory.forceHintsUpdateOnNextPass()
                             }
                         })
                 ).asOptionDescriptor()
             ) +
                     it.cases.map { case ->
                         CheckboxDescriptor(
-                            KotlinBundle.message("""${it.id}.${case.id}"""),
+                            // TODO: Have to clean up this hidden "gem" - maybe make `Case` open ?
+                            KotlinBundle.message("${it.id}.${case.id}"),
                             PropertyBinding(
                                 get = case::value,
                                 set = { newValue ->
@@ -59,6 +62,7 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
                                         it.isEnabled = true
                                     }
                                     it.apply()
+                                    InlayHintsPassFactory.forceHintsUpdateOnNextPass()
                                 })
                         ).asOptionDescriptor()
                     }

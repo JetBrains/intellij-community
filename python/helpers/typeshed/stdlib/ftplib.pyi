@@ -6,7 +6,7 @@ from types import TracebackType
 from typing import Any, Callable, Iterable, Iterator, TextIO
 from typing_extensions import Literal
 
-__all__ = ["FTP", "error_reply", "error_temp", "error_perm", "error_proto", "all_errors"]
+__all__ = ["FTP", "error_reply", "error_temp", "error_perm", "error_proto", "all_errors", "FTP_TLS"]
 
 MSG_OOB: Literal[1]
 FTP_PORT: Literal[21]

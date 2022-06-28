@@ -4,29 +4,27 @@ package org.jetbrains.kotlin.idea.versions
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ScalarIndexExtension
-import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.isSnapshot
 import org.jetbrains.kotlin.idea.util.projectStructure.version
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinJavaScriptMetaFileIndex
 import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
@@ -44,20 +42,8 @@ fun getLibraryRootsWithAbiIncompatibleForKotlinJs(module: Module): Collection<Bi
     return getLibraryRootsWithAbiIncompatibleVersion(module, JsMetadataVersion.INSTANCE, KotlinJsMetadataVersionIndex)
 }
 
-fun findAllUsedLibraries(project: Project): MultiMap<Library, Module> {
-    val libraries = MultiMap<Library, Module>()
-
-    for (module in ModuleManager.getInstance(project).modules) {
-        val moduleRootManager = ModuleRootManager.getInstance(module)
-
-        for (entry in moduleRootManager.orderEntries.filterIsInstance<LibraryOrderEntry>()) {
-            val library = entry.library ?: continue
-
-            libraries.putValue(library, module)
-        }
-    }
-
-    return libraries
+fun Project.forEachAllUsedLibraries(processor: (Library) -> Boolean) {
+    OrderEnumerator.orderEntries(this).forEachLibrary(processor)
 }
 
 enum class LibraryJarDescriptor(val mavenArtifactId: String) {
@@ -73,45 +59,12 @@ enum class LibraryJarDescriptor(val mavenArtifactId: String) {
 
     val repositoryLibraryProperties: RepositoryLibraryProperties
         get() = RepositoryLibraryProperties(
-            KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID,
+            KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID,
             mavenArtifactId,
-            KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort,
+            KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion,
             true,
             emptyList()
         )
-}
-
-@NlsSafe
-@Deprecated(
-    "Replace with `KotlinPluginLayout.standaloneCompilerVersion` or `KotlinPluginLayout.ideCompilerVersion`, depending on use-case.",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith(
-        "KotlinPluginLayout.getInstance().standaloneCompilerVersion",
-        "org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout"
-    )
-)
-fun bundledRuntimeVersion(): String = KotlinPluginLayout.instance.standaloneCompilerVersion
-
-private val KOTLIN_COMPILER_VERSION_SEPARATOR = "-(?:dev|release)".toRegex()
-
-/**
- * Bundled compiler version usually looks like: `1.5.0-release-759`.
- * `kotlinCompilerVersionShort` would return `1.5.0` in such case
- */
-val KotlinPluginLayout.lastStableKnownCompilerVersionShort: String
-    get() {
-        val parts = KOTLIN_COMPILER_VERSION_SEPARATOR.split(lastStableKnownCompilerVersion)
-        return parts.first()
-    }
-
-private val KOTLIN_COMPILER_VERSION_PATTERN = "(\\d+)\\.(\\d+)(?:\\.(\\d+))?.*".toRegex()
-
-fun KotlinVersion.Companion.fromString(version: String): KotlinVersion? {
-    val (major, minor, patch) = KOTLIN_COMPILER_VERSION_PATTERN.matchEntire(version)?.destructured ?: return null
-    val majorValue = major.toIntOrNull() ?: return null
-    val minorValue = minor.toIntOrNull() ?: return null
-    val patchValue = patch.toIntOrNull() ?: 0
-    return KotlinVersion(majorValue, minorValue, patchValue)
 }
 
 data class BinaryVersionedFile<out T : BinaryVersion>(val file: VirtualFile, val version: T, val supportedVersion: T)
@@ -153,7 +106,7 @@ fun hasKotlinJsKjsmFile(scope: GlobalSearchScope): Boolean = runReadAction {
     KotlinJavaScriptMetaFileIndex.hasSomethingInPackage(KOTLIN_JS_FQ_NAME, scope)
 }
 
-fun getStdlibArtifactId(sdk: Sdk?, version: String): String {
+fun getStdlibArtifactId(sdk: Sdk?, version: IdeKotlinVersion): String {
     if (!hasJreSpecificRuntime(version)) {
         return MAVEN_STDLIB_ID
     }
@@ -174,7 +127,7 @@ fun getStdlibArtifactId(sdk: Sdk?, version: String): String {
     }
 }
 
-fun getDefaultJvmTarget(sdk: Sdk?, version: String): JvmTarget? {
+fun getDefaultJvmTarget(sdk: Sdk?, version: IdeKotlinVersion): JvmTarget? {
     if (!hasJreSpecificRuntime(version)) {
         return null
     }
@@ -187,15 +140,11 @@ fun getDefaultJvmTarget(sdk: Sdk?, version: String): JvmTarget? {
     }
 }
 
-fun hasJdkLikeUpdatedRuntime(version: String): Boolean =
-    VersionComparatorUtil.compare(version, "1.2.0-rc-39") >= 0 ||
-            isSnapshot(version) ||
-            version == "default_version" /* for tests */
+fun hasJdkLikeUpdatedRuntime(version: IdeKotlinVersion): Boolean =
+    version.compare("1.2.0-rc-39") >= 0 || version.isSnapshot
 
-fun hasJreSpecificRuntime(version: String): Boolean =
-    VersionComparatorUtil.compare(version, "1.1.0") >= 0 ||
-            isSnapshot(version) ||
-            version == "default_version" /* for tests */
+fun hasJreSpecificRuntime(version: IdeKotlinVersion): Boolean =
+    version.compare("1.1.0") >= 0 || version.isSnapshot
 
 const val MAVEN_STDLIB_ID = PathUtil.KOTLIN_JAVA_STDLIB_NAME
 

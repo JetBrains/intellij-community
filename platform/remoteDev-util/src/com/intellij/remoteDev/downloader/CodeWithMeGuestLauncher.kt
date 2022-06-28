@@ -65,14 +65,7 @@ object CodeWithMeGuestLauncher {
           val pair = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
           if (pair == null) return
 
-          clientLifetime = runDownloadedClient(
-            lifetime = project?.createLifetime() ?: Lifetime.Eternal,
-            pathToClient = pair.first,
-            pathToJre = pair.second,
-            urlForThinClient = url,
-            product = product,
-            progressIndicator = progressIndicator
-          )
+          clientLifetime = runDownloadedClient(project?.createLifetime() ?: Lifetime.Eternal, pair.first, pair.second, url, product, progressIndicator)
         }
         catch (t: Throwable) {
           LOG.warn(t)

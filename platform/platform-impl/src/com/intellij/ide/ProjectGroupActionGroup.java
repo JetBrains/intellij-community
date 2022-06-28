@@ -19,10 +19,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectsWelcomeScreenActionBase;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.List;
 
 /**
@@ -37,21 +35,7 @@ public class ProjectGroupActionGroup extends DefaultActionGroup implements DumbA
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    new RecentProjectsWelcomeScreenActionBase() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myGroup.setExpanded(!myGroup.isExpanded());
-        RecentProjectsManagerBase.getInstanceEx().getState().intIncrementModificationCount();
-        final JList list = getList(e);
-        if (list != null) {
-          final int index = list.getSelectedIndex();
-          rebuildRecentProjectsList(e);
-          list.setSelectedIndex(index);
-        }
-      }
-    }.actionPerformed(e);
-  }
+  public void actionPerformed(@NotNull AnActionEvent e) { }
 
   @Override
   public boolean isPopup() {

@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinJsGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinWithGradleConfigurator
@@ -45,7 +46,7 @@ abstract class AbstractGradleConfigureProjectByChangingFileTest :
         module: Module,
         file: PsiFile,
         configurator: KotlinWithGradleConfigurator,
-        version: String,
+        version: IdeKotlinVersion,
         collector: NotificationMessageCollector
     ) {
         if (file !is GroovyFile && file !is KtFile) {

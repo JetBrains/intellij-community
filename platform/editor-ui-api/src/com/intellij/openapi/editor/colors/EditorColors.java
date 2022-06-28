@@ -89,6 +89,7 @@ public interface EditorColors {
   TextAttributesKey BREADCRUMBS_HOVERED  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_HOVERED");
   TextAttributesKey BREADCRUMBS_CURRENT  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_CURRENT");
   TextAttributesKey BREADCRUMBS_INACTIVE = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_INACTIVE");
+  ColorKey BREADCRUMBS_BORDER_COLOR = ColorKey.createColorKeyWithFallback("BREADCRUMBS_BORDER_COLOR", INDENT_GUIDE_COLOR);
 
   TextAttributesKey CODE_LENS_BORDER_COLOR = TextAttributesKey.createTextAttributesKey("CODE_LENS_BORDER_COLOR");
 

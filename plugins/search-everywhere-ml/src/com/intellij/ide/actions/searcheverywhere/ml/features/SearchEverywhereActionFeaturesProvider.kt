@@ -2,7 +2,15 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.SearchEverywhereBaseAction
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereGeneralActionFeaturesProvider.Companion.IS_ENABLED
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
+import com.intellij.ide.util.gotoByName.MatchMode
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.ActionGlobalUsageInfo
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
@@ -12,107 +20,194 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.actionSystem.EditorAction
+import com.intellij.util.Time
 
-internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActionFeaturesProvider() {
+internal class SearchEverywhereActionFeaturesProvider :
+  SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
   companion object {
-    private const val IS_ACTION_DATA_KEY = "isAction"
-    private const val IS_TOGGLE_ACTION_DATA_KEY = "isToggleAction"
-    private const val IS_EDITOR_ACTION = "isEditorAction"
-    private const val IS_SEARCH_ACTION = "isSearchAction"
+    internal val IS_ACTION_DATA_KEY = EventFields.Boolean("isAction")
+    internal val IS_TOGGLE_ACTION_DATA_KEY = EventFields.Boolean("isToggleAction")
+    internal val IS_EDITOR_ACTION = EventFields.Boolean("isEditorAction")
+    internal val IS_SEARCH_ACTION = EventFields.Boolean("isSearchAction")
 
-    private const val MATCH_MODE_KEY = "matchMode"
-    private const val TEXT_LENGTH_KEY = "textLength"
-    private const val IS_GROUP_KEY = "isGroup"
-    private const val GROUP_LENGTH_KEY = "groupLength"
-    private const val HAS_ICON_KEY = "withIcon"
-    private const val WEIGHT_KEY = "weight"
-    private const val PLUGIN_TYPE = "pluginType"
-    private const val PLUGIN_ID = "pluginId"
+    internal val MATCH_MODE_KEY = EventFields.Enum<MatchMode>("matchMode")
+    internal val TEXT_LENGTH_KEY = EventFields.Int("textLength")
+    internal val IS_GROUP_KEY = EventFields.Boolean("isGroup")
+    internal val GROUP_LENGTH_KEY = EventFields.Int("groupLength")
+    internal val HAS_ICON_KEY = EventFields.Boolean("withIcon")
+    internal val WEIGHT_KEY = EventFields.Double("weight")
+    internal val PLUGIN_TYPE = EventFields.StringValidatedByEnum("pluginType", "plugin_type")
+    internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("pluginId", "plugin")
 
-    private const val GLOBAL_USAGE_COUNT_KEY = "globalUsage"
-    private const val GLOBAL_USAGE_TO_MAX_KEY = "globalUsageToMax"
-    private const val USERS_RATIO_DATA_KEY = "usersRatio"
-    private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
+    private val version = "V" + ActionsGlobalSummaryManager.getUpdatedStatisticsVersion()
+    internal val GLOBAL_USAGE_COUNT_KEY = EventFields.Long("globalUsage")
+    internal val GLOBAL_USAGE_COUNT_KEY_VERSIONED = EventFields.Long("globalUsage$version")
+    internal val GLOBAL_USAGE_TO_MAX_KEY = EventFields.Double("globalUsageToMax")
+    internal val GLOBAL_USAGE_TO_MAX_KEY_VERSIONED = EventFields.Double("globalUsageToMax$version")
+    internal val USERS_RATIO_DATA_KEY = EventFields.Double("usersRatio")
+    internal val USERS_RATIO_DATA_KEY_VERSIONED = EventFields.Double("usersRatio$version")
+    internal val USAGES_PER_USER_RATIO_DATA_KEY = EventFields.Double("usagesPerUserRatio")
+    internal val USAGES_PER_USER_RATIO_DATA_KEY_VERSIONED = EventFields.Double("usagesPerUserRatio$version")
+
+    internal val USAGE = EventFields.Int("usage")
+    internal val USAGE_SE = EventFields.Int("usageSe")
+    internal val USAGE_TO_MAX = EventFields.Double("usageToMax")
+    internal val USAGE_TO_MAX_SE = EventFields.Double("usageToMaxSe")
+
+    internal val TIME_SINCE_LAST_USAGE = EventFields.Long("timeSinceLastUsage")
+    internal val TIME_SINCE_LAST_USAGE_SE = EventFields.Long("timeSinceLastUsageSe")
+    internal val WAS_USED_IN_LAST_MINUTE = EventFields.Boolean("wasUsedInLastMinute")
+    internal val WAS_USED_IN_LAST_MINUTE_SE = EventFields.Boolean("wasUsedInLastMinuteSe")
+    internal val WAS_USED_IN_LAST_HOUR = EventFields.Boolean("wasUsedInLastHour")
+    internal val WAS_USED_IN_LAST_HOUR_SE = EventFields.Boolean("wasUsedInLastHourSe")
+    internal val WAS_USED_IN_LAST_DAY = EventFields.Boolean("wasUsedInLastDay")
+    internal val WAS_USED_IN_LAST_DAY_SE = EventFields.Boolean("wasUsedInLastDaySe")
+    internal val WAS_USED_IN_LAST_MONTH = EventFields.Boolean("wasUsedInLastMonth")
+    internal val WAS_USED_IN_LAST_MONTH_SE = EventFields.Boolean("wasUsedInLastMonthSe")
   }
 
-  override fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, matchedValue: GotoActionModel.MatchedValue): Map<String, Any> {
-    val actionWrapper = matchedValue.value as? GotoActionModel.ActionWrapper
-    data[IS_ACTION_DATA_KEY] = actionWrapper != null
+  override fun getFeaturesDeclarations(): List<EventField<*>> {
+    return arrayListOf<EventField<*>>(
+      IS_ACTION_DATA_KEY, IS_TOGGLE_ACTION_DATA_KEY, IS_EDITOR_ACTION, IS_SEARCH_ACTION,
+      MATCH_MODE_KEY, TEXT_LENGTH_KEY, IS_GROUP_KEY, GROUP_LENGTH_KEY, HAS_ICON_KEY, WEIGHT_KEY,
+      PLUGIN_TYPE, PLUGIN_ID, GLOBAL_USAGE_COUNT_KEY, GLOBAL_USAGE_COUNT_KEY_VERSIONED, GLOBAL_USAGE_TO_MAX_KEY,
+      GLOBAL_USAGE_TO_MAX_KEY_VERSIONED, USERS_RATIO_DATA_KEY, USERS_RATIO_DATA_KEY_VERSIONED,
+      USAGES_PER_USER_RATIO_DATA_KEY, USAGES_PER_USER_RATIO_DATA_KEY_VERSIONED,
+      USAGE, USAGE_SE, USAGE_TO_MAX, USAGE_TO_MAX_SE,
+      TIME_SINCE_LAST_USAGE, TIME_SINCE_LAST_USAGE_SE,
+      WAS_USED_IN_LAST_MINUTE, WAS_USED_IN_LAST_MINUTE_SE,
+      WAS_USED_IN_LAST_HOUR, WAS_USED_IN_LAST_HOUR_SE,
+      WAS_USED_IN_LAST_DAY, WAS_USED_IN_LAST_DAY_SE,
+      WAS_USED_IN_LAST_MONTH, WAS_USED_IN_LAST_MONTH_SE,
+    )
+  }
 
-    if (actionWrapper == null) {
-      // item is an option (OptionDescriptor)
-      return data
+  override fun getElementFeatures(element: Any,
+                                  currentTime: Long,
+                                  searchQuery: String,
+                                  elementPriority: Int,
+                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
+    val value = if (element is GotoActionModel.MatchedValue) element.value else element
+    val action = getAnAction(value) ?: return emptyList()
+
+    val data = arrayListOf<EventPair<*>>()
+    data.add(IS_ACTION_DATA_KEY.with(true))
+    if (value is ActionWrapper) {
+      data.add(MATCH_MODE_KEY.with(value.mode))
+      data.add(IS_GROUP_KEY.with(value.isGroupAction))
+
+      value.actionText?.let {
+        data.add(TEXT_LENGTH_KEY.with(withUpperBound(it.length)))
+      }
+
+      value.groupName?.let {
+        data.add(GROUP_LENGTH_KEY.with(withUpperBound(it.length)))
+      }
     }
-
-    data[MATCH_MODE_KEY] = actionWrapper.mode
-    data[IS_GROUP_KEY] = actionWrapper.isGroupAction
-
-    val action = actionWrapper.action
     addIfTrue(data, IS_EDITOR_ACTION, action is EditorAction)
     addIfTrue(data, IS_SEARCH_ACTION, action is SearchEverywhereBaseAction)
     addIfTrue(data, IS_TOGGLE_ACTION_DATA_KEY, action is ToggleAction)
-    actionWrapper.actionText?.let {
-      data[TEXT_LENGTH_KEY] = withUpperBound(it.length)
-    }
 
-    actionWrapper.groupName?.let {
-      data[GROUP_LENGTH_KEY] = withUpperBound(it.length)
-    }
+    val presentation = if (value is ActionWrapper && value.hasPresentation()) value.presentation else action.templatePresentation
+    data.add(HAS_ICON_KEY.with(presentation.icon != null))
+    data.add(IS_ENABLED.with(presentation.isEnabled))
+    data.add(WEIGHT_KEY.with(presentation.weight))
 
-    val presentation = if (actionWrapper.hasPresentation()) actionWrapper.presentation else action.templatePresentation
-    data[HAS_ICON_KEY] = presentation.icon != null
-    data[IS_ENABLED] = presentation.isEnabled
-    data[WEIGHT_KEY] = presentation.weight
-
-    data.putAll(getLocalUsageStatistics(action, currentTime))
+    data.addAll(getLocalUsageStatistics(action, currentTime))
 
     val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
     val globalSummary = service<ActionsGlobalSummaryManager>()
 
     val actionStats = globalSummary.getActionStatistics(actionId)
     val maxUsageCount = globalSummary.totalSummary.maxUsageCount
-    data.putAll(getGlobalUsageStatistics(actionStats, maxUsageCount))
+    data.addAll(getGlobalUsageStatistics(actionStats, maxUsageCount, false))
 
     val updatedActionStats = globalSummary.getUpdatedActionStatistics(actionId)
     val updatedMaxUsageCount = globalSummary.updatedTotalSummary.maxUsageCount
-    val suffix = "V" + globalSummary.updatedStatisticsVersion
-    data.putAll(getGlobalUsageStatistics(updatedActionStats, updatedMaxUsageCount, suffix))
+    data.addAll(getGlobalUsageStatistics(updatedActionStats, updatedMaxUsageCount, true))
 
     val pluginInfo = getPluginInfo(action.javaClass)
     if (pluginInfo.isSafeToReport()) {
-      data[PLUGIN_TYPE] = pluginInfo.type
-      pluginInfo.id?.let { data[PLUGIN_ID] = it }
+      data.add(PLUGIN_TYPE.with(pluginInfo.type.name))
+      pluginInfo.id?.let { data.add(PLUGIN_ID.with(it)) }
     }
     return data
   }
 
-  private fun getGlobalUsageStatistics(actionGlobalStatistics: ActionGlobalUsageInfo?, maxUsageCount: Long, suffix: String = "") : Map<String, Any> {
-    val result = hashMapOf<String, Any>()
+  private fun getAnAction(value: Any): AnAction? {
+    if (value is ActionWrapper) {
+      return value.action
+    }
+    else if (value is AnAction) {
+      return value
+    }
+    return null
+  }
+
+  private fun getGlobalUsageStatistics(actionGlobalStatistics: ActionGlobalUsageInfo?, maxUsageCount: Long, isVersioned: Boolean) : List<EventPair<*>> {
+    val result = arrayListOf<EventPair<*>>()
     actionGlobalStatistics?.let {
-      result[GLOBAL_USAGE_COUNT_KEY + suffix] = it.usagesCount
+      val globalUsageCountKeyEventId = if (isVersioned) GLOBAL_USAGE_COUNT_KEY_VERSIONED else GLOBAL_USAGE_COUNT_KEY
+      result.add(globalUsageCountKeyEventId.with(it.usagesCount))
       if (maxUsageCount != 0L) {
-        result[GLOBAL_USAGE_TO_MAX_KEY + suffix] = roundDouble(it.usagesCount.toDouble() / maxUsageCount)
+        val globalUsageToMaxKeyEventId = if (isVersioned) GLOBAL_USAGE_TO_MAX_KEY_VERSIONED else GLOBAL_USAGE_TO_MAX_KEY
+        result.add(globalUsageToMaxKeyEventId.with(roundDouble(it.usagesCount.toDouble() / maxUsageCount)))
       }
-      result[USERS_RATIO_DATA_KEY + suffix] = roundDouble(it.usersRatio)
-      result[USAGES_PER_USER_RATIO_DATA_KEY + suffix] = roundDouble(it.usagesPerUserRatio)
+      val usersRatioDataKeyEventId = if (isVersioned) USERS_RATIO_DATA_KEY_VERSIONED else USERS_RATIO_DATA_KEY
+      result.add(usersRatioDataKeyEventId.with(roundDouble(it.usersRatio)))
+      val usagesPerUserRatioDataKeyEventId = if (isVersioned) USAGES_PER_USER_RATIO_DATA_KEY_VERSIONED else USAGES_PER_USER_RATIO_DATA_KEY
+      result.add(usagesPerUserRatioDataKeyEventId.with(roundDouble(it.usagesPerUserRatio)))
     }
     return result
   }
 
   private fun getLocalUsageStatistics(action: AnAction,
-                                      currentTime: Long): Map<String, Any> {
+                                      currentTime: Long): List<EventPair<*>> {
     val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
     val localSummary = service<ActionsLocalSummary>()
-    val summary = localSummary.getActionStatsById(actionId) ?: return emptyMap()
+    val summary = localSummary.getActionStatsById(actionId) ?: return emptyList()
     val totalStats = localSummary.getTotalStats()
 
-    val result = hashMapOf<String, Any>()
-    addTimeAndUsageStatistics(result, summary.usageCount, totalStats.maxUsageCount, currentTime, summary.lastUsedTimestamp, "")
-    addTimeAndUsageStatistics(result,
+    val result = arrayListOf<EventPair<*>>()
+    addTimeAndUsageStatistics(result, summary.usageCount, totalStats.maxUsageCount, currentTime, summary.lastUsedTimestamp, false)
+    addTimeAndUsageStatistics(
+      result,
       summary.usageFromSearchEverywhere, totalStats.maxUsageFromSearchEverywhere,
       currentTime, summary.lastUsedFromSearchEverywhere,
-      "Se"
+      true
     )
     return result
+  }
+
+  private fun addTimeAndUsageStatistics(data: MutableList<EventPair<*>>,
+                                        usage: Int, maxUsage: Int,
+                                        time: Long, lastUsedTime: Long,
+                                        isSe: Boolean) {
+    addUsageStatistics(data, usage, maxUsage, isSe)
+    addLastTimeUsedStatistics(data, time, lastUsedTime, isSe)
+  }
+
+  private fun addUsageStatistics(data: MutableList<EventPair<*>>, usage: Int, maxUsage: Int, isSe: Boolean) {
+    if (usage > 0) {
+      val usageEventId = if (isSe) USAGE_SE else USAGE
+      data.add(usageEventId.with(usage))
+      if (maxUsage != 0) {
+        val usageToMaxEventId = if (isSe) USAGE_TO_MAX_SE else USAGE_TO_MAX
+        data.add(usageToMaxEventId.with(roundDouble(usage.toDouble() / maxUsage)))
+      }
+    }
+  }
+
+  private fun addLastTimeUsedStatistics(data: MutableList<EventPair<*>>, time: Long, lastUsedTime: Long, isSe: Boolean) {
+    if (lastUsedTime > 0) {
+      val timeSinceLastUsage = time - lastUsedTime
+      val timeSinceLastUsageEvent = if (isSe) TIME_SINCE_LAST_USAGE_SE else TIME_SINCE_LAST_USAGE
+      data.add(timeSinceLastUsageEvent.with(timeSinceLastUsage))
+
+      addIfTrue(data, if (isSe) WAS_USED_IN_LAST_MINUTE_SE else WAS_USED_IN_LAST_MINUTE, timeSinceLastUsage <= Time.MINUTE)
+      addIfTrue(data, if (isSe) WAS_USED_IN_LAST_HOUR_SE else WAS_USED_IN_LAST_HOUR, timeSinceLastUsage <= Time.HOUR)
+      addIfTrue(data, if (isSe) WAS_USED_IN_LAST_DAY_SE else WAS_USED_IN_LAST_DAY, timeSinceLastUsage <= Time.DAY)
+      addIfTrue(data, if (isSe) WAS_USED_IN_LAST_MONTH_SE else WAS_USED_IN_LAST_MONTH, timeSinceLastUsage <= (4 * Time.WEEK.toLong()))
+    }
   }
 }

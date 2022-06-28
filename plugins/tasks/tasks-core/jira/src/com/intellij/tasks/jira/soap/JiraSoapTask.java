@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.jira.soap;
 
@@ -40,8 +26,7 @@ import java.util.Locale;
  * @author Mikhail Golubev
  * @author Dmitry Avdeev
  */
-class JiraSoapTask extends JiraTask {
-
+final class JiraSoapTask extends JiraTask {
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US);
 
   private final String myKey;
@@ -81,16 +66,14 @@ class JiraSoapTask extends JiraTask {
           return element1.getText();
         }
 
-        @Nullable
         @Override
-        public String getAuthor() {
+        public @Nullable String getAuthor() {
           //noinspection HardCodedStringLiteral
           return element1.getAttributeValue("author");
         }
 
-        @Nullable
         @Override
-        public Date getDate() {
+        public @Nullable Date getDate() {
           return parseDate(element1.getAttributeValue("created"));
         }
       });
@@ -100,14 +83,12 @@ class JiraSoapTask extends JiraTask {
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return myKey;
   }
 
   @Override
-  @NotNull
-  public String getSummary() {
+  public @NotNull String getSummary() {
     return mySummary;
   }
 
@@ -121,15 +102,13 @@ class JiraSoapTask extends JiraTask {
     return myComments.toArray(Comment.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Override
-  protected String getIconUrl() {
+  protected @Nullable String getIconUrl() {
     return myIconUrl;
   }
 
-  @NotNull
   @Override
-  public TaskType getType() {
+  public @NotNull TaskType getType() {
     return myType;
   }
 
@@ -138,9 +117,8 @@ class JiraSoapTask extends JiraTask {
     return myState;
   }
 
-  @Nullable
   @Override
-  public Date getUpdated() {
+  public @Nullable Date getUpdated() {
     return myUpdated;
   }
 
@@ -149,8 +127,7 @@ class JiraSoapTask extends JiraTask {
     return myCreated;
   }
 
-  @Nullable
-  private static Date parseDate(@NotNull String date) {
+  private static @Nullable Date parseDate(@NotNull String date) {
     try {
       return DATE_FORMAT.parse(date);
     }
@@ -159,8 +136,7 @@ class JiraSoapTask extends JiraTask {
     }
   }
 
-  @Nullable
-  private static String getChildAttribute(@NotNull Element parent, @NotNull String childName, @NotNull String attributeName) {
+  private static @Nullable String getChildAttribute(@NotNull Element parent, @NotNull String childName, @NotNull String attributeName) {
     Element child = parent.getChild(childName);
     if (child == null) {
       return null;

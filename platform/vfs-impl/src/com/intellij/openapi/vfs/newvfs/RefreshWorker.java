@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ReadAction;
@@ -30,7 +30,6 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.vfs.newvfs.VfsEventGenerationHelper.LOG;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 final class RefreshWorker {
   private final boolean myIsRecursive;
@@ -38,8 +37,6 @@ final class RefreshWorker {
   private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
   private volatile boolean myCancelled;
   private final LocalFileSystemRefreshWorker myLocalFileSystemRefreshWorker;
-  private int myFullScans, myPartialScans, myProcessed;
-  private long myVfsTime, myIoTime;
 
   RefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
     boolean canUseNioRefresher = refreshRoot.isInLocalFileSystem() &&
@@ -67,7 +64,6 @@ final class RefreshWorker {
       return;
     }
 
-    var t = System.nanoTime();
     NewVirtualFile root = myRefreshQueue.removeFirst();
     NewVirtualFileSystem fs = root.getFileSystem();
     if (root.isDirectory()) {
@@ -94,10 +90,6 @@ final class RefreshWorker {
     catch (RefreshCancelledException e) {
       LOG.trace("refresh cancelled");
     }
-
-    t = NANOSECONDS.toMillis(System.nanoTime() - t);
-    var retries = (myFullScans + myPartialScans) - myProcessed;
-    VfsUsageCollector.logRefreshScan(myFullScans, myPartialScans, retries, t, NANOSECONDS.toMillis(myVfsTime), NANOSECONDS.toMillis(myIoTime));
   }
 
   private void queueDirectory(@NotNull NewVirtualFile root) {
@@ -117,7 +109,6 @@ final class RefreshWorker {
       boolean succeeded;
 
       do {
-        if (fullSync) myFullScans++; else myPartialScans++;
         myHelper.beginTransaction();
         try {
           succeeded = fullSync ? fullDirRefresh(fs, persistence, dir) : partialDirRefresh(fs, persistence, dir);
@@ -130,7 +121,6 @@ final class RefreshWorker {
         if (!succeeded && LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
       }
       while (!succeeded);
-      myProcessed++;
 
       if (myIsRecursive) {
         dir.markClean();
@@ -141,19 +131,15 @@ final class RefreshWorker {
   private boolean fullDirRefresh(@NotNull NewVirtualFileSystem fs,
                                  @NotNull PersistentFS persistence,
                                  @NotNull VirtualDirectoryImpl dir) {
-    var t = System.nanoTime();
     Pair<List<String>, List<VirtualFile>> snapshot = LocalFileSystemRefreshWorker.getDirectorySnapshot(dir);
-    myVfsTime += System.nanoTime() - t;
     if (snapshot == null) {
       return false;
     }
     List<String> persistedNames = snapshot.getFirst();
     List<VirtualFile> children = snapshot.getSecond();
 
-    t = System.nanoTime();
     Map<String, FileAttributes> childrenWithAttributes = fs instanceof BatchingFileSystem ? ((BatchingFileSystem)fs).listWithAttributes(dir) : null;
     String[] listDir = childrenWithAttributes != null ? ArrayUtil.toStringArray(childrenWithAttributes.keySet()) : fs.list(dir);
-    myIoTime += System.nanoTime() - t;
     String[] upToDateNames = VfsUtil.filterNames(listDir);
     Set<String> newNames = new HashSet<>(upToDateNames.length);
     ContainerUtil.addAll(newNames, upToDateNames);
@@ -204,12 +190,10 @@ final class RefreshWorker {
       }
     }
     else {
-      t = System.nanoTime();
       for (VirtualFile child : chs) {
         checkCancelled(dir);
         updatedMap.add(new Pair<>(child, fs.getAttributes(child)));
       }
-      myIoTime += System.nanoTime() - t;
     }
 
     if (isFullScanDirectoryChanged(dir, persistedNames, children)) {
@@ -252,24 +236,19 @@ final class RefreshWorker {
   private boolean isFullScanDirectoryChanged(@NotNull VirtualDirectoryImpl dir,
                                              @NotNull List<String> names,
                                              @NotNull List<? extends VirtualFile> children) {
-    var t = System.nanoTime();
-    var changed = ReadAction.compute(() -> {
+    return ReadAction.compute(() -> {
       checkCancelled(dir);
       return LocalFileSystemRefreshWorker.areChildrenOrNamesChanged(dir, names, children);
     });
-    myVfsTime += System.nanoTime() - t;
-    return changed;
   }
 
   private boolean partialDirRefresh(@NotNull NewVirtualFileSystem fs,
                                     @NotNull PersistentFS persistence,
                                     @NotNull VirtualDirectoryImpl dir) {
-    var t = System.nanoTime();
     Pair<List<VirtualFile>, List<String>> snapshot = ReadAction.compute(() -> {
       checkCancelled(dir);
       return new Pair<>(dir.getCachedChildren(), dir.getSuspiciousNames());
     });
-    myVfsTime += System.nanoTime() - t;
     List<VirtualFile> cached = snapshot.getFirst();
     List<String> wanted = snapshot.getSecond();
 
@@ -278,9 +257,7 @@ final class RefreshWorker {
       actualNames = null;
     }
     else {
-      t = System.nanoTime();
       actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(VfsUtil.filterNames(fs.list(dir)), false);
-      myIoTime += System.nanoTime() - t;
     }
 
     if (LOG.isTraceEnabled()) {
@@ -288,12 +265,10 @@ final class RefreshWorker {
     }
 
     List<Pair<VirtualFile, FileAttributes>> existingMap = new ArrayList<>(cached.size());
-    t = System.nanoTime();
     for (VirtualFile child : cached) {
       checkCancelled(dir);
       existingMap.add(new Pair<>(child, fs.getAttributes(child)));
     }
-    myIoTime += System.nanoTime() - t;
 
     List<ChildInfo> newKids = new ArrayList<>(wanted.size());
     for (String name : wanted) {
@@ -330,29 +305,21 @@ final class RefreshWorker {
   }
 
   private boolean isDirectoryChanged(@NotNull VirtualDirectoryImpl dir, @NotNull List<VirtualFile> cached, @NotNull List<String> wanted) {
-    var t = System.nanoTime();
-    var changed = ReadAction.compute(() -> {
+    return ReadAction.compute(() -> {
       checkCancelled(dir);
       return !cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames());
     });
-    myVfsTime += System.nanoTime() - t;
-    return changed;
   }
 
-  private @Nullable ChildInfo childRecord(NewVirtualFileSystem fs, VirtualFile dir, String name, boolean canonicalize) {
+  private static @Nullable ChildInfo childRecord(NewVirtualFileSystem fs, VirtualFile dir, String name, boolean canonicalize) {
     FakeVirtualFile file = new FakeVirtualFile(dir, name);
-    var t = System.nanoTime();
     FileAttributes attributes = fs.getAttributes(file);
-    if (attributes == null) {
-      myIoTime += System.nanoTime() - t;
-      return null;
-    }
+    if (attributes == null) return null;
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
     if (canonicalize) {
       name = fs.getCanonicallyCasedName(file);  // need case-exact names in file events
     }
-    myIoTime += System.nanoTime() - t;
     return new ChildInfoImpl(name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
@@ -405,10 +372,7 @@ final class RefreshWorker {
     }
 
     if (childAttributes.isSymLink()) {
-      var t = System.nanoTime();
-      var target = fs.resolveSymLink(child);
-      myIoTime += System.nanoTime() - t;
-      myHelper.checkSymbolicLinkChange(child, child.getCanonicalPath(), target);
+      myHelper.checkSymbolicLinkChange(child, child.getCanonicalPath(), fs.resolveSymLink(child));
     }
 
     if (!childAttributes.isDirectory()) {
@@ -430,12 +394,12 @@ final class RefreshWorker {
     boolean currentIsSymlink = child.is(VFileProperty.SYMLINK), upToDateIsSymlink = childAttributes.isSymLink();
     boolean currentIsSpecial = child.is(VFileProperty.SPECIAL), upToDateIsSpecial = childAttributes.isSpecial();
 
-    if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
+    boolean isFileTypeChanged = currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial;
+    if (currentIsDirectory != upToDateIsDirectory ||
+        (isFileTypeChanged && !Boolean.getBoolean("refresh.ignore.file.type.changes"))) {
       myHelper.scheduleDeletion(child);
       if (parent != null) {
-        var t = System.nanoTime();
         String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
-        myIoTime += System.nanoTime() - t;
         myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, () -> checkCancelled(parent));
       }
       else {

@@ -21,11 +21,11 @@ import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
 import org.jetbrains.kotlin.idea.perf.live.AbstractPerformanceProjectsTest
 import org.jetbrains.kotlin.idea.perf.synthetic.PerformanceNativeProjectsTest.TestProject.*
 import org.jetbrains.kotlin.idea.perf.synthetic.PerformanceNativeProjectsTest.TestTarget.*
-import org.jetbrains.kotlin.idea.perf.util.TeamCity.suite
-import org.jetbrains.kotlin.idea.perf.util.logMessage
+import org.jetbrains.kotlin.idea.performance.tests.utils.TeamCity
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_TEST_SOURCE_SET_NAME
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction.GRADLE_PROJECT
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction.GRADLE_PROJECT
 import org.jetbrains.kotlin.idea.testFramework.suggestOsNeutralFileName
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.library.KOTLIN_STDLIB_NAME
@@ -151,7 +151,7 @@ class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
         assertTrue("Target $testTarget is not allowed on your host OS", testTarget.enabled)
 
         val projectName = projectName(testTarget, testProject, enableCommonizer)
-        suite(projectName) {
+        TeamCity.suite(projectName) {
             Stats(projectName).use { stats ->
                 myProject = perfOpenTemplateGradleProject(stats, testTarget, testProject, enableCommonizer)
 

@@ -46,13 +46,17 @@ public interface CommonJavaRunConfigurationParameters extends CommonProgramRunCo
 
   @Override
   default @NotNull List<EventPair<?>> getAdditionalUsageData() {
-    String jrePath = getAlternativeJrePath();
+    EventPair<Integer> data = getAlternativeJreUserData(getAlternativeJrePath());
+    return data != null ? Collections.singletonList(data) : Collections.emptyList();
+  }
+
+  static EventPair<Integer> getAlternativeJreUserData(String jrePath) {
     if (jrePath != null) {
       JavaVersion version = JavaParametersUtil.getJavaVersion(jrePath);
       if (version != null) {
-        return Collections.singletonList(RunConfigurationUsageTriggerCollector.ALTERNATIVE_JRE_VERSION.with(version.feature));
+        return RunConfigurationUsageTriggerCollector.ALTERNATIVE_JRE_VERSION.with(version.feature);
       }
     }
-    return Collections.emptyList();
+    return null;
   }
 }

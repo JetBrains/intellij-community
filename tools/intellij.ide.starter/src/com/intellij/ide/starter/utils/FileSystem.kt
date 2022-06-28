@@ -60,7 +60,10 @@ object FileSystem {
 
       ZipFile(zipFile.toFile()).use { zip ->
         for (entry in zip.entries()) {
-          if (entry.isDirectory) continue
+          if (entry.isDirectory) {
+            targetDir.resolve(entry.name).toFile().mkdirs()
+            continue
+          }
           val file = targetDir.resolve((map(entry.name) ?: continue))
           file.parent.createDirectories()
           file.outputStream().use { zip.getInputStream(entry).use { entryStream -> entryStream.copyTo(it) } }

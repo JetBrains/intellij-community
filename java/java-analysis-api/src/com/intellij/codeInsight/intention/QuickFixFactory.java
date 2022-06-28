@@ -407,7 +407,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createCreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field);
 
   @NotNull
-  public abstract IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement, boolean useElementNameAsSuffix);
+  public abstract LocalQuickFixAndIntentionActionOnPsiElement createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement, boolean useElementNameAsSuffix);
 
   @NotNull
   public abstract IntentionAction createEnableOptimizeImportsOnTheFlyFix();

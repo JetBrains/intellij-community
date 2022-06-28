@@ -131,7 +131,7 @@ public final class UnaryPlusInspection extends BaseInspection {
         // unary plus might have been used as cast to int
         return;
       }
-      registerError(prefixExpression.getOperationSign(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly(), prefixExpression);
+      registerError(prefixExpression.getOperationSign(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly(), prefixExpression);
     }
   }
 

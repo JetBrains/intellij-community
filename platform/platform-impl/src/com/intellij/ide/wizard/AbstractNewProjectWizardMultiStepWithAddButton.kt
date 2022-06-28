@@ -19,7 +19,8 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallPlug
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.components.SegmentedButtonBorder
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -32,17 +33,24 @@ abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWiza
 
   abstract var additionalStepPlugins: Map<String, String>
 
-  override fun setupSwitcherUi(builder: Row) {
-    super.setupSwitcherUi(builder)
+  override fun setupSwitcherUi(builder: Panel) {
     with(builder) {
-      if (additionalStepPlugins.isNotEmpty()) {
-        val plus = AdditionalStepsAction()
-        cell(ActionButton(plus, plus.templatePresentation, ActionPlaces.getPopupPlace("NEW_PROJECT_WIZARD"),
-                          ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).apply {
-          setLook(IdeaActionButtonLook())
-          border = SegmentedButtonBorder()
-        })
-      }
+      row(label) {
+        createAndSetupSwitcher(this@row)
+
+        if (additionalStepPlugins.isNotEmpty()) {
+          val plus = AdditionalStepsAction()
+          val actionButton = ActionButton(
+            plus,
+            plus.templatePresentation,
+            ActionPlaces.getPopupPlace("NEW_PROJECT_WIZARD"),
+            ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
+          )
+          actionButton.setLook(IdeaActionButtonLook())
+          actionButton.border = SegmentedButtonBorder()
+          cell(actionButton)
+        }
+      }.bottomGap(BottomGap.SMALL)
     }
   }
 

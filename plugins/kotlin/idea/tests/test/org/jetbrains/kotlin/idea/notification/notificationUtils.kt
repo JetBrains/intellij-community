@@ -9,22 +9,22 @@ import com.intellij.openapi.util.Disposer
 import junit.framework.TestCase.assertNull
 
 fun catchNotificationText(project: Project, action: () -> Unit): String? {
-  val myDisposable = Disposer.newDisposable()
-  try {
-    var notificationText: String? = null
-    val connection = project.messageBus.connect(myDisposable)
-    connection.subscribe(Notifications.TOPIC, object : Notifications {
-      override fun notify(notification: Notification) {
-        assertNull(notificationText)
-        notificationText = notification.content
-      }
-    })
+    val myDisposable = Disposer.newDisposable()
+    try {
+        var notificationText: String? = null
+        val connection = project.messageBus.connect(myDisposable)
+        connection.subscribe(Notifications.TOPIC, object : Notifications {
+            override fun notify(notification: Notification) {
+                assertNull(notificationText)
+                notificationText = notification.content
+            }
+        })
 
-    action()
-    connection.deliverImmediately()
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    return notificationText
-  } finally {
-    Disposer.dispose(myDisposable)
-  }
+        action()
+        connection.deliverImmediately()
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        return notificationText
+    } finally {
+        Disposer.dispose(myDisposable)
+    }
 }

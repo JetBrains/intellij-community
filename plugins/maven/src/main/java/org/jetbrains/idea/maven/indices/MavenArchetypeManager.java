@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.JdomKt;
 import com.intellij.util.io.PathKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -96,7 +95,59 @@ public class MavenArchetypeManager {
   }
 
   public Collection<MavenArchetype> getInnerArchetypes() {
-    return executeWithMavenEmbedderWrapper(wrapper -> wrapper.getArchetypes());
+    return List.of(
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-archetype",
+                         "1.0", null,
+                         "An archetype which contains a sample archetype."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-j2ee-simple",
+                         "1.0", null,
+                         "An archetype which contains a simplifed sample J2EE application."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-plugin",
+                         "1.2", null,
+                         "An archetype which contains a sample Maven plugin."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-plugin-site",
+                         "1.1", null,
+                         "An archetype which contains a sample Maven plugin site. " +
+                         "This archetype can be layered upon an existing Maven plugin project."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-portlet",
+                         "1.0.1", null,
+                         "An archetype which contains a sample JSR-268 Portlet."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-profiles",
+                         "1.0-alpha-4", null, ""),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-quickstart",
+                         "1.1", null,
+                         "An archetype which contains a sample Maven project."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-site",
+                         "1.1", null,
+                         "An archetype which contains a sample Maven site which demonstrates some of the supported document types" +
+                         " like APT, XDoc, and FML and demonstrates how to i18n your site. " +
+                         "This archetype can be layered upon an existing Maven project."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-site-simple",
+                         "1.1", null,
+                         "An archetype which contains a sample Maven site."),
+
+      new MavenArchetype("org.apache.maven.archetypes",
+                         "maven-archetype-webapp",
+                         "1.0", null,
+                         "An archetype which contains a sample Maven Webapp project.")
+    );
   }
 
   public Collection<MavenArchetype> getInnerArchetypes(Path path) {
@@ -240,7 +291,7 @@ public class MavenArchetypeManager {
       root.addContent(childElement);
     }
     try {
-      JdomKt.write(root, userArchetypesPath);
+      JDOMUtil.write(root, userArchetypesPath);
     }
     catch (IOException e) {
       MavenLog.LOG.warn(e);

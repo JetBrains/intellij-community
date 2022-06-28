@@ -156,7 +156,7 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
     @Nullable Project project,
     @Nullable Component dialogParent,
     @NotNull FileChooserDescriptor descriptor,
-    @NotNull Predicate<VirtualFile> validateSelectedFile,
+    @NotNull Predicate<? super VirtualFile> validateSelectedFile,
     ProjectImportProvider... providers
   ) {
     FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, dialogParent);

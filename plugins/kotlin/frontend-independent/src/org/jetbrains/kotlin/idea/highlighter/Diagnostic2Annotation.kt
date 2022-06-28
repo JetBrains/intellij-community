@@ -48,40 +48,4 @@ object Diagnostic2Annotation {
             "[${diagnostic.factory.name}] $message"
         } else message
     }
-
-    fun createAnnotation(
-        diagnostic: Diagnostic,
-        range: TextRange,
-        holder: AnnotationHolder,
-        @InspectionMessage nonDefaultMessage: String?,
-        textAttributes: TextAttributesKey?,
-        highlightType: ProblemHighlightType?,
-        renderMessage: (Diagnostic) -> String
-    ): Annotation {
-        val defaultMessage = nonDefaultMessage ?: getDefaultMessage(diagnostic)
-
-        val annotation = when (diagnostic.severity) {
-            Severity.ERROR -> holder.createErrorAnnotation(range, defaultMessage)
-            Severity.WARNING -> {
-                if (highlightType == ProblemHighlightType.WEAK_WARNING) {
-                    holder.createWeakWarningAnnotation(range, defaultMessage)
-                } else {
-                    holder.createWarningAnnotation(range, defaultMessage)
-                }
-            }
-            Severity.INFO -> holder.createInfoAnnotation(range, defaultMessage)
-        }
-
-        annotation.tooltip = getHtmlMessage(diagnostic, renderMessage)
-
-        if (highlightType != null) {
-            annotation.highlightType = highlightType
-        }
-
-        if (textAttributes != null) {
-            annotation.textAttributes = textAttributes
-        }
-
-        return annotation
-    }
 }

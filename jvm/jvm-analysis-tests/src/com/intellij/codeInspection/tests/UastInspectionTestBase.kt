@@ -29,15 +29,17 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptor(sdkLevel)
 
-  enum class ULanguage(val ext: String) { JAVA(".java"), KOTLIN(".kt") }
-
   protected fun JavaCodeInsightTestFixture.setLanguageLevel(languageLevel: LanguageLevel) {
     LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, languageLevel, testRootDisposable)
   }
 
-  protected fun JavaCodeInsightTestFixture.testHighlighting(lang: ULanguage, text: String) {
-    configureByText("UnderTest${lang.ext}", text)
+  protected fun JavaCodeInsightTestFixture.testHighlighting(
+    lang: ULanguage,
+    text: String,
+    fileName: String = generateFileName()
+  ) {
+    configureByText("$fileName${lang.ext}", text)
     checkHighlighting()
   }
 
@@ -45,12 +47,13 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     lang: ULanguage,
     before: String,
     after: String,
-    hint: String = InspectionsBundle.message(
+    vararg hints: String = arrayOf(InspectionsBundle.message(
       "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
-    )
+    )),
+    fileName: String = generateFileName()
   ) {
-    configureByText("UnderTest${lang.ext}", before)
-    runQuickFix(hint)
+    configureByText("$fileName${lang.ext}", before)
+    hints.forEach { runQuickFix(it) }
     checkResult(after)
   }
 
@@ -72,9 +75,10 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     text: String,
     hint: String = InspectionsBundle.message(
       "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
-    )
+    ),
+    fileName: String = generateFileName()
   ) {
-    configureByText("UnderTest${lang.ext}", text)
+    configureByText("$fileName${lang.ext}", text)
     assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
   }
 
@@ -84,6 +88,8 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     configureByFile(file)
     assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
   }
+
+  private fun generateFileName() = getTestName(false).replace("[^a-zA-Z0-9\\.\\-]", "_")
 
   override fun tearDown() {
     try {

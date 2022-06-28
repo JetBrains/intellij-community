@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -30,8 +30,7 @@ public interface VcsLogFilterCollection {
                                                                                            USER_FILTER, HASH_FILTER, DATE_FILTER,
                                                                                            TEXT_FILTER, STRUCTURE_FILTER, ROOT_FILTER);
 
-  @Nullable
-  <T extends VcsLogFilter> T get(@NotNull FilterKey<T> key);
+  @Nullable <T extends VcsLogFilter> T get(@NotNull FilterKey<T> key);
 
   /**
    * Returns true if there are no filters in this collection.

@@ -3,7 +3,6 @@ package org.jetbrains.protocolModelGenerator
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.jsonProtocol.*
 import org.jetbrains.protocolReader.TextOutput

@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.lw;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
 
-public class ColorDescriptor {
+public final class ColorDescriptor {
   private final Color myColor;
   private String mySwingColor;
   private String mySystemColor;
@@ -15,19 +15,19 @@ public class ColorDescriptor {
     myColor = color;
   }
 
-  public static ColorDescriptor fromSwingColor(final String swingColor) {
+  static ColorDescriptor fromSwingColor(final String swingColor) {
     ColorDescriptor result = new ColorDescriptor(null);
     result.mySwingColor = swingColor;
     return result;
   }
 
-  public static ColorDescriptor fromSystemColor(final String systemColor) {
+  static ColorDescriptor fromSystemColor(final String systemColor) {
     ColorDescriptor result = new ColorDescriptor(null);
     result.mySystemColor = systemColor;
     return result;
   }
 
-  public static ColorDescriptor fromAWTColor(final String awtColor) {
+  static ColorDescriptor fromAWTColor(final String awtColor) {
     ColorDescriptor result = new ColorDescriptor(null);
     result.myAWTColor = awtColor;
     return result;
@@ -38,10 +38,7 @@ public class ColorDescriptor {
       final Field field = aClass.getDeclaredField(fieldName);
       return (Color)field.get(null);
     }
-    catch (NoSuchFieldException e) {
-      return Color.black;
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchFieldException | IllegalAccessException e) {
       return Color.black;
     }
   }

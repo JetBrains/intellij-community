@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
@@ -463,6 +464,8 @@ public class PsiUtilCore {
     return language;
   }
 
+  private static final boolean ourSleepDuringValidityCheck = Registry.is("psi.sleep.in.validity.check");
+
   /**
    * Checks if the element is valid. If not, throws {@link PsiInvalidElementAccessException} with
    * a meaningful message that points to the reasons why the element is not valid and may contain the stack trace
@@ -470,10 +473,12 @@ public class PsiUtilCore {
    */
   public static void ensureValid(@NotNull PsiElement element) {
     if (!element.isValid()) {
-      TimeoutUtil.sleep(1); // to see if processing in another thread suddenly makes the element valid again (which is a bug)
-      if (element.isValid()) {
-        LOG.error("PSI resurrected: " + element + " of " + element.getClass());
-        return;
+      if (ourSleepDuringValidityCheck) {
+        TimeoutUtil.sleep(1); // to see if processing in another thread suddenly makes the element valid again (which is a bug)
+        if (element.isValid()) {
+          LOG.error("PSI resurrected: " + element + " of " + element.getClass());
+          return;
+        }
       }
       throw PluginException.createByClass(new PsiInvalidElementAccessException(element), element.getClass());
     }

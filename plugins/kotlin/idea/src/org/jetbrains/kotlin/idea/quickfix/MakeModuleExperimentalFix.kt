@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.CompilerSettings
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.project.toDescriptor
@@ -19,7 +18,6 @@ import org.jetbrains.kotlin.idea.facet.getOrCreateConfiguredFacet
 import org.jetbrains.kotlin.idea.quickfix.ExperimentalFixesFactory.fqNameIsExisting
 import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.util.projectStructure.module
-import org.jetbrains.kotlin.idea.versions.fromString
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
@@ -38,12 +36,9 @@ open class MakeModuleExperimentalFix(
     // `-Xopt-in` (before Kotlin 1.6) https://blog.jetbrains.com/kotlin/2020/03/kotlin-1-3-70-released/
     // `-Xuse-experimental` (before Kotlin 1.3.70), a fallback if `RequireOptIn` annotation does not exist
 
-    private val kotlinCompilerVersion =
-        KotlinVersion.fromString(KotlinPluginLayout.instance.standaloneCompilerVersion) ?: KotlinVersion.CURRENT
-
     private val experimentalPrefix = when {
         module.toDescriptor()?.fqNameIsExisting(OptInNames.REQUIRES_OPT_IN_FQ_NAME) == false -> "-Xuse-experimental"
-        kotlinCompilerVersion.isAtLeast(1, 6, 0) -> "-opt-in"
+        KotlinPluginLayout.instance.standaloneCompilerVersion.kotlinVersion.isAtLeast(1, 6, 0) -> "-opt-in"
         else -> "-Xopt-in"
     }
 

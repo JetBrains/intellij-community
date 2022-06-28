@@ -25,6 +25,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1040,7 +1041,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         ApplicationManager.getApplication().invokeAndWait(() -> {
           JPanel panel = new JPanel(new BorderLayout());
           panel.setOpaque(false);
-          Splitter splitter = new OnePixelSplitter(orientation, proportion, 0.1f, 0.9f);
+          Splitter splitter = createSplitter(orientation, proportion, 0.1f, 0.9f);
           splitter.putClientProperty(SPLITTER_KEY, Boolean.TRUE);
           panel.add(splitter, BorderLayout.CENTER);
           splitter.setFirstComponent(firstComponent);
@@ -1110,6 +1111,18 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     EditorsSplitters splitters = activeWindow == null ? null : fileEditorManager.getSplittersFor(activeWindow);
     return splitters == null ? fileEditorManager.getSplitters() : splitters;
+  }
+
+  @NotNull
+  public static OnePixelSplitter createSplitter(boolean orientation, float proportion, final float minProp, final float maxProp) {
+    return new OnePixelSplitter(orientation, proportion, minProp, maxProp) {
+      @Override
+      protected Divider createDivider() {
+        Divider divider = super.createDivider();
+        divider.setBackground(JBColor.namedColor("EditorPane.splitBorder", JBColor.border()));
+        return divider;
+      }
+    };
   }
 
   public static @Nullable JComponent findDefaultComponentInSplitters(@Nullable Project project)  {

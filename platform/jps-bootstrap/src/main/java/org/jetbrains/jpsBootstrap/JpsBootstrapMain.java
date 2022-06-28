@@ -13,6 +13,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.Jdk11Downloader;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -131,7 +132,15 @@ public class JpsBootstrapMain {
   }
 
   private void main() throws Throwable {
-    Path jdkHome = JpsBootstrapJdk.getJdkHome(communityHome);
+    Path jdkHome;
+    if (JpsBootstrapUtil.underTeamCity) {
+      jdkHome = Jdk11Downloader.getJdkHome(communityHome);
+    }
+    else {
+      // On local run JDK was already downloaded via jps-bootstrap.{sh,cmd}
+      jdkHome = Path.of(System.getProperty("java.home"));
+    }
+
     Path kotlincHome = KotlinCompiler.downloadAndExtractKotlinCompiler(communityHome);
 
     JpsModel model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome, kotlincHome);
@@ -146,7 +155,7 @@ public class JpsBootstrapMain {
 
     if (underTeamCity) {
       SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
-        "jps.bootstrap.java.executable", JpsBootstrapJdk.getJavaExecutable(jdkHome).toString());
+        "jps.bootstrap.java.executable", Jdk11Downloader.getJavaExecutable(jdkHome).toString());
       System.out.println(setParameterServiceMessage.asString());
     }
   }
@@ -219,7 +228,7 @@ public class JpsBootstrapMain {
     // so download them all
     //
     // In case of running from read-to-use classes we need all dependent libraries as well
-    // Instead of calculating what libraries are exacly required, download them all
+    // Instead of calculating what libraries are exactly required, download them all
     jpsBuild.resolveProjectDependencies();
 
     if (manifestJsonUrl != null) {

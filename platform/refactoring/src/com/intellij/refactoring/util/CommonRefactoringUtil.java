@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -78,8 +79,11 @@ public final class CommonRefactoringUtil {
       throw new RefactoringErrorHintException(message);
     }
 
+    // Invoke editor.getComponent() before invokeLater(), so we can quickly fail
+    // and get better stack trace if the imaginary editor is supplied
+    boolean noRootPane = editor == null || editor.getComponent().getRootPane() == null;
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (editor == null || editor.getComponent().getRootPane() == null) {
+      if (noRootPane) {
         showErrorMessage(title, message, helpId, project);
       }
       else {

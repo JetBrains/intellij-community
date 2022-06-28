@@ -186,4 +186,8 @@ public class SLRUMap<K,V> {
 
     return key;
   }
+
+  public @NotNull String dumpStats() {
+    return "probational hits = " + probationalHits + ", protected hits = " + protectedHits + ", misses = " + misses;
+  }
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unnecessaryModuleDependency;
 
 import com.intellij.codeInspection.reference.*;
@@ -66,7 +67,7 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
   public void onInitialize(RefElement refElement) {
     RefModule refModule = refElement.getModule();
     if (refModule != null) {
-      HashSet<Module> modules = new HashSet<>();
+      Set<Module> modules = Collections.synchronizedSet(new HashSet<>());
       collectRequiredModulesInHierarchy(refElement, modules);
       modules.remove(refModule.getModule());
       if (!modules.isEmpty()) {
@@ -162,10 +163,10 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     return module != null ? Collections.singleton(module) : null;
   }
 
-  private static Set<Module> getModules(RefModule refModule) {
+  private static synchronized Set<Module> getModules(RefModule refModule) {
     Set<Module> modules = refModule.getUserData(DEPENDENCIES);
     if (modules == null){
-      modules = new HashSet<>();
+      modules = Collections.synchronizedSet(new HashSet<>());
       refModule.putUserData(DEPENDENCIES, modules);
     }
     return modules;

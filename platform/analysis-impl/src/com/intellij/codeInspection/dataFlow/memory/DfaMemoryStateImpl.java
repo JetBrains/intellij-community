@@ -178,7 +178,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void push(@NotNull DfaValue value) {
-    assert value.getFactory() == myFactory;
+    assert value.getFactory() == myFactory : value;
     myCachedHash = null;
     myStack.push(value);
   }
@@ -1381,8 +1381,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private void flushQualifiedMethods(@NotNull DfaVariableValue variable) {
     if (variable.isFlushableByCalls()) {
       // Flush method results on field write
-      List<DfaVariableValue> toFlush =
-        ContainerUtil.filter(myVariableTypes.keySet(), DfaVariableValue::containsCalls);
+      List<DfaVariableValue> toFlush = StreamEx.of(myEqClasses).flatMap(cls -> cls == null ? null : StreamEx.of(cls.iterator()))
+        .append(myVariableTypes.keySet()).filter(DfaVariableValue::containsCalls).toList();
       toFlush.forEach(val -> doFlush(val, true));
     }
   }

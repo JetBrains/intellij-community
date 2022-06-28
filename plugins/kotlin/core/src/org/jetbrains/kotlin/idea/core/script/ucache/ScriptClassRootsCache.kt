@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRoot
 import org.jetbrains.kotlin.idea.core.util.AbstractFileAttributePropertyService
 import org.jetbrains.kotlin.idea.core.util.readObject
 import org.jetbrains.kotlin.idea.core.util.writeObject
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.io.DataInputStream
@@ -312,10 +312,12 @@ internal class ScriptCacheDependenciesFile : AbstractFileAttributePropertyServic
     write = DataOutputStream::writeObject
 ) {
     companion object {
-        operator fun get(project: Project, file: VirtualFile) = project.getServiceSafe<ScriptCacheDependenciesFile>()[file]
+        operator fun get(project: Project, file: VirtualFile): ScriptCacheDependencies? {
+            return project.service<ScriptCacheDependenciesFile>()[file]
+        }
 
         operator fun set(project: Project, file: VirtualFile, newValue: ScriptCacheDependencies?) {
-            project.getServiceSafe<ScriptCacheDependenciesFile>()[file] = newValue
+            project.service<ScriptCacheDependenciesFile>()[file] = newValue
         }
     }
 }

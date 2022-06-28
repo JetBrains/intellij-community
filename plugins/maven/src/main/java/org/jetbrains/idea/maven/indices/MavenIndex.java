@@ -443,6 +443,7 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
+    if(key == null || value == null || cache == null) return;
     synchronized (cache) {
       Set<String> values = cache.get(key);
       if (values == null) values = new TreeSet<>();

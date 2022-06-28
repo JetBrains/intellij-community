@@ -22,8 +22,9 @@ import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author irengrig
+ * @deprecated Use {@link GitContentRevision}.
  */
+@Deprecated
 public class GitBinaryContentRevision extends GitContentRevision implements BinaryContentRevision {
   public GitBinaryContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project) {
     super(file, revision, project, null);

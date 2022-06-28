@@ -85,6 +85,8 @@ class UISettingsState : BaseState() {
   var showMainMenu by property(true)
   @get:OptionTag("SHOW_NAVIGATION_BAR")
   var showNavigationBar by property(true)
+  @get:OptionTag("NAVIGATION_BAR_LOCATION")
+  var navigationBarLocation by enum(NavBarLocation.BOTTOM)
   @get:OptionTag("SHOW_NAVIGATION_BAR_MEMBERS")
   var showMembersInNavigationBar by property(true)
   @get:OptionTag("SELECTED_TABS_LAYOUT_INFO_ID")

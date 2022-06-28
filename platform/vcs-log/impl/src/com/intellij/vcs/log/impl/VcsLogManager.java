@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -30,6 +31,9 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -286,28 +290,28 @@ public class VcsLogManager implements Disposable {
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {
-    private final AtomicBoolean myIsBroken = new AtomicBoolean(false);
+    private final @NotNull IntSet myErrors = IntSets.synchronize(new IntOpenHashSet());
+    private final @NotNull AtomicBoolean myIsBroken = new AtomicBoolean(false);
 
     @Override
     public void consume(@Nullable Object source, @NotNull Throwable e) {
       if (myIsBroken.compareAndSet(false, true)) {
-        processError(source, e);
+        if (myRecreateMainLogHandler != null) {
+          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(e));
+        }
+        else {
+          LOG.error(e);
+        }
+
+        if (source instanceof VcsLogStorage) {
+          ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
+        }
       }
       else {
-        LOG.debug("Vcs Log storage is broken and is being recreated", e);
-      }
-    }
-
-    protected void processError(@Nullable Object source, @NotNull Throwable e) {
-      if (myRecreateMainLogHandler != null) {
-        ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(e));
-      }
-      else {
-        LOG.error(e);
-      }
-
-      if (source instanceof VcsLogStorage) {
-        ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
+        int errorHashCode = ThrowableInterner.computeTraceHashCode(e);
+        if (myErrors.add(errorHashCode)) {
+          LOG.debug("Vcs Log storage is broken and is being recreated", e);
+        }
       }
     }
 

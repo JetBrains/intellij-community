@@ -332,12 +332,9 @@ val Sdk.remoteSdkAdditionalData: PyRemoteSdkAdditionalDataBase?
   get() = sdkAdditionalData as? PyRemoteSdkAdditionalDataBase
 
 fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
-  val baseDirPath = try {
-    module?.baseDir?.toNioPath()
-  } catch (e: UnsupportedOperationException) {
-    return false
-  }
-  return isLocatedInsideBaseDir(baseDirPath)
+  val moduleDir = module?.baseDir
+  val sdkDir = homeDirectory
+  return moduleDir != null && sdkDir != null && VfsUtil.isAncestor(moduleDir, sdkDir, true)
 }
 
 private fun Sdk.isLocatedInsideBaseDir(baseDir: Path?): Boolean {

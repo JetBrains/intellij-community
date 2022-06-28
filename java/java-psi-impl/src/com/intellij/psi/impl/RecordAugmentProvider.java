@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -98,7 +98,7 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   }
 
   @NotNull
-  private static <Psi extends PsiElement> List<Psi> getFieldAugments(PsiClass aClass) {
+  public static <Psi extends PsiElement> List<Psi> getFieldAugments(PsiClass aClass) {
     PsiRecordComponent[] components = aClass.getRecordComponents();
     PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     ArrayList<Psi> fields = new ArrayList<>(components.length);

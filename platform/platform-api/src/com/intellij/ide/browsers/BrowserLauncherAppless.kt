@@ -188,26 +188,28 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       return false
     }
 
-    val commandWithUrl = BrowserUtil.getOpenBrowserCommand(effectivePath, openInNewWindow).toMutableList()
-    if (url != null) {
-      if (browser != null) browser.addOpenUrlParameter(commandWithUrl, url)
-      else commandWithUrl += url
-    }
-
-    val commandLine = GeneralCommandLine(commandWithUrl)
+    val command = BrowserUtil.getOpenBrowserCommand(effectivePath, openInNewWindow).toMutableList()
+    val commandLine = GeneralCommandLine(command)
 
     val browserSpecificSettings = browser?.specificSettings
     if (browserSpecificSettings != null) {
       commandLine.environment.putAll(browserSpecificSettings.environmentVariables)
     }
 
+    val isOpenCommandUsed = isOpenCommandUsed(commandLine)
+    if (isOpenCommandUsed && url != null) {
+      commandLine.addParameter(url)
+    }
     val specific = browserSpecificSettings?.additionalParameters ?: emptyList()
     if (specific.size + additionalParameters.size > 0) {
-      if (isOpenCommandUsed(commandLine)) {
+      if (isOpenCommandUsed) {
         commandLine.addParameter("--args")
       }
       commandLine.addParameters(specific)
       commandLine.addParameters(*additionalParameters)
+    }
+    if (!isOpenCommandUsed && url != null) {
+      commandLine.addParameter(url)
     }
 
     doLaunch(commandLine, project, browser, fix)

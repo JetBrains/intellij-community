@@ -4,26 +4,34 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.kpm
 
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.idea.projectModel.KotlinFragment
-import org.jetbrains.kotlin.idea.projectModel.KotlinModule
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinFragment
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinFragmentCoordinates
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import java.io.File
 
 
-private val KotlinFragment.fullName
-    get() = fragmentName + (moduleIdentifier.moduleClassifier ?: KotlinModule.MAIN_MODULE_NAME).capitalizeAsciiOnly()
+private val IdeaKotlinFragmentCoordinates.fullName
+    get() = fragmentName + (module.moduleName).capitalizeAsciiOnly()
+
+private val IdeaKotlinFragment.isTestFragment
+    get() = coordinates.module.moduleName == "test"
 
 internal fun calculateKotlinFragmentModuleId(
     gradleModule: IdeaModule,
-    fragment: KotlinFragment,
+    fragment: IdeaKotlinFragmentCoordinates,
     resolverCtx: ProjectResolverContext
 ): String =
     GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule) + ":" + fragment.fullName
 
-fun KotlinFragment.computeSourceType(): ExternalSystemSourceType =
+fun IdeaKotlinFragment.computeSourceType(): ExternalSystemSourceType =
     if (isTestFragment) ExternalSystemSourceType.TEST else ExternalSystemSourceType.SOURCE
 
-fun KotlinFragment.computeResourceType(): ExternalSystemSourceType =
+fun IdeaKotlinFragment.computeResourceType(): ExternalSystemSourceType =
     if (isTestFragment) ExternalSystemSourceType.TEST_RESOURCE else ExternalSystemSourceType.RESOURCE
 
+val IdeaKotlinFragment.sourceDirs: Collection<File>
+    get() = sourceDirectories.map { it.file }
+val IdeaKotlinFragment.resourceDirs: Collection<File>
+    get() = resourceDirectories.map { it.file }

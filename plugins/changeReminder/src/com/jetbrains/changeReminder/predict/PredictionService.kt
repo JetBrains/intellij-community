@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.Disposable
@@ -17,7 +17,6 @@ import com.jetbrains.changeReminder.plugin.UserSettings
 import com.jetbrains.changeReminder.repository.FilesHistoryProvider
 import com.jetbrains.changeReminder.stats.ChangeReminderChangeListChangedEvent
 import com.jetbrains.changeReminder.stats.ChangeReminderNodeExpandedEvent
-import com.jetbrains.changeReminder.stats.logEvent
 import git4idea.history.GitHistoryTraverser
 import git4idea.history.GitHistoryTraverserListener
 import git4idea.history.getTraverser
@@ -79,7 +78,7 @@ internal class PredictionService(val project: Project) : Disposable {
         if (changes.size <= Registry.intValue("vcs.changeReminder.changes.limit")) {
           val prevFiles = lastChanges.map { ChangesUtil.getFilePath(it) }
           val curFiles = changes.map { ChangesUtil.getFilePath(it) }
-          logEvent(project, ChangeReminderChangeListChangedEvent(prevFiles, predictionData, curFiles))
+          ChangeReminderChangeListChangedEvent(prevFiles, predictionData, curFiles).logEvent(project)
         }
         calculatePrediction()
         lastChanges = changes
@@ -105,7 +104,7 @@ internal class PredictionService(val project: Project) : Disposable {
         return
       }
       val predictionData = TreeUtil.findObjectInPath(event.path, PredictionData.Prediction::class.java) ?: return
-      logEvent(project, ChangeReminderNodeExpandedEvent(predictionData))
+      ChangeReminderNodeExpandedEvent(predictionData).logEvent(project)
     }
 
     override fun treeCollapsed(event: TreeExpansionEvent?) {}

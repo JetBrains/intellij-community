@@ -51,6 +51,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -72,7 +73,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   private static final Logger LOG = Logger.getInstance(PopupFactoryImpl.class);
 
-  private final Map<Disposable, List<Balloon>> myStorage = ContainerUtil.createWeakMap();
+  private final Map<Disposable, List<Balloon>> myStorage = new WeakHashMap<>();
 
   @NotNull
   @Override

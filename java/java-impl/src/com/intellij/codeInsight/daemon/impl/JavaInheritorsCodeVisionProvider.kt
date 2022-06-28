@@ -5,6 +5,7 @@ import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
+import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
@@ -98,6 +99,7 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
     private val elementPointer = SmartPointerManager.createPointer(element)
 
     override fun invoke(event: MouseEvent?, editor: Editor) {
+      if (isInlaySettingsEditor(editor)) return
       event ?: return
       val element = elementPointer.element ?: return
       val navigationHandler = markerType.navigationHandler

@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerType
 
-class MarkdownUsageCollector : CounterUsagesCollector() {
+internal class MarkdownUsageCollector : CounterUsagesCollector() {
   companion object {
     private val GROUP = EventLogGroup("markdown.events", 1)
 

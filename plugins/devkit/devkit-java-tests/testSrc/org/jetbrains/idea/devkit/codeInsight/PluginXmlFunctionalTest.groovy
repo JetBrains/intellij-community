@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.idea.devkit.codeInsight
 
@@ -14,6 +14,7 @@ import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.diagnostic.ITNReporter
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.notification.impl.NotificationGroupEP
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceDescriptor
@@ -107,6 +108,8 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("coreImpl", coreImpl)
     String ideCore = PathUtil.getJarPathForClass(Configurable.class)
     moduleBuilder.addLibrary("ide-core", ideCore)
+    String ideCoreImpl = PathUtil.getJarPathForClass(NotificationGroupEP.class)
+    moduleBuilder.addLibrary("ide-core-impl", ideCoreImpl);
   }
 
   // Gradle-like setup, but JBList not in Library

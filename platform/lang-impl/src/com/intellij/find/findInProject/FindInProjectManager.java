@@ -33,9 +33,8 @@ public class FindInProjectManager {
    * @param model would be used for search if not null, otherwise shared (project-level) model would be used
    */
   public void findInProject(@NotNull DataContext dataContext, @Nullable FindModel model) {
-
-    final FindManager findManager = FindManager.getInstance(myProject);
-    final FindModel findModel;
+    FindManager findManager = FindManager.getInstance(myProject);
+    FindModel findModel;
     if (model != null) {
       findModel = model.clone();
     }
@@ -79,11 +78,11 @@ public class FindInProjectManager {
     UsageViewManager manager = UsageViewManager.getInstance(myProject);
 
     if (manager == null) return;
-    final FindManager findManager = FindManager.getInstance(myProject);
+    FindManager findManager = FindManager.getInstance(myProject);
     findManager.getFindInProjectModel().copyFrom(findModel);
-    final FindModel findModelCopy = findModel.clone();
-    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModelCopy);
-    final FindUsagesProcessPresentation processPresentation =
+    FindModel findModelCopy = findModel.clone();
+    UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModelCopy);
+    FindUsagesProcessPresentation processPresentation =
       FindInProjectUtil.setupProcessPresentation(myProject, presentation);
     ConfigurableUsageTarget usageTarget = new FindInProjectUtil.StringUsageTarget(myProject, findModel);
 

@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -18,7 +19,7 @@ private const val FUS_GROUP_ID = "plugins.advertiser"
 
 private val GROUP = EventLogGroup(
   FUS_GROUP_ID,
-  2,
+  3,
 )
 
 private val SOURCE_FIELD = EventFields.Enum(
@@ -33,7 +34,7 @@ private val CONFIGURE_PLUGINS_EVENT = GROUP.registerEvent(
 
 private val PLUGINS_FIELD = EventFields.StringListValidatedByCustomRule(
   "plugins",
-  "plugin",
+  PluginIdRuleValidator::class.java,
 )
 
 private val ENABLE_PLUGINS_EVENT = GROUP.registerEvent(

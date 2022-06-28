@@ -190,7 +190,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void setFraction(final double fraction) {
     synchronized (getLock()) {
       if (isIndeterminate()) {
-        String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
+        String message = "This progress indicator (" + this+") is indeterminate, this may lead to visual inconsistency. " +
                          "Please call setIndeterminate(false) before you start progress. " + getClass();
         LOG.info(message, new IllegalStateException());
         setIndeterminate(false);

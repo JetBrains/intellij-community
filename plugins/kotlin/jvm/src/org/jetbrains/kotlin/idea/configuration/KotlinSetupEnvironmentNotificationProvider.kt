@@ -66,7 +66,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             !hasAnyKotlinRuntimeInScope(module) &&
             UnsupportedAbiVersionNotificationPanelProvider.collectBadRoots(module).isEmpty()
         ) {
-            return createKotlinNotConfiguredPanel(module)
+            return createKotlinNotConfiguredPanel(module, getAbleToRunConfigurators(module).toList())
         }
 
         return CONST_NULL
@@ -90,25 +90,25 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
                 }
             }
 
-        private fun createKotlinNotConfiguredPanel(module: Module): Function<in FileEditor, out JComponent?> =
+        private fun createKotlinNotConfiguredPanel(module: Module, configurators: List<KotlinProjectConfigurator>): Function<in FileEditor, out JComponent?> =
             Function { fileEditor: FileEditor ->
                 EditorNotificationPanel(fileEditor).apply {
                 text = KotlinJvmBundle.message("kotlin.not.configured")
-                val configurators = getAbleToRunConfigurators(module).toList()
                 if (configurators.isNotEmpty()) {
+                    val project = module.project
                     createComponentActionLabel(KotlinJvmBundle.message("action.text.configure")) { label ->
                         val singleConfigurator = configurators.singleOrNull()
                         if (singleConfigurator != null) {
-                            singleConfigurator.apply(module.project)
+                            singleConfigurator.apply(project)
                         } else {
-                            val configuratorsPopup = createConfiguratorsPopup(module.project, configurators)
+                            val configuratorsPopup = createConfiguratorsPopup(project, configurators)
                             configuratorsPopup.showUnderneathOf(label)
                         }
                     }
 
                     createComponentActionLabel(KotlinJvmBundle.message("action.text.ignore")) {
                         SuppressNotificationState.suppressKotlinNotConfigured(module)
-                        EditorNotifications.getInstance(module.project).updateAllNotifications()
+                        EditorNotifications.getInstance(project).updateAllNotifications()
                     }
                 }
             }

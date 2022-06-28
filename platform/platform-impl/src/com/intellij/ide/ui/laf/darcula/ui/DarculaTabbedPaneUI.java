@@ -52,7 +52,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   private boolean tabsOverlapBorder;
   private boolean useSelectedRectBackup = false;
 
-  protected static final JBValue OFFSET = new JBValue.Float(1);
+  private static final JBValue OFFSET = new JBValue.Float(1);
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -278,10 +278,10 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       g.setColor(JBColor.namedColor("TabbedPane.contentAreaColor", 0xbfbfbf));
 
       if (tabPlacement == LEFT || tabPlacement == RIGHT) {
-        g.fillRect(bounds.x + bounds.width - OFFSET.get(), bounds.y, OFFSET.get(), bounds.y + bounds.height);
+        g.fillRect(bounds.x + bounds.width - getOffset(), bounds.y, getOffset(), bounds.y + bounds.height);
       }
       else {
-        g.fillRect(bounds.x, bounds.y + bounds.height - OFFSET.get(), bounds.x + bounds.width, OFFSET.get());
+        g.fillRect(bounds.x, bounds.y + bounds.height - getOffset(), bounds.x + bounds.width, getOffset());
       }
     }
     super.paintTabArea(g, tabPlacement, selectedIndex);
@@ -317,10 +317,10 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
     if (tabPane.getTabLayoutPolicy() == JTabbedPane.SCROLL_TAB_LAYOUT) {
       if (tabPlacement == LEFT || tabPlacement == RIGHT) {
-        w -= OFFSET.get();
+        w -= getOffset();
       }
       else {
-        h -= OFFSET.get();
+        h -= getOffset();
       }
     }
 
@@ -351,20 +351,20 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       boolean wrap = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT;
       switch (tabPlacement) {
         case LEFT:
-          offset = SELECTION_HEIGHT.get() - (wrap ? OFFSET.get() : 0);
+          offset = SELECTION_HEIGHT.get() - (wrap ? getOffset() : 0);
           paintUnderline(g, x + w - offset, y, SELECTION_HEIGHT.get(), h);
           break;
         case RIGHT:
-          offset = wrap ? OFFSET.get() : 0;
+          offset = wrap ? getOffset() : 0;
           paintUnderline(g, x - offset, y, SELECTION_HEIGHT.get(), h);
           break;
         case BOTTOM:
-          offset = wrap ? OFFSET.get() : 0;
+          offset = wrap ? getOffset() : 0;
           paintUnderline(g, x, y - offset, w, SELECTION_HEIGHT.get());
           break;
         case TOP:
         default:
-          offset = SELECTION_HEIGHT.get() - (wrap ? OFFSET.get() : 0);
+          offset = SELECTION_HEIGHT.get() - (wrap ? getOffset() : 0);
           paintUnderline(g, x, y + h - offset, w, SELECTION_HEIGHT.get());
           break;
       }
@@ -375,7 +375,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   protected int getTabLabelShiftY(int tabPlacement, int tabIndex, boolean isSelected) {
     int delta = SELECTION_HEIGHT.get();
     if (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT) {
-      delta -= OFFSET.get();
+      delta -= getOffset();
     }
 
     switch (tabPlacement) {
@@ -396,7 +396,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   protected int getTabLabelShiftX(int tabPlacement, int tabIndex, boolean isSelected) {
     int delta = SELECTION_HEIGHT.get();
     if (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT) {
-      delta -= OFFSET.get();
+      delta -= getOffset();
     }
 
     switch (tabPlacement) {
@@ -421,7 +421,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   @Override
   protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {
     int height = super.calculateTabHeight(tabPlacement, tabIndex, fontHeight) - 2; //remove magic constant '2' added by parent
-    int minHeight = TAB_HEIGHT.get() - (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? OFFSET.get() : 0);
+    int minHeight = TAB_HEIGHT.get() - (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? getOffset() : 0);
     return Math.max(height, minHeight);
   }
 
@@ -636,6 +636,10 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
         myShowHiddenTabsButton.setBounds(bounds);
       }
     }
+  }
+
+  protected int getOffset() {
+    return OFFSET.get();
   }
 
   private void paintUnderline(Graphics g, int x, int y, int w, int h) {

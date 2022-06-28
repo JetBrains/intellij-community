@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.quickfix.getAddExclExclCallFix
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -70,7 +70,7 @@ class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
                 if (!descriptor.isInline || descriptor.extensionReceiverParameter?.type?.isNullable() == true) return
 
                 val receiverExpression = expression.receiverExpression
-                val dataFlowValueFactory = resolutionFacade.getDataFlowValueFactory()
+                val dataFlowValueFactory = resolutionFacade.dataFlowValueFactory
                 val dataFlow = dataFlowValueFactory.createDataFlowValue(receiverExpression, extensionReceiverType, context, descriptor)
                 val stableNullability = context.getDataFlowInfoBefore(receiverExpression).getStableNullability(dataFlow)
                 if (!stableNullability.canBeNull()) return

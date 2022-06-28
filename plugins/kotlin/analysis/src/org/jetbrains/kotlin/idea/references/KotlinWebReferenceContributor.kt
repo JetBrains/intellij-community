@@ -20,6 +20,10 @@ internal class KotlinWebReferenceContributor : PsiReferenceContributor() {
         registrar.registerReferenceProvider(
             psiElement(KtStringTemplateExpression::class.java),
             object : PsiReferenceProvider() {
+                override fun acceptsTarget(target: PsiElement): Boolean {
+                    return false // web references do not point to any real PsiElement
+                }
+
                 override fun getReferencesByElement(
                     element: PsiElement,
                     context: ProcessingContext

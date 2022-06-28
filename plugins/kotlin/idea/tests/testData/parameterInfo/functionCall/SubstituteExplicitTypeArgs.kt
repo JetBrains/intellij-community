@@ -1,4 +1,3 @@
-// IGNORE_FIR
 fun test() {
     mapOf<Int, String>(<caret>)
 }

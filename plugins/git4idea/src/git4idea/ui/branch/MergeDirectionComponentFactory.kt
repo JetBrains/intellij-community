@@ -164,6 +164,8 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
                                     GitBundle.message("branch.direction.panel.head.repo.label"),
                                     ComboBox(repoModel).apply {
                                       renderer = SimpleListCellRenderer.create("") { it.repositoryPath }
+                                    }.also {
+                                      ComboboxSpeedSearch.installSpeedSearch(it, GitRepositoryMappingData::repositoryPath)
                                     }) {
         applySelection(repoModel.selected, branchModel.selected)
       }

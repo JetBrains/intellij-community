@@ -31,6 +31,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -60,21 +61,24 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
                       @NotNull final PsiFile injectedFile) {
     assert documentRange.isValid();
     assert injectedFile.isValid();
-    EditorWindowImpl window;
+    Ref<EditorWindowImpl> editorWindow = Ref.create();
     synchronized (allEditors) {
-      for (EditorWindowImpl editorWindow : allEditors) {
-        if (editorWindow.getDocument() == documentRange && editorWindow.getDelegate() == editor) {
-          editorWindow.myInjectedFile = injectedFile;
-          if (editorWindow.isValid()) {
-            return editorWindow;
+      for (EditorWindowImpl oldEditorWindow : allEditors) {
+        if (oldEditorWindow.getDocument() == documentRange && oldEditorWindow.getDelegate() == editor) {
+          oldEditorWindow.myInjectedFile = injectedFile;
+          if (oldEditorWindow.isValid()) {
+            return oldEditorWindow;
           }
         }
       }
-      window = new EditorWindowImpl(documentRange, editor, injectedFile, documentRange.isOneLine());
-      allEditors.add(window);
+      editor.executeNonCancelableBlock(()-> {
+        EditorWindowImpl newEditorWindow = new EditorWindowImpl(documentRange, editor, injectedFile, documentRange.isOneLine());
+        editorWindow.set(newEditorWindow);
+        allEditors.add(newEditorWindow);
+        newEditorWindow.assertValid();
+      });
     }
-    window.checkValid();
-    return window;
+    return editorWindow.get();
   }
 
   @Override
@@ -140,7 +144,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
       return !isDisposed() && !myInjectedFile.getProject().isDisposed() && myInjectedFile.isValid() && myDocumentWindow.isValid();
     }
 
-    private void checkValid() {
+    private void assertValid() {
       PsiUtilCore.ensureValid(myInjectedFile);
       if (!isValid()) {
         StringBuilder reason = new StringBuilder("Not valid");
@@ -161,7 +165,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
     @Override
     @NotNull
     public LogicalPosition hostToInjected(@NotNull LogicalPosition hPos) {
-      checkValid();
+      assertValid();
       DocumentEx hostDocument = myDelegate.getDocument();
       int hLineEndOffset =
         hPos.line >= hostDocument.getLineCount() ? hostDocument.getTextLength() : hostDocument.getLineEndOffset(hPos.line);
@@ -182,7 +186,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
     @Override
     @NotNull
     public LogicalPosition injectedToHost(@NotNull LogicalPosition pos) {
-      checkValid();
+      assertValid();
 
       int offset = logicalPositionToOffset(pos);
       LogicalPosition samePos = offsetToLogicalPosition(offset);
@@ -417,7 +421,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
     @NotNull
     @Override
     public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
-      checkValid();
+      assertValid();
       Point2D pp = p.getX() >= 0 && p.getY() >= 0 ? p : new Point2D.Double(Math.max(p.getX(), 0), Math.max(p.getY(), 0));
       LogicalPosition hostPos = myDelegate.visualToLogicalPosition(myDelegate.xyToVisualPosition(pp));
       return logicalToVisualPosition(hostToInjected(hostPos));
@@ -438,7 +442,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
     @Override
     @NotNull
     public LogicalPosition offsetToLogicalPosition(final int offset) {
-      checkValid();
+      assertValid();
       int lineNumber = myDocumentWindow.getLineNumber(offset);
       int lineStartOffset = myDocumentWindow.getLineStartOffset(lineNumber);
       int column = calcLogicalColumnNumber(offset - lineStartOffset, lineNumber, lineStartOffset);
@@ -454,7 +458,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
     @Override
     @NotNull
     public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
-      checkValid();
+      assertValid();
       LogicalPosition hostPos = myDelegate.xyToLogicalPosition(p);
       return hostToInjected(hostPos);
     }
@@ -462,7 +466,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
     @Override
     @NotNull
     public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
-      checkValid();
+      assertValid();
       LogicalPosition hostPos = injectedToHost(pos);
       return myDelegate.logicalPositionToXY(hostPos);
     }
@@ -470,14 +474,14 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
     @Override
     @NotNull
     public Point visualPositionToXY(@NotNull final VisualPosition pos) {
-      checkValid();
+      assertValid();
       return logicalPositionToXY(visualToLogicalPosition(pos));
     }
 
     @NotNull
     @Override
     public Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
-      checkValid();
+      assertValid();
       LogicalPosition hostLogical = injectedToHost(visualToLogicalPosition(pos));
       VisualPosition hostVisual = myDelegate.logicalToVisualPosition(hostLogical);
       return myDelegate.visualPositionToPoint2D(hostVisual);
@@ -485,7 +489,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
 
     @Override
     public void repaint(final int startOffset, final int endOffset) {
-      checkValid();
+      assertValid();
       myDelegate.repaint(myDocumentWindow.injectedToHost(startOffset), myDocumentWindow.injectedToHost(endOffset));
     }
 
@@ -505,7 +509,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
 
     @Override
     public void addEditorMouseListener(@NotNull final EditorMouseListener listener) {
-      checkValid();
+      assertValid();
       EditorMouseListener wrapper = new EditorMouseListener() {
         @Override
         public void mousePressed(@NotNull EditorMouseEvent e) {
@@ -550,7 +554,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
 
     @Override
     public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
-      checkValid();
+      assertValid();
       EditorMouseMotionListener wrapper = new EditorMouseMotionListener() {
         @Override
         public void mouseMoved(@NotNull EditorMouseEvent e) {
@@ -670,14 +674,14 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
     @Override
     @NotNull
     public VisualPosition logicalToVisualPosition(@NotNull final LogicalPosition pos) {
-      checkValid();
+      assertValid();
       return new VisualPosition(pos.line, pos.column);
     }
 
     @Override
     @NotNull
     public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition pos) {
-      checkValid();
+      assertValid();
       return new LogicalPosition(pos.line, pos.column);
     }
 

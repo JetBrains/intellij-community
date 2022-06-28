@@ -149,7 +149,6 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         return@run null
       }
 
-      frameAllocator.projectOpened(project)
       result
     }
       .handle { result, error ->

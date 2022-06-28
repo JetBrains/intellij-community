@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl.themes
 
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 
@@ -104,9 +103,9 @@ class EditorTabTheme : TabTheme {
     get() = globalScheme.getAttributes(EditorColors.TAB_SELECTED_INACTIVE).foregroundColor?: underlinedTabForeground
 
   override val inactiveColoredTabBackground: Color
-    get() = newUIAware(JBColor.PanelBackground, JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground())
+    get() = JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground()
 
-  fun <T> newUIAware(newUI: T, oldUI:T):T = if (ExperimentalUI.isNewEditorTabs()) newUI else oldUI
+  fun <T> newUIAware(newUI: T, oldUI:T):T = if (ExperimentalUI.isNewUI()) newUI else oldUI
 }
 
 internal class ToolWindowTabTheme : DefaultTabTheme() {

@@ -7,9 +7,14 @@ import com.intellij.openapi.project.Project
 
 /**
  * Factory for [InlayHintsProvider], can be used to support multiple languages with a single type of inlay hints.
+ *
+ * Method without project is preferable.
  */
 interface InlayHintsProviderFactory {
-  fun getProvidersInfo(project: Project): List<ProviderInfo<out Any>>
+  fun getProvidersInfo(project: Project): List<ProviderInfo<out Any>> = getProvidersInfo()
+
+  @JvmDefault
+  fun getProvidersInfo(): List<ProviderInfo<out Any>> = emptyList()
 
   companion object {
     @JvmStatic

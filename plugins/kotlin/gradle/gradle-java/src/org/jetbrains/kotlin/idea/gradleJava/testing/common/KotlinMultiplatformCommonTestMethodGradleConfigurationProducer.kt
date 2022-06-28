@@ -8,8 +8,9 @@ import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.gradleJava.run.AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.platform.jvm.isJvm
 
 class KotlinMultiplatformCommonTestMethodGradleConfigurationProducer : AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer() {
-    override fun isApplicable(module: Module, platform: TargetPlatform) = platform.isCommon()
+    override fun isApplicable(module: Module, platform: TargetPlatform) = platform.isCommon() || platform.isJvm()
     override fun findExistingConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings? = null
 }

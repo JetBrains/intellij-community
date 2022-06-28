@@ -11,6 +11,7 @@ import io.opentelemetry.context.Scope
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.projector.ProjectorPluginKt
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -30,10 +31,22 @@ import java.util.function.BiFunction
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
+import java.util.function.UnaryOperator
 import java.util.stream.Collectors
 
 @CompileStatic
 final class BuildContextImpl extends BuildContext {
+  final ProductProperties productProperties
+  final WindowsDistributionCustomizer windowsDistributionCustomizer
+  final LinuxDistributionCustomizer linuxDistributionCustomizer
+  final MacDistributionCustomizer macDistributionCustomizer
+  final ProprietaryBuildTools proprietaryBuildTools
+
+  final String buildNumber
+  List<String> XBootClassPathJarNames
+  List<String> bootClassPathJarNames
+  UnaryOperator<Set<String>> classpathCustomizer = UnaryOperator.identity()
+
   final ApplicationInfoProperties applicationInfo
 
   private final JpsGlobal global
@@ -41,6 +54,8 @@ final class BuildContextImpl extends BuildContext {
 
   // thread-safe - forkForParallelTask pass it to child context
   private final ConcurrentLinkedQueue<Map.Entry<Path, String>> distFiles
+
+  private BuiltinModulesFileData builtinModulesData
 
   @Override
   String getFullBuildNumber() {
@@ -50,6 +65,12 @@ final class BuildContextImpl extends BuildContext {
   @Override
   String getSystemSelector() {
     return productProperties.getSystemSelector(applicationInfo, buildNumber)
+  }
+
+  static BuildContext createContext(String communityHome, String projectHome, ProductProperties productProperties,
+                                    ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                                    BuildOptions options = new BuildOptions()) {
+    return create(communityHome, projectHome, productProperties, proprietaryBuildTools, options)
   }
 
   static BuildContextImpl create(String communityHome, String projectHome, ProductProperties productProperties,
@@ -83,9 +104,9 @@ final class BuildContextImpl extends BuildContext {
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
 
-    xBootClassPathJarNames = productProperties.xBootClassPathJarNames
+    XBootClassPathJarNames = productProperties.XBootClassPathJarNames
     bootClassPathJarNames = List.of("util.jar", "util_rt.jar")
-    applicationInfo = new ApplicationInfoProperties(project, productProperties, options, messages)  // Android Studio: don't .patch(this)
+    applicationInfo = new ApplicationInfoPropertiesImpl(project, productProperties, options, messages).patch(this)
     if (productProperties.productCode == null && applicationInfo.productCode != null) {
       productProperties.productCode = applicationInfo.productCode
     }
@@ -98,6 +119,7 @@ final class BuildContextImpl extends BuildContext {
     if (!options.buildStepsToSkip.isEmpty()) {
       messages.info("Build steps to be skipped: ${String.join(", ", options.buildStepsToSkip)}")
     }
+    ProjectorPluginKt.configure(productProperties)
   }
 
   private BuildContextImpl(@NotNull BuildContextImpl parent,
@@ -114,13 +136,14 @@ final class BuildContextImpl extends BuildContext {
 
     buildNumber = parent.buildNumber
 
-    xBootClassPathJarNames = parent.xBootClassPathJarNames
+    XBootClassPathJarNames = parent.XBootClassPathJarNames
     bootClassPathJarNames = parent.bootClassPathJarNames
     applicationInfo = parent.applicationInfo
+    builtinModulesData = parent.builtinModulesData
   }
 
   @Override
-  void addDistFile(@NotNull Map.Entry<Path, String> file) {
+  void addDistFile(@NotNull Map.Entry<? extends Path, String> file) {
     messages.debug("$file requested to be added to app resources")
     distFiles.add(file)
   }
@@ -137,7 +160,7 @@ final class BuildContextImpl extends BuildContext {
                                                                                               ProductProperties productProperties,
                                                                                               BuildOptions buildOptions) {
     return { JpsProject project, BuildMessages messages ->
-      ApplicationInfoProperties applicationInfo = new ApplicationInfoProperties(project, productProperties, buildOptions, messages)
+      ApplicationInfoProperties applicationInfo = new ApplicationInfoPropertiesImpl(project, productProperties, buildOptions, messages)
       return "$projectHome/out/${productProperties.getOutputDirectoryName(applicationInfo)}"
     } as BiFunction<JpsProject, BuildMessages, String>
   }
@@ -145,11 +168,6 @@ final class BuildContextImpl extends BuildContext {
   @Override
   JpsModule findApplicationInfoModule() {
     return findRequiredModule(productProperties.applicationInfoModule)
-  }
-
-  @Override
-  AntBuilder getAnt() {
-    compilationContext.ant
   }
 
   @Override
@@ -190,6 +208,16 @@ final class BuildContextImpl extends BuildContext {
   @Override
   JpsCompilationData getCompilationData() {
     compilationContext.compilationData
+  }
+
+  @Override
+  Path getStableJavaExecutable() {
+    return compilationContext.stableJavaExecutable
+  }
+
+  @Override
+  Path getStableJdkHome() {
+    return compilationContext.stableJdkHome
   }
 
   @Override
@@ -285,7 +313,7 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  void signFiles(@NotNull List<Path> files, Map<String, String> options) {
+  void signFiles(@NotNull List<? extends Path> files, @NotNull Map<String, String> options) {
     if (proprietaryBuildTools.signTool == null) {
       messages.warning("Sign tool isn't defined, $files won't be signed")
     }
@@ -376,7 +404,7 @@ final class BuildContextImpl extends BuildContext {
     BuildOptions options = new BuildOptions()
     options.useCompiledClassesFromProjectOutput = true
     CompilationContextImpl compilationContextCopy = compilationContext
-      .createCopy(ant, messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties, options))
+      .createCopy(messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties, options))
     BuildContextImpl copy = new BuildContextImpl(compilationContextCopy, productProperties,
                                                  windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                                  proprietaryBuildTools, new ConcurrentLinkedQueue<>())
@@ -433,10 +461,63 @@ final class BuildContextImpl extends BuildContext {
       jvmArgs.add('-Dsplash=true')
     }
 
-    if (options.bundledRuntimeVersion >= 17) {
-      jvmArgs.addAll(OpenedPackages.getCommandLineArguments(this))
-    }
+    jvmArgs.addAll(OpenedPackages.getCommandLineArguments(this))
 
     return jvmArgs
+  }
+
+  @Override
+  OsSpecificDistributionBuilder getOsDistributionBuilder(OsFamily os, Path ideaProperties) {
+    OsSpecificDistributionBuilder builder
+    switch (os) {
+      case OsFamily.WINDOWS:
+        builder = windowsDistributionCustomizer?.with {
+          new WindowsDistributionBuilder(this, it, ideaProperties, "$applicationInfo")
+        }
+        break
+      case OsFamily.LINUX:
+        builder = linuxDistributionCustomizer?.with {
+          new LinuxDistributionBuilder(this, it, ideaProperties)
+        }
+        break
+      case OsFamily.MACOS:
+        builder = macDistributionCustomizer?.with {
+          new MacDistributionBuilder(this, it, ideaProperties)
+        }
+        break
+    }
+    return builder
+  }
+
+  @Override
+  BuiltinModulesFileData getBuiltinModule() {
+    if (options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
+      return null
+    }
+
+    BuiltinModulesFileData data = builtinModulesData
+    if (data == null) {
+      throw new IllegalStateException("builtinModulesData is not set. Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
+    }
+    return data
+  }
+
+  void setBuiltinModules(BuiltinModulesFileData data) {
+    if (builtinModulesData != null) {
+      throw new IllegalStateException("builtinModulesData was already set")
+    }
+
+    builtinModulesData = data
+  }
+
+  @Override
+  UnaryOperator<Set<String>> getClasspathCustomizer() {
+    return classpathCustomizer
+  }
+
+  // External use from Rider
+  @SuppressWarnings('unused')
+  void setClasspathCustomizer(UnaryOperator<Set<String>> classpathCustomizer) {
+    this.classpathCustomizer = classpathCustomizer
   }
 }

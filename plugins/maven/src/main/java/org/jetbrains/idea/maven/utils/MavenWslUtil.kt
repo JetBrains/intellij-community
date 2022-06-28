@@ -300,7 +300,7 @@ object MavenWslUtil : MavenUtil() {
               val jdkWslDistr = tryGetWslDistributionForPath(it.jdk.homePath)
               if ((projectWslDistr != null && it.supportType != "WSL") || !sameDistributions(projectWslDistr, jdkWslDistr)) {
                 needReset = true
-                it.shutdown(true)
+                MavenServerManager.getInstance().shutdownConnector(it, true)
               }
             }
           }

@@ -18,6 +18,11 @@ import java.util.Objects;
 public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (LocalHistoryImpl.getInstanceImpl().isDisabled()) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
     Project project = e.getProject();
     LocalHistoryFacade vcs = getVcs();
     IdeaGateway gateway = getGateway();

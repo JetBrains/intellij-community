@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.util.firstNotNullResult
 
 object SourceNavigationHelper {
     private val LOG = Logger.getInstance(SourceNavigationHelper::class.java)
@@ -220,14 +219,14 @@ object SourceNavigationHelper {
         index: StringStubIndexExtension<T>
     ): T? {
         val classFqName = entity.fqName ?: return null
-        return targetScopes(entity, navigationKind).firstNotNullResult { scope ->
+        return targetScopes(entity, navigationKind).firstNotNullOfOrNull { scope ->
             ProgressManager.checkCanceled()
             index.get(classFqName.asString(), entity.project, scope).minByOrNull { it.isExpectDeclaration() }
         }
     }
 
     private fun findClassOrObject(decompiledClassOrObject: KtClassOrObject, navigationKind: NavigationKind): KtClassOrObject? {
-        return findFirstMatchingInIndex<KtClassOrObject>(decompiledClassOrObject, navigationKind, KotlinFullClassNameIndex.getInstance())
+        return findFirstMatchingInIndex<KtClassOrObject>(decompiledClassOrObject, navigationKind, KotlinFullClassNameIndex)
     }
 
     private fun getInitialTopLevelCandidates(
@@ -237,8 +236,8 @@ object SourceNavigationHelper {
         val scopes = targetScopes(declaration, navigationKind)
 
         val index: StringStubIndexExtension<out KtNamedDeclaration> = when (declaration) {
-            is KtNamedFunction -> KotlinTopLevelFunctionFqnNameIndex.getInstance()
-            is KtProperty -> KotlinTopLevelPropertyFqnNameIndex.getInstance()
+            is KtNamedFunction -> KotlinTopLevelFunctionFqnNameIndex
+            is KtProperty -> KotlinTopLevelPropertyFqnNameIndex
             else -> throw IllegalArgumentException("Neither function nor declaration: " + declaration::class.java.name)
         }
 
@@ -307,7 +306,7 @@ object SourceNavigationHelper {
         override fun visitClass(klass: KtClass, data: Unit) = findClassOrObject(klass, navigationKind)
 
         override fun visitTypeAlias(typeAlias: KtTypeAlias, data: Unit) =
-            findFirstMatchingInIndex(typeAlias, navigationKind, KotlinTopLevelTypeAliasFqNameIndex.getInstance())
+            findFirstMatchingInIndex(typeAlias, navigationKind, KotlinTopLevelTypeAliasFqNameIndex)
 
         override fun visitParameter(parameter: KtParameter, data: Unit): KtDeclaration? {
             val callableDeclaration = parameter.parent.parent as KtCallableDeclaration

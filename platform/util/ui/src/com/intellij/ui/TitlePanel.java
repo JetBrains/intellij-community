@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 
@@ -99,7 +100,7 @@ public class TitlePanel extends CaptionPanel {
     if (isExperimentalUI) {
       myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
       useHeaderInsets = true;
-      myLabel.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Popup.headerInsets()));
+      myLabel.setBorder(new EmptyBorder(JBUI.CurrentTheme.Popup.headerInsets()));
     }
   }
 }

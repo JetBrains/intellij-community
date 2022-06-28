@@ -171,6 +171,12 @@ object KotlinPredefinedConfigurations {
             "@'_Annotation fun 'Name('_Param*)",
             FUNCTION_TYPE
         ),
+        searchTemplate(
+            KotlinBundle.message("predefined.configuration.function.explicit.inferred.type"),
+            "explicit/inferred type",
+            "fun 'Name('_Param*): '_Type{0,1}",
+            FUNCTION_TYPE
+        ),
 
         // Comments, KDoc and Metadata
         searchTemplate(

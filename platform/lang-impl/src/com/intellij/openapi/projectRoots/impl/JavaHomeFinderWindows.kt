@@ -4,6 +4,7 @@ package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Bitness
 import com.intellij.openapi.util.io.WindowsRegistryUtil
 import com.intellij.util.io.exists
@@ -98,6 +99,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     val fsRoots = systemInfo.fsRoots
     val roots: MutableSet<Path> = HashSet()
     for (root in fsRoots) {
+      ProgressManager.checkCanceled()
       if (!root.exists()) {
         continue
       }

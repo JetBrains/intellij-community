@@ -5,6 +5,7 @@
 // ACTION: Create class 'T'
 // ACTION: Create enum 'T'
 // ACTION: Create interface 'T'
+// ACTION: Do not show return expression hints
 // ACTION: Remove explicit type specification
 // ERROR: Unresolved reference: T
 val a: <caret>T? = null

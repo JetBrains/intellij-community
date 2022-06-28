@@ -68,6 +68,11 @@ public interface RepositoryManager<T extends Repository> {
   @Nullable
   @CalledInAny
   T getRepositoryForRootQuick(@Nullable VirtualFile root);
+
+  @Nullable
+  @CalledInAny
+  T getRepositoryForRootQuick(@Nullable FilePath rootPath);
+
   /**
    * @return all repositories tracked by the manager.
    */

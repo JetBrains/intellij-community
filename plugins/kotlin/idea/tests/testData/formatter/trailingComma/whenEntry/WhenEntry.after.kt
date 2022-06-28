@@ -1,6 +1,7 @@
 fun foo(x: Any) = when (x) {
     Comparable::class, Iterable::class, String::class, // trailing comma
     -> println(1)
+
     else -> println(3)
 }
 
@@ -14,6 +15,7 @@ fun foo(x: Any) {
         Comparable::class, Iterable::class,
         String::class, /*// trailing comma*/
         -> println(1)
+
         else -> println(3)
     }
 
@@ -21,6 +23,7 @@ fun foo(x: Any) {
         Comparable::class, Iterable::class,
         String::class, /*// trailing comma*/
         -> println(1)
+
         else -> println(3)
     }
 
@@ -33,6 +36,7 @@ fun foo(x: Any) {
         1 -> {
 
         }
+
         else -> println(3)
     }
 
@@ -40,6 +44,7 @@ fun foo(x: Any) {
         1 -> {
 
         }
+
         else -> println(3)
     }
 
@@ -48,6 +53,7 @@ fun foo(x: Any) {
         -> {
 
         }
+
         else -> println(3)
     }
 
@@ -57,6 +63,7 @@ fun foo(x: Any) {
         -> {
 
         }
+
         else -> println(3)
     }
 
@@ -66,6 +73,7 @@ fun foo(x: Any) {
         -> {
 
         }
+
         else -> println(3)
     }
 
@@ -74,6 +82,7 @@ fun foo(x: Any) {
         -> {
 
         }
+
         else -> println(3)
     }
 }

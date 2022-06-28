@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -18,6 +18,7 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollecto
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Version
 
 class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
@@ -44,27 +45,35 @@ class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
     ExecuteTask,
   }
 
+  enum class JreType(val description: String) {
+    EMPTY("empty"),
+    CUSTOM("custom"),
+    USE_INTERNAL_JAVA("#JAVA_INTERNAL"),
+    USE_PROJECT_JDK("#USE_PROJECT_JDK"),
+    USE_JAVA_HOME("#JAVA_HOME")
+  }
+
+
   companion object {
     private val GROUP = EventLogGroup("build.tools", 2)
     private val EXTERNAL_SYSTEM_ID = GROUP.registerEvent("externalSystemId", EventFields.StringValidatedByEnum("value", "build_tools"))
-    fun getJRETypeUsage(key: String, jreName: String?): MetricEvent {
+    val JRE_TYPE_FIELD = EventFields.Enum("value", JreType::class.java) { it.description }
+
+    fun getJreType(jreName: String?): JreType {
+      val jreType = JreType.values().find { it.description == jreName }
       val anonymizedName = when {
-        jreName.isNullOrBlank() -> "empty"
-        jreName in listOf(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
-                          ExternalSystemJdkUtil.USE_PROJECT_JDK,
-                          ExternalSystemJdkUtil.USE_JAVA_HOME) -> jreName
-        else -> "custom"
+        jreName.isNullOrBlank() -> JreType.EMPTY
+        jreType != null -> jreType
+        else -> JreType.CUSTOM
       }
-      return newMetric(key, anonymizedName)
+      return anonymizedName
     }
 
-    fun getJREVersionUsage(project: Project, key: String, jreName: String?): MetricEvent {
+    fun getJreVersion(project: Project, jreName: String?): String {
       val jdk = ExternalSystemJdkUtil.getJdk(project, jreName)
-      val versionString =
-        jdk?.versionString?.let { Version.parseVersion(it)?.let { parsed -> "${parsed.major}.${parsed.minor}" } }
-        ?: "unknown"
-
-      return newMetric(key, versionString)
+      return jdk?.versionString?.let<@NlsSafe String, String?> {
+        Version.parseVersion(it)?.let { parsed -> "${parsed.major}.${parsed.minor}" }
+      } ?: "unknown"
     }
 
     @JvmStatic

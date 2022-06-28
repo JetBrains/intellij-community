@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -53,15 +53,18 @@ public class ReplaceConstructorWithBuilderAction extends PsiElementBaseIntention
     return AllIcons.Actions.RefactoringBulb;
   }
 
-  private static boolean isNotEnumClass(@Nullable PsiClass psiClass) {
-    return psiClass != null && !psiClass.isEnum();
-  }
-  
   @Nullable
   private static PsiMethod getConstructor(@Nullable PsiElement element) {
     PsiMethod method = RefactoringActionContextUtil.getJavaMethodHeader(element);
-    return method != null && method.isConstructor() && 
-           isNotEnumClass(method.getContainingClass()) ? method : null;
+    if (method != null && method.isConstructor()) {
+      PsiClass aClass = method.getContainingClass();
+      if (aClass != null && 
+          !aClass.isEnum() && 
+          method.getName().equals(aClass.getName())) {
+        return method;
+      }
+    }
+    return null;
   }
 
   @Override

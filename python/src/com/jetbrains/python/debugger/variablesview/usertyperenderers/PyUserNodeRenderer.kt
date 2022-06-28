@@ -79,7 +79,7 @@ class PyUserNodeRenderer(var isEnabled: Boolean, existingNames: List<String>?) {
 
 fun getNewRendererName(existingNames: List<String>?): String {
   val default = PyBundle.message("form.debugger.variables.view.user.type.renderers.unnamed")
-  if (existingNames == null || existingNames.isEmpty()) return default
+  if (existingNames.isNullOrEmpty()) return default
   val duplicatedNames = existingNames.filter { it.startsWith(default) }.size
   return if (duplicatedNames > 0) {
     "$default ($duplicatedNames)"

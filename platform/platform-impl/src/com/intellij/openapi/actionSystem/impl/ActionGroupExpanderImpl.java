@@ -19,10 +19,11 @@ final class ActionGroupExpanderImpl implements ActionGroupExpander {
   }
 
   @Override
-  public @NotNull CancellablePromise<List<AnAction>> expandActionGroupAsync(@Nullable Project project,
+  public @NotNull CancellablePromise<List<AnAction>> expandActionGroupAsync(@NotNull PresentationFactory factory,
                                                                             @NotNull DataContext context,
                                                                             @NotNull String place,
                                                                             @NotNull ActionGroup group,
+                                                                            boolean isToolbarAction,
                                                                             boolean hideDisabled,
                                                                             @NotNull Delegate delegate) {
     return delegate.expandActionGroupAsync(group, hideDisabled);

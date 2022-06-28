@@ -137,6 +137,8 @@
     </intentionAction>
     <notificationGroup id="JSON Schema" displayType="NONE"/>
 
+    <psi.referenceContributor language="JSON" implementation="com.intellij.json.JsonWebReferenceContributor"/>
+
     <lang.parserDefinition language="JSONPath" implementationClass="com.intellij.jsonpath.psi.JsonPathParserDefinition"/>
     <lang.braceMatcher language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathPairedBraceMatcher"/>
     <lang.quoteHandler language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathQuoteHandler"/>

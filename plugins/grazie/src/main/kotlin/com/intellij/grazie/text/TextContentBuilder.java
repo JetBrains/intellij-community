@@ -102,32 +102,25 @@ public class TextContentBuilder {
 
   @Nullable
   public TextContent build(PsiElement root, TextContent.TextDomain domain, TextRange valueRange) {
-    TextRange rootRange = root.getTextRange();
-    if (isWrongRange(valueRange, rootRange.getLength())) {
-      LOG.error("The range " + valueRange + " is out of the PSI element, length " + rootRange.getLength());
-      return null;
-    }
-
-    int rootStart = rootRange.getStartOffset();
-    TextRange fileValueRange = valueRange.shiftRight(rootStart);
-    CharSequence fileText = root.getContainingFile().getViewProvider().getContents();
-    if (isWrongRange(fileValueRange, fileText.length())) {
-      LOG.error("The range " + fileValueRange + " is out of the file, length " + fileText.length());
+    int rootStart = root.getTextRange().getStartOffset();
+    String rootText = root.getText();
+    if (isWrongRange(valueRange, rootText.length())) {
+      LOG.error("The range " + valueRange + " is out of the PSI element, length " + rootText.length());
       return null;
     }
 
     TextContent content = new PsiRecursiveElementWalkingVisitor() {
       final List<TextContentImpl.TokenInfo> tokens = new ArrayList<>();
-      int currentStart = fileValueRange.getStartOffset();
+      int currentStart = valueRange.getStartOffset();
 
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        TextRange range = element.getTextRange().intersection(fileValueRange);
+        TextRange range = element.getTextRange().shiftLeft(rootStart).intersection(valueRange);
         if (range == null) return;
 
         if (unknown.test(element)) {
           exclusionStarted(range);
-          tokens.add(new TextContentImpl.PsiToken("", root, TextRange.from(range.getStartOffset(), 0).shiftLeft(rootStart), true));
+          tokens.add(new TextContentImpl.PsiToken("", root, TextRange.from(range.getStartOffset(), 0), true));
         }
         else if (excluded.test(element)) {
           exclusionStarted(range);
@@ -140,15 +133,14 @@ public class TextContentBuilder {
       private void exclusionStarted(TextRange range) {
         if (range.getStartOffset() != currentStart) {
           TextRange tokenRange = new TextRange(currentStart, range.getStartOffset());
-          String tokenText = tokenRange.subSequence(fileText).toString();
-          tokens.add(new TextContentImpl.PsiToken(tokenText, root, tokenRange.shiftLeft(rootStart), false));
+          tokens.add(new TextContentImpl.PsiToken(tokenRange.substring(rootText), root, tokenRange, false));
         }
         currentStart = range.getEndOffset();
       }
 
       @Nullable TextContent walkPsiTree() {
         root.accept(this);
-        exclusionStarted(TextRange.from(fileValueRange.getEndOffset(), 0));
+        exclusionStarted(TextRange.from(valueRange.getEndOffset(), 0));
         return tokens.isEmpty() ? null : new TextContentImpl(domain, tokens);
       }
     }.walkPsiTree();

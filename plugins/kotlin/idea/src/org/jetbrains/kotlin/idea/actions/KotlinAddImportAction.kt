@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -273,10 +274,12 @@ class KotlinAddImportAction internal constructor(
                         }
 
                         importableFqName?.let {
-                            element.mainReference.bindToFqName(
-                                it,
-                                KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
-                            )
+                            underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread(project, KotlinBundle.message("add.import.for.0", it.asString())) {
+                                element.mainReference.bindToFqName(
+                                    it,
+                                    KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
+                                )
+                            }
                         }
                     }
                 } else {

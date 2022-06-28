@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 class DaemonCodeAnalyzerStatusService(project: Project) : Disposable {
     companion object {
-        fun getInstance(project: Project): DaemonCodeAnalyzerStatusService = project.getServiceSafe()
+        fun getInstance(project: Project): DaemonCodeAnalyzerStatusService = project.service()
     }
 
     @Volatile

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.nj2k.inference.common
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtTypeElement
@@ -21,8 +20,8 @@ data class InferenceContext(
 ) {
     fun isInConversionScope(childCandidate: PsiElement) = when (childCandidate) {
         is KtElement -> elements.any { element ->
-            element.containingKtFile == childCandidate.containingKtFile
-                    && element.range.contains(childCandidate.range)
+          element.containingKtFile == childCandidate.containingKtFile
+          && element.textRange.contains(childCandidate.textRange)
         }
         else -> false
     }

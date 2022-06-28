@@ -200,7 +200,7 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
         Disposer.register(parentDisposable, disposable);
         ApplicationListener listener = new ApplicationListener() {
             @Override
-            public void beforeWriteActionStart(Object action) {
+            public void beforeWriteActionStart(@NotNull Object action) {
                 indicator.cancel();
             }
         };

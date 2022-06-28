@@ -23,12 +23,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 public final class PostfixTemplateLogger extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("completion.postfix", 58);
+  private static final EventLogGroup GROUP = new EventLogGroup("completion.postfix", 59);
   private static final @NonNls String CUSTOM = "custom";
   private static final @NonNls String NO_PROVIDER = "no.provider";
   private static final EventField<Language> LANGUAGE = EventFields.Language;
-  private static final EventField<String> TEMPLATE = EventFields.StringValidatedByCustomRule("template", "completion_template");
-  private static final EventField<String> PROVIDER = EventFields.StringValidatedByCustomRule("provider", "completion_provider_template");
+  private static final EventField<String> TEMPLATE = EventFields.StringValidatedByCustomRule("template", PostfixTemplateValidator.class);
+  private static final EventField<String> PROVIDER = EventFields.StringValidatedByCustomRule("provider", PostfixTemplateValidator.class);
   private static final EventField<PluginInfo> PLUGIN_INFO = EventFields.PluginInfo;
   private static final VarargEventId EXPANDED = GROUP.registerVarargEvent("expanded", LANGUAGE, TEMPLATE, PROVIDER, PLUGIN_INFO);
 
@@ -55,10 +55,15 @@ public final class PostfixTemplateLogger extends CounterUsagesCollector {
   }
 
   public static class PostfixTemplateValidator extends CustomValidationRule {
+    @NotNull
+    @Override
+    public String getRuleId() {
+      return "completion_template";
+    }
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return "completion_template".equals(ruleId) || "completion_provider_template".equals(ruleId);
+      return getRuleId().equals(ruleId) || "completion_provider_template".equals(ruleId);
     }
 
     @NotNull

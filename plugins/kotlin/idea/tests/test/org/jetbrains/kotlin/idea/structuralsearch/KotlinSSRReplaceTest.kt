@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch
 
@@ -42,7 +42,6 @@ abstract class KotlinSSRReplaceTest : KotlinLightCodeInsightFixtureTestCase() {
         val matcher = Matcher(project, matchOptions)
         val sink = CollectingMatchResultSink()
         matcher.findMatches(sink)
-        assert(sink.matches.size > 0) { "Amount of matches should be greater than 0." }
         val replaceOptions = ReplaceConfiguration(searchConfiguration).replaceOptions.apply {
             isToReformatAccordingToStyle = reformat
             isToShortenFQN = shortenFqNames

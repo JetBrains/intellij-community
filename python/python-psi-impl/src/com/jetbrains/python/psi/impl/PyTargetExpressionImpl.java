@@ -201,6 +201,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
       return PyUnionType.union(collect);
     }
+    if (parent instanceof PyExceptPart && ((PyExceptPart)parent).isStar() &&
+        LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON311)) {
+      return PyClassTypeImpl.createTypeByQName(this, "ExceptionGroup", false);
+    }
     PyType iterType = getTypeFromIteration(context);
     if (iterType != null) {
       return iterType;

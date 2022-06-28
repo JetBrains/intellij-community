@@ -30,9 +30,10 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
-import org.jetbrains.kotlin.idea.facet.toApiVersion
+import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.maven.*
 import org.jetbrains.kotlin.idea.quickfix.ChangeGeneralLanguageFeatureSupportFix
@@ -108,7 +109,7 @@ protected constructor(
             for (module in excludeMavenChildrenModules(project, dialog.modulesToConfigure)) {
                 val file = findModulePomFile(module)
                 if (file != null && canConfigureFile(file)) {
-                    configureModule(module, file, dialog.kotlinVersion, collector)
+                    configureModule(module, file, IdeKotlinVersion.get(dialog.kotlinVersion), collector)
                     OpenFileAction.openFile(file.virtualFile, project)
                 } else {
                     showErrorMessage(project, KotlinMavenBundle.message("error.cant.find.pom.for.module", module.name))
@@ -124,15 +125,15 @@ protected constructor(
     protected abstract fun isRelevantGoal(goalName: String): Boolean
 
     protected abstract fun createExecutions(pomFile: PomFile, kotlinPlugin: MavenDomPlugin, module: Module)
-    protected abstract fun getStdlibArtifactId(module: Module, version: String): String
+    protected abstract fun getStdlibArtifactId(module: Module, version: IdeKotlinVersion): String
 
-    open fun configureModule(module: Module, file: PsiFile, version: String, collector: NotificationMessageCollector): Boolean =
+    open fun configureModule(module: Module, file: PsiFile, version: IdeKotlinVersion, collector: NotificationMessageCollector): Boolean =
         changePomFile(module, file, version, collector)
 
     private fun changePomFile(
         module: Module,
         file: PsiFile,
-        version: String,
+        version: IdeKotlinVersion,
         collector: NotificationMessageCollector
     ): Boolean {
         val virtualFile = file.virtualFile ?: error("Virtual file should exists for psi file " + file.name)
@@ -143,7 +144,7 @@ protected constructor(
         }
 
         val pom = PomFile.forFileOrNull(file as XmlFile) ?: return false
-        pom.addProperty(KOTLIN_VERSION_PROPERTY, version)
+        pom.addProperty(KOTLIN_VERSION_PROPERTY, version.rawVersion)
 
         pom.addDependency(
             MavenId(GROUP_ID, getStdlibArtifactId(module, version), "\${$KOTLIN_VERSION_PROPERTY}"),
@@ -177,7 +178,7 @@ protected constructor(
         return true
     }
 
-    protected open fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: String) {
+    protected open fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: IdeKotlinVersion) {
     }
 
     protected fun createExecution(
@@ -211,7 +212,7 @@ protected constructor(
             )
         }
 
-        val runtimeUpdateRequired = getRuntimeLibraryVersion(module)?.let { ApiVersion.parse(it) }?.let { runtimeVersion ->
+        val runtimeUpdateRequired = getRuntimeLibraryVersion(module)?.apiVersion?.let { runtimeVersion ->
             runtimeVersion < requiredStdlibVersion
         } ?: false
 
@@ -256,7 +257,7 @@ protected constructor(
         val sinceVersion = feature.sinceApiVersion
 
         val messageTitle = ChangeGeneralLanguageFeatureSupportFix.getFixText(feature, state)
-        if (state != LanguageFeature.State.DISABLED && getRuntimeLibraryVersion(module).toApiVersion() < sinceVersion) {
+        if (state != LanguageFeature.State.DISABLED && getRuntimeLibraryVersionOrDefault(module).apiVersion < sinceVersion) {
             Messages.showErrorDialog(
                 module.project,
                 KotlinMavenBundle.message("update.language.version.feature.support", feature.presentableName, sinceVersion),

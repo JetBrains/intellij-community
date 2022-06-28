@@ -19,7 +19,6 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spi.SPIFileType;
@@ -109,13 +108,5 @@ public class SPIPackageOrClassReferenceElement extends ASTWrapperPsiElement impl
   @Override
   public PsiReference getReference() {
     return this;
-  }
-
-  @Override
-  public PsiReference @NotNull [] getReferences() {
-    PsiReference[] references = ReferenceProvidersRegistry.getReferencesFromProviders(this);
-    if (references.length > 0) return references;
-
-    return super.getReferences();
   }
 }

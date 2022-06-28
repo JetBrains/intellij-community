@@ -206,7 +206,7 @@ public abstract class VcsTreeModelData {
 
       return Stream.of(paths)
         .filter(path -> (path.getPathCount() <= 1 ||
-                         path.getPathComponent(1) == tagNode))
+                        path.getPathComponent(1) == tagNode))
         .map(path -> (ChangesBrowserNode<?>)path.getLastPathComponent());
     }
   }
@@ -272,8 +272,7 @@ public abstract class VcsTreeModelData {
   public static ListSelection<Object> getListSelectionOrAll(@NotNull JTree tree) {
     List<Object> entries = selected(tree).userObjects();
     if (entries.size() > 1) {
-      return ListSelection.createAt(entries, 0)
-        .asExplicitSelection();
+      return ListSelection.createAt(entries, 0);
     }
 
     ChangesBrowserNode<?> selected = selected(tree).nodesStream().findFirst().orElse(null);
@@ -287,8 +286,7 @@ public abstract class VcsTreeModelData {
     }
 
     if (allEntries.size() <= entries.size()) {
-      return ListSelection.createAt(entries, 0)
-        .asExplicitSelection();
+      return ListSelection.createAt(entries, 0);
     }
     else {
       int index = selected != null ? ContainerUtil.indexOfIdentity(allEntries, selected.getUserObject()) : 0;

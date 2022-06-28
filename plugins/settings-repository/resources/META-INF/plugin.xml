@@ -18,7 +18,7 @@
     <applicationConfigurable groupId="tools" instance="org.jetbrains.settingsRepository.IcsConfigurable" id="ics"
                              key="ics.settings" bundle="messages.IcsBundle"/>
 
-    <statistics.counterUsagesCollector groupId="settings.repository" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.settingsRepository.IcsActionsLogger"/>
     <notificationGroup id="Settings Repository" displayType="BALLOON"/>
   </extensions>
 

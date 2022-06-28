@@ -19,12 +19,23 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author Maxim.Mossienko
- */
 public final class CompressionUtil {
   private static final int COMPRESSION_THRESHOLD = 64;
   private static final ThreadLocalCachedByteArray spareBufferLocal = new ThreadLocalCachedByteArray();
+  private static final LZ4Factory factory;
+  static {
+    factory = SystemProperties.getBooleanProperty("idea.use.native.compression", false)
+              ? LZ4Factory.fastestInstance()
+              : LZ4Factory.fastestJavaInstance();
+  }
+
+  private static LZ4Compressor compressor() {
+    return factory.fastCompressor();
+  }
+
+  private static LZ4FastDecompressor decompressor() {
+    return factory.fastDecompressor();
+  }
 
   public static int writeCompressed(@NotNull DataOutput out, byte @NotNull [] bytes, int start, int length) throws IOException {
     if (length > COMPRESSION_THRESHOLD) {
@@ -77,10 +88,6 @@ public final class CompressionUtil {
     return compressedSize;
   }
 
-  private static LZ4Compressor compressor() {
-    return LZ4Factory.fastestJavaInstance().fastCompressor();
-  }
-
   public static byte @NotNull [] readCompressedWithoutOriginalBufferLength(@NotNull DataInput in, int originalBufferLength) throws IOException {
     int size = DataInputOutputUtil.readINT(in);
 
@@ -102,9 +109,6 @@ public final class CompressionUtil {
     return decompressedResult;
   }
 
-  private static LZ4FastDecompressor decompressor() {
-    return LZ4Factory.fastestJavaInstance().fastDecompressor();
-  }
 
   public static byte @NotNull [] readCompressed(@NotNull DataInput in) throws IOException {
     int size = DataInputOutputUtil.readINT(in);

@@ -6,8 +6,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.auth.oauth2.TokenResponse
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
-import com.intellij.collaboration.auth.ui.AccountsPanelFactory.accountsPanel
-import com.intellij.collaboration.util.ProgressIndicatorsProvider
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -15,7 +14,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -26,7 +24,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
 import org.intellij.plugins.markdown.google.accounts.GoogleAccountManager
-import org.intellij.plugins.markdown.google.accounts.GoogleAccountsDetailsProvider
+import org.intellij.plugins.markdown.google.accounts.GoogleAccountsDetailsLoader
 import org.intellij.plugins.markdown.google.accounts.GoogleAccountsListModel
 import org.intellij.plugins.markdown.google.accounts.GoogleUserInfoService
 import org.intellij.plugins.markdown.google.accounts.data.GoogleAccount
@@ -131,20 +129,18 @@ internal object GoogleAccountsUtils {
     val oAuthService = service<GoogleOAuthService>()
     val userInfoService = service<GoogleUserInfoService>()
 
-    val indicatorsProvider = ProgressIndicatorsProvider().also {
-      Disposer.register(disposable, it)
-    }
-    val detailsProvider = GoogleAccountsDetailsProvider(
-      indicatorsProvider,
+    val detailsLoader = GoogleAccountsDetailsLoader(
       accountManager,
       accountsListModel,
       oAuthService,
       userInfoService
     )
 
+    val panelFactory = AccountsPanelFactory(accountManager, accountsListModel, detailsLoader, disposable)
+
     return panel {
       row {
-        accountsPanel(accountManager, accountsListModel, detailsProvider, disposable, false)
+        panelFactory.accountsPanelCell(this, false)
           .horizontalAlign(HorizontalAlign.FILL)
           .verticalAlign(VerticalAlign.FILL)
       }.resizableRow()

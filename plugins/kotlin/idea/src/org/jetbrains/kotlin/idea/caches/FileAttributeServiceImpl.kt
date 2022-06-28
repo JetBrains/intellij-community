@@ -6,6 +6,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.util.io.DataInputOutputUtil
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.CachedAttributeData
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.FileAttributeService
 import java.io.DataInput
 import java.io.DataOutput
 import java.util.concurrent.ConcurrentHashMap

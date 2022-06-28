@@ -1,20 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.changeReminder.stats
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.jetbrains.changeReminder.predict.PredictionData
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.CHANGES_COMMITTED
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.COMMITTED_FILES
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.CUR_MODIFIED_FILES
 
 internal class ChangeReminderChangesCommittedEvent(
   private val curModifiedFiles: Collection<FilePath>,
   private val committedFiles: Collection<FilePath>,
   private val displayedPredictionData: PredictionData
 ) : ChangeReminderUserEvent {
-  override val eventType = ChangeReminderEventType.CHANGES_COMMITTED
 
-  override fun addToLogData(logData: FeatureUsageData) {
-    logData.addChangeReminderLogData(ChangeReminderEventDataKey.CUR_MODIFIED_FILES, curModifiedFiles.anonymizeFilePathCollection())
-    logData.addChangeReminderLogData(ChangeReminderEventDataKey.COMMITTED_FILES, committedFiles.anonymizeFilePathCollection())
-    logData.addPredictionData(displayedPredictionData)
+  override fun logEvent(project: Project) {
+    val data = ArrayList<EventPair<*>>()
+    data.add(CUR_MODIFIED_FILES.with(curModifiedFiles.anonymizeFilePathCollection()))
+    data.add(COMMITTED_FILES.with(committedFiles.anonymizeFilePathCollection()))
+    data.addAll(getPredictionData(displayedPredictionData))
+    CHANGES_COMMITTED.log(project, data)
   }
 }

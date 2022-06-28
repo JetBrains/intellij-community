@@ -13,7 +13,7 @@ import java.util.concurrent.ForkJoinPool;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class AbstractInspectionToolStarter implements ApplicationStarter {
-  protected InspectionApplication myApplication;
+  private InspectionApplication myApplication;
   protected InspectionToolCmdlineOptions myOptions;
 
   protected abstract AbstractInspectionCmdlineOptions createCmdlineOptions();
@@ -85,7 +85,7 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
     return opts.getVerboseLevelProperty() > 0;
   }
 
-  protected void printArgs(@NotNull List<String> args, @NotNull StringBuilder buff) {
+  private static void printArgs(@NotNull List<String> args, @NotNull StringBuilder buff) {
     if (args.size() < 2) {
       buff.append(" no arguments");
     }
@@ -94,7 +94,7 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
     }
   }
 
-  protected void printHelpAndExit(@NotNull List<String> args, final InspectionToolCmdlineOptions opts) {
+  private static void printHelpAndExit(@NotNull List<String> args, final InspectionToolCmdlineOptions opts) {
     final StringBuilder buff = new StringBuilder();
     buff.append("\n");
     buff.append("Invalid options or syntax:");

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
@@ -13,11 +14,10 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.idea.analysis.analyzeInContext
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -44,7 +44,7 @@ class CompletionBindingContextProvider(project: Project) {
     var TEST_LOG: StringBuilder? = null
 
     companion object {
-        fun getInstance(project: Project): CompletionBindingContextProvider = project.getServiceSafe()
+        fun getInstance(project: Project): CompletionBindingContextProvider = project.service()
 
         var ENABLED = true
     }

@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.engine.config.DefaultJupiterConfiguration;
 import org.junit.jupiter.engine.descriptor.ClassTestDescriptor;
@@ -23,9 +21,7 @@ import org.opentest4j.MultipleFailuresError;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class JUnit5EventsTest {
@@ -103,7 +99,10 @@ public class JUnit5EventsTest {
     MultipleFailuresError multipleFailuresError = new MultipleFailuresError("2 errors", Arrays.asList
       (new AssertionFailedError("message1", "expected1", "actual1"),
        new AssertionFailedError("message2", "expected2", "actual2")));
-    ReportEntry reportEntry = ReportEntry.from(ContainerUtil.newHashMap(Pair.create("key1", "value1"), Pair.create("stdout", "out1")));
+    Map<String, String> map = new TreeMap<>();
+    map.put("key1", "value1");
+    map.put("stdout", "out1");
+    ReportEntry reportEntry = ReportEntry.from(map);
     myExecutionListener.reportingEntryPublished(identifier, reportEntry);
     myExecutionListener.executionFinished(identifier, TestExecutionResult.failed(multipleFailuresError));
 
@@ -111,7 +110,7 @@ public class JUnit5EventsTest {
     myExecutionListener.executionFinished(TestIdentifier.from(engineDescriptor), TestExecutionResult.successful());
 
 
-    String lineSeparators = StringUtil.convertLineSeparators(myBuf.toString()).replaceAll("|r", "");
+    String lineSeparators = StringUtil.convertLineSeparators(myBuf.toString()).replaceAll("\\|r", "");
     Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
                             "##teamcity[rootName name = 'testClass' location = 'java:suite://testClass']\n" +
                             "##teamcity[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass/test1' metainfo='']\n" +

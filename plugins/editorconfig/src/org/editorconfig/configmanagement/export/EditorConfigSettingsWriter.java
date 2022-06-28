@@ -126,6 +126,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
       }
     });
     for (String pattern : mappers.keySet().stream().sorted().collect(Collectors.toList())) {
+      if (pattern.isEmpty()) continue;
       String currPattern = pattern;
       for (
         LanguageCodeStylePropertyMapper mapper :

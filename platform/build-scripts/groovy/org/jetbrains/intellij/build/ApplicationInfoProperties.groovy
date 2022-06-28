@@ -19,7 +19,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 @CompileStatic
-final class ApplicationInfoProperties {
+final class ApplicationInfoPropertiesImpl implements ApplicationInfoProperties {
   @SuppressWarnings('SpellCheckingInspection')
   private static final DateTimeFormatter BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
   @VisibleForTesting
@@ -50,9 +50,14 @@ final class ApplicationInfoProperties {
   final List<String> svgProductIcons
   final String patchesUrl
 
+  @Override
+  boolean isEAP() {
+    return isEAP
+  }
+
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   @CompileStatic(TypeCheckingMode.SKIP)
-  private ApplicationInfoProperties(ProductProperties productProperties, BuildOptions buildOptions, String appInfoXml, BuildMessages messages) {
+  private ApplicationInfoPropertiesImpl(ProductProperties productProperties, BuildOptions buildOptions, String appInfoXml, BuildMessages messages) {
     this.appInfoXml = appInfoXml
     Node root = loadXml(appInfoXml)
 
@@ -101,7 +106,7 @@ final class ApplicationInfoProperties {
     patchesUrl = getFirst(root["update-urls"])?.@"patches"
   }
 
-  /** this code is extracted to a method to work around Groovy compiler bug (https://issues.apache.org/jira/projects/GROOVY/issues/GROOVY-10459) */
+/** this code is extracted to a method to work around Groovy compiler bug (https://issues.apache.org/jira/projects/GROOVY/issues/GROOVY-10459) */
   private static Node getFirst(NodeList children) {
     if (children == null || children.isEmpty()) return null
     return children[0] as Node
@@ -118,6 +123,7 @@ final class ApplicationInfoProperties {
     new StringReader(appInfoXml).withCloseable { new XmlParser().parse(it) }
   }
 
+  @Override
   String getAppInfoXml() {
     return appInfoXml
   }
@@ -139,7 +145,7 @@ final class ApplicationInfoProperties {
     }
   }
 
-  ApplicationInfoProperties(JpsProject project, ProductProperties productProperties, BuildOptions buildOptions, BuildMessages messages) {
+  ApplicationInfoPropertiesImpl(JpsProject project, ProductProperties productProperties, BuildOptions buildOptions, BuildMessages messages) {
     this(productProperties, buildOptions, findApplicationInfoInSources(project, productProperties, messages), messages)
   }
 
@@ -175,7 +181,7 @@ final class ApplicationInfoProperties {
       "BUILD", buildContext.buildNumber,
       "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl ?: ""
     ), "__")
-    return new ApplicationInfoProperties(buildContext.productProperties, buildContext.options, patchedAppInfoXml, buildContext.messages)
+    return new ApplicationInfoPropertiesImpl(buildContext.productProperties, buildContext.options, patchedAppInfoXml, buildContext.messages)
   }
 
   //copy of ApplicationInfoImpl.shortenCompanyName

@@ -1,3 +1,4 @@
+// IGNORE_FIR
 fun A.some(s: String) {
 
 }

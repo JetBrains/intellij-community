@@ -678,6 +678,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     LOG.assertTrue(!DumbService.getInstance(project).isAlternativeResolveEnabled());
     final GlobalSearchScope globalSearchScope = getScopeForJUnit(myConfiguration);
     JUnitConfiguration.Data data = myConfiguration.getPersistentData();
+    if (JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT)) {
+      return JUnitStarter.JUNIT4_PARAMETER;
+    }
+    if (JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT)) {
+      return JUnitStarter.JUNIT5_PARAMETER;
+    }
     boolean isMethodConfiguration = JUnitConfiguration.TEST_METHOD.equals(data.TEST_OBJECT);
     boolean isClassConfiguration = JUnitConfiguration.TEST_CLASS.equals(data.TEST_OBJECT);
     final PsiClass psiClass = isMethodConfiguration || isClassConfiguration

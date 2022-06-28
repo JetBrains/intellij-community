@@ -53,7 +53,13 @@ public final class ControlFlow {
     myElementToEndOffsetMap = flow.myElementToEndOffsetMap;
     myElementToStartOffsetMap = flow.myElementToStartOffsetMap;
     myLoopNumbers = flow.myLoopNumbers;
-    myInstructions = StreamEx.of(flow.myInstructions).map(instruction -> instruction.bindToFactory(factory)).toImmutableList();
+    myInstructions = StreamEx.of(flow.myInstructions).map(instruction -> {
+      Instruction updated = instruction.bindToFactory(factory);
+      if (updated.getIndex() == -1) {
+        updated.setIndex(instruction.getIndex());
+      }
+      return updated;
+    }).toImmutableList();
   }
 
   public @NotNull PsiElement getPsiAnchor() {

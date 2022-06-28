@@ -34,7 +34,7 @@ class CommandProcessorImpl extends CoreCommandProcessor {
         super.finishCommand(command, throwable);
       }
       catch (Throwable e) {
-        if (throwable != null) {
+        if (throwable != null && throwable != e) {
           e.addSuppressed(throwable);
         }
         throw e;

@@ -10,7 +10,7 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 
 public class ExceptionUtilRt {
-  public static void rethrowUnchecked(@Nullable Throwable t) {
+  public static void rethrowUnchecked(@Nullable Throwable t) throws RuntimeException, Error {
     if (t instanceof Error) throw (Error)t;
     if (t instanceof RuntimeException) throw (RuntimeException)t;
   }

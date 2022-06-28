@@ -447,10 +447,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     final var pathsToTransfer = new HashSet<VirtualFile>();
     pathsToTransfer.addAll(sdkRoots.second);
     pathsToTransfer.addAll(userAddedRoots.second);
-    // Presumably source and content roots that were configured manually by user, not set up automatically as "transferred"
-    HashSet<VirtualFile> nonTransferredModuleRoots = new HashSet<>(moduleRoots);
-    nonTransferredModuleRoots.removeAll(PyTransferredSdkRootsKt.getPathsToTransfer(sdk));
-    pathsToTransfer.removeAll(nonTransferredModuleRoots);
+    pathsToTransfer.removeAll(moduleRoots);
 
     /*
     Don't run actions related to transferred roots on editable sdks since they can share data with original ones.

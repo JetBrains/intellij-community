@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -30,7 +16,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -39,8 +28,7 @@ public abstract class FileTemplateBase implements FileTemplate {
   static final boolean DEFAULT_REFORMAT_CODE_VALUE = true;
   static final boolean DEFAULT_ENABLED_VALUE = true;
   static final String TEMPLATE_CHILDREN_SUFFIX = ".child.";
-  @Nullable
-  private String myText;
+  private @Nullable String myText;
   private boolean myShouldReformatCode = DEFAULT_REFORMAT_CODE_VALUE;
   private boolean myLiveTemplateEnabled;
   private boolean myLiveTemplateEnabledChanged;
@@ -57,19 +45,16 @@ public abstract class FileTemplateBase implements FileTemplate {
     myShouldReformatCode = reformat;
   }
 
-  @NotNull 
-  public final String getQualifiedName() {
+  public final @NotNull String getQualifiedName() {
     return getQualifiedName(getName(), getExtension());
   }
 
-  @NotNull
-  public static String getQualifiedName(@NonNls @NotNull String name, @NonNls @NotNull String extension) {
+  public static @NotNull String getQualifiedName(@NonNls @NotNull String name, @NonNls @NotNull String extension) {
     return FTManager.encodeFileName(name, extension);
   }
 
   @Override
-  @NotNull
-  public final String getText() {
+  public final @NotNull String getText() {
     final String text = myText;
     return text != null ? text : getDefaultText();
   }
@@ -85,20 +70,17 @@ public abstract class FileTemplateBase implements FileTemplate {
     }
   }
 
-  @NotNull
-  protected String getDefaultText() {
+  protected @NotNull String getDefaultText() {
     return "";
   }
 
   @Override
-  @NotNull
-  public final String getText(@NotNull Map attributes) throws IOException{
+  public final @NotNull String getText(@NotNull Map attributes) throws IOException{
     return FileTemplateUtil.mergeTemplate(attributes, getText(), false);
   }
 
   @Override
-  @NotNull
-  public final String getText(@NotNull Properties attributes) throws IOException{
+  public final @NotNull String getText(@NotNull Properties attributes) throws IOException{
     return FileTemplateUtil.mergeTemplate(attributes, getText(), false);
   }
 
@@ -114,9 +96,8 @@ public abstract class FileTemplateBase implements FileTemplate {
     }
   }
 
-  @NotNull
   @Override
-  public FileTemplateBase clone() {
+  public @NotNull FileTemplateBase clone() {
     try {
       return (FileTemplateBase)super.clone();
     }
@@ -126,7 +107,7 @@ public abstract class FileTemplateBase implements FileTemplate {
   }
 
   @Override
-  public boolean isTemplateOfType(@NotNull final FileType fType) {
+  public boolean isTemplateOfType(final @NotNull FileType fType) {
     return fType.equals(FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(getExtension()));
   }
 

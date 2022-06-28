@@ -40,7 +40,7 @@ public class IdeaLogRecordFormatter extends Formatter {
       record.getMillis() - myLogCreation,
       level,
       loggerName,
-      record.getMessage(),
+      formatMessage(record),
       LINE_SEPARATOR
     );
     if (record.getThrown() != null) {

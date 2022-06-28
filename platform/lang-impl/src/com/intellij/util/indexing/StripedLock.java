@@ -43,14 +43,14 @@ class StripedLock {
     }
   }
 
-  <T> T withAllLocksReadLocked(@NotNull Computable<T> computable) {
+  <T> T withAllLocksWriteLocked(@NotNull Computable<T> computable) {
     Lock[] locks = new Lock[myLocks.length];
     List<Exception> exceptions = new SmartList<>();
     boolean isComputed = false;
     T result = null;
     try {
       for (int i = 0; i < myLocks.length; i++) {
-        locks[i] = myLocks[i].readLock();
+        locks[i] = myLocks[i].writeLock();
         locks[i].lock();
       }
       result = computable.compute();
@@ -82,7 +82,7 @@ class StripedLock {
       throw exception;
     }
     else {
-      assert isComputed : "Computation in StripedLock.withAllLocksReadLocked was incorrect";
+      assert isComputed : "Computation in StripedLock.withAllLocksWriteLocked was incorrect";
       return result;
     }
   }

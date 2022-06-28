@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
@@ -231,6 +231,7 @@ public class IDEATestNGRemoteListener {
     attrs.put("name", methodName);
     final String failureMessage = ex != null ? ex.getMessage() : null;
     if (ex != null) {
+      String expectedPrefix = "expected";
       ComparisonFailureData notification;
       try {
         notification = ComparisonFailureData.create(ex);
@@ -247,7 +248,11 @@ public class IDEATestNGRemoteListener {
           notification = null;
         }
       }
-      ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex, "Comparison Failure: ", "expected");
+      else {
+        expectedPrefix = "expected:";
+      }
+
+      ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex, "Comparison Failure: ", expectedPrefix);
     }
     else {
       attrs.put("message", "");

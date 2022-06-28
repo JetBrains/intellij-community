@@ -121,9 +121,9 @@ class JKKtOperatorImpl(override val token: JKOperatorToken, override val returnT
 
 interface JKKtOperatorToken : JKOperatorToken
 
-class JKJavaOperatorToken(val psiToken: IElementType) : JKOperatorToken {
+class JKJavaOperatorToken(private val psiToken: IElementType) : JKOperatorToken {
     override val text: String
-        get() = error("Java token should not be printed, it should be replaces with corresponding Kotlin one")
+        get() = error("Java token '$psiToken' should not be printed, it should be replaced with the corresponding Kotlin one")
 }
 
 class JKKtSingleValueOperatorToken(val psiToken: KtSingleValueToken) : JKKtOperatorToken {

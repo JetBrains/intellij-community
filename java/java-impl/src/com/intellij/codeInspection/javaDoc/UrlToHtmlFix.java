@@ -15,12 +15,16 @@ import org.jetbrains.annotations.Nullable;
 class UrlToHtmlFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final int myStartOffsetInDocComment;
 
-  // if you want to use "..." as the HTML link text, use the end URL offset in a JavaDoc comment as `myEndOffsetInDocComment`
-  // if you want to use a substring after the URL as the HTML link text, use the end of that substring
   private final int myEndOffsetInDocComment;
 
-  UrlToHtmlFix(@Nullable PsiDocComment element, int startOffsetInDocComment, int endOffsetInDocComment) {
-    super(element);
+  /**
+   * @param comment                 target Javadoc comment to fix
+   * @param startOffsetInDocComment the start offset of the URL in Javadoc comment
+   * @param endOffsetInDocComment   if you want to use "..." as the HTML link text, use the end URL offset in a JavaDoc comment;
+   *                                if you want to use a substring after the URL as the HTML link text, use the end of that substring
+   */
+  UrlToHtmlFix(@NotNull PsiDocComment comment, int startOffsetInDocComment, int endOffsetInDocComment) {
+    super(comment);
     myStartOffsetInDocComment = startOffsetInDocComment;
     myEndOffsetInDocComment = endOffsetInDocComment;
   }

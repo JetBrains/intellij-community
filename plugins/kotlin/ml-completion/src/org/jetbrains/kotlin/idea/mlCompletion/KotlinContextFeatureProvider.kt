@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.mlCompletion
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
 class KotlinContextFeatureProvider : ContextFeatureProvider {
     override fun getName(): String = "kotlin"
@@ -33,7 +33,7 @@ class KotlinContextFeatureProvider : ContextFeatureProvider {
 private enum class KotlinVersionFakeEnum {
     VERSION;
 
-    override fun toString(): String = KotlinPluginUtil.getPluginVersion()
+    override fun toString(): String = KotlinIdePlugin.version
 }
 
 enum class FileTypeStats {

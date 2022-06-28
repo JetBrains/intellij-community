@@ -1,11 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.impl;
 
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSet;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -28,16 +24,12 @@ public final class UnionFileEnumeration implements VirtualFileEnumeration {
   }
 
   @Override
-  public int[] asInts() {
-    return ((CompactVirtualFileSet)asIterable()).onlyInternalFileIds();
-  }
-
-  @Override
-  public @NotNull Iterable<VirtualFile> asIterable() {
-    VirtualFileSet files = VfsUtilCore.createCompactVirtualFileSet();
-    for (VirtualFileEnumeration scope : myHints) {
-      files.addAll(ContainerUtil.toCollection(scope.asIterable()));
+  public int @NotNull [] asArray() {
+    int[] result = ArrayUtil.EMPTY_INT_ARRAY;
+    for (VirtualFileEnumeration hint : myHints) {
+      int[] fileIds = hint.asArray();
+      result = ArrayUtil.mergeArrays(result, fileIds);
     }
-    return files;
+    return result;
   }
 }

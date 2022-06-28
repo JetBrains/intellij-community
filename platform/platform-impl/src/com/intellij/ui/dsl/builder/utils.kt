@@ -13,7 +13,7 @@ enum class DslComponentProperty {
   /**
    * A mark that component is a label of a row, see [Panel.row]
    *
-   * Value: true
+   * Value: [Boolean]
    */
   ROW_LABEL,
 

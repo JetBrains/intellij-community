@@ -37,5 +37,6 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="library" name="microba" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
 </module>

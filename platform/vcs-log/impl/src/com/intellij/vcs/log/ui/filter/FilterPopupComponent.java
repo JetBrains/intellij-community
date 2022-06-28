@@ -20,7 +20,10 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
   /**
    * Special value that indicates that no filtering is on.
    */
-  protected static final Supplier<@Nls String> ALL = VcsLogBundle.messagePointer("vcs.log.filter.all");
+  protected static final Supplier<@Nls String> EMPTY_FILTER_TEXT = () -> "";
+
+  protected static final Supplier<@Nls String> ALL_ACTION_TEXT = VcsLogBundle.messagePointer("vcs.log.filter.all");
+
   @NotNull protected final Model myFilterModel;
 
   FilterPopupComponent(@NotNull Supplier<String> displayName, @NotNull Model filterModel) {
@@ -31,7 +34,18 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
   @Override
   public String getCurrentText() {
     Filter filter = myFilterModel.getFilter();
-    return filter == null ? ALL.get() : getText(filter);
+    return filter == null ? getEmptyFilterValue() : getText(filter);
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getEmptyFilterValue() {
+    return EMPTY_FILTER_TEXT.get();
+  }
+
+  @Override
+  protected boolean isValueSelected() {
+    return myFilterModel.getFilter() != null;
   }
 
   @Override
@@ -65,7 +79,7 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
   private class AllAction extends DumbAwareAction {
 
     AllAction() {
-      super(ALL);
+      super(ALL_ACTION_TEXT);
     }
 
     @Override

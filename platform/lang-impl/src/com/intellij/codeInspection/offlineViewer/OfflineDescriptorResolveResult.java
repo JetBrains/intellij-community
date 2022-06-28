@@ -192,7 +192,8 @@ public final class OfflineDescriptorResolveResult {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
       InspectionEngine.inspectEx(Collections.singletonList(toolWrapper), containingFile, textRange, containingFile.getTextRange(), true,
                                  false, true, new DaemonProgressIndicator(), PairProcessor.alwaysTrue());
-    List<ProblemDescriptor> list = ContainerUtil.flatten(map.values());
+    List<ProblemDescriptor> list = new ArrayList<>();
+    map.values().forEach(problemsList -> list.addAll(problemsList));
     for (PsiFile injectedFile : injectedFiles) {
       Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> injectedMap =
         InspectionEngine.inspectEx(Collections.singletonList(toolWrapper), injectedFile, injectedFile.getTextRange(),

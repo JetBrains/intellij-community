@@ -2,12 +2,14 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtIsExpression
 import org.jetbrains.uast.UBinaryExpressionWithType
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastBinaryExpressionWithTypeKind
 import org.jetbrains.uast.UastErrorType
 
+@ApiStatus.Internal
 class KotlinUTypeCheckExpression(
     override val sourcePsi: KtIsExpression,
     givenParent: UElement?

@@ -2,7 +2,8 @@
 // FIX: Fix comma position
 
 fun a(
-    i: Int, /*
+    i: Int,
+    /*
 */
     b: Boolean,
 ) = Unit

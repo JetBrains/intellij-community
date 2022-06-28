@@ -56,7 +56,7 @@ class DeprecatedGradleDependencyInspection : BaseInspection(), CleanupLocalInspe
                     }
 
                     val libVersion =
-                        DifferentStdlibGradleVersionInspection.getResolvedLibVersion(
+                        DifferentStdlibGradleVersionInspection.getRawResolvedLibVersion(
                             dependencyStatement.containingFile, outdatedInfo.old.groupId, listOf(outdatedInfo.old.name)
                         ) ?: libraryVersionFromOrderEntry(dependencyStatement.containingFile, outdatedInfo.old.name)
 

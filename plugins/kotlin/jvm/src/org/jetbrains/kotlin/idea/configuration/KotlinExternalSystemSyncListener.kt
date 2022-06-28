@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -14,7 +14,6 @@ class KotlinExternalSystemSyncListener : ExternalSystemTaskNotificationListenerA
     override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
         val project = id.findResolvedProject() ?: return
         runUnderDisposeAwareIndicator(KotlinPluginDisposable.getInstance(project)) {
-            KotlinMigrationProjectService.getInstance(project).onImportAboutToStart()
             KotlinConfigurationCheckerService.getInstance(project).syncStarted()
         }
     }

@@ -3,6 +3,7 @@ package org.jetbrains.idea.eclipse.importer;
 
 import com.intellij.openapi.options.SchemeImportException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -80,8 +81,8 @@ public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXm
   }
 
 
-  interface OptionHandler {
+  public interface OptionHandler {
     void handleOption(@NotNull String eclipseKey, @NotNull String value) throws SchemeImportException;
-    void handleName(String name);
+    void handleName(@Nullable String name);
   }
 }

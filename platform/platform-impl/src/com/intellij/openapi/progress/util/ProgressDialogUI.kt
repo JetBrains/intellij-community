@@ -153,7 +153,7 @@ internal class ProgressDialogUI : Disposable {
 
 @Contract(pure = true)
 private fun fitTextToLabel(fullText: String?, label: JLabel): String {
-  if (fullText == null || fullText.isEmpty()) return " "
+  if (fullText.isNullOrEmpty()) return " "
   var newFullText = StringUtil.last(fullText, 500, true).toString() // avoid super long strings
   while (label.getFontMetrics(label.font).stringWidth(newFullText) > label.width) {
     val sep = newFullText.indexOf(File.separatorChar, 4)

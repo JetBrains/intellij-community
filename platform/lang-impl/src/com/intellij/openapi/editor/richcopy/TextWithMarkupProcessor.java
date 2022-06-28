@@ -48,7 +48,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
 
   @NotNull
   @Override
-  public List<RawTextWithMarkup> collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
+  public List<RawTextWithMarkup> collectTransferableData(@NotNull PsiFile file, @NotNull Editor editor, int @NotNull [] startOffsets, int @NotNull [] endOffsets) {
     if (!RichCopySettings.getInstance().isEnabled()) {
       return Collections.emptyList();
     }

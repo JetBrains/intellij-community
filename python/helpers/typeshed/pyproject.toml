@@ -18,6 +18,7 @@ extra_standard_library = [
     "_compression",
     "_csv",
     "_curses",
+    "_heapq",
     "_markupbase",
     "_random",
     "_tkinter",

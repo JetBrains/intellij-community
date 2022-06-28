@@ -2,7 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -27,11 +27,11 @@ import java.io.IOException;
   }
 
   @Override
-  @Nullable
+  @NotNull
   public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
     if (isDataFlavorSupported(flavor)) {
       return fqn;
     }
-    return null;
+    throw new UnsupportedFlavorException(flavor);
   }
 }

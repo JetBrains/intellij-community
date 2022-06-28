@@ -2,6 +2,7 @@
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.ui.*;
 import com.intellij.icons.AllIcons;
@@ -9,6 +10,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -26,6 +28,7 @@ import git4idea.GitLocalBranch;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.GitRemoteBranch;
 import git4idea.actions.GitOngoingOperationAction;
+import git4idea.actions.branch.GitBranchActionsUtil;
 import git4idea.branch.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
@@ -86,7 +89,7 @@ public class GitBranchPopupActions {
       popupGroup.addAll(createPerRepoRebaseActions(myRepository));
     }
 
-    if (ExperimentalUI.isNewVcsBranchPopup()) {
+    if (ExperimentalUI.isNewUI()) {
       ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction("Git.Experimental.Branch.Popup.Actions");
       popupGroup.addAll(actionGroup);
       popupGroup.addSeparator();
@@ -94,7 +97,7 @@ public class GitBranchPopupActions {
 
     popupGroup.addAction(new GitNewBranchAction(myProject, repositoryList));
 
-    if (!ExperimentalUI.isNewVcsBranchPopup()) {
+    if (!ExperimentalUI.isNewUI()) {
       popupGroup.addAction(new CheckoutRevisionActions(myProject, repositoryList));
     }
 
@@ -137,7 +140,14 @@ public class GitBranchPopupActions {
       .toList();
     wrapWithMoreActionIfNeeded(myProject, popupGroup, sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
                                getNumOfTopShownBranches(remoteBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_REMOTES_KEY : null);
-    return popupGroup;
+
+    LightActionGroup result = new LightActionGroup(true);
+    for (AnAction action : popupGroup.getChildren(null)) {
+      boolean isSeparatorOrGroup = action instanceof Separator || action instanceof ActionGroup;
+      result.addAction(isSeparatorOrGroup ? action : new MyDelegateWithShortcutText(action));
+    }
+
+    return result;
   }
 
   private static boolean isSpecForRepo(@NotNull GitRebaseSpec spec, @NotNull GitRepository repository) {
@@ -183,7 +193,9 @@ public class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      createOrCheckoutNewBranch(myProject, myRepositories, HEAD);
+      createOrCheckoutNewBranch(myProject, myRepositories, HEAD,
+                                GitBundle.message("branches.create.new.branch.dialog.title"),
+                                MultiRootBranches.getCommonCurrentBranch(myRepositories));
     }
   }
 
@@ -275,7 +287,7 @@ public class GitBranchPopupActions {
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[]{
         new CheckoutAction(myProject, myRepositories, myBranchName),
-        new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
+        new CheckoutAsNewBranch(myProject, myRepositories, myBranchName, false),
         new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new CompareAction(myProject, myRepositories, myBranchName),
@@ -463,7 +475,7 @@ public class GitBranchPopupActions {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[]{
-        new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
+        new CheckoutAsNewBranch(myProject, myRepositories, myBranchName, false),
         new Separator(),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
@@ -510,7 +522,7 @@ public class GitBranchPopupActions {
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[]{
         new CheckoutRemoteBranchAction(myProject, myRepositories, myBranchName),
-        new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
+        new CheckoutAsNewBranch(myProject, myRepositories, myBranchName, true),
         new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new CompareAction(myProject, myRepositories, myBranchName),
@@ -730,8 +742,12 @@ public class GitBranchPopupActions {
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
+    private final boolean myIsRemote;
 
-    CheckoutAsNewBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+    CheckoutAsNewBranch(@NotNull Project project,
+                        @NotNull List<? extends GitRepository> repositories,
+                        @NotNull String branchName,
+                        boolean isRemote) {
       super(GitBundle.messagePointer("branches.new.branch.from.branch", getSelectedBranchTruncatedPresentation(project, branchName)));
 
       Supplier<@Nls String> description = GitBundle.messagePointer("branches.new.branch.from.branch.description",
@@ -741,6 +757,7 @@ public class GitBranchPopupActions {
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
+      myIsRemote = isRemote;
     }
 
     @Override
@@ -751,7 +768,8 @@ public class GitBranchPopupActions {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       createOrCheckoutNewBranch(myProject, myRepositories, myBranchName + "^0",
-                                GitBundle.message("action.Git.New.Branch.dialog.title", myBranchName));
+                                GitBundle.message("action.Git.New.Branch.dialog.title", myBranchName),
+                                GitBranchActionsUtil.calculateNewBranchInitialName(myBranchName, myIsRemote));
     }
   }
 
@@ -1177,5 +1195,17 @@ public class GitBranchPopupActions {
    */
   public static void addTooltipText(Presentation presentation, @NlsContexts.Tooltip String tooltipText) {
     presentation.putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, tooltipText);
+  }
+
+  private static class MyDelegateWithShortcutText extends EmptyAction.MyDelegatingAction implements PopupElementWithAdditionalInfo {
+    private MyDelegateWithShortcutText(@NotNull AnAction action) {
+      super(action);
+    }
+
+    @Nls
+    @Override
+    public @Nullable String getInfoText() {
+      return KeymapUtil.getPreferredShortcutText(getDelegate().getShortcutSet().getShortcuts());
+    }
   }
 }

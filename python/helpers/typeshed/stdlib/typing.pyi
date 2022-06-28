@@ -1,6 +1,6 @@
 import collections  # Needed by aliases like DefaultDict, see mypy issue 2986
 import sys
-from _typeshed import Self, SupportsKeysAndGetItem
+from _typeshed import Self as TypeshedSelf, SupportsKeysAndGetItem
 from abc import ABCMeta, abstractmethod
 from types import BuiltinFunctionType, CodeType, FrameType, FunctionType, MethodType, ModuleType, TracebackType
 from typing_extensions import Literal as _Literal, ParamSpec as _ParamSpec, final as _final
@@ -11,8 +11,462 @@ if sys.version_info >= (3, 7):
 if sys.version_info >= (3, 9):
     from types import GenericAlias
 
+if sys.version_info >= (3, 11):
+    __all__ = [
+        "Annotated",
+        "Any",
+        "Callable",
+        "ClassVar",
+        "Concatenate",
+        "Final",
+        "ForwardRef",
+        "Generic",
+        "Literal",
+        "Optional",
+        "ParamSpec",
+        "Protocol",
+        "Tuple",
+        "Type",
+        "TypeVar",
+        "Union",
+        "AbstractSet",
+        "ByteString",
+        "Container",
+        "ContextManager",
+        "Hashable",
+        "ItemsView",
+        "Iterable",
+        "Iterator",
+        "KeysView",
+        "Mapping",
+        "MappingView",
+        "MutableMapping",
+        "MutableSequence",
+        "MutableSet",
+        "Sequence",
+        "Sized",
+        "ValuesView",
+        "Awaitable",
+        "AsyncIterator",
+        "AsyncIterable",
+        "Coroutine",
+        "Collection",
+        "AsyncGenerator",
+        "AsyncContextManager",
+        "Reversible",
+        "SupportsAbs",
+        "SupportsBytes",
+        "SupportsComplex",
+        "SupportsFloat",
+        "SupportsIndex",
+        "SupportsInt",
+        "SupportsRound",
+        "ChainMap",
+        "Counter",
+        "Deque",
+        "Dict",
+        "DefaultDict",
+        "List",
+        "OrderedDict",
+        "Set",
+        "FrozenSet",
+        "NamedTuple",
+        "TypedDict",
+        "Generator",
+        "BinaryIO",
+        "IO",
+        "Match",
+        "Pattern",
+        "TextIO",
+        "AnyStr",
+        "assert_never",
+        "cast",
+        "final",
+        "get_args",
+        "get_origin",
+        "get_type_hints",
+        "is_typeddict",
+        "Never",
+        "NewType",
+        "no_type_check",
+        "no_type_check_decorator",
+        "NoReturn",
+        "overload",
+        "ParamSpecArgs",
+        "ParamSpecKwargs",
+        "reveal_type",
+        "runtime_checkable",
+        "Self",
+        "Text",
+        "TYPE_CHECKING",
+        "TypeAlias",
+        "TypeGuard",
+    ]
+elif sys.version_info >= (3, 10):
+    __all__ = [
+        "Annotated",
+        "Any",
+        "Callable",
+        "ClassVar",
+        "Concatenate",
+        "Final",
+        "ForwardRef",
+        "Generic",
+        "Literal",
+        "Optional",
+        "ParamSpec",
+        "Protocol",
+        "Tuple",
+        "Type",
+        "TypeVar",
+        "Union",
+        "AbstractSet",
+        "ByteString",
+        "Container",
+        "ContextManager",
+        "Hashable",
+        "ItemsView",
+        "Iterable",
+        "Iterator",
+        "KeysView",
+        "Mapping",
+        "MappingView",
+        "MutableMapping",
+        "MutableSequence",
+        "MutableSet",
+        "Sequence",
+        "Sized",
+        "ValuesView",
+        "Awaitable",
+        "AsyncIterator",
+        "AsyncIterable",
+        "Coroutine",
+        "Collection",
+        "AsyncGenerator",
+        "AsyncContextManager",
+        "Reversible",
+        "SupportsAbs",
+        "SupportsBytes",
+        "SupportsComplex",
+        "SupportsFloat",
+        "SupportsIndex",
+        "SupportsInt",
+        "SupportsRound",
+        "ChainMap",
+        "Counter",
+        "Deque",
+        "Dict",
+        "DefaultDict",
+        "List",
+        "OrderedDict",
+        "Set",
+        "FrozenSet",
+        "NamedTuple",
+        "TypedDict",
+        "Generator",
+        "BinaryIO",
+        "IO",
+        "Match",
+        "Pattern",
+        "TextIO",
+        "AnyStr",
+        "cast",
+        "final",
+        "get_args",
+        "get_origin",
+        "get_type_hints",
+        "is_typeddict",
+        "NewType",
+        "no_type_check",
+        "no_type_check_decorator",
+        "NoReturn",
+        "overload",
+        "ParamSpecArgs",
+        "ParamSpecKwargs",
+        "runtime_checkable",
+        "Text",
+        "TYPE_CHECKING",
+        "TypeAlias",
+        "TypeGuard",
+    ]
+elif sys.version_info >= (3, 9):
+    __all__ = [
+        "Annotated",
+        "Any",
+        "Callable",
+        "ClassVar",
+        "Final",
+        "ForwardRef",
+        "Generic",
+        "Literal",
+        "Optional",
+        "Protocol",
+        "Tuple",
+        "Type",
+        "TypeVar",
+        "Union",
+        "AbstractSet",
+        "ByteString",
+        "Container",
+        "ContextManager",
+        "Hashable",
+        "ItemsView",
+        "Iterable",
+        "Iterator",
+        "KeysView",
+        "Mapping",
+        "MappingView",
+        "MutableMapping",
+        "MutableSequence",
+        "MutableSet",
+        "Sequence",
+        "Sized",
+        "ValuesView",
+        "Awaitable",
+        "AsyncIterator",
+        "AsyncIterable",
+        "Coroutine",
+        "Collection",
+        "AsyncGenerator",
+        "AsyncContextManager",
+        "Reversible",
+        "SupportsAbs",
+        "SupportsBytes",
+        "SupportsComplex",
+        "SupportsFloat",
+        "SupportsIndex",
+        "SupportsInt",
+        "SupportsRound",
+        "ChainMap",
+        "Counter",
+        "Deque",
+        "Dict",
+        "DefaultDict",
+        "List",
+        "OrderedDict",
+        "Set",
+        "FrozenSet",
+        "NamedTuple",
+        "TypedDict",
+        "Generator",
+        "BinaryIO",
+        "IO",
+        "Match",
+        "Pattern",
+        "TextIO",
+        "AnyStr",
+        "cast",
+        "final",
+        "get_args",
+        "get_origin",
+        "get_type_hints",
+        "NewType",
+        "no_type_check",
+        "no_type_check_decorator",
+        "NoReturn",
+        "overload",
+        "runtime_checkable",
+        "Text",
+        "TYPE_CHECKING",
+    ]
+elif sys.version_info >= (3, 8):
+    __all__ = [
+        "Any",
+        "Callable",
+        "ClassVar",
+        "Final",
+        "ForwardRef",
+        "Generic",
+        "Literal",
+        "Optional",
+        "Protocol",
+        "Tuple",
+        "Type",
+        "TypeVar",
+        "Union",
+        "AbstractSet",
+        "ByteString",
+        "Container",
+        "ContextManager",
+        "Hashable",
+        "ItemsView",
+        "Iterable",
+        "Iterator",
+        "KeysView",
+        "Mapping",
+        "MappingView",
+        "MutableMapping",
+        "MutableSequence",
+        "MutableSet",
+        "Sequence",
+        "Sized",
+        "ValuesView",
+        "Awaitable",
+        "AsyncIterator",
+        "AsyncIterable",
+        "Coroutine",
+        "Collection",
+        "AsyncGenerator",
+        "AsyncContextManager",
+        "Reversible",
+        "SupportsAbs",
+        "SupportsBytes",
+        "SupportsComplex",
+        "SupportsFloat",
+        "SupportsIndex",
+        "SupportsInt",
+        "SupportsRound",
+        "ChainMap",
+        "Counter",
+        "Deque",
+        "Dict",
+        "DefaultDict",
+        "List",
+        "OrderedDict",
+        "Set",
+        "FrozenSet",
+        "NamedTuple",
+        "TypedDict",
+        "Generator",
+        "AnyStr",
+        "cast",
+        "final",
+        "get_args",
+        "get_origin",
+        "get_type_hints",
+        "NewType",
+        "no_type_check",
+        "no_type_check_decorator",
+        "NoReturn",
+        "overload",
+        "runtime_checkable",
+        "Text",
+        "TYPE_CHECKING",
+    ]
+elif sys.version_info >= (3, 7):
+    __all__ = [
+        "Any",
+        "Callable",
+        "ClassVar",
+        "ForwardRef",
+        "Generic",
+        "Optional",
+        "Tuple",
+        "Type",
+        "TypeVar",
+        "Union",
+        "AbstractSet",
+        "ByteString",
+        "Container",
+        "ContextManager",
+        "Hashable",
+        "ItemsView",
+        "Iterable",
+        "Iterator",
+        "KeysView",
+        "Mapping",
+        "MappingView",
+        "MutableMapping",
+        "MutableSequence",
+        "MutableSet",
+        "Sequence",
+        "Sized",
+        "ValuesView",
+        "Awaitable",
+        "AsyncIterator",
+        "AsyncIterable",
+        "Coroutine",
+        "Collection",
+        "AsyncGenerator",
+        "AsyncContextManager",
+        "Reversible",
+        "SupportsAbs",
+        "SupportsBytes",
+        "SupportsComplex",
+        "SupportsFloat",
+        "SupportsInt",
+        "SupportsRound",
+        "ChainMap",
+        "Counter",
+        "Deque",
+        "Dict",
+        "DefaultDict",
+        "List",
+        "OrderedDict",
+        "Set",
+        "FrozenSet",
+        "NamedTuple",
+        "Generator",
+        "AnyStr",
+        "cast",
+        "get_type_hints",
+        "NewType",
+        "no_type_check",
+        "no_type_check_decorator",
+        "NoReturn",
+        "overload",
+        "Text",
+        "TYPE_CHECKING",
+    ]
+else:
+    __all__ = [
+        "Any",
+        "Callable",
+        "ClassVar",
+        "Generic",
+        "Optional",
+        "Tuple",
+        "Type",
+        "TypeVar",
+        "Union",
+        "AbstractSet",
+        "GenericMeta",
+        "ByteString",
+        "Container",
+        "ContextManager",
+        "Hashable",
+        "ItemsView",
+        "Iterable",
+        "Iterator",
+        "KeysView",
+        "Mapping",
+        "MappingView",
+        "MutableMapping",
+        "MutableSequence",
+        "MutableSet",
+        "Sequence",
+        "Sized",
+        "ValuesView",
+        "Reversible",
+        "SupportsAbs",
+        "SupportsBytes",
+        "SupportsComplex",
+        "SupportsFloat",
+        "SupportsInt",
+        "SupportsRound",
+        "Counter",
+        "Deque",
+        "Dict",
+        "DefaultDict",
+        "List",
+        "Set",
+        "FrozenSet",
+        "NamedTuple",
+        "Generator",
+        "AnyStr",
+        "cast",
+        "get_type_hints",
+        "NewType",
+        "no_type_check",
+        "no_type_check_decorator",
+        "overload",
+        "Text",
+        "TYPE_CHECKING",
+    ]
+
 Any = object()
 
+@_final
 class TypeVar:
     __name__: str
     __bound__: Any | None
@@ -23,15 +477,16 @@ class TypeVar:
         self, name: str, *constraints: Any, bound: Any | None = ..., covariant: bool = ..., contravariant: bool = ...
     ) -> None: ...
     if sys.version_info >= (3, 10):
-        def __or__(self, other: Any) -> _SpecialForm: ...
-        def __ror__(self, other: Any) -> _SpecialForm: ...
+        def __or__(self, right: Any) -> _SpecialForm: ...
+        def __ror__(self, left: Any) -> _SpecialForm: ...
 
 # Used for an undocumented mypy feature. Does not exist at runtime.
 _promote = object()
 
 # N.B. Keep this definition in sync with typing_extensions._SpecialForm
+@_final
 class _SpecialForm:
-    def __getitem__(self, typeargs: Any) -> object: ...
+    def __getitem__(self, parameters: Any) -> object: ...
     if sys.version_info >= (3, 10):
         def __or__(self, other: Any) -> _SpecialForm: ...
         def __ror__(self, other: Any) -> _SpecialForm: ...
@@ -92,8 +547,8 @@ if sys.version_info >= (3, 10):
         def args(self) -> ParamSpecArgs: ...
         @property
         def kwargs(self) -> ParamSpecKwargs: ...
-        def __or__(self, other: Any) -> _SpecialForm: ...
-        def __ror__(self, other: Any) -> _SpecialForm: ...
+        def __or__(self, right: Any) -> _SpecialForm: ...
+        def __ror__(self, left: Any) -> _SpecialForm: ...
     Concatenate: _SpecialForm
     TypeAlias: _SpecialForm
     TypeGuard: _SpecialForm
@@ -321,14 +776,14 @@ class Collection(Iterable[_T_co], Container[_T_co], Protocol[_T_co]):
 class Sequence(Collection[_T_co], Reversible[_T_co], Generic[_T_co]):
     @overload
     @abstractmethod
-    def __getitem__(self, i: int) -> _T_co: ...
+    def __getitem__(self, index: int) -> _T_co: ...
     @overload
     @abstractmethod
-    def __getitem__(self, s: slice) -> Sequence[_T_co]: ...
+    def __getitem__(self, index: slice) -> Sequence[_T_co]: ...
     # Mixin methods
     def index(self, value: Any, start: int = ..., stop: int = ...) -> int: ...
     def count(self, value: Any) -> int: ...
-    def __contains__(self, x: object) -> bool: ...
+    def __contains__(self, value: object) -> bool: ...
     def __iter__(self) -> Iterator[_T_co]: ...
     def __reversed__(self) -> Iterator[_T_co]: ...
 
@@ -337,22 +792,22 @@ class MutableSequence(Sequence[_T], Generic[_T]):
     def insert(self, index: int, value: _T) -> None: ...
     @overload
     @abstractmethod
-    def __getitem__(self, i: int) -> _T: ...
+    def __getitem__(self, index: int) -> _T: ...
     @overload
     @abstractmethod
-    def __getitem__(self, s: slice) -> MutableSequence[_T]: ...
+    def __getitem__(self, index: slice) -> MutableSequence[_T]: ...
     @overload
     @abstractmethod
-    def __setitem__(self, i: int, o: _T) -> None: ...
+    def __setitem__(self, index: int, value: _T) -> None: ...
     @overload
     @abstractmethod
-    def __setitem__(self, s: slice, o: Iterable[_T]) -> None: ...
+    def __setitem__(self, index: slice, value: Iterable[_T]) -> None: ...
     @overload
     @abstractmethod
-    def __delitem__(self, i: int) -> None: ...
+    def __delitem__(self, index: int) -> None: ...
     @overload
     @abstractmethod
-    def __delitem__(self, i: slice) -> None: ...
+    def __delitem__(self, index: slice) -> None: ...
     # Mixin methods
     def append(self, value: _T) -> None: ...
     def clear(self) -> None: ...
@@ -360,21 +815,21 @@ class MutableSequence(Sequence[_T], Generic[_T]):
     def reverse(self) -> None: ...
     def pop(self, index: int = ...) -> _T: ...
     def remove(self, value: _T) -> None: ...
-    def __iadd__(self: Self, x: Iterable[_T]) -> Self: ...
+    def __iadd__(self: TypeshedSelf, values: Iterable[_T]) -> TypeshedSelf: ...
 
 class AbstractSet(Collection[_T_co], Generic[_T_co]):
     @abstractmethod
     def __contains__(self, x: object) -> bool: ...
     def _hash(self) -> int: ...
     # Mixin methods
-    def __le__(self, s: AbstractSet[Any]) -> bool: ...
-    def __lt__(self, s: AbstractSet[Any]) -> bool: ...
-    def __gt__(self, s: AbstractSet[Any]) -> bool: ...
-    def __ge__(self, s: AbstractSet[Any]) -> bool: ...
-    def __and__(self, s: AbstractSet[Any]) -> AbstractSet[_T_co]: ...
-    def __or__(self, s: AbstractSet[_T]) -> AbstractSet[_T_co | _T]: ...
-    def __sub__(self, s: AbstractSet[Any]) -> AbstractSet[_T_co]: ...
-    def __xor__(self, s: AbstractSet[_T]) -> AbstractSet[_T_co | _T]: ...
+    def __le__(self, other: AbstractSet[Any]) -> bool: ...
+    def __lt__(self, other: AbstractSet[Any]) -> bool: ...
+    def __gt__(self, other: AbstractSet[Any]) -> bool: ...
+    def __ge__(self, other: AbstractSet[Any]) -> bool: ...
+    def __and__(self, other: AbstractSet[Any]) -> AbstractSet[_T_co]: ...
+    def __or__(self, other: AbstractSet[_T]) -> AbstractSet[_T_co | _T]: ...
+    def __sub__(self, other: AbstractSet[Any]) -> AbstractSet[_T_co]: ...
+    def __xor__(self, other: AbstractSet[_T]) -> AbstractSet[_T_co | _T]: ...
     def isdisjoint(self, other: Iterable[Any]) -> bool: ...
 
 class MutableSet(AbstractSet[_T], Generic[_T]):
@@ -386,10 +841,10 @@ class MutableSet(AbstractSet[_T], Generic[_T]):
     def clear(self) -> None: ...
     def pop(self) -> _T: ...
     def remove(self, value: _T) -> None: ...
-    def __ior__(self: Self, s: AbstractSet[_T]) -> Self: ...  # type: ignore[override,misc]
-    def __iand__(self: Self, s: AbstractSet[Any]) -> Self: ...
-    def __ixor__(self: Self, s: AbstractSet[_T]) -> Self: ...  # type: ignore[override,misc]
-    def __isub__(self: Self, s: AbstractSet[Any]) -> Self: ...
+    def __ior__(self: TypeshedSelf, it: AbstractSet[_T]) -> TypeshedSelf: ...  # type: ignore[override,misc]
+    def __iand__(self: TypeshedSelf, it: AbstractSet[Any]) -> TypeshedSelf: ...
+    def __ixor__(self: TypeshedSelf, it: AbstractSet[_T]) -> TypeshedSelf: ...  # type: ignore[override,misc]
+    def __isub__(self: TypeshedSelf, it: AbstractSet[Any]) -> TypeshedSelf: ...
 
 class MappingView(Sized):
     def __init__(self, mapping: Mapping[Any, Any]) -> None: ...  # undocumented
@@ -397,39 +852,39 @@ class MappingView(Sized):
 
 class ItemsView(MappingView, AbstractSet[tuple[_KT_co, _VT_co]], Generic[_KT_co, _VT_co]):
     def __init__(self, mapping: Mapping[_KT_co, _VT_co]) -> None: ...  # undocumented
-    def __and__(self, o: Iterable[Any]) -> set[tuple[_KT_co, _VT_co]]: ...
-    def __rand__(self, o: Iterable[_T]) -> set[_T]: ...
-    def __contains__(self, o: object) -> bool: ...
+    def __and__(self, other: Iterable[Any]) -> set[tuple[_KT_co, _VT_co]]: ...
+    def __rand__(self, other: Iterable[_T]) -> set[_T]: ...
+    def __contains__(self, item: object) -> bool: ...
     def __iter__(self) -> Iterator[tuple[_KT_co, _VT_co]]: ...
     if sys.version_info >= (3, 8):
         def __reversed__(self) -> Iterator[tuple[_KT_co, _VT_co]]: ...
 
-    def __or__(self, o: Iterable[_T]) -> set[tuple[_KT_co, _VT_co] | _T]: ...
-    def __ror__(self, o: Iterable[_T]) -> set[tuple[_KT_co, _VT_co] | _T]: ...
-    def __sub__(self, o: Iterable[Any]) -> set[tuple[_KT_co, _VT_co]]: ...
-    def __rsub__(self, o: Iterable[_T]) -> set[_T]: ...
-    def __xor__(self, o: Iterable[_T]) -> set[tuple[_KT_co, _VT_co] | _T]: ...
-    def __rxor__(self, o: Iterable[_T]) -> set[tuple[_KT_co, _VT_co] | _T]: ...
+    def __or__(self, other: Iterable[_T]) -> set[tuple[_KT_co, _VT_co] | _T]: ...
+    def __ror__(self, other: Iterable[_T]) -> set[tuple[_KT_co, _VT_co] | _T]: ...
+    def __sub__(self, other: Iterable[Any]) -> set[tuple[_KT_co, _VT_co]]: ...
+    def __rsub__(self, other: Iterable[_T]) -> set[_T]: ...
+    def __xor__(self, other: Iterable[_T]) -> set[tuple[_KT_co, _VT_co] | _T]: ...
+    def __rxor__(self, other: Iterable[_T]) -> set[tuple[_KT_co, _VT_co] | _T]: ...
 
 class KeysView(MappingView, AbstractSet[_KT_co], Generic[_KT_co]):
     def __init__(self, mapping: Mapping[_KT_co, Any]) -> None: ...  # undocumented
-    def __and__(self, o: Iterable[Any]) -> set[_KT_co]: ...
-    def __rand__(self, o: Iterable[_T]) -> set[_T]: ...
-    def __contains__(self, o: object) -> bool: ...
+    def __and__(self, other: Iterable[Any]) -> set[_KT_co]: ...
+    def __rand__(self, other: Iterable[_T]) -> set[_T]: ...
+    def __contains__(self, key: object) -> bool: ...
     def __iter__(self) -> Iterator[_KT_co]: ...
     if sys.version_info >= (3, 8):
         def __reversed__(self) -> Iterator[_KT_co]: ...
 
-    def __or__(self, o: Iterable[_T]) -> set[_KT_co | _T]: ...
-    def __ror__(self, o: Iterable[_T]) -> set[_KT_co | _T]: ...
-    def __sub__(self, o: Iterable[Any]) -> set[_KT_co]: ...
-    def __rsub__(self, o: Iterable[_T]) -> set[_T]: ...
-    def __xor__(self, o: Iterable[_T]) -> set[_KT_co | _T]: ...
-    def __rxor__(self, o: Iterable[_T]) -> set[_KT_co | _T]: ...
+    def __or__(self, other: Iterable[_T]) -> set[_KT_co | _T]: ...
+    def __ror__(self, other: Iterable[_T]) -> set[_KT_co | _T]: ...
+    def __sub__(self, other: Iterable[Any]) -> set[_KT_co]: ...
+    def __rsub__(self, other: Iterable[_T]) -> set[_T]: ...
+    def __xor__(self, other: Iterable[_T]) -> set[_KT_co | _T]: ...
+    def __rxor__(self, other: Iterable[_T]) -> set[_KT_co | _T]: ...
 
 class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
     def __init__(self, mapping: Mapping[Any, _VT_co]) -> None: ...  # undocumented
-    def __contains__(self, o: object) -> bool: ...
+    def __contains__(self, value: object) -> bool: ...
     def __iter__(self) -> Iterator[_VT_co]: ...
     if sys.version_info >= (3, 8):
         def __reversed__(self) -> Iterator[_VT_co]: ...
@@ -437,6 +892,7 @@ class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
 @runtime_checkable
 class ContextManager(Protocol[_T_co]):
     def __enter__(self) -> _T_co: ...
+    @abstractmethod
     def __exit__(
         self, __exc_type: Type[BaseException] | None, __exc_value: BaseException | None, __traceback: TracebackType | None
     ) -> bool | None: ...
@@ -444,6 +900,7 @@ class ContextManager(Protocol[_T_co]):
 @runtime_checkable
 class AsyncContextManager(Protocol[_T_co]):
     async def __aenter__(self) -> _T_co: ...
+    @abstractmethod
     async def __aexit__(
         self, __exc_type: Type[BaseException] | None, __exc_value: BaseException | None, __traceback: TracebackType | None
     ) -> bool | None: ...
@@ -475,6 +932,7 @@ class MutableMapping(Mapping[_KT, _VT], Generic[_KT, _VT]):
     def pop(self, __key: _KT, default: _VT | _T) -> _VT | _T: ...
     def popitem(self) -> tuple[_KT, _VT]: ...
     # This overload should be allowed only if the value type is compatible with None.
+    # Keep OrderedDict.setdefault in line with MutableMapping.setdefault, modulo positional-only differences.
     @overload
     def setdefault(self: MutableMapping[_KT, _T | None], __key: _KT) -> _T | None: ...
     @overload
@@ -583,15 +1041,21 @@ class ByteString(Sequence[int], metaclass=ABCMeta): ...
 
 @_final
 class Match(Generic[AnyStr]):
-    pos: int
-    endpos: int
-    lastindex: int | None
-    lastgroup: str | None
-    string: AnyStr
+    @property
+    def pos(self) -> int: ...
+    @property
+    def endpos(self) -> int: ...
+    @property
+    def lastindex(self) -> int | None: ...
+    @property
+    def lastgroup(self) -> str | None: ...
+    @property
+    def string(self) -> AnyStr: ...
 
     # The regular expression object whose match() or search() method produced
     # this match instance.
-    re: Pattern[AnyStr]
+    @property
+    def re(self) -> Pattern[AnyStr]: ...
     def expand(self, template: AnyStr) -> AnyStr: ...
     # group() returns "AnyStr" or "AnyStr | None", depending on the pattern.
     @overload
@@ -622,15 +1086,21 @@ class Match(Generic[AnyStr]):
     def __getitem__(self, __key: _Literal[0]) -> AnyStr: ...
     @overload
     def __getitem__(self, __key: int | str) -> AnyStr | Any: ...
+    def __copy__(self) -> Match[AnyStr]: ...
+    def __deepcopy__(self, __memo: Any) -> Match[AnyStr]: ...
     if sys.version_info >= (3, 9):
         def __class_getitem__(cls, item: Any) -> GenericAlias: ...
 
 @_final
 class Pattern(Generic[AnyStr]):
-    flags: int
-    groupindex: Mapping[str, int]
-    groups: int
-    pattern: AnyStr
+    @property
+    def flags(self) -> int: ...
+    @property
+    def groupindex(self) -> Mapping[str, int]: ...
+    @property
+    def groups(self) -> int: ...
+    @property
+    def pattern(self) -> AnyStr: ...
     def search(self, string: AnyStr, pos: int = ..., endpos: int = ...) -> Match[AnyStr] | None: ...
     def match(self, string: AnyStr, pos: int = ..., endpos: int = ...) -> Match[AnyStr] | None: ...
     def fullmatch(self, string: AnyStr, pos: int = ..., endpos: int = ...) -> Match[AnyStr] | None: ...
@@ -645,6 +1115,8 @@ class Pattern(Generic[AnyStr]):
     def subn(self, repl: AnyStr, string: AnyStr, count: int = ...) -> tuple[AnyStr, int]: ...
     @overload
     def subn(self, repl: Callable[[Match[AnyStr]], AnyStr], string: AnyStr, count: int = ...) -> tuple[AnyStr, int]: ...
+    def __copy__(self) -> Pattern[AnyStr]: ...
+    def __deepcopy__(self, __memo: Any) -> Pattern[AnyStr]: ...
     if sys.version_info >= (3, 9):
         def __class_getitem__(cls, item: Any) -> GenericAlias: ...
 
@@ -716,11 +1188,11 @@ class NamedTuple(tuple[Any, ...]):
     else:
         def _asdict(self) -> collections.OrderedDict[str, Any]: ...
 
-    def _replace(self: Self, **kwargs: Any) -> Self: ...
+    def _replace(self: TypeshedSelf, **kwargs: Any) -> TypeshedSelf: ...
 
 # Internal mypy fallback type for all typed dicts (does not exist at runtime)
 class _TypedDict(Mapping[str, object], metaclass=ABCMeta):
-    def copy(self: Self) -> Self: ...
+    def copy(self: TypeshedSelf) -> TypeshedSelf: ...
     # Using NoReturn so that only calls using mypy plugin hook that specialize the signature
     # can go through.
     def setdefault(self, k: NoReturn, default: object) -> object: ...
@@ -731,8 +1203,8 @@ class _TypedDict(Mapping[str, object], metaclass=ABCMeta):
     def items(self) -> ItemsView[str, object]: ...
     def keys(self) -> KeysView[str]: ...
     def values(self) -> ValuesView[object]: ...
-    def __or__(self: Self, __value: Self) -> Self: ...
-    def __ior__(self: Self, __value: Self) -> Self: ...
+    def __or__(self: TypeshedSelf, __value: TypeshedSelf) -> TypeshedSelf: ...
+    def __ior__(self: TypeshedSelf, __value: TypeshedSelf) -> TypeshedSelf: ...
 
 def NewType(name: str, tp: Type[_T]) -> Type[_T]: ...
 
@@ -740,12 +1212,15 @@ def NewType(name: str, tp: Type[_T]) -> Type[_T]: ...
 def type_check_only(func_or_cls: _F) -> _F: ...
 
 if sys.version_info >= (3, 7):
+    @_final
     class ForwardRef:
         __forward_arg__: str
         __forward_code__: CodeType
         __forward_evaluated__: bool
         __forward_value__: Any | None
         __forward_is_argument__: bool
+        __forward_is_class__: bool
+        __forward_module__: Any | None
         if sys.version_info >= (3, 9):
             # The module and is_class arguments were added in later Python 3.9 versions.
             def __init__(self, arg: str, is_argument: bool = ..., module: Any | None = ..., *, is_class: bool = ...) -> None: ...

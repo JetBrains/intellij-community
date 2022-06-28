@@ -6,6 +6,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.noarg.NoArgCommandLineProcessor
 
 class NoArgMavenProjectImportHandler : AbstractMavenImportHandler() {
@@ -17,7 +18,7 @@ class NoArgMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val compilerPluginId = NoArgCommandLineProcessor.PLUGIN_ID
     override val pluginName = "noarg"
     override val mavenPluginArtifactName = "kotlin-maven-noarg"
-    override val pluginJarFileFromIdea = KotlinArtifacts.instance.noargCompilerPlugin
+    override val pluginJarFileFromIdea = KotlinArtifacts.instance.noargCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
 
     override fun getOptions(
         mavenProject: MavenProject,

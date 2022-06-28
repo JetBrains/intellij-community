@@ -72,6 +72,10 @@ internal object MarkdownSpacingBuilder {
       //LINKS
       .before(MarkdownElementTypes.LINK_DEFINITION).blankLines(1)
 
+      // Ensure there is a single line after frontmatter header
+      .after(MarkdownElementTypes.FRONT_MATTER_HEADER)
+      .blankLines(1)
+
       //PARAGRAPHS
       .betweenInside(MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.MARKDOWN_FILE)
       .blankLinesRange(markdown.MIN_LINES_BETWEEN_PARAGRAPHS, markdown.MAX_LINES_BETWEEN_PARAGRAPHS)

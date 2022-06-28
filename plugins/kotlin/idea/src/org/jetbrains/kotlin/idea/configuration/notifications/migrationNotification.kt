@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration.notifications
 
@@ -12,23 +12,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectFUSCollector
-import org.jetbrains.kotlin.idea.configuration.MigrationInfo
 import org.jetbrains.kotlin.idea.migration.CodeMigrationAction
+import org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectFUSCollector
+import org.jetbrains.kotlin.idea.migration.MigrationInfo
 
 internal fun showMigrationNotification(project: Project, migrationInfo: MigrationInfo) {
     @NlsSafe
     val detectedChangeMessage = buildString {
         appendBr(KotlinBundle.message("configuration.migration.text.detected.migration"))
-        if (migrationInfo.oldStdlibVersion != migrationInfo.newStdlibVersion) {
-            appendIndentBr(
-                KotlinBundle.message(
-                    "configuration.migration.text.standard.library",
-                    migrationInfo.oldStdlibVersion,
-                    migrationInfo.newStdlibVersion
-                )
-            )
-        }
 
         if (migrationInfo.oldLanguageVersion != migrationInfo.newLanguageVersion) {
             appendIndentBr(
@@ -60,10 +51,11 @@ internal fun showMigrationNotification(project: Project, migrationInfo: Migratio
             NotificationType.WARNING
         )
         .setSuggestionType(true)
-        .addAction(NotificationAction.createExpiring(KotlinBundle.message("configuration.migration.text.run.migrations")) { _, notification ->
-            val projectContext = SimpleDataContext.getProjectContext(project)
-            val action = ActionManager.getInstance().getAction(CodeMigrationAction.ACTION_ID)
-            Notification.fire(notification, action, projectContext)
+        .addAction(NotificationAction.createExpiring(KotlinBundle.message("configuration.migration.text.run.migrations")) { notificationAction, notification ->
+            val notificationProject = notificationAction.project ?: return@createExpiring
+            val projectContext = SimpleDataContext.getProjectContext(notificationProject)
+            val migrationAction = ActionManager.getInstance().getAction(CodeMigrationAction.ACTION_ID)
+            Notification.fire(notification, migrationAction, projectContext)
             KotlinMigrationProjectFUSCollector.logRun()
         })
         .setImportant(true)

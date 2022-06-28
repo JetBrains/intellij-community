@@ -804,8 +804,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     if (wizardContext != null && wizardContext.getProject() != null) {
       project = wizardContext.getProject();
     }
-    if (project != null && project != myProjectRef.get()
-        && Disposer.findRegisteredObject(project, myProjectRefDisposable) == null) {
+    if (project != null && project != myProjectRef.get()) {
       Disposer.register(project, myProjectRefDisposable);
     }
     myProjectRef.set(project);

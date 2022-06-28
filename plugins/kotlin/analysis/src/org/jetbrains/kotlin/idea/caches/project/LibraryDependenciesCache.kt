@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.project
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
@@ -16,7 +17,6 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.core.util.CachedValue
 import org.jetbrains.kotlin.idea.core.util.getValue
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.idea.project.isHMPPEnabled
 
@@ -24,7 +24,7 @@ internal typealias LibrariesAndSdks = Pair<List<LibraryInfo>, List<SdkInfo>>
 
 interface LibraryDependenciesCache {
     companion object {
-        fun getInstance(project: Project):LibraryDependenciesCache = project.getServiceSafe()
+        fun getInstance(project: Project):LibraryDependenciesCache = project.service()
     }
 
     fun getLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibrariesAndSdks
@@ -51,7 +51,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     private fun computeLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibrariesAndSdks {
         val (dependencyCandidates, sdks) = computeLibrariesAndSdksUsedWithNoFilter(libraryInfo)
         val libraryDependenciesFilter = DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
-        val libraries = libraryDependenciesFilter(libraryInfo.platform, dependencyCandidates).map { it.libraries }.flatten()
+        val libraries = libraryDependenciesFilter(libraryInfo.platform, dependencyCandidates).flatMap { it.libraries }
         return Pair(libraries, sdks.toList())
     }
 

@@ -331,7 +331,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
       }, false);
     }
 
-    MemoryStateChange findRelation(DfaVariableValue value, @NotNull Predicate<Relation> relationPredicate, boolean startFromSelf) {
+    MemoryStateChange findRelation(DfaVariableValue value, @NotNull Predicate<? super Relation> relationPredicate, boolean startFromSelf) {
       return findChange(change -> {
         if (change.myInstruction instanceof AssignInstruction && change.myTopOfStack == value) return true;
         Change varChange = change.myChanges.get(value);
@@ -405,7 +405,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
     }
 
     @Nullable
-    private MemoryStateChange findChange(@NotNull Predicate<MemoryStateChange> predicate, boolean startFromSelf) {
+    private MemoryStateChange findChange(@NotNull Predicate<? super MemoryStateChange> predicate, boolean startFromSelf) {
       for (MemoryStateChange change = startFromSelf ? this : getPrevious(); change != null; change = change.getPrevious()) {
         if (predicate.test(change)) {
           return change;

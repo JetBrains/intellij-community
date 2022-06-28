@@ -485,10 +485,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       reportProblem(holder, refName, "inspection.nullable.problems.Nullable.method.overrides.NotNull",
                     getPresentableAnnoName(targetMethod), getPresentableAnnoName(superMethod));
     }
-    else if (isNonAnnotatedOverridingNotNull(targetMethod, superMethod)) {
-      reportProblem(holder, refName, createFixForNonAnnotatedOverridesNotNull(targetMethod, superMethod),
-                    "not.annotated.method.is.used.as.an.override.for.a.method.annotated.with.0", getPresentableAnnoName(superMethod));
-    }
   }
 
   protected LocalQuickFix createNavigateToNullParameterUsagesFix(PsiParameter parameter) {

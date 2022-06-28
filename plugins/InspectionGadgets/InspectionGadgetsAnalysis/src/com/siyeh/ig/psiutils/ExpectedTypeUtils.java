@@ -21,17 +21,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
-import java.util.Set;
 
 public final class ExpectedTypeUtils {
 
@@ -59,37 +58,16 @@ public final class ExpectedTypeUtils {
 
   private static class ExpectedTypeVisitor extends JavaElementVisitor {
 
-    private static final Set<IElementType> arithmeticOps = new THashSet<>(5);
+    private static final TokenSet arithmeticOps =
+      TokenSet.create(JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV, JavaTokenType.PERC);
 
-    private static final Set<IElementType> booleanOps = new THashSet<>(5);
+    private static final TokenSet booleanOps =
+      TokenSet.create(JavaTokenType.ANDAND, JavaTokenType.AND, JavaTokenType.XOR, JavaTokenType.OROR, JavaTokenType.OR);
 
-    private static final Set<IElementType> operatorAssignmentOps = new THashSet<>(11);
-
-    static {
-      arithmeticOps.add(JavaTokenType.PLUS);
-      arithmeticOps.add(JavaTokenType.MINUS);
-      arithmeticOps.add(JavaTokenType.ASTERISK);
-      arithmeticOps.add(JavaTokenType.DIV);
-      arithmeticOps.add(JavaTokenType.PERC);
-
-      booleanOps.add(JavaTokenType.ANDAND);
-      booleanOps.add(JavaTokenType.AND);
-      booleanOps.add(JavaTokenType.XOR);
-      booleanOps.add(JavaTokenType.OROR);
-      booleanOps.add(JavaTokenType.OR);
-
-      operatorAssignmentOps.add(JavaTokenType.PLUSEQ);
-      operatorAssignmentOps.add(JavaTokenType.MINUSEQ);
-      operatorAssignmentOps.add(JavaTokenType.ASTERISKEQ);
-      operatorAssignmentOps.add(JavaTokenType.DIVEQ);
-      operatorAssignmentOps.add(JavaTokenType.ANDEQ);
-      operatorAssignmentOps.add(JavaTokenType.OREQ);
-      operatorAssignmentOps.add(JavaTokenType.XOREQ);
-      operatorAssignmentOps.add(JavaTokenType.PERCEQ);
-      operatorAssignmentOps.add(JavaTokenType.LTLTEQ);
-      operatorAssignmentOps.add(JavaTokenType.GTGTEQ);
-      operatorAssignmentOps.add(JavaTokenType.GTGTGTEQ);
-    }
+    private static final TokenSet operatorAssignmentOps =
+      TokenSet.create(JavaTokenType.PLUSEQ, JavaTokenType.MINUSEQ, JavaTokenType.ASTERISKEQ, JavaTokenType.DIVEQ, JavaTokenType.ANDEQ,
+                      JavaTokenType.OREQ, JavaTokenType.XOREQ, JavaTokenType.PERCEQ, JavaTokenType.LTLTEQ, JavaTokenType.GTGTEQ,
+                      JavaTokenType.GTGTGTEQ);
 
     @NotNull private final PsiExpression wrappedExpression;
     private final boolean calculateTypeForComplexReferences;

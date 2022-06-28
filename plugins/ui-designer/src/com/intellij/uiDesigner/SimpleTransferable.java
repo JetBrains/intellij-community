@@ -2,10 +2,12 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,18 +34,17 @@ public final class SimpleTransferable<T> implements Transferable {
   }
 
   @Override
-  @Nullable
-  public Object getTransferData(final DataFlavor flavor) {
+  @NotNull
+  public Object getTransferData(final DataFlavor flavor) throws UnsupportedFlavorException {
     try {
-      if (!myDataFlavor.equals(flavor)) {
-        return null;
+      if (myDataFlavor.equals(flavor)) {
+        return myDataProxy;
       }
-      return myDataProxy;
     }
     catch (Exception e) {
       LOG.error(e);
-      return null;
     }
+    throw new UnsupportedFlavorException(flavor);
   }
 
   private static <T> DataFlavor getDataFlavor(final Class<T> dataClass) {

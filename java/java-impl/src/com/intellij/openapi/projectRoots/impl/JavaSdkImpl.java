@@ -2,7 +2,7 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
-import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.java.JavaBundle;
@@ -239,7 +239,7 @@ public final class JavaSdkImpl extends JavaSdk {
 
     String vendorPrefix = Registry.is("use.jdk.vendor.in.suggested.jdk.name", true) ? info.variant.prefix : null;
     String name = JdkUtil.suggestJdkName(info.version, vendorPrefix);
-    if (WslDistributionManager.isWslPath(sdkHome)) name += " (WSL)";
+    if (WslPath.isWslUncPath(sdkHome)) name += " (WSL)";
     return name;
   }
 

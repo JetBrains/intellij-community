@@ -49,6 +49,11 @@ public abstract class GenerateToStringActionTestGenerated extends AbstractGenera
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("abstractSuper.kt")
+        public void testAbstractSuper() throws Exception {
+            runTest("testData/codeInsight/generate/toString/multipeTemplates/abstractSuper.kt");
+        }
+
         @TestMetadata("arrays.kt")
         public void testArrays() throws Exception {
             runTest("testData/codeInsight/generate/toString/multipeTemplates/arrays.kt");
@@ -100,6 +105,11 @@ public abstract class GenerateToStringActionTestGenerated extends AbstractGenera
     public static class SingleTemplate extends AbstractGenerateToStringActionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractSuper.kt")
+        public void testAbstractSuper() throws Exception {
+            runTest("testData/codeInsight/generate/toString/singleTemplate/abstractSuper.kt");
         }
 
         @TestMetadata("arrays.kt")

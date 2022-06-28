@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.execution.ui.ConsoleView;
@@ -393,7 +393,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
-  public void setAutoDirectoryMappings(@NotNull List<? extends VcsDirectoryMapping> mappings) {
+  public void setAutoDirectoryMappings(@NotNull List<VcsDirectoryMapping> mappings) {
     myMappings.setDirectoryMappings(mappings);
     myMappings.cleanupMappings();
   }
@@ -415,10 +415,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   public void updateMappedVcsesImmediately() {
     myMappings.updateMappedVcsesImmediately();
-  }
-
-  private void activateActiveVcses() {
-    myMappings.activateActiveVcses();
   }
 
   @Override
@@ -941,7 +937,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   static final class ActivateVcsesStartupActivity implements VcsStartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      getInstanceImpl(project).activateActiveVcses();
+      getInstanceImpl(project).myMappings.activateActiveVcses();
     }
 
     @Override

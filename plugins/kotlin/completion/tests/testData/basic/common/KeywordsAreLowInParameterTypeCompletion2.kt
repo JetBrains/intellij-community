@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class SomeType<T>
 
 fun test(a: SomeType<<caret>>) {}

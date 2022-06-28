@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.keywords
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import org.jetbrains.kotlin.idea.completion.breakOrContinueExpressionItems
 import org.jetbrains.kotlin.idea.completion.handlers.createKeywordConstructLookupElement
+import org.jetbrains.kotlin.idea.completion.handlers.withLineIndentAdjuster
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.psiUtil.prevLeaf
 
@@ -31,15 +32,23 @@ object DefaultCompletionKeywordHandlerProvider : CompletionKeywordHandlerProvide
     private val GETTER_HANDLER =
         completionKeywordHandler<CompletionKeywordHandler.NO_CONTEXT>(KtTokens.GET_KEYWORD) { parameters, _, lookupElement, project ->
             buildList {
-                add(lookupElement)
+                add(lookupElement.withLineIndentAdjuster())
                 if (!parameters.isUseSiteAnnotationTarget) {
-                    add(createKeywordConstructLookupElement(project, KtTokens.GET_KEYWORD.value, "val v:Int get()=caret"))
+                    add(
+                        createKeywordConstructLookupElement(
+                            project,
+                            KtTokens.GET_KEYWORD.value,
+                            "val v:Int get()=caret",
+                            adjustLineIndent = true,
+                        )
+                    )
                     add(
                         createKeywordConstructLookupElement(
                             project,
                             KtTokens.GET_KEYWORD.value,
                             "val v:Int get(){caret}",
-                            trimSpacesAroundCaret = true
+                            trimSpacesAroundCaret = true,
+                            adjustLineIndent = true,
                         )
                     )
                 }
@@ -49,15 +58,24 @@ object DefaultCompletionKeywordHandlerProvider : CompletionKeywordHandlerProvide
     private val SETTER_HANDLER =
         completionKeywordHandler<CompletionKeywordHandler.NO_CONTEXT>(KtTokens.SET_KEYWORD) { parameters, _, lookupElement, project ->
             buildList {
-                add(lookupElement)
+                add(lookupElement.withLineIndentAdjuster())
                 if (!parameters.isUseSiteAnnotationTarget) {
-                    add(createKeywordConstructLookupElement(project, KtTokens.SET_KEYWORD.value, "var v:Int set(value)=caret"))
+                    add(
+                        createKeywordConstructLookupElement(
+                            project,
+                            KtTokens.SET_KEYWORD.value,
+                            "var v:Int set(value)=caret",
+                            adjustLineIndent = true,
+                        )
+                    )
+
                     add(
                         createKeywordConstructLookupElement(
                             project,
                             KtTokens.SET_KEYWORD.value,
                             "var v:Int set(value){caret}",
-                            trimSpacesAroundCaret = true
+                            trimSpacesAroundCaret = true,
+                            adjustLineIndent = true,
                         )
                     )
                 }

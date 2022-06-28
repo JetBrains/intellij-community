@@ -5,8 +5,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import java.awt.Component
 
@@ -28,23 +28,23 @@ class GithubApiRequestExecutorManager {
   }
 
   @RequiresEdt
-  fun getExecutor(account: GithubAccount, project: Project): GithubApiRequestExecutor.WithTokenAuth? {
+  fun getExecutor(account: GithubAccount, project: Project): GithubApiRequestExecutor? {
     return getOrTryToCreateExecutor(account) { GithubAuthenticationManager.getInstance().requestNewToken(account, project) }
   }
 
   @RequiresEdt
-  fun getExecutor(account: GithubAccount, parentComponent: Component): GithubApiRequestExecutor.WithTokenAuth? {
+  fun getExecutor(account: GithubAccount, parentComponent: Component): GithubApiRequestExecutor? {
     return getOrTryToCreateExecutor(account) { GithubAuthenticationManager.getInstance().requestNewToken(account, null, parentComponent) }
   }
 
   @RequiresEdt
   @Throws(GithubMissingTokenException::class)
-  fun getExecutor(account: GithubAccount): GithubApiRequestExecutor.WithTokenAuth {
+  fun getExecutor(account: GithubAccount): GithubApiRequestExecutor {
     return getOrTryToCreateExecutor(account) { throw GithubMissingTokenException(account) }!!
   }
 
   private fun getOrTryToCreateExecutor(account: GithubAccount,
-                                       missingTokenHandler: () -> String?): GithubApiRequestExecutor.WithTokenAuth? {
+                                       missingTokenHandler: () -> String?): GithubApiRequestExecutor? {
 
     return executors.getOrPut(account) {
       (GithubAuthenticationManager.getInstance().getTokenForAccount(account) ?: missingTokenHandler())

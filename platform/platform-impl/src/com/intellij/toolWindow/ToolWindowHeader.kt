@@ -23,6 +23,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.layout.migLayout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.popup.PopupState
@@ -40,6 +41,7 @@ import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.util.function.Supplier
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
@@ -121,8 +123,13 @@ abstract class ToolWindowHeader internal constructor(
       component.border = JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerToolbarLeftRightInsets())
     }
     component.isOpaque = false
+
+    val toolbarPanel = JPanel(HorizontalLayout(0, SwingConstants.CENTER))
+    toolbarPanel.isOpaque = false
+    toolbarPanel.add(component)
+
     @Suppress("LeakingThis")
-    add(component, BorderLayout.EAST)
+    add(toolbarPanel, BorderLayout.EAST)
 
     //westPanel.addMouseListener(
     //  object : PopupHandler() {

@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.idea.project
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.OptionTag
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import java.util.concurrent.atomic.AtomicBoolean
 
 object KotlinLibraryToSourceAnalysisComponent {
@@ -55,7 +55,7 @@ class KotlinLibraryToSourceAnalysisStateComponent : PersistentStateComponent<Kot
     }
 
     companion object {
-        fun getInstance(project: Project): KotlinLibraryToSourceAnalysisStateComponent = project.getServiceSafe()
+        fun getInstance(project: Project): KotlinLibraryToSourceAnalysisStateComponent = project.service()
     }
 }
 

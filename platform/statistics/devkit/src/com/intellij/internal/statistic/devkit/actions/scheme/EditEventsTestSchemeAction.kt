@@ -81,7 +81,7 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
         if (indicator.isCanceled) return null
         val productionGroups = testSchemeStorage.loadProductionGroups()
         if (indicator.isCanceled) return null
-        val eventsScheme = EventsSchemeBuilder.buildEventsScheme()
+        val eventsScheme = EventsSchemeBuilder.buildEventsScheme(recorderId)
         return EventsTestScheme(localGroups, productionGroups, eventsScheme)
       }
     })

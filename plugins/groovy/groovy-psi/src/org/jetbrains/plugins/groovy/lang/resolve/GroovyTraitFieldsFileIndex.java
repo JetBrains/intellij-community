@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -49,7 +49,7 @@ public class GroovyTraitFieldsFileIndex
   private static final SingleEntryIndexer<Collection<TraitFieldDescriptor>> INDEXER = new SingleEntryIndexer<>(true) {
     @Override
     protected Collection<TraitFieldDescriptor> computeValue(@NotNull FileContent inputData) {
-      return index(inputData);
+      return index(inputData.getContent());
     }
   };
 
@@ -88,10 +88,10 @@ public class GroovyTraitFieldsFileIndex
     return 5;
   }
 
-  private static Collection<TraitFieldDescriptor> index(FileContent inputData) {
+  public static Collection<TraitFieldDescriptor> index(byte[] fileContents) {
     final Collection<TraitFieldDescriptor> values = new ArrayList<>();
 
-    new ClassReader(inputData.getContent()).accept(new ClassVisitor(Opcodes.API_VERSION) {
+    new ClassReader(fileContents).accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
         return new FieldVisitor(Opcodes.API_VERSION) {
@@ -172,6 +172,10 @@ public class GroovyTraitFieldsFileIndex
 
   @Override
   public void save(@NotNull DataOutput out, Collection<TraitFieldDescriptor> values) throws IOException {
+    saveTraitFields(out, values);
+  }
+
+  public static void saveTraitFields(@NotNull DataOutput out, Collection<TraitFieldDescriptor> values) throws IOException {
     writeSeq(out, values, descriptor -> {
       out.writeByte(descriptor.flags);
       writeUTF(out, descriptor.typeString);
@@ -182,6 +186,10 @@ public class GroovyTraitFieldsFileIndex
 
   @Override
   public Collection<TraitFieldDescriptor> read(@NotNull DataInput in) throws IOException {
+    return readSeq(in, () -> new TraitFieldDescriptor(in.readByte(), readUTF(in), readUTF(in), readSeq(in, () -> readUTF(in))));
+  }
+
+  public static Collection<TraitFieldDescriptor> readTraitFields(@NotNull DataInput in) throws IOException {
     return readSeq(in, () -> new TraitFieldDescriptor(in.readByte(), readUTF(in), readUTF(in), readSeq(in, () -> readUTF(in))));
   }
 

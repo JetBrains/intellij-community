@@ -57,9 +57,6 @@ Adds support for working with shell script files
     <runConfigurationProducer implementation="com.intellij.sh.run.ShRunConfigurationProducer"/>
     <programRunner implementation="com.intellij.sh.run.ShRunProgramRunner"/>
     <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.sh.run.ShBeforeRunProviderDelegate"/>
-    <experimentalFeature id="com.intellij.sh.run.with.wsl" percentOfUsers="0">
-      <description>Run shell scripts with WSL when needed</description>
-    </experimentalFeature>
     <runLineMarkerContributor language="" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
 
     <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.checkers
 
 import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
@@ -73,20 +74,29 @@ fun parseLanguageVersionSettings(directives: Directives): CompilerTestLanguageVe
     }
 
     val apiVersion = when (apiVersionString) {
-        null -> ApiVersion.LATEST_STABLE
+        null -> KotlinPluginLayout.instance.standaloneCompilerVersion.apiVersion
         "LATEST" -> ApiVersion.LATEST
         else -> ApiVersion.parse(apiVersionString) ?: error("Unknown API version: $apiVersionString")
     }
 
-    val languageVersion = maxOf(LanguageVersion.LATEST_STABLE, LanguageVersion.fromVersionString(apiVersion.versionString)!!)
+    val languageVersion = maxOf(
+        KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion,
+        LanguageVersion.fromVersionString(apiVersion.versionString)!!
+    )
 
     val languageFeatures = languageFeaturesString?.let(::collectLanguageFeatureMap).orEmpty()
 
     return CompilerTestLanguageVersionSettings(languageFeatures, apiVersion, languageVersion, mapOf(*analysisFlags.toTypedArray()))
 }
 
-fun defaultLanguageVersionSettings(): CompilerTestLanguageVersionSettings =
-    CompilerTestLanguageVersionSettings(emptyMap(), ApiVersion.LATEST_STABLE, LanguageVersion.LATEST_STABLE)
+fun defaultLanguageVersionSettings(): CompilerTestLanguageVersionSettings {
+    val bundledKotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+    return CompilerTestLanguageVersionSettings(
+        initialLanguageFeatures = emptyMap(),
+        bundledKotlinVersion.apiVersion,
+        bundledKotlinVersion.languageVersion
+    )
+}
 
 fun languageVersionSettingsFromText(fileTexts: List<String>): LanguageVersionSettings {
     val allDirectives = Directives()

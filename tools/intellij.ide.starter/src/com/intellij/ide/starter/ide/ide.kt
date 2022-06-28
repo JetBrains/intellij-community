@@ -182,7 +182,11 @@ fun getExecutableNameFromInfoPlist(appDir: File, @Suppress("SameParameterValue")
 
 
 private fun downloadAndUnpackJbrIfNeeded(jbrFullVersion: String): Path {
-  val majorVersion = jbrFullVersion.split("+").firstOrNull()?.replace(".", "_")
+  val jbrVersion = jbrFullVersion.split(".")[0].toInt()
+  var majorVersion = jbrFullVersion.split("+").firstOrNull()
+  if (jbrVersion < 17) {
+    majorVersion = majorVersion?.replace(".", "_")
+  }
   requireNotNull(majorVersion) {
     { "majorVersion is: $majorVersion" }
   }
@@ -208,7 +212,7 @@ private fun downloadAndUnpackJbrIfNeeded(jbrFullVersion: String): Path {
     false -> "x64"
   }
 
-  val localFileName = "jbrsdk_dcevm-$majorVersion-$os-$arch-b$buildNumber.tar.gz"
+  val localFileName = "jbrsdk-$majorVersion-$os-$arch-b$buildNumber.tar.gz"
   val downloadUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/$localFileName"
 
   val jbrCacheDirectory = di.direct.instance<GlobalPaths>().getCacheDirectoryFor("jbr")

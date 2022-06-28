@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class LocalEnumCustomValidationRule extends CustomValidationRule {
   private final String myRule;
@@ -16,9 +15,10 @@ public abstract class LocalEnumCustomValidationRule extends CustomValidationRule
     myEnumClass = enumClass;
   }
 
+  @NotNull
   @Override
-  final public boolean acceptRuleId(@Nullable String ruleId) {
-    return myRule.equals(ruleId);
+  public String getRuleId() {
+    return myRule;
   }
 
   @NotNull

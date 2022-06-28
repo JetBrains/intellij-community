@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.javadoc;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-final class MissingDeprecatedAnnotationInspection extends BaseInspection {
+final class MissingDeprecatedAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField") public boolean warnOnMissingJavadoc = false;
 
   @Override

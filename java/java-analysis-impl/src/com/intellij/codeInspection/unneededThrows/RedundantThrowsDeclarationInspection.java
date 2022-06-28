@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.analysis.AnalysisScope;
@@ -79,22 +79,21 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
         final PsiElement throwsRef = throwRefType.getReference();
         final String message = getMessage(refMethod);
         final MyQuickFix fix = new MyQuickFix(processor, throwRefType.getType().getClassName(), IGNORE_ENTRY_POINTS);
-        return manager.createProblemDescriptor(throwsRef, message, fix, ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
+        return manager.createProblemDescriptor(throwsRef, message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
       })
       .toArray(CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
   @NotNull
   private static @InspectionMessage String getMessage(@NotNull final RefMethod refMethod) {
-    final RefClass ownerClass = refMethod.getOwnerClass();
-    if (refMethod.isAbstract() || ownerClass != null && ownerClass.isInterface()) {
-      return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor", "<code>#ref</code>");
+    if (refMethod.isAbstract()) {
+      return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor");
     }
     if (!refMethod.getDerivedMethods().isEmpty()) {
-      return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>");
+      return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor1");
     }
 
-    return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>");
+    return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor2");
   }
 
 

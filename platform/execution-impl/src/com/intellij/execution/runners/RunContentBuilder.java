@@ -302,9 +302,9 @@ public final class RunContentBuilder extends RunTab {
   private static class EmptyWhenDuplicate extends ActionGroup {
 
     private final @NotNull ActionGroup myDelegate;
-    private final @NotNull Predicate<ActionGroup> myDuplicatePredicate;
+    private final @NotNull Predicate<? super ActionGroup> myDuplicatePredicate;
 
-    private EmptyWhenDuplicate(@NotNull ActionGroup delegate, @NotNull Predicate<ActionGroup> isDuplicate) {
+    private EmptyWhenDuplicate(@NotNull ActionGroup delegate, @NotNull Predicate<? super ActionGroup> isDuplicate) {
       myDelegate = delegate;
       myDuplicatePredicate = isDuplicate;
     }

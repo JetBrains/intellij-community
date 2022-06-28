@@ -14,6 +14,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -210,5 +212,25 @@ public final class PySdkUtil {
     }
 
     return Collections.emptyMap();
+  }
+
+  @NotNull
+  public static LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
+    if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+      if (flavor != null) {
+        return flavor.getLanguageLevel(sdk);
+      }
+    }
+    return LanguageLevel.getDefault();
+  }
+
+  /**
+   * @return name of builtins skeleton file; for Python 2.x it is '{@code __builtins__.py}'.
+   */
+  @NotNull
+  @NonNls
+  public static String getBuiltinsFileName(@NotNull Sdk sdk) {
+    return PyBuiltinCache.getBuiltinsFileName(getLanguageLevelForSdk(sdk));
   }
 }

@@ -49,7 +49,7 @@ public abstract class AbstractExcludeFromRunAction<T extends ModuleBasedConfigur
       if (isPatternBasedConfiguration(configuration)) {
         final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(dataContext);
         if (testProxy != null) {
-          final Location location = testProxy.getLocation(project, ((T)configuration).getConfigurationModule().getSearchScope());
+          final Location<?> location = testProxy.getLocation(project, ((T)configuration).getConfigurationModule().getSearchScope());
           if (location != null) {
             final PsiElement psiElement = location.getPsiElement();
             if (psiElement instanceof PsiClass && getPattern((T)configuration).contains(((PsiClass)psiElement).getQualifiedName())) {

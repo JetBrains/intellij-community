@@ -37,7 +37,7 @@ public abstract class LeafElement extends TreeElement {
 
   private final CharSequence myText;
 
-  protected LeafElement(@NotNull IElementType type, CharSequence text) {
+  protected LeafElement(@NotNull IElementType type, @NotNull CharSequence text) {
     super(type);
     myText = text;
   }

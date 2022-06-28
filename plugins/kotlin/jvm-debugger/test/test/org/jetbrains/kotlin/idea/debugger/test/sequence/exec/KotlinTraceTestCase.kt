@@ -73,7 +73,7 @@ abstract class KotlinTraceTestCase : KotlinDescriptorTestCaseWithStepping() {
                     Computable<StreamChain> {
                         val elementAtBreakpoint = positionResolver.getNearestElementToBreakpoint(session)
                         val chains = if (elementAtBreakpoint == null) null else chainBuilder.build(elementAtBreakpoint)
-                        if (chains == null || chains.isEmpty()) null else chainSelector.select(chains)
+                        if (chains.isNullOrEmpty()) null else chainSelector.select(chains)
                     })
 
                 if (chain == null) {

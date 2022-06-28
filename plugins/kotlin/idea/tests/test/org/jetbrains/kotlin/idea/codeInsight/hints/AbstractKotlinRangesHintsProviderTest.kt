@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import java.io.File
 
 abstract class AbstractKotlinRangesHintsProviderTest :
-    InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
+    InlayHintsProviderTestCase() { // Abstract-prefix is just a convention for GenerateTests
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
@@ -20,10 +20,10 @@ abstract class AbstractKotlinRangesHintsProviderTest :
     }
 
     private fun assertThatActualHintsMatch(fileName: String) {
-        with(KotlinRangesHintsProvider()) {
+        with(KotlinValuesHintsProvider()) {
             val fileContents = FileUtil.loadFile(File(fileName), true)
             val settings = createSettings()
-            testProvider("KotlinRangesHintsProvider.kt", fileContents, this, settings)
+            testProvider("KotlinValuesHintsProvider.kt", fileContents, this, settings)
         }
     }
 

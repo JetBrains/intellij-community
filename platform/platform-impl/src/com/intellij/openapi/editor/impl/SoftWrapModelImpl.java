@@ -319,7 +319,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
-    if (!isSoftWrappingEnabled()) {
+    if (!isSoftWrappingEnabled() || !myEditor.getSettings().isPaintSoftWraps()) {
       return 0;
     }
     if (!myEditor.getSettings().isAllSoftWrapsShown()) {
@@ -333,6 +333,9 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   public int doPaint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
+    if (!myEditor.getSettings().isPaintSoftWraps()) {
+      return 0;
+    }
     return myPainter.paint(g, drawingType, x, y, lineHeight);
   }
 

@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinMoveTar
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictChecker
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.Mover
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -144,7 +144,7 @@ class MoveKotlinMethodProcessor(
                     val callExpression = expression.parent as? KtCallExpression ?: return
                     escalateTargetVariableVisibilityIfNeeded(
                         callExpression.containingNonLocalDeclaration()?.resolveToDescriptorIfAny(),
-                        callExpression.getResolutionFacade().getLanguageVersionSettings()
+                        callExpression.getResolutionFacade().languageVersionSettings
                     )
 
                     val oldReceiver = callExpression.getQualifiedExpressionForSelector()?.receiverExpression

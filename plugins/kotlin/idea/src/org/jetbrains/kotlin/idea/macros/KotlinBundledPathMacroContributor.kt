@@ -9,9 +9,10 @@ import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import java.nio.file.Paths
+import kotlin.io.path.bufferedReader
 import kotlin.io.path.extension
 
 const val KOTLIN_BUNDLED = "KOTLIN_BUNDLED"
@@ -27,7 +28,7 @@ class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributor {
                     else -> error("projectFilePath should be either misc.xml or *.ipr file")
                 }
             }
-            .takeIf { it.exists() }
+            .takeIf { path -> path.exists() && path.bufferedReader().use { it.readLine() != null } }
             ?.let { JDOMUtil.load(it) }
             ?.children
             ?.singleOrNull { it.getAttributeValue("name") == KotlinJpsPluginSettings::class.java.simpleName }
@@ -37,7 +38,7 @@ class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributor {
                 }
             }
             ?.version
-            ?.let { KotlinPathsProvider.getKotlinPaths(it).homePath.canonicalPath }
+            ?.let { KotlinArtifactsDownloader.getUnpackedKotlinDistPath(it).canonicalPath }
             ?: KotlinPluginLayout.instance.kotlinc.canonicalPath
         return mapOf(KOTLIN_BUNDLED to path)
     }

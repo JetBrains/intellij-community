@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -49,7 +49,7 @@ import java.util.List;
 /**
  * {@link DiffFromHistoryHandler#showDiffForTwo(Project, FilePath, VcsFileRevision, VcsFileRevision) "Show Diff" for 2 revision} calls the common code.
  * {@link DiffFromHistoryHandler#showDiffForOne(AnActionEvent, Project, FilePath, VcsFileRevision, VcsFileRevision) "Show diff" for 1 revision}
- * behaves differently for merge commits: for them it shown a popup displaying the parents of the selected commit. Selecting a parent
+ * behaves differently for merge commits: for them, a popup is shown displaying the parents of the selected commit. Selecting a parent
  * from the popup shows the difference with this parent.
  * If an ordinary (not merge) revision with 1 parent, it is the same as usual: just compare with the parent;
  *

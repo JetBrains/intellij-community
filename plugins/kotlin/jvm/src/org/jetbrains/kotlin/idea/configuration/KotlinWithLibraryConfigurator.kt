@@ -27,9 +27,8 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.facet.getCleanRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
-import org.jetbrains.kotlin.idea.facet.toApiVersion
+import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.CreateLibraryDialogWithModules
 import org.jetbrains.kotlin.idea.quickfix.askUpdateRuntime
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgress
@@ -282,7 +281,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         val sinceVersion = feature.sinceApiVersion
 
         if (state != LanguageFeature.State.DISABLED &&
-            getRuntimeLibraryVersion(module).toApiVersion() < sinceVersion &&
+            getRuntimeLibraryVersionOrDefault(module).apiVersion < sinceVersion &&
             !askUpdateRuntime(module, sinceVersion)
         ) {
             return
@@ -297,7 +296,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
                     additionalArguments = additionalArguments.replaceLanguageFeature(
                         feature,
                         state,
-                        getCleanRuntimeLibraryVersion(module),
+                        getRuntimeLibraryVersion(module),
                         separator = " ",
                         quoted = false
                     )
@@ -313,7 +312,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         requiredStdlibVersion: ApiVersion,
         forTests: Boolean
     ) {
-        val runtimeUpdateRequired = getRuntimeLibraryVersion(module)?.let { ApiVersion.parse(it) }?.let { runtimeVersion ->
+        val runtimeUpdateRequired = getRuntimeLibraryVersion(module)?.apiVersion?.let { runtimeVersion ->
             runtimeVersion < requiredStdlibVersion
         } ?: false
 
@@ -345,22 +344,27 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
     ) {
         val project = module.project
 
+        var foundLibrary: Library? = null
         // TODO: in our case any PROJECT (not module) library (especially unused)
         //  would fit but I failed to find API for traversing such libraries.
         //  Current solution traverses only used project libraries
-        findAllUsedLibraries(project).keySet()
-            .firstOrNull { libraryJarDescriptor.findExistingJar(it) != null && it.safeAs<LibraryEx>()?.module?.equals(null) == true }
-            ?.let {
-                ModuleRootModificationUtil.addDependency(module, it, scope, false)
-                return
+        project.forEachAllUsedLibraries {
+            if (libraryJarDescriptor.findExistingJar(it) != null && it.safeAs<LibraryEx>()?.module?.equals(null) == true) {
+                foundLibrary = it
+                return@forEachAllUsedLibraries false
             }
+            return@forEachAllUsedLibraries true
+        }
+        foundLibrary?.let {
+            ModuleRootModificationUtil.addDependency(module, it, scope, false)
+        }
 
         val kotlinStdlibVersion = module.findLibrary { isKotlinLibrary(it, project) }
             ?.safeAs<LibraryEx>()?.properties?.safeAs<RepositoryLibraryProperties>()?.version
         RepositoryAddLibraryAction.addLibraryToModule(
             RepositoryLibraryDescription.findDescription(libraryJarDescriptor.repositoryLibraryProperties),
             module,
-            kotlinStdlibVersion ?: KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort,
+            kotlinStdlibVersion ?: KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion,
             scope,
             /* downloadSources = */ true,
             /* downloadJavaDocs = */ true

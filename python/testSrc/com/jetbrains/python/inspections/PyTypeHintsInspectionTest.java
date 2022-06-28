@@ -1111,6 +1111,23 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     });
   }
 
+  // PY-50401
+  public void testParamSpecNameAsLiteral() {
+    doTestByText("from typing import ParamSpec\n" +
+                 "\n" +
+                 "name = 'T0'\n" +
+                 "T0 = ParamSpec(<warning descr=\"'ParamSpec()' expects a string literal as first argument\">name</warning>)\n" +
+                 "T1 = ParamSpec('T1')");
+  }
+
+  // PY-50401
+  public void testParamSpecNameAndTargetNameEquality() {
+    doTestByText("from typing import ParamSpec\n" +
+                 "\n" +
+                 "T0 = ParamSpec(<warning descr=\"The argument to 'ParamSpec()' must be a string equal to the variable name to which it is assigned\">'T1'</warning>)\n" +
+                 "T1 = ParamSpec('T1')");
+  }
+
   // PY-50930
   public void testNoInspectionInCallableParameterParamSpecFromTypingExpressions() {
     doTestByText("from typing import Callable, TypeVar\n" +

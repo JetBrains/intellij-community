@@ -74,6 +74,7 @@ open class CodeVisionHost(val project: Project) {
      * particular implementations of code vision to make sure that other tests' performance is not hurt.
      */
     val isCodeVisionTestKey: Key<Boolean> = Key.create("code.vision.test")
+    private val editorTrackingStart: Key<Long> = Key.create("editor.tracking.start")
 
     /**
      * Returns true iff we are in test in [com.intellij.java.codeInsight.codeVision.CodeVisionTestCase].
@@ -176,7 +177,8 @@ open class CodeVisionHost(val project: Project) {
                           psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
     if (!lifeSettingModel.isEnabledWithRegistry.value) return emptyList()
     val project = editor.project ?: return emptyList()
-    if (psiFile != null && !ProjectRootManager.getInstance(project).fileIndex.isInSourceContent(psiFile.virtualFile)) return emptyList()
+    if (psiFile != null && psiFile.virtualFile != null &&
+        !ProjectRootManager.getInstance(project).fileIndex.isInSourceContent(psiFile.virtualFile)) return emptyList()
     val bypassBasedCollectors = ArrayList<Pair<BypassBasedPlaceholderCollector, CodeVisionProvider<*>>>()
     val placeholders = ArrayList<Pair<TextRange, CodeVisionEntry>>()
     val settings = CodeVisionSettings.instance()
@@ -186,7 +188,8 @@ open class CodeVisionHost(val project: Project) {
       val placeholderCollector: CodeVisionPlaceholderCollector = provider.getPlaceholderCollector(editor, psiFile) ?: continue
       if (placeholderCollector is BypassBasedPlaceholderCollector) {
         bypassBasedCollectors.add(placeholderCollector to provider)
-      } else if (placeholderCollector is GenericPlaceholderCollector) {
+      }
+      else if (placeholderCollector is GenericPlaceholderCollector) {
         for (placeholderRange in placeholderCollector.collectPlaceholders(editor)) {
           placeholders.add(placeholderRange to PlaceholderCodeVisionEntry(provider.id))
         }
@@ -272,7 +275,7 @@ open class CodeVisionHost(val project: Project) {
     return getAnchorForProvider(provider)
   }
 
-  private fun getAnchorForProvider(provider: CodeVisionProvider<*>): CodeVisionAnchorKind{
+  private fun getAnchorForProvider(provider: CodeVisionProvider<*>): CodeVisionAnchorKind {
     return lifeSettingModel.codeVisionGroupToPosition[provider.groupId].nullIfDefault() ?: lifeSettingModel.defaultPosition.value
   }
 
@@ -301,12 +304,17 @@ open class CodeVisionHost(val project: Project) {
     var recalculateWhenVisible = false
 
     var previousLenses: List<Pair<TextRange, CodeVisionEntry>> = ArrayList()
-    val mergingQueueFront = MergingUpdateQueue(CodeVisionHost::class.simpleName!!, 100, true, null, editorLifetime.createNestedDisposable(), null, Alarm.ThreadToUse.POOLED_THREAD)
+    val openTime = System.nanoTime()
+    editor.putUserData(editorTrackingStart, openTime)
+    val mergingQueueFront = MergingUpdateQueue(CodeVisionHost::class.simpleName!!, 100, true, null, editorLifetime.createNestedDisposable(),
+                                               null, Alarm.ThreadToUse.POOLED_THREAD)
     mergingQueueFront.isPassThrough = false
     var calcRunning = false
 
     fun recalculateLenses(groupToRecalculate: Collection<String> = emptyList()) {
-      if (!isInlaySettingsEditor(editor) && !editorManager.selectedEditors.any { isAllowedFileEditor(it) && (it as TextEditor).editor == editor }) {
+      if (!isInlaySettingsEditor(editor) && !editorManager.selectedEditors.any {
+          isAllowedFileEditor(it) && (it as TextEditor).editor == editor
+        }) {
         recalculateWhenVisible = true
         return
       }
@@ -387,6 +395,8 @@ open class CodeVisionHost(val project: Project) {
 
       var everyProviderReadyToUpdate = true
       val inlaySettingsEditor = isInlaySettingsEditor(editor)
+      val editorOpenTime = editor.getUserData(editorTrackingStart)
+      val watcher = project.service<CodeVisionProvidersWatcher>()
       providers.forEach {
         @Suppress("UNCHECKED_CAST")
         it as CodeVisionProvider<Any?>
@@ -409,9 +419,18 @@ open class CodeVisionHost(val project: Project) {
         try {
           val state = it.computeCodeVision(editor, precalculatedUiThings[it.id])
           if (state.isReady.not()) {
-            everyProviderReadyToUpdate = false
+            if (editorOpenTime != null) {
+              watcher.reportProvider(it.groupId, System.nanoTime() - editorOpenTime)
+              if (watcher.shouldConsiderProvider(it.groupId)) {
+                everyProviderReadyToUpdate = false
+              }
+            }
+            else {
+              everyProviderReadyToUpdate = false
+            }
           }
           else {
+            watcher.dropProvider(it.groupId)
             results.addAll(state.result)
           }
         }
@@ -477,9 +496,9 @@ open class CodeVisionHost(val project: Project) {
 
   protected open fun openCodeVisionSettings(groupId: String? = null) {
     InlayHintsConfigurable.showSettingsDialogForLanguage(project, Language.ANY) {
-      if(groupId == null) return@showSettingsDialogForLanguage it.group == InlayGroup.CODE_VISION_GROUP_NEW
+      if (groupId == null) return@showSettingsDialogForLanguage it.group == InlayGroup.CODE_VISION_GROUP_NEW
 
-      return@showSettingsDialogForLanguage  it.group == InlayGroup.CODE_VISION_GROUP_NEW && it.id == groupId
+      return@showSettingsDialogForLanguage it.group == InlayGroup.CODE_VISION_GROUP_NEW && it.id == groupId
     }
   }
 

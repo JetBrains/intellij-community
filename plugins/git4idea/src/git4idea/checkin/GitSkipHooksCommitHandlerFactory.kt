@@ -16,7 +16,6 @@ import git4idea.GitVcs
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import java.awt.event.KeyEvent
 import javax.swing.JComponent
 
 private val IS_SKIP_HOOKS_KEY = Key.create<Boolean>("Git.Commit.IsSkipHooks")
@@ -47,7 +46,6 @@ private class GitSkipHooksConfigurationPanel(
   private val repositoryManager get() = GitRepositoryManager.getInstance(panel.project)
   private val runHooks = NonFocusableCheckBox(GitBundle.message("checkbox.run.git.hooks")).apply {
     isSelected = true
-    mnemonic = KeyEvent.VK_H
     toolTipText = GitBundle.message("tooltip.run.git.hooks")
   }
 

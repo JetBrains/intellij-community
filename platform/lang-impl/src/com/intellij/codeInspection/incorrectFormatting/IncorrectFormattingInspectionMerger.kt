@@ -4,8 +4,7 @@ package com.intellij.codeInspection.incorrectFormatting
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase
 import org.jdom.Element
 
-class IncorrectFormattingInspectionMerger : InspectionElementsMergerBase() {
-
+internal class IncorrectFormattingInspectionMerger : InspectionElementsMergerBase() {
   override fun getMergedToolName(): String {
     return "IncorrectFormatting"
   }
@@ -24,5 +23,4 @@ class IncorrectFormattingInspectionMerger : InspectionElementsMergerBase() {
     }
     return toolElement
   }
-
 }

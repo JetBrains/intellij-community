@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.codeInsight.hint.HintUtil.PROMOTION_PANE_KEY
@@ -27,7 +27,6 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.merge
-import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.commit.CommitModeManager.Companion.setCommitFromLocalChanges
 import com.intellij.vcs.commit.NonModalCommitPromoter.Companion.getPromotionState
@@ -92,11 +91,12 @@ private class NonModalCommitPromotionPanel(private val commitDialog: DefaultComm
     })
   }
 
-  override fun getBackground(): Color? =
-    EditorColorsManager.getInstance().globalScheme.getColor(PROMOTION_PANE_KEY) ?: super.getBackground()
+  override fun getBackground(): Color? {
+    return EditorColorsManager.getInstance().globalScheme.getColor(PROMOTION_PANE_KEY) ?: super.getBackground()
+  }
 
-  private fun createSwitchAction(): JComponent =
-    HyperlinkLabel(message("non.modal.commit.promoter.use.non.modal.action.text")).apply {
+  private fun createSwitchAction(): JComponent {
+    return HyperlinkLabel(message("non.modal.commit.promoter.use.non.modal.action.text")).apply {
       addHyperlinkListener {
         setPromotionState(commitDialog.project, ACCEPTED)
         commitDialog.doCancelAction()
@@ -108,9 +108,10 @@ private class NonModalCommitPromotionPanel(private val commitDialog: DefaultComm
         invokeAction(commitAction, SimpleDataContext.getProjectContext(commitDialog.project), ActionPlaces.UNKNOWN, null, null)
       }
     }
+  }
 
-  private fun createCloseAction(): JComponent =
-    InplaceButton(
+  private fun createCloseAction(): JComponent {
+    return InplaceButton(
       IconButton(
         message("non.modal.commit.promoter.dont.show.again.action.text"),
         AllIcons.Actions.Close,
@@ -120,4 +121,5 @@ private class NonModalCommitPromotionPanel(private val commitDialog: DefaultComm
       setPromotionState(commitDialog.project, REJECTED)
       this@NonModalCommitPromotionPanel.isVisible = false
     }
+  }
 }

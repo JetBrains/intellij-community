@@ -78,6 +78,10 @@ import java.util.concurrent.Future;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_GOTO_DECLARATION;
 
+/**
+ * @deprecated Unused in v2 implementation.
+ */
+@Deprecated
 @ApiStatus.Internal
 public final class CtrlMouseHandler {
   static final Logger LOG = Logger.getInstance(CtrlMouseHandler.class);

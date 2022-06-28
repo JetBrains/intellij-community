@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -304,7 +304,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
 
     final PsiClass memberClass = myMember.getContainingClass();
     if (instanceRef == null || instanceRef instanceof PsiSuperExpression) {
-      PsiClass contextClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      PsiClass contextClass = PsiTreeUtil.getParentOfType(methodRef, PsiClass.class);
       if (!InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
         instanceRef = factory.createExpressionFromText(memberClass.getQualifiedName() + ".this", null);
       } else {
@@ -313,7 +313,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
       newQualifier = null;
     }
     else {
-      newQualifier = factory.createReferenceExpression(memberClass);
+      newQualifier = memberClass == null || memberClass instanceof PsiAnonymousClass ? null : factory.createReferenceExpression(memberClass);
     }
 
     if (mySettings.getNewParametersNumber() > 1) {
@@ -386,6 +386,9 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
   }
 
   private boolean needLambdaConversion(PsiMethodReferenceExpression methodRef) {
+    if (myMember.getContainingClass() instanceof PsiAnonymousClass) {
+      return true;
+    }
     if (mySettings.isMakeFieldParameters()) {
       return true;
     }

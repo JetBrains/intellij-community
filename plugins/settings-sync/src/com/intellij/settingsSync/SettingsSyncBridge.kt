@@ -1,7 +1,6 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -16,20 +15,18 @@ import java.util.concurrent.TimeUnit
  * Handles events about settings change both from the current IDE, and from the server, merges the settings, logs them,
  * and provides the combined data to clients: both to the IDE and to the server.
  */
-internal class SettingsSyncBridge(application: Application,
-                                  parentDisposable: Disposable,
+internal class SettingsSyncBridge(parentDisposable: Disposable,
                                   private val settingsLog: SettingsLog,
-                                  private val ideUpdater: SettingsSyncIdeCommunicator,
+                                  private val ideMediator: SettingsSyncIdeMediator,
                                   private val remoteCommunicator: SettingsSyncRemoteCommunicator,
-                                  private val updateChecker: SettingsSyncUpdateChecker
-) {
+                                  private val updateChecker: SettingsSyncUpdateChecker) {
 
   private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent>()
 
-  private val queue = MergingUpdateQueue("SettingsSyncBridge", 1000, true, null, parentDisposable, null, Alarm.ThreadToUse.POOLED_THREAD).
-    apply {
-      setRestartTimerOnAdd(true)
-    }
+  private val queue = MergingUpdateQueue("SettingsSyncBridge", 1000, true, null, parentDisposable, null,
+                                         Alarm.ThreadToUse.POOLED_THREAD).apply {
+    setRestartTimerOnAdd(true)
+  }
 
   private val updateObject = object : Update(1) { // all requests are always merged
     override fun run() {
@@ -38,26 +35,32 @@ internal class SettingsSyncBridge(application: Application,
     }
   }
 
-  init {
-    queue.queue(object: Update(0) {
-      override fun run() {
-        initializeLog()
-      }
-    })
+  @RequiresBackgroundThread
+  fun initialize(initMode: InitMode) {
+    settingsLog.initialize()
+    // activate the stream provider at this point to correctly process the event from the server (e.g. to synchronize the access to xmls)
+    ideMediator.activateStreamProvider()
 
-    application.messageBus.connect(parentDisposable).subscribe(SETTINGS_CHANGED_TOPIC, object : SettingsChangeListener {
-      override fun settingChanged(event: SyncSettingsEvent) {
-        pendingEvents.add(event)
-        queue.queue(updateObject)
-      }
-    })
+    val initialEvent = when (initMode) {
+      is InitMode.TakeFromServer -> initMode.cloudEvent
+      InitMode.PushToServer -> SyncSettingsEvent.MustPushRequest
+      InitMode.JustInit -> SyncSettingsEvent.LogCurrentSettings
+    }
+    pendingEvents.add(initialEvent)
+    processPendingEvents()
+
+    // todo copy existing settings again here
+    // because local events could happen between activating the stream provider above and starting processing events here
+    SettingsSyncEvents.getInstance().addSettingsChangedListener { event ->
+      pendingEvents.add(event)
+      queue.queue(updateObject)
+    }
   }
 
-  private fun initializeLog() {
-    val newRepository = settingsLog.initialize()
-    if (newRepository) {
-      remoteCommunicator.push(settingsLog.collectCurrentSnapshot()) // todo handle non-successful result
-    }
+  sealed class InitMode {
+    object JustInit : InitMode()
+    class TakeFromServer(val cloudEvent: SyncSettingsEvent.CloudChange) : InitMode()
+    object PushToServer : InitMode()
   }
 
   @RequiresBackgroundThread
@@ -74,6 +77,9 @@ internal class SettingsSyncBridge(application: Application,
       }
       else if (event is SyncSettingsEvent.CloudChange) {
         settingsLog.applyCloudState(event.snapshot)
+      }
+      else if (event is SyncSettingsEvent.LogCurrentSettings) {
+        settingsLog.logExistingSettings()
       }
       else if (event is SyncSettingsEvent.PushIfNeededRequest) {
         pushToCloudRequested = true
@@ -99,11 +105,13 @@ internal class SettingsSyncBridge(application: Application,
       val pushResult: SettingsSyncPushResult = pushToIde(settingsLog.collectCurrentSnapshot())
       LOG.info("Result of pushing settings to the IDE: $pushResult")
       when (pushResult) {
-        SettingsSyncPushResult.Success -> settingsLog.setIdePosition(masterPosition)
+        SettingsSyncPushResult.Success -> {
+          settingsLog.setIdePosition(masterPosition)
+          SettingsSyncStatusTracker.getInstance().updateOnSuccess()
+        }
         is SettingsSyncPushResult.Error -> {
-          // todo notify only in case of explicit sync invocation, otherwise update some SettingsSyncStatus
-          notifySettingsSyncError(title = SettingsSyncBundle.message("notification.title.apply.error"),
-                                  message = pushResult.message)
+          SettingsSyncStatusTracker.getInstance().updateOnError(
+            SettingsSyncBundle.message("notification.title.apply.error") + ": " + pushResult.message)
         }
         SettingsSyncPushResult.Rejected -> {
           // In the case of reject we'll just "wait" for the next update event:
@@ -119,10 +127,13 @@ internal class SettingsSyncBridge(application: Application,
       val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot())
       LOG.info("Result of pushing settings to the cloud: $pushResult")
       when (pushResult) {
-        SettingsSyncPushResult.Success -> settingsLog.setCloudPosition(masterPosition)
+        SettingsSyncPushResult.Success -> {
+          settingsLog.setCloudPosition(masterPosition)
+          SettingsSyncStatusTracker.getInstance().updateOnSuccess()
+        }
         is SettingsSyncPushResult.Error -> {
-          // todo notify only in case of explicit sync invocation, otherwise update some SettingsSyncStatus
-          notifySettingsSyncError(SettingsSyncBundle.message("notification.title.push.error"), pushResult.message)
+          SettingsSyncStatusTracker.getInstance().updateOnError(
+            SettingsSyncBundle.message("notification.title.push.error") + ": " + pushResult.message)
         }
         SettingsSyncPushResult.Rejected -> {
           // todo add protection against potential infinite reject-update-reject cycle
@@ -147,7 +158,7 @@ internal class SettingsSyncBridge(application: Application,
   }
 
   private fun pushToIde(settingsSnapshot: SettingsSnapshot): SettingsSyncPushResult {
-    ideUpdater.settingsLogged(settingsSnapshot)
+    ideMediator.applyToIde(settingsSnapshot)
     return SettingsSyncPushResult.Success // todo
   }
 

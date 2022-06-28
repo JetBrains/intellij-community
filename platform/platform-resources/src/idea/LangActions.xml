@@ -308,11 +308,11 @@
       <add-to-group group-id="EditorGutterPopupMenu" anchor="after" relative-to-action="EditorGutterVcsPopupMenu"/>
     </group>
 
-    <group id="popup@ExpandableBookmarkContextMenu" popup="true">
+    <group id="popup@ExpandableBookmarkContextMenu" popup="true" searchable="false">
       <reference ref="popup@BookmarkContextMenu"/>
     </group>
 
-    <group id="EditBookmarksGroup" popup="true">
+    <group id="EditBookmarksGroup" popup="true" searchable="false">
       <reference ref="popup@BookmarkContextMenu"/>
       <separator/>
       <reference ref="GotoPreviousBookmark"/>
@@ -353,6 +353,7 @@
       These actions are added to the context menu, to the popup menu, and to the toolbar.
       This group should be used to register additional documentation actions.
       -->
+      <reference ref="QuickDocCopy"/>
       <reference ref="Documentation.Navigation"/>
       <reference ref="Documentation.ViewExternal"/>
     </group>
@@ -390,13 +391,20 @@
       <keyboard-shortcut first-keystroke="SPACE" keymap="$default"/>
     </action>
 
-    <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
+    <action id="ViewNavigationBar" class="com.intellij.ide.actions.navbar.ViewNavigationBarAction">
       <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewToolBar"/>
       <override-text place="NavBar"/>
     </action>
 
+    <group id="NavbarLocationGroup" popup="true" class="com.intellij.ide.actions.navbar.NavBarLocationGroup">
+      <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewNavigationBar"/>
+      <action id="NavBarLocationTop" class="com.intellij.ide.actions.navbar.NavBarTopLocationAction"/>
+      <action id="NavBarLocationBottom" class="com.intellij.ide.actions.navbar.NavBarBottomLocationAction"/>
+      <action id="NavBarLocationHide" class="com.intellij.ide.actions.navbar.HideNavBarAction"/>
+    </group>
+
     <action id="ViewMembersInNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarMembersAction">
-      <add-to-group group-id="UIToggleActions" relative-to-action="ViewNavigationBar" anchor="after"/>
+      <add-to-group group-id="UIToggleActions" relative-to-action="NavbarLocationGroup" anchor="after"/>
       <override-text place="NavBar"/>
     </action>
 

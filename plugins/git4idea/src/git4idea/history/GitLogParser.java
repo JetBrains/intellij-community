@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -186,8 +186,10 @@ public class GitLogParser<R extends GitLogRecord> {
     if (myPathsParser.getErrorText() != null ||
         !myOptionsParser.hasCompleteOptionsList()) {
       if (myPathsParser.getErrorText() != null) LOG.debug("Creating record was skipped: " + myPathsParser.getErrorText());
-      if (!myOptionsParser.hasCompleteOptionsList()) LOG.debug("Parsed incomplete options " + myOptionsParser.myResult.getResult() + " for " +
-                                                               Arrays.toString(myOptionsParser.myOptions));
+      if (!myOptionsParser.hasCompleteOptionsList()) {
+        LOG.debug("Parsed incomplete options " + myOptionsParser.myResult.getResult() + " for " +
+                  Arrays.toString(myOptionsParser.myOptions));
+      }
       myOptionsParser.clear();
       myRecordBuilder.clear();
       myPathsParser.clear();

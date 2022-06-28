@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
@@ -139,7 +139,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     boolean needToAddNewline = false;
-    if (first == last && first.getElementType() == DOC_TAG) {
+    if (last.getElementType() == DOC_TAG && first.getElementType() == DOC_TAG) {
       if (anchor == null) {
         anchor = getLastChildNode(); // this is a '*/'
         ASTNode prevBeforeWS = TreeUtil.skipElementsBack(anchor.getTreePrev(), TokenSet.WHITE_SPACE);

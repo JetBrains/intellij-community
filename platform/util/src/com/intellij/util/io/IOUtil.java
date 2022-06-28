@@ -25,14 +25,30 @@ import java.util.stream.Stream;
 
 public final class IOUtil {
   @ApiStatus.Internal
-  public static final String BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP = "idea.bytebuffers.use.native.byte.order";
+  public static final ThreadLocal<Boolean> OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP = new ThreadLocal<Boolean>() {
+    @Override
+    public void set(Boolean value) {
+      if (get() != null) {
+        throw new RuntimeException("Reentrant access");
+      }
+      super.set(value);
+    }
+  };
+
+  @ApiStatus.Internal
+  public static final String SHARED_CACHES_PROP = "idea.shared.caches";
 
   /**
    * if false then storages will use {@link java.nio.ByteOrder#BIG_ENDIAN}
    */
   @ApiStatus.Internal
   public static boolean useNativeByteOrderForByteBuffers() {
-    return SystemProperties.getBooleanProperty(BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP, true);
+    Boolean forced = OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.get();
+    return forced == null || forced.booleanValue();
+  }
+
+  public static boolean isSharedCachesEnabled() {
+    return SystemProperties.getBooleanProperty(SHARED_CACHES_PROP, false);
   }
 
   private static final int STRING_HEADER_SIZE = 1;

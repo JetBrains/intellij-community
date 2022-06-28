@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.packaging.jlink;
 
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -32,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -140,7 +142,7 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
     /**
      * java.lang.module.ModuleFinder API is used here through reflection
      * as idea modules used in the build process were left compatible with Java 8 by intention.
-     * Details are here: https://youtrack.jetbrains.com/issue/IDEA-243693
+     * Details are here: <a href="https://youtrack.jetbrains.com/issue/IDEA-243693">IDEA-243693</a>
      */
     @Nullable
     private static String getModulesSequence(@NotNull String artifactOutputPath) {
@@ -215,13 +217,19 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
     private static int startProcess(@NotNull CompileContext context,
                                     @NotNull List<String> commands,
                                     @NotNull JpsJLinkProperties properties) {
+      File arg_file = null;
       try {
         final AtomicInteger exitCode = new AtomicInteger();
         final @NlsSafe StringBuilder errorOutput = new StringBuilder();
         final List<@NlsSafe String> delayedInfoOutput = new ArrayList<>();
+        
+        arg_file = FileUtil.createTempFile("jlink_arg_file", null);
+        CommandLineWrapperUtil.writeArgumentsFile(arg_file, commands.subList(1, commands.size()), StandardCharsets.UTF_8);
 
-        final Process process = new ProcessBuilder(CommandLineUtil.toCommandLine(commands)).start();
-        BaseOSProcessHandler handler = new BaseOSProcessHandler(process, commands.toString(), null);
+        List<String> newCommands = Arrays.asList(commands.get(0), "@" + arg_file.getCanonicalPath());
+        final Process process = new ProcessBuilder(CommandLineUtil.toCommandLine(newCommands)).start();
+
+        BaseOSProcessHandler handler = new BaseOSProcessHandler(process, newCommands.toString(), null);
         handler.addProcessListener(new ProcessAdapter() {
           @Override
           public void processTerminated(@NotNull ProcessEvent event) {
@@ -264,6 +272,11 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
         error(context, e.getMessage());
         LOG.error(e);
         return -1;
+      }
+      finally {
+        if (arg_file != null) {
+          FileUtil.delete(arg_file);
+        }
       }
     }
 

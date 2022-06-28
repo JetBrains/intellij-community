@@ -1,11 +1,11 @@
 val x =
-        1
+    1
 
 fun foo() {
     val y =
-            2
+        2
     y =
-            3
+        3
 }
 
 // SET_INT: ASSIGNMENT_WRAP = 2

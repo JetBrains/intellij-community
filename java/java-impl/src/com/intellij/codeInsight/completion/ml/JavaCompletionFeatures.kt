@@ -182,7 +182,7 @@ object JavaCompletionFeatures {
   fun getPackageMatchingFeatures(contextFeatures: ContextFeatures, psiClass: PsiClass): Map<String, MLFeatureValue> {
     val packagesInfo = contextFeatures.getUserData(PACKAGES_KEY) ?: return emptyMap()
     val packageName = PsiUtil.getPackageName(psiClass)
-    if (packageName == null || packageName.isEmpty()) return emptyMap()
+    if (packageName.isNullOrEmpty()) return emptyMap()
     val packagePartsCount = packageName.split(".").size
     val result = mutableMapOf<String, MLFeatureValue>()
     val packageMatchedParts = packagesInfo.packageName.matchedParts(packageName)

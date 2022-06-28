@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.tree
 
@@ -112,9 +112,14 @@ class JKEnumConstant(
 }
 
 
-class JKTypeParameter(name: JKNameIdentifier, upperBounds: List<JKTypeElement>) : JKDeclaration() {
+class JKTypeParameter(
+    name: JKNameIdentifier,
+    upperBounds: List<JKTypeElement>,
+    annotationList: JKAnnotationList = JKAnnotationList()
+) : JKDeclaration(), JKAnnotationListOwner {
     override var name: JKNameIdentifier by child(name)
     var upperBounds: List<JKTypeElement> by children(upperBounds)
+    override var annotationList by child(annotationList)
 
     override fun accept(visitor: JKVisitor) = visitor.visitTypeParameter(this)
 }

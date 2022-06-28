@@ -46,6 +46,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @ApiStatus.Internal
   public static final ExtensionPointName<PluggableLocalFileSystemContentLoader> PLUGGABLE_CONTENT_LOADER_EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.pluggableContentLoader");
+
+  @ApiStatus.Internal
+  public static final ExtensionPointName<LocalFileOperationsHandler> FILE_OPERATIONS_HANDLER_EP_NAME =
+    ExtensionPointName.create("com.intellij.vfs.local.fileOperationsHandler");
+
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
   private final FileAttributes FAKE_ROOT_ATTRIBUTES =
@@ -53,6 +58,66 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
                        isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
 
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<>();
+
+  public LocalFileSystemBase() {
+    myHandlers.add(new LocalFileOperationsHandler() {
+      @Override
+      public boolean delete(@NotNull VirtualFile file) throws IOException {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          if (handler.delete(file)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      public boolean move(@NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          if (handler.move(file, toDir)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      public @Nullable File copy(@NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String copyName) throws IOException {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          File copy = handler.copy(file, toDir, copyName);
+          if (copy != null) return copy;
+        }
+        return null;
+      }
+
+      @Override
+      public boolean rename(@NotNull VirtualFile file, @NotNull String newName) throws IOException {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          if (handler.rename(file, newName)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      public boolean createFile(@NotNull VirtualFile dir, @NotNull String name) throws IOException {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          if (handler.createFile(dir, name)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      public boolean createDirectory(@NotNull VirtualFile dir, @NotNull String name) throws IOException {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          if (handler.createDirectory(dir, name)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      public void afterDone(@NotNull ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {
+        for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
+          handler.afterDone(invoker);
+        }
+      }
+    });
+  }
 
   @Override
   public @Nullable VirtualFile findFileByPath(@NotNull String path) {

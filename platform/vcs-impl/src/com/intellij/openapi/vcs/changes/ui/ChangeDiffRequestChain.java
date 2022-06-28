@@ -3,14 +3,13 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.AsyncDiffRequestChain;
+import com.intellij.diff.chains.DiffRequestChainBase;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.chains.DiffRequestSelectionChain;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -20,36 +19,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-/**
- * Supports typical tree-like "Go to Change" navigation popup.
- *
- * @see ChangeDiffRequestChain.Async
- */
-public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRequestSelectionChain, GoToChangePopupBuilder.Chain {
+public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoToChangePopupBuilder.Chain {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestChain.class);
-  @NotNull private final ListSelection<? extends Producer> myProducers;
-
-  public ChangeDiffRequestChain(@NotNull ListSelection<? extends Producer> producers) {
-    myProducers = producers.map(it -> {
-      if (it == null) LOG.error("Producers must not be null");
-      return it;
-    });
-  }
+  @NotNull private final List<? extends Producer> myProducers;
 
   public ChangeDiffRequestChain(@NotNull List<? extends Producer> producers, int index) {
-    this(ListSelection.createAt(producers, index));
-  }
-
-  @Override
-  public @NotNull ListSelection<? extends Producer> getListSelection() {
-    return myProducers;
+    super(index);
+    if (ContainerUtil.exists(producers, Objects::isNull)) {
+      producers = ContainerUtil.skipNulls(producers);
+      LOG.error("Producers must not be null");
+    }
+    myProducers = producers;
   }
 
   @Override
   @NotNull
   public List<? extends Producer> getRequests() {
-    return myProducers.getList();
+    return myProducers;
   }
 
   @NotNull

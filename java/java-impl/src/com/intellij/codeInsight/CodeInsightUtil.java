@@ -20,6 +20,8 @@ import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,7 +213,8 @@ public final class CodeInsightUtil {
 
   public static PsiExpression @NotNull [] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {
     List<PsiExpression> array = new ArrayList<>();
-    addExpressionOccurrences(CommonJavaRefactoringUtil.unparenthesizeExpression(expr), array, scope);
+    TrackingEquivalenceChecker equivalenceChecker = new TrackingEquivalenceChecker();
+    addExpressionOccurrences(CommonJavaRefactoringUtil.unparenthesizeExpression(expr), array, scope, equivalenceChecker);
     if (expr.isPhysical()) {
       boolean found = false;
       for (PsiExpression psiExpression : array) {
@@ -225,16 +228,17 @@ public final class CodeInsightUtil {
     return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  private static void addExpressionOccurrences(PsiExpression expr, List<? super PsiExpression> array, PsiElement scope) {
+  private static void addExpressionOccurrences(PsiExpression expr, List<? super PsiExpression> array, PsiElement scope, EquivalenceChecker equivalenceChecker) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiExpression) {
-        if (JavaPsiEquivalenceUtil.areExpressionsEquivalent(CommonJavaRefactoringUtil.unparenthesizeExpression((PsiExpression)child), expr)) {
+        PsiExpression unparenthesized = CommonJavaRefactoringUtil.unparenthesizeExpression((PsiExpression)child);
+        if (equivalenceChecker.expressionsAreEquivalent(unparenthesized, expr)) {
           array.add((PsiExpression)child);
           continue;
         }
       }
-      addExpressionOccurrences(expr, array, child);
+      addExpressionOccurrences(expr, array, child, equivalenceChecker);
     }
   }
 

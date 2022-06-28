@@ -8,7 +8,7 @@ public class Test {
     }
 
     @NotNull
-    private String getString() {
+    private static String getString() {
         String s = "42";
         return s;
     }

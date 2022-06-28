@@ -143,4 +143,9 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
     }
     return indicator;
   }
+
+  @Override
+  public String toString() {
+    return "ProgressWrapper " + System.identityHashCode(this) + ": running=" + isRunning() + "; canceled=" + isCanceled() +"; original="+myOriginal;
+  }
 }

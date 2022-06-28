@@ -138,9 +138,6 @@ fun ThreadReferenceProxyImpl.supportsEvaluation(): Boolean =
 fun SuspendContextImpl.supportsEvaluation() =
     this.debugProcess.canRunEvaluation || isUnitTestMode()
 
-fun XDebugSession.suspendContextImpl() =
-    suspendContext as SuspendContextImpl
-
 fun threadAndContextSupportsEvaluation(suspendContext: SuspendContextImpl, frameProxy: StackFrameProxyImpl?) =
     suspendContext.invokeInManagerThread {
         suspendContext.supportsEvaluation() && frameProxy?.threadProxy()?.supportsEvaluation() ?: false

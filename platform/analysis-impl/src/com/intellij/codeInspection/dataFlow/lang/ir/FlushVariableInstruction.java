@@ -25,9 +25,7 @@ public class FlushVariableInstruction extends Instruction {
 
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    var instruction = new FlushVariableInstruction(myVariable.bindToFactory(factory));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new FlushVariableInstruction(myVariable.bindToFactory(factory));
   }
 
   @NotNull

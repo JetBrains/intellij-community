@@ -124,18 +124,19 @@ public class NumberEqualityInspection extends BaseInspection {
     public boolean value(final PsiElement element) {
       PsiConditionalExpression ternary = tryCast(element, PsiConditionalExpression.class);
       if (ternary != null) {
-        final PsiExpression condition = skipParenthesizedExprDown(ternary.getCondition());
+        final PsiExpression condition = ternary.getCondition();
         if (isOneOfVariablesDefinitelyNull(ternary, condition)) return true;
       }
 
       final PsiIfStatement ifStatement = tryCast(element, PsiIfStatement.class);
       if (ifStatement == null) return false;
 
-      final PsiExpression condition = skipParenthesizedExprDown(ifStatement.getCondition());
+      final PsiExpression condition = ifStatement.getCondition();
       return isOneOfVariablesDefinitelyNull(ifStatement, condition);
     }
 
     public boolean isOneOfVariablesDefinitelyNull(PsiElement element, PsiExpression condition) {
+      condition = skipParenthesizedExprDown(condition);
       if (condition == null) return false;
 
       boolean isNegated = false;
@@ -164,9 +165,13 @@ public class NumberEqualityInspection extends BaseInspection {
       List<IElementType> targetTokenTypes = areBothOperandsComparedWithNull ? Arrays.asList(OROR, OR) : Arrays.asList(ANDAND, AND);
       if (!targetTokenTypes.contains(tokenType)) return false;
 
-      final PsiElement elementContainsNumberEquality
-        = getElementMustContainNumberEquality(element, isNegated, areBothOperandsComparedWithNull);
-      if (element == null) return false;
+      final PsiElement elementContainsNumberEquality;
+      if (element instanceof PsiBinaryExpression) {
+        elementContainsNumberEquality = getAnotherOperand((PsiBinaryExpression)element, condition);
+      }
+      else {
+        elementContainsNumberEquality = getElementMustContainNumberEquality(element, isNegated, areBothOperandsComparedWithNull);
+      }
       if (!PsiTreeUtil.isAncestor(elementContainsNumberEquality, lhs, false)) return false;
 
       final EquivalenceChecker checker = EquivalenceChecker.getCanonicalPsiEquivalence();
@@ -203,18 +208,21 @@ public class NumberEqualityInspection extends BaseInspection {
       final PsiElement thenBranch = ifStatement.getThenBranch();
       final PsiElement elseBranch = ifStatement.getElseBranch();
       result = isNegated ^ areBothOperandsComparedWithNull ? thenBranch : elseBranch;
-    } else if (element instanceof PsiBinaryExpression) {
-      result = ((PsiBinaryExpression)element).getROperand();
     } else {
       result = null;
     }
     return result;
   }
 
+  private static PsiExpression getAnotherOperand(@NotNull PsiBinaryExpression expression, PsiExpression operand) {
+    PsiExpression rOperand = skipParenthesizedExprDown(expression.getROperand());
+    return rOperand != operand ? rOperand : expression.getLOperand();
+  }
+
   private static boolean isOneOfVariablesDefinitelyNullAsPartOfBooleanExpression(PsiBinaryExpression expression, Filter filter) {
     final PsiBinaryExpression binOp = tryCast(skipParenthesizedExprUp(expression.getParent()), PsiBinaryExpression.class);
     if (binOp == null) return false;
-    final PsiExpression lOperand = skipParenthesizedExprDown(binOp.getLOperand());
-    return filter.isOneOfVariablesDefinitelyNull(binOp, lOperand);
+    return filter.isOneOfVariablesDefinitelyNull(binOp, binOp.getLOperand()) ||
+           filter.isOneOfVariablesDefinitelyNull(binOp, binOp.getROperand());
   }
 }

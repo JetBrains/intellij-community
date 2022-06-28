@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeIndexingInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,10 +37,6 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
     if (LightEdit.owns(project)) return;
     if (changes.isEmpty()) {
       runFullReindex(project, "Project roots have changed");
-    }
-    if (Registry.is("indexing.full.rescan.on.workspace.model.changes")) {
-      runFullReindex(project, "Reindex requested by project root model changes (full rescanning forced by registry key)");
-      return;
     }
     for (RootsChangeIndexingInfo change : changes) {
       if (change == RootsChangeIndexingInfo.TOTAL_REINDEX) {

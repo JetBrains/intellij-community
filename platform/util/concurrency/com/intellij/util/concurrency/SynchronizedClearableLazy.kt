@@ -1,44 +1,40 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
+import com.intellij.util.ObjectUtils
 import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Kotlin-friendly version of ClearableLazyValue
  */
-@Suppress("LocalVariableName")
 class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T> {
-  private val computedValue = AtomicReference<Any?>(Sentinel())
+  private val computedValue = AtomicReference(notYetInitialized())
+  companion object {
+    val NOT_YET_INITIALIZED = ObjectUtils.sentinel("Not yet initialized")
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun notYetInitialized(): T = NOT_YET_INITIALIZED as T
+  private fun nullize(t: T): T? = if (isInitialized(t)) t else null
+  private fun isInitialized(t: T?): Boolean = t !== NOT_YET_INITIALIZED
 
   val valueIfInitialized: T?
-    @Suppress("UNCHECKED_CAST")
     get() {
-      val value = computedValue.get()
-      return if (value is Sentinel) null else value as T
+      return nullize(computedValue.get())
     }
 
   override var value: T
     get() {
-      while (true) {
-        var currentValue = computedValue.get()
-        if (currentValue !is Sentinel) {
-          @Suppress("UNCHECKED_CAST")
-          return currentValue as T
-        }
+      val currentValue = computedValue.get()
+      if (isInitialized(currentValue)) {
+        return currentValue
+      }
 
-        // do not call initializer in parallel
-        synchronized(this) {
-          currentValue = computedValue.get()
-          if (currentValue !is Sentinel) {
-            @Suppress("UNCHECKED_CAST")
-            return currentValue as T
-          }
-
-          val result = initializer()
-          // set under lock to ensure that initializer is not called several times
-          if (computedValue.compareAndSet(currentValue, result)) {
-            return result
-          }
+      // do not call initializer in parallel
+      synchronized(this) {
+        // set under lock to ensure that initializer is not called several times
+        return computedValue.updateAndGet { old ->
+          if (isInitialized(old)) old else initializer()
         }
       }
     }
@@ -46,24 +42,15 @@ class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T> {
       computedValue.set(value)
     }
 
-  override fun isInitialized() = computedValue.get() !is Sentinel
+  override fun isInitialized() = isInitialized(computedValue.get())
 
-  override fun toString() = computedValue.get().toString()
+  override fun toString() = computedValue.toString()
 
   fun drop(): T? {
-    val oldValue = computedValue.getAndSet(Sentinel())
-    @Suppress("UNCHECKED_CAST")
-    return if (oldValue is Sentinel) null else oldValue as T
+    return nullize(computedValue.getAndSet(notYetInitialized()))
   }
 
   fun compareAndDrop(expectedValue: T): Boolean {
-    return computedValue.compareAndSet(expectedValue, Sentinel())
+    return computedValue.compareAndSet(expectedValue, notYetInitialized())
   }
-}
-
-private class Sentinel {
-  override fun toString() = "Lazy value not initialized yet."
-
-  override fun equals(other: Any?) = other === this
-  override fun hashCode() = System.identityHashCode(this)
 }

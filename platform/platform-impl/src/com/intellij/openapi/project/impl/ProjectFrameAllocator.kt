@@ -29,7 +29,6 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.ProjectSelfieUtil
-import com.intellij.ui.ComponentUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
@@ -151,10 +150,10 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         val preAllocated = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
         if (preAllocated == null) {
           if (options.frameManager is FrameInfo) {
-            SingleProjectUiFrameManager(options.frameManager as FrameInfo, createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = options.frameManager as FrameInfo))
+            SingleProjectUiFrameManager(options.frameManager as FrameInfo, createNewProjectFrame(options.frameManager as FrameInfo))
           }
           else {
-            DefaultProjectUiFrameManager(frame = createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = null), frameHelper = null)
+            DefaultProjectUiFrameManager(frame = createNewProjectFrame(null), frameHelper = null)
           }
         }
         else {
@@ -200,10 +199,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       }
     }
   }
-
-  override fun projectOpened(project: Project) {
-    frameManager!!.projectOpened(project)
-  }
 }
 
 private fun restoreFrameState(frameHelper: ProjectFrameHelper, frameInfo: FrameInfo) {
@@ -223,7 +218,7 @@ private fun restoreFrameState(frameHelper: ProjectFrameHelper, frameInfo: FrameI
 }
 
 @ApiStatus.Internal
-internal fun createNewProjectFrame(forceDisableAutoRequestFocus: Boolean, frameInfo: FrameInfo?): IdeFrameImpl {
+internal fun createNewProjectFrame(frameInfo: FrameInfo?): IdeFrameImpl {
   val frame = IdeFrameImpl()
   SplashManager.hideBeforeShow(frame)
 
@@ -246,9 +241,6 @@ internal fun createNewProjectFrame(forceDisableAutoRequestFocus: Boolean, frameI
     frame.extendedState = state
   }
 
-  if (forceDisableAutoRequestFocus || (!ApplicationManager.getApplication().isActive && ComponentUtil.isDisableAutoRequestFocus())) {
-    frame.isAutoRequestFocus = false
-  }
   frame.minimumSize = Dimension(340, frame.minimumSize.height)
   return frame
 }
@@ -259,9 +251,6 @@ internal interface ProjectUiFrameManager {
   fun init(allocator: ProjectUiFrameAllocator)
 
   fun getComponent(): JComponent
-
-  fun projectOpened(project: Project) {
-  }
 }
 
 private class SplashProjectUiFrameManager(private val frame: IdeFrameImpl) : ProjectUiFrameManager {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.light
 
 import com.intellij.ide.lightEdit.LightEdit
@@ -61,7 +61,7 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
   override fun dispose() = Unit
 }
 
-class LightGitStatusBarWidgetFactory: StatusBarWidgetFactory, LightEditCompatible {
+class LightGitStatusBarWidgetFactory : StatusBarWidgetFactory, LightEditCompatible {
   override fun getId(): String = ID
 
   override fun getDisplayName(): String = GitBundle.message("git.light.status.bar.display.name")

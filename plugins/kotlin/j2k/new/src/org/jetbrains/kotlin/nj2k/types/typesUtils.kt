@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.types
 
@@ -6,10 +6,10 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.PrimitiveType
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.Locale
+import java.util.*
 
 fun JKType.asTypeElement(annotationList: JKAnnotationList = JKAnnotationList()) =
     JKTypeElement(this, annotationList)
@@ -61,7 +61,6 @@ private val jvmPrimitiveTypesPriority =
         PrimitiveType.DOUBLE to 6
     )
 
-
 fun JKType.applyRecursive(transform: (JKType) -> JKType?): JKType =
     transform(this) ?: when (this) {
         is JKTypeParameterType -> this
@@ -98,16 +97,16 @@ inline fun <reified T : JKType> T.updateNullability(newNullability: Nullability)
 
 @Suppress("UNCHECKED_CAST")
 fun <T : JKType> T.updateNullabilityRecursively(newNullability: Nullability): T =
-    applyRecursive {
-        when (it) {
-            is JKTypeParameterType -> JKTypeParameterType(it.identifier, newNullability)
+    applyRecursive { type ->
+        when (type) {
+            is JKTypeParameterType -> JKTypeParameterType(type.identifier, newNullability)
             is JKClassType ->
                 JKClassType(
-                    it.classReference,
-                    it.parameters.map { it.updateNullabilityRecursively(newNullability) },
+                    type.classReference,
+                    type.parameters.map { it.updateNullabilityRecursively(newNullability) },
                     newNullability
                 )
-            is JKJavaArrayType -> JKJavaArrayType(it.type.updateNullabilityRecursively(newNullability), newNullability)
+            is JKJavaArrayType -> JKJavaArrayType(type.type.updateNullabilityRecursively(newNullability), newNullability)
             else -> null
         }
     } as T
@@ -130,7 +129,6 @@ fun JKJavaPrimitiveType.toLiteralType(): JKLiteralExpression.LiteralType? =
         else -> null
     }
 
-
 fun JKType.asPrimitiveType(): JKJavaPrimitiveType? =
     if (this is JKJavaPrimitiveType) this
     else when ((this as? JKClassType)?.classReference?.fqName) {
@@ -152,8 +150,7 @@ fun JKJavaPrimitiveType.isNumberType() =
             this == JKJavaPrimitiveType.DOUBLE
 
 fun JKJavaPrimitiveType.kotlinName() =
-    jvmPrimitiveType.javaKeywordName.capitalize(Locale.US)
-
+    jvmPrimitiveType.javaKeywordName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
 
 val primitiveTypes =
     listOf(
@@ -214,8 +211,7 @@ fun JKType.arrayInnerType(): JKType? =
     }
 
 fun JKClassSymbol.isInterface(): Boolean {
-    val target = target
-    return when (target) {
+    return when (val target = target) {
         is PsiClass -> target.isInterface
         is KtClass -> target.isInterface()
         is JKClass -> target.classKind == JKClass.ClassKind.INTERFACE
@@ -225,7 +221,6 @@ fun JKClassSymbol.isInterface(): Boolean {
 
 fun JKType.isInterface(): Boolean =
     (this as? JKClassType)?.classReference?.isInterface() ?: false
-
 
 fun JKType.replaceJavaClassWithKotlinClassType(symbolProvider: JKSymbolProvider): JKType =
     applyRecursive { type ->

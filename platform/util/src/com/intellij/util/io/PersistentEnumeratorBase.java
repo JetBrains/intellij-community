@@ -68,7 +68,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   private boolean myClosed;
   private boolean myDirty;
-  private boolean myCorrupted;
+  private volatile boolean myCorrupted;
   private RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
   private @Nullable Flushable myMarkCleanCallback;
 
@@ -177,7 +177,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         }
         if (sign != myVersion.correctlyClosedMagic) {
           myStorage.close();
-          if (sign != myVersion.dirtyMagic) throw new VersionUpdatedException(file);
+
+          if (sign != myVersion.dirtyMagic) {
+            throw new VersionUpdatedException(file, Integer.toHexString(myVersion.correctlyClosedMagic), Integer.toHexString(sign));
+          }
           throw new CorruptedException(file);
         }
       }
@@ -206,7 +209,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
 
     if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
-      LOG.info("PersistentEnumeratorBase at " + myFile + " has been open (new = " + created + ")");
+      LOG.debug("PersistentEnumeratorBase at " + myFile + " has been open (new = " + created + ")");
     }
   }
 
@@ -518,13 +521,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean isCorrupted() {
-    lockStorageRead();
-    try {
-      return myCorrupted;
-    }
-    finally {
-      unlockStorageRead();
-    }
+    return myCorrupted;
   }
 
   protected void doFlush() throws IOException {

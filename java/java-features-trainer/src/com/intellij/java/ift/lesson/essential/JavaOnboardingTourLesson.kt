@@ -127,6 +127,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
       useDelay = true
+      invokeActionForFocusContext(getActionById("Stop"))
       configurations().forEach { runManager().removeConfiguration(it) }
 
       val root = ProjectUtils.getCurrentLearningProjectRoot()
@@ -244,7 +245,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       })
     }
 
-    val currentJdk = JavaProjectUtil.getEffectiveJdk(project)
+    val currentJdk = JavaProjectUtil.getProjectJdk(project)
 
     @Suppress("HardCodedStringLiteral")
     val currentJdkVersion: @NlsSafe String = currentJdk?.let { JavaSdk.getInstance().getVersionString(it) } ?: "none"
@@ -286,10 +287,6 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
           label(currentLanguageLevel)
         }
       }
-
-      override val possibleTechnicalIssues: Map<String, @Nls String> = mapOf(
-        "jdk_issues" to JavaLessonsBundle.message("java.onboarding.option.jdk.issues")
-      )
 
       override fun feedbackHasBeenProposed() {
         PropertiesComponent.getInstance().setValue(configPropertyName, true, false)

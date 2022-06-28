@@ -1,6 +1,7 @@
 // "Import" "false"
 // ACTION: Create extension function 'H?.inc'
 // ACTION: Create member function 'H.inc'
+// ACTION: Do not show return expression hints
 // ACTION: Replace overloaded operator with function call
 // ERROR: Unresolved reference: ++
 

@@ -48,9 +48,9 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private List<IdeaPluginDependency> myDependencies = new ArrayList<>();
   private Status myStatus = Status.UNKNOWN;
   private boolean myLoaded;
-  private String myDownloadUrl;
+  private @NonNls String myDownloadUrl;
   private @NonNls String myChannel; // TODO parameters map?
-  private String myRepositoryName;
+  private @NlsSafe String myRepositoryName;
   private String myInstalledVersion;
   private boolean myEnabled = true;
   private String myRating;
@@ -437,12 +437,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myEnabled = enabled;
   }
 
-  public String getDownloadUrl() {
+  public @NonNls String getDownloadUrl() {
     return myDownloadUrl;
   }
 
-  public void setDownloadUrl(String host) {
-    myDownloadUrl = host;
+  public void setDownloadUrl(@NonNls String downloadUrl) {
+    myDownloadUrl = downloadUrl;
   }
 
   @ApiStatus.Experimental
@@ -459,7 +459,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return myRepositoryName;
   }
 
-  public void setRepositoryName(String repositoryName) {
+  public void setRepositoryName(@NlsSafe String repositoryName) {
     myRepositoryName = repositoryName;
   }
 

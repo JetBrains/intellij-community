@@ -761,7 +761,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   }
 
   private void close(boolean emergency) throws IOException {
-    if (myDoTrace) LOG.info("Closed " + myStorageFile);
+    if (myDoTrace) LOG.info("Closed " + myStorageFile + "." + (myAppendCache == null ? "" : ("Append cache stats: " + myAppendCache.dumpStats())));
 
     getWriteLock().lock();
     try {

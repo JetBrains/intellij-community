@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -14,7 +14,6 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -264,7 +263,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   class MoveToEntries extends QuickFixAction {
     MoveToEntries(@NotNull InspectionToolWrapper toolWrapper) {
-      super(AnalysisBundle.message("inspection.dead.code.entry.point.quickfix"), null, null, toolWrapper);
+      super(AnalysisBundle.message("inspection.dead.code.entry.point.quickfix"), AllIcons.Nodes.EntryPoints, null, toolWrapper);
     }
 
     @Override
@@ -430,8 +429,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
               (myFixedElements.containsKey(refElement) ||
               isExcluded(refEntity) ||
               isSuppressed(refElement))) && refElement.isValid() && getFilter().accepts(refElement)) {
-          PsiElement psiElement = refElement.getPsiElement();
-          if (psiElement != null && psiElement.getLanguage() != JavaLanguage.INSTANCE) return;
           if (skipEntryPoints(refElement)) return;
           registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
         }
@@ -601,7 +598,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     };
     htmlView.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         URL url = e.getURL();
         if (url == null) {
           return;
@@ -630,7 +627,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     final StringBuilder buf = new StringBuilder();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();
-    DescriptionEditorPaneKt.readHTML(htmlView, DescriptionEditorPaneKt.toHTML(htmlView, text, false));
+    DescriptionEditorPaneKt.readHTML(htmlView, text);
     return ScrollPaneFactory.createScrollPane(htmlView, true);
   }
 

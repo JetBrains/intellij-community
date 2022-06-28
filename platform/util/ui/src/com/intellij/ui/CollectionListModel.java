@@ -9,9 +9,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class CollectionListModel<T> extends AbstractListModel<T> implements EditableModel {
   private final List<T> myItems;
+  private boolean myListenersMuted = false;
 
   public CollectionListModel(@NotNull final Collection<? extends T> items) {
     myItems = new ArrayList<>(items);
@@ -49,12 +51,16 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
   public void add(final T element) {
     int i = myItems.size();
     myItems.add(element);
-    fireIntervalAdded(this, i, i);
+    if (!myListenersMuted) {
+      fireIntervalAdded(this, i, i);
+    }
   }
 
   public void add(int i,final T element) {
     myItems.add(i, element);
-    fireIntervalAdded(this, i, i);
+    if (!myListenersMuted) {
+      fireIntervalAdded(this, i, i);
+    }
   }
 
   public void add(@NotNull final List<? extends T> elements) {
@@ -65,7 +71,9 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     if (elements.isEmpty()) return;
 
     myItems.addAll(index, elements);
-    fireIntervalAdded(this, index, index + elements.size() - 1);
+    if (!myListenersMuted) {
+      fireIntervalAdded(this, index, index + elements.size() - 1);
+    }
   }
 
   public void remove(@NotNull T element) {
@@ -77,7 +85,9 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
 
   public void setElementAt(@NotNull final T item, final int index) {
     itemReplaced(myItems.set(index, item), item);
-    fireContentsChanged(this, index, index);
+    if (!myListenersMuted) {
+      fireContentsChanged(this, index, index);
+    }
   }
 
   @SuppressWarnings("UnusedParameters")
@@ -89,24 +99,32 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     if (item != null) {
       itemReplaced(item, null);
     }
-    fireIntervalRemoved(this, index, index);
+    if (!myListenersMuted) {
+      fireIntervalRemoved(this, index, index);
+    }
   }
 
   public void removeAll() {
     int size = myItems.size();
     if (size > 0) {
       myItems.clear();
-      fireIntervalRemoved(this, 0, size - 1);
+      if (!myListenersMuted) {
+        fireIntervalRemoved(this, 0, size - 1);
+      }
     }
   }
 
   public void contentsChanged(@NotNull final T element) {
     int i = myItems.indexOf(element);
-    fireContentsChanged(this, i, i);
+    if (!myListenersMuted) {
+      fireContentsChanged(this, i, i);
+    }
   }
 
   public void allContentsChanged() {
-    fireContentsChanged(this, 0, myItems.size() - 1);
+    if (!myListenersMuted) {
+      fireContentsChanged(this, 0, myItems.size() - 1);
+    }
   }
 
   public void sort(final Comparator<? super T> comparator) {
@@ -135,8 +153,10 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
   @Override
   public void exchangeRows(int oldIndex, int newIndex) {
     Collections.swap(myItems, oldIndex, newIndex);
-    fireContentsChanged(this, oldIndex, oldIndex);
-    fireContentsChanged(this, newIndex, newIndex);
+    if (!myListenersMuted) {
+      fireContentsChanged(this, oldIndex, oldIndex);
+      fireContentsChanged(this, newIndex, newIndex);
+    }
   }
 
   @Override
@@ -173,7 +193,25 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     for(int i = toIndex; i >= fromIndex; i--) {
       itemReplaced(myItems.remove(i), null);
     }
-    fireIntervalRemoved(this, fromIndex, toIndex);
+    if (!myListenersMuted) {
+      fireIntervalRemoved(this, fromIndex, toIndex);
+    }
   }
 
+  /**
+   * Perform batch update of list muting all the listeners when action is in progress. When action finishes,
+   * listeners are notified that list content is changed completely.
+   *
+   * @param action that performs batch update; accepts this model as a parameter
+   */
+  public void performBatchUpdate(Consumer<CollectionListModel<T>> action) {
+    try {
+      myListenersMuted = true;
+      action.accept(this);
+    }
+    finally {
+      myListenersMuted = false;
+    }
+    allContentsChanged();
+  }
 }

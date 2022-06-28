@@ -211,7 +211,7 @@ public final class Strings {
   }
 
   /**
-   * Implementation copied from {@link String#indexOf(String, int)} except character comparisons made case insensitive
+   * Implementation copied from {@link String#indexOf(String, int)} except character comparisons made case-insensitive
    */
   @Contract(pure = true)
   public static int indexOfIgnoreCase(@NotNull CharSequence where, @NotNull CharSequence what, int fromIndex) {

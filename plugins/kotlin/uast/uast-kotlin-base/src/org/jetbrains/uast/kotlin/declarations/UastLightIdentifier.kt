@@ -4,15 +4,11 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightIdentifier
-import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UIdentifier
-import org.jetbrains.uast.kotlin.createKDocNameSimpleNameReference
-import org.jetbrains.uast.toUElement
 
+@ApiStatus.Internal
 class UastLightIdentifier(
     lightOwner: PsiNameIdentifierOwner,
     ktDeclaration: KtDeclaration?

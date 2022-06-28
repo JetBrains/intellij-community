@@ -4,6 +4,8 @@
 from abc import ABCMeta, abstractmethod
 from typing import Any, SupportsFloat, overload
 
+__all__ = ["Number", "Complex", "Real", "Rational", "Integral"]
+
 class Number(metaclass=ABCMeta):
     @abstractmethod
     def __hash__(self) -> int: ...
@@ -40,8 +42,11 @@ class Complex(Number):
     def __pow__(self, exponent: Any) -> Any: ...
     @abstractmethod
     def __rpow__(self, base: Any) -> Any: ...
+    @abstractmethod
     def __abs__(self) -> Real: ...
+    @abstractmethod
     def conjugate(self) -> Any: ...
+    @abstractmethod
     def __eq__(self, other: object) -> bool: ...
 
 class Real(Complex, SupportsFloat):

@@ -2,3 +2,5 @@
 // OPTIONS: usages
 
 annotation class KotlinAnnForJava(val <caret>p: String)
+
+// FIR_COMPARISON

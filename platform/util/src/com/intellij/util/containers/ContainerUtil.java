@@ -13,11 +13,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * @see CollectionFactory
@@ -43,8 +46,12 @@ public final class ContainerUtil {
     return new HashMap<>();
   }
 
+  /**
+   * @deprecated use {@link Map#of()} or {@link Map#ofEntries(Map.Entry[])} instead
+   */
   @SafeVarargs
   @Contract(pure = true)
+  @Deprecated
   public static @NotNull <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, Pair<? extends K,? extends V> @NotNull ... entries) {
     Map<K, V> map = new HashMap<>(entries.length + 1);
     map.put(first.getFirst(), first.getSecond());
@@ -170,15 +177,6 @@ public final class ContainerUtil {
       return Collections.singletonList(originalList.get(0));
     }
     return Collections.unmodifiableList(new ArrayList<>(originalList));
-  }
-
-  @Contract(pure = true)
-  public static @NotNull <T> Collection<T> unmodifiableOrEmptyCollection(@NotNull Collection<? extends T> original) {
-    int size = original.size();
-    if (size == 0) {
-      return emptyList();
-    }
-    return Collections.unmodifiableCollection(original);
   }
 
   @Contract(pure = true)
@@ -360,7 +358,7 @@ public final class ContainerUtil {
 
   /**
    * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code array} elements.
-   * When contents of {@code array} changes (e.g. via {@code array[0] = null}, this collection contents changes accordingly.
+   * When contents of {@code array} changes (e.g. via {@code array[0] = null}), this collection contents changes accordingly.
    * This collection doesn't contain {@link Collections.UnmodifiableList#list} and {@link Collections.UnmodifiableCollection#c} fields,
    * unlike the {@link Collections#unmodifiableList(List)}, so it might be useful in extremely space-conscious places.
    * (Subject to change in subsequent JDKs).
@@ -384,7 +382,7 @@ public final class ContainerUtil {
 
   /**
    * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code list} elements.
-   * When contents of {@code list} changes (e.g. via {@code list.set(0, null)}, this collection contents changes accordingly.
+   * When contents of {@code list} changes (e.g. via {@code list.set(0, null)}), this collection contents changes accordingly.
    * This collection doesn't contain {@link Collections.UnmodifiableList#list} and {@link Collections.UnmodifiableCollection#c} fields,
    * unlike the {@link Collections#unmodifiableList(List)}, so it might be useful in extremely space-conscious places.
    * (Subject to change in subsequent JDKs).
@@ -536,7 +534,7 @@ public final class ContainerUtil {
 
   /**
    * Process both sorted lists in order defined by {@param comparator}, call {@param processor} for each element in merged list result.
-   * When equal elements occurred, then if {@param mergeEqualItems} then output only the elemen from the {@param list1} and ignore the second,
+   * When equal elements occurred, then if {@param mergeEqualItems} then output only the element from the {@param list1} and ignore the second,
    * else output them both in unspecified order.
    * {@param processor} is invoked for each (output element, is the element from {@param list1}) pair.
    * Both {@param list1} and {@param list2} must be sorted according to {@param comparator}
@@ -1605,11 +1603,6 @@ public final class ContainerUtil {
     return ArrayUtil.mergeCollections(c1, c2, factory);
   }
 
-  @Contract(pure=true)
-  public static <T> T @NotNull [] mergeCollectionsToArray(@NotNull Collection<? extends T> c1, @NotNull Collection<? extends T> c2, @NotNull ArrayFactory<? extends T> factory) {
-    return ArrayUtil.mergeCollections(c1, c2, factory);
-  }
-
   public static <T extends Comparable<? super T>> void sort(@NotNull List<T> list) {
     int size = list.size();
 
@@ -1723,42 +1716,42 @@ public final class ContainerUtil {
   }
 
   /**
-   * @apiNote this sort implementation is NOT stable for element.length < INSERTION_SORT_THRESHOLD
+   * @apiNote this sort implementation is NOT stable for {@code array.length < INSERTION_SORT_THRESHOLD}
    */
-  public static <T> void sort(T @NotNull [] a, @NotNull Comparator<? super T> comparator) {
-    int size = a.length;
+  public static <T> void sort(T @NotNull [] array, @NotNull Comparator<? super T> comparator) {
+    int size = array.length;
 
     if (size < 2) return;
     if (size == 2) {
-      T t0 = a[0];
-      T t1 = a[1];
+      T t0 = array[0];
+      T t1 = array[1];
 
       if (comparator.compare(t0, t1) > 0) {
-        a[0] = t1;
-        a[1] = t0;
+        array[0] = t1;
+        array[1] = t0;
       }
     }
     else if (size < INSERTION_SORT_THRESHOLD) {
       for (int i = 0; i < size; i++) {
         for (int j = 0; j < i; j++) {
-          T ti = a[i];
-          T tj = a[j];
+          T ti = array[i];
+          T tj = array[j];
 
           if (comparator.compare(ti, tj) < 0) {
-            a[i] = tj;
-            a[j] = ti;
+            array[i] = tj;
+            array[j] = ti;
           }
         }
       }
     }
     else {
-      Arrays.sort(a, comparator);
+      Arrays.sort(array, comparator);
     }
   }
 
   /**
    * @param iterable an input iterable to process
-   * @param mapping a side-effect free function which transforms iterable elements
+   * @param mapping a side effect-free function which transforms iterable elements
    * @return read-only list consisting of the elements from the iterable converted by mapping
    */
   @Contract(pure = true)
@@ -1772,7 +1765,7 @@ public final class ContainerUtil {
 
   /**
    * @param iterator an input iterator to process
-   * @param mapping a side-effect free function which transforms iterable elements
+   * @param mapping a side effect-free function which transforms iterable elements
    * @return read-only list consisting of the elements from the iterator converted by mapping
    */
   @Contract(pure = true)
@@ -1786,7 +1779,7 @@ public final class ContainerUtil {
 
   /**
    * @param collection an input collection to process
-   * @param mapping a side-effect free function which transforms iterable elements
+   * @param mapping a side effect-free function which transforms iterable elements
    * @return read-only list consisting of the elements from the input collection converted by mapping
    */
   @Contract(pure = true)
@@ -1801,7 +1794,7 @@ public final class ContainerUtil {
 
   /**
    * @param array an input array to process
-   * @param mapping a side-effect free function which transforms array elements
+   * @param mapping a side effect-free function which transforms array elements
    * @return read-only list consisting of the elements from the input array converted by mapping with nulls filtered out
    */
   @Contract(pure = true)
@@ -1823,7 +1816,7 @@ public final class ContainerUtil {
 
   /**
    * @param array an input array to process
-   * @param mapping a side-effect free function which transforms array elements
+   * @param mapping a side effect-free function which transforms array elements
    * @param emptyArray an empty array of desired result type (maybe returned if the result is also empty)
    * @return array consisting of the elements from the input array converted by mapping with nulls filtered out
    */
@@ -1847,7 +1840,7 @@ public final class ContainerUtil {
 
   /**
    * @param iterable an input iterable to process
-   * @param mapping a side-effect free function which transforms iterable elements
+   * @param mapping a side effect-free function which transforms iterable elements
    * @return read-only list consisting of the elements from the iterable converted by mapping with nulls filtered out
    */
   @Contract(pure = true)
@@ -1865,7 +1858,7 @@ public final class ContainerUtil {
 
   /**
    * @param collection an input collection to process
-   * @param mapping a side-effect free function which transforms collection elements
+   * @param mapping a side effect-free function which transforms collection elements
    * @return read-only list consisting of the elements from the array converted by mapping with nulls filtered out
    */
   @Contract(pure = true)
@@ -2067,7 +2060,7 @@ public final class ContainerUtil {
     if (len > 7) {
       int l = off;
       int n = off + len - 1;
-      if (len > 40) {        // Big arrays, pseudomedian of 9
+      if (len > 40) {        // Big arrays, pseudo-median of 9
         int s = len / 8;
         l = med3(x, comparator, l, l + s, l + 2 * s);
         m = med3(x, comparator, m - s, m, m + s);
@@ -2133,7 +2126,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of the elements from all of the collections
+   * @return read-only list consisting of the elements from all collections in order
    */
   @Contract(pure = true)
   public static @NotNull <E> List<E> flatten(Collection<E> @NotNull [] collections) {
@@ -2171,7 +2164,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of the elements from all of the collections
+   * @return read-only list consisting of the elements from all collections in order
    */
   @Contract(pure = true)
   public static @NotNull <E> List<E> flatten(@NotNull Iterable<? extends Collection<? extends E>> collections) {
@@ -2188,7 +2181,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of the elements from all of the collections
+   * @return read-only list consisting of the elements from all collections in order
    */
   @Contract(pure = true)
   public static @NotNull <E> List<E> flattenIterables(@NotNull Iterable<? extends Iterable<? extends E>> collections) {
@@ -2206,7 +2199,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of the elements from all of the collections returned by the mapping function,
+   * @return read-only list consisting of the elements from all collections returned by the mapping function,
    * or a read-only view of the list returned by the mapping function, if it only returned a single list that was not empty
    */
   public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends @NotNull List<V>> mapping) {
@@ -2311,27 +2304,11 @@ public final class ContainerUtil {
     return -1;
   }
 
-  @Contract(pure=true)
-  public static <T> int lastIndexOfIdentity(@NotNull List<? extends T> list, T object) {
-    for (int i = list.size() - 1; i >= 0; i--) {
-      T t = list.get(i);
-      if (t == object) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
   @Contract(pure = true)
   public static <T, U extends T> U findLastInstance(@NotNull List<? extends T> list, @NotNull Class<? extends U> clazz) {
     int i = lastIndexOf(list, (Condition<T>)clazz::isInstance);
     //noinspection unchecked
     return i < 0 ? null : (U)list.get(i);
-  }
-
-  @Contract(pure = true)
-  public static <T, U extends T> int lastIndexOfInstance(@NotNull List<? extends T> list, @NotNull Class<U> clazz) {
-    return lastIndexOf(list, (Condition<T>)clazz::isInstance);
   }
 
   @Contract(pure = true)
@@ -2769,18 +2746,20 @@ public final class ContainerUtil {
   }
 
   /**
-   * Weak keys hard values hash map.
-   * Null keys are NOT allowed
-   * Null values are allowed
+   * @deprecated use {@link java.util.WeakHashMap} instead
    */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K,V> Map<@NotNull K,V> createWeakMap() {
-    return createWeakMap(4);
+    return new WeakHashMap<>();
   }
 
-  @Contract(value = "_ -> new", pure = true)
+  /**
+   * @deprecated use {@link java.util.WeakHashMap} instead
+   */
+  @Deprecated
   public static @NotNull <K,V> Map<@NotNull K,V> createWeakMap(int initialCapacity) {
-    return CollectionFactory.createWeakMap(initialCapacity, 0.8f, HashingStrategy.canonical());
+    return new WeakHashMap<>(initialCapacity);
   }
 
   @Contract(value = " -> new", pure = true)
@@ -2821,5 +2800,18 @@ public final class ContainerUtil {
       result = accumulator.apply(result, t);
     }
     return result;
+  }
+
+  public static <T> Stream<List<? extends T>> splitListToChunks(@NotNull List<? extends T> list, int chunkSize) {
+    if (chunkSize <= 0) {
+      throw new IllegalArgumentException("invalid chunkSize: " + chunkSize);
+    }
+    int listSize = list.size();
+    if (listSize == 0) {
+      return Stream.empty();
+    }
+    int numberOfChunks = listSize / chunkSize;
+    return IntStream.range(0, numberOfChunks * chunkSize == listSize ? numberOfChunks : numberOfChunks + 1)
+      .mapToObj(i -> list.subList(i * chunkSize, Math.min(listSize, i * chunkSize + chunkSize)));
   }
 }

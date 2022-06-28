@@ -15,7 +15,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -205,15 +206,14 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
       "second line that is long enough to be soft wrapped";
     init(15, text);
 
-    TIntHashSet offsetsBefore = collectSoftWrapStartOffsets(1);
+    IntSet offsetsBefore = collectSoftWrapStartOffsets(1);
     assertTrue(!offsetsBefore.isEmpty());
     
     type('2');
-    final TIntHashSet offsetsAfter = collectSoftWrapStartOffsets(1);
+    final IntSet offsetsAfter = collectSoftWrapStartOffsets(1);
     assertSame(offsetsBefore.size(), offsetsAfter.size());
     offsetsBefore.forEach(value -> {
       assertTrue(offsetsAfter.contains(value + 1));
-      return true;
     });
   }
   
@@ -611,8 +611,8 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     assertEquals(getEditor().offsetToLogicalPosition(text.indexOf("3.") + 2), caretModel.getLogicalPosition());
   }
   
-  private TIntHashSet collectSoftWrapStartOffsets(int documentLine) {
-    TIntHashSet result = new TIntHashSet();
+  private IntSet collectSoftWrapStartOffsets(int documentLine) {
+    IntSet result = new IntOpenHashSet();
     for (SoftWrap softWrap : getEditor().getSoftWrapModel().getSoftWrapsForLine(documentLine)) {
       result.add(softWrap.getStart());
     }

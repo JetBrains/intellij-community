@@ -63,6 +63,10 @@ public class GitContentRevision implements ByteBackedContentRevision {
       return null;
     }
     try {
+      if (!GitUtil.isHashString(myRevision.getRev())) {
+        // do not cache contents for 'HEAD' or branch/tag references
+        return ContentRevisionCache.loadAsBytes(myFile, this::loadContent);
+      }
       return ContentRevisionCache.getOrLoadAsBytes(myProject, myFile, myRevision, GitVcs.getKey(), REPOSITORY_CONTENT, this::loadContent);
     }
     catch (IOException e) {
@@ -103,16 +107,9 @@ public class GitContentRevision implements ByteBackedContentRevision {
 
   @Nullable
   public static GitSubmodule getRepositoryIfSubmodule(@NotNull Project project, @NotNull FilePath path) {
-    VirtualFile file = path.getVirtualFile();
-    if (file == null) { // NB: deletion of a submodule is not supported yet
-      return null;
-    }
-    if (!file.isDirectory()) {
-      return null;
-    }
-
+    // NB: deletion of a submodule is not supported yet
     GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
-    GitRepository candidate = repositoryManager.getRepositoryForRootQuick(file);
+    GitRepository candidate = repositoryManager.getRepositoryForRootQuick(path);
     if (candidate == null) { // not a root
       return null;
     }
@@ -137,7 +134,8 @@ public class GitContentRevision implements ByteBackedContentRevision {
   }
 
   @NotNull
-  public static FilePath createPathFromEscaped(@NotNull VirtualFile vcsRoot, @NotNull String path, boolean isDirectory) throws VcsException {
+  public static FilePath createPathFromEscaped(@NotNull VirtualFile vcsRoot, @NotNull String path, boolean isDirectory)
+    throws VcsException {
     String absolutePath = makeAbsolutePath(vcsRoot, GitUtil.unescapePath(path));
     return VcsUtil.getFilePath(absolutePath, isDirectory);
   }
@@ -175,26 +173,13 @@ public class GitContentRevision implements ByteBackedContentRevision {
       if (submodule != null) {
         return GitSubmoduleContentRevision.createRevision(submodule, revisionNumber);
       }
-      return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, charset);
+      return new GitContentRevision(filePath, (GitRevisionNumber)revisionNumber, project, charset);
     }
     else if (submodule != null) {
       return GitSubmoduleContentRevision.createCurrentRevision(submodule.getRepository());
     }
     else {
-      return CurrentContentRevision.create(filePath);
-    }
-  }
-
-  @NotNull
-  private static GitContentRevision createRevisionImpl(@NotNull FilePath path,
-                                                       @NotNull GitRevisionNumber revisionNumber,
-                                                       @NotNull Project project,
-                                                       @Nullable Charset charset) {
-    if (path.getFileType().isBinary()) {
-      return new GitBinaryContentRevision(path, revisionNumber, project);
-    }
-    else {
-      return new GitContentRevision(path, revisionNumber, project, charset);
+      return new CurrentContentRevision(filePath);
     }
   }
 

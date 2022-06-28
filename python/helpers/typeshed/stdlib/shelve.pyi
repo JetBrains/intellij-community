@@ -4,6 +4,8 @@ from dbm import _TFlags
 from types import TracebackType
 from typing import TypeVar, overload
 
+__all__ = ["Shelf", "BsdDbShelf", "DbfilenameShelf", "open"]
+
 _T = TypeVar("_T")
 _VT = TypeVar("_VT")
 
@@ -20,6 +22,7 @@ class Shelf(MutableMapping[str, _VT]):
     def __getitem__(self, key: str) -> _VT: ...
     def __setitem__(self, key: str, value: _VT) -> None: ...
     def __delitem__(self, key: str) -> None: ...
+    def __contains__(self, key: str) -> bool: ...  # type: ignore[override]
     def __enter__(self: Self) -> Self: ...
     def __exit__(
         self, type: type[BaseException] | None, value: BaseException | None, traceback: TracebackType | None

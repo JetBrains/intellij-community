@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation
 
 import com.intellij.diagnostic.PluginException
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
+import com.intellij.pom.PomTargetPsiElement
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
@@ -104,7 +105,8 @@ fun targetPresentation(element: PsiElement): TargetPresentation {
 }
 
 private fun presentationError(element: PsiElement) {
-  val clazz = element.javaClass
+  val instance = (element as? PomTargetPsiElement)?.target ?: element
+  val clazz = instance.javaClass
   LOG.error(PluginException.createByClass("${clazz.name} cannot be presented", null, clazz))
 }
 

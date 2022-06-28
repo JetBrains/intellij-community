@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.module.Module;
@@ -34,7 +34,9 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 /**
- * Index of EPs via {@link ExtensionPoint#getEffectiveQualifiedName}.
+ * Index of EP declarations via {@link ExtensionPoint#getEffectiveQualifiedName}.
+ *
+ * @see ExtensionPointClassIndex
  */
 public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
 
@@ -76,7 +78,7 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
   }
 
   @Nullable
-  public static ExtensionPoint findExtensionPoint(Project project,GlobalSearchScope scope, String fqn) {
+  public static ExtensionPoint findExtensionPoint(Project project, GlobalSearchScope scope, String fqn) {
     Ref<ExtensionPoint> result = Ref.create();
     FileBasedIndex.getInstance().processValues(NAME, fqn, null, (file, value) -> {
       final PsiManager psiManager = PsiManager.getInstance(project);

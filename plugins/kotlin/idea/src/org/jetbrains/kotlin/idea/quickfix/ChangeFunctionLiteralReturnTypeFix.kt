@@ -6,15 +6,18 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.util.getParentResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentForExpression
 import org.jetbrains.kotlin.types.KotlinType
@@ -64,14 +67,19 @@ class ChangeFunctionLiteralReturnTypeFix(
         val resolvedCall = functionLiteralExpression.getParentResolvedCall(context, true)
         if (resolvedCall != null) {
             val valueArgument = resolvedCall.call.getValueArgumentForExpression(functionLiteralExpression)
-            val correspondingParameter = QuickFixUtil.getParameterDeclarationForValueArgument(resolvedCall, valueArgument)
-            if (correspondingParameter != null) {
-                val correspondingParameterTypeRef = correspondingParameter.typeReference
-                val parameterType = context.get(BindingContext.TYPE, correspondingParameterTypeRef)
-                return if (parameterType != null && !KotlinTypeChecker.DEFAULT.isSubtypeOf(eventualFunctionLiteralType, parameterType))
-                    ChangeParameterTypeFix(correspondingParameter, eventualFunctionLiteralType)
-                else
-                    null
+            val correspondingParameter = resolvedCall.getParameterForArgument(valueArgument)
+
+            if (correspondingParameter != null && correspondingParameter.overriddenDescriptors.size <= 1) {
+                val project = functionLiteralExpression.project
+                val correspondingParameterDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, correspondingParameter)
+                if (correspondingParameterDeclaration is KtParameter) {
+                    val correspondingParameterTypeRef = correspondingParameterDeclaration.typeReference
+                    val parameterType = context.get(BindingContext.TYPE, correspondingParameterTypeRef)
+                    return if (parameterType != null && !KotlinTypeChecker.DEFAULT.isSubtypeOf(eventualFunctionLiteralType, parameterType))
+                        ChangeParameterTypeFix(correspondingParameterDeclaration, eventualFunctionLiteralType)
+                    else
+                        null
+                }
             }
         }
 
@@ -112,7 +120,7 @@ class ChangeFunctionLiteralReturnTypeFix(
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val functionLiteralExpression = QuickFixUtil.getParentElementOfType(diagnostic, KtLambdaExpression::class.java) ?: return null
+            val functionLiteralExpression = diagnostic.psiElement.findParentOfType<KtLambdaExpression>(strict = false) ?: return null
             return ChangeFunctionLiteralReturnTypeFix(functionLiteralExpression, functionLiteralExpression.builtIns.unitType)
         }
     }

@@ -3,6 +3,8 @@ from types import TracebackType
 from typing import Iterator, MutableMapping, Union
 from typing_extensions import Literal
 
+__all__ = ["open", "whichdb", "error"]
+
 _KeyType = Union[str, bytes]
 _ValueType = Union[str, bytes]
 _TFlags = Literal[

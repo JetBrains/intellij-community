@@ -1,12 +1,14 @@
 from _typeshed import SupportsKeysAndGetItem
 from collections.abc import Iterable
 from typing import Generic, TypeVar, overload
+from typing_extensions import final
 
 _KT = TypeVar("_KT")
 _KT2 = TypeVar("_KT2")
 _VT = TypeVar("_VT")
 _VT2 = TypeVar("_VT2")
 
+@final
 class immutabledict(dict[_KT, _VT], Generic[_KT, _VT]):
     @overload
     def union(self, __dict: dict[_KT2, _VT2]) -> immutabledict[_KT | _KT2, _VT | _VT2]: ...

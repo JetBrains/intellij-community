@@ -17,6 +17,14 @@ class KotlinIconProviderTest: KotlinLightCodeInsightFixtureTestCase() {
         createFileAndCheckIcon("Foo.kt", "fun foo() = TODO()", "org/jetbrains/kotlin/idea/icons/kotlin_file.svg")
     }
 
+    fun testClassAndTypeAlias() {
+        val fileBody = """
+            typealias F = Foo
+            class Foo
+        """.trimIndent()
+        createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/classKotlin.svg", "nodes/c_public.svg")
+    }
+
     fun testClassAndPrivateFunction() {
         val fileBody = """
             class Foo

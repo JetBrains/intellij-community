@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.DefaultBundleService;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
@@ -28,15 +27,27 @@ import java.util.function.Supplier;
 public class AbstractBundle {
   private static final Logger LOG = Logger.getInstance(AbstractBundle.class);
 
-  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache = CollectionFactory.createConcurrentWeakMap();
-  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache = CollectionFactory.createConcurrentWeakMap();
-
   private Reference<ResourceBundle> myBundle;
   private Reference<ResourceBundle> myDefaultBundle;
+  private final @NotNull ClassLoader myBundleClassLoader;
   private final @NonNls String myPathToBundle;
+
+  /**
+   * @param bundleClass a class to obtain the classloader, usually a class which declared the field which references the bundle instance
+   */
+  public AbstractBundle(@NotNull Class<?> bundleClass, @NonNls @NotNull String pathToBundle) {
+    myPathToBundle = pathToBundle;
+    myBundleClassLoader = bundleClass.getClassLoader();
+  }
 
   public AbstractBundle(@NonNls @NotNull String pathToBundle) {
     myPathToBundle = pathToBundle;
+    myBundleClassLoader = getClass().getClassLoader();
+  }
+
+  @ApiStatus.Internal
+  protected final @NotNull ClassLoader getBundleClassLoader() {
+    return myBundleClassLoader;
   }
 
   @ApiStatus.Internal
@@ -46,7 +57,7 @@ public class AbstractBundle {
 
   @Contract(pure = true)
   public @NotNull @Nls String getMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    return BundleBase.messageOrDefault(getResourceBundle(getClass().getClassLoader()), key, null, params);
+    return BundleBase.messageOrDefault(getResourceBundle(), key, null, params);
   }
 
   /**
@@ -111,7 +122,7 @@ public class AbstractBundle {
   }
 
   public ResourceBundle getResourceBundle() {
-    return getResourceBundle(getClass().getClassLoader());
+    return getResourceBundle(myBundleClassLoader);
   }
 
   @ApiStatus.Internal
@@ -131,24 +142,21 @@ public class AbstractBundle {
     return bundle;
   }
 
-  public final @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader) {
-    if (pathToBundle.equals(myPathToBundle)) {
-      return getResourceBundle(loader);
-    }
-
-    Map<String, ResourceBundle> cache = (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
-      .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap());
-    ResourceBundle result = cache.get(pathToBundle);
-    if (result == null) {
-      result = resolveResourceBundle(pathToBundle, loader);
-      cache.put(pathToBundle, result);
-    }
-    return result;
+  private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
+    return resolveResourceBundleWithFallback(
+      () -> findBundle(pathToBundle, loader, MyResourceControl.INSTANCE),
+      loader, pathToBundle
+    );
   }
 
-  private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
+  @ApiStatus.Internal
+  protected static @NotNull ResourceBundle resolveResourceBundleWithFallback(
+    @NotNull Supplier<? extends @NotNull ResourceBundle> firstTry,
+    @NotNull ClassLoader loader,
+    @NotNull String pathToBundle
+  ) {
     try {
-      return findBundle(pathToBundle, loader, MyResourceControl.INSTANCE);
+      return firstTry.get();
     }
     catch (MissingResourceException e) {
       LOG.info("Cannot load resource bundle from *.properties file, falling back to slow class loading: " + pathToBundle);
@@ -157,18 +165,19 @@ public class AbstractBundle {
     }
   }
 
-  protected ResourceBundle findBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
+  protected @NotNull ResourceBundle findBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
     return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
-  }
-
-  protected static void clearGlobalLocaleCache() {
-    ourCache.clear();
   }
 
   public void clearLocaleCache() {
     if (myBundle != null) {
       myBundle.clear();
     }
+  }
+
+  @ApiStatus.Internal
+  protected static @NotNull ResourceBundle resolveBundle(@NotNull ClassLoader loader, @NonNls @NotNull String pathToBundle) {
+    return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, MyResourceControl.INSTANCE);
   }
 
   // UTF-8 control for Java <= 1.8.

@@ -153,7 +153,7 @@ public final class TypeInferenceHelper {
   @NotNull
   static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
     if (isFlatDFAAllowed() && ControlFlowUtils.getTopmostOwner(scope) != scope) {
-      assert false;
+      LOG.error("Flat DFA inconsistency: scope is " + scope + ", but topmost owner is " + ControlFlowUtils.getTopmostOwner(scope));
     }
     return CachedValuesManager.getCachedValue(scope, () -> Result.create(new InferenceCache(scope), MODIFICATION_COUNT));
   }

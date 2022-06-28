@@ -251,7 +251,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
                                              @NotNull CompletionResultSet result,
                                              @NotNull Map<String, YAMLScalar> siblings,
                                              @NotNull CompletionParameters completionParameters) {
-    List<? extends LookupElement> lookups = meta.getValueLookups(insertedScalar, new CompletionContextImpl(completionParameters));
+    List<? extends LookupElement> lookups = meta.getValueLookups(insertedScalar, new CompletionContextImpl(completionParameters, result));
     lookups.stream()
       .filter(lookup -> !siblings.containsKey(lookup.getLookupString()))
       .forEach(result::addElement);
@@ -273,11 +273,13 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     private final CompletionType myType;
     private final int myInvocationCount;
     private final String myPrefix;
+    private final CompletionResultSet myCompletionResultSet;
 
-    CompletionContextImpl(CompletionParameters completionParameters) {
+    CompletionContextImpl(CompletionParameters completionParameters, CompletionResultSet completionResultSet) {
       myType = completionParameters.getCompletionType();
       myInvocationCount = completionParameters.getInvocationCount();
       myPrefix = computeCompletionPrefix(completionParameters);
+      myCompletionResultSet = completionResultSet;
     }
 
     @NotNull
@@ -289,6 +291,11 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     @Override
     public int getInvocationCount() {
       return myInvocationCount;
+    }
+
+    @Override
+    public @NotNull CompletionResultSet getCompletionResultSet() {
+      return myCompletionResultSet;
     }
 
     @NotNull

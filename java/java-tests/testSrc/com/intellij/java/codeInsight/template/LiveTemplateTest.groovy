@@ -1287,7 +1287,7 @@ class Foo {
   }
 
   void "test log livetemplate started event"() {
-    def events = FUCollectorTestCase.INSTANCE.collectLogEvents {
+    def events = FUCollectorTestCase.INSTANCE.collectLogEvents(testRootDisposable) {
       configureFromFileText("empty.java", "")
       TemplateManager manager = TemplateManager.getInstance(getProject())
       Template template = manager.createTemplate("empty", "user", '$VAR$')

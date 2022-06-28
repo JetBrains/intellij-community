@@ -3,21 +3,20 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.util.SystemProperties
 import com.intellij.util.lang.UrlClassLoader
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.apache.tools.ant.AntClassLoader
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
+import org.jetbrains.intellij.build.io.ProcessKt
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -34,11 +33,10 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
-import java.util.function.Consumer
 import java.util.function.Predicate
 import java.util.function.Supplier
-import java.util.jar.Manifest
 import java.util.regex.Pattern
+import java.util.stream.Collectors
 import java.util.stream.Stream
 
 @CompileStatic
@@ -79,8 +77,6 @@ class TestingTasksImpl extends TestingTasks {
     else {
       compilationTasks.compileAllModulesAndTests()
     }
-
-    setupTestingDependencies()
 
     String remoteDebugJvmOptions = System.getProperty("teamcity.remote-debug.jvm.options")
     if (remoteDebugJvmOptions != null) {
@@ -370,7 +366,7 @@ class TestingTasksImpl extends TestingTasks {
     }
     String runtime = runtimeExecutablePath()
     context.messages.info("Runtime: $runtime")
-    BuildHelper.runProcess(context, List.of(runtime, "-version"))
+    ProcessKt.runProcess(List.of(runtime, "-version"), null, context.messages)
     context.messages.info("Runtime options: $allJvmArgs")
     context.messages.info("System properties: $allSystemProperties")
     context.messages.info("Bootstrap classpath: $bootstrapClasspath")
@@ -379,13 +375,7 @@ class TestingTasksImpl extends TestingTasks {
       context.messages.info("Environment variables: $envVariables")
     }
 
-    if (options.preferAntRunner) {
-      runJUnitTask(mainModule, allJvmArgs, allSystemProperties, envVariables,
-                   isBootstrapSuiteDefault() && !isRunningInBatchMode() ? bootstrapClasspath : testsClasspath)
-    }
-    else {
-      runJUnit5Engine(mainModule, allSystemProperties, allJvmArgs, envVariables, bootstrapClasspath, testsClasspath)
-    }
+    runJUnit5Engine(mainModule, allSystemProperties, allJvmArgs, envVariables, bootstrapClasspath, testsClasspath)
     notifySnapshotBuilt(allJvmArgs)
   }
 
@@ -535,15 +525,108 @@ class TestingTasksImpl extends TestingTasks {
       jvmArgs.addAll(buildCausalProfilingAgentJvmArg(causalProfilingOptions))
     }
 
-    if (context.options.bundledRuntimeVersion >= 17) {
-      jvmArgs.addAll(OpenedPackages.getCommandLineArguments(context))
-    }
+    jvmArgs.addAll(OpenedPackages.getCommandLineArguments(context))
 
     if (suspendDebugProcess) {
       context.messages.info("""
 ------------->------------- The process suspended until remote debugger connects to debug port -------------<-------------
 ---------------------------------------^------^------^------^------^------^------^----------------------------------------
 """)
+    }
+  }
+
+  @Override
+  void runTestsSkippedInHeadlessEnvironment() {
+    def testsSkippedInHeadlessEnvironment = context.messages.block("Loading all tests annotated with @SkipInHeadlessEnvironment") {
+      loadTestsSkippedInHeadlessEnvironment()
+    }
+    testsSkippedInHeadlessEnvironment.forEach {
+      options.batchTestIncludes = it.first
+      options.mainModule = it.second
+      runTests([], null, null)
+    }
+  }
+
+  private List<Pair<String, String>> loadTestsSkippedInHeadlessEnvironment() {
+    List<Path> classpath = context.project.modules.stream()
+      .flatMap { context.getModuleRuntimeClasspath(it, true).stream() }
+      .distinct().map { Path.of(it) }
+      .collect(Collectors.toList())
+    UrlClassLoader classloader = UrlClassLoader.build().files(classpath).get()
+    Class<?> testAnnotation = Class.forName("com.intellij.testFramework.SkipInHeadlessEnvironment", false, classloader)
+    return context.project.modules.parallelStream().flatMap { module ->
+      def root = Path.of(context.getModuleTestsOutputPath(module))
+      if (Files.exists(root)) {
+        Files.walk(root).withCloseable { stream ->
+          stream.filter { it.toString().endsWith("Test.class") }
+            .map { root.relativize(it).toString() }.filter {
+            def className = FileUtilRt.getNameWithoutExtension(it).replaceAll("/", ".")
+            def testClass = Class.forName(className, false, classloader)
+            !Modifier.isAbstract(testClass.modifiers) && testClass.annotations.any { annotation ->
+              testAnnotation.isAssignableFrom(annotation.class)
+            }
+          }.map { Pair.create(it, module.name) }.collect(Collectors.toList())
+        }.stream()
+      }
+      else {
+        Stream.empty()
+      }
+    }.collect(Collectors.toList())
+  }
+
+  private void runInBatchMode(String mainModule,
+                              Map<String, String> systemProperties,
+                              List<String> jvmArgs,
+                              Map<String, String> envVariables,
+                              List<String> bootstrapClasspath,
+                              List<String> testClasspath) {
+    String mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findModule(mainModule))
+    Pattern pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes))
+    Path root = Path.of(mainModuleTestsOutput)
+
+    def testClasses = Files.walk(root).withCloseable { stream ->
+      stream.filter(new Predicate<Path>() {
+        @Override
+        boolean test(Path path) {
+          return pattern.matcher(root.relativize(path).toString()).matches()
+        }
+      }).collect(Collectors.toList())
+    }
+    if (testClasses.size() == 0) {
+      context.messages.error("No tests were found in $root with $pattern")
+    }
+    testClasses.forEach { Path path ->
+      String qName = FileUtilRt.getNameWithoutExtension(root.relativize(path).toString()).replaceAll("/", ".")
+      List<Path> files = new ArrayList<Path>(testClasspath.size())
+      for (String p : testClasspath) {
+        files.add(Path.of(p))
+      }
+
+      try {
+        def noTests = true
+        UrlClassLoader loader = UrlClassLoader.build().files(files).get()
+        Class<?> aClazz = Class.forName(qName, false, loader)
+        Class<?> testAnnotation = Class.forName("org.junit.Test", false, loader)
+        for (Method m : aClazz.getDeclaredMethods()) {
+          if (m.isAnnotationPresent(testAnnotation as Class<? extends Annotation>) && Modifier.isPublic(m.getModifiers())) {
+            def exitCode =
+              runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.getName())
+            noTests &= exitCode == NO_TESTS_ERROR
+          }
+        }
+
+        if (noTests) {
+          def exitCode3 = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, null)
+          noTests &= exitCode3 == NO_TESTS_ERROR
+        }
+
+        if (noTests) {
+          context.messages.error("No tests were found in $qName")
+        }
+      }
+      catch (Throwable e) {
+        context.messages.error("Failed to process $qName", e)
+      }
     }
   }
 
@@ -554,54 +637,8 @@ class TestingTasksImpl extends TestingTasks {
                                List<String> bootstrapClasspath,
                                List<String> testClasspath) {
     if (isRunningInBatchMode()) {
-      String mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findModule(mainModule))
-      Pattern pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes))
-      Path root = Path.of(mainModuleTestsOutput)
-
-      Stream<Path> stream = Files.walk(root)
-      try {
-        stream
-          .filter(new Predicate<Path>() {
-            @Override
-            boolean test(Path path) {
-              return pattern.matcher(root.relativize(path).toString()).matches()
-            }
-          })
-          .forEach(new Consumer<Path>() {
-            @Override
-            void accept(Path path) {
-              String qName = FileUtilRt.getNameWithoutExtension(root.relativize(path).toString()).replaceAll("/", ".")
-              List<Path> files = new ArrayList<Path>(testClasspath.size())
-              for (String p : testClasspath) {
-                files.add(Path.of(p))
-              }
-
-              try {
-                def noTests = true 
-                UrlClassLoader loader = UrlClassLoader.build().files(files).get()
-                Class<?> aClazz = Class.forName(qName, false, loader)
-                Class<?> testAnnotation = Class.forName("org.junit.Test", false, loader)
-                for (Method m : aClazz.getDeclaredMethods()) {
-                  if (m.isAnnotationPresent(testAnnotation as Class<? extends Annotation>) && Modifier.isPublic(m.getModifiers())) {
-                    def exitCode =
-                      runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.getName())
-                    noTests &= exitCode == NO_TESTS_ERROR
-                  }
-                }
-                
-                if (noTests) {
-                   context.messages.error("No tests were found in the configuration")
-                }
-              }
-              catch (Throwable e) {
-                context.messages.error("Failed to process $qName", e)
-              }
-            }
-          })
-      }
-      finally {
-        stream.close()
-      }
+      context.messages.info("Running tests in batch mode including ${options.batchTestIncludes}")
+      runInBatchMode(mainModule, systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath)
     }
     else {
       context.messages.info("Run junit 5 tests")
@@ -612,7 +649,7 @@ class TestingTasksImpl extends TestingTasks {
       def exitCode3 =
         runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, options.bootstrapSuite, null)
       context.messages.info("Finish junit 3 task")
-      
+
       if (exitCode5 == NO_TESTS_ERROR && exitCode3 == NO_TESTS_ERROR) {
         context.messages.error("No tests were found in the configuration")
       }
@@ -709,148 +746,6 @@ class TestingTasksImpl extends TestingTasks {
         }
       }
     }
-  }
-
-  @SuppressWarnings("GrUnresolvedAccess")
-  @CompileDynamic
-  private void runJUnitTask(String mainModule,
-                            List<String> jvmArgs,
-                            Map<String, String> systemProperties,
-                            Map<String, String> envVariables,
-                            List<String> bootstrapClasspath) {
-    defineJunitTask(context.ant, "$context.paths.communityHome/lib")
-
-    String junitTemp = "$context.paths.temp/junit"
-    context.ant.mkdir(dir: junitTemp)
-
-    List<String> teamCityFormatterClasspath = createTeamCityFormatterClasspath()
-
-    context.ant.junit(fork: true, showoutput: isShowAntJunitOutput(), logfailedtests: false,
-                      tempdir: junitTemp, jvm: runtimeExecutablePath(),
-                      printsummary: (underTeamCity ? "off" : "on"),
-                      haltOnFailure: (options.failFast ? "yes" : "no")) {
-      jvmArgs.each { jvmarg(value: it) }
-      systemProperties.each { key, value ->
-        if (value != null) {
-          sysproperty(key: key, value: value)
-        }
-      }
-      envVariables.each {
-        env(key: it.key, value: it.value)
-      }
-
-      if (teamCityFormatterClasspath != null) {
-        classpath {
-          teamCityFormatterClasspath.each {
-            pathelement(location: it)
-          }
-        }
-        formatter(classname: "jetbrains.buildServer.ant.junit.AntJUnitFormatter3", usefile: false)
-        context.messages.info("Added TeamCity's formatter to JUnit task")
-      }
-      if (!underTeamCity) {
-        classpath {
-          pathelement(location: context.getModuleTestsOutputPath(context.findRequiredModule("intellij.platform.buildScripts")))
-        }
-        formatter(classname: "org.jetbrains.intellij.build.JUnitLiveTestProgressFormatter", usefile: false)
-      }
-
-      //test classpath may exceed the maximum command line, so we need to wrap a classpath in a jar
-      if (!isBootstrapSuiteDefault()) {
-        def classpathJarFile = CommandLineWrapperUtil.createClasspathJarFile(new Manifest(), bootstrapClasspath)
-        classpath {
-          pathelement(location: classpathJarFile.path)
-        }
-      } else {
-        classpath {
-          bootstrapClasspath.each {
-            pathelement(location: it)
-          }
-        }
-      }
-
-      if (isRunningInBatchMode()) {
-        def mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findModule(mainModule))
-        batchtest {
-          fileset dir: mainModuleTestsOutput, includes: options.batchTestIncludes
-        }
-      } else {
-        test(name: options.bootstrapSuite)
-      }
-    }
-  }
-
-  /**
-   * Allows to disable duplicated lines in TeamCity build log (IDEA-240814).
-   *
-   * Note! Build statistics (and other TeamCity Service Message) can be reported only with this option enabled (IDEA-241221).
-   */
-  private static boolean isShowAntJunitOutput() {
-    return SystemProperties.getBooleanProperty("intellij.test.show.ant.junit.output", true)
-  }
-
-  /**
-   * In simple cases when JUnit tests are started from Ant scripts TeamCity will automatically add its formatter to JUnit task. However it
-   * doesn't work if JUnit task is called from Groovy code via a new instance of AntBuilder, so in such cases we need to add the formatter
-   * explicitly.
-   * @return classpath for TeamCity's JUnit formatter or {@code null} if the formatter shouldn't be added
-   */
-  private List<String> createTeamCityFormatterClasspath() {
-    if (!underTeamCity) return null
-
-    if (context.ant.project.buildListeners.any { it.class.name.startsWith("jetbrains.buildServer.") }) {
-      context.messages.info("TeamCity's BuildListener is registered in the Ant project so its formatter will be added to JUnit task automatically.")
-      return null
-    }
-
-    String agentHomeDir = System.getProperty("agent.home.dir")
-    if (agentHomeDir == null) {
-      context.messages.error("'agent.home.dir' system property isn't set, cannot add TeamCity JARs to classpath.")
-    }
-    List<String> classpath = [
-      "$agentHomeDir/lib/runtime-util.jar",
-      "$agentHomeDir/lib/serviceMessages.jar",
-      "$agentHomeDir/plugins/antPlugin/ant-runtime.jar",
-      "$agentHomeDir/plugins/junitPlugin/junit-runtime.jar",
-      "$agentHomeDir/plugins/junitPlugin/junit-support.jar"
-    ].collect {it.toString()}
-    classpath.each {
-      if (!new File(it).exists()) {
-        context.messages.error("Cannot add required JARs from $agentHomeDir to classpath: $it doesn't exist")
-      }
-    }
-    return classpath
-  }
-
-  protected static boolean isUnderTeamCity() {
-    System.getenv("TEAMCITY_VERSION") != null
-  }
-
-  static boolean dependenciesInstalled
-  void setupTestingDependencies() {
-    if (!dependenciesInstalled) {
-      dependenciesInstalled = true
-      BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
-      BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
-    }
-  }
-
-  static boolean taskDefined
-
-  /**
-   * JUnit is an optional dependency in Ant, so by defining its tasks dynamically we simplify setup for gant/Ant scripts, there is no need
-   * to explicitly add its JARs to Ant libraries.
-   */
-  @CompileDynamic
-  static private def defineJunitTask(AntBuilder ant, String communityLib) {
-    if (taskDefined) return
-    taskDefined = true
-    def junitTaskLoaderRef = "JUNIT_TASK_CLASS_LOADER"
-    org.apache.tools.ant.types.Path pathJUnit = new org.apache.tools.ant.types.Path(ant.project)
-    pathJUnit.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-junit.jar"))
-    pathJUnit.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-junit4.jar"))
-    ant.project.addReference(junitTaskLoaderRef, new AntClassLoader(ant.project.getClass().getClassLoader(), ant.project, pathJUnit))
-    ant.taskdef(name: "junit", classname: "org.apache.tools.ant.taskdefs.optional.junit.JUnitTask", loaderRef: junitTaskLoaderRef)
   }
 
   protected boolean isBootstrapSuiteDefault() {

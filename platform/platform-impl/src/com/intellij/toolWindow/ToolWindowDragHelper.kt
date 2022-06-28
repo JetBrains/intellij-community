@@ -35,8 +35,9 @@ import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
 private fun Dimension.isNotEmpty(): Boolean = width > 0 && height > 0
+private const val THUMB_SIZE = 220
 
-internal class ToolWindowDragHelper(parent: Disposable, val pane: ToolWindowPane) : MouseDragHelper<ToolWindowPane>(parent, pane) {
+internal class ToolWindowDragHelper(parent: Disposable, @JvmField val pane: ToolWindowPane) : MouseDragHelper<ToolWindowPane>(parent, pane) {
   private var toolWindowRef: WeakReference<ToolWindowImpl?>? = null
   private var initialAnchor: ToolWindowAnchor? = null
   private var initialButton: Component? = null
@@ -49,7 +50,6 @@ internal class ToolWindowDragHelper(parent: Disposable, val pane: ToolWindowPane
   private var sourceIsHeader = false
 
   companion object {
-    const val THUMB_SIZE = 220
     const val THUMB_OPACITY = .85f
 
     internal fun createDragImage(component: Component): BufferedImage? {
@@ -103,7 +103,7 @@ internal class ToolWindowDragHelper(parent: Disposable, val pane: ToolWindowPane
     }
 
     fun createDragImage(component: JComponent, thumbSize: Int = JBUI.scale(THUMB_SIZE)): BufferedImage {
-      val image = UIUtil.createImage(component, component.width, component.height, BufferedImage.TYPE_INT_RGB)
+      val image = ImageUtil.createImage(component.graphicsConfiguration, component.width, component.height, BufferedImage.TYPE_INT_RGB)
       val graphics = image.graphics
       graphics.color = UIUtil.getBgFillColor(component)
       RectanglePainter.FILL.paint(graphics as @NotNull Graphics2D, 0, 0, component.width, component.height, null)
@@ -478,12 +478,12 @@ internal class ToolWindowDragHelper(parent: Disposable, val pane: ToolWindowPane
     highlighter.isVisible = !dragOut
   }
 
-  class MyDialog(owner: JComponent,
-                 val helper: ToolWindowDragHelper,
-                 val stripeButtonImage: BufferedImage,
-                 val toolWindowThumbnailImage: BufferedImage?) : JDialog(
-    UIUtil.getWindow(owner), null, ModalityType.MODELESS) {
-    var myDragOut = null as Boolean?
+  private class MyDialog(owner: JComponent,
+                         @JvmField val helper: ToolWindowDragHelper,
+                         private val stripeButtonImage: BufferedImage,
+                         private val toolWindowThumbnailImage: BufferedImage?) : JDialog(ComponentUtil.getWindow(owner), null,
+                                                                                         ModalityType.MODELESS) {
+    private var dragOut: Boolean? = null
 
     init {
       isUndecorated = true
@@ -495,20 +495,21 @@ internal class ToolWindowDragHelper(parent: Disposable, val pane: ToolWindowPane
       isAlwaysOnTop = true
       contentPane = JLabel()
       contentPane.addMouseListener(object : MouseAdapter() {
-        override fun mouseReleased(e: MouseEvent?) {
-          helper.mouseReleased(e) //stop drag
+        override fun mouseReleased(e: MouseEvent) {
+          // stop drag
+          helper.mouseReleased(e)
         }
 
-        override fun mouseDragged(e: MouseEvent?) {
-          helper.relocate(e!!)
+        override fun mouseDragged(e: MouseEvent) {
+          helper.relocate(e)
         }
       })
       setDragOut(false)
     }
 
     fun setDragOut(dragOut: Boolean) {
-      if (dragOut == myDragOut) return
-      myDragOut = dragOut
+      if (dragOut == this.dragOut) return
+      this.dragOut = dragOut
       val image = if (dragOut && toolWindowThumbnailImage != null) toolWindowThumbnailImage else stripeButtonImage
       updateIcon(image)
     }

@@ -4,6 +4,8 @@ from typing import TypeVar, overload
 from .handlers import SimpleHandler
 from .types import ErrorStream, StartResponse, WSGIApplication, WSGIEnvironment
 
+__all__ = ["WSGIServer", "WSGIRequestHandler", "demo_app", "make_server"]
+
 server_version: str  # undocumented
 sys_version: str  # undocumented
 software_version: str  # undocumented

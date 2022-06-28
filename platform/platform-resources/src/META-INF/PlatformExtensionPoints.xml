@@ -74,7 +74,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="getDataRule"
-                    beanClass="com.intellij.ide.impl.DataManagerImpl$GetDataRuleBean"
+                    beanClass="com.intellij.ide.impl.GetDataRuleBean"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.impl.dataRules.GetDataRule"/>
     </extensionPoint>
@@ -344,6 +344,7 @@
 
     <extensionPoint name="vfs.local.pluggableFileWatcher" interface="com.intellij.openapi.vfs.local.PluggableFileWatcher" />
     <extensionPoint name="vfs.local.pluggableContentLoader" interface="com.intellij.openapi.vfs.impl.local.PluggableLocalFileSystemContentLoader" />
+    <extensionPoint name="vfs.local.fileOperationsHandler" interface="com.intellij.openapi.vfs.LocalFileOperationsHandler" dynamic="true" />
 
     <extensionPoint name="gutterMarkPreprocessor" interface="com.intellij.openapi.editor.GutterMarkPreprocessor" />
     <extensionPoint name="remote.credentialsType" interface="com.intellij.remote.CredentialsType" dynamic="true"/>
@@ -477,7 +478,6 @@
     <extensionPoint name="projectToolbarWidget" interface="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory" dynamic="true"/>
     <extensionPoint name="appToolbarWidget" interface="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarAppWidgetFactory" dynamic="true"/>
 
-    <extensionPoint name="fsRootDataLoader" interface="com.intellij.openapi.vfs.newvfs.persistent.FsRootDataLoader"/>
     <extensionPoint name="semanticRootProvider" interface="com.intellij.openapi.vfs.newvfs.persistent.RootSemanticAddressProvider"/>
 
     <extensionPoint name="persistentFsConnectionListener" interface="com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener"/>

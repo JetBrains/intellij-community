@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.editor
 
@@ -20,6 +20,82 @@ class TypedHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
         '{',
         """val x = "$<caret>" """,
         """val x = "$dollar{}" """
+    )
+
+    fun testAutoIndentGetter() = doTypeTest(
+        ch = '(',
+        beforeText = """
+            val i: Int
+            get<caret>
+        """.trimIndent(),
+        afterText = """
+            val i: Int
+                get(<caret>)
+        """.trimIndent(),
+    )
+
+    fun testAutoIndentSetter() = doTypeTest(
+        ch = '(',
+        beforeText = """
+            var i: Int
+            set<caret>
+        """.trimIndent(),
+        afterText = """
+            var i: Int
+                set(<caret>)
+        """.trimIndent(),
+    )
+
+    fun testAutoIndentSetterAndGetter() = doTypeTest(
+        ch = '(',
+        beforeText = """
+            var i: Int
+                get() = 42
+            set<caret>
+        """.trimIndent(),
+        afterText = """
+            var i: Int
+                get() = 42
+                set(<caret>)
+        """.trimIndent(),
+    )
+
+    fun testAutoIndentSetterAndGetter2() = doTypeTest(
+        ch = '(',
+        beforeText = """
+            var i: Int
+                get() = 42
+                set<caret>
+        """.trimIndent(),
+        afterText = """
+            var i: Int
+                get() = 42
+                set(<caret>)
+        """.trimIndent(),
+    )
+
+    fun testAutoIndentGetterWithModifierBefore() = doTypeTest(
+        ch = '(',
+        beforeText = """
+            val i: Int
+            private get<caret>
+        """.trimIndent(),
+        afterText = """
+            val i: Int
+                private get(<caret>)
+        """.trimIndent(),
+    )
+
+    fun testAutoIndentSetterWithModifierBefore() = doTypeTest(
+        ch = '(',
+        beforeText = """
+            var i: Int
+            private set<caret>
+        """.trimIndent(),
+        afterText = """
+            var i: Int
+                private set(<caret>)
+        """.trimIndent(),
     )
 
     fun testAutoIndentRightOpenBrace() = doTypeTest(

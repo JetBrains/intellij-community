@@ -1,9 +1,6 @@
 package com.intellij.settingsSync
 
 import com.intellij.configurationStore.ComponentStoreImpl
-import com.intellij.configurationStore.StreamProvider
-import com.intellij.configurationStore.getExportableComponentsMap
-import com.intellij.configurationStore.getExportableItemsFromLocalStorage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -12,18 +9,14 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.messages.Topic
 import java.nio.file.Path
-
-@Topic.AppLevel
-internal val SETTINGS_CHANGED_TOPIC: Topic<SettingsChangeListener> = Topic(SettingsChangeListener::class.java)
 
 private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 
-internal fun isSettingsSyncEnabledByKey() : Boolean =
+internal fun isSettingsSyncEnabledByKey(): Boolean =
   SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
 
-internal fun isSettingsSyncEnabledInSettings() : Boolean =
+internal fun isSettingsSyncEnabledInSettings(): Boolean =
   SettingsSyncSettings.getInstance().syncEnabled
 
 internal class SettingsSyncMain : Disposable {
@@ -40,7 +33,10 @@ internal class SettingsSyncMain : Disposable {
     else CloudConfigServerCommunicator()
 
     componentStore = application.stateStore as ComponentStoreImpl
-    controls = init(application, this, settingsSyncStorage, appConfigPath, componentStore, remoteCommunicator)
+    val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, appConfigPath, enabledCondition = {
+      isSettingsSyncEnabledByKey() && isAvailable() && isSettingsSyncEnabledInSettings()
+    })
+    controls = init(application, this, settingsSyncStorage, appConfigPath, remoteCommunicator, ideMediator)
   }
 
   override fun dispose() {
@@ -50,7 +46,6 @@ internal class SettingsSyncMain : Disposable {
 
   @RequiresBackgroundThread
   internal fun syncSettings() {
-    val publisher = ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC)
     when (controls.remoteCommunicator.checkServerState()) {
       is ServerState.UpdateNeeded -> {
         LOG.info("Updating from server")
@@ -59,11 +54,11 @@ internal class SettingsSyncMain : Disposable {
       }
       ServerState.FileNotExists -> {
         LOG.info("No file on server, we must push")
-        publisher.settingChanged(SyncSettingsEvent.MustPushRequest)
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.MustPushRequest)
       }
       ServerState.UpToDate -> {
         LOG.info("Updating settings is not needed, will check if push is needed")
-        publisher.settingChanged(SyncSettingsEvent.PushIfNeededRequest)
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.PushIfNeededRequest)
       }
       is ServerState.Error -> {
         // error already logged in checkServerState, we schedule update
@@ -71,12 +66,8 @@ internal class SettingsSyncMain : Disposable {
     }
   }
 
-  fun enableSyncing() {
-    componentStore.storageManager.addStreamProvider(controls.streamProvider, true)
-  }
-
   fun disableSyncing() {
-    componentStore.storageManager.removeStreamProvider(controls.streamProvider::class.java)
+    controls.ideMediator.removeStreamProvider()
   }
 
   internal companion object {
@@ -92,27 +83,21 @@ internal class SettingsSyncMain : Disposable {
                       parentDisposable: Disposable,
                       settingsSyncStorage: Path,
                       appConfigPath: Path,
-                      componentStore: ComponentStoreImpl,
-                      remoteCommunicator: SettingsSyncRemoteCommunicator): SettingsSyncControls {
-      // todo migrate from cloud config or settings-repository
-
-      val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable) {
-        getExportableItemsFromLocalStorage(getExportableComponentsMap(false), componentStore.storageManager).keys
-      }
-      val ideUpdater = SettingsSyncIdeCommunicator(application, componentStore, appConfigPath)
+                      remoteCommunicator: SettingsSyncRemoteCommunicator,
+                      ideMediator: SettingsSyncIdeMediator): SettingsSyncControls {
+      val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable,
+                                       ideMediator.collectFilesToExportFromSettings(appConfigPath))
       val updateChecker = SettingsSyncUpdateChecker(application, remoteCommunicator)
-      val bridge = SettingsSyncBridge(application, parentDisposable, settingsLog, ideUpdater, remoteCommunicator, updateChecker)
-
-      componentStore.storageManager.addStreamProvider(ideUpdater, true)
-
-      return SettingsSyncControls(ideUpdater, updateChecker, bridge, remoteCommunicator)
+      val bridge = SettingsSyncBridge(parentDisposable, settingsLog, ideMediator, remoteCommunicator, updateChecker)
+      return SettingsSyncControls(ideMediator, updateChecker, bridge, remoteCommunicator, settingsSyncStorage)
     }
 
     private val LOG = logger<SettingsSyncMain>()
   }
 
-  internal class SettingsSyncControls(val streamProvider: StreamProvider,
+  internal class SettingsSyncControls(val ideMediator: SettingsSyncIdeMediator,
                                       val updateChecker: SettingsSyncUpdateChecker,
                                       val bridge: SettingsSyncBridge,
-                                      val remoteCommunicator: SettingsSyncRemoteCommunicator)
+                                      val remoteCommunicator: SettingsSyncRemoteCommunicator,
+                                      val settingsSyncStorage: Path)
 }

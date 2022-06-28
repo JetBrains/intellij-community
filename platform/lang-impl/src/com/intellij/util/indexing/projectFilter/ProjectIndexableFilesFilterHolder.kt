@@ -128,11 +128,11 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
 
       }
     }
-    catch (e: Exception) {
-      FileBasedIndexImpl.LOG.error(e)
-    }
     catch (_: ProcessCanceledException) {
 
+    }
+    catch (e: Exception) {
+      FileBasedIndexImpl.LOG.error(e)
     }
   }
 

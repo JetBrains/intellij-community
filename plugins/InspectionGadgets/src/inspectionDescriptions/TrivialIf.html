@@ -23,11 +23,9 @@ Reports <code>if</code> statements that can be simplified to a single assignment
   if (condition2) return false;
   return true;
 </code></pre>
-<p>Use the <b>Ignore 'assert' statements </b> option if want to hide a warning for <code>if</code> statements
+<p>Note that replacing <code>if (isTrue()) assert false;</code> with <code>assert isTrue();</code> may change the program semantics
+  when asserts are disabled if condition has side effects.
+  Use the <b>Ignore 'if' statements with trivial 'assert'</b> option if you want to hide a warning for <code>if</code> statements
   containing only <code>assert</code> statement in their bodies.</p>
-<p>For example, in the following code the warning will be hidden:</p>
-<pre><code>
-  if (isTrue()) assert false;
-</code></pre>
 </body>
 </html>

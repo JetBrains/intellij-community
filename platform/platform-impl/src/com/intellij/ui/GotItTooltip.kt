@@ -6,6 +6,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
@@ -70,13 +71,11 @@ class GotItTooltipService {
 }
 
 /**
- * The `id` is a unique identifier for the tooltip that will be used to store the tooltip state in [PropertiesComponent].
- * Identifier has the following format: `place.where.used` (lowercase words separated with dots).
- *
- * Got It tooltip usage statistics can be properly gathered if its identifier prefix is registered in
- * `plugin.xml` (`PlatformExtensions.xml`) with `com.intellij.statistics.gotItTooltipAllowlist` extension point.
- * Prefix can cover a whole class of different Got It tooltips. If the prefix is shorter than the whole ID, then all different
- * tooltip usages will be reported in one category described by the prefix.
+ * id is a unique id for the tooltip that will be used to store the tooltip state in <code>PropertiesComponent</code>
+ * id has the following format: place.where.used - lowercase words separated with dots.
+ * GotIt tooltip usage statistics can be properly gathered if its id prefix is registered in plugin.xml (PlatformExtensions.xml)
+ * with gotItTooltipAllowlist extension point. Prefix can cover a whole class of different gotit tooltips.
+ * If prefix is shorter than the whole ID then all different tooltip usages will be reported in one category described by the prefix.
  */
 class GotItTooltip(@NonNls val id: String,
                    @Nls val text: String,
@@ -129,7 +128,7 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   /**
-   * Add an optional header to the tooltip.
+   * Add optional header to the tooltip.
    */
   fun withHeader(@Nls header: String): GotItTooltip {
     this.header = header
@@ -137,7 +136,7 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   /**
-   * Set preferred tooltip position relatively to the owner component.
+   * Set preferred tooltip position relatively to the owner component
    */
   fun withPosition(position: Balloon.Position): GotItTooltip {
     this.position = position
@@ -169,7 +168,7 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   /**
-   * Set the close timeout. If set, then the tooltip appears without the "Got It" button.
+   * Set close timeout. If set then tooltip appears without "Got It" button.
    */
   @JvmOverloads
   fun withTimeout(timeout: Int = DEFAULT_TIMEOUT): GotItTooltip {
@@ -180,7 +179,7 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   /**
-   * Limit tooltip body width to the given value. By default, it's limited to `MAX_WIDTH` pixels.
+   * Limit tooltip body width to the given value. By default it's limited to <code>MAX_WIDTH</code> pixels.
    */
   fun withMaxWidth(width: Int): GotItTooltip {
     maxWidth = width
@@ -188,7 +187,7 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   /**
-   * Add an optional link to the tooltip.
+   * Add optional link to the tooltip.
    */
   fun withLink(@Nls linkLabel: String, action: () -> Unit): GotItTooltip {
     link = object : LinkLabel<Unit>(linkLabel, null) {
@@ -199,14 +198,14 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   /**
-   * Add an optional link to the tooltip. Java version.
+   * Add optional link to the tooltip. Java version.
    */
   fun withLink(@Nls linkLabel: String, action: Runnable): GotItTooltip {
     return withLink(linkLabel) { action.run() }
   }
 
   /**
-   * Add an optional browser link to the tooltip. Link is rendered with arrow icon.
+   * Add optional browser link to the tooltip. Link is rendered with arrow icon.
    */
   fun withBrowserLink(@Nls linkLabel: String, url: URL): GotItTooltip {
     link = object : LinkLabel<Unit>(linkLabel, AllIcons.Ide.External_link_arrow) {
@@ -233,7 +232,7 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   /**
-   * Show close shortcut next to the "Got It" button.
+   * Optionally show close shortcut next to Got It button
    */
   fun andShowCloseShortcut(): GotItTooltip {
     showCloseShortcut = true
@@ -241,7 +240,7 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   /**
-   * Set the notification method that's called when actual [Balloon] is created.
+   * Set notification method that's called when actual <code>Balloon</code> is created.
    */
   fun setOnBalloonCreated(callback: (Balloon) -> Unit): GotItTooltip {
     onBalloonCreated = callback
@@ -249,21 +248,20 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   /**
-   * Returns `true` if this tooltip can be shown at the given properties settings.
+   * Returns <code>true</code> if this tooltip can be shown at the given properties settings.
    */
   override fun canShow(): Boolean = showCondition("$PROPERTY_PREFIX.$id")
 
   /**
    * Show tooltip for the given component and point to the component.
+   * If the component is showing (see <code>Component.isShowing</code>) and has not empty bounds then
+   * the tooltip is shown right away.
+   * If the component is showing but has empty bounds (technically not visible) then tooltip is shown asynchronously
+   * when component gets resized to not empty bounds.
+   * If the component is not showing then tooltip is shown asynchronously when component is added to the hierarchy and
+   * gets not empty bounds.
    *
-   * If the component is showing (see [Component.isShowing]) and has not empty bounds,
-   * then the tooltip is shown right away.
-   *
-   * If the component is showing but has empty bounds (technically not visible),
-   * then tooltip is shown asynchronously when the component gets resized to not empty bounds.
-   *
-   * If the component is not showing, then tooltip is shown asynchronously when component is added to the hierarchy
-   * and gets not empty bounds.
+   * not for actionButton
    */
   override fun show(component: JComponent, pointProvider: (Component, Balloon) -> Point) {
     if (canShow()) {
@@ -624,7 +622,7 @@ class GotItTooltip(@NonNls val id: String,
   }
 }
 
-private class LimitedWidthLabel(htmlBuilder: HtmlBuilder, limit: Int) : JLabel() {
+private class LimitedWidthLabel (htmlBuilder: HtmlBuilder, limit: Int) : JLabel() {
   val htmlView: View
 
   init {
@@ -667,7 +665,7 @@ private class LimitedWidthLabel(htmlBuilder: HtmlBuilder, limit: Int) : JLabel()
     val editorKit = GotItEditorKit()
 
     private fun createHTMLView(component: JComponent, html: String): View {
-      val document = editorKit.createDocument(component.font, component.foreground)
+      val document = editorKit.createDocument(component.font, component.foreground ?: UIUtil.getLabelForeground())
       StringReader(html).use { editorKit.read(it, document, 0) }
 
       val factory = editorKit.viewFactory

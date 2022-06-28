@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -78,7 +78,8 @@ public class JavaDebugProcess extends XDebugProcess {
     process -> new JavaBreakpointHandler.JavaExceptionBreakpointHandler(process),
     process -> new JavaBreakpointHandler.JavaFieldBreakpointHandler(process),
     process -> new JavaBreakpointHandler.JavaMethodBreakpointHandler(process),
-    process -> new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process)
+    process -> new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process),
+    process -> new JavaBreakpointHandler.JavaCollectionBreakpointHandler(process)
   };
 
   public static JavaDebugProcess create(@NotNull final XDebugSession session, @NotNull final DebuggerSession javaSession) {

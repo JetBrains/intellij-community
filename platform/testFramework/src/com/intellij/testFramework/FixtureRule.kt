@@ -340,14 +340,13 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-inline fun Project.use(task: (Project) -> Unit) {
+inline fun <T> Project.use(task: (Project) -> T): T =
   try {
     task(this)
   }
   finally {
     PlatformTestUtil.forceCloseProjectWithoutSaving(this)
   }
-}
 
 class DisposeNonLightProjectsRule : ExternalResource() {
   override fun after() {

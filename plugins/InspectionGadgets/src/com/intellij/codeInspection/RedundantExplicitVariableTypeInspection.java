@@ -62,7 +62,6 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
           if (variable.getType().equals(getNormalizedType(copyVariable))) {
             holder.registerProblem(element2Highlight,
                                    InspectionGadgetsBundle.message("inspection.redundant.explicit.variable.type.description"),
-                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                    new ReplaceWithVarFix());
           }
         }

@@ -1,20 +1,23 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
+import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.hints.chain.AbstractCallChainHintsProvider
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.parameterInfo.HintsTypeRenderer
-import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -54,6 +57,12 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
 
     override val description: String
         get() = KotlinBundle.message("inlay.kotlin.call.chains.hints")
+
+    override fun isLanguageSupported(language: Language): Boolean = language == KotlinLanguage.INSTANCE
+
+    override fun getProperty(key: String): String = KotlinBundle.getMessage(key)
+
+    override fun getCaseDescription(case: ImmediateConfigurable.Case): String? = case.extendedDescription
 
     override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
         KotlinAbstractHintsProvider.createKtFile(project, document, fileType)

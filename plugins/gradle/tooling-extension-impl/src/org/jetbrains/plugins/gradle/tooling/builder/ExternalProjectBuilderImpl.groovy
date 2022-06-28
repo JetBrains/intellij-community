@@ -73,12 +73,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def cache = context.getData(PROJECTS_PROVIDER)
     def tasksFactory = context.getData(TASKS_PROVIDER)
     def sourceSetFinder = new SourceSetCachedFinder(context)
-    return doBuild(modelName, project, cache, tasksFactory, sourceSetFinder)
+    return doBuild(modelName, project, context, cache, tasksFactory, sourceSetFinder)
   }
 
   @Nullable
   private static Object doBuild(final String modelName,
                                 final Project project,
+                                ModelBuilderContext context,
                                 ConcurrentMap<Project, ExternalProject> cache,
                                 TasksFactory tasksFactory,
                                 SourceSetCachedFinder sourceSetFinder) {
@@ -104,7 +105,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     defaultExternalProject.buildFile = project.buildFile
     defaultExternalProject.group = wrap(project.group)
     defaultExternalProject.projectDir = project.projectDir
-    defaultExternalProject.sourceSets = getSourceSets(project, resolveSourceSetDependencies, sourceSetFinder)
+    defaultExternalProject.sourceSets = getSourceSets(project, context, resolveSourceSetDependencies, sourceSetFinder)
     // Android Studio: provide the option to not build Gradle tasks list, because this triggers full task graph configuration, which is
     // very slow for large Android projects.
     def skipTasks;
@@ -123,7 +124,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
     final Map<String, DefaultExternalProject> childProjects = new TreeMap<String, DefaultExternalProject>()
     for (Map.Entry<String, Project> projectEntry : project.getChildProjects().entrySet()) {
-      final Object externalProjectChild = doBuild(modelName, projectEntry.getValue(), cache, tasksFactory, sourceSetFinder)
+      final Object externalProjectChild = doBuild(modelName, projectEntry.getValue(), context, cache, tasksFactory, sourceSetFinder)
       if (externalProjectChild instanceof DefaultExternalProject) {
         childProjects.put(projectEntry.getKey(), (DefaultExternalProject)externalProjectChild)
       }
@@ -203,6 +204,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   @CompileDynamic
   private static Map<String, DefaultExternalSourceSet> getSourceSets(Project project,
+                                                                     ModelBuilderContext context,
                                                                      boolean resolveSourceSetDependencies,
                                                                      SourceSetCachedFinder sourceSetFinder) {
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
@@ -266,8 +268,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       return result
     }
 
-    def (resourcesIncludes, resourcesExcludes, filterReaders) = getFilters(project, 'processResources')
-    def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = getFilters(project, 'processTestResources')
+    def (resourcesIncludes, resourcesExcludes, filterReaders) = getFilters(project, context, 'processResources')
+    def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = getFilters(project, context, 'processTestResources')
     //def (javaIncludes,javaExcludes) = getFilters(project,'compileJava')
 
     def additionalIdeaGenDirs = [] as Collection<File>
@@ -589,7 +591,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   }
 
   @CompileDynamic
-  static List<List> getFilters(Project project, String taskName) {
+  static List<List> getFilters(Project project, ModelBuilderContext context, String taskName) {
     def includes = []
     def excludes = []
     def filterReaders = [] as List<ExternalFilter>
@@ -611,55 +613,62 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
         if (copyActions) {
           copyActions.each { Action<? super FileCopyDetails> action ->
-            def filterClass = findPropertyWithType(action, Class, 'filterType', 'val$filterType', 'arg$2', 'arg$1')
-            if (filterClass != null) {
-              //noinspection GrUnresolvedAccess
-              def filterType = filterClass.name
-              def filter = [filterType: filterType] as DefaultExternalFilter
-
-              def props = findPropertyWithType(action, Map, 'properties', 'val$properties', 'arg$1')
-              if (props != null) {
-                  if ('org.apache.tools.ant.filters.ExpandProperties' == filterType && props['project']) {
-                    if (props['project']) filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props['project'].properties)
-                  }
-                  else {
-                    filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props)
-                  }
-              }
-              filterReaders << filter
+            if ('RenamingCopyAction' == action.class.simpleName) {
+              filterReaders << getRenamingCopyFilter(action)
             }
-            else if (action.class.simpleName == 'RenamingCopyAction' && action.hasProperty('transformer')) {
-              //noinspection GrUnresolvedAccess
-              if (action.transformer.hasProperty('matcher') && action?.transformer?.hasProperty('replacement')) {
-                //noinspection GrUnresolvedAccess
-                String pattern = action?.transformer?.matcher?.pattern()?.pattern ?: action?.transformer?.pattern?.pattern
-                //noinspection GrUnresolvedAccess
-                String replacement = action?.transformer?.replacement
-                def filter = [filterType: 'RenamingCopyFilter'] as DefaultExternalFilter
-                if (pattern && replacement) {
-                  filter.propertiesAsJsonMap = new GsonBuilder().create().toJson([pattern: pattern, replacement: replacement])
-                  filterReaders << filter
-                }
-              }
+            else {
+              filterReaders << getFilter(action)
             }
-//          else {
-//            project.logger.error(
-//              ErrorMessageBuilder.create(project, "Resource configuration errors")
-//                .withDescription("Unsupported copy action found: " + action.class.name).build())
-//          }
           }
         }
       }
     }
-    catch (Exception ignore) {
-//      project.logger.error(
-//        ErrorMessageBuilder.create(project, e, "Resource configuration errors")
-//          .withDescription("Unable to resolve resources filtering configuration").build())
+    catch (Exception exception) {
+      def message = ErrorMessageBuilder.create(project, exception, "Resource configuration errors")
+        .withDescription("Idea internal error: Unable to resolve resources filtering configuration")
+        .buildMessage()
+      context.report(project, message)
     }
 
     return [includes, excludes, filterReaders]
   }
 
+  @CompileDynamic
+  private static ExternalFilter getFilter(Action<? super FileCopyDetails> action) {
+    def filterClass = findPropertyWithType(action, Class, 'filterType', 'val$filterType', 'arg$2', 'arg$1')
+    if (filterClass == null) {
+      throw new IllegalArgumentException("Unsupported action found: " + action.class.name)
+    }
+
+    def filterType = filterClass.name
+    def properties = findPropertyWithType(action, Map, 'properties', 'val$properties', 'arg$1')
+    if ('org.apache.tools.ant.filters.ExpandProperties' == filterType) {
+      if (properties != null && properties['project'] != null) {
+        properties = properties['project'].properties
+      }
+    }
+
+    def filter = new DefaultExternalFilter()
+    filter.filterType = filterType
+    if (properties != null) {
+      filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(properties)
+    }
+    return filter
+  }
+
+  @CompileDynamic
+  private static ExternalFilter getRenamingCopyFilter(Action<? super FileCopyDetails> action) {
+    assert 'RenamingCopyAction' == action.class.simpleName
+
+    def pattern = action.transformer.matcher?.pattern()?.pattern() ?:
+                  action.transformer.pattern?.pattern()
+    def replacement = action.transformer.replacement
+
+    def filter = new DefaultExternalFilter()
+    filter.filterType = 'RenamingCopyFilter'
+    filter.propertiesAsJsonMap = new GsonBuilder().create().toJson([pattern: pattern, replacement: replacement])
+    return filter
+  }
 
   static <T> T findPropertyWithType(Object self, Class<T> type, String... propertyNames) {
     for (String name in propertyNames) {
@@ -669,7 +678,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
           field.setAccessible(true)
           return field.get(self) as T
         }
-      } catch (NoSuchFieldException ignored) {
+      }
+      catch (NoSuchFieldException ignored) {
       }
     }
     return null

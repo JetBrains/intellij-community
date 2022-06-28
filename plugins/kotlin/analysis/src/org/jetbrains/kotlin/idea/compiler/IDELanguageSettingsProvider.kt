@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.caches.project.*
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.project.*
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -29,7 +30,6 @@ import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.subplatformsOfType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
-import kotlin.KotlinVersion
 
 class IDELanguageSettingsProviderHelper(private val project: Project) {
     internal val languageVersionSettings: LanguageVersionSettings
@@ -49,8 +49,8 @@ class IDELanguageSettingsProviderHelper(private val project: Project) {
         for (module in ModuleManager.getInstance(project).modules) {
             val settings = KotlinFacetSettingsProvider.getInstance(project)?.getSettings(module) ?: continue
             val compilerArguments = settings.mergedCompilerArguments as? K2JVMCompilerArguments ?: continue
-            val kotlinVersion =
-                LanguageVersion.fromVersionString(compilerArguments.languageVersion)?.toKotlinVersion() ?: KotlinVersion.CURRENT
+            val kotlinVersion = LanguageVersion.fromVersionString(compilerArguments.languageVersion)?.toKotlinVersion()
+                ?: KotlinPluginLayout.instance.standaloneCompilerVersion.kotlinVersion
 
             result = JavaTypeEnhancementStateParser(MessageCollector.NONE, kotlinVersion).parse(
                 compilerArguments.jsr305,

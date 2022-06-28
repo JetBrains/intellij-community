@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.lambdaToExplicit;
 
 import com.intellij.codeInspection.*;
@@ -57,7 +57,7 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
 
       private void registerProblem(PsiLambdaExpression lambda, PsiExpression expr, LocalQuickFix fix) {
         holder.registerProblem(lambda, JavaBundle.message("inspection.excessive.lambda.message"),
-                               ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new TextRange(0, expr.getStartOffsetInParent()),
                                fix);
       }

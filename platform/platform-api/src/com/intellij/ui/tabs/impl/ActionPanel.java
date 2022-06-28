@@ -78,7 +78,7 @@ public final class ActionPanel extends NonOpaquePanel {
   public void paint(Graphics g) {
     boolean isHovered = myTabs.isHoveredTab(myTabs.myInfo2Label.get(myInfo));
     boolean isSelected = myTabs.getSelectedInfo() == myInfo;
-    if (ExperimentalUI.isNewEditorTabs() && myTabs instanceof JBEditorTabs && !isSelected && !isHovered && !myInfo.isPinned()) {
+    if (ExperimentalUI.isNewUI() && myTabs instanceof JBEditorTabs && !isSelected && !isHovered && !myInfo.isPinned()) {
       return;
     }
     super.paint(g);

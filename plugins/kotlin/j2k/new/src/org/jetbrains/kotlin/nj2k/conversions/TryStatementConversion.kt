@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
@@ -69,11 +69,12 @@ class TryStatementConversion(context: NewJ2kConverterContext) : RecursiveApplica
 
     private fun convertCatchSection(javaCatchSection: JKJavaTryCatchSection): List<JKKtTryCatchSection> {
         javaCatchSection.block.detach(javaCatchSection)
-        return javaCatchSection.parameter.type.type.let {
+        val typeElement = javaCatchSection.parameter.type
+        return typeElement.type.let {
             (it as? JKJavaDisjunctionType)?.disjunctions ?: listOf(it)
         }.map {
             val parameter = JKParameter(
-                JKTypeElement(it.updateNullability(Nullability.NotNull)),
+                JKTypeElement(it.updateNullability(Nullability.NotNull), typeElement.annotationList.copyTreeAndDetach()),
                 javaCatchSection.parameter.name.copyTreeAndDetach()
             )
             JKKtTryCatchSection(

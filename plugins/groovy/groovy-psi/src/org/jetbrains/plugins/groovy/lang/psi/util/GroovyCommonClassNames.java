@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import java.util.Set;
@@ -26,6 +26,7 @@ public interface GroovyCommonClassNames {
   String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
   String JAVA_MATH_BIG_INTEGER = "java.math.BigInteger";
   String ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE = "org.codehaus.groovy.runtime.MethodClosure";
+  String ORG_CODEHAUS_GROOVY_MACRO_RUNTIME_MACRO = "org.codehaus.groovy.macro.runtime.Macro";
   String JAVA_UTIL_REGEX_MATCHER = "java.util.regex.Matcher";
   String GROOVY_TRANSFORM_FIELD = "groovy.transform.Field";
   String GROOVY_TRANSFORM_RECORD_TYPE = "groovy.transform.RecordType";

@@ -2,7 +2,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -32,10 +32,10 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
       if (sdk != null) {
         String homePath = sdk.getHomePath();
         if (homePath != null) {
-          return WslDistributionManager.isWslPath(homePath);
+          return WslPath.isWslUncPath(homePath);
         }
       }
-      return WslDistributionManager.isWslPath(path);
+      return WslPath.isWslUncPath(path);
     }
     Module module = getConfigurationModule().getModule();
     if (module != null) {
@@ -47,7 +47,7 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
         return false;
       }
       String sdkHomePath = sdk.getHomePath();
-      return sdkHomePath != null && WslDistributionManager.isWslPath(sdkHomePath);
+      return sdkHomePath != null && WslPath.isWslUncPath(sdkHomePath);
     }
     return false;
   }

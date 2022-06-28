@@ -264,12 +264,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       selected = contentManager.getContents()[0];
     }
 
-    if (selected != null) {
-      ContentTabLabel label = contentToTabs.get(selected);
-      if (label != null) {
-        result += label.getMinimumSize().width;
-      }
-    }
+    result += selected == null ? 0 : contentToTabs.get(selected).getMinimumSize().width;
     return result;
   }
 

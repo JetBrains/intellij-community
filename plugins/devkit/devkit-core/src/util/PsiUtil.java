@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -38,30 +38,31 @@ public final class PsiUtil {
 
   private PsiUtil() { }
 
-  public static boolean isInstantiable(@NotNull PsiClass cls) {
-    PsiModifierList modList = cls.getModifierList();
-    if (modList == null || cls.isInterface() || modList.hasModifierProperty(PsiModifier.ABSTRACT) || !isPublicOrStaticInnerClass(cls)) {
+  /**
+   * @return {@code true} if given class can be instantiated by container at runtime
+   */
+  public static boolean isInstantiable(@NotNull PsiClass psiClass) {
+    if (psiClass instanceof PsiTypeParameter ||
+        psiClass.hasModifierProperty(PsiModifier.PRIVATE) ||
+        psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return false;
     }
 
-    PsiMethod[] constructors = cls.getConstructors();
+    if (psiClass.getContainingClass() != null &&
+        !psiClass.hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
+    }
+
+    PsiMethod[] constructors = psiClass.getConstructors();
     if (constructors.length == 0) return true;
 
     for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().isEmpty()
-          && constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+      int parametersCount = constructor.getParameterList().getParametersCount();
+      if (parametersCount <= 1) {
         return true;
       }
     }
     return false;
-  }
-
-  public static boolean isPublicOrStaticInnerClass(@NotNull PsiClass cls) {
-    PsiModifierList modifiers = cls.getModifierList();
-    if (modifiers == null) return false;
-
-    return modifiers.hasModifierProperty(PsiModifier.PUBLIC) &&
-           (cls.getContainingClass() == null || modifiers.hasModifierProperty(PsiModifier.STATIC));
   }
 
   @Nullable

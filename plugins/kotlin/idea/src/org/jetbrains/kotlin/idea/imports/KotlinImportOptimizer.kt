@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.*
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.*
-import org.jetbrains.kotlin.types.error.ErrorSimpleFunctionDescriptorImpl
+import org.jetbrains.kotlin.types.error.ErrorFunctionDescriptor
 
 class KotlinImportOptimizer : ImportOptimizer {
     override fun supports(file: PsiFile) = file is KtFile
@@ -177,7 +177,9 @@ class KotlinImportOptimizer : ImportOptimizer {
 
                     if (!reference.canBeResolvedViaImport(target, bindingContext)) continue
 
-                    if (isAccessibleAsMember(importableDescriptor, element, bindingContext)) continue
+                    if (importableDescriptor.name in names && isAccessibleAsMember(importableDescriptor, element, bindingContext)) {
+                        continue
+                    }
 
                     val descriptorNames = (aliases[importableFqName].orEmpty() + importableFqName.shortName()).intersect(names)
                     namesToImport.getOrPut(importableFqName) { hashSetOf() } += descriptorNames
@@ -310,5 +312,5 @@ private fun hasResolvedDescriptor(element: KtElement, bindingContext: BindingCon
         element.getResolvedCall(bindingContext) != null
     else
         element.mainReference?.resolveToDescriptors(bindingContext)?.let { descriptors ->
-            descriptors.isNotEmpty() && descriptors.none { it is ErrorSimpleFunctionDescriptorImpl }
+            descriptors.isNotEmpty() && descriptors.none { it is ErrorFunctionDescriptor }
         } == true

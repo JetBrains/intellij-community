@@ -133,7 +133,7 @@ Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage
 AssigOp                  = "=" | "+="
 
 ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedAnyChar})+
-ParameterExpansionExpr   = [^}/$`\"]+ | {EscapedChar}+
+ParameterExpansionExpr   = ([^}/$`\"\\] | {EscapedChar})+
 ParamExpansionSeparator  = "!" | ":" | ":"?"=" | ":"?"+" | ":"?"-" | ":"?"?" | "@" | ","","? | "^""^"? | "*"
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
@@ -331,7 +331,7 @@ EvalContent              = [^|\r\n$\"`'() ;] | {EscapedAnyChar}
     "elif"                        { return ELIF; }
     "else"                        { return ELSE; }
     "fi"                          { popState(IF_CONDITION); return FI; }
-    "for"                         { pushState(OTHER_CONDITIONS); return FOR; }
+    "for" / {WhiteSpace}+         { pushState(OTHER_CONDITIONS); return FOR; }
     "in"                          { return IN; }
     "function"                    { return FUNCTION; }
     "if"                          { pushState(IF_CONDITION); return IF; }

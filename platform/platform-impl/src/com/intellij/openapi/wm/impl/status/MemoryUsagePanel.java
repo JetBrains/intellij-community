@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -74,16 +74,16 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
 
   @Override
   public void install(@NotNull StatusBar statusBar) {
-    if (statusBar instanceof IdeStatusBarImpl) {
-      ((IdeStatusBarImpl)statusBar).setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 6));
-    }
+    //if (statusBar instanceof IdeStatusBarImpl) {
+    //  ((IdeStatusBarImpl)statusBar).setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 6));
+    //}
   }
 
   @Override
   public void dispose() { 
-    if (myStatusBar instanceof IdeStatusBarImpl) {
-      ((IdeStatusBarImpl)myStatusBar).setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 0));
-    }
+    //if (myStatusBar instanceof IdeStatusBarImpl) {
+    //  ((IdeStatusBarImpl)myStatusBar).setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 0));
+    //}
     myStatusBar = null;
   }
 
@@ -127,15 +127,15 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
 
     // background
     g.setColor(UIUtil.getPanelBackground());
-    g.fillRect(0, 0, barWidth, size.height - 1);
+    g.fillRect(0, 0, barWidth, size.height);
 
     // gauge (allocated)
     g.setColor(UNUSED_COLOR);
-    g.fillRect(0, 0, allocatedBarLength, size.height - 1);
+    g.fillRect(0, 0, allocatedBarLength, size.height);
 
     // gauge (used)
     g.setColor(USED_COLOR);
-    g.fillRect(0, 0, usedBarLength, size.height - 1);
+    g.fillRect(0, 0, usedBarLength, size.height);
 
     //text
     super.paintComponent(g);

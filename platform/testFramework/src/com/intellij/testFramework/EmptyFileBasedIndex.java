@@ -186,7 +186,7 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     return EmptyIndex.getInstance();
   }
 
-  private static class EmptyIndex<Key, Value> implements UpdatableIndex<Key, Value, FileContent, UpdatableIndex.EmptyData> {
+  private static class EmptyIndex<Key, Value> implements UpdatableIndex<Key, Value, FileContent, Void> {
     @SuppressWarnings("rawtypes")
     private static final EmptyIndex INSTANCE = new EmptyIndex();
     private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
@@ -215,17 +215,12 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public @NotNull UpdatableIndex.EmptyData instantiateFileData() {
+    public Void getFileIndexMetaData(@NotNull IndexedFile file) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void writeData(@NotNull UpdatableIndex.EmptyData unused, @NotNull IndexedFile file) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setIndexedStateForFileOnCachedData(int fileId, @NotNull UpdatableIndex.EmptyData unused) {
+    public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void unused) {
       throw new UnsupportedOperationException();
     }
 

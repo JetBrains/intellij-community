@@ -3,6 +3,7 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.actions.CreateFileFromTemplateAction
 import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.HTML
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.WebModuleBuilder
@@ -17,7 +18,9 @@ import com.intellij.util.PlatformUtils
 import com.intellij.xml.XmlBundle
 
 class HTMLNewProjectWizard : LanguageNewProjectWizard {
-  override val name: String = "HTML"
+
+  override val name = HTML
+
   override val ordinal = 400
 
   override fun isEnabled(context: WizardContext) = PlatformUtils.isCommunityEdition()

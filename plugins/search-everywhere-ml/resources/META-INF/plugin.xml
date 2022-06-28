@@ -48,6 +48,15 @@
 
     <statistician key="searchEverywhere"
                   implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereFileStatistician"/>
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereActionStatistician"/>
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereSymbolStatistician"/>
+
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereRunConfigurationFeaturesProvider$RunConfigurationTypeValidator"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLStatisticsCollector"/>
   </extensions>
 
   <extensionPoints>
@@ -66,16 +75,29 @@
 
   <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
     <searchEverywhereElementFeaturesProvider
-      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider"/>
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereGeneralActionFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereActionFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereOptionFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereCommonFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereSymbolFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereRunConfigurationFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywherePsiElementFeaturesProvider"/>
 
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ActionKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ClassAndFileKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.PsiElementKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.RunConfigurationsKeyProvider"/>
 
     <rankingModelLoader
       implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelLoader"/>

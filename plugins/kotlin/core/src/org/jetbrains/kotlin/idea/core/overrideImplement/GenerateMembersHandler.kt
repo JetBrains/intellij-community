@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
-import org.jetbrains.kotlin.util.firstNotNullResult
 
-abstract class GenerateMembersHandler : AbstractGenerateMembersHandler<OverrideMemberChooserObject>() {
+abstract class GenerateMembersHandler(final override val toImplement: Boolean) :
+    AbstractGenerateMembersHandler<OverrideMemberChooserObject>() {
 
     override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<OverrideMemberChooserObject> {
         val descriptor = classOrObject.resolveToDescriptorIfAny() ?: return emptySet()
@@ -86,12 +86,12 @@ abstract class GenerateMembersHandler : AbstractGenerateMembersHandler<OverrideM
                 if (index == -1) return lastElement
                 val classDescriptor = classOrObject.descriptor as? ClassDescriptor ?: return lastElement
 
-                val upperElement = ((index - 1) downTo 0).firstNotNullResult {
+                val upperElement = ((index - 1) downTo 0).firstNotNullOfOrNull {
                     classDescriptor.findElement(superMemberDescriptors[it])
                 }
                 if (upperElement != null) return upperElement
 
-                val lowerElement = ((index + 1) until superMemberDescriptors.size).firstNotNullResult {
+                val lowerElement = ((index + 1) until superMemberDescriptors.size).firstNotNullOfOrNull {
                     classDescriptor.findElement(superMemberDescriptors[it])
                 }
                 if (lowerElement != null) return lowerElement.prevSiblingOfSameType() ?: classLeftBrace

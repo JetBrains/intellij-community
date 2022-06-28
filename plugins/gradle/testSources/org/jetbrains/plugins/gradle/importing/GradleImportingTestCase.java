@@ -197,34 +197,36 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     }
     JavaVersion javaRuntimeVersion = JavaVersion.current();
     assumeTestJavaRuntime(javaRuntimeVersion);
-    GradleVersion baseVersion = getCurrentGradleBaseVersion();
-    if (!GradleJvmSupportMatriciesKt.isSupported(baseVersion, javaRuntimeVersion)) {
-      // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
-      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-      List<String> paths = JavaHomeFinder.suggestHomePaths(true);
-      for (String path : paths) {
-        if (JdkUtil.checkForJdk(path)) {
-          JdkVersionDetector.JdkVersionInfo jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(path);
-          if (jdkVersionInfo == null) continue;
-          if (GradleJvmSupportMatriciesKt.isSupported(baseVersion, jdkVersionInfo.version)) {
-            return path;
-          }
-        }
-      }
-      fail("Cannot find JDK for Gradle, checked paths: " + paths);
-      return null;
-    }
-    else {
-      return IdeaTestUtil.requireRealJdkHome();
-    }
+    return requireJdkHome(getCurrentGradleBaseVersion());
   }
 
-  private String requireWslJdkHome(WSLDistribution distribution) {
+  private static String requireWslJdkHome(@NotNull WSLDistribution distribution) {
     String jdkPath = System.getProperty("wsl.jdk.path");
     if (jdkPath == null) {
       jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64";
     }
     return distribution.getWindowsPath(jdkPath);
+  }
+
+  public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
+    JavaVersion javaRuntimeVersion = JavaVersion.current();
+    if (GradleJvmSupportMatriciesKt.isSupported(gradleVersion, javaRuntimeVersion)) {
+      return IdeaTestUtil.requireRealJdkHome();
+    }
+    // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
+    List<String> paths = JavaHomeFinder.suggestHomePaths(true);
+    for (String path : paths) {
+      if (JdkUtil.checkForJdk(path)) {
+        JdkVersionDetector.JdkVersionInfo jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(path);
+        if (jdkVersionInfo == null) continue;
+        if (GradleJvmSupportMatriciesKt.isSupported(gradleVersion, jdkVersionInfo.version)) {
+          return path;
+        }
+      }
+    }
+    fail("Cannot find JDK for Gradle, checked paths: " + paths);
+    return null;
   }
 
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {

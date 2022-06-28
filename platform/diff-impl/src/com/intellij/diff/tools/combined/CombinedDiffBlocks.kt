@@ -120,7 +120,6 @@ private class CombinedSimpleDiffHeader(blockId: CombinedPathBlockId, withBorder:
             append(FontUtil.spaceAndThinSpace() + parentPath, SimpleTextAttributes.GRAYED_ATTRIBUTES)
           }
           icon = FileTypeRegistry.getInstance().getFileTypeByFileName(path.name).icon
-          font = JBUI.Fonts.label(16f)
         }
       val component = OpaquePanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(3), 0))
         .apply {

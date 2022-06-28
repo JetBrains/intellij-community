@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.shortenRefs;
 
@@ -233,6 +233,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         @TestMetadata("ParameterTypeGenericTypes.kt")
         public void testParameterTypeGenericTypes() throws Exception {
             runTest("../idea/tests/testData/shortenRefsFir/types/ParameterTypeGenericTypes.kt");
+        }
+
+        @TestMetadata("ParameterTypeGenericTypes_missingTypeArgumentError.kt")
+        public void testParameterTypeGenericTypes_missingTypeArgumentError() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/types/ParameterTypeGenericTypes_missingTypeArgumentError.kt");
         }
 
         @TestMetadata("ParameterTypeImplicitImportBeatsStarImport.kt")

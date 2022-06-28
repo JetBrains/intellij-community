@@ -2,15 +2,8 @@
 package org.jetbrains.plugins.gradle.service.project.wizard.groovy
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logArtifactIdChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logDslChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logGroupIdChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
-import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep.Companion.withJavaSampleCodeAsset
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
@@ -19,25 +12,23 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.Panel
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.addSampleCode
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.groupId
+import com.intellij.ui.UIBundle
+import com.intellij.ui.dsl.builder.*
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.service.project.wizard.generateModuleBuilder
-import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.GroovyHomeKind
 import org.jetbrains.plugins.groovy.config.wizard.*
 
 class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
-  override val name: String = GradleConstants.SYSTEM_ID.readableName
+  override val name = GRADLE
 
-  override val ordinal: Int = 2
+  override val ordinal = 200
 
   override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep = Step(parent).chain(::AssetsStep)
 
@@ -46,18 +37,27 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     BuildSystemGroovyNewProjectWizardData by parent {
 
     private val addSampleCodeProperty = propertyGraph.property(false)
+      .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
     var addSampleCode by addSampleCodeProperty
 
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
-      builder.row(GroovyBundle.message("label.groovy.sdk")) {
-        groovySdkComboBox(context, groovySdkProperty)
-      }.bottomGap(BottomGap.SMALL)
-      builder.addSampleCodeCheckbox(addSampleCodeProperty)
+      with(builder) {
+        row(GroovyBundle.message("label.groovy.sdk")) {
+          groovySdkComboBox(context, groovySdkProperty)
+        }.bottomGap(BottomGap.SMALL)
+        row {
+          checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+            .bindSelected(addSampleCodeProperty)
+            .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
+        }.topGap(TopGap.SMALL)
+      }
     }
 
     override fun setupProject(project: Project) {
+      super.setupProject(project)
+
       val builder = generateModuleBuilder()
       builder.gradleVersion = suggestGradleVersion()
 
@@ -92,18 +92,6 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
           }
         }
       }
-
-      logSdkFinished(sdk)
-    }
-
-    init {
-      sdkProperty.afterChange { logSdkChanged(it) }
-      useKotlinDslProperty.afterChange { logDslChanged(it) }
-      parentProperty.afterChange { logParentChanged(!it.isPresent) }
-      addSampleCodeProperty.afterChange { logAddSampleCodeChanged() }
-      groupIdProperty.afterChange { logGroupIdChanged() }
-      artifactIdProperty.afterChange { logArtifactIdChanged() }
-      versionProperty.afterChange { logVersionChanged() }
     }
   }
 

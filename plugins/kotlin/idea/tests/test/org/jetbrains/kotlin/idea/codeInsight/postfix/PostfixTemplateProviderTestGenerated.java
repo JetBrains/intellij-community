@@ -31,6 +31,16 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
             runTest("testData/codeInsight/postfix/arg.kt");
         }
 
+        @TestMetadata("argWithReturn.kt")
+        public void testArgWithReturn() throws Exception {
+            runTest("testData/codeInsight/postfix/argWithReturn.kt");
+        }
+
+        @TestMetadata("argWithThrow.kt")
+        public void testArgWithThrow() throws Exception {
+            runTest("testData/codeInsight/postfix/argWithThrow.kt");
+        }
+
         @TestMetadata("assert.kt")
         public void testAssert() throws Exception {
             runTest("testData/codeInsight/postfix/assert.kt");
@@ -136,6 +146,11 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
             runTest("testData/codeInsight/postfix/sout.kt");
         }
 
+        @TestMetadata("soutCompanionClassLiteral.kt")
+        public void testSoutCompanionClassLiteral() throws Exception {
+            runTest("testData/codeInsight/postfix/soutCompanionClassLiteral.kt");
+        }
+
         @TestMetadata("soutInIf.kt")
         public void testSoutInIf() throws Exception {
             runTest("testData/codeInsight/postfix/soutInIf.kt");
@@ -229,6 +244,16 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
         @TestMetadata("whenForSealedClass.kt")
         public void testWhenForSealedClass() throws Exception {
             runTest("testData/codeInsight/postfix/whenForSealedClass.kt");
+        }
+
+        @TestMetadata("whenOnThis.kt")
+        public void testWhenOnThis() throws Exception {
+            runTest("testData/codeInsight/postfix/whenOnThis.kt");
+        }
+
+        @TestMetadata("whenOnThisInExtension.kt")
+        public void testWhenOnThisInExtension() throws Exception {
+            runTest("testData/codeInsight/postfix/whenOnThisInExtension.kt");
         }
 
         @TestMetadata("while.kt")

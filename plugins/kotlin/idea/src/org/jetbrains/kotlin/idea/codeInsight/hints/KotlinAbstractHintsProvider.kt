@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
@@ -32,6 +34,14 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
     open val hintsArePlacedAtTheEndOfLine = false
 
     abstract fun isElementSupported(resolved: HintType?, settings: T): Boolean
+
+    open fun isHintSupported(hintType: HintType): Boolean = false
+
+    override fun isLanguageSupported(language: Language): Boolean = language == KotlinLanguage.INSTANCE
+
+    override fun getProperty(key: String): String = KotlinBundle.getMessage(key)
+
+    override fun getCaseDescription(case: ImmediateConfigurable.Case): String? = case.extendedDescription
 
     override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
         createKtFile(project, document, fileType)
@@ -155,4 +165,10 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
     }
 
     data class PresentationAndSettings(val presentation: InlayPresentation, val offset: Int, val relatesToPrecedingText: Boolean)
+
+    abstract class HintsSettings {
+        abstract fun isEnabled(hintType: HintType): Boolean
+
+        abstract fun enable(hintType: HintType, enable: Boolean)
+    }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
@@ -74,12 +74,13 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
     private fun JKAnnotation.tryConvertRepeatableAnnotation(): Boolean {
         if (classSymbol.fqName == JvmAnnotationNames.REPEATABLE_ANNOTATION.asString() && moduleApiVersion >= ApiVersion.KOTLIN_1_6) {
             val jvmRepeatable = "kotlin.jvm.JvmRepeatable"
-            KotlinTopLevelTypeAliasFqNameIndex.getInstance()[
+            KotlinTopLevelTypeAliasFqNameIndex
+                .get(
                     jvmRepeatable,
-                    context.project,
-                    context.converter.targetModule?.let { GlobalSearchScope.moduleWithLibrariesScope(it) }
-                        ?: ProjectScope.getLibrariesScope(context.project)
-            ].ifEmpty {
+                     context.project,
+                     context.converter.targetModule?.let { GlobalSearchScope.moduleWithLibrariesScope(it) }
+                         ?: ProjectScope.getLibrariesScope(context.project)
+                ).ifEmpty {
                 return false
             }
 
@@ -110,8 +111,8 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
                 "TYPE_PARAMETER" to listOf("TYPE_PARAMETER"),
                 "TYPE" to listOf("ANNOTATION_CLASS", "CLASS"),
                 "TYPE_USE" to listOf("TYPE_USE")
-            ).map { (java, kotlins) ->
-                "java.lang.annotation.ElementType.$java" to kotlins.map { "kotlin.annotation.AnnotationTarget.$it" }
+            ).map { (java, kotlin) ->
+                "java.lang.annotation.ElementType.$java" to kotlin.map { "kotlin.annotation.AnnotationTarget.$it" }
             }.toMap()
     }
 }

@@ -4,7 +4,6 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.ui.InputException
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
@@ -118,7 +117,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private fun executeDefault(executor: CommitExecutor?): Boolean {
     val proceed = checkCommit(executor) &&
                   addUnversionedFiles() &&
-                  saveCommitOptions()
+                  saveCommitOptionsOnCommit()
     if (!proceed) return false
 
     saveCommitMessage(true)
@@ -136,7 +135,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean {
     val proceed = checkCommit(executor) &&
                   canExecute(executor) &&
-                  saveCommitOptions()
+                  saveCommitOptionsOnCommit()
     if (!proceed) return false
 
     saveCommitMessage(true)
@@ -169,13 +168,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     }
 
   protected open fun doExecuteDefault(executor: CommitExecutor?): Boolean {
-    try {
-      return workflow.executeDefault(executor)
-    }
-    catch (e: InputException) { // TODO Looks like this catch is unnecessary - check
-      e.show()
-      return false
-    }
+    return workflow.executeDefault(executor)
   }
 
   private fun canExecute(executor: CommitExecutor): Boolean = workflow.canExecute(executor, getIncludedChanges())
@@ -183,22 +176,22 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     return workflow.executeCustom(executor, session)
   }
 
-  protected open fun saveCommitOptions() = try {
+  protected open fun saveCommitOptionsOnCommit(): Boolean {
     commitOptions.saveState()
-    true
-  }
-  catch (ex: InputException) {
-    ex.show()
-    false
+    return true
   }
 
   protected abstract fun saveCommitMessage(success: Boolean)
 
-  private fun getVcsOptions(commitPanel: CheckinProjectPanel, vcses: Collection<AbstractVcs>, commitContext: CommitContext) =
+  private fun getVcsOptions(commitPanel: CheckinProjectPanel,
+                            vcses: Collection<AbstractVcs>,
+                            commitContext: CommitContext): Map<AbstractVcs, RefreshableOnComponent> =
     vcses.sortedWith(VCS_COMPARATOR)
-      .associateWith { it.checkinEnvironment?.createCommitOptions(commitPanel, commitContext) }
-      .filterValues { it != null }
-      .mapValues { it.value!! }
+      .mapNotNull { vcs ->
+        val optionsPanel = vcs.checkinEnvironment?.createCommitOptions(commitPanel, commitContext) ?: return@mapNotNull null
+        Pair(vcs, optionsPanel)
+      }
+      .toMap()
 
   private fun getBeforeOptions(handlers: Collection<CheckinHandler>): List<RefreshableOnComponent> =
     handlers.mapNotNullLoggingErrors(LOG) { it.beforeCheckinConfigurationPanel }

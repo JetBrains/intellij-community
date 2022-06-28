@@ -51,7 +51,7 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
 
     if (javaSliceUsage != null && javaSliceUsage.indexNesting != 0) {
       append(" " + JavaBundle.message("slice.usage.message.tracking.container.contents",
-                                      getContainerName(javaSliceUsage),
+                                      javaSliceUsage.containerName,
                                       javaSliceUsage.syntheticField.isEmpty() ? "" : "." + javaSliceUsage.syntheticField),
              SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
@@ -99,35 +99,6 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
     if (javaSliceUsage != null && javaSliceUsage.requiresAssertionViolation) {
       append(" " + JavaBundle.message("slice.usage.message.assertion.violated"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
-  }
-
-  @NotNull
-  private static String getContainerName(@NotNull JavaSliceUsage usage) {
-    String result = "";
-    JavaSliceUsage prev = usage;
-    String name = "";
-    while (usage != null) {
-      if (usage.indexNesting != prev.indexNesting) {
-        result = name + (result.isEmpty() ? "" : ".") + result;
-        if (usage.indexNesting == 0) break;
-      }
-      PsiElement element = usage.getElement();
-      if (element instanceof PsiNamedElement) {
-        name = ((PsiNamedElement)element).getName();
-      }
-      else if (element instanceof PsiReference) {
-        name = ((PsiReference)element).getCanonicalText();
-      }
-      else if (element instanceof PsiExpression) {
-        PsiType type = ((PsiExpression)element).getType();
-        if (type != null) {
-          name = type.getPresentableText();
-        }
-      }
-      prev = usage;
-      usage = (JavaSliceUsage)usage.getParent();
-    }
-    return result;
   }
 }
 

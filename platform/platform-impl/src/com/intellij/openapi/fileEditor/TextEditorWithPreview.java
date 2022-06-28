@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -11,14 +11,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.Alarm;
@@ -136,7 +135,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setSplitterProportionKey(getSplitterProportionKey());
     mySplitter.setFirstComponent(myEditor.getComponent());
     mySplitter.setSecondComponent(myPreview.getComponent());
-    mySplitter.setDividerWidth(2);
+    mySplitter.setDividerWidth(ExperimentalUI.isNewUI() ? 1 : 2);
+    if (ExperimentalUI.isNewUI()) {
+      mySplitter.getDivider().setBackground(JBColor.border());
+    }
 
     myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
 
@@ -495,7 +497,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     public Icon getIcon(@Nullable TextEditorWithPreview editor) {
       if (this == SHOW_EDITOR) return AllIcons.General.LayoutEditorOnly;
       if (this == SHOW_PREVIEW) return AllIcons.General.LayoutPreviewOnly;
-      return editor != null && editor.myIsVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
+      boolean isVerticalSplit = editor != null && editor.myIsVerticalSplit;
+      if (ExperimentalUI.isNewUI()) {
+        return isVerticalSplit ? IconLoader.getIcon("expui/general/editorPreviewVertical.svg", AllIcons.class)
+                               : IconLoader.getIcon("expui/general/editorPreview.svg", AllIcons.class);
+      }
+      return isVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
     }
   }
 

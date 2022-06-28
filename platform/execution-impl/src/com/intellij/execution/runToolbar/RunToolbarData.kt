@@ -7,6 +7,7 @@ import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.impl.ProjectRunConfigurationConfigurable
 import com.intellij.execution.impl.RunConfigurable
 import com.intellij.execution.impl.SingleConfigurationConfigurable
+import com.intellij.execution.runToolbar.data.RWWaitingForAProcesses
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
@@ -47,7 +48,7 @@ interface RunToolbarData {
   val id: String
   var configuration: RunnerAndConfigurationSettings?
   val environment: ExecutionEnvironment?
-  val waitingForAProcesses: WaitingForAProcesses
+  val waitingForAProcesses: RWWaitingForAProcesses
 
   fun clear()
 }
@@ -67,9 +68,7 @@ fun DataContext.runToolbarData(): RunToolbarData? {
 }
 
 fun AnActionEvent.mainState(): RunToolbarMainSlotState? {
-  return this.dataContext.getData(RunToolbarData.RUN_TOOLBAR_MAIN_STATE) ?: this.project?.let {
-    if(RunToolbarSlotManager.getInstance(it).mainSlotData == this.runToolbarData()) RunToolbarMainSlotState.CONFIGURATION else null
-  }
+  return this.dataContext.getData(RunToolbarData.RUN_TOOLBAR_MAIN_STATE)
 }
 
 internal fun DataContext.configuration(): RunnerAndConfigurationSettings? {

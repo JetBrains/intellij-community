@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -33,7 +33,6 @@ import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
-import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
 import java.util.ArrayList;
@@ -535,30 +534,28 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @NotNull
   private static TextLayout createTextLayout(String text, Font basefont, FontRenderContext fontRenderContext) {
     AttributedString string = new AttributedString(text);
-    int start = 0;
-    int end = text.length();
-    AttributedCharacterIterator it = string.getIterator(new AttributedCharacterIterator.Attribute[0], start, end);
+    int length = text.length();
     Font currentFont = basefont;
-    int currentIndex = start;
-    for(char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
+    int currentIndex = 0;
+    for(int pos = 0; pos < length; pos = text.offsetByCodePoints(pos, 1)) {
+      int codePoint = text.codePointAt(pos);
       Font font = basefont;
-      if (!font.canDisplay(c)) {
+      if (!font.canDisplay(codePoint)) {
         for (SuitableFontProvider provider : SuitableFontProvider.EP_NAME.getExtensionsIfPointIsRegistered()) {
-          font = provider.getFontAbleToDisplay(c, basefont.getSize(), basefont.getStyle(), basefont.getFamily());
+          font = provider.getFontAbleToDisplay(codePoint, basefont.getSize(), basefont.getStyle(), basefont.getFamily());
           if (font != null) break;
         }
       }
-      int i = it.getIndex();
       if (!Comparing.equal(currentFont, font)) {
-        if (i > currentIndex) {
-          string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, i);
+        if (pos > currentIndex) {
+          string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, pos);
         }
         currentFont = font;
-        currentIndex = i;
+        currentIndex = pos;
       }
     }
-    if (currentIndex < end) {
-      string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, end);
+    if (currentIndex < length) {
+      string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, length);
     }
     return new TextLayout(string.getIterator(), fontRenderContext);
   }
@@ -1091,7 +1088,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   public static int getTextBaseLine(@NotNull FontMetrics metrics, final int height) {
     // adding leading to ascent, just like in editor (leads to bad presentation for certain fonts with Oracle JDK, see IDEA-167541)
-    return (height - metrics.getHeight()) / 2 + metrics.getAscent() +
+    return (height - metrics.getHeight() + 1) / 2 + metrics.getAscent() +
            (SystemInfo.isJetBrainsJvm ? metrics.getLeading() : 0);
   }
 

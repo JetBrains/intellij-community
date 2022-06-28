@@ -14,7 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 
-class GenerateEventsScheme : DumbAwareAction(ActionsBundle.message("action.GenerateEventsScheme.text"),
+class GenerateEventsScheme(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER) : DumbAwareAction(ActionsBundle.message("action.GenerateEventsScheme.text"),
                                              ActionsBundle.message("action.GenerateEventsScheme.description"),
                                              AllIcons.FileTypes.Json) {
   override fun update(e: AnActionEvent) {
@@ -24,7 +24,7 @@ class GenerateEventsScheme : DumbAwareAction(ActionsBundle.message("action.Gener
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
-    val eventsScheme = EventsSchemeBuilder.buildEventsScheme()
+    val eventsScheme = EventsSchemeBuilder.buildEventsScheme(recorderId)
     val text = GsonBuilder().setPrettyPrinting().create().toJson(eventsScheme)
     val scratchFile = ScratchRootType.getInstance().createScratchFile(project, "statistics_events_scheme.json", JsonLanguage.INSTANCE, text)
     if (scratchFile == null) {

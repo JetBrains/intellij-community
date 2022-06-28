@@ -4,10 +4,10 @@
 package com.intellij.usages.impl.rules
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.GeneratedSourcesFilter
 import com.intellij.usages.rules.ImportFilteringRule
 import com.intellij.usages.rules.UsageFilteringRule
 import com.intellij.usages.rules.UsageFilteringRuleProvider
+import com.intellij.usages.rules.GeneratedSourceUsageFilter
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 
@@ -23,13 +23,17 @@ fun platformUsageFilteringRules(project: Project): List<UsageFilteringRule> {
   val result = ArrayList<UsageFilteringRule>()
   result.add(ReadAccessFilteringRule)
   result.add(WriteAccessFilteringRule)
-  if (GeneratedSourcesFilter.EP_NAME.hasAnyExtensions()) {
+  if (areGeneratedSourceUsageFiltersAvailable()) {
     result.add(UsageInGeneratedCodeFilteringRule(project))
   }
   if (ImportFilteringRule.EP_NAME.hasAnyExtensions()) {
     result.add(ImportUsageFilteringRule)
   }
   return result
+}
+
+private fun areGeneratedSourceUsageFiltersAvailable(): Boolean {
+  return GeneratedSourceUsageFilter.EP_NAME.extensions.any(GeneratedSourceUsageFilter::isAvailable)
 }
 
 private fun fromExtensions(project: Project, result: MutableList<UsageFilteringRule>) {

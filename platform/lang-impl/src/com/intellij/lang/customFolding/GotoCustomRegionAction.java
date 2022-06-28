@@ -25,9 +25,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class GotoCustomRegionAction extends AnAction implements DumbAware, PopupAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

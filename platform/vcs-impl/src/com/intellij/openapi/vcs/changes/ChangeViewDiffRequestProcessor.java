@@ -37,8 +37,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple
-  implements DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
+public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple implements DiffPreviewUpdateProcessor {
 
   private static final int MANY_CHANGES_THRESHOLD = 10000;
 
@@ -52,22 +51,16 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   // Abstract
   //
 
-  @Override
-  public ListSelection<? extends DiffRequestProducer> collectDiffProducers(boolean selectedOnly) {
-    Project project = getProject();
-    Wrapper change = getCurrentChange();
-    List<Wrapper> changes = (selectedOnly ? getSelectedChanges() : getAllChanges()).collect(Collectors.toList());
-    return ListSelection.create(changes, change)
-      .withExplicitSelection(selectedOnly)
-      .map(wrapper -> wrapper.createProducer(project));
-  }
-
   @NotNull
   public abstract Stream<? extends Wrapper> getSelectedChanges();
 
   @NotNull
   public abstract Stream<? extends Wrapper> getAllChanges();
 
+  /**
+   * Select change in view (ex: in corresponding JTree).
+   * NB: might do nothing if existing multiple selection contains passed change.
+   */
   protected abstract void selectChange(@NotNull Wrapper change);
 
   protected boolean showAllChangesForEmptySelection() {
@@ -225,6 +218,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
     @Override
     protected void onSelected(@NotNull Wrapper change) {
+      setCurrentChange(change);
       selectChange(change);
     }
   }

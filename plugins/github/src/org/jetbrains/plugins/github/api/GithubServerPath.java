@@ -131,7 +131,7 @@ public final class GithubServerPath implements ServerPath {
 
   @NotNull
   public String toUrl() {
-    return getSchemaUrlPart() + myHost + getPortUrlPart() + StringUtil.notNullize(mySuffix);
+    return toUrl(true);
   }
 
   @NotNull

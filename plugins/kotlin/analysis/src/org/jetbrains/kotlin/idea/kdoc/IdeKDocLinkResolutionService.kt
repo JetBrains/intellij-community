@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.kdoc
 
@@ -8,11 +8,11 @@ import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMethodDescriptor
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.incremental.components.LookupLocation
@@ -41,8 +41,8 @@ class IdeKDocLinkResolutionService(val project: Project) : KDocLinkResolutionSer
 
         val targetFqName = FqName.fromSegments(qualifiedName)
 
-        val functions = KotlinFunctionShortNameIndex.getInstance().get(shortName, project, scope).asSequence()
-        val classes = KotlinClassShortNameIndex.getInstance().get(shortName, project, scope).asSequence()
+        val functions = KotlinFunctionShortNameIndex.get(shortName, project, scope).asSequence()
+        val classes = KotlinClassShortNameIndex.get(shortName, project, scope).asSequence()
 
         val descriptors = (functions + classes).filter { it.fqName == targetFqName }
             .map { it.unsafeResolveToDescriptor(BodyResolveMode.PARTIAL) } // TODO Filter out not visible due dependencies config descriptors
@@ -66,7 +66,7 @@ class IdeKDocLinkResolutionService(val project: Project) : KDocLinkResolutionSer
             return javaFunctions
         }
 
-        if (!targetFqName.isRoot && PackageIndexUtil.packageExists(targetFqName, scope, project))
+        if (!targetFqName.isRoot && PackageIndexUtil.packageExists(targetFqName, scope))
             return listOf(GlobalSyntheticPackageViewDescriptor(targetFqName, project, scope))
         return emptyList()
     }
@@ -102,27 +102,27 @@ private class GlobalSyntheticPackageViewDescriptor(
         }
 
 
-        fun getClassesByNameFilter(nameFilter: (Name) -> Boolean) = KotlinFullClassNameIndex.getInstance()
+        fun getClassesByNameFilter(nameFilter: (Name) -> Boolean) = KotlinFullClassNameIndex
             .getAllKeys(project)
             .asSequence()
             .filter { it.startsWith(fqName.asString()) }
             .map(::FqName)
             .filter { it.isChildOf(fqName) }
             .filter { nameFilter(it.shortName()) }
-            .flatMap { KotlinFullClassNameIndex.getInstance()[it.asString(), project, scope].asSequence() }
+            .flatMap { KotlinFullClassNameIndex.get(it.asString(), project, scope).asSequence() }
             .map { it.resolveToDescriptorIfAny() }
 
-        fun getFunctionsByNameFilter(nameFilter: (Name) -> Boolean) = KotlinTopLevelFunctionFqnNameIndex.getInstance()
+        fun getFunctionsByNameFilter(nameFilter: (Name) -> Boolean) = KotlinTopLevelFunctionFqnNameIndex
             .getAllKeys(project)
             .asSequence()
             .filter { it.startsWith(fqName.asString()) }
             .map(::FqName)
             .filter { it.isChildOf(fqName) }
             .filter { nameFilter(it.shortName()) }
-            .flatMap { KotlinTopLevelFunctionFqnNameIndex.getInstance()[it.asString(), project, scope].asSequence() }
+            .flatMap { KotlinTopLevelFunctionFqnNameIndex.get(it.asString(), project, scope).asSequence() }
             .map { it.resolveToDescriptorIfAny() as? DeclarationDescriptor }
 
-        fun getSubpackages(nameFilter: (Name) -> Boolean) = PackageIndexUtil.getSubPackageFqNames(fqName, scope, project, nameFilter)
+        fun getSubpackages(nameFilter: (Name) -> Boolean) = PackageIndexUtil.getSubPackageFqNames(fqName, scope, nameFilter)
             .map { GlobalSyntheticPackageViewDescriptor(it, project, scope) }
 
         override fun getContributedDescriptors(

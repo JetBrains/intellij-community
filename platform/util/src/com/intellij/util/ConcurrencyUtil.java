@@ -248,9 +248,10 @@ public final class ConcurrencyUtil {
   }
 
   /**
-   * Rethrow exception (wrapped in RuntimeException if necessary) if it's the completion result of the {@code task}
+   * Complete the {@code task} and rethrow exceptions (wrapped in RuntimeException if necessary), if any.
+   * Useful when the result of the Future is otherwise abandoned.
    */
-  public static void manifestExceptionsIn(@NotNull Future<?> task) {
+  public static void manifestExceptionsIn(@NotNull Future<?> task) throws RuntimeException, Error {
     try {
       task.get();
     }

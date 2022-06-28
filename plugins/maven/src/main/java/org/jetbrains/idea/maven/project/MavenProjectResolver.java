@@ -94,7 +94,6 @@ public class MavenProjectResolver {
 
       MavenUtil.restartConfigHighlightning(project, mavenProjects);
     }
-    if (myTree != null) myTree.resolutionCompleted();
   }
 
 
@@ -133,10 +132,9 @@ public class MavenProjectResolver {
     Collection<MavenProjectReaderResult> results = new MavenProjectReader(project)
       .resolveProject(generalSettings, embedder, files, explicitProfiles, myTree.getProjectLocator());
 
-    MavenResolveResultProcessor.ArtifactTransferProblems problems = MavenResolveResultProcessor.getArtifactTransferProblems(results);
-    if (!problems.isEmpty()) {
-      MavenResolveResultProcessor.notifySyncForProblem(project, problems);
-    }
+    MavenResolveResultProblemProcessor.MavenResolveProblemHolder problems = MavenResolveResultProblemProcessor.getProblems(results);
+    MavenResolveResultProblemProcessor.notifySyncForProblem(project, problems);
+
     context.putUserData(UNRESOLVED_ARTIFACTS, problems.unresolvedArtifacts);
 
     for (MavenProjectReaderResult result : results) {
@@ -156,6 +154,7 @@ public class MavenProjectResolver {
 
       MavenProjectChanges changes = mavenProjectCandidate
         .set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
+      mavenProjectCandidate.getProblems(); // need for fill problem cache
       if (result.nativeMavenProject != null) {
         for (MavenImporter eachImporter : mavenProjectCandidate.getSuitableImporters()) {
           eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);

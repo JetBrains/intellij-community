@@ -9,39 +9,40 @@ val x: (Pair<Int, Int>, Int) -> Unit = { (x, y), z ->
 }
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
-    (x,
+        (x,
             y),
-    z,
+        z,
     ->
     println(x)
 }
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
-    (
+        (
             x,
             y),
-    z,
+        z,
     ->
     println(x)
 }
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
-    (
+        (
             x, // adw
             y,
-    ),
-    z,
+        ),
+        z,
     ->
     println(x)
 }
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
-    (
-            x, /* val x: (Pair<Int, Int>, Int) -> Unit = { (x, y), z, ->
+        (
+            x,
+                /* val x: (Pair<Int, Int>, Int) -> Unit = { (x, y), z, ->
     println(x)
 }*/
-    ),
-    z,
+        ),
+        z,
     ->
     println(x)
 }
@@ -55,36 +56,36 @@ val x: (Pair<Int, Int>, Int) -> Unit = { (x, y/**/), z ->
 }
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
-    (x, y/*
+        (x, y/*
 */),
-    z,
+        z,
     ->
     println(x)
 }
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
-    (/**/x /**/  /*
+        (/**/x /**/  /*
 */, // awdawd
             y/*
 */),
-    z,
+        z,
     ->
     println(x)
 }
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
-    (/**/x /**/  /*
+        (/**/x /**/  /*
 */, // awdawd
             y/*
 */),
-    z,
+        z,
     ->
     println(x)
 }
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
-    (x, y),
-    z,
+        (x, y),
+        z,
     ->
     println(x)
 }

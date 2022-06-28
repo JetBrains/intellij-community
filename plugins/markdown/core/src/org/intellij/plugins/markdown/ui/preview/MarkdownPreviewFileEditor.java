@@ -212,11 +212,6 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
   @Override
-  public @Nullable FileEditorLocation getCurrentLocation() {
-    return null;
-  }
-
-  @Override
   public @NotNull VirtualFile getFile() {
     return myFile;
   }

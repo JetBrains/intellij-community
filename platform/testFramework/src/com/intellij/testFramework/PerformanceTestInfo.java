@@ -7,6 +7,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.io.StorageLockContext;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -152,6 +153,7 @@ public class PerformanceTestInfo {
       }
       //noinspection CallToSystemGC
       System.gc();
+      StorageLockContext.forceDirectMemoryCache();
     }
   }
 

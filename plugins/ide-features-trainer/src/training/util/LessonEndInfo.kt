@@ -2,10 +2,12 @@
 package training.util
 
 import kotlinx.serialization.Serializable
+import training.statistic.LearningInternalProblems
 
 @Serializable
 data class LessonEndInfo(
   val lessonPassed: Boolean,
   val currentTaskIndex: Int,
   val currentVisualIndex: Int,
+  val internalProblems: Set<LearningInternalProblems>,
 )

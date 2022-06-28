@@ -343,6 +343,16 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("testData/basic/multifile/PropertyKeysWithPrefix/");
     }
 
+    @TestMetadata("StaticMembersOfImportedClassFromJava")
+    public void testStaticMembersOfImportedClassFromJava() throws Exception {
+        runTest("testData/basic/multifile/StaticMembersOfImportedClassFromJava/");
+    }
+
+    @TestMetadata("StaticMembersOfImportedInterfaceFromJava")
+    public void testStaticMembersOfImportedInterfaceFromJava() throws Exception {
+        runTest("testData/basic/multifile/StaticMembersOfImportedInterfaceFromJava/");
+    }
+
     @TestMetadata("StaticMembersOfNotImportedClassFromJava")
     public void testStaticMembersOfNotImportedClassFromJava() throws Exception {
         runTest("testData/basic/multifile/StaticMembersOfNotImportedClassFromJava/");

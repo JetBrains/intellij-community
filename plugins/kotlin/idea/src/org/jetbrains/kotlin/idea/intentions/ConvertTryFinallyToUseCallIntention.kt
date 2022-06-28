@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.types.typeUtil.supertypes
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("DEPRECATION")
 class ConvertTryFinallyToUseCallInspection : IntentionBasedInspection<KtTryExpression>(
@@ -73,12 +74,15 @@ class ConvertTryFinallyToUseCallIntention : SelfTargetingRangeIntention<KtTryExp
     override fun applicabilityRange(element: KtTryExpression): TextRange? {
         // Single statement in finally, no catch blocks
         val finallySection = element.finallyBlock ?: return null
-        val finallyExpression = finallySection.finalExpression.statements.singleOrNull() ?: return null
+        val finallyExpression = finallySection.finalExpression.statements.singleOrNull()?.let {
+            it.safeAs<KtQualifiedExpression>()?.callExpression ?: it.safeAs<KtCallExpression>()
+        } ?: return null
+        if (finallyExpression.calleeExpression?.text != "close") return null
         if (element.catchClauses.isNotEmpty()) return null
 
         val context = element.analyze()
         val resolvedCall = finallyExpression.getResolvedCall(context) ?: return null
-        if (resolvedCall.candidateDescriptor.name.asString() != "close") return null
+        if (resolvedCall.valueArguments.isNotEmpty()) return null
         if (resolvedCall.extensionReceiver != null) return null
         val receiver = resolvedCall.dispatchReceiver ?: return null
         if (receiver.type.supertypes().all {

@@ -13,7 +13,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
-import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.JBDimension;
@@ -99,9 +98,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         if (group != null) {
           if (!group.isExpanded()) {
             group.setExpanded(true);
-            ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
             int index = list.getSelectedIndex();
-            RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel(model);
             list.setSelectedIndex(group.getProjects().isEmpty() ? index : index + 1);
           }
         } else {
@@ -130,8 +127,6 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         if (group != null && group.isExpanded()) {
           group.setExpanded(false);
           int index = list.getSelectedIndex();
-          ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
-          RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel(model);
           list.setSelectedIndex(index);
         }
       }

@@ -2,6 +2,9 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
@@ -11,6 +14,7 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -23,15 +27,19 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemT
 
 internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
-    override val name = "IntelliJ"
+    override val name = INTELLIJ
 
-    override val ordinal: Int = 100
+    override val ordinal = 0
 
     override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
-    class Step(private val parent: KotlinNewProjectWizard.Step) : AbstractNewProjectWizardStep(parent) {
+    class Step(parent: KotlinNewProjectWizard.Step) :
+        AbstractNewProjectWizardStep(parent),
+        BuildSystemKotlinNewProjectWizardData by parent {
+
         private val sdkProperty = propertyGraph.property<Sdk?>(null)
         private val addSampleCodeProperty = propertyGraph.property(false)
+            .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
         private val sdk by sdkProperty
         private val addSampleCode by addSampleCodeProperty
@@ -42,10 +50,12 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                     val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
                     sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
                         .columns(COLUMNS_MEDIUM)
+                        .whenItemSelectedFromUi { logSdkChanged(sdk) }
                 }
                 row {
                     checkBox(message("label.project.wizard.new.project.add.sample.code"))
                         .bindSelected(addSampleCodeProperty)
+                        .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
                 }.topGap(TopGap.SMALL)
 
                 kmpWizardLink(context)
@@ -55,8 +65,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
         override fun setupProject(project: Project) =
             KotlinNewProjectWizard.generateProject(
                 project = project,
-                projectPath = "${parent.path}/${parent.name}",
-                projectName = parent.name,
+                projectPath = "$path/$name",
+                projectName = name,
                 sdk = sdk,
                 buildSystemType = BuildSystemType.Jps,
                 addSampleCode = addSampleCode

@@ -289,7 +289,8 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     TargetedCommandLine targetedCommandLine = PythonScripts.buildTargetedCommandLine(pythonExecution,
                                                                                      targetEnvironment,
                                                                                      getSdk(),
-                                                                                     Collections.emptyList());
+                                                                                     Collections.emptyList(),
+                                                                                     false);
     // TODO [targets] Set parent directory of interpreter as the working directory
 
     LOG.info("Running packaging tool");

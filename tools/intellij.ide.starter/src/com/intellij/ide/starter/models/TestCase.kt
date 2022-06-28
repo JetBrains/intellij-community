@@ -25,7 +25,7 @@ data class TestCase(
         this.ideInfo.productCode,
         this.ideInfo.platformPrefix,
         this.ideInfo.executableFileName,
-        "ijplatform_IJPlatform213_${product}_InstallersForEapRelease",
+        "ijplatform_IJPlatform221_${product}_InstallersForEapRelease",
         tag = "EAP",
       )
     )

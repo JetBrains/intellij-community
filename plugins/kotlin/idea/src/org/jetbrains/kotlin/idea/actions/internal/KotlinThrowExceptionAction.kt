@@ -4,14 +4,14 @@ package org.jetbrains.kotlin.idea.actions.internal
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 
 class KotlinThrowExceptionAction : AnAction() {
     override fun update(e: AnActionEvent) {
         super.update(e)
 
-        e.presentation.isEnabledAndVisible = KotlinPluginUtil.isPatched() || isApplicationInternalMode()
+        e.presentation.isEnabledAndVisible = KotlinIdePlugin.hasPatchedVersion || isApplicationInternalMode()
     }
 
     override fun actionPerformed(e: AnActionEvent) {

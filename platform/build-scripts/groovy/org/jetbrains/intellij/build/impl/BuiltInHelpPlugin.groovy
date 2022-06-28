@@ -22,7 +22,7 @@ final class BuiltInHelpPlugin {
       return null
     }
 
-    return PluginLayout.plugin(MODULE_NAME) {
+    return PluginLayoutGroovy.plugin(MODULE_NAME) {
       configure(delegate, pluginVersion, productName, resourceRoot)
     }
   }
@@ -41,7 +41,9 @@ final class BuiltInHelpPlugin {
           resourceRoot,
           context.getModuleRuntimeClasspath(context.findRequiredModule(MODULE_NAME), false),
           assetJar,
-          context.messages)
+          context.messages,
+          context.stableJavaExecutable,
+        )
       }
     })
     spec.withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {

@@ -4,10 +4,10 @@ package com.intellij.ide.plugins
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.PathManager.getHomePath
-import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.getErrorsAsString
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
+import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import java.io.StringWriter
 import java.nio.file.Files
@@ -36,6 +36,7 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.cwm.plugin", /* platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now */
   "intellij.osgi", /* no particular package prefix to choose */
   "intellij.hunspell", /* MP-3656 Marketplace doesn't allow uploading plugins without dependencies */
+  "kotlin.resources-fir", /* Kotlin FIR IDE Plugin has the same plugin id as the plain Kotlin plugin */
 )
 
 class PluginModelValidator(sourceModules: List<Module>) {
@@ -127,7 +128,7 @@ class PluginModelValidator(sourceModules: List<Module>) {
     for (pluginInfo in pluginIdToInfo.values) {
       val descriptor = pluginInfo.descriptor
 
-      val dependenciesElements = descriptor.getChildren("dependencies")
+      val dependenciesElements = descriptor.children("dependencies").toList()
       if (dependenciesElements.size > 1) {
         _errors.add(PluginValidationError(
           "The only `dependencies` tag is expected",

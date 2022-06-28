@@ -8,6 +8,7 @@ import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.PopupLocationTracker;
 import com.intellij.ide.ui.PopupLocator;
 import com.intellij.ide.ui.ScreenAreaConsumer;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -20,6 +21,7 @@ import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.popup.*;
@@ -47,6 +49,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.*;
@@ -279,13 +282,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myHeaderAlwaysFocusable = headerAlwaysFocusable;
     myMovable = movable;
 
-    ActiveIcon actualIcon = titleIcon == null ? new ActiveIcon(EmptyIcon.ICON_0) : titleIcon;
-
     myHeaderPanel = new JPanel(new BorderLayout());
 
     if (caption != null) {
       if (!caption.isEmpty()) {
-        TitlePanel titlePanel = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive());
+        TitlePanel titlePanel = titleIcon == null ? new TitlePanel() : new TitlePanel(titleIcon.getRegular(), titleIcon.getInactive());
         titlePanel.setText(caption);
         titlePanel.setPopupTitle(ExperimentalUI.isNewUI());
         myCaption = titlePanel;
@@ -442,8 +443,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (StringUtil.isEmpty(hint)) return hint;
 
     Dimension size = myContent.getSize();
-    if (size.width == 0 && size.height == 0)
+    if (size.width == 0 && size.height == 0) {
       size = myContent.computePreferredSize();
+    }
 
     JBInsets.removeFrom(size, myContent.getInsets());
     JBInsets.removeFrom(size, myAdComponent.getInsets());
@@ -1286,11 +1288,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (ExperimentalUI.isNewUI()) {
       mySpeedSearchPatternField.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
       textField.setOpaque(false);
-      JBEmptyBorder outsideBorder = new JBEmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
+      textField.putClientProperty("TextFieldWithoutMargins", true);
+      textField.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, true);
+      textField.putClientProperty("TextField.NoMinHeightBounds", true);
+      EmptyBorder outsideBorder = new EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
       Border lineBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.Popup.separatorColor(), 0, 0, 1, 0);
-      mySpeedSearchPatternField.setBorder(JBUI.Borders.compound(outsideBorder, lineBorder));
+      mySpeedSearchPatternField.setBorder(JBUI.Borders.compound(outsideBorder, lineBorder,
+                                                                new EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldInputInsets())));
       textField.setBorder(JBUI.Borders.empty());
-      textField.setMargin(JBUI.CurrentTheme.Popup.searchFieldInputInsets());
     } else {
       if (mySpeedSearchAlwaysShown) {
         mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
@@ -2054,7 +2059,28 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   public static boolean isCloseRequest(KeyEvent e) {
-    return e != null && e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
+    if (e != null && e.getID() == KeyEvent.KEY_PRESSED) {
+      KeymapManager keymapManager = KeymapManager.getInstance();
+      if (keymapManager != null) {
+        Shortcut[] shortcuts = keymapManager.getActiveKeymap().getShortcuts(IdeActions.ACTION_EDITOR_ESCAPE);
+        for (Shortcut shortcut : shortcuts) {
+          if (shortcut instanceof KeyboardShortcut) {
+            KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+            if (keyboardShortcut.getFirstKeyStroke().getKeyCode() == e.getKeyCode() &&
+                keyboardShortcut.getSecondKeyStroke() == null) {
+              int m1 = keyboardShortcut.getFirstKeyStroke().getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK | InputEvent.ALT_MASK);
+              int m2 = e.getModifiers();
+              return m1 == m2;
+            }
+          }
+        }
+        return false;
+      }
+      else {
+        return e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
+      }
+    }
+    return false;
   }
 
   private @NotNull Point fixLocateByContent(@NotNull Point location, boolean save) {

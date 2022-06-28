@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -143,16 +144,18 @@ internal class SwitchToRecentEditorActionGroup : ActionGroup(), DumbAware {
   @Suppress("DialogTitleCapitalization")
   private class MySwitchAction(val content: RecentBlankContent) : BlankSwitchContentActionBase() {
     init {
-      val text = content.text
-      val dateAppendix = DateFormatUtil.formatPrettyDateTime(content.timestamp)
-      val presentable = when {
-        text.length < 40 -> DiffBundle.message("blank.diff.recent.content.summary.text.date", text.trim(), dateAppendix)
-        else -> {
-          val shortenedText = StringUtil.shortenTextWithEllipsis(text.trim(), 30, 0)
-          DiffBundle.message("blank.diff.recent.content.summary.text.length.date", shortenedText, text.length, dateAppendix)
+      templatePresentation.setTextWithMnemonic {
+        val text = content.text
+        val dateAppendix = DateFormatUtil.formatPrettyDateTime(content.timestamp)
+        val presentable = when {
+          text.length < 40 -> DiffBundle.message("blank.diff.recent.content.summary.text.date", text.trim(), dateAppendix)
+          else -> {
+            val shortenedText = StringUtil.shortenTextWithEllipsis(text.trim(), 30, 0)
+            DiffBundle.message("blank.diff.recent.content.summary.text.length.date", shortenedText, text.length, dateAppendix)
+          }
         }
+        TextWithMnemonic.fromPlainText(presentable)
       }
-      templatePresentation.text = presentable
     }
 
     override fun isEnabled(currentContent: DiffContent): Boolean = true

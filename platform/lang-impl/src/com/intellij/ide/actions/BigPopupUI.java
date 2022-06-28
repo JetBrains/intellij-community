@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.text.JTextComponent;
@@ -58,6 +59,9 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   @NotNull
   protected abstract ListCellRenderer<Object> createCellRenderer();
 
+  /**
+   * todo make the method abstract after {@link #createTopLeftPanel()} and {link {@link #createSettingsPanel()}} are removed
+   */
   @NotNull
   protected JComponent createHeader() {
     JPanel header = new JPanel(new BorderLayout());
@@ -111,8 +115,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
         setBorder(PopupUtil.createComplexPopupTextFieldBorder());
       }
       else {
-        Insets insets = JBUI.CurrentTheme.BigPopup.searchFieldInsets();
-        Border empty = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
+        Border empty = new EmptyBorder(JBUI.CurrentTheme.BigPopup.searchFieldInsets());
         Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 0, 0);
         setBorder(JBUI.Borders.merge(empty, topLine, true));
         setBackground(JBUI.CurrentTheme.BigPopup.searchFieldBackground());
@@ -179,7 +182,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
       if (header.getBorder() == null) {
         header.setBorder(
           JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
-                                JBUI.Borders.empty(JBUI.CurrentTheme.ComplexPopup.headerInsets())));
+                                new EmptyBorder(JBUI.CurrentTheme.ComplexPopup.headerInsets())));
       }
       header.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
       myResultsList.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
@@ -231,12 +234,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     pnl.setOpaque(false);
 
     JScrollPane resultsScroll = new JBScrollPane(myResultsList);
-    if (ExperimentalUI.isNewUI()) {
-      resultsScroll.setBorder(JBUI.Borders.empty(PopupUtil.createComplexPopupTextFieldInsets(4, 8)));
-    }
-    else {
-      resultsScroll.setBorder(null);
-    }
+    resultsScroll.setBorder(null);
     resultsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     ComponentUtil.putClientProperty(resultsScroll.getVerticalScrollBar(), JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true);
 
@@ -291,8 +289,8 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     if (viewType == ViewType.SHORT) {
       size.height -= suggestionsPanel.getPreferredSize().height;
       if (ExperimentalUI.isNewUI()) {
-        size.height -= JBUI.scale(JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().getUnscaled().bottom +
-                                  JBUI.CurrentTheme.ComplexPopup.TEXT_FIELD_SEPARATOR_HEIGHT);
+        size.height -= JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().bottom +
+                       JBUI.scale(JBUI.CurrentTheme.ComplexPopup.TEXT_FIELD_SEPARATOR_HEIGHT);
       }
     }
     return size;

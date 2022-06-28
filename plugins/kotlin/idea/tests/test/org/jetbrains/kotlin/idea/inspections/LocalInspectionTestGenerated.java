@@ -7325,6 +7325,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/moveLambdaOutsideParentheses/suspendLambda.kt");
         }
 
+        @TestMetadata("twoLabels.kt")
+        public void testTwoLabels() throws Exception {
+            runTest("testData/inspectionsLocal/moveLambdaOutsideParentheses/twoLabels.kt");
+        }
+
         @TestMetadata("typeParameter.kt")
         public void testTypeParameter() throws Exception {
             runTest("testData/inspectionsLocal/moveLambdaOutsideParentheses/typeParameter.kt");
@@ -7676,6 +7681,39 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notMatchFunctionParameterType.kt")
         public void testNotMatchFunctionParameterType() throws Exception {
             runTest("testData/inspectionsLocal/objectLiteralToLambda/notMatchFunctionParameterType.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/overrideDeprecatedMigration")
+    public static class OverrideDeprecatedMigration extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("copyDeprecation1.kt")
+        public void testCopyDeprecation1() throws Exception {
+            runTest("testData/inspectionsLocal/overrideDeprecatedMigration/copyDeprecation1.kt");
+        }
+
+        @TestMetadata("copyDeprecation2.kt")
+        public void testCopyDeprecation2() throws Exception {
+            runTest("testData/inspectionsLocal/overrideDeprecatedMigration/copyDeprecation2.kt");
+        }
+
+        @TestMetadata("copyDeprecation3.kt")
+        public void testCopyDeprecation3() throws Exception {
+            runTest("testData/inspectionsLocal/overrideDeprecatedMigration/copyDeprecation3.kt");
+        }
+
+        @TestMetadata("copyDeprecation4.kt")
+        public void testCopyDeprecation4() throws Exception {
+            runTest("testData/inspectionsLocal/overrideDeprecatedMigration/copyDeprecation4.kt");
+        }
+
+        @TestMetadata("copyDeprecationProperty.kt")
+        public void testCopyDeprecationProperty() throws Exception {
+            runTest("testData/inspectionsLocal/overrideDeprecatedMigration/copyDeprecationProperty.kt");
         }
     }
 
@@ -8051,6 +8089,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameGlobalVariable.kt");
         }
 
+        @TestMetadata("sameNameInImplicitReceiverClass.kt")
+        public void testSameNameInImplicitReceiverClass() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameInImplicitReceiverClass.kt");
+        }
+
+        @TestMetadata("sameNameInImplicitReceiverClass2.kt")
+        public void testSameNameInImplicitReceiverClass2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameInImplicitReceiverClass2.kt");
+        }
+
+        @TestMetadata("sameNameInImplicitReceiverClass3.kt")
+        public void testSameNameInImplicitReceiverClass3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameInImplicitReceiverClass3.kt");
+        }
+
+        @TestMetadata("sameNameInImplicitReceiverClass4.kt")
+        public void testSameNameInImplicitReceiverClass4() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameInImplicitReceiverClass4.kt");
+        }
+
         @TestMetadata("sameNameLocalFunction.kt")
         public void testSameNameLocalFunction() throws Exception {
             runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameLocalFunction.kt");
@@ -8259,6 +8317,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public static class RedundantExplicitType extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotated.kt")
+        public void testAnnotated() throws Exception {
+            runTest("testData/inspectionsLocal/redundantExplicitType/annotated.kt");
         }
 
         @TestMetadata("boolean.kt")
@@ -8663,6 +8726,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("explicitType.kt")
+        public void testExplicitType() throws Exception {
+            runTest("testData/inspectionsLocal/redundantLambdaArrow/explicitType.kt");
+        }
+
         @TestMetadata("forEach.kt")
         public void testForEach() throws Exception {
             runTest("testData/inspectionsLocal/redundantLambdaArrow/forEach.kt");
@@ -8796,6 +8864,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notApplicableVararg_ni.kt")
         public void testNotApplicableVararg_ni() throws Exception {
             runTest("testData/inspectionsLocal/redundantLambdaArrow/notApplicableVararg_ni.kt");
+        }
+
+        @TestMetadata("nullableReceiver.kt")
+        public void testNullableReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/redundantLambdaArrow/nullableReceiver.kt");
         }
 
         @TestMetadata("overload4.kt")
@@ -9052,6 +9125,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/redundantNullableReturnType/function/overridable.kt");
             }
 
+            @TestMetadata("returnNulableFromLambdaToOuterFunction.kt")
+            public void testReturnNulableFromLambdaToOuterFunction() throws Exception {
+                runTest("testData/inspectionsLocal/redundantNullableReturnType/function/returnNulableFromLambdaToOuterFunction.kt");
+            }
+
             @TestMetadata("returnNullableForLambda.kt")
             public void testReturnNullableForLambda() throws Exception {
                 runTest("testData/inspectionsLocal/redundantNullableReturnType/function/returnNullableForLambda.kt");
@@ -9247,6 +9325,31 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantOverride/delegatedMemberHidesSuperTypeOverride4.kt");
         }
 
+        @TestMetadata("equals.kt")
+        public void testEquals() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals.kt");
+        }
+
+        @TestMetadata("equals2.kt")
+        public void testEquals2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals2.kt");
+        }
+
+        @TestMetadata("equals3.kt")
+        public void testEquals3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals3.kt");
+        }
+
+        @TestMetadata("equals4.kt")
+        public void testEquals4() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals4.kt");
+        }
+
+        @TestMetadata("equals5.kt")
+        public void testEquals5() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals5.kt");
+        }
+
         @TestMetadata("getterWithDerivedProperty.kt")
         public void testGetterWithDerivedProperty() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/getterWithDerivedProperty.kt");
@@ -9265,6 +9368,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("getterWithDerivedProperty4.kt")
         public void testGetterWithDerivedProperty4() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/getterWithDerivedProperty4.kt");
+        }
+
+        @TestMetadata("hashCode.kt")
+        public void testHashCode() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/hashCode.kt");
         }
 
         @TestMetadata("javaPackagePrivate.kt")
@@ -9310,6 +9418,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("singleExpressionFunction.kt")
         public void testSingleExpressionFunction() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/singleExpressionFunction.kt");
+        }
+
+        @TestMetadata("toString.kt")
+        public void testToString() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/toString.kt");
         }
 
         @TestMetadata("twoInterfaces.kt")
@@ -9718,6 +9831,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("coroutineContext.kt")
         public void testCoroutineContext() throws Exception {
             runTest("testData/inspectionsLocal/redundantSuspend/coroutineContext.kt");
+        }
+
+        @TestMetadata("invokingByQualified.kt")
+        public void testInvokingByQualified() throws Exception {
+            runTest("testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
         }
 
         @TestMetadata("override.kt")
@@ -13736,6 +13854,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/setterBackingFieldAssignment/plusAssign.kt");
         }
 
+        @TestMetadata("throw.kt")
+        public void testThrow() throws Exception {
+            runTest("testData/inspectionsLocal/setterBackingFieldAssignment/throw.kt");
+        }
+
         @TestMetadata("timesAssign.kt")
         public void testTimesAssign() throws Exception {
             runTest("testData/inspectionsLocal/setterBackingFieldAssignment/timesAssign.kt");
@@ -15802,6 +15925,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/jsExport.kt");
         }
 
+        @TestMetadata("lastPropertyInPrimaryConstructor.kt")
+        public void testLastPropertyInPrimaryConstructor() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/lastPropertyInPrimaryConstructor.kt");
+        }
+
+        @TestMetadata("lastPropertyInPrimaryConstructorWithComments.kt")
+        public void testLastPropertyInPrimaryConstructorWithComments() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/lastPropertyInPrimaryConstructorWithComments.kt");
+        }
+
         @TestMetadata("privateProperty.kt")
         public void testPrivateProperty() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/privateProperty.kt");
@@ -15905,6 +16038,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("usedEnumFunction9.kt")
         public void testUsedEnumFunction9() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction9.kt");
+        }
+
+        @TestMetadata("valueClassParameter.kt")
+        public void testValueClassParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/valueClassParameter.kt");
         }
 
         @TestMetadata("withJvmNameUsedFromKotlin.kt")
@@ -16288,6 +16426,276 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("set.kt")
         public void testSet() throws Exception {
             runTest("testData/inspectionsLocal/usePropertyAccessSyntax/set.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness")
+    public abstract static class VerboseNullabilityAndEmptiness extends AbstractLocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/array")
+        public static class Array extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/array/nullOrIsEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/arrayList")
+        public static class ArrayList extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("notNullAndIsNotEmpty.kt")
+            public void testNotNullAndIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/arrayList/notNullAndIsNotEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/collection")
+        public static class Collection extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/collection/nullOrIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmptyInIsNullOrEmpty.kt")
+            public void testNullOrIsEmptyInIsNullOrEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/collection/nullOrIsEmptyInIsNullOrEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex")
+        public static class Complex extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty2.kt")
+            public void testNullOrIsEmpty2() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty2.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty3.kt")
+            public void testNullOrIsEmpty3() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty3.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty4.kt")
+            public void testNullOrIsEmpty4() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty4.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty5.kt")
+            public void testNullOrIsEmpty5() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty5.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/hashSet")
+        public static class HashSet extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/hashSet/nullOrIsEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/intArray")
+        public static class IntArray extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/intArray/nullOrIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty2.kt")
+            public void testNullOrIsEmpty2() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/intArray/nullOrIsEmpty2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/list")
+        public static class List extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("notNullAndIsEmpty.kt")
+            public void testNotNullAndIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/notNullAndIsEmpty.kt");
+            }
+
+            @TestMetadata("notNullAndIsNotEmpty.kt")
+            public void testNotNullAndIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/notNullAndIsNotEmpty.kt");
+            }
+
+            @TestMetadata("notNullAndNotIsEmpty.kt")
+            public void testNotNullAndNotIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/notNullAndNotIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/nullOrIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty2.kt")
+            public void testNullOrIsEmpty2() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/nullOrIsEmpty2.kt");
+            }
+
+            @TestMetadata("nullOrIsNotEmpty.kt")
+            public void testNullOrIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/nullOrIsNotEmpty.kt");
+            }
+
+            @TestMetadata("nullOrNotIsNotEmpty.kt")
+            public void testNullOrNotIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/nullOrNotIsNotEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/map")
+        public static class Map extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/map/nullOrIsEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers")
+        public static class Receivers extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers/nullOrIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty2.kt")
+            public void testNullOrIsEmpty2() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers/nullOrIsEmpty2.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty3.kt")
+            public void testNullOrIsEmpty3() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers/nullOrIsEmpty3.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty4.kt")
+            public void testNullOrIsEmpty4() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers/nullOrIsEmpty4.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty5.kt")
+            public void testNullOrIsEmpty5() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers/nullOrIsEmpty5.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty6.kt")
+            public void testNullOrIsEmpty6() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers/nullOrIsEmpty6.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/set")
+        public static class Set extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/set/nullOrIsEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/str")
+        public static class Str extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("notNullAndIsNotBlank.kt")
+            public void testNotNullAndIsNotBlank() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/str/notNullAndIsNotBlank.kt");
+            }
+
+            @TestMetadata("notNullAndIsNotEmpty.kt")
+            public void testNotNullAndIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/str/notNullAndIsNotEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsBlank.kt")
+            public void testNullOrIsBlank() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/str/nullOrIsBlank.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/str/nullOrIsEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/wrapped")
+        public static class Wrapped extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("binaryExpressionInParentheses.kt")
+            public void testBinaryExpressionInParentheses() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/wrapped/binaryExpressionInParentheses.kt");
+            }
+
+            @TestMetadata("nullCheckExpressionInParentheses.kt")
+            public void testNullCheckExpressionInParentheses() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/wrapped/nullCheckExpressionInParentheses.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/wrapped/nullOrIsEmpty.kt");
+            }
         }
     }
 

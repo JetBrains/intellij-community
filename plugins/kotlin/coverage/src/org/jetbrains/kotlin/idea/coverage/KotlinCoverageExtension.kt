@@ -55,7 +55,7 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         LOG.info("Retrieving coverage for " + element.name)
 
         val qualifiedNames = collectGeneratedClassQualifiedNames(findOutputRoots(element), element)
-        return if (qualifiedNames == null || qualifiedNames.isEmpty()) null else totalCoverageForQualifiedNames(coverageAnnotator, qualifiedNames)
+        return if (qualifiedNames.isNullOrEmpty()) null else totalCoverageForQualifiedNames(coverageAnnotator, qualifiedNames)
     }
 
     override fun keepCoverageInfoForClassWithoutSource(bundle: CoverageSuitesBundle, classFile: File): Boolean {

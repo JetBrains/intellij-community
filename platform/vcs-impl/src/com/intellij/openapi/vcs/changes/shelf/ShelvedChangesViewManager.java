@@ -218,8 +218,7 @@ public class ShelvedChangesViewManager implements Disposable {
       createShelvedListsWithChangesNode(shelvedLists, createTagNode(VcsBundle.message("shelve.recently.deleted.node")));
     }
 
-    private void createShelvedListsWithChangesNode(@NotNull List<ShelvedChangeList> shelvedLists,
-                                                   @NotNull ChangesBrowserNode<?> parentNode) {
+    private void createShelvedListsWithChangesNode(@NotNull List<ShelvedChangeList> shelvedLists, @NotNull ChangesBrowserNode<?> parentNode) {
       shelvedLists.forEach(changeList -> {
         List<ShelvedWrapper> shelvedChanges = new ArrayList<>();
         requireNonNull(changeList.getChanges()).stream().map(change -> new ShelvedWrapper(change, changeList)).forEach(shelvedChanges::add);
@@ -488,7 +487,7 @@ public class ShelvedChangesViewManager implements Disposable {
         }
       }
     }
-    return wrappers.asExplicitSelection();
+    return wrappers;
   }
 
   @NotNull
@@ -797,7 +796,7 @@ public class ShelvedChangesViewManager implements Disposable {
         }
 
         @Override
-        public void updateDiffAction(@NotNull AnActionEvent event) {
+        public void updateAvailability(@NotNull AnActionEvent event) {
           DiffShelvedChangesActionProvider.updateAvailability(event);
         }
 
@@ -825,7 +824,7 @@ public class ShelvedChangesViewManager implements Disposable {
       PreviewDiffSplitterComponent previewSplitter =
         new PreviewDiffSplitterComponent(changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION);
       previewSplitter.setFirstComponent(myTreeScrollPane);
-      DiffPreview.setPreviewVisible(previewSplitter, myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
+      previewSplitter.setPreviewVisible(myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN, false);
 
       myTree.addSelectionListener(() -> previewSplitter.updatePreview(false), changeProcessor);
 
@@ -885,8 +884,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        DiffPreview previewSplitter = ObjectUtils.chooseNotNull(mySplitterDiffPreview, myEditorDiffPreview);
-        DiffPreview.setPreviewVisible(previewSplitter, state);
+        ObjectUtils.chooseNotNull(mySplitterDiffPreview, myEditorDiffPreview).setPreviewVisible(state, false);
         myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN = state;
       }
 

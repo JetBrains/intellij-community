@@ -76,16 +76,19 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, project: Project) {
 
     val targetIndicator = TargetProgressIndicatorAdapter(indicator)
     val environment = targetEnvRequest.prepareEnvironment(targetIndicator)
+    try {
+      // XXX Make it automatic
+      environment.uploadVolumes.values.forEach { it.upload(".", targetIndicator) }
 
-    // XXX Make it automatic
-    environment.uploadVolumes.values.forEach { it.upload(".", targetIndicator) }
+      val cmd = execution.buildTargetedCommandLine(environment, sdk, emptyList())
+      cmd.execute(environment, indicator)
 
-    val cmd = execution.buildTargetedCommandLine(environment, sdk, emptyList())
-    cmd.execute(environment, indicator)
-
-    // XXX Make it automatic
-    environment.downloadVolumes.values.forEach { it.download(".", indicator) }
-
+      // XXX Make it automatic
+      environment.downloadVolumes.values.forEach { it.download(".", indicator) }
+    }
+    finally {
+      environment.shutdown()
+    }
     if (!Files.exists(stateFilePath)) {
       throw IllegalStateException("$stateFilePath is missing")
     }

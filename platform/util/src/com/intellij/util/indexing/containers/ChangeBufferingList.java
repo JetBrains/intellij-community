@@ -18,14 +18,15 @@ import java.util.function.IntPredicate;
  */
 public final class ChangeBufferingList implements Cloneable {
   static final int MAX_FILES = 20000; // less than Short.MAX_VALUE
-  //static final int MAX_FILES = 100;
-  private volatile int[] changes;
+  private int[] changes;
   private short length;
   private boolean hasRemovals;
-  private volatile boolean mayHaveDupes;
-  private volatile RandomAccessIntContainer randomAccessContainer;
+  private boolean mayHaveDupes;
+  private RandomAccessIntContainer randomAccessContainer;
 
-  public ChangeBufferingList() { this(3); }
+  public ChangeBufferingList() {
+    this(3);
+  }
   public ChangeBufferingList(int length) {
     if (length > MAX_FILES) {
       randomAccessContainer = new IdBitSet(length);
@@ -94,64 +95,59 @@ public final class ChangeBufferingList implements Cloneable {
   }
 
   private RandomAccessIntContainer getRandomAccessContainer() {
-    int[] currentChanges = changes;
-    if (currentChanges == null) return randomAccessContainer;
+    if (changes == null) return randomAccessContainer;
 
-    synchronized (currentChanges) {
-      currentChanges = changes;
-      if (currentChanges == null) return randomAccessContainer;
-      boolean copyChanges = true;
-      RandomAccessIntContainer idSet;
+    boolean copyChanges = true;
+    RandomAccessIntContainer idSet;
 
-      if (randomAccessContainer == null) {
-        int someElementsNumberEstimation = length;
+    if (randomAccessContainer == null) {
+      int someElementsNumberEstimation = length;
 
-        // todo we can check these lengths instead of only relying upon reaching MAX_FILES
-        //int lengthOfBitSet = IdBitSet.sizeInBytes(minMax[1], minMax[0]);
-        //int lengthOfIntSet = 4 * length;
+      // todo we can check these lengths instead of only relying upon reaching MAX_FILES
+      //int lengthOfBitSet = IdBitSet.sizeInBytes(minMax[1], minMax[0]);
+      //int lengthOfIntSet = 4 * length;
 
-        if (someElementsNumberEstimation < MAX_FILES) {
-          if (!hasRemovals) {
-            if (mayHaveDupes) {
-              removingDupesAndSort();
-            }
-            idSet = new SortedIdSet(currentChanges, length);
-
-            copyChanges = false;
-          } else {
-            idSet = new SortedIdSet(Math.max(someElementsNumberEstimation, 3));
+      if (someElementsNumberEstimation < MAX_FILES) {
+        if (!hasRemovals) {
+          if (mayHaveDupes) {
+            removingDupesAndSort();
           }
-        }
-        else if (!hasRemovals) {
-          idSet = new IdBitSet(changes, length, 0);
+          idSet = new SortedIdSet(changes, length);
+
           copyChanges = false;
         } else {
-          idSet = new IdBitSet(calcMinMax(changes, length), 0);
+          idSet = new SortedIdSet(Math.max(someElementsNumberEstimation, 3));
         }
+      }
+      else if (!hasRemovals) {
+        idSet = new IdBitSet(changes, length, 0);
+        copyChanges = false;
       } else {
-        idSet = randomAccessContainer;
+        idSet = new IdBitSet(calcMinMax(changes, length), 0);
       }
+    } else {
+      idSet = randomAccessContainer;
+    }
 
-      assert idSet != null;
+    assert idSet != null;
 
-      if (copyChanges) {
-        for(int i = 0, len = length; i < len; ++i) {
-          int id = currentChanges[i];
-          if (id > 0) {
-            idSet.add(id);
-          } else {
-            idSet.remove(-id);
-          }
+    if (copyChanges) {
+      for(int i = 0, len = length; i < len; ++i) {
+        int id = changes[i];
+        if (id > 0) {
+          idSet.add(id);
+        } else {
+          idSet.remove(-id);
         }
       }
-
-      length = 0;
-      hasRemovals = false;
-      mayHaveDupes = false;
-      randomAccessContainer = idSet;
-      changes = null;
-      return randomAccessContainer;
     }
+
+    length = 0;
+    hasRemovals = false;
+    mayHaveDupes = false;
+    randomAccessContainer = idSet;
+    changes = null;
+    return randomAccessContainer;
   }
 
   private void removingDupesAndSort() { // duplicated ids can be present for some index due to cancellation of indexing for next index
@@ -242,14 +238,11 @@ public final class ChangeBufferingList implements Cloneable {
   public synchronized IntIdsIterator intIterator() {
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null && !hasRemovals) {
-      int[] currentChanges = changes;
-      if (currentChanges != null) {
+      if (changes != null) {
         if (mayHaveDupes) {
-          synchronized (currentChanges) {
-            if (mayHaveDupes) removingDupesAndSort();
-          }
+          removingDupesAndSort();
         }
-        return new ChangesIterator(currentChanges, length, true);
+        return new ChangesIterator(changes, length, true);
       }
     }
     return getRandomAccessContainer().intIterator();

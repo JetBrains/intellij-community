@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 9);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 10);
 
   public enum DialogType {automatically, manually}
 
@@ -40,13 +40,13 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
                          .collect(Collectors.toList()));
   private static final EventId3<String, String, String> TIP_SHOWN =
     GROUP.registerEvent("tip.shown",
-                        EventFields.StringValidatedByCustomRule("filename", TipInfoValidationRule.RULE_ID),
+                        EventFields.StringValidatedByCustomRule("filename", TipInfoValidationRule.class),
                         ALGORITHM_FIELD,
                         EventFields.Version);
 
   private static final EventId2<String, Long> TIP_PERFORMED =
     GROUP.registerEvent("tip.performed",
-                        EventFields.StringValidatedByCustomRule("filename", TipInfoValidationRule.RULE_ID),
+                        EventFields.StringValidatedByCustomRule("filename", TipInfoValidationRule.class),
                         EventFields.Long("time_passed"));
 
   @Override
@@ -73,9 +73,10 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   public static class TipInfoValidationRule extends CustomValidationRule {
     public static final String RULE_ID = "tip_info";
 
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return RULE_ID.equals(ruleId);
+    public String getRuleId() {
+      return RULE_ID;
     }
 
     @NotNull

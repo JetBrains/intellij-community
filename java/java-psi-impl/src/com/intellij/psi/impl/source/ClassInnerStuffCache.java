@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,7 +96,7 @@ public final class ClassInnerStuffCache {
   }
 
   private boolean classNameIsSealed() {
-    return PsiKeyword.SEALED.equals(myClass.getName()) && PsiUtil.getLanguageLevel(myClass).isAtLeast(LanguageLevel.JDK_16_PREVIEW);
+    return PsiKeyword.SEALED.equals(myClass.getName()) && PsiUtil.getLanguageLevel(myClass).isAtLeast(LanguageLevel.JDK_17);
   }
 
   @Nullable

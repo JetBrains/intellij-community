@@ -38,7 +38,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.*
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.*
+import com.intellij.util.containers.filterSmart
+import com.intellij.util.containers.mapSmart
+import com.intellij.util.containers.nullize
+import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics

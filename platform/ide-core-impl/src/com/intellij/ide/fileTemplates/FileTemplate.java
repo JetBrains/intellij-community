@@ -12,9 +12,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * @author MYakovlev
- */
 public interface FileTemplate extends Cloneable {
   FileTemplate[] EMPTY_ARRAY = new FileTemplate[0];
 
@@ -71,8 +68,7 @@ public interface FileTemplate extends Cloneable {
   @NotNull
   String getText(@NotNull Properties attributes) throws IOException;
 
-  @NotNull
-  default String getFileName() { return ""; }
+  default @NotNull String getFileName() { return ""; }
 
   default void setFileName(@NotNull String fileName) {}
 

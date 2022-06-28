@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.light
 
 import com.intellij.ide.lightEdit.LightEditService
@@ -61,7 +61,8 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
     if (lightEditService.selectedFile == baseVersion.file && lst?.virtualFile == baseVersion.file) {
       if (baseVersion.text != null) {
         lst?.setBaseRevision(baseVersion.text)
-      } else {
+      }
+      else {
         dropLst()
       }
     }
@@ -104,7 +105,8 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
       try {
         val content = getFileContentAsString(request.file, request.repositoryPath, tracker.gitExecutable)
         return BaseVersion(request.file, StringUtil.convertLineSeparators(content))
-      } catch (e: VcsException) {
+      }
+      catch (e: VcsException) {
         LOG.warn("Could not read base version for ${request.file}", e)
         return BaseVersion(request.file, null)
       }

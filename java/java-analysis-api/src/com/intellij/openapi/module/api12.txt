@@ -1,4 +1,7 @@
+sun.net.www.protocol.https.HttpsURLConnectionImpl#getSSLSession()
 sun.util.locale.provider.NumberFormatProviderImpl#getCompactNumberInstance(java.util.Locale;java.text.NumberFormat.Style;)
+sun.util.locale.provider.SPILocaleProviderAdapter.NumberFormatProviderDelegate#getCompactNumberInstance(java.util.Locale;java.text.NumberFormat.Style;)
+java.io.InputStream#skipNBytes(long;)
 java.net.ServerSocket#ServerSocket(java.net.SocketImpl;)
 java.net.SecureCacheResponse#getSSLSession()
 java.nio.file.Files#mismatch(java.nio.file.Path;java.nio.file.Path;)
@@ -34,8 +37,6 @@ java.lang.Float#resolveConstantDesc(java.lang.invoke.MethodHandles.Lookup;)
 java.lang.Double#describeConstable()
 java.lang.Double#resolveConstantDesc(java.lang.invoke.MethodHandles.Lookup;)
 java.lang.String#indent(int;)
-java.lang.String#align()
-java.lang.String#align(int;)
 java.lang.String#transform(java.util.function.Function<? super java.lang.String,? extends R>;)
 java.lang.String#describeConstable()
 java.lang.String#resolveConstantDesc(java.lang.invoke.MethodHandles.Lookup;)
@@ -72,21 +73,34 @@ java.util.concurrent.CompletionStage#exceptionallyAsync(java.util.function.Funct
 java.util.concurrent.CompletionStage#exceptionallyCompose(java.util.function.Function<java.lang.Throwable,? extends java.util.concurrent.CompletionStage<T>>;)
 java.util.concurrent.CompletionStage#exceptionallyComposeAsync(java.util.function.Function<java.lang.Throwable,? extends java.util.concurrent.CompletionStage<T>>;)
 java.util.concurrent.CompletionStage#exceptionallyComposeAsync(java.util.function.Function<java.lang.Throwable,? extends java.util.concurrent.CompletionStage<T>>;java.util.concurrent.Executor;)
+java.util.concurrent.CompletableFuture#exceptionallyAsync(java.util.function.Function<java.lang.Throwable,? extends T>;)
+java.util.concurrent.CompletableFuture#exceptionallyAsync(java.util.function.Function<java.lang.Throwable,? extends T>;java.util.concurrent.Executor;)
+java.util.concurrent.CompletableFuture#exceptionallyCompose(java.util.function.Function<java.lang.Throwable,? extends java.util.concurrent.CompletionStage<T>>;)
+java.util.concurrent.CompletableFuture#exceptionallyComposeAsync(java.util.function.Function<java.lang.Throwable,? extends java.util.concurrent.CompletionStage<T>>;)
+java.util.concurrent.CompletableFuture#exceptionallyComposeAsync(java.util.function.Function<java.lang.Throwable,? extends java.util.concurrent.CompletionStage<T>>;java.util.concurrent.Executor;)
 javax.net.ssl.HttpsURLConnection#getSSLSession()
 javax.naming.ldap.spi.LdapDnsProvider
 javax.naming.ldap.spi.LdapDnsProviderResult
+jdk.javadoc.internal.doclint.Checker#visitSystemProperty(com.sun.source.doctree.SystemPropertyTree;java.lang.Void;)
 javax.swing.filechooser.FileSystemView#getChooserShortcutPanelFiles()
+com.sun.tools.javac.tree.JCTree.JCCase#getExpressions()
+com.sun.tools.javac.tree.JCTree.JCCase#getBody()
+com.sun.tools.javac.tree.JCTree.JCCase#getCaseKind()
+com.sun.tools.javac.tree.DocPretty#visitSystemProperty(com.sun.source.doctree.SystemPropertyTree;java.lang.Void;)
+com.sun.tools.javac.tree.TreeCopier#visitSwitchExpression(com.sun.source.tree.SwitchExpressionTree;P;)
+com.sun.tools.javac.tree.DocTreeMaker#newSystemPropertyTree(javax.lang.model.element.Name;)
 com.sun.source.tree.Tree.Kind#SWITCH_EXPRESSION
 com.sun.source.tree.CaseTree#getExpressions()
 com.sun.source.tree.CaseTree#getBody()
 com.sun.source.tree.CaseTree#getCaseKind()
 com.sun.source.tree.CaseTree.CaseKind
-com.sun.source.tree.BreakTree#getValue()
 com.sun.source.tree.TreeVisitor#visitSwitchExpression(com.sun.source.tree.SwitchExpressionTree;P;)
 com.sun.source.tree.SwitchExpressionTree
 com.sun.source.util.DocTreeFactory#newSystemPropertyTree(javax.lang.model.element.Name;)
 com.sun.source.util.DocTreeScanner#visitSystemProperty(com.sun.source.doctree.SystemPropertyTree;P;)
 com.sun.source.util.SimpleDocTreeVisitor#visitSystemProperty(com.sun.source.doctree.SystemPropertyTree;P;)
+com.sun.source.doctree.DocTree.Kind#SYSTEM_PROPERTY
 com.sun.source.doctree.DocTreeVisitor#visitSystemProperty(com.sun.source.doctree.SystemPropertyTree;P;)
 com.sun.source.doctree.SystemPropertyTree
 javax.lang.model.SourceVersion#RELEASE_12
+com.sun.source.tree.BreakTree#getValue()

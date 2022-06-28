@@ -66,6 +66,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
@@ -92,6 +93,8 @@ public final class GitUtil {
   private static final @NonNls String REPO_PATH_LINK_PREFIX = "gitdir:";
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
   private static final @NonNls String HEAD_FILE = "HEAD";
+
+  private static final Pattern HASH_STRING_PATTERN = Pattern.compile("[a-fA-F0-9]{40}");
 
   /**
    * A private constructor to suppress instance creation
@@ -1078,5 +1081,9 @@ public final class GitUtil {
     }
     String head = result.getOutputAsJoinedString();
     return HashImpl.build(head);
+  }
+
+  public static boolean isHashString(@NotNull @NonNls String revision) {
+    return HASH_STRING_PATTERN.matcher(revision).matches();
   }
 }

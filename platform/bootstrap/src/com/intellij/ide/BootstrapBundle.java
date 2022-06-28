@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.AbstractBundle;
-import com.intellij.BundleBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +15,7 @@ public final class BootstrapBundle {
   static {
     AbstractBundle instance = null;
     try {
-      instance = new AbstractBundle(BUNDLE);
+      instance = new AbstractBundle(BootstrapBundle.class, BUNDLE);
     }
     catch (Throwable ignored) { }
     INSTANCE = instance;
@@ -29,7 +28,7 @@ public final class BootstrapBundle {
   public static @Nls @NotNull String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (INSTANCE != null) {
       try {
-        return BundleBase.messageOrDefault(INSTANCE.getResourceBundle(BootstrapBundle.class.getClassLoader()), key, null, params);
+        return INSTANCE.getMessage(key, params);
       }
       catch (Throwable ignored) { }
     }

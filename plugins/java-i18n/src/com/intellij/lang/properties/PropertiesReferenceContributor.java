@@ -129,6 +129,6 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
         if (words.length != 1) return PsiReference.EMPTY_ARRAY;
         return Holder.CLASS_REFERENCE_PROVIDER.getReferencesByString(words[0], element, 0);
       }
-    });
+    }, PsiReferenceRegistrar.LOWER_PRIORITY);
   }
 }

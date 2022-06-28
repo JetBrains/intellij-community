@@ -398,7 +398,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
                               DiagnosticOutputConsumer diagnosticSink,
                               OutputFileConsumer outputSink,
                               JavaCompilingTool compilingTool,
-                              File moduleInfoFile) {
+                              File moduleInfoFile) throws IOException {
     final Semaphore counter = new Semaphore();
     COUNTER_KEY.set(context, counter);
 
@@ -766,7 +766,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @NotNull
-  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) {
+  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) throws IOException {
     ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
     if (server != null) {
       return server;
@@ -1153,6 +1153,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
         // current javac compiler does support required language level
         return Pair.create(sdkVersionPair.first.getHomePath(), sdkVersion);
       }
+      LOG.warn("Target bytecode version " + targetLanguageLevel + " is not supported by SDK version " + sdkVersion);
     }
     final String fallbackJdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null);
     if (fallbackJdkHome == null) {

@@ -21,6 +21,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
   companion object {
     private const val SHOULD_ORDER_BY_ML_KEY = "shouldOrderByMl"
     private const val CONTEXT_INFO_KEY = "contextInfo"
+    private const val SEARCH_STATE_FEATURES_KEY = "searchStateFeatures"
     private const val FOUND_ELEMENTS_KEY = "foundElements"
   }
 
@@ -52,26 +53,26 @@ class OpenFeaturesInScratchFileAction : AnAction() {
   private fun getFeaturesReport(searchEverywhereUI: SearchEverywhereUI): Map<String, Any> {
     val mlSessionService = SearchEverywhereMlSessionService.getService()
     val searchSession = mlSessionService.getCurrentSession()!!
+    val state = searchSession.getCurrentSearchState()
 
     val features = searchEverywhereUI.foundElementsInfo.map { info ->
       val rankingWeight = info.priority
       val contributor = info.contributor.searchProviderId
       val elementName = StringUtil.notNullize(info.element.toString(), "undefined")
-      if (searchSession.itemIdProvider.isElementSupported(info.element)) {
-        val id = searchSession.itemIdProvider.getId(info.element)
+      val elementId = searchSession.itemIdProvider.getId(info.element)
+      if (elementId != null) {
         val mlWeight = if (isTabWithMl(searchEverywhereUI.selectedTabID)) {
           mlSessionService.getMlWeight(info.contributor, info.element, rankingWeight)
         } else {
           null
         }
 
-        val state = searchSession.getCurrentSearchState()
         return@map ElementFeatures(
           elementName,
           mlWeight,
           rankingWeight,
           contributor,
-          state!!.getElementFeatures(id, info.element, info.contributor, rankingWeight).features.toSortedMap()
+          state!!.getElementFeatures(elementId, info.element, info.contributor, rankingWeight).featuresAsMap().toSortedMap()
         )
       }
       else {
@@ -81,7 +82,8 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
     return mapOf(
       SHOULD_ORDER_BY_ML_KEY to mlSessionService.shouldOrderByMl(searchEverywhereUI.selectedTabID),
-      CONTEXT_INFO_KEY to searchSession.cachedContextInfo,
+      CONTEXT_INFO_KEY to searchSession.cachedContextInfo.features.associate { it.field.name to it.data },
+      SEARCH_STATE_FEATURES_KEY to state!!.searchStateFeatures.associate { it.field.name to it.data },
       FOUND_ELEMENTS_KEY to features
     )
   }

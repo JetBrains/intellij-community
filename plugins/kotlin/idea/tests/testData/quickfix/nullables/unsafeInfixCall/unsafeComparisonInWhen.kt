@@ -1,9 +1,10 @@
 // "Replace with safe (?.) call" "false"
 // ACTION: Add non-null asserted (!!) call
-// ACTION: Flip '<='
+// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
-// ACTION: Replace overloaded operator with function call
 // ACTION: Expand boolean expression to 'if else'
+// ACTION: Flip '<='
+// ACTION: Replace overloaded operator with function call
 // ERROR: Operator call corresponds to a dot-qualified call 'w?.x.compareTo(42)' which is not allowed on a nullable receiver 'w?.x'.
 
 class Wrapper(val x: Int)

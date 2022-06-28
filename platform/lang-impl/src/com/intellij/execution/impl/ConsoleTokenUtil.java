@@ -133,12 +133,7 @@ class ConsoleTokenUtil {
     if (mergeWithThePreviousSameTypeToken && startOffset > 0) {
       RangeMarker prevMarker = findTokenMarker(editor, project, startOffset - 1);
       ConsoleViewContentType prevMarkerType = prevMarker == null ? null : getTokenType(prevMarker);
-      int prevMarkerEndOffset = prevMarkerType == null ? -1 : prevMarker.getEndOffset();
-      if (contentType.equals(prevMarkerType) &&
-          prevMarkerEndOffset >= 0 &&
-          prevMarkerEndOffset < editor.getDocument().getTextLength() &&
-          // must not merge tokens with end line because user input should be separated by new lines
-          editor.getDocument().getCharsSequence().charAt(prevMarkerEndOffset - 1) != '\n') {
+      if (contentType.equals(prevMarkerType)) {
         startOffset = prevMarker.getStartOffset();
         prevMarker.dispose();
       }

@@ -42,7 +42,7 @@ public class Alarm implements Disposable {
 
   // requests scheduled to myExecutorService
   private final List<Request> myRequests = new SmartList<>(); // guarded by LOCK
-  // requests not yet scheduled to myExecutorService (because e.g. the corresponding component isn't active yet)
+  // requests not yet scheduled to myExecutorService (because e.g., the corresponding component isn't active yet)
   private final List<Request> myPendingRequests = new SmartList<>(); // guarded by LOCK
 
   private final ScheduledExecutorService myExecutorService;
@@ -304,7 +304,7 @@ public class Alarm implements Disposable {
   }
 
   /**
-   * wait for all requests to start execution (i.e. their delay elapses and their run() method, well, runs)
+   * wait for all requests to start execution (i.e., their delay elapses and their run() method, well, runs)
    * and then wait for the execution to finish.
    */
   @TestOnly

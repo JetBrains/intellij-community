@@ -108,8 +108,9 @@ public final class ExtractMethodHelper {
       boolean isPerformanceScript = System.getProperty("testscript.filename") != null;
       final Project project = callElement.getProject();
       final boolean exitCode = isUnittest || isPerformanceScript ||
-                               MessageDialogBuilder.yesNo(RefactoringBundle.message("refactoring.extract.method.dialog.title"),
-                                                          message,
+                               MessageDialogBuilder.yesNo(message,
+                                                          RefactoringBundle.message(
+                                                            "refactoring.extract.method.dialog.title"),
                                                           UIUtil.getInformationIcon()).ask(project);
       if (exitCode) {
         boolean replaceAll = false;

@@ -19,7 +19,14 @@ internal interface SettingsLog {
    * false if the data was already there, and we've just created internal structures.
    */
   @RequiresBackgroundThread
-  fun initialize(): Boolean
+  fun initialize()
+
+  /**
+   * Records all shareable settings from the config directories in their current state.
+   * Happens on the very first settings sync initialization, and between IDE sessions.
+   */
+  @RequiresBackgroundThread
+  fun logExistingSettings()
 
   /**
    * Records the current local state of the settings.

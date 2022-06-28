@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.buildA
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -697,7 +698,8 @@ fun PomFile.changeFeatureConfiguration(
         }
 
     argsSubTag.findSubTags("arg").filter { feature.name in it.value.text }.forEach { it.deleteCascade() }
-    val featureArgumentString = feature.buildArgumentString(state, kotlinPlugin.version.stringValue)
+    val kotlinVersion = kotlinPlugin.version.stringValue?.let(IdeKotlinVersion::opt)
+    val featureArgumentString = feature.buildArgumentString(state, kotlinVersion)
     val childTag = argsSubTag.createChildTag("arg", featureArgumentString)
     return argsSubTag.add(childTag)
 }

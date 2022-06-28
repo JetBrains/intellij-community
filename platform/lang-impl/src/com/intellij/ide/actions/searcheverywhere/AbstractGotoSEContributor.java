@@ -47,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -404,12 +403,15 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         return ((PsiElementNavigationItem)element).getTargetElement();
       }
     }
-
-    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId) && element instanceof PsiElement) {
-      return QualifiedNameProviderUtil.getQualifiedName((PsiElement)element);
-    }
-
     return null;
+  }
+
+  @Nullable
+  @Override
+  public String getItemDescription(@NotNull Object element) {
+    return element instanceof PsiElement && ((PsiElement)element).isValid()
+           ? QualifiedNameProviderUtil.getQualifiedName((PsiElement) element)
+           : null;
   }
 
   @Override

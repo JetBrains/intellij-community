@@ -1,6 +1,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,9 +19,18 @@ public interface SearchEverywhereContributorFactory<Item> {
 
   /**
    * Returns 'true' if the contributor is available and should be created
+   * @deprecated see {@link #isAvailable(Project)}
    */
+  @Deprecated
   default boolean isAvailable() {
     return true;
+  }
+
+  /**
+   * Returns 'true' if the contributor is available and should be created
+   */
+  default boolean isAvailable(Project project) {
+    return isAvailable();
   }
 
   /**

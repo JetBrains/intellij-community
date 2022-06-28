@@ -72,7 +72,10 @@ class GitStageDiffPreview(project: Project,
         .map(::GitFileStatusNodeWrapper)
     }
 
-    override fun onSelected(change: Wrapper) = selectChange(change)
+    override fun onSelected(change: Wrapper) {
+      currentChange = change
+      selectChange(change)
+    }
   }
 
   private fun wrap(modelData: VcsTreeModelData): Stream<Wrapper> =

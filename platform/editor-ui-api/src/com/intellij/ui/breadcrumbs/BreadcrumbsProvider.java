@@ -14,34 +14,33 @@ import java.util.List;
 import static java.util.Collections.emptyList;
 
 /**
- * Allows providing language-specific breadcrumbs, i.e. path to the file root from a selected PSI element.
+ * Allows to provide a language-specific breadcrumbs,
+ * i.e. path to the file root from a selected PSI element.
  */
 public interface BreadcrumbsProvider {
   ExtensionPointName<BreadcrumbsProvider> EP_NAME = ExtensionPointName.create("com.intellij.breadcrumbsInfoProvider");
 
   /**
-   * @return array of languages supported by this provider
+   * @return an array of languages supported by this provider
    */
   Language[] getLanguages();
 
   /**
    * @param element that represents a single crumb
-   * @return {@code true} if this provider supports the specified element
+   * @return {@code true} if the specified element is supported by this provider
    */
   boolean acceptElement(@NotNull PsiElement element);
 
   /**
-   * Determines the text for a single crumb from the provided element.
-   *
    * @param element that represents a single crumb
-   * @return text for the crumb
+   * @return a text for the specified element
    */
   @NotNull
   @NlsSafe String getElementInfo(@NotNull PsiElement element);
 
   /**
    * @param element that represents a single crumb
-   * @return icon for the crumb
+   * @return an icon for the specified element
    */
   @Nullable
   default Icon getElementIcon(@NotNull PsiElement element) {
@@ -50,7 +49,7 @@ public interface BreadcrumbsProvider {
 
   /**
    * @param element that represents a single crumb
-   * @return description for the crumb
+   * @return a description for the specified element
    */
   @Nullable
   default @NlsSafe String getElementTooltip(@NotNull PsiElement element) {
@@ -59,7 +58,7 @@ public interface BreadcrumbsProvider {
 
   /**
    * @param element that represents a single crumb
-   * @return element that represents a parent crumb, or {@code null}
+   * @return an element that represents a parent crumb, or {@code null}
    */
   @Nullable
   default PsiElement getParent(@NotNull PsiElement element) {
@@ -70,7 +69,7 @@ public interface BreadcrumbsProvider {
    * Reserved for future releases. Not supported yet.
    *
    * @param element that represents a single crumb
-   * @return list of elements to navigate
+   * @return a list of elements to navigate
    */
   @NotNull
   default List<PsiElement> getChildren(@NotNull PsiElement element) {
@@ -79,7 +78,7 @@ public interface BreadcrumbsProvider {
 
   /**
    * @param element that represents a single crumb
-   * @return list of actions for the context menu
+   * @return a list of actions for context menu
    */
   @NotNull
   default List<? extends Action> getContextActions(@NotNull PsiElement element) {

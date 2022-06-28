@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * Base class for HTTP-based repositories functioning over Apache Commons HttpClient 3.1.
@@ -144,7 +145,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
 
   @Override
   public void setPassword(String password) {
-    if (!Comparing.equal(password, getPassword())) {
+    if (!Objects.equals(password, getPassword())) {
       super.setPassword(password);
       reconfigureClient();
     }

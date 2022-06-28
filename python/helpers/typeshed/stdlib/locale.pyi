@@ -1,6 +1,33 @@
 import sys
 from _typeshed import StrPath
 
+__all__ = [
+    "getlocale",
+    "getdefaultlocale",
+    "getpreferredencoding",
+    "Error",
+    "setlocale",
+    "resetlocale",
+    "localeconv",
+    "strcoll",
+    "strxfrm",
+    "str",
+    "atof",
+    "atoi",
+    "format",
+    "format_string",
+    "currency",
+    "normalize",
+    "LC_CTYPE",
+    "LC_COLLATE",
+    "LC_MESSAGES",
+    "LC_TIME",
+    "LC_MONETARY",
+    "LC_NUMERIC",
+    "LC_ALL",
+    "CHAR_MAX",
+]
+
 # This module defines a function "str()", which is why "str" can't be used
 # as a type annotation or type alias.
 from builtins import str as _str

@@ -11,9 +11,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClassNameRuleValidator extends CustomValidationRule {
+  @NotNull
+  @Override
+  public String getRuleId() {
+    return "class_name";
+  }
+
   @Override
   public boolean acceptRuleId(@Nullable String ruleId) {
-    return "dialog_class".equals(ruleId) || "quick_fix_class_name".equals(ruleId) || "class_name".equals(ruleId);
+    return "dialog_class".equals(ruleId) || "quick_fix_class_name".equals(ruleId) || getRuleId().equals(ruleId);
   }
 
   @NotNull

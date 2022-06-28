@@ -1,0 +1,3 @@
+<foo>
+<bar>A &lt; B<caret></bar>
+</foo>

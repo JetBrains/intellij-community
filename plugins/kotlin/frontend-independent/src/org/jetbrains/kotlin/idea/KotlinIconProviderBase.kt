@@ -78,10 +78,12 @@ open class KotlinIconProviderBase : IconProvider(), DumbAware {
     companion object {
         fun isSingleClassFile(file: KtFile) = getSingleClass(file) != null
 
-        fun getSingleClass(file: KtFile): KtClassOrObject? {
-            val mainClass = getMainClass(file)
-            return if (mainClass != null && file.declarations.filterNot { it.isPrivate() }.size == 1) mainClass else null
-        }
+        fun getSingleClass(file: KtFile): KtClassOrObject? =
+            getMainClass(file)?.takeIf {
+                file.declarations
+                    .filterNot { it.isPrivate() || it is KtTypeAlias }
+                    .size == 1
+            }
 
         fun getMainClass(file: KtFile): KtClassOrObject? {
             val classes = file.declarations.filterNot { it.isPrivate() }.filterIsInstance<KtClassOrObject>()

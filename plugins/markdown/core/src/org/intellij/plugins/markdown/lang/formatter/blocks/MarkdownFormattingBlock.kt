@@ -73,6 +73,7 @@ internal open class MarkdownFormattingBlock(
       // and the fact that when end of code fence is in blockquote -- parser
       // would treat blockquote as a part of code fence end token
       MarkdownElementTypes.CODE_FENCE -> emptyList()
+      MarkdownElementTypes.FRONT_MATTER_HEADER -> emptyList()
       MarkdownElementTypes.LIST_ITEM -> {
         MarkdownBlocks.create(node.children(), settings, spacing) {
           if (it.elementType in NON_ALIGNABLE_LIST_ELEMENTS) alignment else newAlignment

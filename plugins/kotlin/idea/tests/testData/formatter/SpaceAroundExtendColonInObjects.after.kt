@@ -11,7 +11,7 @@ object Some3
     :
 
 
-        A
+    A
 
 val a = object :A {}
 
@@ -25,7 +25,7 @@ class B {
 
 class C {
     companion object :
-            A {
+        A {
 
     }
 }

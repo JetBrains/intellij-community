@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
-import com.intellij.ide.IconProvider;
+import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithoutContent;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,14 +39,11 @@ public class UIComponentVirtualFile extends LightVirtualFile implements VirtualF
     }
   }
 
-  static class UIComponentVirtualFileIconProvider extends IconProvider {
+  static class UIComponentVirtualFileIconProvider implements FileIconProvider {
     @Override
-    public @Nullable Icon getIcon(@NotNull PsiElement element, int flags) {
-      if (element instanceof PsiFile) {
-        VirtualFile file = ((PsiFile)element).getVirtualFile();
-        if (file instanceof UIComponentVirtualFile) {
-          return ((UIComponentVirtualFile)file).myUi.getIcon();
-        }
+    public @Nullable Icon getIcon(@NotNull VirtualFile file, int flags, @Nullable Project project) {
+      if (file instanceof UIComponentVirtualFile) {
+        return ((UIComponentVirtualFile)file).myUi.getIcon();
       }
       return null;
     }

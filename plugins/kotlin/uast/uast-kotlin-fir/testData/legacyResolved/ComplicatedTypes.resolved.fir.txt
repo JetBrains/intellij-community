@@ -1,0 +1,34 @@
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> Decompiled_Class: ParameterizedType
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang.reflect: reflect
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = reflect) -> PsiPackage:java.lang.reflect: reflect
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ParameterizedType) -> Decompiled_Class: ParameterizedType
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> Decompiled_Class: Type
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang.reflect: reflect
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = reflect) -> PsiPackage:java.lang.reflect: reflect
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Type) -> Decompiled_Class: Type
+UTypeReferenceExpression (name = kotlin.PublishedApi) -> USimpleNameReferenceExpression (identifier = PublishedApi) -> Decompiled_Class: PublishedApi
+UTypeReferenceExpression (name = java.lang.reflect.Type) -> USimpleNameReferenceExpression (identifier = Type) -> Decompiled_Class: Type
+    ULocalVariable (name = base) -> UObjectLiteralExpression -> Kotlin_Light_Method:
+    UTypeReferenceExpression (name = TypeBase<T>) -> USimpleNameReferenceExpression (identifier = TypeBase) -> Kotlin_Light_Class:@PublishedApi
+internal open class TypeBase<T>: TypeBase
+    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+    UPostfixExpression (operator = !!) -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Method: getJavaClass
+    UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = base) -> Kotlin_Light_Variable: base
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> Decompiled_Method: getJavaClass
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = genericSuperclass) -> null: null
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null
+    UPostfixExpression (operator = !!) -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> null: null
+    UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = superType) -> Kotlin_Light_Variable: superType
+    UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
+    UTypeReferenceExpression (name = java.lang.reflect.ParameterizedType) -> USimpleNameReferenceExpression (identifier = ParameterizedType) -> Decompiled_Class: ParameterizedType
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = actualTypeArguments) -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = first) -> FUN: first
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null

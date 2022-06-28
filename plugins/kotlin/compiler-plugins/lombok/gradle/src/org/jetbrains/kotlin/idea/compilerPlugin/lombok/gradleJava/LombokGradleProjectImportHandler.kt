@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.lombok.LombokCommandLineProcessor
 import org.jetbrains.kotlin.lombok.LombokCommandLineProcessor.Companion.CONFIG_FILE_OPTION
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
+import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractCompilerPluginGradleImportHandler
 import org.jetbrains.kotlin.idea.gradleTooling.model.lombok.LombokModel
 import java.io.File
@@ -13,7 +14,7 @@ import java.io.File
 class LombokGradleProjectImportHandler : AbstractCompilerPluginGradleImportHandler<LombokModel>() {
 
     override val modelKey: Key<LombokModel> = LombokGradleProjectResolverExtension.KEY
-    override val pluginJarFileFromIdea: File = KotlinArtifacts.instance.lombokCompilerPlugin
+    override val pluginJarFileFromIdea: String = KotlinArtifacts.instance.lombokCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
     override val compilerPluginId: String = LombokCommandLineProcessor.PLUGIN_ID
     override val pluginName: String = "lombok"
 

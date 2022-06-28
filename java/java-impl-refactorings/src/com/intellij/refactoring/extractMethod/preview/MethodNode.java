@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Pavel.Dolgov
@@ -27,7 +28,7 @@ class MethodNode extends FragmentNode {
   }
 
   @Override
-  protected TextChunk @NotNull [] createTextChunks(@NotNull PsiElement element) {
+  protected @NotNull TextChunk @NotNull [] createTextChunks(@NotNull PsiElement element) {
     assert element instanceof PsiMethod;
     Project project = element.getProject();
 
@@ -41,11 +42,12 @@ class MethodNode extends FragmentNode {
     PsiIdentifier identifier = psiMethod.getNameIdentifier();
     int startOffset = identifier != null ? identifier.getTextRange().getStartOffset() : range.getStartOffset();
     int endOffset = Math.min(psiMethod.getParameterList().getTextRange().getEndOffset(), range.getEndOffset());
-    return ChunkExtractor.getExtractor(file)
-                         .createTextChunks(usageAdapter, file.getText(), startOffset, endOffset, false, new ArrayList<>());
+    List<TextChunk> result = new ArrayList<>();
+    ChunkExtractor.getExtractor(file).appendTextChunks(usageAdapter, file.getText(), startOffset, endOffset, false, result);
+    return result.toArray(TextChunk.EMPTY_ARRAY);
   }
 
-  public Icon getIcon() {
+  Icon getIcon() {
     return myIcon;
   }
 }

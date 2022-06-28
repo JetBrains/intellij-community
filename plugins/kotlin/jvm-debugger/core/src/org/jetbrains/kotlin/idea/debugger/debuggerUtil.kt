@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineEndOffset
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isKotlinFakeLineNumber
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -211,11 +212,22 @@ fun isOnSuspendReturnOrReenter(location: Location): Boolean {
 }
 
 fun isOneLineMethod(location: Location): Boolean {
-    val allLineLocations = location.method().safeAllLineLocations()
-    val firstLine = allLineLocations.firstOrNull()?.lineNumber()
-    val lastLine = allLineLocations.lastOrNull()?.lineNumber()
-
-    return firstLine != null && firstLine == lastLine
+    val method = location.safeMethod() ?: return false
+    val allLineLocations = method.safeAllLineLocations()
+    if (allLineLocations.isEmpty()) return false
+    if (allLineLocations.size == 1) return true
+    
+    val inlineFunctionBorders = method.getInlineFunctionAndArgumentVariablesToBordersMap().values
+    return allLineLocations
+        .mapNotNull { loc ->
+            if (!isKotlinFakeLineNumber(loc) &&
+                !inlineFunctionBorders.any { loc in it })
+                loc.lineNumber()
+            else
+                null
+        }
+        .toHashSet()
+        .size == 1
 }
 
 fun findElementAtLine(file: KtFile, line: Int): PsiElement? {

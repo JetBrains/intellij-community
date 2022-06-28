@@ -6,3 +6,5 @@ fun test() {
     A(0)
     A()
 }
+
+// FIR_COMPARISON

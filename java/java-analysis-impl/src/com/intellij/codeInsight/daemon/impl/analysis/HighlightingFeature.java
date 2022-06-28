@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -42,18 +42,7 @@ public enum HighlightingFeature {
   PATTERNS(LanguageLevel.JDK_16, "feature.patterns.instanceof"),
   TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_15, "feature.text.block.escape.sequences"),
   TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks") ,
-  SEALED_CLASSES(LanguageLevel.JDK_16_PREVIEW, "feature.sealed.classes") {
-    @Override
-    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel == LanguageLevel.JDK_16_PREVIEW ||
-             useSiteLevel.isAtLeast(LanguageLevel.JDK_17);
-    }
-
-    @Override
-    LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_17;
-    }
-  },
+  SEALED_CLASSES(LanguageLevel.JDK_17, "feature.sealed.classes"),
   LOCAL_INTERFACES(LanguageLevel.JDK_16, "feature.local.interfaces"),
   LOCAL_ENUMS(LanguageLevel.JDK_16, "feature.local.enums"),
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),

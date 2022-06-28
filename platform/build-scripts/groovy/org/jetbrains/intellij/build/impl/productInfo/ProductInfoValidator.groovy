@@ -1,12 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.productInfo
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.networknt.schema.JsonSchema
+import com.networknt.schema.JsonSchemaFactory
+import com.networknt.schema.SpecVersion
+import com.networknt.schema.ValidationMessage
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.impl.ArchiveUtils
 
 import java.nio.charset.StandardCharsets
@@ -37,7 +46,7 @@ final class ProductInfoValidator {
    */
   static void checkInArchive(BuildContext context, Path archiveFile, String pathInArchive) {
     String productJsonPath = joinPaths(pathInArchive, ProductInfoGenerator.FILE_NAME)
-    String entryData = ArchiveUtils.loadEntry(archiveFile, productJsonPath)
+    byte[] entryData = ArchiveUtils.loadEntry(archiveFile, productJsonPath)
     if (entryData == null) {
       context.messages.error("Failed to validate product-info.json: cannot find '$productJsonPath' in $archiveFile")
     }
@@ -54,29 +63,32 @@ final class ProductInfoValidator {
                            List<Pair<Path, String>> installationArchives) {
     Path productJsonFile = directoryWithProductJson.resolve(relativePathToProductJson + ProductInfoGenerator.FILE_NAME)
 
-    String string
+    byte[] content
     try {
-      string = Files.readString(productJsonFile)
+      content = Files.readAllBytes(productJsonFile)
     }
     catch (NoSuchFileException ignored) {
       context.messages.error("Failed to validate product-info.json: $productJsonFile doesn't exist")
       return
     }
-    validateProductJson(context, string, productJsonFile, relativePathToProductJson, installationDirectories, installationArchives)
+    validateProductJson(context, content, productJsonFile, relativePathToProductJson, installationDirectories, installationArchives)
   }
 
   void validateInDirectory(byte[] productJson, String relativePathToProductJson, List<Path> installationDirectories,
                            List<Pair<Path, String>> installationArchives) {
-    String string = new String(productJson, StandardCharsets.UTF_8)
-    validateProductJson(context, string, null, relativePathToProductJson, installationDirectories, installationArchives)
+    validateProductJson(context, productJson, null, relativePathToProductJson, installationDirectories, installationArchives)
   }
 
   private static void validateProductJson(BuildContext context,
-                                          String jsonText,
+                                          byte[] jsonText,
                                           @Nullable Path productJsonFile,
                                           String relativePathToProductJson,
                                           List<Path> installationDirectories,
                                           List<Pair<Path, String>> installationArchives) {
+
+    Path schemaPath = context.paths.communityHomeDir.resolve("platform/build-scripts/groovy/org/jetbrains/intellij/build/product-info.schema.json")
+    verifyJsonBySchema(jsonText, schemaPath, context.messages)
+
     ProductInfoData productJson
     try {
       productJson = JSON.std.beanFrom(ProductInfoData.class, jsonText)
@@ -91,12 +103,33 @@ final class ProductInfoValidator {
       return
     }
 
-    for (it in productJson.launch) {
-      checkFileExists(context, it.launcherPath, "$it.os launcher", relativePathToProductJson, installationDirectories, installationArchives)
-      checkFileExists(context, it.javaExecutablePath, "$it.os java executable", relativePathToProductJson,
+    checkFileExists(context, productJson.svgIconPath, "svg icon", relativePathToProductJson, installationDirectories, installationArchives)
+
+    for (launch in productJson.launch) {
+      if (OsFamily.ALL.find { (it.osName == launch.os) } == null) {
+        context.messages.error("Incorrect os name '$launch.os' in $relativePathToProductJson/product-info.json")
+      }
+
+      checkFileExists(context, launch.launcherPath, "$launch.os launcher", relativePathToProductJson, installationDirectories, installationArchives)
+      checkFileExists(context, launch.javaExecutablePath, "$launch.os java executable", relativePathToProductJson,
                       installationDirectories, installationArchives)
-      checkFileExists(context, it.vmOptionsFilePath, "$it.os VM options file", relativePathToProductJson,
+      checkFileExists(context, launch.vmOptionsFilePath, "$launch.os VM options file", relativePathToProductJson,
                       installationDirectories, installationArchives)
+    }
+  }
+
+  private static void verifyJsonBySchema(@NotNull byte[] jsonData, @NotNull Path jsonSchemaFile, BuildMessages messages) {
+    JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
+    JsonSchema schema = factory.getSchema(Files.readString(jsonSchemaFile))
+
+    ObjectMapper mapper = new ObjectMapper()
+    JsonNode node = mapper.readTree(jsonData)
+
+    Set<ValidationMessage> errors = schema.validate(node)
+    if (!errors.isEmpty()) {
+      messages.error("Unable to validate JSON agains $jsonSchemaFile:\n" +
+                     errors.join("\n") +
+                     "\njson file content:\n" + new String(jsonData, StandardCharsets.UTF_8))
     }
   }
 

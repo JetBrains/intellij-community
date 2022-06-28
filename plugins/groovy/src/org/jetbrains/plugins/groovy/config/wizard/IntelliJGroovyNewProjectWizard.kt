@@ -4,12 +4,7 @@ package org.jetbrains.plugins.groovy.config.wizard
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logContentRootChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleFileLocationChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleNameChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
@@ -45,9 +40,9 @@ import java.nio.file.Paths
 
 class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
-  override val name: String = "IntelliJ"
+  override val name = INTELLIJ
 
-  override val ordinal: Int = 0
+  override val ordinal = 0
 
   override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep = Step(parent).chain(::AssetsStep)
 
@@ -62,6 +57,8 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
+      super.setupProject(project)
+
       val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
         val contentRoot = FileUtil.toSystemDependentName(contentRoot)
         contentEntryPath = contentRoot
@@ -87,16 +84,6 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       if (addSampleCode) {
         openSampleCodeInEditorLater(project, contentRoot)
       }
-
-      logSdkFinished(sdk)
-    }
-
-    init {
-      sdkProperty.afterChange { logSdkChanged(it) }
-      addSampleCodeProperty.afterChange { logAddSampleCodeChanged() }
-      moduleNameProperty.afterChange { logModuleNameChanged() }
-      contentRootProperty.afterChange { logContentRootChanged() }
-      moduleFileLocationProperty.afterChange { logModuleFileLocationChanged() }
     }
 
     private fun openSampleCodeInEditorLater(project: Project, contentEntryPath: String) {

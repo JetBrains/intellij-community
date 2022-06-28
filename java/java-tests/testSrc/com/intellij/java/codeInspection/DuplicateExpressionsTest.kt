@@ -38,12 +38,13 @@ class DuplicateExpressionsTest : LightJavaCodeInsightFixtureTestCase() {
   fun testCollections() = doTest(1)
   fun testDeepNestedClass() = doTest(7)
   fun testQualifier() = doTest(1)
+  fun testComplexPackage() = doTest(pkg="foo/bar/baz/")
 
-  private fun doTest(threshold: Int = 50) {
+  private fun doTest(threshold: Int = 50, pkg: String = "") {
     val oldThreshold = inspection.complexityThreshold
     try {
       inspection.complexityThreshold = threshold
-      myFixture.testHighlighting("${getTestName(false)}.java")
+      myFixture.testHighlighting("$pkg${getTestName(false)}.java")
     }
     finally {
       inspection.complexityThreshold = oldThreshold

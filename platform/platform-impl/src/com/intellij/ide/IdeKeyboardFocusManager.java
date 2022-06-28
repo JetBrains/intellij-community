@@ -15,13 +15,19 @@
  */
 package com.intellij.ide;
 
+import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
 import javax.swing.*;
 import javax.swing.FocusManager;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 /**
  * We extend the obsolete {@link DefaultFocusManager} class here instead of {@link KeyboardFocusManager} to prevent unwanted overwriting of
@@ -56,6 +62,22 @@ class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc above *
         LOG.debug("setDefaultFocusTraversalPolicy: " + defaultPolicy, new Throwable());
       }
       super.setDefaultFocusTraversalPolicy(defaultPolicy);
+    }
+  }
+
+  @Override
+  public boolean dispatchKeyEvent(KeyEvent e) {
+    activateEditorOnEscape(e);
+    return super.dispatchKeyEvent(e);
+  }
+
+  private void activateEditorOnEscape(KeyEvent e) {
+    if (getFocusOwner() == null && !e.isConsumed() && KeymapUtil.isEventForAction(e, IdeActions.ACTION_FOCUS_EDITOR)) {
+      Project project = ProjectUtil.getActiveProject();
+      if (project != null) {
+        ToolWindowManager.getInstance(project).activateEditorComponent();
+        e.consume();
+      }
     }
   }
 

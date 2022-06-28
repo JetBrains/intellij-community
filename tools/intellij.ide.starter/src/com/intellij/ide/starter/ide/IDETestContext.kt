@@ -93,7 +93,7 @@ data class IDETestContext(
     return addVMOptionsPatch { addSystemProperty("gradle.user.home", localGradleRepo.toString()) }
   }
 
-  fun executeAfterProjectOpening(executeAfterProjectOpening: Boolean = true) = this.addVMOptionsPatch {
+  fun executeAfterProjectOpening(executeAfterProjectOpening: Boolean = true) = addVMOptionsPatch {
     addSystemProperty("performance.execute.script.after.project.opened", executeAfterProjectOpening)
   }
 
@@ -147,12 +147,17 @@ data class IDETestContext(
         .withXmx(4 * 1024)
     }
 
-  fun setPathForMemorySnapshot(): IDETestContext {
-    return this.addVMOptionsPatch {
-      this
-        .addSystemProperty("memory.snapshots.path", paths.logsDir)
+  fun setPathForMemorySnapshot(): IDETestContext =
+    addVMOptionsPatch {
+      addSystemProperty("memory.snapshots.path", paths.logsDir)
     }
-  }
+
+
+  fun setPathForSnapshots(): IDETestContext =
+    addVMOptionsPatch {
+      addSystemProperty("snapshots.path", paths.snapshotsDir)
+    }
+
 
   fun collectMemorySnapshotOnFailedPluginUnload(): IDETestContext =
     addVMOptionsPatch {
@@ -164,34 +169,34 @@ data class IDETestContext(
       addSystemProperty("ide.plugins.per.project", true)
     }
 
-  fun disableAutoImport(disabled: Boolean = true) = this.addVMOptionsPatch {
-    this.addSystemProperty("external.system.auto.import.disabled", disabled)
+  fun disableAutoImport(disabled: Boolean = true) = addVMOptionsPatch {
+    addSystemProperty("external.system.auto.import.disabled", disabled)
   }
 
-  fun disableOrdinaryIndexes() = this.addVMOptionsPatch {
-    this.addSystemProperty("idea.use.only.index.infrastructure.extension", true)
+  fun disableOrdinaryIndexes() = addVMOptionsPatch {
+    addSystemProperty("idea.use.only.index.infrastructure.extension", true)
   }
 
-  fun setSharedIndexesDownload(enable: Boolean = true) = this.addVMOptionsPatch {
+  fun setSharedIndexesDownload(enable: Boolean = true) = addVMOptionsPatch {
     addSystemProperty("shared.indexes.bundled", enable)
       .addSystemProperty("shared.indexes.download", enable)
       .addSystemProperty("shared.indexes.download.auto.consent", enable)
   }
 
-  fun skipIndicesInitialization() = this.addVMOptionsPatch {
-    this.addSystemProperty("idea.skip.indices.initialization", true)
+  fun skipIndicesInitialization() = addVMOptionsPatch {
+    addSystemProperty("idea.skip.indices.initialization", true)
   }
 
-  fun addTestResultFilePath() = this.addVMOptionsPatch {
-    this.addSystemProperty(TEST_RESULT_FILE_PATH_PROPERTY, paths.tempDir.resolve("testResult.txt"))
+  fun addTestResultFilePath() = addVMOptionsPatch {
+    addSystemProperty(TEST_RESULT_FILE_PATH_PROPERTY, paths.tempDir.resolve("testResult.txt"))
   }
 
-  fun collectImportProjectPerfMetrics() = this.addVMOptionsPatch {
-    this.addSystemProperty("idea.collect.project.import.performance", true)
+  fun collectImportProjectPerfMetrics() = addVMOptionsPatch {
+    addSystemProperty("idea.collect.project.import.performance", true)
   }
 
-  fun enableWorkspaceModelVerboseLogs() = this.addVMOptionsPatch {
-    this.addSystemProperty("idea.log.trace.categories", "#com.intellij.workspaceModel")
+  fun enableWorkspaceModelVerboseLogs() = addVMOptionsPatch {
+    addSystemProperty("idea.log.trace.categories", "#com.intellij.workspaceModel")
   }
 
   fun wipeSystemDir() = apply {
@@ -231,7 +236,7 @@ data class IDETestContext(
     return this
   }
 
-  fun internalMode() = this.addVMOptionsPatch { this.addSystemProperty("idea.is.internal", true) }
+  fun internalMode() = addVMOptionsPatch { addSystemProperty("idea.is.internal", true) }
 
   fun prepareProjectCleanImport(): IDETestContext {
     return removeIdeaProjectDirectory().removeAllImlFilesInProject()
@@ -252,11 +257,11 @@ data class IDETestContext(
   }
 
   fun disableAutoSetupJavaProject() = addVMOptionsPatch {
-    this.addSystemProperty("idea.java.project.setup.disabled", true)
+    addSystemProperty("idea.java.project.setup.disabled", true)
   }
 
   fun disablePackageSearchBuildFiles() = addVMOptionsPatch {
-    this.addSystemProperty("idea.pkgs.disableLoading", true)
+    addSystemProperty("idea.pkgs.disableLoading", true)
   }
 
   fun removeGradleConfigFiles(): IDETestContext {
@@ -274,7 +279,7 @@ data class IDETestContext(
   }
 
   fun removeIdeaProjectDirectory(): IDETestContext {
-    val ideaDirPath = this.resolvedProjectHome.resolve(".idea")
+    val ideaDirPath = resolvedProjectHome.resolve(".idea")
 
     logOutput("Removing $ideaDirPath ...")
 
@@ -288,7 +293,7 @@ data class IDETestContext(
   }
 
   fun removeAllImlFilesInProject(): IDETestContext {
-    val projectDir = this.resolvedProjectHome
+    val projectDir = resolvedProjectHome
 
     logOutput("Removing all .iml files in $projectDir ...")
 
@@ -304,7 +309,7 @@ data class IDETestContext(
   }
 
   fun addPropertyToGradleProperties(property: String, value: String): IDETestContext {
-    val projectDir = this.resolvedProjectHome
+    val projectDir = resolvedProjectHome
     val gradleProperties = projectDir.resolve("gradle.properties")
     val lineWithTheSameProperty = gradleProperties.readLines().singleOrNull { it.contains(property) }
     if (lineWithTheSameProperty != null) {
@@ -335,7 +340,8 @@ data class IDETestContext(
     runTimeout: Duration = Duration.minutes(10),
     useStartupScript: Boolean = true,
     launchName: String = "",
-    expectedKill: Boolean = false
+    expectedKill: Boolean = false,
+    collectNativeThreads: Boolean = false
   ): IDEStartResult {
     return runContext()
       .copy(
@@ -345,7 +351,8 @@ data class IDETestContext(
         runTimeout = runTimeout,
         useStartupScript = useStartupScript,
         launchName = launchName,
-        expectedKill = expectedKill
+        expectedKill = expectedKill,
+        collectNativeThreads = collectNativeThreads
       )
       .addVMOptionsPatch(patchVMOptions)
       .runIDE()
@@ -389,7 +396,7 @@ data class IDETestContext(
 
   fun setProviderMemoryOnlyOnLinux(): IDETestContext {
     if (SystemInfo.isLinux) {
-      val optionsConfig = this.paths.configDir.resolve("options")
+      val optionsConfig = paths.configDir.resolve("options")
       optionsConfig.toFile().mkdirs()
       val securityXml = optionsConfig.resolve("security.xml")
       securityXml.toFile().createNewFile()
@@ -403,8 +410,8 @@ data class IDETestContext(
   }
 
   fun setGradleJvmInProject(useJavaHomeAsGradleJvm: Boolean = true): IDETestContext {
-    if (this._resolvedProjectHome != null) {
-      val ideaDir = this.resolvedProjectHome.resolve(".idea")
+    if (_resolvedProjectHome != null) {
+      val ideaDir = resolvedProjectHome.resolve(".idea")
       val gradleXml = ideaDir.resolve("gradle.xml")
 
       if (gradleXml.toFile().exists()) {
@@ -442,15 +449,15 @@ data class IDETestContext(
   }
 
   fun addBuildProcessProfiling(): IDETestContext {
-    if (this._resolvedProjectHome != null) {
-      val ideaDir = this.resolvedProjectHome.resolve(".idea")
+    if (_resolvedProjectHome != null) {
+      val ideaDir = resolvedProjectHome.resolve(".idea")
       val workspace = ideaDir.resolve("workspace.xml")
 
       if (workspace.toFile().exists()) {
         val newContent = StringBuilder()
         val readText = workspace.toFile().readText()
         val userLocalBuildProcessVmOptions = when {
-          (this.testName.contains(
+          (testName.contains(
             "intellij_sources")) -> "-Dprofiling.mode=true -Dgroovyc.in.process=true -Dgroovyc.asm.resolving.only=false"
           else -> "-Dprofiling.mode=true"
         }
@@ -491,8 +498,8 @@ data class IDETestContext(
   }
 
   fun checkThatBuildRunByIdea(): IDETestContext {
-    if (this._resolvedProjectHome != null) {
-      val ideaDir = this.resolvedProjectHome.resolve(".idea")
+    if (_resolvedProjectHome != null) {
+      val ideaDir = resolvedProjectHome.resolve(".idea")
       val gradle = ideaDir.resolve("gradle.xml")
       if (gradle.toFile().exists()) {
         val readText = gradle.toFile().readText()
@@ -527,8 +534,8 @@ data class IDETestContext(
   }
 
   fun updateBuildProcessHeapSize(): IDETestContext {
-    if (this._resolvedProjectHome != null) {
-      val ideaDir = this.resolvedProjectHome.resolve(".idea")
+    if (_resolvedProjectHome != null) {
+      val ideaDir = resolvedProjectHome.resolve(".idea")
       val compilerXml = ideaDir.resolve("compiler.xml")
       if (compilerXml.toFile().exists()) {
         val newContent = StringBuilder()
@@ -551,11 +558,14 @@ data class IDETestContext(
   }
 
   fun updateGeneralSettings(): IDETestContext {
-    val patchedIdeGeneralXml = File(this::class.java.classLoader.getResource("ide.general.xml")!!.path)
+    val patchedIdeGeneralXml = this::class.java.classLoader.getResourceAsStream("ide.general.xml")
     val pathToGeneralXml = paths.configDir.toAbsolutePath().resolve("options/ide.general.xml")
+
     if (!pathToGeneralXml.exists()) {
       pathToGeneralXml.parent.createDirectories()
-      patchedIdeGeneralXml.copyTo(pathToGeneralXml.toFile())
+      patchedIdeGeneralXml.use {
+        pathToGeneralXml.writeBytes(it.readAllBytes())
+      }
     }
     return this
   }

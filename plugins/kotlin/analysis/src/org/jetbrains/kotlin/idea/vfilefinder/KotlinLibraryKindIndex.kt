@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.VirtualFileWithId
-import org.jetbrains.kotlin.idea.caches.FileAttributeService
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.FileAttributeService
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
 
 enum class KnownLibraryKindForIndex {

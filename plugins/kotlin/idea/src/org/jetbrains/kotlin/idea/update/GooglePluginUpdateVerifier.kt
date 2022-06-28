@@ -7,8 +7,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.util.isDev
-import org.jetbrains.kotlin.idea.util.isEap
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import java.io.IOException
 import java.net.URL
 import java.util.*
@@ -23,12 +22,11 @@ class GooglePluginUpdateVerifier : PluginUpdateVerifier() {
     // Verifies if a plugin can be installed in Android Studio 3.2+.
     // Currently used only by KotlinPluginUpdater.
     override fun verify(pluginDescriptor: IdeaPluginDescriptor): PluginVerifyResult? {
-        if (pluginDescriptor.pluginId.idString != KOTLIN_PLUGIN_ID) {
-            return null
-        }
+        val pluginVersion = KotlinIdePlugin.version
 
-        val version = pluginDescriptor.version
-        if (isEap(version) || isDev(version)) {
+        if (pluginDescriptor.pluginId != KotlinIdePlugin.id || KotlinIdePlugin.isPostProcessed) {
+            return null
+        } else if (KotlinIdePlugin.isPreRelease) {
             return PluginVerifyResult.accept()
         }
 
@@ -42,12 +40,12 @@ class GooglePluginUpdateVerifier : PluginUpdateVerifier() {
             val release = getRelease(pluginCompatibility)
                 ?: return PluginVerifyResult.decline(KotlinBundle.message("update.reason.text.no.verified.versions.for.this.build"))
 
-            return if (release.plugins().any { KOTLIN_PLUGIN_ID == it.id && version == it.version })
+            return if (release.plugins().any { KOTLIN_PLUGIN_ID == it.id && pluginVersion == it.version })
                 PluginVerifyResult.accept()
             else
                 PluginVerifyResult.decline(KotlinBundle.message("update.reason.text.version.to.be.verified"))
         } catch (e: Exception) {
-            LOG.info("Exception when verifying plugin ${pluginDescriptor.pluginId.idString} version $version", e)
+            LOG.info("Exception when verifying plugin ${pluginDescriptor.pluginId.idString} version $pluginVersion", e)
             return when (e) {
                 is IOException ->
                     PluginVerifyResult.decline(KotlinBundle.message("update.reason.text.unable.to.connect.to.compatibility.verification.repository"))

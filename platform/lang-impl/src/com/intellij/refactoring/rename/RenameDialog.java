@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.find.FindBundle;
@@ -82,7 +82,7 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     boolean toSearchInComments = isToSearchInCommentsForRename();
     myCbSearchInComments.setSelected(toSearchInComments);
 
-    if (myCbSearchTextOccurrences.isEnabled()) {
+    if (isSearchForTextOccurrencesEnabled()) {
       boolean toSearchForTextOccurrences = isToSearchForTextOccurrencesForRename();
       myCbSearchTextOccurrences.setSelected(toSearchForTextOccurrences);
     }
@@ -320,7 +320,7 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
   public void performRename(@NotNull String newName) {
     final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(myPsiElement);
     elementProcessor.setToSearchInComments(myPsiElement, isSearchInComments());
-    if (myCbSearchTextOccurrences.isEnabled()) {
+    if (isSearchForTextOccurrencesEnabled()) {
       elementProcessor.setToSearchForTextOccurrences(myPsiElement, isSearchInNonJavaFiles());
     }
     if (mySuggestedNameInfo != null) {
@@ -337,6 +337,10 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     }
 
     invokeRefactoring(processor);
+  }
+
+  protected boolean isSearchForTextOccurrencesEnabled() {
+    return myCbSearchTextOccurrences.isEnabled();
   }
 
   public RenameProcessor createRenameProcessorEx(@NotNull String newName) {

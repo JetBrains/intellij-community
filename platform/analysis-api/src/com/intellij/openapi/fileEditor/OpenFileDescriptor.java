@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<OpenFileDescriptor> {
   /**
-   * Tells descriptor to navigate in specific editor rather than file editor in main IDE window.
-   * For example if you want to navigate in editor embedded into modal dialog, you should provide this data.
+   * Tells descriptor to navigate in specific editor rather than file editor in the main IDE window.
+   * For example, if you want to navigate in an editor embedded into modal dialog, you should provide this data.
    */
   public static final DataKey<Editor> NAVIGATE_IN_EDITOR = DataKey.create("NAVIGATE_IN_EDITOR");
 

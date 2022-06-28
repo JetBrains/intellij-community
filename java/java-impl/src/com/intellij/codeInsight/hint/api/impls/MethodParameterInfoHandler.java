@@ -854,7 +854,7 @@ public final class MethodParameterInfoHandler
 
       updateMethodPresentation(method, getCandidateInfoSubstitutor(info, call != null && call.resolveMethod() == method), context);
     }
-    else {
+    else if (p instanceof PsiMethod) {
       updateMethodPresentation((PsiMethod)p, null, context);
     }
   }

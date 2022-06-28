@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -65,7 +65,7 @@ final class PluginRepositoryXmlGenerator {
           depends.append("<depends>").append(it.content).append("</depends>")
         }
       }
-      xml.getChild("dependencies")?.getChildren("plugin")?.each {
+      xml.getChild("dependencies")?.children("plugin")?.iterator()?.each {
         depends.append("<depends>").append(it.getAttributeValue("id")).append("</depends>")
       }
 

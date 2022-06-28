@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.postProcessing.processings
 
@@ -8,7 +8,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.analysis.analyzeInContext
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.*
@@ -39,7 +39,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RemoveExplicitPropertyTypeProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
-        if (element.typeReference == null) return false
+        val typeReference = element.typeReference
+        if (typeReference == null || typeReference.annotationEntries.isNotEmpty()) return false
         val needFieldTypes = settings?.specifyFieldTypeByDefault == true
         val needLocalVariablesTypes = settings?.specifyLocalVariableTypeByDefault == true
 
@@ -100,7 +101,7 @@ class RemoveExplicitTypeArgumentsProcessing : InspectionLikeProcessingForElement
     }
 }
 
-// the types arguments for Stream.collect calls cannot be explicitly specified in Kotlin
+// the types arguments for Stream.collect calls cannot be explicitly specified in Kotlin,
 // but we need them in nullability inference, so we remove it here
 class RemoveJavaStreamsCollectCallTypeArgumentsProcessing :
     InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
@@ -284,9 +285,12 @@ class JavaObjectEqualsToEqOperatorProcessing : InspectionLikeProcessingForElemen
 
 class RemoveForExpressionLoopParameterTypeProcessing :
     InspectionLikeProcessingForElement<KtForExpression>(KtForExpression::class.java) {
-    override fun isApplicableTo(element: KtForExpression, settings: ConverterSettings?): Boolean =
-        element.loopParameter?.typeReference?.typeElement != null
-                && settings?.specifyLocalVariableTypeByDefault != true
+    override fun isApplicableTo(element: KtForExpression, settings: ConverterSettings?): Boolean {
+        val typeReference = element.loopParameter?.typeReference ?: return false
+        return (typeReference.annotationEntries.isEmpty()
+                && typeReference.typeElement != null
+                && settings?.specifyLocalVariableTypeByDefault != true)
+    }
 
     override fun apply(element: KtForExpression) {
         element.loopParameter?.typeReference = null

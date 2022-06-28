@@ -5,11 +5,14 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.border.EmptyBorder
 
 internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, shortcutSupplier: Function<in String?, String?>,
                                  toolbar: JComponent) {
@@ -23,23 +26,24 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
     panel = panel {
       row {
         tabbedPane = tabbedPaneHeader()
-          .resizableColumn()
           .verticalAlign(VerticalAlign.BOTTOM)
           .customize(Gaps.EMPTY)
           .applyToComponent {
+            font = JBFont.regular()
             background = JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND
             isFocusable = false
           }
           .component
         cell(toolbar)
-          .customize(Gaps.EMPTY)
+          .resizableColumn()
+          .horizontalAlign(HorizontalAlign.RIGHT)
       }
     }
 
-    val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().unscaled
+    val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
     panel.border = JBUI.Borders.compound(
-      JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
-      JBUI.Borders.empty(0, headerInsets.left, 0, headerInsets.right))
+      JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
+      EmptyBorder(0, headerInsets.left, 0, headerInsets.right))
 
     for (tab in tabs) {
       val shortcut = shortcutSupplier.apply(tab.id)

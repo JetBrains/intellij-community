@@ -2,10 +2,12 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class KotlinUAnnotationMethod(
     psi: KtLightMethod,
     givenParent: UElement?

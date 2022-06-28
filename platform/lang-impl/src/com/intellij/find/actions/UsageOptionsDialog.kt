@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -32,7 +32,7 @@ internal class UsageOptionsDialog<O>(
   @NlsContexts.Label presentableText: String?,
   private val handler: UsageHandler<O>,
   allOptions: AllSearchOptions<O>,
-  showScopeChooser: Boolean,
+  private val showScopeChooser: Boolean,
   canReuseTab: Boolean
 ) : DialogWrapper(project) {
 
@@ -127,7 +127,9 @@ internal class UsageOptionsDialog<O>(
   override fun doOKAction() {
     super.doOKAction()
     FindSettings.getInstance().apply {
-      defaultScopeName = myScope.displayName
+      if (showScopeChooser) {
+        defaultScopeName = myScope.displayName
+      }
       myCbOpenInNewTab?.let { checkbox ->
         isShowResultsInSeparateView = checkbox.isSelected
       }

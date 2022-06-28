@@ -6,6 +6,8 @@ from .headers import Headers
 from .types import ErrorStream, InputStream, StartResponse, WSGIApplication, WSGIEnvironment
 from .util import FileWrapper
 
+__all__ = ["BaseHandler", "SimpleHandler", "BaseCGIHandler", "CGIHandler", "IISCGIHandler", "read_environ"]
+
 _exc_info = tuple[Optional[type[BaseException]], Optional[BaseException], Optional[TracebackType]]
 
 def format_date_time(timestamp: float | None) -> str: ...  # undocumented

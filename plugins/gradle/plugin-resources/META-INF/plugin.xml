@@ -5,7 +5,7 @@
   <vendor>JetBrains</vendor>
   <description>
       <![CDATA[
-      Provides integration with <a href="http://www.gradle.org">Gradle</a> for automation of building, testing, publishing, and deployment of software packages.
+      Provides integration with <a href="https://www.gradle.org">Gradle</a> for automation of building, testing, publishing, and deployment of software packages.
       <ul>
       <li>Create a new Gradle project or import an existing Gradle project.</li>
       <li>Edit Gradle files with coding assistance (code completion, inspections, refactoring, and much more).</li>
@@ -41,8 +41,6 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.issueChecker" interface="org.jetbrains.plugins.gradle.issue.GradleIssueChecker"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.targetEnvironmentAware" interface="org.jetbrains.plugins.gradle.execution.target.GradleTargetEnvironmentAware"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName= "org.jetbrains.plugins.gradle.taskResultListener" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskResultListener"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -104,6 +102,7 @@
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager"
       serviceImplementation="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl"/>
 
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper$SystemPropertiesAdjuster"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettingsMigration$LegacyDefaultGradleProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
@@ -172,7 +171,7 @@
     </group>
 
     <action id="Gradle.ExecuteTask" class="org.jetbrains.plugins.gradle.action.GradleExecuteTaskAction"
-            icon="GradleIcons.Gradle">
+            icon="AllIcons.Actions.Run_anything">
     </action>
     <action id="Gradle.ToggleOfflineAction" class="org.jetbrains.plugins.gradle.action.ToggleOfflineAction"
             icon="AllIcons.Actions.OfflineMode"/>

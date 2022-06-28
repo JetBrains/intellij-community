@@ -2,29 +2,31 @@
 
 package org.jetbrains.uast.kotlin.internal
 
+import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtConstructor
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
 import org.jetbrains.uast.kotlin.TypeOwnerKind
+import org.jetbrains.uast.kotlin.getContainingLightClass
 import org.jetbrains.uast.kotlin.lz
+import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
 
 val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().single { it.language == KotlinLanguage.INSTANCE } as FirKotlinUastLanguagePlugin?
@@ -51,14 +53,40 @@ internal fun KtAnalysisSession.toPsiClass(
     return PsiTypesUtil.getPsiClass(toPsiType(ktType, source, context, typeOwnerKind, boxed = true))
 }
 
-internal fun KtAnalysisSession.toPsiMethod(functionSymbol: KtFunctionLikeSymbol): PsiMethod? {
-    val psi = functionSymbol.psi ?: return null
-    try {
-        return psi.getRepresentativeLightMethod()
-    } catch (e: IllegalStateException) {
-        // TODO: Creating FirModuleResolveState is not yet supported for LibrarySourceInfo(libraryName=myLibrary)
-        //  this happens while destructuring a variable via Pair casting (testDestructuringDeclaration).
-        return null
+internal fun KtAnalysisSession.toPsiMethod(
+    functionSymbol: KtFunctionLikeSymbol,
+    context: KtElement,
+): PsiMethod? {
+    return when (val psi = functionSymbol.psiForUast(context.project)) {
+        null -> null
+        is PsiMethod -> psi
+        is KtClassOrObject -> {
+            // For synthetic members in enum classes, `psi` points to their containing enum class.
+            if (psi is KtClass && psi.isEnum()) {
+                val lc = psi.toLightClass() ?: return null
+                lc.methods.find { it.name == (functionSymbol as? KtFunctionSymbol)?.name?.identifier }?.let { return it }
+            }
+
+            // Default primary constructor
+            psi.primaryConstructor?.getRepresentativeLightMethod()?.let { return it }
+            val lc = psi.toLightClass() ?: return null
+            lc.constructors.firstOrNull()?.let { return it }
+            if (psi.isLocal) UastFakeLightPrimaryConstructor(psi, lc) else null
+        }
+        is KtFunction -> {
+            // For JVM-invisible methods, such as @JvmSynthetic, LC conversion returns nothing, so fake it
+            fun handleLocalOrSynthetic(source: KtFunction): PsiMethod? {
+                val ktModule = source.getKtModule(context.project)
+                if (ktModule !is KtSourceModule) return null
+                return getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
+            }
+
+            if (psi.isLocal)
+                handleLocalOrSynthetic(psi)
+            else
+                psi.getRepresentativeLightMethod() ?: handleLocalOrSynthetic(psi)
+        }
+        else -> psi.getRepresentativeLightMethod()
     }
 }
 
@@ -117,4 +145,16 @@ internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {
     if (ktType == null) return null
     if (ktType is KtClassErrorType) return null
     return if (ktType.canBeNull) TypeNullability.NULLABLE else TypeNullability.NOT_NULL
+}
+
+/**
+ * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KtLibraryModule].
+ */
+internal fun KtSymbol.psiForUast(project: Project): PsiElement? {
+    return when (origin) {
+        KtSymbolOrigin.LIBRARY -> {
+            FirPsiDeclarationProvider.findPsi(this, project) ?: psi
+        }
+        else -> psi
+    }
 }

@@ -1,4 +1,9 @@
 // "Make 'InternalString' public" "true"
+// ACTION: Create test
+// ACTION: Do not show return expression hints
+// ACTION: Enable a trailing comma by default in the formatter
+// ACTION: Introduce import alias
+// ACTION: Make 'InternalString' public
 // ACTION: Make 'User' internal
 // ACTION: Make 'User' private
 

@@ -6,6 +6,40 @@ from ssl import SSLContext
 from types import TracebackType
 from typing import Any, Pattern, Protocol, Sequence, Union, overload
 
+if sys.version_info >= (3, 7):
+    __all__ = [
+        "SMTPException",
+        "SMTPNotSupportedError",
+        "SMTPServerDisconnected",
+        "SMTPResponseException",
+        "SMTPSenderRefused",
+        "SMTPRecipientsRefused",
+        "SMTPDataError",
+        "SMTPConnectError",
+        "SMTPHeloError",
+        "SMTPAuthenticationError",
+        "quoteaddr",
+        "quotedata",
+        "SMTP",
+        "SMTP_SSL",
+    ]
+else:
+    __all__ = [
+        "SMTPException",
+        "SMTPServerDisconnected",
+        "SMTPResponseException",
+        "SMTPSenderRefused",
+        "SMTPRecipientsRefused",
+        "SMTPDataError",
+        "SMTPConnectError",
+        "SMTPHeloError",
+        "SMTPAuthenticationError",
+        "quoteaddr",
+        "quotedata",
+        "SMTP",
+        "SMTP_SSL",
+    ]
+
 _Reply = tuple[int, bytes]
 _SendErrs = dict[str, _Reply]
 # Should match source_address for socket.create_connection

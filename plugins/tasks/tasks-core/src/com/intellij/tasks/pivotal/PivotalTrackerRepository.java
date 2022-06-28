@@ -4,7 +4,6 @@ package com.intellij.tasks.pivotal;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
@@ -33,6 +32,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -175,7 +175,7 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     final String projectId = matcher.group("projectId");
     final String storyId = matcher.group("storyId");
     final HttpPut request = new HttpPut(getRestApiUrl("projects", projectId, "stories", storyId));
-    String payload = ourGson.toJson(ContainerUtil.newHashMap(Pair.create("current_state", state.getId())));
+    String payload = ourGson.toJson(Map.of("current_state", state.getId()));
     request.setEntity(new StringEntity(payload, ContentType.APPLICATION_JSON));
     getHttpClient().execute(request);
   }

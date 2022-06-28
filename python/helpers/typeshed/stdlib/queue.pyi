@@ -5,6 +5,11 @@ from typing import Any, Generic, TypeVar
 if sys.version_info >= (3, 9):
     from types import GenericAlias
 
+if sys.version_info >= (3, 7):
+    __all__ = ["Empty", "Full", "Queue", "PriorityQueue", "LifoQueue", "SimpleQueue"]
+else:
+    __all__ = ["Empty", "Full", "Queue", "PriorityQueue", "LifoQueue"]
+
 _T = TypeVar("_T")
 
 class Empty(Exception): ...

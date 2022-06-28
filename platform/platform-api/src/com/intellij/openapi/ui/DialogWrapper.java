@@ -27,10 +27,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.UIBundle;
-import com.intellij.ui.UiInterceptors;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -42,7 +39,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 
@@ -58,6 +54,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -234,6 +231,10 @@ public abstract class DialogWrapper {
     myCreateSouthSection = createSouth;
     initResizeListener();
     createDefaultActions();
+    if(myPeer.getWindow() != null) {
+      ToolbarUtil.setTransparentTitleBar(myPeer.getWindow(), myPeer.getRootPane(),
+                                         runnable -> Disposer.register(myDisposable, () -> runnable.run()));
+    }
   }
 
   protected final void initResizeListener() {
@@ -573,7 +574,7 @@ public abstract class DialogWrapper {
     return helpButton;
   }
 
-  public static @NotNull JButton createHelpButton(@NotNull Action action) {
+  private static JButton createHelpButton(@NotNull Action action) {
     JButton helpButton = new JButton(action);
     helpButton.putClientProperty("JButton.buttonType", "help");
     helpButton.setText("");
@@ -997,10 +998,8 @@ public abstract class DialogWrapper {
   }
 
   private void processDoNotAskOnCancel() {
-    if (myDoNotAsk != null) {
-      if (myDoNotAsk.shouldSaveOptionsOnCancel() && myDoNotAsk.canBeHidden()) {
-        myDoNotAsk.setToBeShown(toBeShown(), CANCEL_EXIT_CODE);
-      }
+    if (myDoNotAsk != null && myDoNotAsk.shouldSaveOptionsOnCancel() && myDoNotAsk.canBeHidden()) {
+      myDoNotAsk.setToBeShown(toBeShown(), CANCEL_EXIT_CODE);
     }
   }
 
@@ -1047,18 +1046,20 @@ public abstract class DialogWrapper {
    */
   protected void doOKAction() {
     if (getOKAction().isEnabled()) {
-      if (myDialogPanel != null) {
-        myDialogPanel.apply();
-      }
+      applyFields();
       close(OK_EXIT_CODE);
     }
   }
 
+  protected void applyFields() {
+    if (myDialogPanel != null) {
+      myDialogPanel.apply();
+    }
+  }
+
   protected void processDoNotAskOnOk(int exitCode) {
-    if (myDoNotAsk != null) {
-      if (myDoNotAsk.canBeHidden()) {
-        myDoNotAsk.setToBeShown(toBeShown(), exitCode);
-      }
+    if (myDoNotAsk != null && myDoNotAsk.canBeHidden()) {
+      myDoNotAsk.setToBeShown(toBeShown(), exitCode);
     }
   }
 

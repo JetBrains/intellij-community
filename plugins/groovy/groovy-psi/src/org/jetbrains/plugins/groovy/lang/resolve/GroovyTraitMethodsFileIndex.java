@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -21,18 +21,21 @@ import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.stubs.*;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.FileBasedIndex.InputFilter;
-import com.intellij.util.io.ByteSequenceDataExternalizer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC;
@@ -109,7 +112,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
   }
 
   @Nullable
-  private static PsiJavaFileStub index(@NotNull VirtualFile file, byte @NotNull [] content) {
+  public static PsiJavaFileStub index(@NotNull VirtualFile file, byte @NotNull [] content) {
     try {
       PsiJavaFileStub root = new PsiJavaFileStubImpl("", true);
       new ClassReader(content).accept(new GrTraitMethodVisitor(file, root), EMPTY_ATTRIBUTES, ClassReader.SKIP_CODE);
@@ -181,11 +184,10 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
     if (helperFile == null) return Collections.emptyList();
 
-    ByteArraySequence byteSequence = FileBasedIndex.getInstance().getSingleEntryIndexData(INDEX_ID, helperFile, trait.getProject());
+    ByteArraySequence byteSequence = GrTraitUtil.GROOVY_TRAIT_METHODS_GIST.getFileData(trait.getProject(), helperFile);
     if (byteSequence == null) return Collections.emptyList();
 
-    GroovyTraitMethodsFileIndex indexEx = FileBasedIndexExtension.EXTENSION_POINT_NAME.findExtension(GroovyTraitMethodsFileIndex.class);
-    StubTreeSerializer serializer = Objects.requireNonNull(indexEx).myStubTreeSerializer;
+    StubTreeSerializer serializer = new ShareableStubTreeSerializer();
 
     List<PsiMethod> result = new ArrayList<>();
     Stub root;

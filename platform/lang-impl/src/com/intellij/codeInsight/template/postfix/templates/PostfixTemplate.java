@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,27 +19,20 @@ import java.util.Objects;
 
 /**
  * Represents a postfix template. 
- * Postfix template is a live template that is applicable to a specific code fragment, e.g. "sout" template:
- * <br>
+ * Postfix templates are live template that applicable to a specific code fragment e.g. "sout" template:
  * <code>
  * "hello".sout
  * </code>
- * <br>
  * is expanded to:
- * <br>
  * <code>
- * System.out.println("hello");
- * </code>
+ * System.out.println("hello")  
+ * <code/>
+ * <br>
+ * Editable templates:
+ * editable postfix template MUST know the provider that created it.
  * <p>
- * Editable postfix template MUST:
- * <ul>
- * <li>know the provider that created it</li>
- * <li>provide proper {@code equals()}/{@code hashCode()} implementation</li>
- * </ul>
- * Equal postfix templates produced by the very same provider will overwrite each other.
- *
- * @see PostfixTemplateProvider
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/postfix-templates.html">Postfix Templates (IntelliJ Platform Docs)</a>
+ * Editable postfix templates MUST provide proper equals/hashCode implementation.
+ * Equal postfix templates produces by the very same provider will overwrite each other.
  */
 public abstract class PostfixTemplate {
   private final @NotNull @NonNls String myId;
@@ -100,8 +92,9 @@ public abstract class PostfixTemplate {
     return defaultDescription;
   }
 
+
   /**
-   * @return identifier used for saving the settings related to this template
+   * Template's identifier. Used for saving the settings related to this templates.
    */
   @NotNull
   public @NonNls String getId() {
@@ -109,32 +102,25 @@ public abstract class PostfixTemplate {
   }
 
   /**
-   * @return key used for expanding the template in the editor
+   * Template's key. Used while expanding template in editor.
+   *
+   * @return
    */
   @NotNull
   public final @NlsSafe String getKey() {
     return myKey;
   }
 
-  /**
-   * @return template name displayed in UI
-   */
   @NotNull
   public @NlsSafe String getPresentableName() {
     return myPresentableName;
   }
 
-  /**
-   * @return template description displayed in UI
-   */
   @NotNull
   public @NlsContexts.DetailedDescription String getDescription() {
     return myLazyDescription.getValue();
   }
 
-  /**
-   * @return short example of the expanded form shown in the completion popup and templates tree on the configuration page
-   */
   @NotNull
   public @NlsSafe String getExample() {
     return myExample;
@@ -144,53 +130,30 @@ public abstract class PostfixTemplate {
     return true;
   }
 
-  /**
-   * @return {@code true} if general postfix templates setting is enabled and this template is enabled in settings
-   */
   public boolean isEnabled(PostfixTemplateProvider provider) {
     final PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     return settings.isPostfixTemplatesEnabled() && settings.isTemplateEnabled(this, provider);
   }
 
-  /**
-   * Determines whether this template can be used in the given context specified by the parameters.
-   *
-   * @param context      PSI element before the template key
-   * @param copyDocument copy of the document that contains changes introduced
-   *                     in {@link PostfixTemplateProvider#preCheck(PsiFile, Editor, int)} method
-   * @param newOffset    offset before the template key
-   * @return {@code true} if template is applicable in the given context, {@code false} otherwise
-   */
   public abstract boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset);
 
-  /**
-   * Inserts the template content in the given editor.
-   *
-   * @param context PSI element before the template key
-   * @param editor  current editor
-   */
   public abstract void expand(@NotNull PsiElement context, @NotNull Editor editor);
 
-  /**
-   * @return the {@link PostfixTemplateProvider} that provided this template
-   */
   @Nullable
   public PostfixTemplateProvider getProvider() {
     return myProvider;
   }
 
   /**
-   * Built-in templates cannot be removed.
-   * If they are editable, they can be restored to the default state.
+   * Builtin templates cannot be removed.
+   * If they are editable, they can be restored to default.
    */
   public boolean isBuiltin() {
     return true;
   }
 
   /**
-   * Return true if this template can be edited.
-   * <p>
-   * Note that a template can be edited if its provider is not {@code null} and its key starts with {@code .} (dot), e.g., {@code .iter}.
+   * Template can be edit. Template can be editable if its provider is not null and its key starts with . can be edited.
    */
   public boolean isEditable() {
     return true;

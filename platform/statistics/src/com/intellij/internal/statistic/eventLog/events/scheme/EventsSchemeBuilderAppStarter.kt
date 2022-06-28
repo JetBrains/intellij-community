@@ -32,7 +32,7 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
       }
     }
 
-    val groups = EventsSchemeBuilder.buildEventsScheme(pluginId)
+    val groups = EventsSchemeBuilder.buildEventsScheme(null, pluginId)
     val errors = EventSchemeValidator.validateEventScheme(groups)
     if (errors.isNotEmpty()) {
       throw IllegalStateException(errors.joinToString("\n"))
@@ -59,7 +59,7 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
     val text = buildString {
       for (descriptor in PluginManagerCore.getLoadedPlugins()) {
         if (descriptor.isEnabled) {
-          appendLine(descriptor.name)
+          appendLine(descriptor.pluginId.idString)
         }
       }
     }

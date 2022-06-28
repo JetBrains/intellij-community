@@ -6,7 +6,4 @@ internal class TopPackageIdValidationRule : LocalFileCustomValidationRule(
     "top_package_id",
     PackageSearchEventsLogger::class.java,
     "/fus/allowed-packages"
-) {
-
-    override fun acceptRuleId(ruleId: String?) = ruleId == FUSGroupIds.RULE_TOP_PACKAGE_ID
-}
+)

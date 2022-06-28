@@ -2,9 +2,11 @@
 package com.intellij.internal.statistic
 
 import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -13,17 +15,9 @@ import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.ExecutionException
 
 object FUCollectorTestCase {
-  fun collectLogEvents(action: () -> Unit): List<LogEvent> {
-    val oldLogger = FeatureUsageLogger.loggerProvider
-    try {
-      val mockLoggerProvider = TestStatisticsEventLoggerProvider()
-      FeatureUsageLogger.loggerProvider = mockLoggerProvider
-      action()
-      return mockLoggerProvider.getLoggedEvents()
-    }
-    finally {
-      FeatureUsageLogger.loggerProvider = oldLogger
-    }
+  fun collectLogEvents(parentDisposable: Disposable,
+                       action: () -> Unit): List<LogEvent> {
+    return collectLogEvents("FUS", parentDisposable, action)
   }
 
   fun collectProjectStateCollectorEvents(collectorClass: Class<out ProjectUsagesCollector>, project: Project): Set<MetricEvent> {
@@ -46,4 +40,15 @@ object FUCollectorTestCase {
     val method = collectorClass.getMethod("getMetrics")
     return method.invoke(collector) as Set<MetricEvent>
   }
+
+  fun collectLogEvents(recorder: String,
+                       parentDisposable: Disposable,
+                       action: () -> Unit): List<LogEvent> {
+    val mockLoggerProvider = TestStatisticsEventLoggerProvider(recorder)
+    (StatisticsEventLoggerProvider.EP_NAME.point as ExtensionPointImpl<StatisticsEventLoggerProvider>)
+      .maskAll(listOf(mockLoggerProvider), parentDisposable, true)
+    action()
+    return mockLoggerProvider.getLoggedEvents()
+  }
+
 }

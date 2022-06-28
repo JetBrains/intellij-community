@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.generate
 
 import com.intellij.lang.Language
@@ -39,6 +39,26 @@ interface UastCodeGenerationPlugin {
    * Replaces a [UElement] by another [UElement] and automatically shortens the reference, if any.
    */
   fun <T : UElement> replace(oldElement: UElement, newElement: T, elementType: Class<T>): T?
+
+  /**
+   * Changes the reference so that it starts to point to the specified element. This is called,
+   * for example, by the "Create Class from New" quickfix, to bind the (invalid) reference on
+   * which the quickfix was called to the newly created class.
+   *
+   * @param reference the reference to rebind
+   * @param element the element which should become the target of the reference.
+   * @return the new underlying element of the reference.
+   */
+  fun bindToElement(reference: UReferenceExpression, element: PsiElement): PsiElement?
+
+  /**
+   * Replaces fully-qualified class names in the contents of the specified element with
+   * non-qualified names and adds import statements as necessary.
+   *
+   * @param reference the element to shorten references in.
+   * @return the element in the PSI tree after the shorten references operation corresponding to the original element.
+   */
+  fun shortenReference(reference: UReferenceExpression): UReferenceExpression?
 }
 
 /**
@@ -124,6 +144,12 @@ inline fun <reified T : UElement> UElement.replace(newElement: T): T? =
         logger<UastCodeGenerationPlugin>().warn("failed replacing the $this with $newElement")
       }
     }
+
+fun UReferenceExpression.bindToElement(element: PsiElement): PsiElement? =
+  UastCodeGenerationPlugin.byLanguage(this.lang)?.bindToElement(this, element)
+
+fun UReferenceExpression.shortenReference(): UReferenceExpression? =
+  UastCodeGenerationPlugin.byLanguage(this.lang)?.shortenReference(this)
 
 @ApiStatus.Experimental
 inline fun <reified T : UElement> T.refreshed() = sourcePsi?.also {
