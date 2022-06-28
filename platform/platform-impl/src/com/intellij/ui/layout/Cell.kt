@@ -335,6 +335,7 @@ abstract class Cell : BaseBuilder {
     return component(comment = comment).withSelectedBinding(PropertyBinding(getter, setter))
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   open fun radioButton(@RadioButton text: String, prop: KMutableProperty0<Boolean>, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get())
     return component(comment = comment).withSelectedBinding(prop.toBinding())

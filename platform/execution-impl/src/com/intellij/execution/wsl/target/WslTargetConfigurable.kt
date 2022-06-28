@@ -9,7 +9,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
 class WslTargetConfigurable(val config: WslTargetEnvironmentConfiguration,
@@ -22,10 +23,10 @@ class WslTargetConfigurable(val config: WslTargetEnvironmentConfiguration,
     row(label = IdeBundle.message("wsl.linux.distribution.label")) {
       val distribution : WSLDistribution? = project.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
       if (distribution != null) {
-        label(distribution.msId).withBinding(
+        label(distribution.msId).bind(
           { distribution },
           { _, _ -> },
-          PropertyBinding(
+          MutableProperty(
             { config.distribution },
             { config.distribution = distribution }
           )
@@ -33,10 +34,10 @@ class WslTargetConfigurable(val config: WslTargetEnvironmentConfiguration,
       }
       else {
         comboBox = WslDistributionComboBox(null, true)
-        comboBox().withBinding(
+        cell(comboBox).bind(
           { c -> c.selected },
           { c, v -> c.selected = v },
-          PropertyBinding(
+          MutableProperty(
             { config.distribution },
             { config.distribution = it }
           )
