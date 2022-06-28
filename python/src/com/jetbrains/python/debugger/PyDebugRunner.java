@@ -22,10 +22,11 @@ import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,9 +55,12 @@ import org.jetbrains.concurrency.Promises;
 import java.io.File;
 import java.net.ServerSocket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
@@ -563,10 +567,14 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       environmentController.appendTargetPathToPathsValue(PYTHONPATH_ENV_NAME, CYTHON_EXTENSIONS_DIR);
     }
 
-    addProjectRootsToEnv(project, environmentController);
-
     final AbstractPythonRunConfiguration runConfiguration = runProfile instanceof AbstractPythonRunConfiguration ?
                                                             (AbstractPythonRunConfiguration)runProfile : null;
+    final Module module = runConfiguration != null ? runConfiguration.getModule() : null;
+
+    if (module != null) {
+      addProjectRootsToEnv(module, environmentController);
+    }
+
     if (runConfiguration != null) {
       final Sdk sdk = runConfiguration.getSdk();
       if (sdk != null) {
@@ -736,14 +744,18 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     debuggerScript.addParameter(FILE_PARAM);
   }
 
-  private static void addProjectRootsToEnv(@NotNull Project project, @NotNull EnvironmentController environment) {
+  private static void addProjectRootsToEnv(@NotNull Module module, @NotNull EnvironmentController environment) {
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    Stream<VirtualFile> contentRoots = Stream.concat(Arrays.stream(moduleRootManager.getContentRoots()),
+                                                     getDependenciesContentRoots(module));
 
-    List<String> roots = new ArrayList<>();
-    for (VirtualFile contentRoot : ProjectRootManager.getInstance(project).getContentRoots()) {
-      roots.add(contentRoot.getPath());
-    }
+    environment.putTargetPathsValue(IDE_PROJECT_ROOTS, contentRoots.map(contentRoot -> contentRoot.getPath()).collect(Collectors.toList()));
+  }
 
-    environment.putTargetPathsValue(IDE_PROJECT_ROOTS, roots);
+  private static Stream<VirtualFile> getDependenciesContentRoots(Module module) {
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    final Stream<Module> dependencies = Arrays.stream(moduleRootManager.getDependencies());
+    return dependencies.flatMap(d -> Arrays.stream(ModuleRootManager.getInstance(d).getContentRoots()));
   }
 
   private static void addSdkRootsToEnv(@NotNull EnvironmentController environmentController,
