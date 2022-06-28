@@ -35,4 +35,8 @@ public interface ElevationService {
   }
 
   @NotNull Process createProcess(@NotNull ProcessBuilder processBuilder) throws ExecutionException;
+
+  default boolean isAvailable() {
+    return ApplicationManager.getApplication().getService(ElevationServiceAvailability.class).isAvailable();
+  }
 }

@@ -376,6 +376,8 @@
 
     <applicationService serviceInterface="com.intellij.execution.process.ElevationService"
                         serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.process.ElevationServiceAvailability"
+                        serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceAvailabilityImpl"/>
 
     <applicationService serviceInterface="com.intellij.execution.process.OSProcessManager"
                         serviceImplementation="com.intellij.execution.process.impl.OSProcessManagerImpl"/>
