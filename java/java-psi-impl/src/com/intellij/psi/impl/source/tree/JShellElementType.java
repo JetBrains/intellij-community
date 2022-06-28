@@ -16,13 +16,11 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.JShellLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PsiJShellHolderMethodImpl;
 import com.intellij.psi.impl.source.PsiJShellImportHolderImpl;
 import com.intellij.psi.impl.source.PsiJShellRootClassImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,8 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Eugene Zhuravlev
  */
 public interface JShellElementType {
-  IFileElementType FILE = new IFileElementType("JSHELL_FILE", JShellLanguage.INSTANCE);
-
   IElementType ROOT_CLASS = new IJShellElementType("JSHELL_ROOT_CLASS") {
     private final AtomicInteger ourClassCounter = new AtomicInteger();
     @Override
