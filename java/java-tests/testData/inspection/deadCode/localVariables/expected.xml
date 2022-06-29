@@ -99,8 +99,23 @@
   </problem>
   <problem>
     <file>AnonymousClass.java</file>
+    <line>9</line>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+  </problem>
+  <problem>
+    <file>AnonymousClass.java</file>
     <line>10</line>
     <description>Variable &lt;code&gt;i1&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>AnonymousClass.java</file>
+    <line>14</line>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+  </problem>
+  <problem>
+    <file>AnonymousClass.java</file>
+    <line>19</line>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
   </problem>
   <problem>
     <file>AnonymousClass.java</file>

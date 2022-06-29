@@ -284,14 +284,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         }
       }
 
-      UField[] uFields = uClass.getFields();
-      for (UField uField : uFields) {
-        final UExpression initializer = uField.getUastInitializer();
-        if (initializer != null) {
-          refUtil.addReferencesTo(uClass, this, initializer);
-        }
-      }
-
       final RefMethodImpl defaultConstructor = (RefMethodImpl)getDefaultConstructor();
       if (defaultConstructor != null) {
         for (RefClass superClass : getBaseClasses()) {
@@ -308,6 +300,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       UMethod[] uMethods = uClass.getMethods();
       for (UMethod uMethod : uMethods) {
         if (uMethod.getSourcePsi() == classSourcePsi) {
+          // Kotlin implicit constructor
           refUtil.addReferencesTo(uClass, this, uMethod.getUastBody());
         }
       }
