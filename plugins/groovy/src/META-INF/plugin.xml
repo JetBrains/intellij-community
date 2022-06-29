@@ -39,11 +39,6 @@
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
 
-  <projectListeners>
-    <listener class="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroModuleListener"
-              topic="com.intellij.openapi.project.ModuleListener"/>
-  </projectListeners>
-
   <extensionPoints>
     <extensionPoint name="methodComparator" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
     <extensionPoint name="overloadResolver" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.api.GroovyOverloadResolver"/>

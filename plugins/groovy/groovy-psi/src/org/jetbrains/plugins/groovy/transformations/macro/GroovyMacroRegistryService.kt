@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.transformations.macro
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 
 /**
@@ -17,6 +18,7 @@ interface GroovyMacroRegistryService {
 
   fun getAllKnownMacros(context: PsiElement): List<PsiMethod>
 
+  @ApiStatus.Internal
   fun refreshModule(module: Module)
 }
 

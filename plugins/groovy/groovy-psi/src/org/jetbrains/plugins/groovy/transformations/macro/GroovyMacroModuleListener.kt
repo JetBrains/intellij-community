@@ -2,46 +2,29 @@
 package org.jetbrains.plugins.groovy.transformations.macro
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.ModuleListener
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
+import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 
-class GroovyMacroModuleListener : ModuleListener, ModuleRootListener, WorkspaceModelChangeListener {
-
-  override fun moduleAdded(project: Project, module: Module) = project.service<GroovyMacroRegistryService>().refreshModule(module)
-
-  override fun moduleRemoved(project: Project, module: Module) = project.service<GroovyMacroRegistryService>().refreshModule(module)
-
-  override fun rootsChanged(event: ModuleRootEvent) {
-    refreshAllModules(event.project)
-  }
-
-  override fun beforeChanged(event: VersionedStorageChange) {
-    val project = getProject(event) ?: return
-    refreshAllModules(project)
-  }
+class GroovyMacroModuleListener : WorkspaceModelChangeListener {
 
   override fun changed(event: VersionedStorageChange) {
-    val project = getProject(event) ?: return
-    refreshAllModules(project)
-  }
-
-  private fun getProject(event: VersionedStorageChange) : Project? {
-    var project : Project? = null
-    event.storageAfter.moduleMap.forEach { _, bridge -> project = bridge.project}
-    return project
-  }
-
-  private fun refreshAllModules(project: Project) {
-    val service = project.service<GroovyMacroRegistryService>()
-    for (module in ModuleManager.getInstance(project).modules) {
-      service.refreshModule(module)
+    val moduleChanges = event.getChanges(ModuleEntity::class.java)
+    if (moduleChanges.isEmpty()) {
+      return
+    }
+    for (moduleEntity in moduleChanges) {
+      val entitiesToFlush = when (moduleEntity) {
+        is EntityChange.Added -> listOf(moduleEntity.entity)
+        is EntityChange.Removed -> listOf(moduleEntity.entity)
+        is EntityChange.Replaced -> listOf(moduleEntity.oldEntity, moduleEntity.newEntity)
+      }
+      for (entity in entitiesToFlush) {
+        val bridge = event.storageBefore.moduleMap.getDataByEntity(entity) ?: continue
+        bridge.project.service<GroovyMacroRegistryService>().refreshModule(bridge)
+      }
     }
   }
 }
