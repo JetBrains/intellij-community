@@ -27,7 +27,7 @@ class InsertExplicitTypeArgumentsIntention : SelfTargetingRangeIntention<KtCallE
     KotlinBundle.lazyMessage("add.explicit.type.arguments")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtCallExpression): TextRange? =
-        if (isApplicableTo(element, element.safeAnalyzeNonSourceRootCode())) element.calleeExpression?.textRange else null
+        if (isApplicableTo(element)) element.calleeExpression?.textRange else null
 
     override fun applyTo(element: KtCallExpression, editor: Editor?) = applyTo(element)
 
