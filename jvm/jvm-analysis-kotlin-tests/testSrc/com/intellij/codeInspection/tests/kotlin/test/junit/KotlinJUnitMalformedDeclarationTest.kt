@@ -825,7 +825,7 @@ class KotlinJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() 
     """.trimIndent(), """
       class Test {
           companion object {
-              @kotlin.jvm.JvmField
+              @JvmField
               @org.junit.experimental.theories.DataPoint
               val f1: Any? = null
           }
@@ -841,7 +841,7 @@ class KotlinJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() 
     """.trimIndent(), """
       class Test {
           companion object {
-              @kotlin.jvm.JvmField
+              @JvmField
               @org.junit.experimental.theories.DataPoint
               val f1: Any? = null
           }
@@ -981,7 +981,7 @@ class KotlinJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() 
       }
     """.trimIndent(), """
       class PrivateRule {
-        @kotlin.jvm.JvmField
+        @JvmField
         @org.junit.Rule
         var x = 0
       }
@@ -1003,7 +1003,7 @@ class KotlinJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() 
       }
 
       object PrivateClassRule {
-          @kotlin.jvm.JvmField
+          @JvmField
           @org.junit.ClassRule
           var x = SomeTestRule()
       }

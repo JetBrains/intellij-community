@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.inspections.KotlinUniversalQuickFix
 import org.jetbrains.kotlin.idea.util.hasAnnotationWithShortName
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -23,7 +24,9 @@ class MakeFieldPublicFix(element: KtProperty) : KotlinCrossLanguageQuickFixActio
                 property.removeModifier(currentVisibilityModifier.elementType as KtModifierKeywordToken)
             }
             if (!property.hasAnnotationWithShortName(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME.shortName())) {
-                property.addAnnotationEntry(KtPsiFactory(project).createAnnotationEntry("@kotlin.jvm.JvmField"))
+                ShortenReferences.DEFAULT.process(
+                    property.addAnnotationEntry(KtPsiFactory(project).createAnnotationEntry("@kotlin.jvm.JvmField"))
+                )
             }
         }
     }
