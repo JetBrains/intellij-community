@@ -9,14 +9,17 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.UncaughtExceptionsExtension
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.CancellationException
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
+import javax.swing.SwingUtilities
 
 abstract class CancellableReadActionTests {
 
@@ -36,6 +39,11 @@ abstract class CancellableReadActionTests {
     fun init() {
       ProgressIndicatorUtils.cancelActionsToBeCancelledBeforeWrite() // init write action listener
     }
+  }
+
+  @BeforeEach
+  fun clearEventQueue() {
+    SwingUtilities.invokeAndWait(EmptyRunnable.INSTANCE)
   }
 }
 
