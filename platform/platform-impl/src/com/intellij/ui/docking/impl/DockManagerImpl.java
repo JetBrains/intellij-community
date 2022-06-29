@@ -557,8 +557,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       myDockContentUiContainer = new JPanel(new BorderLayout());
       myDockContentUiContainer.setOpaque(false);
 
-      final Window frame = getFrame();
-      if (frame instanceof JFrame && supportDockedToolWindows) {
+      if (!ApplicationManager.getApplication().isUnitTestMode() && getFrame() instanceof JFrame && supportDockedToolWindows) {
         final String paneId = Objects.requireNonNull(getDimensionKey());
 
         final ToolWindowButtonManager buttonManager;
@@ -571,7 +570,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
           buttonManager = new ToolWindowPaneOldButtonManager(paneId);
         }
 
-        myToolWindowPane = new ToolWindowPane((JFrame)frame, this, paneId, buttonManager);
+        myToolWindowPane = new ToolWindowPane((JFrame)getFrame(), this, paneId, buttonManager);
         myToolWindowPane.setDocumentComponent(myContainer.getContainerComponent());
 
         myDockContentUiContainer.add(myToolWindowPane, BorderLayout.CENTER);

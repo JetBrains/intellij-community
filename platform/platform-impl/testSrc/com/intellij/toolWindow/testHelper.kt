@@ -130,6 +130,9 @@ fun testButtonLayout(isNewUi: Boolean, anchor: ToolWindowAnchor) {
 }
 
 private class TestStripeButtonManager(override val id: String, override val windowDescriptor: WindowInfo) : StripeButtonManager {
+  override val toolWindow: ToolWindowImpl
+    get() = TODO("Not implemented")
+
   override fun updateState(toolWindow: ToolWindowImpl) {
     TODO("not implemented")
   }
