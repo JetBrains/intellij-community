@@ -293,7 +293,6 @@ public abstract class UsefulTestCase extends TestCase {
       },
       () -> disposeRootDisposable(),
       () -> cleanupSwingDataStructures(),
-      () -> cleanupDeleteOnExitHookList(),
       () -> Disposer.setDebugMode(true),
       () -> {
         if (myTempDir != null) {
@@ -333,40 +332,6 @@ public abstract class UsefulTestCase extends TestCase {
       }
     }
     return false;
-  }
-
-  private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;
-  private static final Class<?> DELETE_ON_EXIT_HOOK_CLASS;
-  static {
-    Class<?> aClass;
-    try {
-      aClass = Class.forName("java.io.DeleteOnExitHook");
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-    @SuppressWarnings("unchecked") Set<String> files = ReflectionUtil.getStaticFieldValue(aClass, Set.class, "files");
-    DELETE_ON_EXIT_HOOK_CLASS = aClass;
-    DELETE_ON_EXIT_HOOK_DOT_FILES = files;
-  }
-
-  @SuppressWarnings("SynchronizeOnThis")
-  private static void cleanupDeleteOnExitHookList() {
-    // try to reduce the file set retained by java.io.DeleteOnExitHook
-    List<String> list;
-    synchronized (DELETE_ON_EXIT_HOOK_CLASS) {
-      if (DELETE_ON_EXIT_HOOK_DOT_FILES.isEmpty()) return;
-      list = new ArrayList<>(DELETE_ON_EXIT_HOOK_DOT_FILES);
-    }
-    for (int i = list.size() - 1; i >= 0; i--) {
-      String path = list.get(i);
-      File file = new File(path);
-      if (file.delete() || !file.exists()) {
-        synchronized (DELETE_ON_EXIT_HOOK_CLASS) {
-          DELETE_ON_EXIT_HOOK_DOT_FILES.remove(path);
-        }
-      }
-    }
   }
 
   @SuppressWarnings("ConstantConditions")
