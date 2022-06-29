@@ -28,7 +28,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilBase
 import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
@@ -49,7 +49,7 @@ class AddDependencyAction : AnAction(
             val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return@run false
 
             val psiFile: PsiFile? = PsiUtilBase.getPsiFileInEditor(editor, project)
-            if (psiFile == null || ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, psiFile) == null) {
+            if (psiFile == null || CoroutineProjectModuleOperationProvider.forProjectPsiFileOrNull(project, psiFile) == null) {
                 return@run false
             }
 

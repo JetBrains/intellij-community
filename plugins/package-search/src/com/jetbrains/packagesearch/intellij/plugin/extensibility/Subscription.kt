@@ -16,18 +16,13 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+/**
+ * Functional interface used to unsubscribe listeners for [ModuleChangesSignalProvider].
+ */
+fun interface Subscription {
 
-class BuildSystemType @JvmOverloads constructor(
-    val name: String,
-    val language: String,
-    @Suppress("unused")
-    @Deprecated("This property will be removed soon as it is unused.")
-    @ScheduledForRemoval
-    val statisticsKey: String,
-    val dependencyAnalyzerKey: ProjectSystemId? = null
-) {
-
-    companion object
+    /**
+     * Stops the listeners that generated this subscription.
+     */
+    fun unsubscribe()
 }

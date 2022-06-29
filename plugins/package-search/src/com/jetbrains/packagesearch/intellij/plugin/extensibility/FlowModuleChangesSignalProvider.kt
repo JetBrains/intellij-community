@@ -18,30 +18,29 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.jetbrains.packagesearch.intellij.plugin.util.asCoroutine
+import kotlinx.coroutines.flow.Flow
 import kotlin.streams.asSequence
 
 /**
- * Extension point that allows to listen to module changes.
+ * Extension point that allows to listen to module changes using Kotlin [Flow]s.
  */
-interface ModuleChangesSignalProvider {
+interface FlowModuleChangesSignalProvider {
 
     companion object {
 
-        private val extensionPointName: ExtensionPointName<ModuleChangesSignalProvider> =
-            ExtensionPointName.create("com.intellij.packagesearch.moduleChangesSignalProvider")
+        private val extensionPointName: ExtensionPointName<FlowModuleChangesSignalProvider> =
+            ExtensionPointName.create("com.intellij.packagesearch.flowModuleChangesSignalProvider")
 
         internal fun extensions(project: Project) =
             extensionPointName.extensions(project).asSequence()
-                .map { it.asCoroutine().registerModuleChangesListener(project) }
+                .map { it.registerModuleChangesListener(project) }
                 .toList()
                 .toTypedArray()
     }
 
     /**
-     * Register a [listener] that is invoked every time the implemented build systems signals a change
+     * Returns a [Flow]<[Unit]> that emits  every time the build systems has made a change
      * in the module structure.
      */
-    fun registerModuleChangesListener(project: Project, listener: Runnable): Subscription
+    fun registerModuleChangesListener(project: Project): Flow<Unit>
 }
-

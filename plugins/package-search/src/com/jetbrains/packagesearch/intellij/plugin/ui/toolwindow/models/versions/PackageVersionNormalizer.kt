@@ -36,7 +36,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.UiPackageModelCacheKey
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -76,7 +75,7 @@ internal class PackageSearchCachesService : Disposable {
 
     suspend fun clear() = coroutineScope {
         launch { normalizerCache.clear() }
-        launch(Dispatchers.IO) { persistentCacheFile.delete() }
+        launch { persistentCacheFile.delete() }
     }
 }
 
@@ -102,7 +101,7 @@ internal class PackageSearchProjectCachesService(project: Project) {
         launch { searchCache.clear() }
         launch { searchPackageModelCache.clear() }
         launch { installedDependencyCache.clear() }
-        launch(Dispatchers.IO) {
+        launch {
             projectCacheDirectory.delete(true)
             projectCacheDirectory.createDirectories()
         }

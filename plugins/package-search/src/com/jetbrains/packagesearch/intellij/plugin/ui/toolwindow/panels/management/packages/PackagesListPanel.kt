@@ -71,7 +71,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.parallelMapNotNull
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
 import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -392,7 +391,7 @@ internal class PackagesListPanel(
             logTrace("PackagesListPanel main flow") { "Total elaboration took $time" }
             result
         }
-            .flowOn(project.lifecycleScope.dispatcher)
+            .flowOn(project.lifecycleScope.coroutineDispatcher)
             .onEach { (targetModules, headerData, packagesTableViewModel) ->
                 val renderingTime = measureTime {
                     updateListEmptyState(targetModules)

@@ -16,6 +16,14 @@ Supports Maven and Gradle projects.
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider"
                         dynamic="true"/>
 
+        <extensionPoint qualifiedName="com.intellij.packagesearch.coroutineProjectModuleOperationProvider"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider"
+                        dynamic="true"/>
+
+        <extensionPoint qualifiedName="com.intellij.packagesearch.asyncProjectModuleOperationProvider"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.AsyncProjectModuleOperationProvider"
+                        dynamic="true"/>
+
         <extensionPoint qualifiedName="com.intellij.packagesearch.configurableContributor"
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributor"
                         area="IDEA_PROJECT"
@@ -33,6 +41,11 @@ Supports Maven and Gradle projects.
 
         <extensionPoint qualifiedName="com.intellij.packagesearch.moduleTransformer"
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+
+        <extensionPoint qualifiedName="com.intellij.packagesearch.asyncModuleTransformer"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.AsyncModuleTransformer"
                         area="IDEA_PROJECT"
                         dynamic="true"/>
 
@@ -65,6 +78,9 @@ Supports Maven and Gradle projects.
         <projectConfigurable groupId="build" key="packagesearch.configuration.title" bundle="messages.packageSearchBundle"
                              id="preferences.packagesearch.PackageSearchGeneralConfigurable"
                              instance="com.jetbrains.packagesearch.intellij.plugin.configuration.ui.PackageSearchGeneralConfigurable"/>
+
+        <packagesearch.flowModuleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensibility.ExternalProjectSignalProvider"/>
 
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.services.DependencyNavigationService"/>

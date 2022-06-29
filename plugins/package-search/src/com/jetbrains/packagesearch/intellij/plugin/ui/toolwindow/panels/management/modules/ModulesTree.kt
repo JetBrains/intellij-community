@@ -108,7 +108,7 @@ internal class ModulesTree(
                 }
                 null
             }
-            .flowOn(project.lifecycleScope.dispatcher)
+            .flowOn(project.lifecycleScope.coroutineDispatcher)
             .onEach { selectionModel.selectionPath = it }
             .flowOn(Dispatchers.EDT)
             .launchIn(project.lifecycleScope)

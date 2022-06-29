@@ -21,24 +21,15 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.util.asCoroutine
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import java.util.concurrent.CompletableFuture
 import kotlin.streams.asSequence
 
-/**
- * Extension point used to register [Module]s transformations to [ProjectModule]s.
- */
-@Deprecated(
-    "Use the async version instead",
-    ReplaceWith("AsyncModuleTransformer"),
-    DeprecationLevel.WARNING
-)
-@ScheduledForRemoval
-interface ModuleTransformer {
+interface AsyncModuleTransformer {
 
     companion object {
 
-        private val extensionPointName: ExtensionPointName<ModuleTransformer> =
-            ExtensionPointName.create("com.intellij.packagesearch.moduleTransformer")
+        private val extensionPointName: ExtensionPointName<AsyncModuleTransformer> =
+          ExtensionPointName.create("com.intellij.packagesearch.asyncModuleTransformer")
 
         internal fun extensions(areaInstance: AreaInstance) =
             extensionPointName.extensions(areaInstance).asSequence().map { it.asCoroutine() }.toList()
@@ -58,7 +49,5 @@ interface ModuleTransformer {
      * @param nativeModules The native [Module]s that will be transformed.
      * @return [ProjectModule]s wrapping [nativeModules] or an empty list.
      */
-    fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule>
+    fun transformModules(project: Project, nativeModules: List<Module>): CompletableFuture<List<ProjectModule>>
 }
-
-

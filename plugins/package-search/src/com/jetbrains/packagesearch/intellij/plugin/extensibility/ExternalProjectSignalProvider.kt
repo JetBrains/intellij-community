@@ -16,18 +16,15 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
+import com.intellij.openapi.project.Project
+import com.jetbrains.packagesearch.intellij.plugin.util.messageBusFlow
+import kotlinx.coroutines.flow.Flow
 
-class BuildSystemType @JvmOverloads constructor(
-    val name: String,
-    val language: String,
-    @Suppress("unused")
-    @Deprecated("This property will be removed soon as it is unused.")
-    @ScheduledForRemoval
-    val statisticsKey: String,
-    val dependencyAnalyzerKey: ProjectSystemId? = null
-) {
+class ExternalProjectSignalProvider : FlowModuleChangesSignalProvider {
 
-    companion object
+    override fun registerModuleChangesListener(project: Project): Flow<Unit> =
+        project.messageBusFlow(ProjectDataImportListener.TOPIC) {
+            ProjectDataImportListener { trySend(Unit) }
+        }
 }
