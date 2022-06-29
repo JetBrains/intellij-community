@@ -123,7 +123,9 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
         if (myRecursively && shouldProcessDependenciesRecursively()) {
           JpsModule depModule = ((JpsModuleDependency)element).getModule();
           if (depModule != null) {
-            doProcessDependencies(depModule, processor, processed);
+            if (!doProcessDependencies(depModule, processor, processed)) {
+              return false;
+            }
             continue;
           }
         }
