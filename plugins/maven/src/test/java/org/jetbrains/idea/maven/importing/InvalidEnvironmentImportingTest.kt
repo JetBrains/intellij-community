@@ -1,19 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LoggedErrorProcessor
 import junit.framework.TestCase
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
+import java.util.*
 
 class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   private lateinit var myTestSyncViewManager: SyncViewManager
@@ -83,14 +84,9 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun loggedErrorProcessor(search: String) = object : LoggedErrorProcessor() {
-    override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
-      if (message != null && message.contains(search)) {
-        return false
-      }
-      return true
-    }
+    override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =
+      if (message.contains(search)) EnumSet.noneOf(Action::class.java) else EnumSet.allOf(Action::class.java)
   }
-
 
   private fun assertEvent(description: String = "Asserted", predicate: (BuildEvent) -> Boolean) {
     if (myEvents.isEmpty()) {
@@ -102,10 +98,6 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
     fail("Message \"${description}\" was not found. Known messages:\n" +
          myEvents.joinToString("\n") { "${it}" })
-  }
-
-  private fun assertErrorEvent(message: String) {
-
   }
 
   private fun createAndImportProject() {

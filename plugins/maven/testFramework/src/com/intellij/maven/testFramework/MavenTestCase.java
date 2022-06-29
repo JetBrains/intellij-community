@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenServerConnector;
@@ -152,15 +153,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
-        if (StringUtil.notNullize(t.getMessage()).contains("The network name cannot be found") &&
-            StringUtil.notNullize(message).contains("Couldn't read shelf information")) {
-          return false;
-        }
-        if ("JDK annotations not found".equals(t.getMessage()) && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl".equals(category)) {
-          return false;
-        }
-        return super.processError(category, message, t, details);
+      public Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
+        boolean intercept = t != null && (
+          StringUtil.notNullize(t.getMessage()).contains("The network name cannot be found") && message.contains("Couldn't read shelf information") ||
+          "JDK annotations not found".equals(t.getMessage()) && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl".equals(category));
+        return intercept ? EnumSet.noneOf(Action.class) : EnumSet.allOf(Action.class);
       }
     }, () -> super.runBare(testRunnable));
   }

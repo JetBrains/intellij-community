@@ -1,10 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class LoggedErrorProcessor {
@@ -14,21 +17,17 @@ public class LoggedErrorProcessor {
     return ourInstance;
   }
 
-  private static void setNewInstance(@NotNull LoggedErrorProcessor newInstance) {
-    ourInstance = newInstance;
-  }
-
   /**
-   * Set the new {@link LoggedErrorProcessor} {@code newInstance}, execute {@code runnable} with it and restore the old processor afterwards
+   * Sets the processor to {@code newInstance}, executes {@code runnable} with it, and restores the old processor afterwards.
    */
   public static <T extends Throwable> void executeWith(@NotNull LoggedErrorProcessor newInstance, @NotNull ThrowableRunnable<T> runnable) throws T {
     LoggedErrorProcessor oldInstance = getInstance();
-    setNewInstance(newInstance);
+    ourInstance = newInstance;
     try {
       runnable.run();
     }
     finally  {
-      setNewInstance(oldInstance);
+      ourInstance = oldInstance;
     }
   }
 
@@ -53,21 +52,27 @@ public class LoggedErrorProcessor {
   }
 
   /**
-   * Should return {@code true} when the message should be logged by {@link TestLogger} as usual,
+   * Should return {@code true} when the message should be logged by {@link TestLoggerFactory.TestLogger} as usual,
    * or {@code false} to signal that the message is "intercepted" and should be ignored.
    *
-   * @see TestLogger#warn
+   * @see TestLoggerFactory.TestLogger#warn(String, Throwable)
    */
   public boolean processWarn(@NotNull String category, String message, Throwable t) {
     return true;
   }
 
+  public enum Action {LOG, STDERR, RETHROW}
+
   /**
-   * Should return {@code true} when the message should be logged by {@link TestLogger} as usual,
-   * or {@code false} to signal that the message is "intercepted" and should be ignored.
-   *
-   * @see TestLogger#warn
+   * Returns a set of actions to be performed by {@link TestLoggerFactory.TestLogger#error(String, Throwable, String...)} on the given log event.
    */
+  public Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
+    var process = processError(category, message, t, details);
+    return process ? EnumSet.allOf(Action.class) : EnumSet.noneOf(Action.class);
+  }
+
+  /** @deprecated use/override {@link #processError(String, String, String[], Throwable)} instead */
+  @Deprecated(forRemoval = true)
   public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
     return true;
   }

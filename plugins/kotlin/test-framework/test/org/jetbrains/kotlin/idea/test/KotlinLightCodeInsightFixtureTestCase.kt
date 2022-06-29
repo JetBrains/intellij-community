@@ -116,9 +116,9 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
         if (captureExceptions) {
             LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
-                override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+                override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
                     exceptions.addIfNotNull(t)
-                    return super.processError(category, message, t, details)
+                    return super.processError(category, message, details, t)
                 }
             }) {
                 super.runBare(testRunnable)
