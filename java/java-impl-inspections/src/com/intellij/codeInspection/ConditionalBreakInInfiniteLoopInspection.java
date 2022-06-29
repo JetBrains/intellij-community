@@ -6,8 +6,10 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,16 +139,18 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
                        ((PsiContinueStatement)e).findContinuedStatement() == loopStatement)) {
         return null;
       }
-      boolean variablesInLoop = VariableAccessUtils.collectUsedVariables(lastBreakCondition).stream()
-        .anyMatch(variable -> PsiTreeUtil.isAncestor(loopStatement, variable, false));
-      if (last == null || variablesInLoop) return null;
+      boolean variablesInLoop =
+        ContainerUtil.exists(VariableAccessUtils.collectUsedVariables(lastBreakCondition),
+                             variable -> PsiTreeUtil.isAncestor(loopStatement, variable, false));
+      if (variablesInLoop) return null;
       return new Context(loopStatement, body, lastBreakCondition, last, false, isBreakInThen[0]);
     }
 
+    @Contract("null, _, _ -> null")
     @Nullable
     private static PsiExpression extractBreakCondition(@Nullable PsiIfStatement ifStatement,
                                                        @NotNull PsiLoopStatement loopStatement,
-                                                       @NotNull boolean[] isBreakInThen) {
+                                                       boolean @NotNull [] isBreakInThen) {
       if (ifStatement == null) return null;
       if (ControlFlowUtils.statementBreaksLoop(ControlFlowUtils.stripBraces(ifStatement.getThenBranch()), loopStatement)) {
         if (hasVariableNameConflict(loopStatement, ifStatement, ifStatement.getElseBranch())) return null;
@@ -194,7 +198,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
       String loopText;
       if (ControlFlowUtils.isEndlessLoop(loop)) {
         String conditionForWhile = context.myConditionInThen ? BoolUtils.getNegatedExpressionText(context.myCondition, ct) : ct.text(context.myCondition);
-        pullDownStatements(context.myConditionStatement, loop, context.myConditionInThen ? context.myConditionStatement.getElseBranch() : context.myConditionStatement.getThenBranch());
+        pullDownStatements(context.myConditionStatement, context.myConditionInThen ? context.myConditionStatement.getElseBranch() : context.myConditionStatement.getThenBranch());
         ct.delete(context.myConditionStatement);
         loopText = context.myConditionInTheBeginning
                    ? "while(" + conditionForWhile + ")" + ct.text(context.myLoopBody)
@@ -210,7 +214,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
       ct.replaceAndRestoreComments(context.myLoopStatement, loopText);
     }
 
-    private void pullDownStatements(@NotNull PsiIfStatement conditionStatement, @NotNull PsiConditionalLoopStatement loop, @Nullable PsiStatement branch) {
+    private static void pullDownStatements(@NotNull PsiIfStatement conditionStatement, @Nullable PsiStatement branch) {
       if (branch != null) {
         PsiElement parent = conditionStatement.getParent();
         PsiStatement[] branchStatements = ControlFlowUtils.unwrapBlock(branch);
