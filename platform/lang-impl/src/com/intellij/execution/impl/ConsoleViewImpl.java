@@ -793,6 +793,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     editor.getFoldingModel().runBatchFoldingOperation(() -> ((FoldingModelEx)editor.getFoldingModel()).clearFoldRegions());
+    editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength()).forEach(inlay -> Disposer.dispose(inlay));
 
     cancelHeavyAlarm();
   }
