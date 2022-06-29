@@ -198,7 +198,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  public void fireBuildReferences(RefElement refElement) {
+  private void fireBuildReferences(RefElement refElement) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onReferencesBuild(refElement);
     }
@@ -427,9 +427,12 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void buildReferences(RefElement element) {
+    if (element.areReferencesBuilt()) return;
+    ((RefElementImpl)element).setReferencesBuilt(true);
     executeTask(() -> {
       element.initializeIfNeeded();
       element.buildReferences();
+      fireBuildReferences(element);
     });
   }
 

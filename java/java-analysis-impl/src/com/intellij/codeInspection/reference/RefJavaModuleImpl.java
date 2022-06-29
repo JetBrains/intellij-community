@@ -207,8 +207,6 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
       buildExportsReferences(javaModule);
       buildProvidesReferences(javaModule);
       buildUsesReferences(javaModule);
-
-      getRefManager().fireBuildReferences(this);
     }
   }
 

@@ -21,9 +21,7 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   }
 
   @Override
-  public void buildReferences() {
-    getRefManager().fireBuildReferences(this);
-  }
+  public void buildReferences() {}
 
   @Override
   public boolean isSuspicious() {
