@@ -4,16 +4,20 @@ package com.intellij.openapi.progress.impl
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.Deferred
 import java.awt.Component
 import java.awt.Window
 
 internal class ComponentModalTaskOwner(val component: Component) : ModalTaskOwner
 
+internal class WindowModalTaskOwner(val window: Deferred<Window>) : ModalTaskOwner
+
 internal class ProjectModalTaskOwner(val project: Project) : ModalTaskOwner
 
-internal fun ownerWindow(owner: ModalTaskOwner): Window? {
+internal suspend fun ownerWindow(owner: ModalTaskOwner): Window? {
   return when (owner) {
     is ComponentModalTaskOwner -> ProgressWindow.calcParentWindow(owner.component, null)
+    is WindowModalTaskOwner -> owner.window.await()
     is ProjectModalTaskOwner -> ProgressWindow.calcParentWindow(null, owner.project)
     else -> ProgressWindow.calcParentWindow(null, null) // guess
   }
