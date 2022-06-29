@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
@@ -46,7 +47,7 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
     val manager = containingFile.manager
 
     for (extension in extensions) {
-      val delegateType = factory.createTypeFromText(extension.rootTypeFqn, place)
+      val delegateType = createType(factory, extension.rootTypeFqn, place.resolveScope)
       if (delegateType !is PsiClassType) {
         continue
       }
@@ -74,5 +75,32 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
   private fun shouldAddConfiguration(extension: GradleExtensionsSettings.GradleExtension, context: PsiElement): Boolean {
     val clazz = JavaPsiFacade.getInstance(context.project).findClass(extension.rootTypeFqn, context.resolveScope) ?: return true
     return !InheritanceUtil.isInheritor(clazz, "org.gradle.api.internal.catalog.AbstractExternalDependencyFactory")
+  }
+
+  private fun createType(factory: PsiElementFactory, generifiedFqnClassName: String, resolveScope: GlobalSearchScope) : PsiType {
+    val className = generifiedFqnClassName.substringBefore('<')
+    val hostClassType = factory.createTypeByFQClassName(className, resolveScope)
+    val hostClass = hostClassType.resolve() ?: return hostClassType
+    val parameters = mutableListOf<String>()
+    val builder = StringBuilder()
+    var parameterStack = 0
+    for (char in generifiedFqnClassName.substringAfter('<')) {
+      if (char == '<') {
+        parameterStack += 1
+      } else if (char == '>') {
+        parameterStack -= 1
+      } else if (char == ',') {
+        if (parameterStack == 0) {
+          parameters.add(builder.toString())
+          builder.clear()
+        } else {
+          builder.append(char)
+        }
+      } else {
+        builder.append(char)
+      }
+    }
+    val parsedParameters = parameters.map { createType(factory, it, resolveScope) }
+    return factory.createType(hostClass, *parsedParameters.toTypedArray())
   }
 }
