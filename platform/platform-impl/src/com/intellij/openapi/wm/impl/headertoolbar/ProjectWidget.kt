@@ -60,7 +60,7 @@ private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget)
   private var file: VirtualFile? by Delegates.observable(null) { _, _, _ -> updateText() }
   private var settings: UISettings by Delegates.observable(UISettings.getInstance()) { _, _, _ -> updateText() }
 
-  private val swingExecutor: Executor = Executor { run -> SwingUtilities.invokeLater(run) }
+  private val swingExecutor: Executor = Executor(SwingUtilities::invokeLater)
 
   init {
     file = FileEditorManager.getInstance(proj).selectedFiles.firstOrNull()
@@ -177,7 +177,7 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
       val content = panel {
         customizeSpacingConfiguration(EmptySpacingConfiguration()) {
           row {
-            icon(recentProjectsManager.getProjectIcon(projectPath, true))
+            icon(RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true))
               .verticalAlign(VerticalAlign.TOP)
               .customize(JBGaps(right = 8))
 

@@ -1,7 +1,5 @@
-/*******************************************************************************
- * Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
- ******************************************************************************/
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 
 package com.intellij.ide
 
@@ -100,8 +98,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   }
 
   private val modCounter = AtomicLong()
-  private val projectIconHelper by lazy { RecentProjectIconHelper() }
-  private val namesToResolve: MutableSet<String> = HashSet(MAX_PROJECTS_IN_MAIN_MENU)
+  private val projectIconHelper by lazy(::RecentProjectIconHelper)
+  private val namesToResolve = HashSet<String>(MAX_PROJECTS_IN_MAIN_MENU)
 
   private val nameCache: MutableMap<String, String> = Collections.synchronizedMap(HashMap())
 
@@ -114,7 +112,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       namesToResolve.clear()
     }
     for (p in paths) {
-      nameCache[p] = readProjectName(p)
+      nameCache.put(p, readProjectName(p))
     }
   }
 
@@ -359,9 +357,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     state.lastOpenedProject = path
   }
 
-  fun getLastOpenedProject(): String? {
-    return state.lastOpenedProject
-  }
+  fun getLastOpenedProject() = state.lastOpenedProject
 
   init {
     Toolkit.getDefaultToolkit().addAWTEventListener(

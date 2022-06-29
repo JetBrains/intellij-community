@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.components.BaseState
@@ -17,7 +17,7 @@ class RecentProjectMetaInfo : BaseState() {
   @get:Attribute
   var displayName by string()
 
-  // to set frame title as earlier as possible
+  // to set frame title as early as possible
   @get:Attribute
   var frameTitle by string()
 
