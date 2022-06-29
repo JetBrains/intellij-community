@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" version="2" url="http://kotlinlang.org" allow-bundled-update="true">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" version="2" url="https://kotlinlang.org" allow-bundled-update="true">
   <id>org.jetbrains.kotlin</id>
 
   <name>Kotlin FIR</name>
@@ -11,8 +11,11 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
 <a href="http://slack.kotlinlang.org/">Public Slack</a><br>
 <a href="https://youtrack.jetbrains.com/issues/KT">Issue tracker</a><br>
 ]]></description>
+  <!--suppress PluginXmlValidity -->
   <version>999-SNAPSHOT</version>
-  <vendor url="http://www.jetbrains.com">JetBrains</vendor>
+
+  <!--suppress PluginXmlValidity -->
+  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
 
   <depends>com.intellij.modules.platform</depends>
 
