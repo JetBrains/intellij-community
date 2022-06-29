@@ -13,7 +13,7 @@ class SimpleInstaller : IdeInstallator {
   override fun install(ideInfo: IdeInfo): Pair<String, InstalledIde> {
     val installersDirectory = (di.direct.instance<GlobalPaths>().installersDirectory / ideInfo.productCode).createDirectories()
     //Download
-    val ideInstaller = di.direct.instance<IDEResolver>().resolveIDE(ideInfo, installersDirectory)
+    val ideInstaller = di.direct.instance<IdeDownloader>().downloadIdeInstaller(ideInfo, installersDirectory)
     val installDir = di.direct.instance<GlobalPaths>().getCacheDirectoryFor("builds") / "${ideInfo.productCode}-${ideInstaller.buildNumber}"
     //Unpack
     IdeArchiveExtractor.unpackIdeIfNeeded(ideInstaller.installerFile.toFile(), installDir.toFile())

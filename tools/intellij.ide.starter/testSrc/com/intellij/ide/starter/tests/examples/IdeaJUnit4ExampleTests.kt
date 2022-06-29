@@ -2,8 +2,8 @@ package com.intellij.ide.starter.tests.examples
 
 import com.intellij.ide.starter.ide.command.CommandChain
 import com.intellij.ide.starter.tests.examples.data.TestCases
+import com.intellij.ide.starter.tests.examples.junit4.hyphenateWithClass
 import com.intellij.ide.starter.tests.examples.junit4.initStarterRule
-import com.intellij.ide.starter.tests.examples.junit4.toPrintableWithClass
 import com.jetbrains.performancePlugin.commands.chain.exitApp
 import org.junit.Rule
 import org.junit.Test
@@ -19,8 +19,9 @@ class IdeaJUnit4ExampleTests {
   @Test
   fun openProjectExampleTest() {
     val context = testContextFactory
-      .initializeTestRunner(testName.toPrintableWithClass(this::class), TestCases.IC.GradleJitPackSimple)
+      .initializeTestRunner(testName.hyphenateWithClass(this::class), TestCases.IC.GradleJitPackSimple)
       .prepareProjectCleanImport()
+      .skipIndicesInitialization()
       .setSharedIndexesDownload(enable = true)
 
     context.runIDE(

@@ -1,33 +1,17 @@
 package com.intellij.ide.starter.models
 
+import com.intellij.ide.starter.community.model.BuildType
 import com.intellij.ide.starter.system.SystemInfo
 
 data class IdeInfo(
   val productCode: String,
   val platformPrefix: String,
   val executableFileName: String,
-  val buildType: String,
-  val buildNumber: String,
+  val buildType: String = BuildType.EAP.type,
+  val buildNumber: String = "",
   val tag: String? = null
 ) {
-  companion object {
-    fun new(
-      productCode: String,
-      platformPrefix: String,
-      executableFileName: String,
-      jetBrainsCIBuildType: String? = null,
-      buildNumber: String = ""
-    ): IdeInfo {
-      return IdeInfo(
-        productCode = productCode,
-        platformPrefix = platformPrefix,
-        executableFileName = executableFileName,
-        buildNumber = buildNumber,
-        buildType = if (!jetBrainsCIBuildType.isNullOrBlank()) jetBrainsCIBuildType else ""
-      )
-    }
-
-  }
+  companion object
 
   val installerFilePrefix
     get() = when (productCode) {

@@ -4,7 +4,6 @@ import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.*
 import com.intellij.ide.starter.models.IdeInfo
-import com.intellij.ide.starter.models.IdeProduct
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.path.IDEDataPaths
@@ -79,7 +78,7 @@ interface TestContainer<T> : Closeable {
     val context = IDETestContext(paths, ide, testCase, testName, projectHome, patchVMOptions = { this }, ciServer = ciServer)
     allContexts += context
 
-    val baseContext = when (testCase.ideInfo == IdeProduct.AI.ideInfo) {
+    val baseContext = when (testCase.ideInfo == IdeProductProvider.AI) {
       true -> context
         .addVMOptionsPatch {
           overrideDirectories(paths)

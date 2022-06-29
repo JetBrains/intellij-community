@@ -1,11 +1,11 @@
 package com.intellij.ide.starter.tests.examples.data
 
 import com.intellij.ide.starter.data.TestCaseTemplate
-import com.intellij.ide.starter.models.IdeProduct
+import com.intellij.ide.starter.ide.IdeProductProvider
 import com.intellij.ide.starter.project.ProjectInfo
 import kotlin.io.path.div
 
-object IdeaCommunityCases : TestCaseTemplate(IdeProduct.IC) {
+object IdeaCommunityCases : TestCaseTemplate(IdeProductProvider.IC) {
 
   val GradleJitPackSimple = getTemplate().withProject(
     ProjectInfo(
