@@ -2,6 +2,7 @@
   <id>org.jetbrains.kotlin</id>
 
   <name>Kotlin FIR</name>
+  <category>Languages</category>
   <description><![CDATA[
 The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Studio.
 <br>
