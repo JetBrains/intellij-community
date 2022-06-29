@@ -26,7 +26,7 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
-import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.startup.InitProjectActivityJavaShim;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,7 +70,7 @@ public final class PsiVFSListener implements BulkFileListener {
     myFileManager = (FileManagerImpl)myManager.getFileManager();
   }
 
-  static final class MyStartUpActivity implements StartupActivity {
+  static final class MyStartUpActivity extends InitProjectActivityJavaShim {
     @Override
     public void runActivity(@NotNull Project project) {
       MessageBusConnection connection = project.getMessageBus().connect();

@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ ******************************************************************************/
 package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
 import com.intellij.diagnostic.opentelemetry.TraceManager
 import com.intellij.diagnostic.telemetry.useWithScope
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
@@ -161,10 +162,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   @OptIn(DelicateCoroutinesApi::class)
   suspend fun projectOpened(indicator: ProgressIndicator?) {
     val app = ApplicationManager.getApplication()
-    if (indicator != null && app.isInternal) {
-      indicator.text = IdeBundle.message("startup.indicator.text.running.startup.activities")
-    }
-
     // see https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity
     LOG.assertTrue(!isStartupActivitiesPassed)
     runActivity("project startup") {
@@ -173,8 +170,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         isStartupActivitiesPassed = true
       }
     }
-
-    indicator?.checkCanceled()
 
     // opened on startup
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)

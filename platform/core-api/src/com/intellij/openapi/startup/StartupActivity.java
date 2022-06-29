@@ -12,13 +12,12 @@ import org.jetbrains.annotations.NotNull;
  * on a background thread with no visible progress indicator. Otherwise, it is executed on EDT when indexes are ready.
  * </p>
  * <p>
- * See <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity">docs</a> for details.
+ * See <a href="https://youtrack.jetbrains.com/articles/IDEA-A-219/Startup-Activity#Post-Startup-Activity">docs</a> for details.
  *
  * @see StartupManager
  * @see com.intellij.ide.util.RunOnceUtil
  */
 public interface StartupActivity {
-
   ExtensionPointName<StartupActivity> POST_STARTUP_ACTIVITY = new ExtensionPointName<>("com.intellij.postStartupActivity");
 
   void runActivity(@NotNull Project project);

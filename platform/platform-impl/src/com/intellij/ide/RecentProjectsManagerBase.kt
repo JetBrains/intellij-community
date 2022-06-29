@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ ******************************************************************************/
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide
@@ -70,7 +72,6 @@ import javax.imageio.ImageIO
 import javax.imageio.ImageTypeSpecifier
 import javax.imageio.stream.MemoryCacheImageOutputStream
 import javax.swing.Icon
-import javax.swing.JComponent
 import javax.swing.JFrame
 import kotlin.collections.Map.Entry
 import kotlin.collections.component1
@@ -885,7 +886,7 @@ private class OldRecentDirectoryProjectsManager : PersistentStateComponent<Recen
 }
 
 private open class MyProjectUiFrameManager(val frame: IdeFrameImpl, override val frameHelper: ProjectFrameHelper) : ProjectUiFrameManager {
-  override fun getComponent(): JComponent = frame.rootPane
+  override fun getWindow() = frame
 
   override suspend fun init(allocator: ProjectUiFrameAllocator) {
     // this class is used for pre-initialized frames

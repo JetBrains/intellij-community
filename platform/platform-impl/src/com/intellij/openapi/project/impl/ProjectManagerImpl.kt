@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ ******************************************************************************/
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.project.impl
@@ -68,9 +70,7 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
@@ -151,6 +151,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       override fun projectOpened(project: Project) {
         for (listener in getAllListeners(project)) {
           try {
+            @Suppress("DEPRECATION")
             listener.projectOpened(project)
           }
           catch (e: Exception) {
@@ -586,25 +587,31 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
            return@run null
          }
 
-         frameAllocator.projectLoaded(project)
-         try {
-           val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
-           val indicator = ProgressManager.getInstance().progressIndicator
-           if (indicator != null) {
-             indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..."  // NON-NLS (internal mode)
-             else ProjectBundle.message("project.preparing.workspace")
-             indicator.isIndeterminate = true
+         coroutineScope {
+           launch {
+             frameAllocator.projectLoaded(project)
            }
 
-           tracer.spanBuilder("open project")
-             .setAttribute(AttributeKey.stringKey("project"), project.name)
-             .useWithScope {
-               doOpenProject(project, indicator, isRunStartUpActivitiesEnabled(project), waitEdtActivity)
+           try {
+             val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
+             val indicator = ProgressManager.getInstance().progressIndicator
+             if (indicator != null) {
+               indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..."  // NON-NLS (internal mode)
+               else ProjectBundle.message("project.preparing.workspace")
+               indicator.isIndeterminate = true
              }
-         }
-         catch (e: ProcessCanceledException) {
-           handleProjectOpenCancelOrFailure(project)
-           return@run null
+
+             tracer.spanBuilder("open project")
+               .setAttribute(AttributeKey.stringKey("project"), project.name)
+               .useWithScope {
+                 doOpenProject(project, indicator, isRunStartUpActivitiesEnabled(project), waitEdtActivity)
+               }
+           }
+           catch (e: ProcessCanceledException) {
+             // todo check cancellation
+             handleProjectOpenCancelOrFailure(project)
+             throw CancellationException("PCE", e)
+           }
          }
 
          result
@@ -962,6 +969,7 @@ private fun openProjectSync(project: Project, indicator: ProgressIndicator?, run
     val activity = StartUpMeasurer.startActivity("project opened callbacks")
 
     runActivity("projectOpened event executing") {
+      @Suppress("DEPRECATION")
       ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
     }
 
@@ -1000,6 +1008,7 @@ private suspend fun doOpenProject(project: Project,
 
     runActivity("projectOpened event executing") {
       tracer.spanBuilder("execute projectOpened handlers").setParent(traceContext).useWithScope {
+        @Suppress("DEPRECATION")
         ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
       }
     }
@@ -1012,6 +1021,11 @@ private suspend fun doOpenProject(project: Project,
   ProjectImpl.ourClassesAreLoaded = true
 
   if (runStartUpActivities) {
+    val app = ApplicationManager.getApplication()
+    if (indicator != null && app.isInternal) {
+      indicator.text = IdeBundle.message("startup.indicator.text.running.startup.activities")
+    }
+
     tracer.spanBuilder("StartupManager.projectOpened").useWithScope {
       (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
     }
