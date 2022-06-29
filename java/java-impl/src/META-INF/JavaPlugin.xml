@@ -533,6 +533,9 @@
                     key="rmi.compiler.description" bundle="messages.JavaCompilerBundle"/>
     </projectConfigurable>
 
+    <projectConfigurable provider="com.intellij.compiler.cache.ui.CompilerCacheConfigurableProvider" id="reference.projectsettings.compiler.compilercache"
+                         key="compiler.cache.description" bundle="messages.JavaCompilerBundle" parentId="project.propCompiler"/>
+
     <actionOnSaveInfoProvider id="BuildOnSaveInfoProvider"
                               implementation="com.intellij.compiler.options.BuildOnSaveInfo$BuildOnSaveInfoProvider"
                               order="after FormatOnSaveInfoProvider, after EsLintOnSaveInfoProvider, after PrettierOnSaveInfoProvider, after FileWatcherOnSaveInfoProvider, after UploadOnSaveInfoProvider"/>

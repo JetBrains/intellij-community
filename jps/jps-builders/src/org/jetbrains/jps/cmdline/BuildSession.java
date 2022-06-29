@@ -44,7 +44,6 @@ import java.util.*;
 import java.util.concurrent.Executor;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
-import static org.jetbrains.jps.incremental.storage.ProjectStamps.FORCE_DOWNLOAD_PORTABLE_CACHES;
 
 /**
 * @author Eugene Zhuravlev
@@ -170,10 +169,15 @@ final class BuildSession implements Runnable, CanceledStatus {
 
       myCacheLoadManager = null;
       if (ProjectStamps.PORTABLE_CACHES && myCacheDownloadSettings != null) {
-        LOG.info("Trying to download JPS caches before build");
-        myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.loadModelAndGetJpsProject(), this, myProjectPath, myChannel,
-                                                        mySessionId, myCacheDownloadSettings);
-        myCacheLoadManager.load(myBuildRunner, true, myScopes);
+        LOG.info("Cache download settings: disableDownload=" + myCacheDownloadSettings.getDisableDownload() + "; forceUpdate=" + myCacheDownloadSettings.getForceDownload());
+        if (myCacheDownloadSettings.getDisableDownload()) {
+          LOG.info("Cache download is disabled");
+        } else {
+          LOG.info("Trying to download JPS caches before build");
+          myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.loadModelAndGetJpsProject(), this, myProjectPath, myChannel,
+                                                          mySessionId, myCacheDownloadSettings);
+          myCacheLoadManager.load(myBuildRunner, true, myScopes);
+        }
       }
 
       runBuild(new MessageHandler() {
@@ -345,7 +349,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
       }
       myProjectDescriptor = pd;
-      if (myCacheLoadManager != null && !FORCE_DOWNLOAD_PORTABLE_CACHES) myCacheLoadManager.updateBuildStatistic(myProjectDescriptor);
+      if (myCacheLoadManager != null) myCacheLoadManager.updateBuildStatistic(myProjectDescriptor);
 
       myLastEventOrdinal = myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L;
 

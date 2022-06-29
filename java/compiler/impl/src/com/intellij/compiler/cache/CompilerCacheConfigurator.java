@@ -6,7 +6,6 @@ import com.intellij.compiler.cache.client.CompilerCacheServerAuthUtil;
 import com.intellij.compiler.cache.client.CompilerCachesServerClient;
 import com.intellij.compiler.cache.git.GitCommitsIterator;
 import com.intellij.compiler.cache.git.GitRepositoryUtil;
-import com.intellij.compiler.cache.statistic.CompilerCacheLoadingStats;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -39,8 +38,11 @@ public class CompilerCacheConfigurator {
     builder.setDownloadCommit(commit.first);
     builder.setCommitsCountLatestBuild(commit.second);
     builder.putAllAuthHeaders(authHeaders);
-    builder.setDecompressionSpeed(CompilerCacheLoadingStats.getApproximateDecompressionSpeed());
-    builder.setDeletionSpeed(CompilerCacheLoadingStats.getApproximateDeletionSpeed());
+    builder.setDecompressionSpeed(CompilerCacheLoadingSettings.getApproximateDecompressionSpeed());
+    builder.setDeletionSpeed(CompilerCacheLoadingSettings.getApproximateDeletionSpeed());
+    builder.setForceDownload(CompilerCacheLoadingSettings.getForceUpdateValue());
+    builder.setDisableDownload(CompilerCacheLoadingSettings.getDisableUpdateValue());
+    builder.setMaxDownloadDuration(CompilerCacheLoadingSettings.getMaxDownloadDuration());
     return builder.build();
   }
 
