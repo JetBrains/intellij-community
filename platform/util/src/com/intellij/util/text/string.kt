@@ -25,3 +25,14 @@ fun String.findTextRange(substring: String): TextRange? {
   if (start == -1) return null
   return TextRange.from(start, substring.length)
 }
+
+fun String.allOccurrencesOf(substring: String): Sequence<Int> = sequence {
+  val text = this@allOccurrencesOf
+  var lastPos = 0
+  while (true) {
+    val ind = text.indexOf(substring, lastPos)
+    if (ind == -1) return@sequence
+    lastPos = ind + substring.length
+    yield(ind)
+  }
+}
