@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.modify
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.runChangeSignature
 import org.jetbrains.kotlin.idea.refactoring.explicateAsTextForReceiver
 import org.jetbrains.kotlin.idea.refactoring.getThisLabelName
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getThisReceiverOwner
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class UnusedReceiverParameterInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -183,6 +185,13 @@ fun isUsageOfDescriptor(descriptor: DeclarationDescriptor, element: KtElement, c
     }
 
     if (element !is KtExpression) return false
+
+    if (element is KtClassLiteralExpression) {
+        val typeParameter = element.receiverExpression?.mainReference?.resolve() as? KtTypeParameter
+        val typeParameterDescriptor = context[BindingContext.TYPE_PARAMETER, typeParameter]
+        if (descriptor.safeAs<CallableDescriptor>()?.typeParameters?.any { it == typeParameterDescriptor } == true) return true
+    }
+
     return when (element) {
         is KtDestructuringDeclarationEntry -> {
             listOf { context[BindingContext.COMPONENT_RESOLVED_CALL, element] }
