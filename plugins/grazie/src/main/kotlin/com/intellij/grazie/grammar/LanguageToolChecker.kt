@@ -130,7 +130,8 @@ open class LanguageToolChecker : TextChecker() {
     private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
     private val interner = Interner.createWeakInterner<String>()
     private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
-    private val openClosedRegexp = Regex("[\\[(].+(\\.\\.|:|,).+[])]")
+    private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,).+[])]")
+    private val openClosedRangeEnd = Regex(".*" + openClosedRangeStart.pattern)
 
     internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRule> {
       return tool.allRules.asSequence()
@@ -174,10 +175,11 @@ open class LanguageToolChecker : TextChecker() {
     }
 
     // https://github.com/languagetool-org/languagetool/issues/6566
+    @OptIn(ExperimentalStdlibApi::class)
     private fun couldBeOpenClosedRange(text: TextContent, index: Int): Boolean {
       val unpaired = text[index]
-      return "([".contains(unpaired) && openClosedRegexp.find(text, index)?.range?.start == index ||
-             ")]".contains(unpaired) && openClosedRegexp.findAll(text.subSequence(0, index + 1)).any { it.range.last == index }
+      return "([".contains(unpaired) && openClosedRangeStart.matchesAt(text, index) ||
+             ")]".contains(unpaired) && openClosedRangeEnd.matches(text.subSequence(0, index + 1))
     }
 
     // https://github.com/languagetool-org/languagetool/issues/5230
