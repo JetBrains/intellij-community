@@ -1819,7 +1819,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
     if (ExperimentalUI.isNewUI()) {
       if (width == 0) return 0;
-      return (int)Math.max(FREE_PAINTERS_RIGHT_AREA_WIDTH.get(), scale(JBUI.getInt("Gutter.VcsChanges.width", 3)) + JBUI.scale(6));
+      return (int)Math.max(FREE_PAINTERS_RIGHT_AREA_WIDTH.get(), scale(JBUI.getInt("Gutter.VcsChanges.width", 4)) + JBUI.scale(5));
     }
     return width;
   }

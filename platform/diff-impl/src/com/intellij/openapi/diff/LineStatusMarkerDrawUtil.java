@@ -198,7 +198,7 @@ public class LineStatusMarkerDrawUtil {
     int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
     if (ExperimentalUI.isNewUI()) {
       x += 2; //IDEA-286352
-      return new IntPair(x, x + (int)(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 3) * getEditorScale(editor))));
+      return new IntPair(x, x + (int)(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4) * getEditorScale(editor))));
     }
     int endX = gutter.getWhitespaceSeparatorOffset();
     return new IntPair(x, endX);
