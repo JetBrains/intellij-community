@@ -2,6 +2,7 @@
   <id>org.jetbrains.kotlin</id>
 
   <name>Kotlin</name>
+  <category>Languages</category>
   <description><![CDATA[
 The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
 The plugin supports Kotlin 1.7 and lower.
