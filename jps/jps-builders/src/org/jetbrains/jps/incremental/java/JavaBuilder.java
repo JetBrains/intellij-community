@@ -464,7 +464,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       if (moduleInfoFile != null) { // has modules
         final ModulePathSplitter splitter = MODULE_PATH_SPLITTER.get(context);
         final Pair<ModulePath, Collection<File>> pair = splitter.splitPath(
-          moduleInfoFile, outs.keySet(), ProjectPaths.getCompilationModulePath(chunk, false)
+          moduleInfoFile, outs.keySet(), ProjectPaths.getCompilationModulePath(chunk, false), collectAdditionalRequires(options)
         );
         final boolean useModulePathOnly = Boolean.parseBoolean(System.getProperty(USE_MODULE_PATH_ONLY_OPTION))/*compilerConfig.useModulePathOnly()*/;
         if (useModulePathOnly) {
@@ -529,6 +529,35 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     finally {
       counter.waitFor();
     }
+  }
+
+  @NotNull
+  private static Set<String> collectAdditionalRequires(Iterable<String> options) {
+    // --add-reads module=other-module(,other-module)*
+    // The option specifies additional modules to be considered as required by a given module.
+    final Set<String> result = new SmartHashSet<>();
+    for (Iterator<String> it = options.iterator(); it.hasNext(); ) {
+      final String option = it.next();
+      if ("--add-reads".equalsIgnoreCase(option) && it.hasNext()) {
+        final String val = it.next();
+        int begin = val.indexOf('=');
+        if (begin > 0) {
+          begin++;
+          while (begin < val.length()) {
+            final int end = val.indexOf(',', begin);
+            if (end > begin) {
+              result.add(val.substring(begin, end));
+              begin = end + 1;
+            }
+            else {
+              result.add(val.substring(begin));
+              break;
+            }
+          }
+        }
+      }
+    }
+    return result;
   }
 
   private static void logJavacCall(ModuleChunk chunk, Iterable<String> options, final String mode) {
