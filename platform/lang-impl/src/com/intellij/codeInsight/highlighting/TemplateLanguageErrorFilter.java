@@ -44,6 +44,13 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     this(templateExpressionEdgeTokens, templateFileViewProviderClass, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
+  protected TemplateLanguageErrorFilter(
+    @NotNull NotNullLazyValue<TokenSet> templateExpressionEdgeTokens,
+    @NotNull Class<?> templateFileViewProviderClass)
+  {
+    this(templateExpressionEdgeTokens, templateFileViewProviderClass, ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
   protected TemplateLanguageErrorFilter(@NotNull TokenSet templateExpressionEdgeTokens,
                                         @NotNull Class<?> templateFileViewProviderClass,
                                         String @NotNull ... knownSubLanguageNames) {
