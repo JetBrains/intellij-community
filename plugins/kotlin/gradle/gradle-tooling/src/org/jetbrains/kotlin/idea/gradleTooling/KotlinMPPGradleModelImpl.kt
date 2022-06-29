@@ -289,7 +289,6 @@ data class KotlinNativeMainRunTaskImpl(
 data class ExtraFeaturesImpl(
     override val coroutinesState: String?,
     override val isHMPPEnabled: Boolean,
-    override val isNativeDependencyPropagationEnabled: Boolean
 ) : ExtraFeatures
 
 data class KotlinMPPGradleModelImpl(
@@ -314,7 +313,6 @@ data class KotlinMPPGradleModelImpl(
         extraFeatures = ExtraFeaturesImpl(
             mppModel.extraFeatures.coroutinesState,
             mppModel.extraFeatures.isHMPPEnabled,
-            mppModel.extraFeatures.isNativeDependencyPropagationEnabled
         ),
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
