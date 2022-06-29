@@ -2,7 +2,6 @@
 package com.intellij.java.ift.lesson.essential
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
-import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
@@ -15,11 +14,9 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.java.ift.JavaProjectUtil
-import com.intellij.java.ift.lesson.run.highlightRunGutters
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
@@ -376,30 +373,6 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   }
 
   private fun LessonContext.runTasks() {
-    task {
-      highlightRunGutters(2, highlightInside = true, usePulsation = true)
-    }
-
-    val runItem = ExecutionBundle.message("default.runner.start.action.text").dropMnemonic() + " '$demoConfigurationName.main()'"
-
-    task {
-      text(JavaLessonsBundle.message("java.onboarding.context.menu"))
-      triggerAndFullHighlight().component { ui: ActionMenuItem ->
-        ui.text == runItem
-      }
-      restoreIfModified(sample)
-    }
-
-    task {
-      text(JavaLessonsBundle.message("java.onboarding.run.sample", strong(runItem), action("RunClass")))
-      checkToolWindowState("Run", true)
-      timerCheck {
-        configurations().isNotEmpty()
-      }
-      restoreIfModified(sample)
-      rehighlightPreviousUi = true
-    }
-
     highlightRunToolbar()
 
     task {
@@ -408,7 +381,8 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
                                      icon(AllIcons.Actions.StartDebugger),
                                      icon(AllIcons.Actions.Profile),
                                      icon(AllIcons.General.RunWithCoverage)))
-      proceedLink()
+      text(JavaLessonsBundle.message("java.onboarding.run.sample", icon(AllIcons.Actions.Execute), action("Run")))
+      checkToolWindowState("Run", true)
       restoreIfModified(sample)
     }
   }
