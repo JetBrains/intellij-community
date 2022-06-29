@@ -8,7 +8,7 @@ import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.projectStructure.tooling.IdePlatformKindTooling
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.js.KotlinJSRunConfigurationData
 import org.jetbrains.kotlin.idea.js.KotlinJSRunConfigurationDataProvider

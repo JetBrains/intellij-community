@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.core.platform.impl
 
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import org.jetbrains.kotlin.idea.base.projectStructure.tooling.IdePlatformKindTooling
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.platform.getGenericTestIcon

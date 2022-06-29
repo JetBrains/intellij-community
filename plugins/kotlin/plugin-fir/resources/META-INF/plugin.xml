@@ -91,7 +91,7 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
 
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.JvmIdePlatformKindTooling"/>
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.JsIdePlatformKindTooling"/>
-    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.projectStructure.tooling.CommonIdePlatformKindTooling"/>
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.codeInsight.tooling.CommonIdePlatformKindTooling"/>
 
   </extensions>
 

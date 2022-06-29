@@ -22,7 +22,7 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
-import org.jetbrains.kotlin.idea.base.projectStructure.tooling.tooling
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator

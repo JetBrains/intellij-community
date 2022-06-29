@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.base.facet.externalSystemNativeMainRunTasks
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
-import org.jetbrains.kotlin.idea.base.projectStructure.tooling.IdePlatformKindTooling
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.isMainFunction
 import org.jetbrains.kotlin.idea.platform.isKotlinTestDeclaration
