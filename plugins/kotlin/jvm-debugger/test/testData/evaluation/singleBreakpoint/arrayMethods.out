@@ -4,7 +4,7 @@ Connected to the target VM
 arrayMethods.kt:5
 Compile bytecode for args.toString().length > 0
 Compile bytecode for args.hashCode() and 0
-Compile bytecode for args.clone()
+Compile bytecode for args.cloneMock()
 Disconnected from the target VM
 
 Process finished with exit code 0
