@@ -302,7 +302,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
         Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
         //noinspection UseDPIAwareBorders
-        ((SelectablePanel)myComponent).setBorder(new EmptyBorder(0, innerInsets.left + leftRightInset, 0, leftRightInset));
+        myComponent.setBorder(new EmptyBorder(0, innerInsets.left + leftRightInset, 0, leftRightInset));
       }
     }
 
