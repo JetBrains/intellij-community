@@ -456,7 +456,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       PsiTypeCastExpression castExpression = (PsiTypeCastExpression)element;
       if(isSoleParameter(parameters, castExpression.getOperand())) {
         PsiTypeElement type = castExpression.getCastType();
-        if (type != null) {
+        if (type != null && !PsiUtilCore.hasErrorElementChild(type)) {
           return type.getText() + ".class::cast";
         }
       }
