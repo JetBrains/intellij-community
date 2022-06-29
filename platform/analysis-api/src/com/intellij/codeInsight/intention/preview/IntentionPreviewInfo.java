@@ -57,6 +57,16 @@ public interface IntentionPreviewInfo {
   };
 
   /**
+   * Changes in the file copy should be displayed as intention preview, without trimming any whitespaces
+   */
+  IntentionPreviewInfo DIFF_NO_TRIM = new IntentionPreviewInfo() {
+    @Override
+    public String toString() {
+      return "DIFF_NO_TRIM";
+    }
+  };
+
+  /**
    * Diff preview where old text and new text are explicitly displayed.
    * Could be used to generate fake diff previews (e.g. when changes are to be applied to another file)
    */

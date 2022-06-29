@@ -114,13 +114,16 @@ internal class IntentionPreviewComputable(private val project: Project,
       }
       ProgressManager.checkCanceled()
       return when (result) {
-        IntentionPreviewInfo.DIFF -> {
+        IntentionPreviewInfo.DIFF,
+        IntentionPreviewInfo.DIFF_NO_TRIM -> {
           PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(psiFileCopy.viewProvider)
+          val policy = if (result == IntentionPreviewInfo.DIFF) ComparisonPolicy.TRIM_WHITESPACES else ComparisonPolicy.DEFAULT
           IntentionPreviewDiffResult(
             psiFile = psiFileCopy,
             origFile = origFile,
-            lineFragments = ComparisonManager.getInstance()
-              .compareLines(origFile.text, editorCopy.document.text, ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE))
+            policy = policy,
+            lineFragments = ComparisonManager.getInstance().compareLines(origFile.text, editorCopy.document.text, policy,
+                                                                         DumbProgressIndicator.INSTANCE))
         }
         IntentionPreviewInfo.EMPTY -> null
         is IntentionPreviewInfo.CustomDiff -> {
@@ -130,7 +133,8 @@ internal class IntentionPreviewComputable(private val project: Project,
             ComparisonManager.getInstance()
               .compareLines(result.originalText(), result.modifiedText(),
                             ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE),
-            fakeDiff = false)
+            fakeDiff = false,
+            policy = ComparisonPolicy.TRIM_WHITESPACES)
         }
         else -> result
       }
@@ -182,4 +186,5 @@ private fun findCopyIntention(project: Project,
 internal data class IntentionPreviewDiffResult(val psiFile: PsiFile,
                                                val origFile: PsiFile,
                                                val lineFragments: List<LineFragment>,
-                                               val fakeDiff: Boolean = true): IntentionPreviewInfo
+                                               val fakeDiff: Boolean = true,
+                                               val policy: ComparisonPolicy): IntentionPreviewInfo

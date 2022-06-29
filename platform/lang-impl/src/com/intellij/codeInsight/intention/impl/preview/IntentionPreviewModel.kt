@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.diff.comparison.ComparisonManager
-import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.fragments.LineFragmentImpl
 import com.intellij.openapi.diff.DiffColors
@@ -59,8 +58,8 @@ internal class IntentionPreviewModel {
 
       val fileText = psiFileCopy.text
       val origText = result.origFile.text
-      val diff = squash(ComparisonManager.getInstance().compareLines(origText, fileText,
-                                                                     ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE))
+      val diff = squash(ComparisonManager.getInstance().compareLines(
+        origText, fileText, result.policy, DumbProgressIndicator.INSTANCE))
       var diffs = diff.mapNotNull { fragment ->
         val start = getOffset(fileText, fragment.startLine2)
         val end = getOffset(fileText, fragment.endLine2)
