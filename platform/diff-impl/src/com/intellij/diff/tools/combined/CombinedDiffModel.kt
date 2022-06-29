@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -153,9 +154,13 @@ open class CombinedDiffModelImpl(protected val project: Project,
 
   override fun unloadRequestContents(blockIds: Collection<CombinedBlockId>) {
     val unloadedRequests = mutableMapOf<CombinedBlockId, DiffRequest>()
+    val loadedRequestsLimit = Registry.intValue("combined.diff.loaded.content.limit")
+
     for (blockId in blockIds) {
-      val unloadedRequest = loadedRequests.remove(blockId) ?: continue
-      unloadedRequests[blockId] = unloadedRequest
+      if (loadedRequestsLimit < 0 || loadedRequestsLimit < loadedRequests.size) {
+        val unloadedRequest = loadedRequests.remove(blockId) ?: continue
+        unloadedRequests[blockId] = unloadedRequest
+      }
     }
     if (unloadedRequests.isNotEmpty()) {
       modelListeners.multicaster.onRequestContentsUnloaded(unloadedRequests)
