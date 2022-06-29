@@ -17,16 +17,24 @@ class IdeaJUnit4ExampleTests {
   val testContextFactory = initStarterRule()
 
   @Test
-  fun openProjectExampleTest() {
+  fun `open gradle project on the latest EAP IJ Community`() {
     val context = testContextFactory
       .initializeTestRunner(testName.hyphenateWithClass(this::class), TestCases.IC.GradleJitPackSimple)
       .prepareProjectCleanImport()
       .skipIndicesInitialization()
       .setSharedIndexesDownload(enable = true)
 
-    context.runIDE(
-      commands = CommandChain()
-        .exitApp()
-    )
+    context.runIDE(commands = CommandChain().exitApp())
+  }
+
+  @Test
+  fun `open gradle project on the latest Release IJ Community`() {
+    val context = testContextFactory
+      .initializeTestRunner(testName.hyphenateWithClass(this::class), TestCases.IC.GradleJitPackSimple.useRelease())
+      .prepareProjectCleanImport()
+      .skipIndicesInitialization()
+      .setSharedIndexesDownload(enable = true)
+
+    context.runIDE(commands = CommandChain().exitApp())
   }
 }
