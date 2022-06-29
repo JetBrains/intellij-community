@@ -13,13 +13,14 @@ sealed class KotlinTryExpressionSurrounder : KotlinControlFlowExpressionSurround
     class TryCatch : KotlinTryExpressionSurrounder() {
         @NlsSafe
         override fun getTemplateDescription() = "try { expr } catch {}"
-        override fun getPattern() = "try { $0 } catch (e: Exception) {}"
+        override fun getPattern() = "try { $0 } catch (e: Exception) { TODO(\"Not yet implemented\") }"
     }
 
     class TryCatchFinally : KotlinTryExpressionSurrounder() {
         @NlsSafe
         override fun getTemplateDescription() = "try { expr } catch {} finally {}"
-        override fun getPattern() = "try { $0 } catch (e: Exception) {} finally {}"
+        override fun getPattern() = "try { $0 } catch (e: Exception) { TODO(\"Not yet implemented\") } finally {}"
+
     }
 
     override fun getRange(editor: Editor, replaced: KtExpression): TextRange? {
