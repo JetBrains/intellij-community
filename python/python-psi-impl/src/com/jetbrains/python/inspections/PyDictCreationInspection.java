@@ -71,7 +71,7 @@ public class PyDictCreationInspection extends PyInspection {
           if (!targets.isEmpty()) {
             registerProblem(node,
                             PyPsiBundle.message("INSP.dict.creation.this.dictionary.creation.could.be.rewritten.as.dictionary.literal"),
-                            new DictCreationQuickFix(node));
+                            new DictCreationQuickFix());
             break;
           }
           statement = PsiTreeUtil.getNextSiblingOfType(assignmentStatement, PyStatement.class);
