@@ -1116,6 +1116,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/idea/kotlin.idea.iml" filepath="$PROJECT_DIR$/plugins/kotlin/idea/kotlin.idea.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/idea/tests/kotlin.idea.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/idea/tests/kotlin.idea.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/injection/kotlin.injection.iml" filepath="$PROJECT_DIR$/plugins/kotlin/injection/kotlin.injection.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/inspections-fe10/kotlin.inspections-fe10.iml" filepath="$PROJECT_DIR$/plugins/kotlin/inspections-fe10/kotlin.inspections-fe10.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/idea/kotlin.j2k.idea.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/idea/kotlin.j2k.idea.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/new/kotlin.j2k.new.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/new/kotlin.j2k.new.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/new/tests/kotlin.j2k.new.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/new/tests/kotlin.j2k.new.tests.iml" />
@@ -1144,6 +1145,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/performance-tests/performance-test-utils/kotlin.performance-tests.performance-test-utils.iml" filepath="$PROJECT_DIR$/plugins/kotlin/performance-tests/performance-test-utils/kotlin.performance-tests.performance-test-utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin/kotlin.plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin/kotlin.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin-fir/kotlin.plugin-fir.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin-fir/kotlin.plugin-fir.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin-updater/kotlin.plugin-updater.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin-updater/kotlin.plugin-updater.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/preferences/kotlin.preferences.iml" filepath="$PROJECT_DIR$/plugins/kotlin/preferences/kotlin.preferences.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-configuration/kotlin.project-configuration.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-configuration/kotlin.project-configuration.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-tests/project-tests-base/kotlin.project-tests.project-tests-base.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-tests/project-tests-base/kotlin.project-tests.project-tests-base.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-tests/project-tests-fe10/kotlin.project-tests.project-tests-fe10.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-tests/project-tests-fe10/kotlin.project-tests.project-tests-fe10.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-tests/project-tests-fir/kotlin.project-tests.project-tests-fir.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-tests/project-tests-fir/kotlin.project-tests.project-tests-fir.iml" />

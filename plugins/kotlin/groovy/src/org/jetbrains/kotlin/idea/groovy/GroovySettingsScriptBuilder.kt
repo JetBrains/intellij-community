@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.groovy
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.configuration.toGroovyRepositorySnippet
-import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
 import org.jetbrains.kotlin.idea.extensions.gradle.SettingsScriptBuilder
+import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 

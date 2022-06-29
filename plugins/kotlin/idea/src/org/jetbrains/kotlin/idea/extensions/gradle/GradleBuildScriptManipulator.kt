@@ -12,14 +12,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.base.util.module
-
-data class RepositoryDescription(
-    val id: String,
-    val name: String,
-    val url: String,
-    val bintrayUrl: String?,
-    val isSnapshot: Boolean
-)
+import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 
 val SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS = setOf("classpath", "compile", "api", "implementation", "compileOnly", "runtimeOnly")
 

@@ -16,7 +16,7 @@
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.newFileHook"
-            interface="org.jetbrains.kotlin.idea.actions.NewKotlinFileHook" 
+            interface="org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.facetValidatorCreator"
@@ -58,7 +58,6 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner" preload="true"/>
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.KotlinTypingListenerService" preload="true"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.KotlinPluginDisposable"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.util.ProjectJob"/>
@@ -109,6 +108,7 @@
     <projectPathMacroContributor implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"/>
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$MyStartupActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledRefresher"/>
 
@@ -351,6 +351,7 @@
     <notificationGroup
             id="Kotlin plugin updates"
             displayType="STICKY_BALLOON"
+            bundle="messages.KotlinPluginUpdaterBundle"
             key="plugin.updater.notification.group"
     />
     <notificationGroup
@@ -367,6 +368,7 @@
             id="Kotlin EAP"
             displayType="STICKY_BALLOON"
             key="kotlin.eap.notification.group.name"
+            bundle="messages.KotlinPluginUpdaterBundle"
     />
     <notificationGroup
             id="Update Kotlin code style"

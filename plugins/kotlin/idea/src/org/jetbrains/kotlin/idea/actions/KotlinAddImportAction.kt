@@ -30,16 +30,16 @@ import org.jetbrains.kotlin.idea.completion.KotlinStatisticsInfo
 import org.jetbrains.kotlin.idea.completion.isDeprecatedAtCallSite
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
-import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
+import org.jetbrains.kotlin.idea.util.application.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.isOneSegmentFQN
 import org.jetbrains.kotlin.name.parentOrNull
@@ -273,13 +273,12 @@ class KotlinAddImportAction internal constructor(
                             }
                         }
 
-                        importableFqName?.let {
-                            underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread(project, KotlinBundle.message("add.import.for.0", it.asString())) {
-                                element.mainReference.bindToFqName(
-                                    it,
-                                    KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
-                                )
-                            }
+                        if (importableFqName != null) {
+                            underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread(
+                                project,
+                                progressTitle = KotlinBundle.message("add.import.for.0", importableFqName.asString()),
+                                computable = { element.mainReference.bindToFqName(importableFqName, ShorteningMode.FORCED_SHORTENING) }
+                            )
                         }
                     }
                 } else {

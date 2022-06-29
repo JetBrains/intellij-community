@@ -2,10 +2,9 @@
 
 package org.jetbrains.kotlin.idea
 
+import com.intellij.util.text.VersionComparatorUtil
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.versions.isRuntimeOutdated
 import org.junit.Assert
-
 
 class KotlinRuntimeLibraryUtilTest : TestCase() {
 
@@ -50,5 +49,9 @@ class KotlinRuntimeLibraryUtilTest : TestCase() {
             isRuntimeOutdated(library, bundledRuntime)
         )
     }
+}
 
+private fun isRuntimeOutdated(libraryVersion: String?, runtimeVersion: String): Boolean {
+    return libraryVersion == null || libraryVersion.startsWith("internal-") != runtimeVersion.startsWith("internal-") ||
+            VersionComparatorUtil.compare(runtimeVersion.substringBefore("-release-"), libraryVersion) > 0
 }

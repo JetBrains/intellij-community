@@ -29,17 +29,18 @@ import org.jetbrains.kotlin.config.KotlinFacetSettings;
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider;
 import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetectorUtils;
-import org.jetbrains.kotlin.idea.base.platforms.JsStdlibDetectionUtil;
+import org.jetbrains.kotlin.idea.base.indices.JavaIndicesUtils;
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility;
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind;
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider;
 import org.jetbrains.kotlin.idea.base.projectStructure.LanguageVersionSettingsProviderUtils;
+import org.jetbrains.kotlin.idea.base.psi.JavaPsiUtils;
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.idea.facet.FacetUtilsKt;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
 import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector;
-import org.jetbrains.kotlin.idea.util.Java9StructureUtilKt;
 import org.jetbrains.kotlin.platform.TargetPlatform;
 import org.jetbrains.kotlin.platform.js.JsPlatforms;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms;
@@ -166,13 +167,13 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
 
     public void testJsLibraryVersion11() {
         Library jsRuntime = getFirstLibrary(myProject);
-        IdeKotlinVersion version = JsStdlibDetectionUtil.INSTANCE.getJavaScriptLibraryStdVersion(jsRuntime, myProject);
+        IdeKotlinVersion version = KotlinJavaScriptStdlibDetectorFacility.INSTANCE.getStdlibVersion(myProject, jsRuntime);
         assertEquals(new KotlinVersion(1, 1, 0), version.getKotlinVersion());
     }
 
     public void testJsLibraryVersion106() {
         Library jsRuntime = getFirstLibrary(myProject);
-        IdeKotlinVersion version = JsStdlibDetectionUtil.INSTANCE.getJavaScriptLibraryStdVersion(jsRuntime, myProject);
+        IdeKotlinVersion version = KotlinJavaScriptStdlibDetectorFacility.INSTANCE.getStdlibVersion(myProject, jsRuntime);
         assertEquals(new KotlinVersion(1, 0, 6), version.getKotlinVersion());
     }
 
@@ -321,11 +322,10 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         Sdk moduleSdk = ModuleRootManager.getInstance(getModule()).getSdk();
         assertNotNull("Module SDK is not defined", moduleSdk);
 
-        PsiJavaModule javaModule = Java9StructureUtilKt.findFirstPsiJavaModule(module);
+        PsiJavaModule javaModule = JavaIndicesUtils.findModuleInfoFile(myProject, module.getModuleScope());
         assertNotNull(javaModule);
 
-        PsiRequiresStatement stdlibDirective =
-                Java9StructureUtilKt.findRequireDirective(javaModule, JavaModuleKt.KOTLIN_STDLIB_MODULE_NAME);
+        PsiRequiresStatement stdlibDirective = JavaPsiUtils.findRequireDirective(javaModule, JavaModuleKt.KOTLIN_STDLIB_MODULE_NAME);
         assertNotNull("Require directive for " + JavaModuleKt.KOTLIN_STDLIB_MODULE_NAME + " is expected",
                       stdlibDirective);
 

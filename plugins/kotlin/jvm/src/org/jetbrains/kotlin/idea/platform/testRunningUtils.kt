@@ -12,16 +12,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.isFrameworkAvailable
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.util.string.joinWithEscape
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.platform.IdePlatformKind
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.has
-import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
-import org.jetbrains.kotlin.platform.js.JsPlatform
-import org.jetbrains.kotlin.platform.jvm.JvmPlatform
-import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -96,14 +86,4 @@ fun DeclarationDescriptor.isKotlinTestDeclaration(): Boolean {
 
     val classDescriptor = this as? ClassDescriptorWithResolutionScopes ?: return false
     return classDescriptor.declaredCallableMembers.any { it.isKotlinTestDeclaration() }
-}
-
-internal fun IdePlatformKind.isCompatibleWith(platform: TargetPlatform): Boolean {
-    return when (this) {
-        is JvmIdePlatformKind -> platform.has(JvmPlatform::class)
-        is NativeIdePlatformKind -> platform.has(NativePlatform::class)
-        is JsIdePlatformKind -> platform.has(JsPlatform::class)
-        is CommonIdePlatformKind -> true
-        else -> false
-    }
 }

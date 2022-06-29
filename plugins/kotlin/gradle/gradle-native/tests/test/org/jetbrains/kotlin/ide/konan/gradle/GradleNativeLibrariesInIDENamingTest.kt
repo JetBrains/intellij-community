@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VfsUtilCore.urlToPath
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
-import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
+import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.konan.library.konanCommonLibraryPath
 import org.jetbrains.kotlin.konan.library.konanPlatformLibraryPath
@@ -74,9 +74,8 @@ private fun assertValidModule(module: Module, projectRoot: String) {
         assertFalse("No Kotlin/Native libraries in $module", nativeLibraries.isEmpty())
         nativeLibraries.forEach { assertValidNativeLibrary(it, projectRoot) }
 
-        val kotlinVersion = requireNotNull(module.externalCompilerVersion) {
-            "External compiler version should not be null"
-        }
+        val kotlinVersion = ExternalCompilerVersionProvider.get(module)?.rawVersion
+            ?: error("External compiler version should not be null")
 
         val expectedNativeLibraryNames = when {
             module.name.contains("linux", ignoreCase = true) -> NATIVE_LINUX_LIBRARIES

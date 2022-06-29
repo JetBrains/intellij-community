@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook
 import org.jetbrains.kotlin.psi.KtFile
 
 open class NewKotlinScriptAction(

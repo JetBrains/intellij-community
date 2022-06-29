@@ -82,7 +82,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class Generic extends KotlinTemplateContextType {
         public Generic() {
-            super("KOTLIN", KotlinBundle.message("configuration.name.kotlin"), EverywhereContextType.class);
+            super("KOTLIN", KotlinBundle.message("template.context.type.generic"), EverywhereContextType.class);
         }
 
         @Override
@@ -98,7 +98,7 @@ public abstract class KotlinTemplateContextType extends TemplateContextType {
 
     public static class TopLevel extends KotlinTemplateContextType {
         public TopLevel() {
-            super("KOTLIN_TOPLEVEL", KotlinBundle.message("top.level"), Generic.class);
+            super("KOTLIN_TOPLEVEL", KotlinBundle.message("template.context.type.top.level"), Generic.class);
         }
 
         @Override

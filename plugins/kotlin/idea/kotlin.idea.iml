@@ -54,6 +54,10 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.highlighting" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
     <orderEntry type="module" module-name="kotlin.core" />
+    <orderEntry type="module" module-name="kotlin.preferences" />
+    <orderEntry type="module" module-name="kotlin.plugin-updater" />
+    <orderEntry type="module" module-name="kotlin.inspections-fe10" />
+    <orderEntry type="module" module-name="kotlin.project-configuration" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.j2k.old" />
@@ -87,6 +91,7 @@
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />

@@ -49,6 +49,9 @@
     <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />
     <orderEntry type="module" module-name="kotlin.properties" exported="" />
+    <orderEntry type="module" module-name="kotlin.plugin-updater" exported="" />
+    <orderEntry type="module" module-name="kotlin.preferences" exported="" />
+    <orderEntry type="module" module-name="kotlin.project-configuration" exported="" />
     <orderEntry type="module" module-name="kotlin.spellchecker" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" exported="" />
   </component>

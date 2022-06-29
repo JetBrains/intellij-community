@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinBundle
 
 class KotlinCodeInsightWorkspaceSettingsProvider(project: Project) :
-    ConfigurableBuilder(KotlinBundle.message("plugin.updater.notification.title")), AutoImportOptionsProvider {
+    ConfigurableBuilder(KotlinBundle.message("code.insight.workspace.settings.title")), AutoImportOptionsProvider {
     init {
         checkBox(
             ApplicationBundle.message("checkbox.add.unambiguous.imports.on.the.fly"),

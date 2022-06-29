@@ -141,6 +141,9 @@ final class KotlinPluginBuilder {
     "kotlin.j2k.idea",
     "kotlin.j2k.old",
     "kotlin.j2k.new",
+    "kotlin.plugin-updater",
+    "kotlin.preferences",
+    "kotlin.project-configuration",
     "kotlin.project-wizard.cli",
     "kotlin.project-wizard.core",
     "kotlin.project-wizard.idea",
@@ -160,6 +163,7 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea-base",
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
+    "kotlin.inspections-fe10",
     "kotlin.features-trainer"
   )
 

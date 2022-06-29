@@ -36,9 +36,10 @@ import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.maven.*
+import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
+import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.quickfix.ChangeGeneralLanguageFeatureSupportFix
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 
 abstract class KotlinMavenConfigurator
 protected constructor(
@@ -105,7 +106,7 @@ protected constructor(
         if (!dialog.isOK) return
 
         WriteCommandAction.runWriteCommandAction(project) {
-            val collector = createConfigureKotlinNotificationCollector(project)
+            val collector = NotificationMessageCollector.create(project)
             for (module in excludeMavenChildrenModules(project, dialog.modulesToConfigure)) {
                 val file = findModulePomFile(module)
                 if (file != null && canConfigureFile(file)) {

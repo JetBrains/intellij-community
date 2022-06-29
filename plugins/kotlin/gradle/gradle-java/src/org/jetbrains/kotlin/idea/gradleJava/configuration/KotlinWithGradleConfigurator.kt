@@ -37,12 +37,13 @@ import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersi
 import org.jetbrains.kotlin.idea.gradle.configuration.scope
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl.findManipulator
+import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
+import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
-import org.jetbrains.kotlin.idea.versions.getStdlibArtifactId
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
@@ -111,7 +112,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
     fun configureSilently(project: Project, modules: List<Module>, version: IdeKotlinVersion): NotificationMessageCollector {
         return project.executeCommand(KotlinIdeaGradleBundle.message("command.name.configure.kotlin")) {
-            val collector = createConfigureKotlinNotificationCollector(project)
+            val collector = NotificationMessageCollector.create(project)
             val changedFiles = configureWithVersion(project, modules, version, collector)
 
             for (file in changedFiles) {
@@ -176,7 +177,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         )
     }
 
-    protected open fun getStdlibArtifactName(sdk: Sdk?, version: IdeKotlinVersion) = getStdlibArtifactId(sdk, version)
+    protected open fun getStdlibArtifactName(sdk: Sdk?, version: IdeKotlinVersion) = getJvmStdlibArtifactId(sdk, version)
 
     protected open fun getJvmTarget(sdk: Sdk?, version: IdeKotlinVersion): String? = null
 
@@ -299,7 +300,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             KotlinGradleFacadeImpl.getManipulator(buildScript).addKotlinLibraryToModuleBuildScript(module, scope, libraryDescriptor)
 
             buildScript.virtualFile?.let {
-                createConfigureKotlinNotificationCollector(buildScript.project)
+                NotificationMessageCollector.create(buildScript.project)
                     .addMessage(KotlinIdeaGradleBundle.message("text.was.modified", it.path))
                     .showNotification()
             }

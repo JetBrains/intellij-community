@@ -26,6 +26,10 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import java.io.File
 
+fun Module.hasKotlinFacet(): Boolean {
+    return FacetManager.getInstance(this).getFacetByType(KotlinFacetType.TYPE_ID) != null
+}
+
 val Module.externalProjectId: String
     get() = facetSettings?.externalProjectId ?: ""
 
@@ -188,4 +192,17 @@ private fun Module.findOldFashionedImplementedModuleNames(): List<String> {
         FacetTypeRegistry.getInstance().findFacetType(KotlinFacetType.ID)!!.defaultFacetName
     )
     return facet?.configuration?.settings?.implementedModuleNames ?: emptyList()
+}
+
+fun Module.externalSystemTestRunTasks(): List<ExternalSystemTestRunTask> {
+    return externalSystemRunTasks().filterIsInstance<ExternalSystemTestRunTask>()
+}
+
+fun Module.externalSystemNativeMainRunTasks(): List<ExternalSystemNativeMainRunTask> {
+    return externalSystemRunTasks().filterIsInstance<ExternalSystemNativeMainRunTask>()
+}
+
+private fun Module.externalSystemRunTasks(): List<ExternalSystemRunTask> {
+    val settingsProvider = KotlinFacetSettingsProvider.getInstance(project) ?: return emptyList()
+    return settingsProvider.getInitializedSettings(this).externalSystemRunTasks
 }

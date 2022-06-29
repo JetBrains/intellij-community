@@ -19,7 +19,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.idea.base.platforms.tooling.tooling
+import org.jetbrains.kotlin.idea.base.projectStructure.tooling.tooling
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById

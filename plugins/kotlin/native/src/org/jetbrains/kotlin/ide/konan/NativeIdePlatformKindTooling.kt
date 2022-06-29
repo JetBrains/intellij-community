@@ -3,16 +3,14 @@
 package org.jetbrains.kotlin.ide.konan
 
 import com.intellij.execution.actions.RunConfigurationProducer
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.idea.base.facet.externalSystemNativeMainRunTasks
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.tooling.IdePlatformKindTooling
-import org.jetbrains.kotlin.idea.facet.externalSystemNativeMainRunTasks
+import org.jetbrains.kotlin.idea.base.projectStructure.tooling.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.isMainFunction
 import org.jetbrains.kotlin.idea.platform.isKotlinTestDeclaration
@@ -36,7 +34,6 @@ class NativeIdePlatformKindTooling : IdePlatformKindTooling() {
     override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.NATIVE)
 
     override val libraryKind: PersistentLibraryKind<*> = KotlinNativeLibraryKind
-    override fun getLibraryDescription(project: Project): CustomLibraryDescription? = null
 
     override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
         if (!allowSlowOperations) return null

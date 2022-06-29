@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.tooling.tooling
+import org.jetbrains.kotlin.idea.base.projectStructure.tooling.tooling
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout

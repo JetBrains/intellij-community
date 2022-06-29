@@ -57,7 +57,7 @@
         <projectService serviceInterface="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"
                         serviceImplementation="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"/>
 
-        <projectService serviceImplementation="org.jetbrains.kotlin.idea.versions.SuppressNotificationState"/>
+        <projectService serviceImplementation="org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState"/>
 
         <applicationService serviceImplementation="org.jetbrains.kotlin.idea.debugger.ToggleKotlinVariablesState"/>
 
@@ -108,7 +108,7 @@
         <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService"
                             serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFE10MainFunctionLocatingService"/>
 
-        <library.type implementation="org.jetbrains.kotlin.idea.framework.JSLibraryType"/>
+        <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
         <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceRootDetector"/>
 
         <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
@@ -200,7 +200,7 @@
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.JvmIdePlatformKindTooling"/>
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.JsIdePlatformKindTooling"/>
-        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.CommonIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.projectStructure.tooling.CommonIdePlatformKindTooling"/>
 
         <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.DiagnosticSuppressorForDebugger"/>
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>

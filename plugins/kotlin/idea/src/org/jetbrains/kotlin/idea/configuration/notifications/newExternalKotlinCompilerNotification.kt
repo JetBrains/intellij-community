@@ -10,23 +10,23 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.configuration.findLatestExternalKotlinCompilerVersion
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils
 
 @VisibleForTesting
 const val LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME = "kotlin.updates.whats.new.shown.for"
 
 class ExternalKotlinCompilerProjectDataImportListener(private val project: Project) : ProjectDataImportListener {
     override fun onImportFinished(projectPath: String?) {
-        ProgressIndicatorUtils.runUnderDisposeAwareIndicator(KotlinPluginDisposable.getInstance(project)) {
+        BackgroundTaskUtil.runUnderDisposeAwareIndicator(KotlinPluginDisposable.getInstance(project)) {
             showNewKotlinCompilerAvailableNotificationIfNeeded(project)
         }
     }
@@ -38,7 +38,7 @@ fun showNewKotlinCompilerAvailableNotificationIfNeeded(project: Project) {
     if (!bundledCompilerVersion.isRelease) return
 
     fun findExternalVersion() =
-        (findLatestExternalKotlinCompilerVersion(project) ?: KotlinPluginLayout.standaloneCompilerVersion).kotlinVersion
+        (ExternalCompilerVersionProvider.findLatest(project) ?: KotlinPluginLayout.standaloneCompilerVersion).kotlinVersion
 
     val bundledKotlinVersion = bundledCompilerVersion.kotlinVersion
     if (!newExternalKotlinCompilerShouldBePromoted(bundledKotlinVersion, ::findExternalVersion)) return

@@ -14,11 +14,11 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.EmptyClipboardOwner
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
+import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInSources
+import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInTestsOnly
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
-import org.jetbrains.kotlin.idea.configuration.findExternalKotlinCompilerVersions
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
-import org.jetbrains.kotlin.idea.configuration.hasKotlinFilesInSources
-import org.jetbrains.kotlin.idea.configuration.hasKotlinFilesOnlyInTests
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
@@ -76,7 +76,7 @@ class CopyKotlinProjectOverviewAction : AnAction() {
                 yield(
                     when {
                         hasKotlinFilesInSources(module) -> "Sources of [${module.name}]"
-                        hasKotlinFilesOnlyInTests(module) -> "Test sources of [${module.name}]"
+                        hasKotlinFilesInTestsOnly(module) -> "Test sources of [${module.name}]"
                         else -> null
                     }
                 )
@@ -95,6 +95,6 @@ class CopyKotlinProjectOverviewAction : AnAction() {
     }
 
     private fun getUsedKotlinCompilerVersions(project: Project): Sequence<String> {
-        return findExternalKotlinCompilerVersions(project).asSequence().map { it.rawVersion }
+        return ExternalCompilerVersionProvider.findAll(project).asSequence().map { it.rawVersion }
     }
 }

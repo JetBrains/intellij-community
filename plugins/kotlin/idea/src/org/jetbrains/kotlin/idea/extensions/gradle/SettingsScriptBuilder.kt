@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.extensions.gradle
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 
 abstract class SettingsScriptBuilder<T: PsiFile>(val scriptFile: T) {
     private val builder = StringBuilder(scriptFile.text)

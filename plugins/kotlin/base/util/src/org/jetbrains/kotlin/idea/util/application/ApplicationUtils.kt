@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.util.application
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.CancellationCheck
@@ -11,6 +13,8 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 fun <T> runReadAction(action: () -> T): T {
     return ApplicationManager.getApplication().runReadAction<T>(action)
@@ -63,6 +67,8 @@ inline fun invokeLater(expired: Condition<*>, crossinline action: () -> Unit) =
 @Suppress("NOTHING_TO_INLINE")
 inline fun isUnitTestMode(): Boolean = ApplicationManager.getApplication().isUnitTestMode
 
+inline fun isHeadlessEnvironment(): Boolean = ApplicationManager.getApplication().isHeadlessEnvironment
+
 @Suppress("NOTHING_TO_INLINE")
 inline fun isDispatchThread(): Boolean = ApplicationManager.getApplication().isDispatchThread
 
@@ -90,4 +96,22 @@ inline fun <T> runAction(runImmediately: Boolean, crossinline action: () -> T): 
         }
     }
     return result!!
+}
+
+@ApiStatus.Internal
+fun <T: Any> underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread(
+    project: Project,
+    @Nls progressTitle: String,
+    computable: () -> T
+): T {
+    return if (CommandProcessor.getInstance().currentCommandName != null) {
+        lateinit var result: T
+        val application = ApplicationManager.getApplication() as ApplicationEx
+        application.runWriteActionWithNonCancellableProgressInDispatchThread(progressTitle, project, null) {
+            result = computable()
+        }
+        result
+    } else {
+        ActionUtil.underModalProgress(project, progressTitle, computable)
+    }
 }

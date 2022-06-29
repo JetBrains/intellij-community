@@ -49,7 +49,7 @@ abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
 
     private fun configure(modules: List<Module>, configurator: KotlinWithLibraryConfigurator<*>) {
         val project = modules.first().project
-        val collector = createConfigureKotlinNotificationCollector(project)
+        val collector = NotificationMessageCollector.create(project)
 
         configurator.getOrCreateKotlinLibrary(project, collector)
         for (module in modules) {

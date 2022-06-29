@@ -16,6 +16,8 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
+import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.DEFAULT_GRADLE_PLUGIN_REPOSITORY
@@ -177,7 +179,7 @@ open class GradleKotlinJavaFrameworkSupportProvider(
     override fun getPluginExpression() = "id 'org.jetbrains.kotlin.jvm'"
 
     override fun getDependencies(sdk: Sdk?): List<String> {
-        return listOf(getStdlibArtifactId(sdk, KotlinPluginLayout.standaloneCompilerVersion))
+        return listOf(getJvmStdlibArtifactId(sdk, KotlinPluginLayout.standaloneCompilerVersion))
     }
 
     override fun addSupport(

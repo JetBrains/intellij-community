@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.PlatformUtils
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.configuration.*
-import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgress
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -21,7 +21,8 @@ abstract class ConfigureKotlinInProjectAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
 
-        val (modules, configurators) = underModalProgress(project, KotlinJvmBundle.message("lookup.project.configurators.progress.text")) {
+        val progressTitle = KotlinJvmBundle.message("lookup.project.configurators.progress.text")
+        val (modules, configurators) = ActionUtil.underModalProgress(project, progressTitle) {
             val modules = getConfigurableModules(project)
             if (modules.all(::isModuleConfigured)) {
                 return@underModalProgress modules to emptyList<KotlinProjectConfigurator>()

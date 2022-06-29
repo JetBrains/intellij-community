@@ -24,7 +24,7 @@ import com.sun.jdi.InvalidStackFrameException
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
-import org.jetbrains.kotlin.idea.configuration.syncNonBlockingReadAction
+import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
 import org.jetbrains.kotlin.idea.debugger.getContextElement
@@ -278,7 +278,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
             contextElement.language == JavaFileType.INSTANCE.language -> {
                 val project = contextElement.project
                 val scope = contextElement.resolveScope
-                project.syncNonBlockingReadAction { scope.hasKotlinJvmRuntime(project) }
+                syncNonBlockingReadAction(project) { scope.hasKotlinJvmRuntime(project) }
             }
             else -> false
         }

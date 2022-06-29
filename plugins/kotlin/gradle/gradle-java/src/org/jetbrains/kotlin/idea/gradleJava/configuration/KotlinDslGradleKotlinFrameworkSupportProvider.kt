@@ -26,10 +26,10 @@ import org.jetbrains.kotlin.idea.gradle.configuration.MIN_GRADLE_VERSION_FOR_NEW
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.GSK_KOTLIN_VERSION_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.getKotlinGradlePluginClassPathSnippet
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.getKotlinModuleDependencySnippet
+import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
+import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
 import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
-import org.jetbrains.kotlin.idea.versions.getDefaultJvmTarget
-import org.jetbrains.kotlin.idea.versions.getStdlibArtifactId
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider
 import javax.swing.Icon
@@ -140,7 +140,7 @@ class KotlinDslGradleKotlinJavaFrameworkSupportProvider :
             addJvmTargetTask(buildScriptData)
         }
 
-        val artifactId = getStdlibArtifactId(rootModel.sdk, KotlinPluginLayout.standaloneCompilerVersion)
+        val artifactId = getJvmStdlibArtifactId(rootModel.sdk, KotlinPluginLayout.standaloneCompilerVersion)
         buildScriptData.addDependencyNotation(composeDependency(buildScriptData, artifactId))
     }
 

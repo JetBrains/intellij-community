@@ -5,13 +5,11 @@ package org.jetbrains.kotlin.idea.core.platform.impl
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.tooling.IdePlatformKindTooling
+import org.jetbrains.kotlin.idea.base.projectStructure.tooling.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.framework.JSLibraryStdDescription
 import org.jetbrains.kotlin.idea.js.KotlinJSRunConfigurationData
 import org.jetbrains.kotlin.idea.js.KotlinJSRunConfigurationDataProvider
 import org.jetbrains.kotlin.idea.platform.getGenericTestIcon
@@ -36,7 +34,6 @@ class JsIdePlatformKindTooling : IdePlatformKindTooling() {
     override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.JS)
 
     override val libraryKind = KotlinJavaScriptLibraryKind
-    override fun getLibraryDescription(project: Project) = JSLibraryStdDescription(project)
 
     override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
         if (!allowSlowOperations) return null

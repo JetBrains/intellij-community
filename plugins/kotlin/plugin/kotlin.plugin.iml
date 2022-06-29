@@ -63,6 +63,9 @@
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.git" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.plugin-updater" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.preferences" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-configuration" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" scope="RUNTIME" />
@@ -90,6 +93,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.inspections-fe10" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.native" scope="RUNTIME" />
