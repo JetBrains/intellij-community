@@ -2,46 +2,39 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 
 public class CreateClassQuickFix implements LocalQuickFix {
-  private final String myClassName;
-  private final SmartPsiElementPointer<PsiElement> myAnchor;
+  private final @NotNull String myClassName;
+  private final @NotNull SmartPsiElementPointer<PsiFile> myTargetFile;
 
-  public CreateClassQuickFix(String className, PsiElement anchor) {
+  public CreateClassQuickFix(@NotNull String className, @NotNull PsiFile targetFile) {
     myClassName = className;
-
-    final Project project = anchor.getProject();
-    final PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(project).getInjectionHost(anchor);
-    final PsiElement notInjectedAnchor = injectionHost != null ? injectionHost : anchor;
-
-    myAnchor = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(notInjectedAnchor);
+    myTargetFile = SmartPointerManager.getInstance(targetFile.getProject()).createSmartPsiElementPointer(targetFile);
   }
 
   @Override
   @NotNull
   public String getName() {
-    if (myAnchor.getElement() instanceof PyFile) {
-      return PyPsiBundle.message("QFIX.create.class.in.module", myClassName, ((PyFile)myAnchor.getElement()).getName());
+    PsiFile targetFile = myTargetFile.getElement();
+    if (targetFile != null) {
+      return PyPsiBundle.message("QFIX.create.class.in.module", myClassName, targetFile.getName());
     }
     return PyPsiBundle.message("QFIX.create.class.0", myClassName);
   }
@@ -54,34 +47,48 @@ public class CreateClassQuickFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement anchor = myAnchor.getElement();
-    if (anchor == null || !anchor.isValid()) {
+    PsiElement unresolvedReference = descriptor.getPsiElement();
+    if (unresolvedReference == null) {
       return;
     }
 
-    if (!(anchor instanceof PyFile)) {
-      anchor = PyPsiUtils.getParentRightBefore(anchor, anchor.getContainingFile());
-      assert anchor != null;
+    PsiFile targetFile = myTargetFile.getElement();
+    if (targetFile == null) {
+      return;
     }
 
-    final boolean isPy3K = LanguageLevel.forElement(anchor).isPy3K();
+    final boolean isPy3K = LanguageLevel.forElement(targetFile).isPy3K();
     String superClass = isPy3K ? "" : "(object)";
     PyClass pyClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class,
-                                                                             "class " + myClassName + superClass + ":\n    pass");
-    if (anchor instanceof PyFile) {
-      pyClass = (PyClass) anchor.add(pyClass);
+                                                                             "class " + myClassName + superClass + ":\n" +
+                                                                             "    pass");
+    InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(unresolvedReference.getProject());
+    PsiLanguageInjectionHost injectionHost = injectionManager.getInjectionHost(unresolvedReference);
+    if (unresolvedReference.getContainingFile() == targetFile) {
+      PsiElement insertionAnchor = PyPsiUtils.getParentRightBefore(unresolvedReference, targetFile);
+      assert insertionAnchor != null;
+      pyClass = (PyClass)insertionAnchor.getParent().addBefore(pyClass, insertionAnchor);
+    }
+    else if (injectionHost != null && injectionHost.getContainingFile() == targetFile) {
+      PsiElement insertionAnchor = PyPsiUtils.getParentRightBefore(injectionHost, targetFile);
+      assert insertionAnchor != null;
+      pyClass = (PyClass)insertionAnchor.getParent().addBefore(pyClass, insertionAnchor);
     }
     else {
-      pyClass = (PyClass) anchor.getParent().addBefore(pyClass, anchor);
+      pyClass = (PyClass)targetFile.add(pyClass);
     }
     pyClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(pyClass);
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(pyClass);
     if (!isPy3K) {
-      builder.replaceElement(pyClass.getSuperClassExpressions() [0], "object");
+      builder.replaceElement(pyClass.getSuperClassExpressions()[0], "object");
     }
     builder.replaceElement(pyClass.getStatementList(), PyNames.PASS);
 
     PythonTemplateRunner.runTemplate(pyClass.getContainingFile(), builder);
   }
 
+  @Override
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new CreateClassQuickFix(myClassName, target);
+  }
 }

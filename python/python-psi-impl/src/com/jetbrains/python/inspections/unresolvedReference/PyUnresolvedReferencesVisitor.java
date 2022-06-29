@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyCustomType;
@@ -1036,27 +1037,30 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return Collections.emptyList();
   }
 
-  LocalQuickFix getCreateClassFix(@NonNls String refText, PsiElement element) {
+  @Nullable LocalQuickFix getCreateClassFix(@NonNls String refText, PsiElement element) {
     if (refText.length() > 2 && Character.isUpperCase(refText.charAt(0)) && !StringUtil.toUpperCase(refText).equals(refText)) {
-      PsiElement anchor = element;
       if (element instanceof PyQualifiedExpression) {
         PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
         if (qualifier == null) {
           final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class);
           if (fromImport != null) qualifier = fromImport.getImportSource();
         }
+        PsiFile destination = null;
         if (qualifier != null) {
           final PyType type = myTypeEvalContext.getType(qualifier);
           if (type instanceof PyModuleType) {
-            anchor = ((PyModuleType)type).getModule();
+            destination = ((PyModuleType)type).getModule();
           }
           else {
-            anchor = null;
+            return null;
           }
         }
-        if (anchor != null) {
-          return new CreateClassQuickFix(refText, anchor);
+        if (destination == null) {
+          InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(element.getProject());
+          PsiLanguageInjectionHost injectionHost = injectionManager.getInjectionHost(element);
+          destination = ObjectUtils.chooseNotNull(injectionHost, element).getContainingFile();
         }
+        return new CreateClassQuickFix(refText, destination);
       }
     }
     return null;
