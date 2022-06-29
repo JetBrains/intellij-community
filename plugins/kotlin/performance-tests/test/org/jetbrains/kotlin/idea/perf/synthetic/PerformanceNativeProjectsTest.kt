@@ -288,10 +288,6 @@ class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
     // goal: make sure that the project imported from Gradle is valid
     private fun runProjectSanityChecks(project: Project) {
 
-        val isNativeDependencyPropagationEnabled by lazy {
-            readGradleProperty(project, "kotlin.native.enableDependencyPropagation")?.toBoolean() == true
-        }
-
         val nativeModules: Map<Module, Set<String>> = runReadAction {
             project.allModules().mapNotNull { module ->
                 val facetSettings = KotlinFacet.get(module)?.configuration?.settings ?: return@mapNotNull null
@@ -315,11 +311,6 @@ class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
                         pureLibraryName + if (platformPart != null) " [$platformPart]" else ""
                     }
                     .toSet()
-
-                // workaround to skip common Linux modules in "enabled dependency propagation" mode that do not
-                // get any Kotlin/Native KLIB libraries
-                if (nativeLibraries.isEmpty() && moduleName.startsWith("linux") && isNativeDependencyPropagationEnabled)
-                    return@mapNotNull null
 
                 module to nativeLibraries
             }.toMap()
