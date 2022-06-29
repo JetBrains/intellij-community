@@ -38,7 +38,6 @@ public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocal
   }
 
   private static class ConvertExplicitCallToLambdaFix implements LocalQuickFix {
-    @SafeFieldForPreview
     private final LambdaAndExplicitMethodPair myInfo;
     private final String myName;
 
