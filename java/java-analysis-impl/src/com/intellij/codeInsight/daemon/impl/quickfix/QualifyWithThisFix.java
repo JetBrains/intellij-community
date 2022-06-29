@@ -15,14 +15,17 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class QualifyWithThisFix implements IntentionAction {
   private final PsiClass myContainingClass;
@@ -31,6 +34,11 @@ public class QualifyWithThisFix implements IntentionAction {
   public QualifyWithThisFix(@NotNull PsiClass containingClass, @NotNull PsiElement expression) {
     myContainingClass = containingClass;
     myExpression = expression;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new QualifyWithThisFix(myContainingClass, PsiTreeUtil.findSameElementInCopy(myExpression, target));
   }
 
   @NotNull
