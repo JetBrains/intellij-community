@@ -666,12 +666,15 @@ public final class PsiLiteralUtil {
     }
     if (PsiType.DOUBLE.equals(exprType) && PsiType.FLOAT.equals(wantedType)) {
       Double value = ObjectUtils.tryCast(literal.getValue(), Double.class);
-      if (value != null && (double)(float)(double)value == value) {
-        String text = literal.getText();
-        if (StringUtil.endsWithIgnoreCase(text, "D")) {
-          text = text.substring(0, text.length() - 1);
+      if (value != null) {
+        float f = (float)(double)value;
+        if (Float.isFinite(f) && (f != 0.0 || value == 0.0)) {
+          String text = literal.getText();
+          if (StringUtil.endsWithIgnoreCase(text, "D")) {
+            text = text.substring(0, text.length() - 1);
+          }
+          return text + "F";
         }
-        return text + "F";
       }
     }
     if (PsiType.FLOAT.equals(exprType) && PsiType.DOUBLE.equals(wantedType)) {

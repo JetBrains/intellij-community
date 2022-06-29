@@ -960,7 +960,6 @@ public final class HighlightMethodUtil {
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createSurroundWithArrayFix(methodCall, null));
 
     CastMethodArgumentFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
-    ConvertDoubleToFloatFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
     AddTypeArgumentsFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
 
     CandidateInfo[] candidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
@@ -1881,7 +1880,6 @@ public final class HighlightMethodUtil {
     if (classReference != null) {
       ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, fixRange);
       ChangeTypeArgumentsFix.registerIntentions(results, list, info, aClass, fixRange);
-      ConvertDoubleToFloatFix.registerIntentions(results, list, info, fixRange);
     }
     ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, info, fixRange);
     QuickFixAction.registerQuickFixAction(info, fixRange, QUICK_FIX_FACTORY.createSurroundWithArrayFix(constructorCall, null));

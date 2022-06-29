@@ -1,7 +1,7 @@
 // "Cast argument to 'float'" "true"
 class Test {
   void bar() {
-    foo(1e1F);
+    foo((float) 1e137);
   }
   void foo(float f){}
 }
