@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -8,7 +8,10 @@ import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Key;
+import com.intellij.uast.UastMetaLanguage;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 public abstract class HTMLJavaHTMLComposer implements HTMLComposerExtension<HTMLJavaHTMLComposer> {
   public static final Key<HTMLJavaHTMLComposer> COMPOSER = Key.create("HTMLJavaComposer");
@@ -49,5 +52,10 @@ public abstract class HTMLJavaHTMLComposer implements HTMLComposerExtension<HTML
   @Override
   public Language getLanguage() {
     return JavaLanguage.INSTANCE;
+  }
+
+  @Override
+  public Collection<Language> getLanguages() {
+    return Language.findInstance(UastMetaLanguage.class).getMatchingLanguages();
   }
 }
