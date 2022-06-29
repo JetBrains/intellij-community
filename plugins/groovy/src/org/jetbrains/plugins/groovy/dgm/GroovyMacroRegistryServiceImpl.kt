@@ -10,10 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiUtilBase
+import com.intellij.psi.util.*
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -24,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroModuleListener
 import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroRegistryService
 import java.util.concurrent.ConcurrentHashMap
 
@@ -50,7 +46,7 @@ class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistry
     return getModuleRegistry(module).mapNotNull { it.element }
   }
 
-  override fun refreshModule(module: Module) {
+  fun refreshModule(module: Module) {
     availableModules.remove(module)
   }
 
@@ -59,6 +55,9 @@ class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistry
       val moduleRegistry: CachedValue<Set<SmartPsiElementPointer<PsiMethod>>> = CachedValuesManager.getManager(module.project).createCachedValue {
         val scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
         val extensionFiles = FileTypeIndex.getFiles(DGMFileType, scope)
+        if (extensionFiles.isEmpty()) {
+          return@createCachedValue CachedValueProvider.Result(emptySet(), PsiModificationTracker.MODIFICATION_COUNT)
+        }
         val macroRegistry = mutableSetOf<PsiMethod>()
         val extensionClassFiles = mutableListOf<VirtualFile>()
         for (extensionVirtualFile in extensionFiles) {
