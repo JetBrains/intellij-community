@@ -1353,6 +1353,12 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
         }
         return;
       }
+
+      // diagnostics for IDEA-283781
+      if (actionId.equals("CommentByLineComment")) {
+        LOG.info("Unregistering line comment action", new Throwable());
+      }
+
       AnAction actionToRemove = idToAction.remove(actionId);
       actionToId.remove(actionToRemove);
       idToIndex.removeInt(actionId);
