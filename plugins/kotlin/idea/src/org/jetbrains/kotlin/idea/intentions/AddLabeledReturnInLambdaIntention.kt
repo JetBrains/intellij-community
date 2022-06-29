@@ -9,9 +9,11 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 
@@ -36,6 +38,8 @@ class AddLabeledReturnInLambdaIntention : SelfTargetingRangeIntention<KtBlockExp
 
     private fun isApplicableTo(block: KtBlockExpression): Boolean {
         val lastStatement = block.statements.lastOrNull().takeIf { it !is KtReturnExpression } ?: return false
+        if (block.getNonStrictParentOfType<KtLambdaExpression>() == null) return false
+
         val bindingContext = lastStatement.safeAnalyzeNonSourceRootCode().takeIf { it != BindingContext.EMPTY } ?: return false
         return lastStatement.isUsedAsExpression(bindingContext)
     }
