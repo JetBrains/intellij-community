@@ -334,13 +334,18 @@ data class IDETestContext(
   fun warmUp(
     patchVMOptions: VMOptions.() -> VMOptions = { this },
     commands: Iterable<MarshallableCommand>,
-    runTimeout: Duration = 10.minutes
+    runTimeout: Duration = 10.minutes,
+    storeClassReport: Boolean = false
   ): IDEStartResult {
 
     return runIDE(
       patchVMOptions = {
         val warmupReports = IDEStartupReports(paths.reportsDir / "warmUp")
-        enableStartupPerformanceLog(warmupReports).enableClassLoadingReport(paths.logsDir / "class-report.txt").patchVMOptions()
+        if (storeClassReport) {
+          this.enableStartupPerformanceLog(warmupReports).enableClassLoadingReport(paths.reportsDir / "warmUp" / "class-report.txt").patchVMOptions()
+        } else {
+          this
+        }
       },
       commands = testCase.commands.plus(commands),
       runTimeout = runTimeout,
