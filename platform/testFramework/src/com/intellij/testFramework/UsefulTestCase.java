@@ -281,9 +281,9 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @Override
+  @SuppressWarnings("Convert2MethodRef")
   protected void tearDown() throws Exception {
-    // don't use method references here to make stack trace reading easier
-    //noinspection Convert2MethodRef
+    // to make stack trace reading easier, don't use method references here
     new RunAll(
       () -> {
         if (isIconRequired()) {
