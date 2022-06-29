@@ -41,7 +41,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
-                                               MergeableUsage,
+                                               MergeableUsage, Comparable<UsageInfo2UsageAdapter>,
                                                RenameableUsage, DataProvider, UsagePresentation {
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
   private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);

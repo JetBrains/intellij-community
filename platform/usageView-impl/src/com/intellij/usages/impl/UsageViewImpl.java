@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
@@ -29,7 +28,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -129,28 +127,27 @@ public class UsageViewImpl implements UsageViewEx {
     if (o1 == o2) return 0;
     if (o1 == NullUsage.INSTANCE) return -1;
     if (o2 == NullUsage.INSTANCE) return 1;
-    if (o1 instanceof UsageInfo2UsageAdapter && o2 instanceof UsageInfo2UsageAdapter) {
-      return ((UsageInfo2UsageAdapter)o1).compareTo((UsageInfo2UsageAdapter)o2);
+    if (o1 instanceof Comparable && o2 instanceof Comparable && o1.getClass() == o2.getClass()) {
+      //noinspection unchecked
+      int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
+      if (selfcompared != 0) return selfcompared;
+
+      if (o1 instanceof UsageInFile && o2 instanceof UsageInFile) {
+        UsageInFile u1 = (UsageInFile)o1;
+        UsageInFile u2 = (UsageInFile)o2;
+
+        VirtualFile f1 = u1.getFile();
+        VirtualFile f2 = u2.getFile();
+
+        if (f1 != null && f1.isValid() && f2 != null && f2.isValid()) {
+          return f1.getPresentableUrl().compareTo(f2.getPresentableUrl());
+        }
+      }
+
+      return 0;
     }
-    if (o1 == null) return -1;
-    if (o2 == null) return 1;
-    int c = compareByOffsetInFile(o1, o2);
-    if (c != 0) return c;
     return o1.toString().compareTo(o2.toString());
   };
-
-  private static int compareByOffsetInFile(@NotNull Usage o1, @NotNull Usage o2) {
-    FileEditorLocation location1 = o1.getLocation();
-    FileEditorLocation location2 = o2.getLocation();
-    VirtualFile file1 = location1 == null ? null : location1.getEditor().getFile();
-    VirtualFile file2 = location2 == null ? null : location2.getEditor().getFile();
-    if (file1 == null || file2 == null) return 0;
-    if (file1.equals(file2)) {
-      return location1.compareTo(location2);
-    }
-    return VfsUtilCore.compareByPath(file1, file2);
-  }
-
   @NonNls public static final String HELP_ID = "ideaInterface.find";
   private UsageContextPanel myCurrentUsageContextPanel; // accessed in EDT only
   private final List<UsageContextPanel> myAllUsageContextPanels = new ArrayList<>(); // accessed in EDT only
