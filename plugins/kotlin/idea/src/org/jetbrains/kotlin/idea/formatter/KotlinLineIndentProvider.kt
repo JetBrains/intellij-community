@@ -7,6 +7,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.formatter.lineIndent.KotlinIndentationAdjuster
 import org.jetbrains.kotlin.idea.formatter.lineIndent.KotlinLangLineIndentProvider
 
@@ -19,37 +20,41 @@ class KotlinLineIndentProvider : KotlinLangLineIndentProvider() {
 
     override fun indentionSettings(editor: Editor): KotlinIndentationAdjuster = object : KotlinIndentationAdjuster {
         val settings = CodeStyle.getSettings(editor)
+        val commonSettings: KotlinCommonCodeStyleSettings get() = settings.kotlinCommonSettings
+        val customSettings: KotlinCodeStyleSettings get() = settings.kotlinCustomSettings
 
         override val alignWhenMultilineFunctionParentheses: Boolean
-            get() = settings.kotlinCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS
+            get() = commonSettings.ALIGN_MULTILINE_METHOD_BRACKETS
 
         override val alignWhenMultilineBinaryExpression: Boolean
-            get() = settings.kotlinCommonSettings.ALIGN_MULTILINE_BINARY_OPERATION
+            get() = commonSettings.ALIGN_MULTILINE_BINARY_OPERATION
 
         override val continuationIndentInElvis: Boolean
-            get() = settings.kotlinCustomSettings.CONTINUATION_INDENT_IN_ELVIS
+            get() = customSettings.CONTINUATION_INDENT_IN_ELVIS
 
         override val continuationIndentForExpressionBodies: Boolean
-            get() = settings.kotlinCustomSettings.CONTINUATION_INDENT_FOR_EXPRESSION_BODIES
+            get() = customSettings.CONTINUATION_INDENT_FOR_EXPRESSION_BODIES
 
         override val alignMultilineParameters: Boolean
-            get() = settings.kotlinCommonSettings.ALIGN_MULTILINE_PARAMETERS
+            get() = commonSettings.ALIGN_MULTILINE_PARAMETERS
 
         override val alignMultilineParametersInCalls: Boolean
-            get() = settings.kotlinCommonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS
+            get() = commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS
 
         override val continuationIndentInArgumentLists: Boolean
-            get() = settings.kotlinCustomSettings.CONTINUATION_INDENT_IN_ARGUMENT_LISTS
+            get() = customSettings.CONTINUATION_INDENT_IN_ARGUMENT_LISTS
 
         override val continuationIndentInParameterLists: Boolean
-            get() = settings.kotlinCustomSettings.CONTINUATION_INDENT_IN_PARAMETER_LISTS
+            get() = customSettings.CONTINUATION_INDENT_IN_PARAMETER_LISTS
 
         override val continuationIndentInIfCondition: Boolean
-            get() = settings.kotlinCustomSettings.CONTINUATION_INDENT_IN_IF_CONDITIONS
+            get() = customSettings.CONTINUATION_INDENT_IN_IF_CONDITIONS
+
+        override val continuationIndentForChainedCalls: Boolean
+            get() = customSettings.CONTINUATION_INDENT_FOR_CHAINED_CALLS
     }
 
     companion object {
-        @get:TestOnly
         @set:TestOnly
         var useFormatter: Boolean = false
     }
