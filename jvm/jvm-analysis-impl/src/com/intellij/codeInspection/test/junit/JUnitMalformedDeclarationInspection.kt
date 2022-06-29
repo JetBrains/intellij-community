@@ -766,20 +766,22 @@ private class JUnitMalformedSignatureVisitor(
     private fun ProblemsHolder.fieldTypeProblem(
       element: UField, visibility: UastVisibility?, annotation: String, problems: List<@NlsSafe String>, type: String
     ) {
-      val message = if (problems.isEmpty()) {
-        JvmAnalysisBundle.message(
+      if (problems.isEmpty()) {
+        val message = JvmAnalysisBundle.message(
           "jvm.inspections.junit.malformed.annotated.field.typed.descriptor", annotation.substringAfterLast('.'), type)
+        registerUProblem(element, message)
       }
       else if (problems.size == 1) {
-        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.field.single.typed.descriptor",
+        val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.field.single.typed.descriptor",
                                   annotation.substringAfterLast('.'), problems.first(), type
         )
+        reportFieldProblem(message, element, visibility)
       } else {
-        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.field.double.typed.descriptor",
+        val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.field.double.typed.descriptor",
                                   annotation.substringAfterLast('.'), problems.first(), problems.last(), type
         )
+        reportFieldProblem(message, element, visibility)
       }
-      reportFieldProblem(message, element, visibility)
     }
 
     private fun ProblemsHolder.reportFieldProblem(message: @InspectionMessage String, element: UField, visibility: UastVisibility?) {
