@@ -68,10 +68,9 @@ internal class PkgsToDAAction : AnAction(
                 dependencyAnalyzerSupportedUsages.forEach { usage ->
                     add(usage.projectModule.name) {
                         navigateToDA(
-                            group = usage.scope.scopeName,
-                            artifact = data.groupId,
-                            version = data.artifactId,
-                            scope = usage.getResolvedVersionOrFallback().versionName,
+                            group = data.groupId,
+                            artifact = data.artifactId,
+                            version = usage.getResolvedVersionOrFallback().versionName,
                             module = usage.projectModule.nativeModule,
                             systemId = usage.projectModule.buildSystemType.dependencyAnalyzerKey!!
                         )
@@ -94,10 +93,9 @@ internal class PkgsToDAAction : AnAction(
         } else {
             val usage = data.usageInfo.single()
             navigateToDA(
-                group = usage.scope.scopeName,
-                artifact = data.groupId,
-                version = data.artifactId,
-                scope = usage.getResolvedVersionOrFallback().versionName,
+                group = data.groupId,
+                artifact = data.artifactId,
+                version = usage.getResolvedVersionOrFallback().versionName,
                 module = usage.projectModule.nativeModule,
                 systemId = usage.projectModule.buildSystemType.dependencyAnalyzerKey!!
             )
@@ -105,13 +103,12 @@ internal class PkgsToDAAction : AnAction(
     }
 
     @Suppress("HardCodedStringLiteral")
-    private fun navigateToDA(group: String, artifact: String, version: String, scope: String, module: Module, systemId: ProjectSystemId) =
+    private fun navigateToDA(group: String, artifact: String, version: String, module: Module, systemId: ProjectSystemId) =
         DependencyAnalyzerManager.getInstance(module.project)
             .getOrCreate(systemId)
             .setSelectedDependency(
                 module = module,
-                data = DAArtifact(group, artifact, version),
-                scope = scope
+                data = DAArtifact(group, artifact, version)
             )
 }
 
