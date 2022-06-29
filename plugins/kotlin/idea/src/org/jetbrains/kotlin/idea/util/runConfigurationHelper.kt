@@ -61,6 +61,6 @@ class JavaParametersBuilder(private val project: Project) {
 
     companion object {
         fun getModuleDependencies(module: Module): List<String> =
-            CompilerPaths.getOutputPaths(arrayOf(module)).toList() + OrderEnumerator.orderEntries(module).recursively().pathsList.pathList
+            CompilerPaths.getOutputPaths(arrayOf(module)).toList() + OrderEnumerator.orderEntries(module).withoutSdk().recursively().pathsList.pathList
     }
 }
