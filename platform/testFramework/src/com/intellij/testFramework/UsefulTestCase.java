@@ -81,7 +81,7 @@ import static org.junit.Assume.assumeTrue;
  * <p>
  * The execution order is the following:
  * <ul>
- *   <li><em>(JUnit 4 only)</em> {@linkplain #checkShouldRunTest(Description)} that can be used to ignore tests with meaningful message
+ *   <li><em>(JUnit 4 only)</em> {@linkplain #checkShouldRunTest} that can be used to ignore tests with meaningful message
  *   <li>{@linkplain #shouldRunTest()} is also called (both JUnit 3 and JUnit 4)
  *   <li>{@linkplain #setUp()}, usually overridden so that it initializes classes in order from base to specific
  *     <ul>
@@ -100,6 +100,7 @@ import static org.junit.Assume.assumeTrue;
  * which may differ from how {@linkplain #setUp()}/{@linkplain #tearDown()} are executed.
  */
 public abstract class UsefulTestCase extends TestCase {
+  @ApiStatus.Internal
   public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
   @ApiStatus.Internal
   public static final boolean IS_UNDER_SAFE_PUSH = IS_UNDER_TEAMCITY && "true".equals(System.getenv("SAFE_PUSH"));
@@ -116,7 +117,6 @@ public abstract class UsefulTestCase extends TestCase {
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
   private @Nullable Disposable myTestRootDisposable;
-
   private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
 
@@ -131,13 +131,13 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   /**
-   * This @Rule ensures that JUnit4 tests defined in subclasses annotated with @RunWith are executed
-   * in the exactly the same context as if they would have been executed were they plain old JUnit3 tests.
-   * This includes calling all the necessary setUp()/tearDown() together with any other customization defined by the
+   * This rule ensures that JUnit4 tests defined in subclasses annotated with {@code @RunWith} are executed
+   * in exactly the same context as if they would have been executed were they plain old JUnit3 tests.
+   * This includes calling all the necessary {@code setUp()}/{@code tearDown()} together with any other customization defined by the
    * platform subclasses like {@link LightPlatformTestCase} or {@link HeavyPlatformTestCase}: running on EDT,
    * in a write action, wrapped in a command, etc.
-   *
-   * It's executed around any other rules and @Before/@After methods defined in subclasses.
+   * <p>
+   * It is executed around any other rules and {@code @Before}/{@code @After} methods defined in subclasses.
    * Subclasses may change this by using {@link #asOuterRule}.
    */
   @Rule
@@ -147,7 +147,7 @@ public abstract class UsefulTestCase extends TestCase {
       String name = description.getMethodName();
       name = StringUtil.notNullize(StringUtil.substringBefore(name, "["), name);
       setName(name);
-      checkShouldRunTest(description);
+      checkShouldRunTest();
       runBare(base::evaluate);
     }
   };
@@ -155,9 +155,9 @@ public abstract class UsefulTestCase extends TestCase {
   /**
    * Use to make the specified rule applied around the base rule.
    * This may be useful in case you need to access the rule from {@link #setUp()}.
-   *
-   * NB. Do not annotate the field that you assign the result of an asOuterRule() call to, as @Rule.
-   *     Otherwise the rule is going to be applied twice.
+   * <p>
+   * NB: do not annotate the field that you assign the result of this method to as {@code @Rule} -
+   * otherwise, the rule will be applied twice.
    */
   protected @NotNull <R extends TestRule> R asOuterRule(@NotNull R rule) {
     runBareTestRule = RuleChain.outerRule(rule).around(runBareTestRule);
@@ -191,14 +191,13 @@ public abstract class UsefulTestCase extends TestCase {
   }
   private List<Throwable> mySuppressedExceptions;
 
-  public UsefulTestCase() {
-  }
+  public UsefulTestCase() { }
 
   public UsefulTestCase(@NotNull String name) {
     super(name);
   }
 
-  protected void checkShouldRunTest(@NotNull Description description) throws AssumptionViolatedException {
+  protected void checkShouldRunTest() throws AssumptionViolatedException {
     assumeTrue("skipped: shouldRunTest() returned false", shouldRunTest());
   }
 
@@ -235,8 +234,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  // some brilliant tests overrides setup and change setup flow in an alien way - quite unsafe and error prone to fix for now,
-  // so, expose method for such a brilliant test classes
+  // some brilliant tests override setup and change setup flow in an alien way - quite unsafe to fix now
   protected final void setupTempDir() throws IOException {
     if (myTempDir == null && shouldContainTempFiles()) {
       myTempDir = createGlobalTempDirectory();
@@ -354,7 +352,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   @SuppressWarnings("SynchronizeOnThis")
   private static void cleanupDeleteOnExitHookList() {
-    // try to reduce file set retained by java.io.DeleteOnExitHook
+    // try to reduce the file set retained by java.io.DeleteOnExitHook
     List<String> list;
     synchronized (DELETE_ON_EXIT_HOOK_CLASS) {
       if (DELETE_ON_EXIT_HOOK_DOT_FILES.isEmpty()) return;
@@ -486,11 +484,9 @@ public abstract class UsefulTestCase extends TestCase {
   /**
    * Logs the setup cost grouped by test fixture class (superclass of the current test class).
    *
-   * @param cost setup cost in milliseconds
+   * @param cost a cost of setup in milliseconds
    */
-  private void logPerClassCost(int cost,
-                               @NotNull ObjectIntMap<String> costMap,
-                               @NotNull ObjectIntMap<String> countMap) {
+  private void logPerClassCost(int cost, @NotNull ObjectIntMap<String> costMap, @NotNull ObjectIntMap<String> countMap) {
     String name = getClass().getSuperclass().getName();
     int storedCost = costMap.get(name);
     costMap.put(name, (storedCost == -1 ? 0 : storedCost)+cost);
@@ -525,15 +521,13 @@ public abstract class UsefulTestCase extends TestCase {
 
   @Override
   public final void runBare() throws Throwable {
-    if (!shouldRunTest()) {
-      return;
+    if (shouldRunTest()) {
+      runBare(super::runTest);
     }
-    runBare(super::runTest);
   }
 
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    final ThrowableRunnable<Throwable> wrappedRunnable = wrapTestRunnable(testRunnable);
-
+    var wrappedRunnable = wrapTestRunnable(testRunnable);
     if (runInDispatchThread()) {
       UITestUtil.replaceIdeEventQueueSafely();
       EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
@@ -574,9 +568,6 @@ public abstract class UsefulTestCase extends TestCase {
     return true;
   }
 
-  /**
-   * If you want a more shorter name than runInEdtAndWait.
-   */
   protected static <T extends Throwable> void edt(@NotNull ThrowableRunnable<T> runnable) throws T {
     EdtTestUtil.runInEdtAndWait(runnable);
   }
@@ -612,20 +603,19 @@ public abstract class UsefulTestCase extends TestCase {
   public static void assertOrderedEquals(byte @NotNull [] actual, byte @NotNull [] expected) {
     assertEquals(expected.length, actual.length);
     for (int i = 0; i < actual.length; i++) {
-      byte a = actual[i];
-      byte e = expected[i];
-      assertEquals("not equals at index: "+i, e, a);
+      assertEquals("not equals at index: " + i, expected[i], actual[i]);
     }
   }
 
   public static void assertOrderedEquals(int @NotNull [] actual, int @NotNull [] expected) {
     if (actual.length != expected.length) {
-      fail("Expected size: "+expected.length+"; actual: "+actual.length+"\nexpected: "+Arrays.toString(expected)+"\nactual  : "+Arrays.toString(actual));
+      fail("Expected size: " + expected.length + "; actual: " + actual.length +
+           "\nexpected: " + Arrays.toString(expected) + "\nactual  : " + Arrays.toString(actual));
     }
     for (int i = 0; i < actual.length; i++) {
       int a = actual[i];
       int e = expected[i];
-      assertEquals("not equals at index: "+i, e, a);
+      assertEquals("not equals at index: " + i, e, a);
     }
   }
 
@@ -935,17 +925,14 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected @NotNull String getTestDirectoryName() {
-    final String testName = getTestName(true);
-    return testName.replaceAll("_.*", "");
+    return getTestName(true).replaceAll("_.*", "");
   }
 
   public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText) {
     assertSameLinesWithFile(filePath, actualText, true);
   }
 
-  public static void assertSameLinesWithFile(@NotNull String filePath,
-                                             @NotNull String actualText,
-                                             @NotNull Supplier<String> messageProducer) {
+  public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText, @NotNull Supplier<String> messageProducer) {
     assertSameLinesWithFile(filePath, actualText, true, messageProducer);
   }
 
@@ -1035,28 +1022,23 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   /**
-   * @return true for a test which performs A LOT of computations to test resources consumption, not correctness.
+   * @return true for a test which performs a lot of computations to test resource consumption, not correctness.
    * Such test should avoid performing expensive consistency checks, e.g. data structure consistency complex validations.
    * If you want your test to be treated as "Performance", mention "Performance" word in its class/method name.
    * For example: {@code public void testHighlightingPerformance()}
    */
   public final boolean isPerformanceTest() {
-    String testName = getName();
-    String className = getClass().getSimpleName();
-    return TestFrameworkUtil.isPerformanceTest(testName, className);
+    return TestFrameworkUtil.isPerformanceTest(getName(), getClass().getSimpleName());
   }
 
   /**
-   * @return true for a test which performs A LOT of computations, but which does care about correctness of operations it performs.
+   * @return true for a test which performs a lot of computations <b>and</b> does care about the correctness of operations it performs.
    * Such test should typically avoid performing expensive checks, e.g. data structure consistency complex validations.
    * If you want your test to be treated as "Stress", please mention one of these words in its name: "Stress", "Slow".
    * For example: {@code public void testStressPSIFromDifferentThreads()}
    */
   public final boolean isStressTest() {
-    return isStressTest(getName(), getClass().getName());
-  }
-
-  private static boolean isStressTest(String testName, String className) {
+    String testName = getName(), className = getClass().getSimpleName();
     return TestFrameworkUtil.isPerformanceTest(testName, className) ||
            containsStressWords(testName) ||
            containsStressWords(className);
@@ -1074,22 +1056,15 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   /**
-   * Checks that the code block throws an exception of the specified class.
-   *
-   * @param exceptionClass   Expected exception type
-   * @param runnable         Block annotated with some exception type
+   * Checks that the code block throws a specified exception.
    */
   public static void assertThrows(@NotNull Class<? extends Throwable> exceptionClass, @NotNull ThrowableRunnable<?> runnable) {
     assertThrows(exceptionClass, null, runnable);
   }
 
   /**
-   * Checks that the code block throws an exception of the specified class with a message that contains the given message.
-   * If the expected error message is null, the actual error message is not checked, it may also be absent.
-   *
-   * @param exceptionClass       the expected exception type; the actual exception may also be a subtype
-   * @param expectedErrorMsgPart the expected part of the exception message, {@code null} allows any or an absent message
-   * @param runnable             the action that is supposed to throw the exception
+   * Checks that the code block throws a specified exception with a message that contains the given text.
+   * If the expected error message is null, the actual error message is not checked.
    */
   public static void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
                                   @Nullable String expectedErrorMsgPart,
@@ -1230,7 +1205,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  protected void setRegistryPropertyForTest(@NotNull String property, @NotNull String value) {
+  protected void setRegistryPropertyForTest(@NotNull String property, @SuppressWarnings("SameParameterValue") @NotNull String value) {
     Registry.get(property).setValue(value);
     Disposer.register(getTestRootDisposable(), () -> Registry.get(property).resetToDefault());
   }

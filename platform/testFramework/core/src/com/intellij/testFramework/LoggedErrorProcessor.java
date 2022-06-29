@@ -32,7 +32,8 @@ public class LoggedErrorProcessor {
   }
 
   /**
-   * Runs {@code runnable} and return the exception which was logged from it. Report failures if no errors or more than one error were logged.
+   * Runs {@code runnable} and returns an exception which was logged from it.
+   * Reports failures if no errors or more than one error were logged.
    */
   public static @NotNull Throwable executeAndReturnLoggedError(@NotNull Runnable runnable) {
     AtomicReference<Throwable> error = new AtomicReference<>();

@@ -88,10 +88,9 @@ public class DefaultLogger extends Logger {
   }
 
   public static void disableStderrDumping(@NotNull Disposable parentDisposable) {
-    final boolean prev = ourMirrorToStderr;
+    boolean prev = ourMirrorToStderr;
     ourMirrorToStderr = false;
     Disposer.register(parentDisposable, () -> {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourMirrorToStderr = prev;
     });
   }
