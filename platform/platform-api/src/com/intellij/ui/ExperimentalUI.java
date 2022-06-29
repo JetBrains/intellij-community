@@ -42,6 +42,10 @@ public abstract class ExperimentalUI {
     return isNewUI() && Registry.is("ide.experimental.ui.navbar.scroll");
   }
 
+  public static boolean isEditorTabsWithScrollBar() {
+    return isNewUI() && Registry.is("ide.experimental.ui.editor.tabs.scrollbar");
+  }
+
   public static ExperimentalUI getInstance() {
     return ApplicationManager.getApplication().getService(ExperimentalUI.class);
   }

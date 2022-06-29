@@ -31,7 +31,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   private TabsSideSplitter mySplitter = null;
 
   @Override
-  int getScrollOffset() {
+  public int getScrollOffset() {
     return myScrollOffset;
   }
 

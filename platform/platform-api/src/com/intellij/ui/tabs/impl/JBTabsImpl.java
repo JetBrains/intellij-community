@@ -27,8 +27,11 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBThinOverlappingScrollBar;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.hover.HoverListener;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
@@ -54,6 +57,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.*;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.plaf.ComponentUI;
@@ -78,7 +83,6 @@ public class JBTabsImpl extends JComponent
   public static final Key<Boolean> PINNED = Key.create("pinned");
 
   TabsLayout myTabsLayout;
-  JPanel myTabContent;
 
   public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
   public static final int MIN_TAB_WIDTH = JBUIScale.scale(75);
@@ -86,6 +90,7 @@ public class JBTabsImpl extends JComponent
 
   private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
   private static final Logger LOG = Logger.getInstance(JBTabsImpl.class);
+  private static final int SCROLL_BAR_THICKNESS = 3;
 
   private final List<TabInfo> myVisibleInfos = new ArrayList<>();
   private final Map<TabInfo, AccessibleTabPage> myInfo2Page = new HashMap<>();
@@ -228,6 +233,11 @@ public class JBTabsImpl extends JComponent
   }
 
   private TabLabel tabLabelAtMouse;
+
+  @Nullable private JBScrollBar myScrollBar;
+  private final BoundedRangeModel myScrollBarModel = new DefaultBoundedRangeModel();
+  private ChangeListener myScrollBarChangeListener;
+  private boolean myScrollBarOn = false;
 
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
@@ -388,8 +398,6 @@ public class JBTabsImpl extends JComponent
         toolkit.removeAWTEventListener(listener1);
       }
     });
-
-    myTabContent = new JPanel();
 
     setOpaque(true);
     setBackground(myTabPainter.getBackgroundColor());
@@ -561,6 +569,71 @@ public class JBTabsImpl extends JComponent
                                         .filter(Conditions.not(Conditions.is(mySelectedInfo)))
                                         .transform(info -> info.getComponent()).iterator();
                                     });
+
+    HoverListener hoverListener = new HoverListener() {
+      @Override
+      public void mouseEntered(@NotNull Component component, int x, int y) {
+        toggleScrollBar(isInsideTabsArea(x, y));
+      }
+
+      @Override
+      public void mouseMoved(@NotNull Component component, int x, int y) {
+        toggleScrollBar(isInsideTabsArea(x, y));
+      }
+
+      @Override
+      public void mouseExited(@NotNull Component component) {
+        toggleScrollBar(false);
+      }
+    };
+    hoverListener.addTo(this);
+
+    myScrollBarChangeListener = new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        updateTabsOffsetFromScrollBar();
+      }
+    };
+  }
+
+  private boolean isInsideTabsArea(int x, int y) {
+    if (myHeaderFitSize == null) return false;
+
+    switch (getTabsPosition()) {
+      case top:
+        return y <= myHeaderFitSize.height;
+      case left:
+        return x <= myHeaderFitSize.width;
+      case bottom:
+        return y >= getHeight() - myHeaderFitSize.height;
+      case right:
+        return x >= getWidth() - myHeaderFitSize.width;
+    }
+
+    return false;
+  }
+
+  private void setupScrollBar() {
+    if (myScrollBar != null) {
+      remove(myScrollBar);
+      myScrollBar = null;
+      myScrollBarOn = false;
+    }
+
+    if (!isWithScrollBar() || UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE) return;
+
+    myScrollBar = new JBThinOverlappingScrollBar(isHorizontalTabs() ? Adjustable.HORIZONTAL : Adjustable.VERTICAL);
+    add(myScrollBar, 0);
+    myScrollBar.setBounds(getScrollBarBounds());
+    myScrollBar.setModel(myScrollBarModel);
+    myScrollBar.toggle(myScrollBarOn);
+    myScrollBar.setVisible(true);
+  }
+
+  private void toggleScrollBar(boolean isOn) {
+    if (isOn == myScrollBarOn || myScrollBar == null) return;
+    myScrollBarOn = isOn;
+    myScrollBar.toggle(isOn);
   }
 
   @NotNull
@@ -586,7 +659,7 @@ public class JBTabsImpl extends JComponent
     }
     JComponent more = myMoreToolbar.getComponent();
 
-    if (!getTabsPosition().isSide() && Registry.is("ide.editor.tabs.show.fadeout") && more.isShowing()) {
+    if (!getTabsPosition().isSide() && Registry.is("ide.editor.tabs.show.fadeout") && (more.isShowing() || isWithScrollBar())) {
       int width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200));
       Rectangle moreRect = getMoreRect();
       Rectangle labelsArea = null;
@@ -607,8 +680,8 @@ public class JBTabsImpl extends JComponent
                           && label.getX() + label.getPreferredSize().width > moreRect.x
                           && Math.abs(label.getY() - moreRect.y) < moreRect.height / 2;
         if (needShowRightFadeout && !showRightFadeout) {
-          moreY = label.getY();
-          moreHeight = label.getHeight();
+          moreY = Math.max(label.getY(), (int)getScrollBarBounds().getMaxY());
+          moreHeight = label.getY() + label.getHeight() - moreY;
         }
         showRightFadeout |= needShowRightFadeout;
       }
@@ -622,13 +695,34 @@ public class JBTabsImpl extends JComponent
         ((Graphics2D)g).fill(leftSide);
       }
       if (showRightFadeout) {
-        Rectangle rightSide = new Rectangle(myMoreToolbar.getComponent().getX() - 1 - width, moreY, width, moreHeight - 1);
+        Rectangle rightSide = new Rectangle(getTabsAreaWidth() - width, moreY, width, moreHeight - 1);
         ((Graphics2D)g).setPaint(
           new GradientPaint(rightSide.x, rightSide.y, transparent, rightSide.x + rightSide.width, rightSide.y,
                             tabBg));
         ((Graphics2D)g).fill(rightSide);
       }
     }
+  }
+
+  private Rectangle getScrollBarBounds() {
+    if (!isWithScrollBar()) return new Rectangle(0, 0, 0, 0);
+
+    switch (getTabsPosition()) {
+      case left:
+        return new Rectangle(0, 0, SCROLL_BAR_THICKNESS, getHeight());
+      case right:
+        return new Rectangle(getWidth() - SCROLL_BAR_THICKNESS, 0, SCROLL_BAR_THICKNESS, getHeight());
+      case top:
+        return new Rectangle(0, 1, getWidth(), SCROLL_BAR_THICKNESS);
+      case bottom:
+        return new Rectangle(0, getHeight() - SCROLL_BAR_THICKNESS, getWidth(), SCROLL_BAR_THICKNESS);
+    }
+
+    return new Rectangle(0, 0, 0, 0);
+  }
+
+  public boolean isWithScrollBar() {
+    return mySingleRowLayout != null && mySingleRowLayout.isWithScrollBar();
   }
 
   @NotNull
@@ -657,6 +751,7 @@ public class JBTabsImpl extends JComponent
     if (getTabsPosition() != JBTabsPosition.top) {
       mySingleRow = true;
     }
+    setupScrollBar();
     boolean useTableLayout = !isSingleRow();
      useTableLayout |= getTabsPosition() == JBTabsPosition.top
                 && supportsTableLayoutAsSingleRow()
@@ -812,6 +907,8 @@ public class JBTabsImpl extends JComponent
     super.addNotify();
     addTimerUpdate();
 
+    myScrollBarModel.addChangeListener(myScrollBarChangeListener);
+
     if (myDeferredFocusRequest != null) {
       final Runnable request = myDeferredFocusRequest;
       myDeferredFocusRequest = null;
@@ -849,6 +946,8 @@ public class JBTabsImpl extends JComponent
     setFocused(false);
 
     removeTimerUpdate();
+
+    myScrollBarModel.removeChangeListener(myScrollBarChangeListener);
 
     if (ScreenUtil.isStandardAddRemoveNotify(this) && myGlassPane != null) {
       Disposer.dispose(myTabActionsAutoHideListenerDisposable);
@@ -1524,6 +1623,9 @@ public class JBTabsImpl extends JComponent
     if (label != null) {
       setComponentZOrder(label, 0);
     }
+    if (myScrollBar != null) {
+      setComponentZOrder(myScrollBar, 0);
+    }
 
     fireBeforeSelectionChanged(oldInfo, newInfo);
     boolean oldValue = myMouseInsideTabsArea;
@@ -2032,6 +2134,50 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  private void updateScrollBarModel() {
+    if (myScrollBarModel.getValueIsAdjusting()) return;
+
+    int maximum = 0;
+    int value = 0;
+    int extent = 0;
+
+    if (isHorizontalTabs()) {
+      extent = getTabsAreaWidth();
+
+      int theMostLeftX = 0;
+      for (Component tab : myInfo2Label.values()) {
+        maximum += tab.getPreferredSize().width;
+        theMostLeftX = Math.min(theMostLeftX, tab.getX());
+      }
+      value = Math.max(0, -theMostLeftX);
+    }
+    else {
+      extent = getHeight();
+      if (myEntryPointToolbar != null && myEntryPointToolbar.getComponent().isVisible()) {
+        extent = myEntryPointToolbar.getComponent().getY();
+      }
+
+      int theMostTopX = 0;
+      for (Component tab : myInfo2Label.values()) {
+        maximum += tab.getPreferredSize().height;
+        theMostTopX = Math.min(theMostTopX, tab.getY());
+      }
+      value = Math.max(0, -theMostTopX);
+    }
+
+    myScrollBarModel.setMaximum(maximum);
+    myScrollBarModel.setValue(value);
+    myScrollBarModel.setExtent(extent);
+  }
+
+  private void updateTabsOffsetFromScrollBar() {
+    if (myScrollBar == null || !myScrollBar.getValueIsAdjusting()) return;
+    if (mySingleRowLayout == null) return;
+    int currentUnitsOffset = mySingleRowLayout.getScrollOffset();
+    int updatedOffset = myScrollBarModel.getValue();
+    mySingleRowLayout.scroll(updatedOffset - currentUnitsOffset);
+    relayout(false, false);
+  }
 
   @Override
   public void doLayout() {
@@ -2135,11 +2281,25 @@ public class JBTabsImpl extends JComponent
         myTabActionsAutoHideListener.processMouseOver();
 
         applyResetComponents();
+
+        if (myScrollBar != null) {
+          myScrollBar.setBounds(getScrollBarBounds());
+        }
+        updateScrollBarModel();
       }
     }
     finally {
       myForcedRelayout = false;
     }
+  }
+
+  private int getTabsAreaWidth() {
+    if (myMoreToolbar.getComponent().isVisible()) {
+      return myMoreToolbar.getComponent().getX();
+    } else if (myEntryPointToolbar != null && myEntryPointToolbar.getComponent().isVisible()) {
+      return myEntryPointToolbar.getComponent().getX();
+    }
+    return getBounds().width;
   }
 
   private void centerizeMoreToolbarPosition() {
@@ -2732,8 +2892,9 @@ public class JBTabsImpl extends JComponent
       myForcedRelayout = forced;
     }
     if (myMoreToolbar != null) {
-      myMoreToolbar.getComponent().setVisible(getEffectiveLayout() instanceof ScrollableSingleRowLayout ||
-                                              getEffectiveLayout() instanceof TableLayout);
+      myMoreToolbar.getComponent().setVisible(!isWithScrollBar() &&
+                                              (getEffectiveLayout() instanceof ScrollableSingleRowLayout ||
+                                              getEffectiveLayout() instanceof TableLayout));
     }
     revalidateAndRepaint(layoutNow);
   }
