@@ -5,6 +5,10 @@ fun main(args: Array<String>) {
     val a = 5
 }
 
+// Calling original `clone()` method fails on JBR 17 with `java.lang.reflect.InaccessibleObjectException`
+fun Array<String>.clone() =
+    clone()
+
 // EXPRESSION: args.toString().length > 0
 // RESULT: 1: Z
 
