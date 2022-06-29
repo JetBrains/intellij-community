@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
@@ -16,11 +16,12 @@ class CompletionFileLoggerProvider : Disposable, CompletionLoggerProvider() {
     eventLogger.dispose()
   }
 
-  override fun newCompletionLogger(languageName: String): CompletionLogger {
+  override fun newCompletionLogger(languageName: String, shouldLogElementFeatures: Boolean): CompletionLogger {
     val installationUID = service<InstallationIdProvider>().installationId()
     val completionUID = UUID.randomUUID().toString()
     val bucket = EventLogConfiguration.getInstance().bucket.toString()
-    return CompletionFileLogger(installationUID.shortedUUID(), completionUID.shortedUUID(), bucket, languageName, eventLogger)
+    return CompletionFileLogger(installationUID.shortedUUID(), completionUID.shortedUUID(), bucket, languageName, shouldLogElementFeatures,
+                                eventLogger)
   }
 }
 

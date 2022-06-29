@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -43,6 +43,11 @@ class CompletionLoggerInitializer : LookupTracker() {
       "c#" to 0.1,
       "go" to 0.4
     )
+
+    private fun shouldLogElementFeatures(language: Language): Boolean {
+      val experimentInfo = ExperimentStatus.getInstance().forLanguage(language)
+      return !experimentInfo.inExperiment || (experimentInfo.shouldCalculateFeatures && experimentInfo.shouldLogElementFeatures)
+    }
   }
   private val actionListener: LookupActionsListener by lazy { LookupActionsListener.getInstance() }
 
@@ -72,7 +77,8 @@ class CompletionLoggerInitializer : LookupTracker() {
   private fun actionsTracker(lookup: LookupImpl,
                              storage: MutableLookupStorage,
                              experimentInfo: ExperimentInfo): CompletionActionsListener {
-    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger(getLoggingLanguageName(storage.language))
+    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger(getLoggingLanguageName(storage.language),
+                                                                            shouldLogElementFeatures(storage.language))
     val actionsTracker = CompletionActionsTracker(lookup, storage, logger, experimentInfo)
     return LoggerPerformanceTracker(actionsTracker, storage.performanceTracker)
   }

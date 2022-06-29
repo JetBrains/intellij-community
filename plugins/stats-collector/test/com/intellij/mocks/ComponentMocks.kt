@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mocks
 
 import com.intellij.completion.ml.experiment.ExperimentInfo
@@ -34,19 +34,22 @@ internal class TestExperimentStatus : ExperimentStatus {
   private var shouldRank = false
   private var shouldShowArrows = false
   private var shouldCalculateFeatures = false
+  private var shouldLogElementFeatures = false
 
   override fun forLanguage(language: Language): ExperimentInfo =
-    ExperimentInfo(inExperiment, VERSION, shouldRank, shouldShowArrows, shouldCalculateFeatures)
+    ExperimentInfo(inExperiment, VERSION, shouldRank, shouldShowArrows, shouldCalculateFeatures, shouldLogElementFeatures)
 
   override fun disable() = Unit
 
   override fun isDisabled(): Boolean = false
 
-  fun updateExperimentSettings(inExperiment: Boolean, shouldRank: Boolean, shouldShowArrows: Boolean, shouldCalculateFeatures: Boolean) {
+  fun updateExperimentSettings(inExperiment: Boolean, shouldRank: Boolean, shouldShowArrows: Boolean, shouldCalculateFeatures: Boolean,
+                               shouldLogElementFeatures: Boolean) {
     this.inExperiment = inExperiment
     this.shouldRank = shouldRank
     this.shouldShowArrows = shouldShowArrows
     this.shouldCalculateFeatures = shouldCalculateFeatures
+    this.shouldLogElementFeatures = shouldLogElementFeatures
   }
 }
 
