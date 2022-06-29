@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.Link
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.panel
@@ -59,13 +58,11 @@ class InvalidateCachesDialog(
   override fun createSouthAdditionalPanel(): JPanel? {
     if (!canRestart) return null
 
-    val link = Link(IdeBundle.message("link.just.restart")) {
-      close(JUST_RESTART_CODE)
-    }
+    val justRestartAction = DialogWrapperExitAction(IdeBundle.message("button.just.restart"), JUST_RESTART_CODE)
 
     val panel = NonOpaquePanel(BorderLayout())
     panel.border = JBUI.Borders.emptyLeft(10)
-    panel.add(link)
+    panel.add(createJButtonForAction(justRestartAction))
     return panel
   }
 
