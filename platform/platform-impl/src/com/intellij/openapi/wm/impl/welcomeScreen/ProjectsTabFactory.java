@@ -22,7 +22,10 @@ import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService;
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.*;
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors;
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree;
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory;
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.border.CustomLineBorder;
@@ -121,9 +124,9 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
 
     private static @NotNull PanelState getCurrentState() {
       List<RecentProjectTreeItem> recentProjects = RecentProjectListActionProvider.getInstance().collectProjects(true);
-      List<CloneableProjectItem> cloneableProjects = CloneableProjectsService.getInstance().collectCloneableProjects();
-
-      return !recentProjects.isEmpty() || !cloneableProjects.isEmpty() ? PanelState.NOT_EMPTY : PanelState.EMPTY;
+      return !recentProjects.isEmpty() || CloneableProjectsService.getInstance().isCloneActive()
+             ? PanelState.NOT_EMPTY
+             : PanelState.EMPTY;
     }
 
     private @NotNull JComponent createRecentProjectsPanel() {
