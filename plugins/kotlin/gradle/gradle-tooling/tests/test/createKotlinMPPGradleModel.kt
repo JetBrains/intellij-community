@@ -27,12 +27,10 @@ internal fun createKotlinMPPGradleModel(
 internal fun createExtraFeatures(
     coroutinesState: String? = null,
     isHmppEnabled: Boolean = false,
-    isNativeDependencyPropagationEnabled: Boolean = false
 ): ExtraFeaturesImpl {
     return ExtraFeaturesImpl(
         coroutinesState = coroutinesState,
         isHMPPEnabled = isHmppEnabled,
-        isNativeDependencyPropagationEnabled = isNativeDependencyPropagationEnabled
     )
 }
 

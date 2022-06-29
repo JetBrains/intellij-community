@@ -6,5 +6,4 @@ import java.io.Serializable
 interface ExtraFeatures : Serializable {
     val coroutinesState: String?
     val isHMPPEnabled: Boolean
-    val isNativeDependencyPropagationEnabled: Boolean
 }

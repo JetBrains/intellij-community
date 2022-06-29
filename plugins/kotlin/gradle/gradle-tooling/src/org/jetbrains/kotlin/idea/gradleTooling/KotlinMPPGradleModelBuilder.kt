@@ -62,7 +62,6 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 extraFeatures = ExtraFeaturesImpl(
                     coroutinesState = coroutinesState,
                     isHMPPEnabled = importingContext.getProperty(IS_HMPP_ENABLED),
-                    isNativeDependencyPropagationEnabled = importingContext.getProperty(ENABLE_NATIVE_DEPENDENCY_PROPAGATION)
                 ),
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
