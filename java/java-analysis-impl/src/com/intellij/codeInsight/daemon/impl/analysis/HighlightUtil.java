@@ -260,7 +260,7 @@ public final class HighlightUtil {
                 .range(conjunct)
                 .descriptionAndTooltip(JavaErrorBundle.message("interface.expected")).create();
               QuickFixAction
-                .registerQuickFixAction(errorResult, new FlipIntersectionSidesFix(aClass.getName(), conjList, conjunct, castTypeElement),
+                .registerQuickFixAction(errorResult, new FlipIntersectionSidesFix(aClass.getName(), conjunct, castTypeElement),
                                         null);
               return errorResult;
             }
