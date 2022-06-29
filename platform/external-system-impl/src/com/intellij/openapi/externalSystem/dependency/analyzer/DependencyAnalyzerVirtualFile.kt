@@ -25,10 +25,7 @@ class DependencyAnalyzerVirtualFile(
   override fun createContent(editor: UIComponentFileEditor): Content {
     val view = DependencyAnalyzerViewImpl(project, systemId, editor)
     views.add(view, editor)
-    return object : Content {
-      override fun createComponent() = view.createComponent()
-      override fun getPreferredFocusedComponent() = null
-    }
+    return Content { view.createComponent() }
   }
 
   init {

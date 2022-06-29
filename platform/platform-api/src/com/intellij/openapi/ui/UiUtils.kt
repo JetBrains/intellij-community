@@ -28,6 +28,19 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
+val PREFERRED_FOCUSED_COMPONENT = Key.create<JComponent>("JComponent.preferredFocusedComponent")
+
+fun JComponent.getPreferredFocusedComponent(): JComponent? {
+  if (this is DialogPanel) {
+    return preferredFocusedComponent
+  }
+  return getUserData(PREFERRED_FOCUSED_COMPONENT)
+}
+
+fun JComponent.addPreferredFocusedComponent(component: JComponent) {
+  putUserData(PREFERRED_FOCUSED_COMPONENT, component)
+}
+
 fun <T> JComponent.putUserData(key: Key<T>, data: T?) {
   putClientProperty(key, data)
 }

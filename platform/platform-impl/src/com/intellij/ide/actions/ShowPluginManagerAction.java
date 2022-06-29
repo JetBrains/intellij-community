@@ -72,7 +72,7 @@ public class ShowPluginManagerAction extends AnAction implements DumbAware {
     }
 
     @Override
-    public @Nullable JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent(@NotNull JComponent component) {
       return configurable.getPreferredFocusedComponent();
     }
   }
