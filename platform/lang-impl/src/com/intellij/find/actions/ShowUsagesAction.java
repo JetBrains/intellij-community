@@ -20,6 +20,7 @@ import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
@@ -1091,10 +1092,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     if (!(usage instanceof UsageInfo2UsageAdapter)) return -1;
     PsiElement element = ((UsageInfo2UsageAdapter)usage).getElement();
     if (element == null) return -1;
+    InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(element.getProject());
+    if (injectionManager.isInjectedFragment(element.getContainingFile())) {
+      return injectionManager.injectedToHost(element, element.getTextRange().getStartOffset());
+    }
     return element.getTextRange().getStartOffset();
   }
 
-  private static boolean areAllUsagesInOneLine(@NotNull Usage visibleUsage, @NotNull List<? extends Usage> usages) {
+  static boolean areAllUsagesInOneLine(@NotNull Usage visibleUsage, @NotNull List<? extends Usage> usages) {
     Editor editor = getEditorFor(visibleUsage);
     if (editor == null) return false;
     int offset = getUsageOffset(visibleUsage);
