@@ -58,13 +58,6 @@ public abstract class ExperimentalUI {
 
       patchUIDefaults(isEnabled);
       if (isEnabled) {
-        int tabPlacement = UISettings.getInstance().getEditorTabPlacement();
-        if (tabPlacement == SwingConstants.LEFT
-            || tabPlacement == SwingConstants.RIGHT
-            || tabPlacement == SwingConstants.BOTTOM) {
-          UISettings.getInstance().setEditorTabPlacement(SwingConstants.TOP);
-        }
-
         if (getInstance().isIconPatcherSet.compareAndSet(false, true)) {
           if (getInstance().iconPathPatcher != null) {
             IconLoader.removePathPatcher(getInstance().iconPathPatcher);
