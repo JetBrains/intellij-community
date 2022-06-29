@@ -160,7 +160,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
      if (problemDescriptor.getHighlightType() == ProblemHighlightType.GENERIC_ERROR_OR_WARNING && attributesKey == null) {
       attributesKey = myProfileWrapper.getInspectionProfile().getEditorAttributes(key.toString(), myFile);
     }
-    TextAttributes attributes = attributesKey == null || editorColorsScheme == null
+    TextAttributes attributes = attributesKey == null || editorColorsScheme == null || severity.getName().equals(attributesKey.getExternalName())
                                 ? severityRegistrar.getTextAttributesBySeverity(severity)
                                 : editorColorsScheme.getAttributes(attributesKey);
     HighlightInfo.Builder b = HighlightInfo.newHighlightInfo(highlightInfoType)
