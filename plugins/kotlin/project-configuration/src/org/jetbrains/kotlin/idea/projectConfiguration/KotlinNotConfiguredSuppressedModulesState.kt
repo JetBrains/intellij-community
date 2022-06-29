@@ -7,7 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
-import org.jetbrains.kotlin.idea.configuration.toModuleGroup
+import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 
 @State(name = "SuppressABINotification")
 class KotlinNotConfiguredSuppressedModulesState : PersistentStateComponent<KotlinNotConfiguredSuppressedModulesState> {

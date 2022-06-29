@@ -6,11 +6,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.base.projectStructure.allModules
+import org.jetbrains.kotlin.idea.base.projectStructure.getWholeModuleGroup
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.addStdlibToJavaModuleInfo
-import org.jetbrains.kotlin.idea.configuration.allModules
-import org.jetbrains.kotlin.idea.configuration.getWholeModuleGroup
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget

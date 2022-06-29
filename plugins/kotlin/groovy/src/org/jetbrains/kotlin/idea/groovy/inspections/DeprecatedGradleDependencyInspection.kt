@@ -9,8 +9,8 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.text.VersionComparatorUtil
-import org.jetbrains.kotlin.idea.configuration.allModules
-import org.jetbrains.kotlin.idea.configuration.getWholeModuleGroup
+import org.jetbrains.kotlin.idea.base.projectStructure.allModules
+import org.jetbrains.kotlin.idea.base.projectStructure.getWholeModuleGroup
 import org.jetbrains.kotlin.idea.configuration.parseExternalLibraryName
 import org.jetbrains.kotlin.idea.extensions.gradle.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
 import org.jetbrains.kotlin.idea.inspections.ReplaceStringInDocumentFix

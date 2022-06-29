@@ -33,6 +33,7 @@
     <orderEntry type="module" module-name="kotlin.base.line-markers" exported="" />
     <orderEntry type="module" module-name="kotlin.base.obsolete-compat" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fir.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.plugin-fir" exported="" />
     <orderEntry type="module" module-name="kotlin.fir" exported="" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />

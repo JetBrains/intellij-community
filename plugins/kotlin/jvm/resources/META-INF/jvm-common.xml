@@ -198,8 +198,9 @@
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.JvmIdePlatformKindTooling"/>
-        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.JsIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JvmIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JsIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10NativeIdePlatformKindTooling"/>
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.codeInsight.tooling.CommonIdePlatformKindTooling"/>
 
         <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.DiagnosticSuppressorForDebugger"/>

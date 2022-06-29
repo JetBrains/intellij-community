@@ -89,8 +89,9 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.fir.highlighter.beforeResolve.DeclarationHighlightingExtension"/>
     <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.fir.highlighter.beforeResolve.AnnotationsHighlightingExtension"/>
 
-    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.JvmIdePlatformKindTooling"/>
-    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.JsIdePlatformKindTooling"/>
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirJvmIdePlatformKindTooling"/>
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirJsIdePlatformKindTooling"/>
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirNativeIdePlatformKindTooling"/>
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.codeInsight.tooling.CommonIdePlatformKindTooling"/>
 
   </extensions>

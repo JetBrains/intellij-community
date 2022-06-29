@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="kotlin.base.platforms" />
     <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" />

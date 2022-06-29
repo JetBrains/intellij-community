@@ -10,7 +10,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.ide.konan.KotlinNativeRunConfigurationProvider
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.KotlinNativeRunConfigurationProvider
 import org.jetbrains.kotlin.idea.base.facet.externalSystemNativeMainRunTasks
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.util.module

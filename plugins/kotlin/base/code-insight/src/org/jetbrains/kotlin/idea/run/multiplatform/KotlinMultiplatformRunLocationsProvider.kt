@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run.multiplatform
 
 import com.intellij.execution.Location
@@ -15,16 +14,14 @@ import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
-import org.jetbrains.kotlin.idea.configuration.toModuleGroup
+import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 
 class KotlinMultiplatformRunLocationsProvider : MultipleRunLocationsProvider() {
     override fun getLocationDisplayName(locationCreatedFrom: Location<*>, originalLocation: Location<*>): String? {
         val module = locationCreatedFrom.module ?: return null
-        @Suppress("UnnecessaryVariable")
-        @NlsSafe
-        val name = "[${compactedGradleProjectId(module) ?: module.name}]"
-        return name
+        @NlsSafe val name = compactedGradleProjectId(module)
+        return "[$name]"
     }
 
     override fun getAlternativeLocations(originalLocation: Location<*>): List<Location<*>> {

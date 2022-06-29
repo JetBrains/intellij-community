@@ -9,8 +9,8 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.roots.findGradleProjectStructure
@@ -28,7 +28,7 @@ abstract class KotlinGradleInspectionVisitor : BaseInspectionVisitor() {
 
         if (!isUnitTestMode()) {
             val module = fileIndex.getModuleForFile(file.virtualFile) ?: return
-            if (!module.isGradleModule()) return
+            if (!module.isGradleModule) return
         }
 
         if (fileIndex.isExcluded(file.virtualFile)) return

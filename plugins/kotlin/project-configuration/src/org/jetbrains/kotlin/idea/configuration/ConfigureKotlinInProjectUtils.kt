@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinder
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinJavaScriptMetaFileIndex
 import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.utils.ifEmpty
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtils")
 

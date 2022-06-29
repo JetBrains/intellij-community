@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.configuration
+@file:JvmName("ModuleSourceRootGroupUtils")
 
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+package org.jetbrains.kotlin.idea.base.projectStructure
+
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
@@ -61,18 +62,6 @@ class ModuleSourceRootMap(val modules: Collection<Module>) {
     }
 }
 
-fun Module.toModuleGroup() = ModuleSourceRootMap(project).toModuleGroup(this)
-fun Module.getWholeModuleGroup() = ModuleSourceRootMap(project).getWholeModuleGroup(this)
-
-private fun isSourceRootPrefix(externalId: String, previousModuleExternalId: String) =
-    externalId.length < previousModuleExternalId.length && previousModuleExternalId.startsWith(externalId)
-
-val Module.externalProjectId: String?
-    get() = ExternalSystemApiUtil.getExternalProjectId(this)
-
-val Module.externalProjectPath: String?
-    get() = ExternalSystemApiUtil.getExternalProjectPath(this)
-
 fun ModuleSourceRootGroup.allModules(): Set<Module> {
     val result = LinkedHashSet<Module>()
     result.add(baseModule)
@@ -80,16 +69,24 @@ fun ModuleSourceRootGroup.allModules(): Set<Module> {
     return result
 }
 
+fun Module.toModuleGroup() = ModuleSourceRootMap(project).toModuleGroup(this)
+
+fun Module.getWholeModuleGroup() = ModuleSourceRootMap(project).getWholeModuleGroup(this)
+
 fun List<ModuleSourceRootGroup>.exclude(excludeModules: Collection<Module>): List<ModuleSourceRootGroup> {
     return mapNotNull {
         if (it.baseModule in excludeModules)
             null
         else {
-            val remainingSourceRootModules = it.sourceRootModules - excludeModules
+            val remainingSourceRootModules = it.sourceRootModules - excludeModules.toSet()
             if (remainingSourceRootModules.isEmpty())
                 null
             else
                 ModuleSourceRootGroup(it.baseModule, remainingSourceRootModules)
         }
     }
+}
+
+private fun isSourceRootPrefix(externalId: String, previousModuleExternalId: String): Boolean {
+    return externalId.length < previousModuleExternalId.length && previousModuleExternalId.startsWith(externalId)
 }

@@ -4,22 +4,34 @@ package org.jetbrains.kotlin.idea.base.util
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.facet.FacetManager
+import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.FileTypeIndex
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.kotlin.config.ALL_KOTLIN_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.nio.file.Paths
 
 val KOTLIN_FILE_EXTENSIONS: Set<String> = setOf("kt", "kts")
@@ -103,3 +115,23 @@ fun LibraryEx.updateEx(block: (LibraryEx.ModifiableModelEx) -> Unit) {
         modifiableModel.commit()
     }
 }
+
+private val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
+    JavaModuleSourceRootTypes.SOURCES + ALL_KOTLIN_SOURCE_ROOT_TYPES
+
+fun PsiElement.isUnderKotlinSourceRootTypes(): Boolean {
+    val ktFile = this.containingFile.safeAs<KtFile>() ?: return false
+    val file = ktFile.virtualFile?.takeIf { it !is VirtualFileWindow && it.fileSystem !is NonPhysicalFileSystem } ?: return false
+    val projectFileIndex = ProjectRootManager.getInstance(ktFile.project).fileIndex
+    return projectFileIndex.isUnderSourceRootOfType(file, KOTLIN_AWARE_SOURCE_ROOT_TYPES)
+}
+
+private val GRADLE_SYSTEM_ID = ProjectSystemId("GRADLE")
+
+val Module.isGradleModule: Boolean
+    get() = ExternalSystemApiUtil.isExternalSystemAwareModule(GRADLE_SYSTEM_ID, this)
+
+private val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
+
+val Module.isMavenModule: Boolean
+    get() = ExternalSystemApiUtil.isExternalSystemAwareModule(MAVEN_SYSTEM_ID, this)

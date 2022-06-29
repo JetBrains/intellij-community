@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.platforms.StdlibDetectorFacility
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInTestsOnly
 import org.jetbrains.kotlin.idea.base.util.sdk

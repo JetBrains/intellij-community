@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.execution.TestStateStorage
@@ -8,13 +7,13 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinBaseCodeInsightBundle
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
+import org.jetbrains.kotlin.idea.base.util.isGradleModule
+import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
-import org.jetbrains.kotlin.idea.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.SimplePlatform
@@ -31,7 +30,6 @@ import javax.swing.Icon
 
 class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
     companion object {
-
         /**
          * Users may want to try to run that individual test, for example to check if it still fails because of some third party problem,
          * but it's not executed when a whole class or test package run.
@@ -40,7 +38,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
          * As of now launching ignored tests (for Gradle) is impossible.
          */
         private fun KtNamedDeclaration.isIgnoredForGradleModule(includeSlowProviders: Boolean): Boolean {
-            val ktNamedFunction = this.safeAs<KtNamedFunction>().takeIf { module?.isGradleModule() == true } ?: return false
+            val ktNamedFunction = this.safeAs<KtNamedFunction>().takeIf { module?.isGradleModule == true } ?: return false
             val testFramework = KotlinTestFramework.getApplicableFor(this, includeSlowProviders)
             return testFramework?.isIgnoredMethod(ktNamedFunction) == true
         }
@@ -109,7 +107,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
 
         return Info(
             icon,
-            Function { KotlinBundle.message("highlighter.tool.tip.text.run.test") },
+            Function { KotlinBaseCodeInsightBundle.message("highlighter.tool.tip.text.run.test") },
             *ExecutorAction.getActions(getOrder(declaration))
         )
     }

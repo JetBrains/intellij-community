@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="kotlin.base.obsolete-compat" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.statistics" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.base.fir.code-insight" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.fir" scope="PROVIDED" />
