@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.*
+import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
@@ -15,14 +16,22 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -166,40 +175,61 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
     private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem, isSelected: Boolean, separator: ListSeparator?): JComponent {
       val action = value.action as ReopenProjectAction
       val projectPath = action.projectPath
-      val nameLbl = JLabel(action.projectNameToDisplay ?: "")
-      val pathLbl = JLabel(projectPath)
-      val iconLbl = JLabel(recentProjectsManager.getProjectIcon(projectPath, true))
+      lateinit var nameLbl: JLabel
+      lateinit var pathLbl: JLabel
 
-      pathLbl.font = JBFont.small()
-      pathLbl.foreground = if (isSelected) UIUtil.getListSelectionForeground(true) else UIUtil.getLabelInfoForeground()
-      nameLbl.foreground = if (isSelected) UIUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
+      val content = panel {
+        customizeSpacingConfiguration(EmptySpacingConfiguration()) {
+          row {
+            icon(recentProjectsManager.getProjectIcon(projectPath, true))
+              .verticalAlign(VerticalAlign.TOP)
+              .customize(JBGaps(right = 8))
 
-      val inner = NonOpaquePanel()
-      inner.add(nameLbl, BorderLayout.NORTH)
-      inner.add(pathLbl, BorderLayout.SOUTH)
-      inner.border = JBUI.Borders.emptyLeft(11)
-
-      val outer = NonOpaquePanel(BorderLayout())
-      outer.add(iconLbl, BorderLayout.WEST)
-      outer.add(inner, BorderLayout.CENTER)
-      outer.border = JBUI.Borders.empty(5, 13)
-
-      AccessibleContextUtil.setCombinedName(outer, nameLbl, " - ", pathLbl)
-      AccessibleContextUtil.setCombinedDescription(outer, nameLbl, " - ", pathLbl)
-
-      var res = outer
-      if (separator != null) {
-        res = NonOpaquePanel(BorderLayout())
-        res.border = JBUI.Borders.empty()
-        res.add(createSeparator(separator), BorderLayout.NORTH)
-        res.add(outer, BorderLayout.CENTER)
+            panel {
+              row {
+                nameLbl = label(action.projectNameToDisplay ?: "")
+                  .customize(JBGaps(bottom = 4))
+                  .applyToComponent {
+                    foreground = if (isSelected) UIUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
+                  }.component
+              }
+              row {
+                pathLbl = label(FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(projectPath), false))
+                  .applyToComponent {
+                    font = JBFont.small()
+                    foreground = UIUtil.getLabelInfoForeground()
+                  }.component
+              }
+            }
+          }
+        }
+      }.apply {
+        border = JBUI.Borders.empty(8, 0)
+        isOpaque = false
       }
 
+      val result = SelectablePanel.wrap(content, JBUI.CurrentTheme.Popup.BACKGROUND)
+      PopupUtil.configSelectablePanel(result)
+      if (isSelected) {
+        result.selectionColor = ListPluginComponent.SELECTION_COLOR
+      }
+
+      AccessibleContextUtil.setCombinedName(result, nameLbl, " - ", pathLbl)
+      AccessibleContextUtil.setCombinedDescription(result, nameLbl, " - ", pathLbl)
+
+      if (separator == null) {
+        return result
+      }
+
+      val res = NonOpaquePanel(BorderLayout())
+      res.border = JBUI.Borders.empty()
+      res.add(createSeparator(separator), BorderLayout.NORTH)
+      res.add(result, BorderLayout.CENTER)
       return res
     }
 
     private fun createSeparator(separator: ListSeparator): JComponent {
-      val res = GroupHeaderSeparator(JBUI.insets(0, 13, 5, 0))
+      val res = GroupHeaderSeparator(JBUI.CurrentTheme.Popup.separatorLabelInsets())
       res.caption = separator.text
 
       val panel = JPanel(BorderLayout())
