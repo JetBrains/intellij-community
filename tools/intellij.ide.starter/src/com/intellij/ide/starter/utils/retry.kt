@@ -6,11 +6,10 @@ import kotlin.time.Duration.Companion.seconds
 
 /** @return T - if successful; null - otherwise */
 suspend fun <T> withRetryAsync(retries: Long = 3, messageOnFailure: String = "", retryAction: suspend () -> T): T? {
-  var value: T? = null
 
   (1..retries).forEach { failureCount ->
     try {
-      value = retryAction()
+      return retryAction()
     }
     catch (t: Throwable) {
       if (messageOnFailure.isNotBlank())
@@ -25,8 +24,9 @@ suspend fun <T> withRetryAsync(retries: Long = 3, messageOnFailure: String = "",
     }
   }
 
-  return value
+  return null
 }
+
 
 /** @return T - if successful; null - otherwise */
 fun <T> withRetry(retries: Long = 3, messageOnFailure: String = "", retryAction: () -> T): T? = runBlocking {
