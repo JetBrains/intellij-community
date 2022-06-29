@@ -1,3 +1,4 @@
+
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dgm
 
@@ -46,13 +47,17 @@ class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistry
     return candidates.find { it.element?.canBeAppliedTo(call) == true }?.element
   }
 
-  override fun getAllMacros(context: PsiElement): List<PsiMethod> {
+  override fun getAllKnownMacros(context: PsiElement): List<PsiMethod> {
     val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return emptyList()
     return availableModules.value[module]?.mapNotNull { it.element } ?: emptyList()
   }
 
   override fun refreshModule(module: Module) {
     availableModules = getInitializer()
+  }
+
+  fun getInitializer(): Lazy<Map<Module, MacroRegistry>> {
+    return lazyPub { collectModuleRegistry() }
   }
 
   private fun collectModuleRegistry(): Map<Module, MacroRegistry> {
@@ -68,10 +73,6 @@ class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistry
       }
     }
     return modules
-  }
-
-  fun getInitializer(): Lazy<Map<Module, MacroRegistry>> {
-    return lazyPub { collectModuleRegistry() }
   }
 }
 

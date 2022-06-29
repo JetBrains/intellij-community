@@ -15,7 +15,7 @@ interface GroovyMacroRegistryService {
 
   fun resolveAsMacro(call: GrMethodCall): PsiMethod?
 
-  fun getAllMacros(context: PsiElement): List<PsiMethod>
+  fun getAllKnownMacros(context: PsiElement): List<PsiMethod>
 
   fun refreshModule(module: Module)
 }
