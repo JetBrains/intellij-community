@@ -187,11 +187,11 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val pane: Tool
         val parent = c.parent
         if (c.isShowing && parent is AbstractDroppableStripe) {
           initialButton = c
-          initialSize = toolWindow.windowInfo.floatingBounds?.size ?: JBUI.size(500, 400)
           parent
         }
         else null
       }
+      initialSize = toolWindow.windowInfo.floatingBounds?.size ?: JBUI.size(500, 400)
     }
     else {
       initialAnchor = toolWindow.anchor
