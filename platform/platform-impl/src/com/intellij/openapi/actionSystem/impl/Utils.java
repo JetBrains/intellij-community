@@ -191,13 +191,14 @@ public final class Utils {
                                                                boolean isContextMenu,
                                                                @Nullable Runnable onProcessed,
                                                                @Nullable JComponent menuItem) {
+    boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     DataContext wrapped = wrapDataContext(context);
     Project project = CommonDataKeys.PROJECT.getData(wrapped);
     Component contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrapped);
     ActionUpdater updater = new ActionUpdater(presentationFactory, wrapped, place, isContextMenu, false, null, null);
     ActionGroupExpander expander = ActionGroupExpander.getInstance();
     List<AnAction> list;
-    if (isAsyncDataContext(wrapped)) {
+    if (isAsyncDataContext(wrapped) && !isUnitTestMode) {
       if (isContextMenu) {
         ActionUpdater.cancelAllUpdates("context menu requested");
       }
@@ -241,7 +242,7 @@ public final class Utils {
       }
     }
     else {
-      if (Registry.is("actionSystem.update.actions.async") && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (Registry.is("actionSystem.update.actions.async") && !isUnitTestMode) {
         LOG.error("Async data context required in '" + place + "': " + wrapped.getClass().getName());
       }
       try {
