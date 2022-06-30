@@ -191,12 +191,13 @@ public final class Utils {
                                                                boolean isContextMenu,
                                                                @Nullable Runnable onProcessed,
                                                                @Nullable JComponent menuItem) {
-    boolean async = isAsyncDataContext(context);
-    ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, isContextMenu, false, null, null);
+    DataContext wrapped = wrapDataContext(context);
+    Project project = CommonDataKeys.PROJECT.getData(wrapped);
+    Component contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrapped);
+    ActionUpdater updater = new ActionUpdater(presentationFactory, wrapped, place, isContextMenu, false, null, null);
     ActionGroupExpander expander = ActionGroupExpander.getInstance();
-    Project project = CommonDataKeys.PROJECT.getData(context);
     List<AnAction> list;
-    if (async) {
+    if (isAsyncDataContext(wrapped)) {
       if (isContextMenu) {
         ActionUpdater.cancelAllUpdates("context menu requested");
       }
@@ -223,7 +224,7 @@ public final class Utils {
           if (!canRetryOnThisException(ex)) onProcessed.run();
         });
       }
-      try (AccessToken ignore = cancelOnUserActivityInside(promise, PlatformDataKeys.CONTEXT_COMPONENT.getData(context), menuItem)) {
+      try (AccessToken ignore = cancelOnUserActivityInside(promise, contextComponent, menuItem)) {
         ourExpandActionGroupImplEDTLoopLevel++;
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
           AWTEvent event = queue.getNextEvent();
@@ -241,7 +242,7 @@ public final class Utils {
     }
     else {
       if (Registry.is("actionSystem.update.actions.async") && !ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error("Async data context required in '" + place + "': " + context.getClass().getName());
+        LOG.error("Async data context required in '" + place + "': " + wrapped.getClass().getName());
       }
       try {
         list = DO_FULL_EXPAND ?
