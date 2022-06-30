@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
@@ -326,5 +323,14 @@ public final class PyRefactoringUtil {
 
   public static boolean isValidNewName(@NotNull String name, @NotNull PsiElement scopeAnchor) {
     return !(IntroduceValidator.isDefinedInScope(name, scopeAnchor) || PyNames.isReserved(name));
+  }
+
+  @Nullable
+  public static <T extends PsiElement> T findSameElementForPreview(@Nullable SmartPsiElementPointer<T> pointer,
+                                                                   @NotNull PsiFile previewFile) {
+    if (pointer == null) return null;
+    T element = pointer.getElement();
+    if (element == null) return null;
+    return PsiTreeUtil.findSameElementInCopy(element, previewFile);
   }
 }
