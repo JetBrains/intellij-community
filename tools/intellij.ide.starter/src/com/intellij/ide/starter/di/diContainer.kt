@@ -16,6 +16,7 @@ import com.intellij.ide.starter.report.publisher.ReportPublisher
 import com.intellij.ide.starter.report.publisher.impl.ConsoleTestResultPublisher
 import com.intellij.ide.starter.report.publisher.impl.QodanaTestResultPublisher
 import com.intellij.ide.starter.runner.CodeBuilderHost
+import com.intellij.ide.starter.utils.logOutput
 import org.kodein.di.DI
 import org.kodein.di.bindFactory
 import org.kodein.di.bindSingleton
@@ -49,4 +50,6 @@ var di = DI {
   bindFactory<IDETestContext, BuildToolProvider> { testContext: IDETestContext -> BuildToolDefaultProvider(testContext) }
   bindSingleton<List<ReportPublisher>> { listOf(ConsoleTestResultPublisher, QodanaTestResultPublisher) }
   bindSingleton<IdeProduct> { IdeProductImp }
+}.apply {
+  logOutput("DI was initialized")
 }
