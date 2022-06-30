@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 package com.siyeh.ig.javabeans;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -36,16 +37,13 @@ public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "class.without.no.arg.constructor.ignore.option"),
-      this, "m_ignoreClassesWithNoConstructors");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("class.without.no.arg.constructor.ignore.option"),
+                                          this, "m_ignoreClassesWithNoConstructors");
   }
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "class.without.no.arg.constructor.problem.descriptor");
+    return InspectionGadgetsBundle.message("class.without.no.arg.constructor.problem.descriptor");
   }
 
   @Override
@@ -53,44 +51,28 @@ public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
     return new ClassWithoutNoArgConstructorVisitor();
   }
 
-  private class ClassWithoutNoArgConstructorVisitor
-    extends BaseInspectionVisitor {
+  private class ClassWithoutNoArgConstructorVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
-      if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType() || aClass.isRecord()) {
+      if (aClass.isInterface() || aClass.isEnum() || aClass.isRecord()) {
         return;
       }
-      if (aClass instanceof PsiTypeParameter) {
+      if (aClass instanceof PsiAnonymousClass || aClass instanceof PsiTypeParameter) {
         return;
       }
-      if (m_ignoreClassesWithNoConstructors &&
-          !classHasConstructor(aClass)) {
-        return;
-      }
-      if (classHasNoArgConstructor(aClass)) {
+      if (classHasNoArgConstructor(aClass, m_ignoreClassesWithNoConstructors)) {
         return;
       }
       registerClassError(aClass);
     }
 
-    private boolean classHasNoArgConstructor(PsiClass aClass) {
+    private boolean classHasNoArgConstructor(PsiClass aClass, boolean ignoreNoConstructor) {
       final PsiMethod[] constructors = aClass.getConstructors();
-      for (final PsiMethod constructor : constructors) {
-        final PsiParameterList parameterList =
-          constructor.getParameterList();
-        if (parameterList.isEmpty()) {
-          return true;
-        }
+      if (ignoreNoConstructor && constructors.length == 0) {
+        return true;
       }
-      return false;
-    }
-
-    private boolean classHasConstructor(PsiClass aClass) {
-      final PsiMethod[] constructors = aClass.getConstructors();
-      return constructors.length != 0;
+      return ContainerUtil.exists(constructors, c -> c.getParameterList().isEmpty());
     }
   }
 }
