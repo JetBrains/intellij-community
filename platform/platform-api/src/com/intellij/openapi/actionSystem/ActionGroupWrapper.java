@@ -44,6 +44,11 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   }
 
   @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    myDelegate.beforeActionPerformedUpdate(e);
+  }
+
+  @Override
   public boolean canBePerformed(@NotNull DataContext context) {
     return myDelegate.canBePerformed(context);
   }
