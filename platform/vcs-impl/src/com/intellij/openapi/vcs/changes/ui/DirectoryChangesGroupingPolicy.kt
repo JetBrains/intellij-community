@@ -9,8 +9,6 @@ import javax.swing.tree.DefaultTreeModel
 
 class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
-    DIRECTORY_POLICY.set(subtreeRoot, this)
-
     val grandParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot) ?: subtreeRoot
     HIERARCHY_UPPER_BOUND.set(subtreeRoot, grandParent)
     CACHING_ROOT.set(subtreeRoot, getCachingRoot(grandParent, subtreeRoot))
@@ -60,7 +58,6 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
   }
 
   companion object {
-    @JvmField internal val DIRECTORY_POLICY = Key.create<DirectoryChangesGroupingPolicy>("ChangesTree.DirectoryPolicy")
     internal val GRAND_PARENT_CANDIDATE = Key.create<ChangesBrowserNode<*>?>("ChangesTree.GrandParentCandidate")
     internal val HIERARCHY_UPPER_BOUND = Key.create<ChangesBrowserNode<*>?>("ChangesTree.HierarchyUpperBound")
     internal val CACHING_ROOT = Key.create<ChangesBrowserNode<*>?>("ChangesTree.CachingRoot")
