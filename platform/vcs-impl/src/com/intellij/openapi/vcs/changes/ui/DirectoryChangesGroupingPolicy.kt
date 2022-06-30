@@ -4,20 +4,22 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.DIRECTORY_CACHE
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.PATH_NODE_BUILDER
+import java.util.function.Function
 import javax.swing.tree.DefaultTreeModel
 
 class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
-    val grandParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot) ?: subtreeRoot
+    val nextPolicyGroup = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot)
+    val grandParent = nextPolicyGroup ?: subtreeRoot
     val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
+    val pathBuilder = PATH_NODE_BUILDER.getRequired(subtreeRoot)
 
-    return ParentNodeBuilder(subtreeRoot, grandParent, cachingRoot).getParentNodeRecursive(nodePath)
+    return ParentNodeBuilder(pathBuilder, grandParent, cachingRoot).getParentNodeRecursive(nodePath)
   }
 
-  private inner class ParentNodeBuilder(val subtreeRoot: ChangesBrowserNode<*>,
+  private inner class ParentNodeBuilder(val pathBuilder: Function<StaticFilePath, ChangesBrowserNode<*>?>,
                                         val grandParent: ChangesBrowserNode<*>,
                                         val cachingRoot: ChangesBrowserNode<*>) {
-
     fun getParentNodeRecursive(nodePath: StaticFilePath): ChangesBrowserNode<*> {
       generateSequence(nodePath.parent) { it.parent }.forEach { parentPath ->
         val cachedParent = DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]
@@ -25,7 +27,7 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
           return cachedParent
         }
 
-        val pathNode = PATH_NODE_BUILDER.getRequired(subtreeRoot).apply(parentPath)
+        val pathNode = pathBuilder.apply(parentPath)
         if (pathNode != null) {
           pathNode.markAsHelperNode()
 
@@ -37,7 +39,7 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
         }
 
         if (cachedParent != null) { // cachedParent == grandParent
-          return grandParent
+          return cachedParent
         }
       }
 
