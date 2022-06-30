@@ -84,7 +84,7 @@ public final class ChangeListWorker {
   }
 
   @NotNull
-  private Map<ListData, ListData> copyListsDataFrom(@NotNull Collection<? extends ListData> lists) {
+  private Map<ListData, ListData> copyListsDataFrom(@NotNull Collection<ListData> lists) {
     ListData oldDefault = myDefault;
     List<String> oldIds = ContainerUtil.map(myLists, list -> list.id);
 
@@ -282,11 +282,6 @@ public final class ChangeListWorker {
   @NotNull
   public List<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
     return ContainerUtil.map(getAffectedListsData(changes), this::toChangeList);
-  }
-
-  @NotNull
-  public List<LocalChangeList> getAffectedLists(@NotNull Change change) {
-    return getAffectedLists(Collections.singletonList(change));
   }
 
   @NotNull
@@ -754,7 +749,7 @@ public final class ChangeListWorker {
     }
   }
 
-  void setChangeLists(@NotNull Collection<? extends LocalChangeListImpl> lists) {
+  void setChangeLists(@NotNull Collection<LocalChangeListImpl> lists) {
     if (!myChangeListsEnabled) return;
 
     myIdx.clear();
