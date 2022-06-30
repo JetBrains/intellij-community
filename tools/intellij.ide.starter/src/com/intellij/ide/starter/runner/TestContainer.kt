@@ -50,12 +50,13 @@ interface TestContainer<T> : Closeable {
     return di.direct.factory<IdeInfo, IdeInstallator>().invoke(ideInfo).install(ideInfo)
   }
 
-  fun installPerformanceTestingPluginIfMissing(context: IDETestContext, ide: InstalledIde) {
+  fun installPerformanceTestingPluginIfMissing(context: IDETestContext) {
     val performancePluginId = "com.jetbrains.performancePlugin"
 
     context.pluginConfigurator.apply {
-      if (getPluginInstalledState(performancePluginId) != PluginInstalledState.INSTALLED)
-        setupPluginFromPluginManager(performancePluginId, ideBuild = ide.build)
+      val pluginState = getPluginInstalledState(performancePluginId)
+      if (pluginState != PluginInstalledState.INSTALLED && pluginState != PluginInstalledState.BUNDLED_TO_IDE)
+        setupPluginFromPluginManager(performancePluginId, ideBuild = context.ide.build)
     }
   }
 
@@ -100,6 +101,6 @@ interface TestContainer<T> : Closeable {
 
     return setupHooks
       .fold(baseContext.updateGeneralSettings()) { acc, hook -> acc.hook() }
-      .apply { installPerformanceTestingPluginIfMissing(this, ide) }
+      .apply { installPerformanceTestingPluginIfMissing(this) }
   }
 }
