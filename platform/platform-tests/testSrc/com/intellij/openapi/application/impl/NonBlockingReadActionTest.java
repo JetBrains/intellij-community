@@ -38,7 +38,6 @@ import org.jetbrains.concurrency.Promise;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -456,10 +455,10 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     AtomicReference<Throwable> loggedError = new AtomicReference<>();
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
+      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
         assertNotNull(t);
         loggedError.set(t);
-        return EnumSet.noneOf(Action.class);
+        return Action.NONE;
       }
     }, ()->runnable.accept(loggedError));
   }

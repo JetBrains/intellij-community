@@ -153,11 +153,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
+      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
         boolean intercept = t != null && (
           StringUtil.notNullize(t.getMessage()).contains("The network name cannot be found") && message.contains("Couldn't read shelf information") ||
           "JDK annotations not found".equals(t.getMessage()) && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl".equals(category));
-        return intercept ? EnumSet.noneOf(Action.class) : EnumSet.allOf(Action.class);
+        return intercept ? Action.NONE : Action.ALL;
       }
     }, () -> super.runBare(testRunnable));
   }

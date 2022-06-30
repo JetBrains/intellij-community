@@ -359,7 +359,7 @@ class AsyncPromiseTest {
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
         loggedError.set(true)
-        return EnumSet.noneOf(Action::class.java)
+        return Action.NONE
       }
     }) {
       val promise = ReadAction.nonBlocking {

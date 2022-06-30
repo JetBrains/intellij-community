@@ -206,7 +206,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     int[] logCount = {0};
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public boolean processWarn(@NotNull String category, String message, Throwable t) {
+      public boolean processWarn(@NotNull String category, @NotNull String message, Throwable t) {
         if (message.contains(jarFile.getName())) logCount[0]++;
         return super.processWarn(category, message, t);
       }

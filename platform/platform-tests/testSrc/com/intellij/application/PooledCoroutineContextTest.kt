@@ -47,7 +47,7 @@ class PooledCoroutineContextTest : UsefulTestCase() {
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): MutableSet<Action> {
         throwable = t
-        return EnumSet.noneOf(Action::class.java)
+        return Action.NONE
       }
     }, block)
     return throwable

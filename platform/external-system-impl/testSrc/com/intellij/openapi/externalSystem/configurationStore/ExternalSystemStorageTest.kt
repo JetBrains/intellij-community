@@ -872,8 +872,8 @@ class ExternalSystemStorageTest {
   private fun suppressLogs(action: () -> Unit) {
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =
-        if (message.contains("Trying to load multiple modules with the same name.")) EnumSet.noneOf(Action::class.java)
-        else EnumSet.allOf(Action::class.java)
+        if (message.contains("Trying to load multiple modules with the same name.")) Action.NONE
+        else Action.ALL
     }) {
       action()
     }

@@ -39,7 +39,7 @@ public class LoggedErrorProcessor {
     AtomicReference<Throwable> error = new AtomicReference<>();
     executeWith(new LoggedErrorProcessor() {
       @Override
-      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
+      public boolean processError(@NotNull String category, @NotNull String message, Throwable t, String @NotNull [] details) {
         Assert.assertNotNull("Unexpected error without Throwable: " + message, t);
         if (!error.compareAndSet(null, t)) {
           Assert.fail("Multiple errors were reported: " + error.get().getMessage() + " and " + t.getMessage());
@@ -58,23 +58,28 @@ public class LoggedErrorProcessor {
    *
    * @see TestLoggerFactory.TestLogger#warn(String, Throwable)
    */
-  public boolean processWarn(@NotNull String category, String message, Throwable t) {
+  public boolean processWarn(@NotNull String category, @NotNull String message, @Nullable Throwable t) {
     return true;
   }
 
-  public enum Action {LOG, STDERR, RETHROW}
+  public enum Action {
+    LOG, STDERR, RETHROW;
+    public static final EnumSet<Action> ALL = EnumSet.allOf(Action.class);
+    public static final EnumSet<Action> NONE = EnumSet.noneOf(Action.class);
+  }
 
   /**
    * Returns a set of actions to be performed by {@link TestLoggerFactory.TestLogger#error(String, Throwable, String...)} on the given log event.
    */
+  @NotNull
   public Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
     var process = processError(category, message, t, details);
-    return process ? EnumSet.allOf(Action.class) : EnumSet.noneOf(Action.class);
+    return process ? Action.ALL : Action.NONE;
   }
 
   /** @deprecated use/override {@link #processError(String, String, String[], Throwable)} instead */
   @Deprecated(forRemoval = true)
-  public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
+  public boolean processError(@NotNull String category, @NotNull String message, @Nullable Throwable t, String @NotNull [] details) {
     return true;
   }
 }

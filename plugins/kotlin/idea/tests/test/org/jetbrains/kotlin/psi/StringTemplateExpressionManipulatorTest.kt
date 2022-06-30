@@ -88,7 +88,7 @@ class StringTemplateExpressionManipulatorTest : KotlinLightCodeInsightFixtureTes
 private fun suppressFallingOnLogError(call: () -> Unit) {
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
         override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =
-            EnumSet.noneOf(Action::class.java)
+            Action.NONE
     }) {
         call()
     }

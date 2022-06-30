@@ -35,7 +35,7 @@ class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExte
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =
         // don't fail this if `LOG.error()` was called for our exception somewhere
-        if (t is FakeExecutionException) EnumSet.noneOf(Action::class.java) else EnumSet.allOf(Action::class.java)
+        if (t is FakeExecutionException) Action.NONE else Action.ALL
     }) {
       runInEdtAndWait {
         ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).buildAndExecute()

@@ -85,7 +85,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
   private fun loggedErrorProcessor(search: String) = object : LoggedErrorProcessor() {
     override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =
-      if (message.contains(search)) EnumSet.noneOf(Action::class.java) else EnumSet.allOf(Action::class.java)
+      if (message.contains(search)) Action.NONE else Action.ALL
   }
 
   private fun assertEvent(description: String = "Asserted", predicate: (BuildEvent) -> Boolean) {

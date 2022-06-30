@@ -123,7 +123,7 @@ fun loggedError(canThrow: Semaphore): Throwable {
       override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
         throwable = t!!
         gotIt.up()
-        return EnumSet.noneOf(Action::class.java)
+        return Action.NONE
       }
     }) {
       canThrow.up()
