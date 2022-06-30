@@ -21,29 +21,38 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
                                      pathBuilder: Function<StaticFilePath, ChangesBrowserNode<*>?>,
                                      grandParent: ChangesBrowserNode<*>,
                                      cachingRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
-    generateSequence(nodePath.parent) { it.parent }.forEach { parentPath ->
+    var chainParent = grandParent
+    val nodes = mutableListOf<ChangesBrowserNode<*>>()
+
+    // for(var parentPath = nodePath.parent; parentPath != null; parentPath = parentPath.parent)
+    var parentPath: StaticFilePath = nodePath
+    while (true) {
+      parentPath = parentPath.parent ?: break
+
       val cachedParent = DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]
       if (cachedParent != null && cachedParent != grandParent) {
-        return cachedParent
+        chainParent = cachedParent
+        break
       }
 
       val pathNode = pathBuilder.apply(parentPath)
       if (pathNode != null) {
         pathNode.markAsHelperNode()
-
-        val parentNode = cachedParent ?: getParentNodeRecursive(parentPath, pathBuilder, grandParent, cachingRoot)
-        model.insertNodeInto(pathNode, parentNode, parentNode.childCount)
-
         DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key] = pathNode
-        return pathNode
+        nodes.add(pathNode)
       }
 
       if (cachedParent != null) { // cachedParent == grandParent
-        return cachedParent
+        break
       }
     }
 
-    return grandParent
+    var node = chainParent
+    for (nextNode in nodes.asReversed()) {
+      model.insertNodeInto(nextNode, node, node.childCount)
+      node = nextNode
+    }
+    return node
   }
 
   class Factory : ChangesGroupingPolicyFactory() {
