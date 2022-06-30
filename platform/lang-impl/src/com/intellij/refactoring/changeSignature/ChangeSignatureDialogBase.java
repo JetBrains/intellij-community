@@ -2,10 +2,10 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -33,6 +33,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -83,7 +84,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   protected final ParameterTableModel myParametersTableModel;
   protected final UpdateSignatureListener mySignatureUpdater = new UpdateSignatureListener();
   private MethodSignatureComponent mySignatureArea;
-  private final Alarm myUpdateSignatureAlarm = new Alarm();
+  private final Alarm myUpdateSignatureAlarm;
 
   protected VisibilityPanelBase<Visibility> myVisibilityPanel;
 
@@ -128,13 +129,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     setTitle(RefactoringBundle.message("changeSignature.refactoring.name"));
     init();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    doUpdateSignature();
-    Disposer.register(myDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myUpdateSignatureAlarm.cancelAllRequests();
-      }
-    });
+    myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myDisposable);
   }
 
   public void setParameterInfos(@NotNull List<? extends ParamInfo> parameterInfos) {
@@ -594,6 +589,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     if (mySignatureArea == null || myPropagateParamChangesButton == null) return;
 
     final Runnable updateRunnable = () -> {
+      if (myUpdateSignatureAlarm.isDisposed()) return;
       myUpdateSignatureAlarm.cancelAllRequests();
       myUpdateSignatureAlarm.addRequest(() -> {
         if (myProject.isDisposed()) return;
@@ -610,7 +606,9 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
   private void doUpdateSignature() {
     LOG.assertTrue(!PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
-    mySignatureArea.setSignature(calculateSignature());
+    ReadAction.nonBlocking(() -> calculateSignature())
+      .finishOnUiThread(ModalityState.current(), signature -> mySignatureArea.setSignature(signature))
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   protected void updatePropagateButtons() {
