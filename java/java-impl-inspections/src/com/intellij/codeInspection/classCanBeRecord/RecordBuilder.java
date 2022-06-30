@@ -5,13 +5,17 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.FieldAccessorCandidate;
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.parser.DeclarationParser;
+import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.JavaDummyElement;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -82,10 +86,11 @@ class RecordBuilder {
 
   @NotNull
   PsiClass build() {
-    PsiJavaFile psiFile = (PsiJavaFile)PsiFileFactory.getInstance(myOriginClass.getProject())
-      .createFileFromText("Dummy.java", JavaLanguage.INSTANCE, myRecordText.toString(), false, false);
-    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_16);
-    return psiFile.getClasses()[0];
+    JavaDummyElement dummyElement = new JavaDummyElement(
+      myRecordText.toString(), builder -> JavaParser.INSTANCE.getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS),
+      LanguageLevel.JDK_16);
+    DummyHolder holder = DummyHolderFactory.createHolder(myOriginClass.getManager(), dummyElement, myOriginClass);
+    return (PsiClass)Objects.requireNonNull(SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode()));
   }
 
   @NotNull
@@ -109,13 +114,13 @@ class RecordBuilder {
                                               @Nullable FieldAccessorCandidate fieldAccessorCandidate) {
     PsiAnnotation[] fieldAnnotations = field.getAnnotations();
     String fieldAnnotationsText = Arrays.stream(fieldAnnotations).map(PsiAnnotation::getText).collect(Collectors.joining(" "));
-    String annotationsText = fieldAnnotationsText == "" ? fieldAnnotationsText : fieldAnnotationsText + " ";
+    String annotationsText = fieldAnnotationsText.isEmpty() ? fieldAnnotationsText : fieldAnnotationsText + " ";
     if (fieldAccessorCandidate != null && fieldAccessorCandidate.isDefault()) {
       String accessorAnnotationsText = Arrays.stream(fieldAccessorCandidate.getAccessor().getAnnotations())
         .filter(accessorAnn -> !CommonClassNames.JAVA_LANG_OVERRIDE.equals(accessorAnn.getQualifiedName()))
         .filter(accessorAnn -> !ContainerUtil.exists(fieldAnnotations, fieldAnn -> AnnotationUtil.equal(fieldAnn, accessorAnn)))
         .map(PsiAnnotation::getText).collect(Collectors.joining(" "));
-      annotationsText = accessorAnnotationsText == "" ? annotationsText : annotationsText + accessorAnnotationsText + " ";
+      annotationsText = accessorAnnotationsText.isEmpty() ? annotationsText : annotationsText + accessorAnnotationsText + " ";
     }
     return annotationsText + componentType.getCanonicalText() + " " + field.getName();
   }
