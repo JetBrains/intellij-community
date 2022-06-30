@@ -328,7 +328,7 @@ object UpdateChecker {
     indicator: ProgressIndicator? = null,
   ): InternalPluginResults {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
-    if (System.getProperty("idea.ignore.disabled.plugins") == null) {
+    if (!PluginEnabler.HEADLESS.isIgnoredDisabledPlugins) {
       val brokenPlugins = MarketplaceRequests.getInstance().getBrokenPlugins(ApplicationInfo.getInstance().build)
       if (brokenPlugins.isNotEmpty()) {
         PluginManagerCore.updateBrokenPlugins(brokenPlugins)

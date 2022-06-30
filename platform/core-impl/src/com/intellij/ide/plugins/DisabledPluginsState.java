@@ -20,13 +20,16 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @ApiStatus.Internal
-public final class DisabledPluginsState implements PluginEnabler {
+public final class DisabledPluginsState implements PluginEnabler.Headless {
 
   public static final @NonNls String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
 
+  private static final boolean IGNORE_DISABLED_PLUGINS = Boolean.getBoolean("idea.ignore.disabled.plugins");
+
   private static volatile @Nullable Set<PluginId> ourDisabledPlugins;
   private static final List<Runnable> ourDisabledPluginListeners = new CopyOnWriteArrayList<>();
-  private static volatile boolean ourIgnoreDisabledPlugins;
+
+  private static volatile boolean ourIgnoredDisabledPlugins = IGNORE_DISABLED_PLUGINS;
 
   DisabledPluginsState() {
   }
@@ -39,9 +42,15 @@ public final class DisabledPluginsState implements PluginEnabler {
     ourDisabledPluginListeners.remove(listener);
   }
 
-  // For use in headless environment only
-  public static void setIgnoreDisabledPlugins(boolean ignoreDisabledPlugins) {
-    ourIgnoreDisabledPlugins = ignoreDisabledPlugins;
+  @Override
+  public boolean isIgnoredDisabledPlugins() {
+    return ourIgnoredDisabledPlugins;
+  }
+
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+  @Override
+  public void setIgnoredDisabledPlugins(boolean ignoredDisabledPlugins) {
+    ourIgnoredDisabledPlugins = ignoredDisabledPlugins;
   }
 
   public static @NotNull Set<PluginId> loadDisabledPlugins() {
@@ -104,7 +113,7 @@ public final class DisabledPluginsState implements PluginEnabler {
     }
 
     // to preserve the order of additions and removals
-    if (ourIgnoreDisabledPlugins || PluginManagerCore.IGNORE_DISABLED_PLUGINS) {
+    if (ourIgnoredDisabledPlugins) {
       return new HashSet<>();
     }
 

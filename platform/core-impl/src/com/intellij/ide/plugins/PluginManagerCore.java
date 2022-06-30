@@ -72,8 +72,6 @@ public final class PluginManagerCore {
   static final @NonNls String ENABLE = "enable";
   static final @NonNls String EDIT = "edit";
 
-  static final boolean IGNORE_DISABLED_PLUGINS = Boolean.getBoolean("idea.ignore.disabled.plugins");
-
   @SuppressWarnings("StaticNonFinalField")
   private static volatile boolean IGNORE_COMPATIBILITY = Boolean.getBoolean("idea.ignore.plugin.compatibility");
 
@@ -198,7 +196,7 @@ public final class PluginManagerCore {
   }
 
   static @NotNull Map<@NotNull PluginId, @NotNull Set<String>> getBrokenPluginVersions() {
-    if (IGNORE_DISABLED_PLUGINS) {
+    if (PluginEnabler.HEADLESS.isIgnoredDisabledPlugins()) {
       return Collections.emptyMap();
     }
 
