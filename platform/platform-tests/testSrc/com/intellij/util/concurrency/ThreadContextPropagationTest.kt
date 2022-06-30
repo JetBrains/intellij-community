@@ -13,7 +13,11 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.InvocationInterceptor
+import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.lang.reflect.Method
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
@@ -31,6 +35,21 @@ class ThreadContextPropagationTest {
     @RegisterExtension
     @JvmField
     val uncaughtExceptionsExtension = UncaughtExceptionsExtension()
+
+    @RegisterExtension
+    @JvmField
+    val propagationExtension: InvocationInterceptor = object : InvocationInterceptor {
+
+      override fun interceptTestMethod(
+        invocation: InvocationInterceptor.Invocation<Void>,
+        invocationContext: ReflectiveInvocationContext<Method>,
+        extensionContext: ExtensionContext,
+      ) {
+        Propagation.runWithContextPropagationEnabled {
+          invocation.proceed()
+        }
+      }
+    }
   }
 
   @Test
@@ -88,13 +107,11 @@ class ThreadContextPropagationTest {
     return suspendCancellableCoroutine { continuation ->
       val element = TestElement("element")
       withThreadContext(element) {                                       // install context in calling thread
-        Propagation.runTestWithPropagationEnabled {
-          submit {                                                         // switch to another thread
-            val result: Result<Unit> = runCatching {
-              assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context
-            }
-            continuation.resumeWith(result)
+        submit {                                                         // switch to another thread
+          val result: Result<Unit> = runCatching {
+            assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context
           }
+          continuation.resumeWith(result)
         }
       }
     }

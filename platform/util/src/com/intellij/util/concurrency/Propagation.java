@@ -27,16 +27,25 @@ public final class Propagation {
   }
 
   @TestOnly
-  static void runTestWithPropagationEnabled(@NotNull Runnable runnable) {
+  static void runWithContextPropagationEnabled(@NotNull Runnable runnable) {
     boolean propagateThreadContext = Holder.propagateThreadContext;
-    boolean propagateThreadCancellation = Holder.propagateThreadCancellation;
     Holder.propagateThreadContext = true;
-    Holder.propagateThreadCancellation = true;
     try {
       runnable.run();
     }
     finally {
       Holder.propagateThreadContext = propagateThreadContext;
+    }
+  }
+
+  @TestOnly
+  static void runWithCancellationPropagationEnabled(@NotNull Runnable runnable) {
+    boolean propagateThreadCancellation = Holder.propagateThreadCancellation;
+    Holder.propagateThreadCancellation = true;
+    try {
+      runnable.run();
+    }
+    finally {
       Holder.propagateThreadCancellation = propagateThreadCancellation;
     }
   }
