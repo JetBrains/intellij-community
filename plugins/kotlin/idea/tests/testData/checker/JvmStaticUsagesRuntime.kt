@@ -8,7 +8,7 @@ class A {
         }
     }
 
-    <error descr="[WRONG_ANNOTATION_TARGET] This annotation is not applicable to target 'object'">@JvmStatic</error>
+    <error descr="[WRONG_ANNOTATION_TARGET] This annotation is not applicable to target 'standalone object'">@JvmStatic</error>
     object A {
         @JvmStatic fun a2() {
 
