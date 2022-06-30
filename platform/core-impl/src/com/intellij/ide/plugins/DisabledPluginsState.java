@@ -101,7 +101,7 @@ public final class DisabledPluginsState implements PluginEnabler {
     }
 
     // to preserve the order of additions and removals
-    if (ourIgnoreDisabledPlugins || System.getProperty("idea.ignore.disabled.plugins") != null) {
+    if (ourIgnoreDisabledPlugins || PluginManagerCore.IGNORE_DISABLED_PLUGINS) {
       return new HashSet<>();
     }
 

@@ -72,7 +72,7 @@ public final class PluginManagerCore {
   static final @NonNls String ENABLE = "enable";
   static final @NonNls String EDIT = "edit";
 
-  private static final boolean IGNORE_DISABLED_PLUGINS = Boolean.getBoolean("idea.ignore.disabled.plugins");
+  static final boolean IGNORE_DISABLED_PLUGINS = Boolean.getBoolean("idea.ignore.disabled.plugins");
 
   @SuppressWarnings("StaticNonFinalField")
   private static volatile boolean IGNORE_COMPATIBILITY = Boolean.getBoolean("idea.ignore.plugin.compatibility");
