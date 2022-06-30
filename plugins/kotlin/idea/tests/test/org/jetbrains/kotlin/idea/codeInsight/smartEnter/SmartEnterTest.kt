@@ -595,6 +595,95 @@ class SmartEnterTest : KotlinLightCodeInsightFixtureTestCase() {
             """
     )
 
+    fun testWhenEntry() = doFunTest(
+        """
+            when (i) {
+                1<caret>
+            }
+            """,
+        """
+            when (i) {
+                1 -> {
+                    <caret>
+                }
+            }
+            """
+    )
+
+    fun testWhenEntryWithSomeConditions() = doFunTest(
+        """
+            when (i) {
+                1, 2<caret>, 3
+            }
+            """,
+        """
+            when (i) {
+                1, 2, 3 -> {
+                    <caret>
+                }
+            }
+            """
+    )
+
+    fun testWhenEntryWithSpaces() = doFunTest(
+        """
+            when (i) {
+                1 <caret>
+            }
+            """,
+        """
+            when (i) {
+                1 -> {
+                    <caret>
+                }
+            }
+            """
+    )
+
+    fun testWhenEntryWithArrow() = doFunTest(
+        """
+            when (i) {
+                1 -><caret>
+            }
+            """,
+        """
+            when (i) {
+                1 -> {
+                    <caret>
+                }
+            }
+            """
+    )
+
+    fun testWhenEntryWithArrowAndSpaces() = doFunTest(
+        """
+            when (i) {
+                1 -> <caret>
+            }
+            """,
+        """
+            when (i) {
+                1 -> {
+                    <caret>
+                }
+            }
+            """
+    )
+
+    fun testWhenEntryWithError() = doFunTest(
+        """
+            when (i) {
+                1 -<caret>
+            }
+            """,
+        """
+            when (i) {
+                1 -
+                        <caret>
+            }
+            """
+    )
+
     fun testDoWhile() = doFunTest(
         """
             do <caret>
