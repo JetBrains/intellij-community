@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FlipIntersectionSidesFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(FlipIntersectionSidesFix.class);
@@ -39,6 +41,13 @@ public class FlipIntersectionSidesFix implements IntentionAction {
     myClassName = className;
     myConjunct = conjunct;
     myCastTypeElement = castTypeElement;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiTypeElement cast = PsiTreeUtil.findSameElementInCopy(myCastTypeElement, target);
+    PsiTypeElement conjunct = PsiTreeUtil.findSameElementInCopy(myConjunct, target);
+    return new FlipIntersectionSidesFix(myClassName, conjunct, cast);
   }
 
   @NotNull
