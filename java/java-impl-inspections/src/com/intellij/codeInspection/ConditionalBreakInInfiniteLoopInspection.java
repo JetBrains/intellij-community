@@ -57,11 +57,11 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
 
       private void visitLoop(@NotNull PsiConditionalLoopStatement loopStatement, @Nullable PsiElement keyword) {
         if (keyword == null) return;
-        Context context = Context.from(loopStatement, noConversionToDoWhile, allowConditionFusion);
+        Context context = Context.from(loopStatement, noConversionToDoWhile);
         if (context == null) return;
         LocalQuickFix[] fixes;
         if (context.myConditionInTheBeginning) {
-          fixes = new LocalQuickFix[]{new LoopTransformationFix(noConversionToDoWhile, allowConditionFusion)};
+          fixes = new LocalQuickFix[]{new LoopTransformationFix(noConversionToDoWhile)};
         }
         else {
           SetInspectionOptionFix setInspectionOptionFix =
@@ -70,9 +70,19 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
                                        JavaBundle.message(
                                          "inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while"),
                                        true);
-          fixes = new LocalQuickFix[]{new LoopTransformationFix(noConversionToDoWhile, allowConditionFusion), setInspectionOptionFix};
+          fixes = new LocalQuickFix[]{new LoopTransformationFix(noConversionToDoWhile), setInspectionOptionFix};
         }
-        holder.registerProblem(keyword, JavaBundle.message("inspection.conditional.break.in.infinite.loop.description"), fixes);
+        ProblemHighlightType highlightType;
+        if (!allowConditionFusion && !context.isInfiniteLoop) {
+          if (holder.isOnTheFly()) {
+            highlightType = ProblemHighlightType.INFORMATION;
+          } else {
+            return;
+          }
+        } else {
+          highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        }
+        holder.registerProblem(keyword, JavaBundle.message("inspection.conditional.break.in.infinite.loop.description"), highlightType, fixes);
       }
     };
   }
@@ -84,28 +94,28 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     final @NotNull PsiIfStatement myConditionStatement;
     final boolean myConditionInTheBeginning;
     final boolean myConditionInThen;
+    final boolean isInfiniteLoop;
 
     Context(@NotNull PsiLoopStatement loopStatement,
             @NotNull PsiStatement loopBody,
             @NotNull PsiExpression condition,
             @NotNull PsiIfStatement statement,
             boolean conditionInTheBeginning,
-            boolean conditionInThen) {
+            boolean conditionInThen,
+            boolean isInfiniteLoop) {
       myLoopStatement = loopStatement;
       myLoopBody = loopBody;
       myCondition = condition;
       myConditionStatement = statement;
       myConditionInTheBeginning = conditionInTheBeginning;
       myConditionInThen = conditionInThen;
+      this.isInfiniteLoop = isInfiniteLoop;
     }
 
     @Nullable
-    private static Context from(@NotNull PsiConditionalLoopStatement loopStatement, boolean noConversionToDoWhile, boolean allowConditionFusion) {
+    private static Context from(@NotNull PsiConditionalLoopStatement loopStatement, boolean noConversionToDoWhile) {
       boolean isEndlessLoop = ControlFlowUtils.isEndlessLoop(loopStatement);
       if (!isEndlessLoop) {
-        if (!allowConditionFusion) {
-          return null;
-        }
         if (loopStatement instanceof PsiForStatement) {
           PsiForStatement forStatement = (PsiForStatement)loopStatement;
           if ((forStatement.getInitialization() != null && !(forStatement.getInitialization() instanceof PsiEmptyStatement))
@@ -132,7 +142,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
       if (first != null
           && firstBreakCondition != null
           && (isEndlessLoop || (isLoopConditionAtStart && (BoolUtils.getLogicalOperandCount(loopCondition) + BoolUtils.getLogicalOperandCount(firstBreakCondition)) < 4))) {
-        return new Context(loopStatement, body, firstBreakCondition, first, true, isBreakInThen.get());
+        return new Context(loopStatement, body, firstBreakCondition, first, true, isBreakInThen.get(), isEndlessLoop);
       }
       if (noConversionToDoWhile) return null;
       PsiIfStatement last = tryCast(statements[statements.length - 1], PsiIfStatement.class);
@@ -149,7 +159,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
         ContainerUtil.exists(VariableAccessUtils.collectUsedVariables(lastBreakCondition),
                              variable -> PsiTreeUtil.isAncestor(loopStatement, variable, false));
       if (variablesInLoop) return null;
-      return new Context(loopStatement, body, lastBreakCondition, last, false, isBreakInThen.get());
+      return new Context(loopStatement, body, lastBreakCondition, last, false, isBreakInThen.get(), isEndlessLoop);
     }
 
     @Contract("null, _, _ -> null")
@@ -188,11 +198,9 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
 
   private static class LoopTransformationFix implements LocalQuickFix {
     private final boolean noConversionToDoWhile;
-    private final boolean allowConditionFusion;
 
-    private LoopTransformationFix(boolean noConversionToDoWhile, boolean allowConditionFusion) {
+    private LoopTransformationFix(boolean noConversionToDoWhile) {
       this.noConversionToDoWhile = noConversionToDoWhile;
-      this.allowConditionFusion = allowConditionFusion;
     }
 
     @Nls
@@ -206,7 +214,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiConditionalLoopStatement loop = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiConditionalLoopStatement.class);
       if (loop == null) return;
-      Context context = Context.from(loop, noConversionToDoWhile, allowConditionFusion);
+      Context context = Context.from(loop, noConversionToDoWhile);
       if (context == null) return;
       CommentTracker ct = new CommentTracker();
       String loopText;
