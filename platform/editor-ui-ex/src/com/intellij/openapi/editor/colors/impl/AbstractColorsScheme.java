@@ -246,6 +246,16 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   @Override
+  public boolean isUseLigatures() {
+    return getFontPreferences().useLigatures();
+  }
+
+  @Override
+  public void setUseLigatures(boolean useLigatures) {
+    ensureEditableFontPreferences().setUseLigatures(useLigatures);
+  }
+
+  @Override
   public @NotNull Font getFont(EditorFontType key) {
     return myFontPreferences instanceof DelegatingFontPreferences ? EditorFontCache.getInstance().getFont(key) : super.getFont(key);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -110,6 +110,10 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * @see com.intellij.application.options.EditorFontsConstants
    */
   void setLineSpacing(float lineSpacing);
+
+  boolean isUseLigatures();
+
+  void setUseLigatures(boolean useLigatures);
 
   Object clone();
 

@@ -4495,6 +4495,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private String myFaceName;
     private Float myLineSpacing;
     private boolean myFontPreferencesAreSetExplicitly;
+    private Boolean myUseLigatures;
 
     private MyColorSchemeDelegate(@Nullable EditorColorsScheme globalScheme) {
       super(globalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : globalScheme);
@@ -4507,12 +4508,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       String editorFontName = getEditorFontName();
       float editorFontSize = getEditorFontSize2D();
       if (!myFontPreferencesAreSetExplicitly) {
-        updatePreferences(myFontPreferences, editorFontName, editorFontSize,
+        updatePreferences(myFontPreferences, editorFontName, editorFontSize, myUseLigatures,
                           delegate == null ? null : delegate.getFontPreferences());
       }
       String consoleFontName = getConsoleFontName();
       float consoleFontSize = getConsoleFontSize2D();
-      updatePreferences(myConsoleFontPreferences, consoleFontName, consoleFontSize,
+      updatePreferences(myConsoleFontPreferences, consoleFontName, consoleFontSize, myUseLigatures,
                         delegate == null ? null : delegate.getConsoleFontPreferences());
 
       myFontsMap = new EnumMap<>(EditorFontType.class);
@@ -4533,12 +4534,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                          @NotNull FontPreferences fontPreferences) {
       Font baseFont = FontFamilyService.getFont(familyName, fontPreferences.getRegularSubFamily(), fontPreferences.getBoldSubFamily(),
                                                 style, fontSize);
-      myFontsMap.put(fontType, EditorFontCacheImpl.deriveFontWithLigatures(baseFont, fontPreferences.useLigatures()));
+      myFontsMap.put(fontType, EditorFontCacheImpl.deriveFontWithLigatures(baseFont, myUseLigatures != null ? myUseLigatures : fontPreferences.useLigatures()));
     }
 
     private void updatePreferences(@NotNull FontPreferencesImpl preferences,
                                    @NotNull String fontName,
                                    float fontSize,
+                                   Boolean useLigatures,
                                    @Nullable FontPreferences delegatePreferences) {
       preferences.clear();
       preferences.register(fontName, fontSize);
@@ -4551,7 +4553,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           first = false;
         }
       }
-      preferences.setUseLigatures(delegatePreferences != null && delegatePreferences.useLigatures());
+      preferences.setUseLigatures(useLigatures != null ? useLigatures : (delegatePreferences != null && delegatePreferences.useLigatures()));
       preferences.setRegularSubFamily(delegatePreferences == null ? null : delegatePreferences.getRegularSubFamily());
       preferences.setBoldSubFamily(delegatePreferences == null ? null : delegatePreferences.getBoldSubFamily());
     }
@@ -4762,6 +4764,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (oldLineSpacing != newLineSpacing) {
         reinitSettings();
       }
+    }
+
+    @Override
+    public boolean isUseLigatures() {
+      return myUseLigatures == null ? super.isUseLigatures() : myUseLigatures;
+    }
+
+    @Override
+    public void setUseLigatures(boolean useLigatures) {
+      myUseLigatures = useLigatures;
+      reinitFontsAndSettings();
     }
   }
 
