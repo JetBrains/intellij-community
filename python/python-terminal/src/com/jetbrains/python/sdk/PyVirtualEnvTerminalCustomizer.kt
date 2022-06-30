@@ -4,36 +4,64 @@ package com.jetbrains.python.sdk
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.run.findActivateScript
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import java.io.File
+import java.nio.file.Path
 import javax.swing.JCheckBox
 import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isExecutable
 import kotlin.io.path.name
 
 class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   private fun generateCommandForPowerShell(sdk: Sdk, sdkHomePath: VirtualFile): Array<out String>? {
+    // TODO: This should be migrated to Targets API: each target provides terminal
     if ((sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavor is CondaEnvSdkFlavor) {
       // Activate conda
 
-      // ' are in "Write-Host"
-      val errorMessage = PyTerminalBundle.message("powershell.conda.not.activated").replace('\'', '"')
-      // No need to escape path: conda can't have spaces
-      val condaActivateCommand = "try { conda activate ${sdkHomePath.parent.path} } catch { Write-Host('$errorMessage') }"
-      return arrayOf("powershell.exe", "-NoExit", "-Command", condaActivateCommand)
+      val condaPath = PyCondaPackageService.getCondaExecutable(sdk.homePath)?.let { Path(it) }
+      val condaActivationCommand: String
+      if (condaPath != null && condaPath.exists() && condaPath.isExecutable()) {
+        condaActivationCommand = getCondaActivationCommand(condaPath, sdkHomePath)
+      }
+      else {
+        logger<PyVirtualEnvTerminalCustomizer>().warn("Can't find $condaPath, will not activate conda")
+        condaActivationCommand = PyTerminalBundle.message("powershell.conda.not.activated", "conda")
+      }
+      return arrayOf("powershell.exe", "-NoExit", "-Command", condaActivationCommand)
     }
 
     // Activate convenient virtualenv
     val virtualEnvProfile = sdkHomePath.parent.findChild("activate.ps1") ?: return null
     return if (virtualEnvProfile.exists()) arrayOf("powershell.exe", "-NoExit", "-File", virtualEnvProfile.path) else null
+  }
+
+  /**
+   *``conda init`` installs conda activation hook into user profile
+   *  We run this hook manually because we can't ask user to install hook and restart terminal
+   *  In case of failure we ask user to run "conda init" manually
+   */
+  private fun getCondaActivationCommand(condaPath: Path, sdkHomePath: VirtualFile): String {
+    // ' are in "Write-Host"
+    val errorMessage = PyTerminalBundle.message("powershell.conda.not.activated", condaPath).replace('\'', '"')
+
+
+    // No need to escape path: conda can't have spaces
+    return """
+        $condaPath shell.powershell hook | Out-String | Invoke-Expression ; 
+        try { conda activate ${sdkHomePath.parent.path} } catch { Write-Host('$errorMessage') }
+        """.trim()
   }
 
   override fun customizeCommandAndEnvironment(project: Project,
