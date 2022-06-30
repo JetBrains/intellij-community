@@ -67,7 +67,7 @@ private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 // for non-technical reasons this method cannot return CompletableFuture
 @OptIn(DelicateCoroutinesApi::class)
 fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
-  val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
+  val initAppActivity = startupStart!!.endAndStart(Activities.INIT_APP)
 
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
   GlobalScope.launch(errorHandler) {
@@ -222,7 +222,7 @@ private suspend fun prepareStart(app: ApplicationImpl, initAppActivity: Activity
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
     }
 
-    StartupUtil.getServerFuture().asDeferred().await()
+    getServerFuture().asDeferred().await()
   }
 
   coroutineScope {
@@ -370,14 +370,14 @@ fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
 }
 
 private fun addActivateAndWindowsCliListeners() {
-  StartupUtil.addExternalInstanceListener { rawArgs ->
+  addExternalInstanceListener { rawArgs ->
     LOG.info("External instance command received")
     val (args, currentDirectory) = if (rawArgs.isEmpty()) emptyList<String>() to null else rawArgs.subList(1, rawArgs.size) to rawArgs[0]
     val result = handleExternalCommand(args, currentDirectory)
     result.future
   }
 
-  StartupUtil.LISTENER = BiFunction { currentDirectory, args ->
+  EXTERNAL_LISTENER = BiFunction { currentDirectory, args ->
     LOG.info("External Windows command received")
     if (args.isEmpty()) {
       return@BiFunction 0
@@ -388,8 +388,8 @@ private fun addActivateAndWindowsCliListeners() {
 
   ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
-      StartupUtil.addExternalInstanceListener { CliResult.error(Main.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
-      StartupUtil.LISTENER = BiFunction { _, _ -> Main.ACTIVATE_DISPOSING }
+      addExternalInstanceListener { CliResult.error(Main.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
+      EXTERNAL_LISTENER = BiFunction { _, _ -> Main.ACTIVATE_DISPOSING }
     }
   })
 }

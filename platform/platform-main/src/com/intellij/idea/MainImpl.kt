@@ -1,22 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.idea;
+package com.intellij.idea
 
-import com.intellij.util.PlatformUtils;
-import kotlinx.coroutines.Deferred;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.PlatformUtils
+import kotlinx.coroutines.Deferred
+import java.util.concurrent.CompletableFuture
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
-@SuppressWarnings("UnusedDeclaration")
-public final class MainImpl implements StartupUtil.AppStarter {
-  public MainImpl() {
-    PlatformUtils.setDefaultPrefixForCE();
+class MainImpl : AppStarter {
+  init {
+    PlatformUtils.setDefaultPrefixForCE()
   }
 
-  @Override
-  public @NotNull CompletableFuture<?> start(@NotNull List<String> args, @NotNull Deferred<Object> prepareUiFuture) {
-    ApplicationLoader.initApplication(args, prepareUiFuture);
-    return CompletableFuture.completedFuture(null);
+  override fun start(args: List<String>, prepareUiFuture: Deferred<Any>): CompletableFuture<*> {
+    initApplication(args, prepareUiFuture)
+    return CompletableFuture.completedFuture(null)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
@@ -125,7 +125,7 @@ public final class SocketLock {
     return myBuiltinServerFuture;
   }
 
-  public @NotNull Map.Entry<ActivationStatus, CliResult> lockAndTryActivate(@NotNull String @NotNull [] args) throws Exception {
+  public @NotNull Map.Entry<@NotNull ActivationStatus, @Nullable CliResult> lockAndTryActivate(@NotNull String @NotNull [] args) throws Exception {
     log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
     lockPortFiles();

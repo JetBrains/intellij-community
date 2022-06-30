@@ -188,7 +188,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
     AppExecutorUtil.getAppExecutorService().execute(() -> {
       try {
-        if (StartupUtil.getShellEnvLoadingFuture().get() == Boolean.FALSE) {
+        if (StartupUtil.getShellEnvLoadFuture().get() == Boolean.FALSE) {
           NotificationAction action = NotificationAction.createSimpleExpiring(
             IdeBundle.message("shell.env.loading.learn.more"), () -> BrowserUtil.browse("https://jb.gg/shell-env"));
           String appName = ApplicationNamesInfo.getInstance().getFullProductName(), shell = System.getenv("SHELL");

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
-import com.intellij.idea.StartupUtil
+import com.intellij.idea.getServerFuture
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -67,11 +66,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
         return false
       }
 
-      val port = StringUtil.parseInt(authority.substring(portIndex + 1), -1)
-      if (port == -1) {
-        return false
-      }
-
+      val port = authority.substring(portIndex + 1).toIntOrNull() ?: return false
       val options = BuiltInServerOptions.getInstance()
       val idePort = getInstance().port
       if (options.builtInServerPort != port && idePort != port) {
@@ -123,7 +118,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       }
     }
 
-    return StartupUtil.getServerFuture()
+    return getServerFuture()
       .thenAcceptAsync(Consumer { mainServer ->
         try {
           server = when (mainServer) {

@@ -15,7 +15,7 @@ import com.intellij.ide.impl.HeadlessDataManager
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.structureView.StructureViewFactory
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl
-import com.intellij.idea.StartupUtil
+import com.intellij.idea.Java11ShimImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.Application
@@ -70,7 +70,7 @@ import javax.swing.Timer
 class TestApplicationManager private constructor() {
   companion object {
     init {
-      Java11Shim.INSTANCE = StartupUtil.Java11ShimImpl()
+      Java11Shim.INSTANCE = Java11ShimImpl()
       ExtensionNotApplicableException.useFactoryWithStacktrace()
     }
 
