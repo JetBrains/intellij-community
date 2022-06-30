@@ -748,5 +748,6 @@ class QuickFixRegistrar : QuickFixContributor {
         PROGRESSIONS_CHANGING_RESOLVE.registerFactory(OverloadResolutionChangeFix)
 
         EQUALITY_NOT_APPLICABLE.registerFactory(EqualityNotApplicableFactory)
+        INCOMPATIBLE_TYPES.registerFactory(IncompatibleTypesFactory)
     }
 }
