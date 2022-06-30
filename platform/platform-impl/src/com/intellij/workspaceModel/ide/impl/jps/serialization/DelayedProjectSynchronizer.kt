@@ -1,15 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.CompletableFuture
 import kotlin.system.measureTimeMillis
 
 /**
@@ -19,9 +23,25 @@ import kotlin.system.measureTimeMillis
  * of workspace model with project model files (iml/xml).
  */
 class DelayedProjectSynchronizer : StartupActivity.Background {
+  @OptIn(DelicateCoroutinesApi::class)
   override fun runActivity(project: Project) {
-    val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project) ?: return
-    if ((WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
+    // todo remove GlobalScope usage, platform should support suspend activities
+    GlobalScope.launch {
+      if (project.isDisposed) {
+        return@launch
+      }
+
+      doSync(project)
+    }
+  }
+
+  companion object {
+    private suspend fun doSync(project: Project) {
+      val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project) ?: return
+      if (!(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
+        return
+      }
+
       val loadingTime = measureTimeMillis {
         projectModelSynchronizer.loadProject(project)
         project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
@@ -30,17 +50,14 @@ class DelayedProjectSynchronizer : StartupActivity.Background {
         "Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}"
       )
     }
-  }
 
-  companion object {
     @TestOnly
-    fun backgroundPostStartupProjectLoading(project: Project) {
+    suspend fun backgroundPostStartupProjectLoading(project: Project) {
       // Due to making [DelayedProjectSynchronizer] as backgroundPostStartupActivity we should have this hack because
       // background activity doesn't start in the tests
-      val startupManager = StartupManager.getInstance(project)
-      while (!startupManager.postStartupActivityPassed()) { }
-      val extensionPointName = ExtensionPointName<StartupActivity.Background>("com.intellij.backgroundPostStartupActivity")
-      extensionPointName.extensionList.filterIsInstance<DelayedProjectSynchronizer>().single().runActivity(project)
+      val allActivitiesPassedFuture = StartupManagerEx.getInstanceEx(project).allActivitiesPassedFuture as CompletableFuture<*>
+      allActivitiesPassedFuture.asDeferred().join()
+      doSync(project)
     }
   }
 }

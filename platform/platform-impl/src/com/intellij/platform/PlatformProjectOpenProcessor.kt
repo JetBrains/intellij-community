@@ -7,11 +7,13 @@ import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -20,15 +22,19 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.CancellationException
 
 private val LOG = logger<PlatformProjectOpenProcessor>()
 private val EP_NAME = ExtensionPointName<DirectoryProjectConfigurator>("com.intellij.directoryProjectConfigurator")
@@ -192,6 +198,49 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return module
     }
 
+    suspend fun runDirectoryProjectConfiguratorsV2(baseDir: Path, project: Project, newProject: Boolean): Module {
+      project.putUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR, true)
+
+      val moduleRef = Ref<Module>()
+
+      val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(baseDir)!!
+      withContext(Dispatchers.EDT) {
+        virtualFile.refresh(false, false)
+      }
+
+      for (configurator in EP_NAME.iterable) {
+        fun task() {
+          configurator.configureProject(project, virtualFile, moduleRef, newProject)
+        }
+
+        try {
+          if (configurator.isEdtRequired) {
+            withContext(Dispatchers.EDT) {
+              task()
+            }
+          }
+          else {
+            task()
+          }
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+        }
+      }
+
+      val module = moduleRef.get()
+      if (module == null) {
+        LOG.error("No extension configured a module for $baseDir; extensions = ${EP_NAME.extensionList}")
+      }
+      return module
+    }
+
     @JvmStatic
     fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
       return ProjectAttachProcessor.EP_NAME.findFirstSafe { processor -> processor.attachToProject(project, projectDir, callback) } != null
@@ -238,8 +287,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
   }
 
-  @Suppress("HardCodedStringLiteral")
-  override fun getName() = "text editor"
+  override val name: String
+    get() = "text editor"
 }
 
 private fun openFileFromCommandLine(project: Project, file: Path, line: Int, column: Int) {

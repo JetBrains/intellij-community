@@ -89,7 +89,6 @@ internal class ModuleBridgeLoaderService(private val project: Project) {
       WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
     }
 
-
     companion object {
       private val LOG = logger<ModuleBridgeProjectServiceInitializedListener>()
     }

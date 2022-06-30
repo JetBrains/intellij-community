@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -10,7 +10,7 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -36,6 +36,8 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -199,19 +201,26 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
   }
 
-  fun applyLoadedStorage(storeToEntitySources: Pair<EntityStorage, List<EntitySource>>?) {
-    if (storeToEntitySources == null) return
-    WriteAction.runAndWait<RuntimeException> {
-      if (project.isDisposed) return@runAndWait
-      childActivity = childActivity?.endAndStart("applying loaded changes")
-      WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-        updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
-                                  || it is DummyParentEntitySource }, storeToEntitySources.first)
-        childActivity = childActivity?.endAndStart("unloaded modules loading")
-        runAutomaticModuleUnloader(updater)
+  suspend fun applyLoadedStorage(storeToEntitySources: Pair<EntityStorage, List<EntitySource>>?) {
+    if (storeToEntitySources == null) {
+      return
+    }
+
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
+        if (project.isDisposed) return@runWriteAction
+        childActivity = childActivity?.endAndStart("applying loaded changes")
+        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+          updater.replaceBySource({
+                                    it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
+                                    || it is DummyParentEntitySource
+                                  }, storeToEntitySources.first)
+          childActivity = childActivity?.endAndStart("unloaded modules loading")
+          runAutomaticModuleUnloader(updater)
+        }
+        childActivity?.end()
+        childActivity = null
       }
-      childActivity?.end()
-      childActivity = null
     }
     sourcesToSave.clear()
     sourcesToSave.addAll(storeToEntitySources.second)
@@ -221,7 +230,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     activity = null
   }
 
-  fun loadProject(project: Project): Unit = applyLoadedStorage(loadProjectToEmptyStorage(project))
+  suspend fun loadProject(project: Project) {
+    applyLoadedStorage(loadProjectToEmptyStorage(project))
+  }
 
   private fun runAutomaticModuleUnloader(storage: EntityStorage) {
     ModuleManagerEx.getInstanceEx(project).unloadNewlyAddedModulesIfPossible(storage)

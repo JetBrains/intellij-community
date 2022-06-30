@@ -14,9 +14,10 @@ import com.intellij.ide.impl.OpenResult.Companion.failure
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -44,11 +45,12 @@ import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.*
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.basicAttributesIfExists
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Frame
 import java.awt.KeyboardFocusManager
@@ -68,11 +70,11 @@ object ProjectUtil {
   private const val PROJECTS_DIR = "projects"
   private const val PROPERTY_PROJECT_PATH = "%s.project.path"
 
-  @ApiStatus.Internal
+  @Internal
   @JvmField
   val PREVENT_IPR_LOOKUP_KEY = Key.create<Boolean>("project.util.prevent.ipr.lookup")
 
-  @ApiStatus.Internal
+  @Internal
   @JvmField
   val PROCESSOR_CHOOSER_KEY = Key.create<Function<List<ProjectOpenProcessor>, ProjectOpenProcessor>>("project.util.processor.chooser")
 
@@ -152,8 +154,8 @@ object ProjectUtil {
       }
     }
 
-    val lazyVirtualFile = NullableLazyValue.lazyNullable { ProjectUtilCore.getFileAndRefresh(file) }
-    if (!confirmOpeningAndSetProjectTrustedStateIfNeeded(file)) {
+    val lazyVirtualFile = lazy { ProjectUtilCore.getFileAndRefresh(file) }
+    if (!runUnderModalProgressIfIsEdt { confirmOpeningAndSetProjectTrustedStateIfNeeded(file) }) {
       return cancel()
     }
 
@@ -217,17 +219,17 @@ object ProjectUtil {
   }
 
   private fun openResult(project: Project?, alternative: OpenResult): OpenResult {
-    return if (project != null) OpenResult.Success(project) else alternative
+    return if (project == null) alternative else OpenResult.Success(project)
   }
 
-  suspend fun openOrImportAsync(file: Path, options: OpenProjectTask): Project? {
+  suspend fun openOrImportAsync(file: Path, options: OpenProjectTask = OpenProjectTask()): Project? {
     if (!options.forceOpenInNewFrame) {
-      val existing = findAndFocusExistingProjectForPath(file)
-      if (existing != null) {
-        return existing
+      findAndFocusExistingProjectForPath(file)?.let {
+        return it
       }
     }
-    val lazyVirtualFile = NullableLazyValue.lazyNullable {
+
+    val lazyVirtualFile = lazy {
       ProjectUtilCore.getFileAndRefresh(file)
     }
     for (provider in ProjectOpenProcessor.EXTENSION_POINT_NAME.iterable) {
@@ -245,7 +247,8 @@ object ProjectUtil {
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
       return ProjectManagerEx.getInstanceEx().openProjectAsync(file, options.withRunConfigurators())
     }
-    if (PREVENT_IPR_LOOKUP_KEY.get(options) != java.lang.Boolean.TRUE && Files.isDirectory(file)) {
+
+    if (PREVENT_IPR_LOOKUP_KEY.get(options) != true && Files.isDirectory(file)) {
       try {
         Files.newDirectoryStream(file).use { directoryStream ->
           for (child in directoryStream) {
@@ -266,13 +269,18 @@ object ProjectUtil {
 
     val project: Project?
     if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
-      project = ProjectManagerEx.getInstanceEx().openProjectAsync(file,
-                                                                  options.asNewProject().withRunConfigurators().withBeforeOpenCallback { p: Project ->
-                                                                    p.putUserData(
-                                                                      PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR,
-                                                                      java.lang.Boolean.TRUE)
-                                                                    true
-                                                                  })
+      project = ProjectManagerEx.getInstanceEx().openProjectAsync(
+        projectStoreBaseDir = file,
+        options = options.copy(
+          isNewProject = true,
+          useDefaultProjectAsTemplate = true,
+          runConfigurators = true,
+          beforeOpen = {
+            it.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+            true
+          },
+        )
+      )
     }
     else {
       val virtualFile = lazyVirtualFile.value ?: return null
@@ -281,7 +289,7 @@ object ProjectUtil {
     return postProcess(project)
   }
 
-  private fun computeProcessors(file: Path, lazyVirtualFile: NullableLazyValue<VirtualFile?>): MutableList<ProjectOpenProcessor> {
+  private fun computeProcessors(file: Path, lazyVirtualFile: Lazy<VirtualFile?>): MutableList<ProjectOpenProcessor> {
     val processors = ArrayList<ProjectOpenProcessor>()
     ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe { processor: ProjectOpenProcessor ->
       if (processor is PlatformProjectOpenProcessor) {
@@ -320,7 +328,7 @@ object ProjectUtil {
       processor = processors[0]
     }
     else {
-      processors.removeIf { it: ProjectOpenProcessor? -> it is PlatformProjectOpenProcessor }
+      processors.removeIf { it is PlatformProjectOpenProcessor }
       if (processors.size == 1) {
         processor = processors.first()
       }
@@ -359,26 +367,27 @@ object ProjectUtil {
         processors.first()
       }
       else -> {
-        processors.removeIf { it: ProjectOpenProcessor? -> it is PlatformProjectOpenProcessor }
-        var chooser: Function<List<ProjectOpenProcessor>, ProjectOpenProcessor>
+        processors.removeIf { it is PlatformProjectOpenProcessor }
         if (processors.size == 1) {
           processors.first()
         }
-        else if (PROCESSOR_CHOOSER_KEY.get(options).also { chooser = it } != null) {
-          LOG.info("options.openProcessorChooser will handle the open processor dilemma")
-          chooser.apply(processors)
-        }
         else {
-          withContext(Dispatchers.EDT) {
-            SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile)
-          } ?: return null
+          val chooser = PROCESSOR_CHOOSER_KEY.get(options)
+          if (chooser == null) {
+            withContext(Dispatchers.EDT) {
+              SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile)
+            } ?: return null
+          }
+          else {
+            LOG.info("options.openProcessorChooser will handle the open processor dilemma")
+            chooser.apply(processors)
+          }
         }
       }
     }
 
-    val future = processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
-    if (future != null) {
-      return future.asDeferred().await()
+    processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)?.let {
+      return it.orElse(null)
     }
 
     return withContext(Dispatchers.EDT) {
@@ -787,7 +796,7 @@ object ProjectUtil {
     }.asCompletableFuture()
   }
 
-  @ApiStatus.Internal
+  @Internal
   @VisibleForTesting
   suspend fun openExistingDir(file: Path, currentProject: Project?): Project? {
     val canAttach = ProjectAttachProcessor.canAttachToProject()
@@ -815,4 +824,28 @@ object ProjectUtil {
   fun isValidProjectPath(file: Path): Boolean {
     return ProjectUtilCore.isValidProjectPath(file)
   }
+}
+
+@Internal
+// inline is not used - easier debug
+fun <T> runUnderModalProgressIfIsEdt(task: suspend () -> T): T {
+  if (!ApplicationManager.getApplication().isDispatchThread) {
+    return runBlocking { task() }
+  }
+
+  logger<ProjectOpenProcessor>().warn("Do not execute in EDT")
+  return runBlockingUnderModalProgress(task)
+}
+
+@Internal
+@RequiresEdt
+fun <T> runBlockingUnderModalProgress(task: suspend () -> T): T {
+  return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
+    val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
+    runBlockingCancellable {
+      withContext(modalityState.asContextElement()) {
+        task()
+      }
+    }
+  }, "", true, null)
 }

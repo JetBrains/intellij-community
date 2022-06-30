@@ -1,19 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.facet.mock.AnotherMockFacetType
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.OpenProjectTaskBuilder
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
@@ -22,12 +25,16 @@ import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
-import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.apache.commons.lang.RandomStringUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.*
@@ -73,7 +80,7 @@ class DelayedProjectSynchronizerTest {
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     saveToCache(projectData.storage)
 
-    val project = loadProject(projectData.projectDir)
+    val project = runBlocking { loadProject(projectData.projectDir) }
 
     val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
     assertTrue(workspaceModel.loadedFromCache)
@@ -98,7 +105,7 @@ class DelayedProjectSynchronizerTest {
     saveToCache(storage)
 
     val (afterProjectFiles, _) = copyProjectFiles(projectFileAfter)
-    val project = loadProject(afterProjectFiles)
+    val project = runBlocking { loadProject(afterProjectFiles) }
 
     waitAndAssert(1_000, "xxx module isn't found") {
       "xxx" in ModuleManager.getInstance(project).modules.map { it.name }
@@ -117,12 +124,16 @@ class DelayedProjectSynchronizerTest {
     //it'll be possible to create a proper tests which prepares the cache in a separate JVM process
     JpsFileEntitySource.FileInDirectory.resetId()
 
-    val project = loadProject(projectData.projectDir)
-    runWriteActionAndWait {
-      LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("foo")
+    runBlocking {
+      val project = loadProject(projectData.projectDir)
+      withContext(Dispatchers.EDT) {
+        ApplicationManager.getApplication().runWriteAction {
+          LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("foo")
+        }
+      }
+      val storage = WorkspaceModel.getInstance(project).entityStorage.current
+      JpsProjectModelSynchronizer.getInstance(project)!!.getSerializers().saveAllEntities(storage, projectData.configLocation)
     }
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
-    JpsProjectModelSynchronizer.getInstance(project)!!.getSerializers().saveAllEntities(storage, projectData.configLocation)
     val librariesFolder = projectData.projectDir.toPath().resolve(".idea/libraries/")
     val librariesPaths = Files.list(librariesFolder).sorted().toList()
     assertEquals(4, librariesPaths.size)
@@ -206,8 +217,8 @@ class DelayedProjectSynchronizerTest {
     }
   }
 
-  private fun loadProject(projectDir: File): Project {
-    val project = PlatformTestUtil.loadAndOpenProject(projectDir.toPath(), disposableRule.disposable)
+  private suspend fun loadProject(projectDir: File): Project {
+    val project = ProjectManagerEx.getInstanceEx().openProjectAsync(projectDir.toPath(), OpenProjectTaskBuilder().build())!!
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })

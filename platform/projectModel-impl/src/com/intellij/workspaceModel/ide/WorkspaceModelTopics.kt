@@ -5,6 +5,7 @@ import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
@@ -12,6 +13,8 @@ import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.storage.VersionedStorageChange
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.*
 
 interface WorkspaceModelChangeListener : EventListener {
@@ -100,14 +103,14 @@ class WorkspaceModelTopics : Disposable {
   fun syncModuleBridge(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(MODULE_BRIDGE_INITIALIZER)
   fun syncPublisher(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(CHANGED)
 
-  fun notifyModulesAreLoaded() {
+  suspend fun notifyModulesAreLoaded() {
     val activity = StartUpMeasurer.startActivity("postponed events sending", ActivityCategory.DEFAULT)
     sendToQueue = false
 
     if (allEvents.isNotEmpty() && allEvents.any { it.events.isNotEmpty() }) {
       val activityInQueue = activity.startChild("events sending (in queue)")
       val application = ApplicationManager.getApplication()
-      application.invokeAndWait {
+      withContext(Dispatchers.EDT) {
         application.runWriteAction {
           val innerActivity = activityInQueue.endAndStart("events sending")
           allEvents.forEach { queue ->
@@ -130,7 +133,7 @@ class WorkspaceModelTopics : Disposable {
     if (allEventsForModuleBridge.isNotEmpty() && allEventsForModuleBridge.any { it.events.isNotEmpty() }) {
       val activityInQueue = activity.startChild("events sending (in queue first)")
       val application = ApplicationManager.getApplication()
-      application.invokeAndWait {
+      withContext(Dispatchers.EDT) {
         application.runWriteAction {
           val innerActivity = activityInQueue.endAndStart("events sending first")
           allEventsForModuleBridge.forEach { queue ->
@@ -175,7 +178,6 @@ class WorkspaceModelTopics : Disposable {
         originalListener.changed(event)
       }
     }
-
   }
 
   override fun dispose() {

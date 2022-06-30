@@ -379,11 +379,11 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
   }
 
-  fun <T> runWithFrameReuseEnabled(task: Supplier<T>): T {
+  fun <T> runWithFrameReuseEnabled(task: () -> T): T {
     val savedValue = frameReuseEnabled
     frameReuseEnabled = true
     try {
-      return task.get()
+      return task()
     }
     finally {
       frameReuseEnabled = savedValue

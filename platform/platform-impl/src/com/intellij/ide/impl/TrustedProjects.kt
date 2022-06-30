@@ -9,6 +9,7 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
@@ -22,6 +23,8 @@ import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
 import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Attribute
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -38,8 +41,8 @@ import kotlin.io.path.pathString
  *   or if the confirmation wasn't shown because the project trust state was already known.
  */
 @ApiStatus.Internal
-fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectFileOrDir: Path): Boolean {
-  return invokeAndWaitIfNeeded {
+suspend fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectFileOrDir: Path): Boolean {
+  return withContext(Dispatchers.EDT) {
     val projectDir = if (projectFileOrDir.isDirectory()) projectFileOrDir else projectFileOrDir.parent
     val trustedPaths = TrustedPaths.getInstance()
     val trustedState = trustedPaths.getProjectPathTrustedState(projectDir)
@@ -47,7 +50,7 @@ fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectFileOrDir: Path): Boo
       when (confirmOpeningUntrustedProject(projectDir)) {
         OpenUntrustedProjectChoice.TRUST_AND_OPEN -> trustedPaths.setProjectPathTrusted(projectDir, true)
         OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE -> trustedPaths.setProjectPathTrusted(projectDir, false)
-        OpenUntrustedProjectChoice.CANCEL -> return@invokeAndWaitIfNeeded false
+        OpenUntrustedProjectChoice.CANCEL -> return@withContext false
       }
     }
     true

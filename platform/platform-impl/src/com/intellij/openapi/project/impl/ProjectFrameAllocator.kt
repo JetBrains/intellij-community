@@ -1,6 +1,4 @@
-/*******************************************************************************
- * Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
- ******************************************************************************/
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.saveSettings
@@ -45,7 +43,10 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
     if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
       saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
     }
-    return task()
+    // we have to open project in a write-safe context
+    return withModalProgressIndicator(owner = ModalTaskOwner.guess(), title = "") {
+      task()
+    }
   }
 
   /**

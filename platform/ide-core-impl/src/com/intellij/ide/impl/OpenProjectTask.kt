@@ -42,7 +42,7 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                            val preloadServices: Boolean = true,
                            val beforeInit: ((Project) -> Unit)? = null,
                            /** Ignored if project is explicitly set. */
-                           val beforeOpen: ((Project) -> Boolean)? = null,
+                           val beforeOpen: (suspend (Project) -> Boolean)? = null,
                            val preparedToOpen: ((Module) -> Unit)? = null) : UserDataHolder {
 
   private val userData = ConcurrentHashMap<Key<*>, Any>()
