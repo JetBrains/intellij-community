@@ -41,16 +41,19 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
     }
 
     private fun getPathNode(nodePath: StaticFilePath): ChangesBrowserNode<*>? {
-      PATH_NODE_BUILDER.getRequired(subtreeRoot).apply(nodePath)?.let {
-        it.markAsHelperNode()
-
-        val grandParent = GRAND_PARENT_CANDIDATE.get(subtreeRoot) ?: getParentNodeRecursive(nodePath)
-
-        model.insertNodeInto(it, grandParent, grandParent.childCount)
-        DIRECTORY_CACHE.getValue(cachingRoot)[nodePath.key] = it
-        return it
+      return createPathNode(nodePath)?.let { pathNode ->
+        val parentNode = GRAND_PARENT_CANDIDATE.get(subtreeRoot) ?: getParentNodeRecursive(nodePath)
+        model.insertNodeInto(pathNode, parentNode, parentNode.childCount)
+        pathNode
       }
-      return null
+    }
+
+    private fun createPathNode(nodePath: StaticFilePath): ChangesBrowserNode<*>? {
+      val pathNode = PATH_NODE_BUILDER.getRequired(subtreeRoot).apply(nodePath) ?: return null
+      pathNode.markAsHelperNode()
+
+      DIRECTORY_CACHE.getValue(cachingRoot)[nodePath.key] = pathNode
+      return pathNode
     }
   }
 
