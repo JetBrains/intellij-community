@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -44,7 +44,12 @@ import java.awt.event.MouseEvent;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * @author Gabriel Pizarro
+ */
 public final class ActionMenu extends JBMenu {
+  private static final String uiClassID = "ActionMenuUI";
+
   private final String myPlace;
   private final DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
@@ -116,8 +121,18 @@ public final class ActionMenu extends JBMenu {
   }
 
   @Override
+  public String getUIClassID() {
+    return uiClassID;
+  }
+
+  @Override
   public void updateUI() {
-    setUI(IdeaMenuUI.createUI(this));
+    if (UIManager.get(getUIClassID()) != null) {
+      setUI(UIManager.getUI(this));
+    } else {
+      setUI(IdeaMenuUI.createUI(this));
+    }
+
     setFont(UIUtil.getMenuFont());
 
     JPopupMenu popupMenu = getPopupMenu();

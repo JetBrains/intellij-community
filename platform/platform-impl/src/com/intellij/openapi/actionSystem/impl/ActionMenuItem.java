@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -35,7 +35,11 @@ import java.awt.event.KeyEvent;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
+/**
+ * @author Gabriel Pizarro
+ */
 public class ActionMenuItem extends JBCheckBoxMenuItem {
+  private static final String uiClassID = "ActionMenuItemUI";
   static final Icon EMPTY_ICON = EmptyIcon.create(16, 1);
 
   private final ActionRef<AnAction> myAction;
@@ -169,8 +173,17 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   @Override
+  public String getUIClassID() {
+    return uiClassID;
+  }
+
+  @Override
   public void updateUI() {
-    setUI(BegMenuItemUI.createUI(this));
+    if (UIManager.get(getUIClassID()) != null) {
+      setUI(UIManager.getUI(this));
+    } else {
+      setUI(BegMenuItemUI.createUI(this));
+    }
   }
 
   /**
