@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeWithContentNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.intentions.callExpression
+import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.idea.isMainFunction
 import org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureConfiguration
@@ -189,7 +190,7 @@ fun isUsageOfDescriptor(descriptor: DeclarationDescriptor, element: KtElement, c
     if (element is KtClassLiteralExpression) {
         val typeParameter = element.receiverExpression?.mainReference?.resolve() as? KtTypeParameter
         val typeParameterDescriptor = context[BindingContext.TYPE_PARAMETER, typeParameter]
-        if (descriptor.safeAs<CallableDescriptor>()?.typeParameters?.any { it == typeParameterDescriptor } == true) return true
+        if (descriptor.safeAs<CallableDescriptor>()?.receiverType()?.constructor == typeParameterDescriptor?.typeConstructor) return true
     }
 
     return when (element) {
