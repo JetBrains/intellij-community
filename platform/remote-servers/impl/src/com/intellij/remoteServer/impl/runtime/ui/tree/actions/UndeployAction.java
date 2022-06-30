@@ -1,5 +1,6 @@
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
@@ -26,4 +27,10 @@ public class UndeployAction extends DumbAwareAction {
       node.undeploy();
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
 }
