@@ -20,16 +20,16 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
 
     fun getParentNodeRecursive(nodePath: StaticFilePath): ChangesBrowserNode<*> {
       generateSequence(nodePath.parent) { it.parent }.forEach { parentPath ->
-        DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]?.let {
-          if (grandParent == it) {
+        val cachedParent = DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]
+        if (cachedParent != null) {
+          if (grandParent == cachedParent) {
             createPathNode(parentPath)?.let { pathNode ->
-              val parentNode = grandParent
-              model.insertNodeInto(pathNode, parentNode, parentNode.childCount)
+              model.insertNodeInto(pathNode, grandParent, grandParent.childCount)
               return pathNode
             }
             return grandParent
           }
-          return it
+          return cachedParent
         }
 
         createPathNode(parentPath)?.let { pathNode ->
