@@ -210,7 +210,7 @@ public class PluginManagerTest {
 
     Path configPath = tempDir.getRoot().toPath().resolve("config-link");
     IoTestUtil.createSymbolicLink(configPath, tempDir.newDirectory("config-target").toPath());
-    DisabledPluginsState.saveDisabledPlugins(configPath, "a");
+    DisabledPluginsState.saveDisabledPluginsAndInvalidate(configPath, "a");
     assertThat(configPath.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator());
   }
 

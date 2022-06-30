@@ -46,6 +46,7 @@ import java.util.stream.StreamSupport;
  *
  * @implNote Prefer to use only JDK classes. Any post start-up functionality should be placed in {@link PluginManager} class.
  */
+@SuppressWarnings("SSBasedInspection")
 public final class PluginManagerCore {
   public static final @NonNls String META_INF = "META-INF/";
 
@@ -262,16 +263,6 @@ public final class PluginManagerCore {
       getLogger().error("Failed to read " + brokenPluginsStorage, e);
     }
     return null;
-  }
-
-  @ApiStatus.Internal
-  public static void writePluginsList(@NotNull Collection<PluginId> ids, @NotNull Writer writer) throws IOException {
-    List<PluginId> sortedIds = new ArrayList<>(ids);
-    sortedIds.sort(null);
-    for (PluginId id : sortedIds) {
-      writer.write(id.getIdString());
-      writer.write('\n');
-    }
   }
 
   @ApiStatus.Internal
@@ -906,7 +897,7 @@ public final class PluginManagerCore {
     else if (!ask3rdPartyPluginsPrivacyConsent(aliens)) {
       getLogger().info("3rd-party plugin privacy note declined; disabling plugins");
       aliens.forEach(descriptor -> descriptor.setEnabled(false));
-      PluginEnabler.HEADLESS.disableById(aliens.stream().map(descriptor -> descriptor.getPluginId()).collect(Collectors.toSet()));
+      PluginEnabler.HEADLESS.disable(aliens);
       thirdPartyPluginsNoteAccepted = Boolean.FALSE;
     }
     else {
@@ -922,17 +913,15 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  static synchronized void write3rdPartyPlugins(@NotNull Collection<? extends IdeaPluginDescriptor> aliens) {
-    Path file = Paths.get(PathManager.getConfigPath(), THIRD_PARTY_PLUGINS_FILE);
+  static synchronized void write3rdPartyPlugins(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+    Path path = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE);
     try {
-      NioFiles.createDirectories(file.getParent());
-      try (BufferedWriter writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
-        //noinspection SSBasedInspection
-        writePluginsList(aliens.stream().map(PluginDescriptor::getPluginId).collect(Collectors.toList()), writer);
-      }
+      writePluginIdsToFile(path,
+                           descriptors.stream().map(IdeaPluginDescriptor::getPluginId),
+                           StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
     }
     catch (IOException e) {
-      getLogger().error(file.toString(), e);
+      getLogger().error(path.toString(), e);
     }
   }
 
@@ -950,6 +939,34 @@ public final class PluginManagerCore {
     }
 
     return Collections.emptyList();
+  }
+
+  @ApiStatus.Internal
+  public synchronized static void writePluginIdsToFile(@NotNull Path path,
+                                                       @NotNull Set<PluginId> pluginIds,
+                                                       OpenOption... openOptions) throws IOException {
+    writePluginIdsToFile(path,
+                         pluginIds.stream(),
+                         openOptions);
+  }
+
+  @ApiStatus.Internal
+  public synchronized static void writePluginIdsToFile(@NotNull Path path,
+                                                       @NotNull Stream<PluginId> pluginIds,
+                                                       OpenOption... openOptions) throws IOException {
+    writePluginIdsToFile(path,
+                         pluginIds.map(PluginId::getIdString).collect(Collectors.toList()),
+                         openOptions);
+  }
+
+  @VisibleForTesting
+  public synchronized static void writePluginIdsToFile(@NotNull Path path,
+                                                       @NotNull Collection<String> pluginIds,
+                                                       OpenOption... openOptions) throws IOException {
+    NioFiles.createDirectories(path.getParent());
+    Files.write(path,
+                new TreeSet<>(pluginIds),
+                openOptions);
   }
 
   private static boolean ask3rdPartyPluginsPrivacyConsent(Iterable<? extends IdeaPluginDescriptor> descriptors) {

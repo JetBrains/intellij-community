@@ -7,15 +7,12 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.io.NioFiles;
 import org.jetbrains.annotations.*;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -56,7 +53,7 @@ public final class DisabledPluginsState implements PluginEnabler.Headless {
   public static @NotNull Set<PluginId> loadDisabledPlugins() {
     Set<PluginId> disabledPlugins = new LinkedHashSet<>();
 
-    Path file = Paths.get(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
+    Path file = getDefaultFilePath();
     if (!Files.isRegularFile(file)) {
       return disabledPlugins;
     }
@@ -95,7 +92,7 @@ public final class DisabledPluginsState implements PluginEnabler.Headless {
     }
     finally {
       if (updateFile) {
-        trySaveDisabledPlugins(file, disabledPlugins, false);
+        trySaveDisabledPlugins(disabledPlugins, false);
       }
     }
 
@@ -161,53 +158,49 @@ public final class DisabledPluginsState implements PluginEnabler.Headless {
                       disabled.addAll(plugins);
 
     getLogger().info(joinedPluginIds(plugins, enabled));
-    return changed && trySaveDisabledPlugins(disabled);
+    return changed && saveDisabledPluginsAndInvalidate(disabled);
   }
 
-  public static boolean trySaveDisabledPlugins(@NotNull Collection<PluginId> pluginIds) {
-    return trySaveDisabledPlugins(PathManager.getConfigDir().resolve(DISABLED_PLUGINS_FILENAME), pluginIds, true);
+  public static boolean saveDisabledPluginsAndInvalidate(@NotNull Set<PluginId> pluginIds) {
+    return trySaveDisabledPlugins(pluginIds,
+                                  true);
   }
 
-  private static boolean trySaveDisabledPlugins(@NotNull Path file,
-                                                @NotNull Collection<PluginId> pluginIds,
+  private static boolean trySaveDisabledPlugins(@NotNull Set<PluginId> pluginIds,
                                                 boolean invalidate) {
     try {
-      saveDisabledPlugins(file, pluginIds, invalidate);
-      return true;
+      PluginManagerCore.writePluginIdsToFile(getDefaultFilePath(),
+                                             pluginIds);
     }
     catch (IOException e) {
       getLogger().warn("Unable to save disabled plugins list", e);
       return false;
     }
-  }
 
-  @TestOnly
-  public static void saveDisabledPlugins(@NotNull Path configDir, String... ids) throws IOException {
-    List<PluginId> pluginIds = new ArrayList<>();
-    for (String id : ids) {
-      pluginIds.add(PluginId.getId(id));
-    }
-    saveDisabledPlugins(configDir.resolve(DISABLED_PLUGINS_FILENAME), pluginIds, true);
-  }
-
-  private static void saveDisabledPlugins(@NotNull Path file,
-                                          @NotNull Collection<PluginId> pluginIds,
-                                          boolean invalidate) throws IOException {
-    savePluginsList(pluginIds, file);
     if (invalidate) {
       invalidate();
     }
+
     for (Runnable listener : ourDisabledPluginListeners) {
       listener.run();
     }
+
+    return true;
   }
 
-  public static void savePluginsList(@NotNull Collection<PluginId> ids, @NotNull Path file) throws IOException {
-    NioFiles.createDirectories(file.getParent());
-    try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-      PluginManagerCore.writePluginsList(ids, writer);
-    }
+  @TestOnly
+  public static void saveDisabledPluginsAndInvalidate(@NotNull Path configPath,
+                                                      String... pluginIds) throws IOException {
+    PluginManagerCore.writePluginIdsToFile(configPath.resolve(DISABLED_PLUGINS_FILENAME),
+                                           Arrays.asList(pluginIds));
+    invalidate();
   }
+
+  private static @NotNull Path getDefaultFilePath() {
+    return PathManager.getConfigDir()
+      .resolve(DISABLED_PLUGINS_FILENAME);
+  }
+
 
   private static @NotNull Logger getLogger() {
     // do not use class reference here
