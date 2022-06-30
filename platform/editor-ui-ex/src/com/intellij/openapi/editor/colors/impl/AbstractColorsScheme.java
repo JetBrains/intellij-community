@@ -768,7 +768,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       ModifiableFontPreferences editablePrefs = new FontPreferencesImpl();
       myFontPreferences.copyTo(editablePrefs);
       myFontPreferences = editablePrefs;
-      ((FontPreferencesImpl)myFontPreferences).setChangeListener(() -> initFonts());
+      ((FontPreferencesImpl)myFontPreferences).addChangeListener((source) -> initFonts());
     }
     return (ModifiableFontPreferences)myFontPreferences;
   }

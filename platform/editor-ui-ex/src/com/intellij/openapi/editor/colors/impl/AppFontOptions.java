@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -66,7 +66,7 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
   public void loadState(@NotNull F state) {
     copyState(state, myFontPreferences);
     myFontPrefVersion = state.VERSION;
-    myFontPreferences.setChangeListener(() -> EditorFontCache.getInstance().reset());
+    myFontPreferences.addChangeListener((source) -> EditorFontCache.getInstance().reset());
   }
 
   protected abstract F createFontState(@NotNull FontPreferences fontPreferences);
