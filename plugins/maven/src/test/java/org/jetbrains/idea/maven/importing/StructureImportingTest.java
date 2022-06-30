@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Assume;
@@ -62,6 +63,57 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     }
     else {
       assertTrue(ModuleRootManager.getInstance(getModule("project")).isSdkInherited());
+    }
+  }
+
+  @Test
+  public void testImportWithAlreadyExistingModules() throws IOException {
+    createModule("m1");
+    createModule("m2");
+    createModule("m3");
+
+    PsiTestUtil.addSourceRoot(getModule("m1"), createProjectSubFile("m1/user-sources"));
+    PsiTestUtil.addSourceRoot(getModule("m2"), createProjectSubFile("m2/user-sources"));
+    PsiTestUtil.addSourceRoot(getModule("m3"), createProjectSubFile("m3/user-sources"));
+
+    assertModules("m1", "m2", "m3");
+    assertSources("m1", "user-sources");
+    assertSources("m2", "user-sources");
+    assertSources("m3", "user-sources");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>");
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    createProjectSubDirs("m1/src/main/java",
+                         "m2/src/main/java",
+                         "m3/src/main/java");
+
+    importProject();
+    assertModules("project", "m1", "m2", "m3");
+
+    if (supportsLegacyKeepingFoldersFromPreviousImport()) {
+      assertSources("m1", "user-sources", "src/main/java");
+      assertSources("m2", "user-sources", "src/main/java");
+      assertSources("m3", "user-sources");
+    }
+    else {
+      assertSources("m1", "src/main/java");
+      assertSources("m2", "src/main/java");
+      assertSources("m3", "user-sources");
     }
   }
 

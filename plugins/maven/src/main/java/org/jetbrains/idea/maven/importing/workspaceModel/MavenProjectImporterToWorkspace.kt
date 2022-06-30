@@ -10,8 +10,10 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModelUtil
@@ -137,8 +139,16 @@ class MavenProjectImporterToWorkspace(
     val importModuleData = mutableListOf<AppliedModuleData>()
     MavenUtil.invokeAndWaitWriteAction(myProject) {
       WorkspaceModel.getInstance(myProject).updateProjectModel { current ->
-        current.replaceBySource(
-          { (it as? JpsImportedEntitySource)?.externalSystemId == WorkspaceModuleImporter.EXTERNAL_SOURCE_ID }, builder)
+        // remove modules which should be replaced with Maven modules, in order to clean them from pre-existing sources, dependencies etc.
+        // It's needed since otherwise 'replaceBySource' will merge pre-existing Module content with imported module content, resulting in
+        // unexpected module configuration.
+        val importedModuleNames = createdModules.mapTo(mutableSetOf()) { it.moduleId.name }
+        current
+          .entities(ModuleEntity::class.java)
+          .filter { !isMainEntity(it.entitySource) && it.name in importedModuleNames }
+          .forEach { current.removeEntity(it) }
+
+        current.replaceBySource({ isMainEntity(it) }, builder)
       }
       val storage = WorkspaceModel.getInstance(myProject).entityStorage.current
       for ((moduleId, mavenProject, moduleType) in createdModules) {
@@ -153,6 +163,9 @@ class MavenProjectImporterToWorkspace(
 
     return importModuleData
   }
+
+  private fun isMainEntity(it: EntitySource) =
+    (it as? JpsImportedEntitySource)?.externalSystemId == WorkspaceModuleImporter.EXTERNAL_SOURCE_ID
 
   private fun finalizeImport(modules: List<AppliedModuleData>,
                              moduleNameByProject: Map<MavenProject, String>,

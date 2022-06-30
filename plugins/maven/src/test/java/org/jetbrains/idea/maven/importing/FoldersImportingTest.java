@@ -217,7 +217,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                      "</build>");
     resolveFoldersAndImport();
 
-    if (supportsKeepingFoldersFromPreviousImport()) {
+    if (supportsLegacyKeepingFoldersFromPreviousImport()) {
       assertSources("project", "src2", "src1");
     }
     else {
@@ -1560,9 +1560,9 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
     testAssertions.accept(true);
     importProject();
-    testAssertions.accept(supportsKeepingFoldersFromPreviousImport());
+    testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport());
     resolveFoldersAndImport();
-    testAssertions.accept(supportsKeepingFoldersFromPreviousImport());
+    testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport());
   }
 
   @Test
