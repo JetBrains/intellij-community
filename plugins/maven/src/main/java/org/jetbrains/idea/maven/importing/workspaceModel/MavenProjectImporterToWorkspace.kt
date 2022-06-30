@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
-import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -160,7 +159,6 @@ class MavenProjectImporterToWorkspace(
                              projectChanges: Map<MavenProject, MavenProjectChanges>,
                              postTasks: List<MavenProjectsProcessorTask>) {
     val importers = mutableListOf<MavenModuleImporter>()
-
     for ((module, mavenProject, moduleType) in modules) {
       importers.add(MavenModuleImporter(module,
                                         myProjectsTree,
@@ -170,9 +168,6 @@ class MavenProjectImporterToWorkspace(
                                         myImportingSettings,
                                         myModelsProvider,
                                         moduleType))
-
-      val mavenId = mavenProject.mavenId
-      myModelsProvider.registerModulePublication(module, ProjectId(mavenId.groupId, mavenId.artifactId, mavenId.version))
     }
 
     configFacets(importers, postTasks)
