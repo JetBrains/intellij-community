@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePerFileMappings;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Condition;
@@ -78,5 +79,11 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
   @Override
   protected FilePropertyPusher<Language> getFilePropertyPusher() {
     return myPropertyPusher;
+  }
+
+  @Override
+  protected @Nullable Language handleUnknownMapping(VirtualFile file, String value) {
+    Language defaultMapping = getDefaultMapping(file);
+    return defaultMapping != null ? defaultMapping : PlainTextLanguage.INSTANCE;
   }
 }
