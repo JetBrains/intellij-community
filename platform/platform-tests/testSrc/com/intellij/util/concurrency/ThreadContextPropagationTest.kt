@@ -5,15 +5,20 @@ import com.intellij.concurrency.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.timeoutRunBlocking
+import com.intellij.openapi.progress.timeoutWaitUp
 import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.UncaughtExceptionsExtension
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 class ThreadContextPropagationTest {
 
@@ -22,6 +27,10 @@ class ThreadContextPropagationTest {
     @RegisterExtension
     @JvmField
     val applicationExtension = ApplicationExtension()
+
+    @RegisterExtension
+    @JvmField
+    val uncaughtExceptionsExtension = UncaughtExceptionsExtension()
   }
 
   @Test
@@ -118,7 +127,19 @@ class ThreadContextPropagationTest {
       service.schedule(it.callable(), 10, TimeUnit.MILLISECONDS)
     }
     doTest {
-      service.scheduleWithFixedDelay(it.runnable(), 10, 10, TimeUnit.MILLISECONDS)
+      val canStart = Semaphore(1)
+      lateinit var future: Future<*>
+      val runCounter = AtomicInteger(0)
+      val runOnce = Runnable {
+        canStart.timeoutWaitUp()
+        when {
+          runCounter.compareAndSet(0, 1) -> it()
+          runCounter.compareAndSet(1, 2) -> future.cancel(false)
+          else -> Assertions.fail("Cancelled periodic task must not be run again")
+        }
+      }
+      future = service.scheduleWithFixedDelay(runOnce, 10, 10, TimeUnit.MILLISECONDS)
+      canStart.up()
     }
   }
 }
