@@ -40,11 +40,6 @@ class RerunFailedTestsAction extends AnAction {
       return false;
     }
 
-    ExecutionEnvironment environment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
-    if (environment == null) {
-      return false;
-    }
-
     AnAction[] actions = contentDescriptor.getRestartActions();
     if (actions.length == 0) {
       return false;
@@ -53,6 +48,11 @@ class RerunFailedTestsAction extends AnAction {
     for (AnAction action : actions) {
       if (action instanceof AbstractRerunFailedTestsAction) {
         if (execute) {
+          ExecutionEnvironment environment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
+          if (environment == null) {
+            return false;
+          }
+
           ((AbstractRerunFailedTestsAction)action).execute(e, environment);
           return true;
         }
