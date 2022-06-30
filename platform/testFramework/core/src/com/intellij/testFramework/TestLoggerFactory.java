@@ -11,9 +11,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AssumptionViolatedException;
+import org.junit.ComparisonFailure;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -156,6 +158,56 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
+  /**
+   * Report full contents, not limited to 20 characters of ComparisonFailure#MAX_CONTEXT_LENGTH
+   */
+  @Nullable
+  private static String dumpComparisonFailures(@Nullable Throwable t) {
+    if (t == null) return null;
+
+    StringBuilder sb = new StringBuilder();
+    ExceptionUtil.findCauseAndSuppressed(t, ComparisonFailure.class).forEach(e -> {
+      logComparisonFailure(sb,
+                           ((ComparisonFailure)t).getExpected(),
+                           ((ComparisonFailure)t).getActual());
+    });
+
+    ExceptionUtil.findCauseAndSuppressed(t, junit.framework.ComparisonFailure.class).forEach(e -> {
+      logComparisonFailure(sb,
+                           ((junit.framework.ComparisonFailure)t).getExpected(),
+                           ((junit.framework.ComparisonFailure)t).getActual());
+    });
+
+    return sb.length() != 0 ? sb.toString() : null;
+  }
+
+  private static void logComparisonFailure(@NotNull StringBuilder sb, @Nullable String expected, @Nullable String actual) {
+    if (expected == null && actual == null) return;
+
+    sb.append("Comparison Failure");
+    sb.append(System.lineSeparator());
+
+    if (actual == null) {
+      sb.append("Actual [null]");
+    }
+    else {
+      sb.append("Actual [[");
+      sb.append(actual);
+      sb.append("]]");
+    }
+    sb.append(System.lineSeparator());
+
+    if (expected == null) {
+      sb.append("Expected [null]");
+    }
+    else {
+      sb.append("Expected [[");
+      sb.append(expected);
+      sb.append("]]");
+    }
+    sb.append(System.lineSeparator());
+  }
+
   public static void onTestStarted() {
     var factory = Logger.getFactory();
     if (factory instanceof TestLoggerFactory) {
@@ -163,13 +215,17 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  /** @deprecated use {@link #onTestFinished(boolean, Description)} or {@link #onTestFinished(boolean, String)} instead */
+  /**
+   * @deprecated use {@link #onTestFinished(boolean, Description)} or {@link #onTestFinished(boolean, String)} instead
+   */
   @Deprecated
   public static void onTestFinished(boolean success) {
     onTestFinished(success, "unnamed_test");
   }
 
-  /** @see #onTestFinished(boolean, String) */
+  /**
+   * @see #onTestFinished(boolean, String)
+   */
   public static void onTestFinished(boolean success, @NotNull Description description) {
     onTestFinished(success, description.getDisplayName());
   }
@@ -187,7 +243,10 @@ public final class TestLoggerFactory implements Logger.Factory {
   public static void logTestFailure(@NotNull Throwable t) {
     var factory = Logger.getFactory();
     if (factory instanceof TestLoggerFactory) {
-      ((TestLoggerFactory)factory).buffer(LogLevel.ERROR, "#TestFramework", "Test failed", t);
+      String comparisonFailures = dumpComparisonFailures(t);
+      String message = comparisonFailures != null ? "test failed: " + comparisonFailures : "Test failed";
+
+      ((TestLoggerFactory)factory).buffer(LogLevel.ERROR, "#TestFramework", message, t);
     }
   }
 
