@@ -14,37 +14,36 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
     val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
     val pathBuilder = PATH_NODE_BUILDER.getRequired(subtreeRoot)
 
-    return ParentNodeBuilder(pathBuilder, grandParent, cachingRoot).getParentNodeRecursive(nodePath)
+    return getParentNodeRecursive(nodePath, pathBuilder, grandParent, cachingRoot)
   }
 
-  private inner class ParentNodeBuilder(val pathBuilder: Function<StaticFilePath, ChangesBrowserNode<*>?>,
-                                        val grandParent: ChangesBrowserNode<*>,
-                                        val cachingRoot: ChangesBrowserNode<*>) {
-    fun getParentNodeRecursive(nodePath: StaticFilePath): ChangesBrowserNode<*> {
-      generateSequence(nodePath.parent) { it.parent }.forEach { parentPath ->
-        val cachedParent = DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]
-        if (cachedParent != null && cachedParent != grandParent) {
-          return cachedParent
-        }
-
-        val pathNode = pathBuilder.apply(parentPath)
-        if (pathNode != null) {
-          pathNode.markAsHelperNode()
-
-          val parentNode = cachedParent ?: getParentNodeRecursive(parentPath)
-          model.insertNodeInto(pathNode, parentNode, parentNode.childCount)
-
-          DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key] = pathNode
-          return pathNode
-        }
-
-        if (cachedParent != null) { // cachedParent == grandParent
-          return cachedParent
-        }
+  private fun getParentNodeRecursive(nodePath: StaticFilePath,
+                                     pathBuilder: Function<StaticFilePath, ChangesBrowserNode<*>?>,
+                                     grandParent: ChangesBrowserNode<*>,
+                                     cachingRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
+    generateSequence(nodePath.parent) { it.parent }.forEach { parentPath ->
+      val cachedParent = DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]
+      if (cachedParent != null && cachedParent != grandParent) {
+        return cachedParent
       }
 
-      return grandParent
+      val pathNode = pathBuilder.apply(parentPath)
+      if (pathNode != null) {
+        pathNode.markAsHelperNode()
+
+        val parentNode = cachedParent ?: getParentNodeRecursive(parentPath, pathBuilder, grandParent, cachingRoot)
+        model.insertNodeInto(pathNode, parentNode, parentNode.childCount)
+
+        DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key] = pathNode
+        return pathNode
+      }
+
+      if (cachedParent != null) { // cachedParent == grandParent
+        return cachedParent
+      }
     }
+
+    return grandParent
   }
 
   class Factory : ChangesGroupingPolicyFactory() {
