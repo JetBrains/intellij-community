@@ -42,7 +42,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
     myLeftSidebar = leftSidebar;
     myLeftSidebar.addSelectionListener(this, tab -> {
-      System.out.println("CLICK");
       mainPanel.select(tab, true);
       WelcomeScreenEventCollector.logTabSelected(tab);
     });
@@ -114,7 +113,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       }
     }
     myLeftSidebar.init();
-    System.out.println("LOADTABS");
   }
 
   public void setTabListVisible(boolean visible) {
@@ -123,7 +121,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   @ApiStatus.Experimental
   public void selectTab(@NotNull WelcomeScreenTab tab) {
-    System.out.println("SELECT TAB KEK");
     myLeftSidebar.selectTab(tab);
   }
 
