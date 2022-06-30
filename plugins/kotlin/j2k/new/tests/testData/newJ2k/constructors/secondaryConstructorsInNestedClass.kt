@@ -1,4 +1,4 @@
-// ERROR: Modifier 'protected' is not applicable inside 'object'
+// ERROR: Modifier 'protected' is not applicable inside 'standalone object'
 internal object Outer {
     fun foo() {
         val nested1 = Nested1(1)

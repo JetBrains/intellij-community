@@ -14,7 +14,7 @@ class B() {
 }
 
 object b {
-  <error descr="[WRONG_MODIFIER_CONTAINING_DECLARATION] Modifier 'companion' is not applicable inside 'object'">companion</error> object {
+  <error descr="[WRONG_MODIFIER_CONTAINING_DECLARATION] Modifier 'companion' is not applicable inside 'standalone object'">companion</error> object {
     val x = 1
   }
   // error
