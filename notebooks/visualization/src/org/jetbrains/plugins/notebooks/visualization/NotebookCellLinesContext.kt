@@ -13,13 +13,6 @@ import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 
 /**
- * Get the position of a current [NotebookCellLines.Interval]. It is calculated according to the focused component and the caret position.
- */
-@Deprecated("inline me")
-fun DataContext.getNotebookCellLinesInterval(): NotebookCellLines.Interval? =
-  getData(NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY)
-
-/**
  * A list of editors and offsets inside them. Editors are ordered according to their conformity to the UI event and context,
  * and offsets represent the places in the editors closest to the place where the event happened.
  * The event and the context are extracted from the focused component, the mouse cursor position, and the caret position.

@@ -111,7 +111,7 @@ internal class NotebookOutputCollapseSingleInCellAction private constructor() : 
 }
 
 private fun getCollapsingComponents(e: AnActionEvent): List<CollapsingComponent>? {
-  val interval = e.dataContext.getNotebookCellLinesInterval() ?: return null
+  val interval = e.dataContext.getData(NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY) ?: return null
   return e.getData(PlatformDataKeys.EDITOR)?.let { getCollapsingComponents(it, interval) }
 }
 
@@ -135,7 +135,7 @@ private val AnActionEvent.notebookEditor: EditorImpl?
   get() = notebookCellInlayManager?.editor
 
 private fun markScrollingPositionBeforeOutputCollapseToggle(e: AnActionEvent) {
-  val cell = e.dataContext.getNotebookCellLinesInterval() ?: return
+  val cell = e.dataContext.getData(NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY) ?: return
   val editor = e.notebookCellInlayManager?.editor ?: return
   val notebookCellEditorScrollingPositionKeeper = editor.notebookCellEditorScrollingPositionKeeper ?: return
 
