@@ -87,7 +87,7 @@ public final class ModulePathSplitter {
     return splitPath(chunkModuleInfo, chunkOutputs, path, Collections.emptySet());
   }
 
-  public Pair<ModulePath, Collection<File>> splitPath(File chunkModuleInfo, Set<? extends File> chunkOutputs, Collection<? extends File> path, Set<String> addReads) {
+  public Pair<ModulePath, Collection<File>> splitPath(File chunkModuleInfo, Set<? extends File> chunkOutputs, Collection<? extends File> path, Collection<String> addReads) {
     if (myModuleFinderCreateMethod == null) {
       // the module API is not available
       return Pair.create(ModulePath.create(path), Collections.emptyList());
