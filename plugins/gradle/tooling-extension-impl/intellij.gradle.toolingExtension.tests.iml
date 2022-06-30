@@ -7,7 +7,7 @@
           <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xuse-old-backend" />
         </compilerSettings>
         <compilerArguments>
-          <option name="jvmTarget" value="1.6" />
+          <option name="jvmTarget" value="1.8" />
           <option name="languageVersion" value="1.4" />
           <option name="apiVersion" value="1.4" />
         </compilerArguments>
