@@ -532,28 +532,16 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @NotNull
-  private static Set<String> collectAdditionalRequires(Iterable<String> options) {
+  private static Collection<String> collectAdditionalRequires(Iterable<String> options) {
     // --add-reads module=other-module(,other-module)*
     // The option specifies additional modules to be considered as required by a given module.
     final Set<String> result = new SmartHashSet<>();
     for (Iterator<String> it = options.iterator(); it.hasNext(); ) {
       final String option = it.next();
       if ("--add-reads".equalsIgnoreCase(option) && it.hasNext()) {
-        final String val = it.next();
-        int begin = val.indexOf('=');
-        if (begin > 0) {
-          begin++;
-          while (begin < val.length()) {
-            final int end = val.indexOf(',', begin);
-            if (end > begin) {
-              result.add(val.substring(begin, end));
-              begin = end + 1;
-            }
-            else {
-              result.add(val.substring(begin));
-              break;
-            }
-          }
+        final String moduleNames = StringUtil.substringAfter(it.next(), "=");
+        if (moduleNames != null) {
+          result.addAll(StringUtil.split(moduleNames, ","));
         }
       }
     }
