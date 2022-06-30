@@ -229,7 +229,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (myIconLabel == null) return;
     myIconLabel.setIcon(icon);
     myIconLabel.setDisabledIcon(disabledIcon);
-    if (ExperimentalUI.isNewUI() && icon.getIconWidth() != -1 && icon.getIconHeight() != -1) {
+    if (ExperimentalUI.isNewUI() && icon != null && icon.getIconWidth() != -1 && icon.getIconHeight() != -1) {
       myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
     }
   }
