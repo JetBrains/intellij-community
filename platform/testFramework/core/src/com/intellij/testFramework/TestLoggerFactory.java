@@ -301,7 +301,7 @@ public final class TestLoggerFactory implements Logger.Factory {
         DefaultLogger.dumpExceptionsToStderr(message, t);
       }
 
-      if (actions.contains(LoggedErrorProcessor.Action.LOG)) {
+      if (actions.contains(LoggedErrorProcessor.Action.RETHROW)) {
         throw new TestLoggerAssertionError(message, t);
       }
     }
