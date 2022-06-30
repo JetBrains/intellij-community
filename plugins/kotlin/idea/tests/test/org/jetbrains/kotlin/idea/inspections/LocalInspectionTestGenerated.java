@@ -15964,6 +15964,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testReifiedWithClassLiteral() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/reifiedWithClassLiteral.kt");
         }
+
+        @TestMetadata("reifiedWithClassLiteral2.kt")
+        public void testReifiedWithClassLiteral2() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/reifiedWithClassLiteral2.kt");
+        }
+
+        @TestMetadata("reifiedWithClassLiteral3.kt")
+        public void testReifiedWithClassLiteral3() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/reifiedWithClassLiteral3.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
