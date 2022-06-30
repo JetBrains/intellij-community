@@ -265,11 +265,12 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       while (ei < expressions.length && pi < parameters.length) {
         PsiExpression expression = expressions[ei];
         PsiParameter parameter = parameters[pi];
-        PsiType paramType = substitutor.substitute(parameter.getType());
+        PsiType bareParameterType = getValidParameterType(parameter, targetMethod);
+        PsiType paramType = substitutor.substitute(bareParameterType);
         if (buf.length() > 0) buf.append(", ");
         final PsiType parameterType = PsiUtil.convertAnonymousToBaseType(paramType);
         final String presentableText = escapePresentableType(parameterType);
-        final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(pi).withName(parameter.getName()).withType(parameter.getType());
+        final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(pi).withName(parameter.getName()).withType(bareParameterType);
         if (TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression)) {
           buf.append(presentableText);
           result.add(parameterInfo);
@@ -285,10 +286,11 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       if (result.size() != expressions.length) return null;
       for(int i = pi; i < parameters.length; i++) {
         if (buf.length() > 0) buf.append(", ");
-        buf.append("<s>").append(escapePresentableType(parameters[i].getType())).append("</s>");
+        PsiType paramType = getValidParameterType(parameters[i], targetMethod);
+        buf.append("<s>").append(escapePresentableType(paramType)).append("</s>");
         final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(pi)
           .withName(parameters[i].getName())
-          .withType(parameters[i].getType());
+          .withType(paramType);
         removedParams.add(parameterInfo);
       }
     }
@@ -301,20 +303,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (buf.length() > 0) buf.append(", ");
         PsiParameter parameter = parameters[i];
         PsiExpression expression = expressions[i];
-        PsiType bareParamType = parameter.getType();
-        if (!bareParamType.isValid()) {
-          try {
-            PsiUtil.ensureValidType(bareParamType);
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Throwable e) {
-            throw PluginException.createByClass(
-              parameter.getClass() + "; valid=" + parameter.isValid() + "; method.valid=" + targetMethod.isValid(),
-              e, parameter.getClass());
-          }
-        }
+        PsiType bareParamType = getValidParameterType(parameter, targetMethod);
         PsiType paramType = substitutor.substitute(bareParamType);
         PsiUtil.ensureValidType(paramType);
         final String presentableText = escapePresentableType(paramType);
@@ -340,7 +329,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       boolean isSilly = true;
       for (int i = 0; i < result.size(); i++) {
         PsiParameter parameter = parameters[i];
-        PsiType paramType = substitutor.substitute(parameter.getType());
+        PsiType paramType = substitutor.substitute(getValidParameterType(parameter, targetMethod));
         ParameterInfoImpl parameterInfo = result.get(i);
         String typeText = parameterInfo.getTypeText();
         if (!paramType.equalsToText(typeText) && !paramType.getPresentableText().equals(typeText)) {
@@ -351,6 +340,25 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       if (isSilly) return null;
     }
     return result.toArray(new ParameterInfoImpl[0]);
+  }
+
+  @NotNull
+  private static PsiType getValidParameterType(PsiParameter parameter, PsiMethod targetMethod) {
+    PsiType bareParamType = parameter.getType();
+    if (!bareParamType.isValid()) {
+      try {
+        PsiUtil.ensureValidType(bareParamType);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        throw PluginException.createByClass(
+          parameter.getClass() + "; valid=" + parameter.isValid() + "; method.valid=" + targetMethod.isValid(),
+          e, parameter.getClass());
+      }
+    }
+    return bareParamType;
   }
 
   @NotNull
