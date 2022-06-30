@@ -284,44 +284,14 @@ public final class ArtifactRepositoryManager {
       // RepositorySystem.resolveDependencies() ignores classifiers, so we need to set classifiers explicitly for discovered dependencies.
       // Because of that we have to first discover deps and then resolve corresponding artifacts
       try {
-        final List<ArtifactRequest> requests;
+        final List<ArtifactRequest> requests = new ArrayList<>();;
         final Set<VersionConstraint> constraints;
         if (kind == ArtifactKind.ANNOTATIONS) {
           constraints = relaxForAnnotations(originalConstraints);
         } else {
           constraints = Collections.singleton(originalConstraints);
         }
-        RepositorySystemSession session;
-        if (includeTransitiveDependencies) {
-          session = mySessionFactory.createSession(excludedDependencies);
-          final CollectResult collectResult = myRetry.retry(() -> ourSystem.collectDependencies(
-            session, createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind))
-          ), LOG);
-          final ArtifactRequestBuilder builder = new ArtifactRequestBuilder(kind);
-          DependencyFilter filter = createScopeFilter();
-          if (!excludedDependencies.isEmpty()) {
-            filter = DependencyFilterUtils.andFilter(filter, new ExcludeDependenciesFilter(excludedDependencies));
-          }
-          collectResult.getRoot().accept(new TreeDependencyVisitor(new FilteringDependencyVisitor(builder, filter)));
-          requests = builder.getRequests();
-        }
-        else {
-          session = mySessionFactory.createDefaultSession();
-          requests = new ArrayList<>();
-          for (Artifact artifact : toArtifacts(groupId, artifactId, constraints, Collections.singleton(kind))) {
-            if (ourVersioning.parseVersionConstraint(artifact.getVersion()).getRange() != null) {
-              final VersionRangeRequest versionRangeRequest = new VersionRangeRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null);
-              final VersionRangeResult result = ourSystem.resolveVersionRange(session, versionRangeRequest);
-              if (!result.getVersions().isEmpty()) {
-                Artifact newArtifact = artifact.setVersion(result.getHighestVersion().toString());
-                requests.add(new ArtifactRequest(newArtifact, Collections.unmodifiableList(myRemoteRepositories), null));
-              }
-            }
-            else {
-              requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
-            }
-          }
-        }
+        RepositorySystemSession session = prepareRequests(groupId, artifactId, constraints, kind, includeTransitiveDependencies, excludedDependencies, requests);
 
         if (!requests.isEmpty()) {
           try {
@@ -355,6 +325,65 @@ public final class ArtifactRepositoryManager {
         if (kind == ArtifactKind.ARTIFACT) {
           throw e;
         }
+      }
+    }
+    return artifacts;
+  }
+
+  @NotNull
+  private RepositorySystemSession prepareRequests(String groupId,
+                                                  String artifactId,
+                                                  Set<VersionConstraint> constraints,
+                                                  ArtifactKind kind,
+                                                  boolean includeTransitiveDependencies,
+                                                  List<String> excludedDependencies,
+                                                  List<ArtifactRequest> requests) throws Exception {
+    RepositorySystemSession session;
+    if (includeTransitiveDependencies) {
+      session = mySessionFactory.createSession(excludedDependencies);
+      final CollectResult collectResult = myRetry.retry(() -> ourSystem.collectDependencies(
+        session, createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind))
+      ), LOG);
+      final ArtifactRequestBuilder builder = new ArtifactRequestBuilder(kind);
+      DependencyFilter filter = createScopeFilter();
+      if (!excludedDependencies.isEmpty()) {
+        filter = DependencyFilterUtils.andFilter(filter, new ExcludeDependenciesFilter(excludedDependencies));
+      }
+      collectResult.getRoot().accept(new TreeDependencyVisitor(new FilteringDependencyVisitor(builder, filter)));
+      requests.addAll(builder.getRequests());
+    }
+    else {
+      session = mySessionFactory.createDefaultSession();
+      for (Artifact artifact : toArtifacts(groupId, artifactId, constraints, Collections.singleton(kind))) {
+        if (ourVersioning.parseVersionConstraint(artifact.getVersion()).getRange() != null) {
+          final VersionRangeRequest versionRangeRequest = new VersionRangeRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null);
+          final VersionRangeResult result = ourSystem.resolveVersionRange(session, versionRangeRequest);
+          if (!result.getVersions().isEmpty()) {
+            Artifact newArtifact = artifact.setVersion(result.getHighestVersion().toString());
+            requests.add(new ArtifactRequest(newArtifact, Collections.unmodifiableList(myRemoteRepositories), null));
+          }
+        }
+        else {
+          requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
+        }
+      }
+    }
+    return session;
+  }
+
+  @NotNull
+  public Collection<Artifact> resolveDependencyAsArtifactStrict(String groupId, String artifactId, String versionConstraint,
+                                                                ArtifactKind kind, boolean includeTransitiveDependencies,
+                                                                List<String> excludedDependencies) throws Exception {
+    final List<Artifact> artifacts = new ArrayList<>();
+    final List<ArtifactRequest> requests = new ArrayList<>();
+    final Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
+    RepositorySystemSession session = prepareRequests(groupId, artifactId, constraints, kind, includeTransitiveDependencies, excludedDependencies, requests);
+
+    if (!requests.isEmpty()) {
+      List<ArtifactResult> resultList = myRetry.retry(() -> ourSystem.resolveArtifacts(session, requests), LOG);
+      for (ArtifactResult result : resultList) {
+        artifacts.add(result.getArtifact());
       }
     }
     return artifacts;
