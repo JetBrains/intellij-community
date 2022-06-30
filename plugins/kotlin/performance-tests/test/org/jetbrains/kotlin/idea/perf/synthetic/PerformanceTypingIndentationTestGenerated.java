@@ -113,6 +113,179 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/beforeDot")
+        public static class BeforeDot extends AbstractPerformanceTypingIndentationTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ArrayAccessInFirstPosition.after.kt")
+            public void testArrayAccessInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("ArrayAccessInNonFirstPositionOnFirstLine.after.kt")
+            public void testArrayAccessInNonFirstPositionOnFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessInNonFirstPositionOnFirstLine.after.kt");
+            }
+
+            @TestMetadata("ArrayAccessInNonFirstPositionOnNonFirstLine.after.kt")
+            public void testArrayAccessInNonFirstPositionOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessInNonFirstPositionOnNonFirstLine.after.kt");
+            }
+
+            @TestMetadata("ArrayAccessWithCommentInFirstPosition.after.kt")
+            public void testArrayAccessWithCommentInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessWithCommentInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("ArrayAccessWithMultilineComment2InFirstPosition.after.kt")
+            public void testArrayAccessWithMultilineComment2InFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessWithMultilineComment2InFirstPosition.after.kt");
+            }
+
+            @TestMetadata("ArrayAccessWithMultilineCommentInFirstPosition.after.kt")
+            public void testArrayAccessWithMultilineCommentInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessWithMultilineCommentInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("ArrayAccessWithSeveralArgumentsInFirstPosition.after.kt")
+            public void testArrayAccessWithSeveralArgumentsInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessWithSeveralArgumentsInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("CallInFirstPosition.after.kt")
+            public void testCallInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("CallInFirstPositionAfterOpenParenthesis.after.kt")
+            public void testCallInFirstPositionAfterOpenParenthesis() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInFirstPositionAfterOpenParenthesis.after.kt");
+            }
+
+            @TestMetadata("CallInFirstPositionAfterReturn.after.kt")
+            public void testCallInFirstPositionAfterReturn() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInFirstPositionAfterReturn.after.kt");
+            }
+
+            @TestMetadata("CallInNonFirstPositionAfterOpenParenthesis.after.kt")
+            public void testCallInNonFirstPositionAfterOpenParenthesis() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInNonFirstPositionAfterOpenParenthesis.after.kt");
+            }
+
+            @TestMetadata("CallInNonFirstPositionAfterReturn.after.kt")
+            public void testCallInNonFirstPositionAfterReturn() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInNonFirstPositionAfterReturn.after.kt");
+            }
+
+            @TestMetadata("CallInNonFirstPositionAfterReturnOnNonFirstLine.after.kt")
+            public void testCallInNonFirstPositionAfterReturnOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInNonFirstPositionAfterReturnOnNonFirstLine.after.kt");
+            }
+
+            @TestMetadata("CallInNonFirstPositionOnFirstLine.after.kt")
+            public void testCallInNonFirstPositionOnFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInNonFirstPositionOnFirstLine.after.kt");
+            }
+
+            @TestMetadata("CallInNonFirstPositionOnNonFirstLine.after.kt")
+            public void testCallInNonFirstPositionOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInNonFirstPositionOnNonFirstLine.after.kt");
+            }
+
+            @TestMetadata("CallWithArgumentsInFirstPosition.after.kt")
+            public void testCallWithArgumentsInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallWithArgumentsInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("CallWithCommentsInFirstPosition.after.kt")
+            public void testCallWithCommentsInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallWithCommentsInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("CallWithLambdaInFirstPosition.after.kt")
+            public void testCallWithLambdaInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallWithLambdaInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("CallWithLambdaInNonFirstPositionOnFirstLine.after.kt")
+            public void testCallWithLambdaInNonFirstPositionOnFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallWithLambdaInNonFirstPositionOnFirstLine.after.kt");
+            }
+
+            @TestMetadata("CallWithLambdaInNonFirstPositionOnNonFirstLine.after.kt")
+            public void testCallWithLambdaInNonFirstPositionOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallWithLambdaInNonFirstPositionOnNonFirstLine.after.kt");
+            }
+
+            @TestMetadata("FirstPositionOnNewLineInsideCall.after.kt")
+            public void testFirstPositionOnNewLineInsideCall() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/FirstPositionOnNewLineInsideCall.after.kt");
+            }
+
+            @TestMetadata("MultilineCallWithLambdaInFirstPosition.after.kt")
+            public void testMultilineCallWithLambdaInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/MultilineCallWithLambdaInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("MultilineCallWithLambdaInNonFirstPositionOnFirstLine.after.kt")
+            public void testMultilineCallWithLambdaInNonFirstPositionOnFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/MultilineCallWithLambdaInNonFirstPositionOnFirstLine.after.kt");
+            }
+
+            @TestMetadata("MultilineCallWithLambdaInNonFirstPositionOnNonFirstLine.after.kt")
+            public void testMultilineCallWithLambdaInNonFirstPositionOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/MultilineCallWithLambdaInNonFirstPositionOnNonFirstLine.after.kt");
+            }
+
+            @TestMetadata("NonFirstPositionOnNewLineInsideCall.after.kt")
+            public void testNonFirstPositionOnNewLineInsideCall() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/NonFirstPositionOnNewLineInsideCall.after.kt");
+            }
+
+            @TestMetadata("NonFirstPositionOnNonFirstLineOnNewLineInsideCall.after.kt")
+            public void testNonFirstPositionOnNonFirstLineOnNewLineInsideCall() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/NonFirstPositionOnNonFirstLineOnNewLineInsideCall.after.kt");
+            }
+
+            @TestMetadata("ReferenceInFirstPosition.after.kt")
+            public void testReferenceInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("ReferenceInFirstPositionAfterProperty.after.kt")
+            public void testReferenceInFirstPositionAfterProperty() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInFirstPositionAfterProperty.after.kt");
+            }
+
+            @TestMetadata("ReferenceInNonFirstPositionAfterProperty.after.kt")
+            public void testReferenceInNonFirstPositionAfterProperty() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInNonFirstPositionAfterProperty.after.kt");
+            }
+
+            @TestMetadata("ReferenceInNonFirstPositionAfterPropertyOnNonFirstLine.after.kt")
+            public void testReferenceInNonFirstPositionAfterPropertyOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInNonFirstPositionAfterPropertyOnNonFirstLine.after.kt");
+            }
+
+            @TestMetadata("ReferenceInNonFirstPositionOnFirstLine.after.kt")
+            public void testReferenceInNonFirstPositionOnFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInNonFirstPositionOnFirstLine.after.kt");
+            }
+
+            @TestMetadata("ReferenceInNonFirstPositionOnNonFirstLine.after.kt")
+            public void testReferenceInNonFirstPositionOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInNonFirstPositionOnNonFirstLine.after.kt");
+            }
+
+            @TestMetadata("ReferenceInNonFirstPositionOnNonFirstLineAfterProperty.after.kt")
+            public void testReferenceInNonFirstPositionOnNonFirstLineAfterProperty() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInNonFirstPositionOnNonFirstLineAfterProperty.after.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/commenter")
         public static class Commenter extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -1911,6 +2084,174 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/editor/enterHandler")
     public abstract static class InvertedSettings extends AbstractPerformanceTypingIndentationTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/beforeDot")
+        public static class BeforeDot extends AbstractPerformanceTypingIndentationTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
+            }
+
+            @TestMetadata("ArrayAccessInFirstPosition.after.inv.kt")
+            public void testArrayAccessInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("ArrayAccessInNonFirstPositionOnFirstLine.after.inv.kt")
+            public void testArrayAccessInNonFirstPositionOnFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessInNonFirstPositionOnFirstLine.after.inv.kt");
+            }
+
+            @TestMetadata("ArrayAccessInNonFirstPositionOnNonFirstLine.after.inv.kt")
+            public void testArrayAccessInNonFirstPositionOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessInNonFirstPositionOnNonFirstLine.after.inv.kt");
+            }
+
+            @TestMetadata("ArrayAccessWithCommentInFirstPosition.after.inv.kt")
+            public void testArrayAccessWithCommentInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessWithCommentInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("ArrayAccessWithMultilineComment2InFirstPosition.after.inv.kt")
+            public void testArrayAccessWithMultilineComment2InFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessWithMultilineComment2InFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("ArrayAccessWithMultilineCommentInFirstPosition.after.inv.kt")
+            public void testArrayAccessWithMultilineCommentInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessWithMultilineCommentInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("ArrayAccessWithSeveralArgumentsInFirstPosition.after.inv.kt")
+            public void testArrayAccessWithSeveralArgumentsInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ArrayAccessWithSeveralArgumentsInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("CallInFirstPosition.after.inv.kt")
+            public void testCallInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("CallInFirstPositionAfterOpenParenthesis.after.inv.kt")
+            public void testCallInFirstPositionAfterOpenParenthesis() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInFirstPositionAfterOpenParenthesis.after.inv.kt");
+            }
+
+            @TestMetadata("CallInFirstPositionAfterReturn.after.inv.kt")
+            public void testCallInFirstPositionAfterReturn() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInFirstPositionAfterReturn.after.inv.kt");
+            }
+
+            @TestMetadata("CallInNonFirstPositionAfterOpenParenthesis.after.inv.kt")
+            public void testCallInNonFirstPositionAfterOpenParenthesis() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInNonFirstPositionAfterOpenParenthesis.after.inv.kt");
+            }
+
+            @TestMetadata("CallInNonFirstPositionAfterReturn.after.inv.kt")
+            public void testCallInNonFirstPositionAfterReturn() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInNonFirstPositionAfterReturn.after.inv.kt");
+            }
+
+            @TestMetadata("CallInNonFirstPositionAfterReturnOnNonFirstLine.after.inv.kt")
+            public void testCallInNonFirstPositionAfterReturnOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInNonFirstPositionAfterReturnOnNonFirstLine.after.inv.kt");
+            }
+
+            @TestMetadata("CallInNonFirstPositionOnFirstLine.after.inv.kt")
+            public void testCallInNonFirstPositionOnFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInNonFirstPositionOnFirstLine.after.inv.kt");
+            }
+
+            @TestMetadata("CallInNonFirstPositionOnNonFirstLine.after.inv.kt")
+            public void testCallInNonFirstPositionOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallInNonFirstPositionOnNonFirstLine.after.inv.kt");
+            }
+
+            @TestMetadata("CallWithArgumentsInFirstPosition.after.inv.kt")
+            public void testCallWithArgumentsInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallWithArgumentsInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("CallWithCommentsInFirstPosition.after.inv.kt")
+            public void testCallWithCommentsInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallWithCommentsInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("CallWithLambdaInFirstPosition.after.inv.kt")
+            public void testCallWithLambdaInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallWithLambdaInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("CallWithLambdaInNonFirstPositionOnNonFirstLine.after.inv.kt")
+            public void testCallWithLambdaInNonFirstPositionOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/CallWithLambdaInNonFirstPositionOnNonFirstLine.after.inv.kt");
+            }
+
+            @TestMetadata("FirstPositionOnNewLineInsideCall.after.inv.kt")
+            public void testFirstPositionOnNewLineInsideCall() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/FirstPositionOnNewLineInsideCall.after.inv.kt");
+            }
+
+            @TestMetadata("MultilineCallWithLambdaInFirstPosition.after.inv.kt")
+            public void testMultilineCallWithLambdaInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/MultilineCallWithLambdaInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("MultilineCallWithLambdaInNonFirstPositionOnFirstLine.after.inv.kt")
+            public void testMultilineCallWithLambdaInNonFirstPositionOnFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/MultilineCallWithLambdaInNonFirstPositionOnFirstLine.after.inv.kt");
+            }
+
+            @TestMetadata("MultilineCallWithLambdaInNonFirstPositionOnNonFirstLine.after.inv.kt")
+            public void testMultilineCallWithLambdaInNonFirstPositionOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/MultilineCallWithLambdaInNonFirstPositionOnNonFirstLine.after.inv.kt");
+            }
+
+            @TestMetadata("NonFirstPositionOnNewLineInsideCall.after.inv.kt")
+            public void testNonFirstPositionOnNewLineInsideCall() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/NonFirstPositionOnNewLineInsideCall.after.inv.kt");
+            }
+
+            @TestMetadata("NonFirstPositionOnNonFirstLineOnNewLineInsideCall.after.inv.kt")
+            public void testNonFirstPositionOnNonFirstLineOnNewLineInsideCall() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/NonFirstPositionOnNonFirstLineOnNewLineInsideCall.after.inv.kt");
+            }
+
+            @TestMetadata("ReferenceInFirstPosition.after.inv.kt")
+            public void testReferenceInFirstPosition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("ReferenceInFirstPositionAfterProperty.after.inv.kt")
+            public void testReferenceInFirstPositionAfterProperty() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInFirstPositionAfterProperty.after.inv.kt");
+            }
+
+            @TestMetadata("ReferenceInNonFirstPositionAfterProperty.after.inv.kt")
+            public void testReferenceInNonFirstPositionAfterProperty() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInNonFirstPositionAfterProperty.after.inv.kt");
+            }
+
+            @TestMetadata("ReferenceInNonFirstPositionAfterPropertyOnNonFirstLine.after.inv.kt")
+            public void testReferenceInNonFirstPositionAfterPropertyOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInNonFirstPositionAfterPropertyOnNonFirstLine.after.inv.kt");
+            }
+
+            @TestMetadata("ReferenceInNonFirstPositionOnFirstLine.after.inv.kt")
+            public void testReferenceInNonFirstPositionOnFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInNonFirstPositionOnFirstLine.after.inv.kt");
+            }
+
+            @TestMetadata("ReferenceInNonFirstPositionOnNonFirstLine.after.inv.kt")
+            public void testReferenceInNonFirstPositionOnNonFirstLine() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInNonFirstPositionOnNonFirstLine.after.inv.kt");
+            }
+
+            @TestMetadata("ReferenceInNonFirstPositionOnNonFirstLineAfterProperty.after.inv.kt")
+            public void testReferenceInNonFirstPositionOnNonFirstLineAfterProperty() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/ReferenceInNonFirstPositionOnNonFirstLineAfterProperty.after.inv.kt");
+            }
+        }
+
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/elvis")
         public static class Elvis extends AbstractPerformanceTypingIndentationTest {

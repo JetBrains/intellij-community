@@ -9,10 +9,10 @@ import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider
 import com.intellij.testFramework.EditorTestUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider
-import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightTestCase
-import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
 import java.io.File
@@ -43,6 +43,11 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
             "// IGNORE_FORMATTER"
         ) != null
 
+        val ignoreInvFormatter = InTextDirectivesUtils.findStringWithPrefixes(
+            originalFileText,
+            "// IGNORE_INV_FORMATTER"
+        ) != null
+
         Assert.assertFalse(
             "Only one option of 'WITHOUT_CUSTOM_LINE_INDENT_PROVIDER' and 'IGNORE_FORMATTER' is available at the same time",
             withoutCustomLineIndentProvider && ignoreFormatter
@@ -60,9 +65,11 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
             },
             body = {
                 doNewlineTest(
-                    originalFile.path, afterFilePath,
+                    beforeFilePath = originalFile.path,
+                    afterFilePath = afterFilePath,
                     withoutCustomLineIndentProvider = withoutCustomLineIndentProvider,
                     ignoreFormatter = ignoreFormatter,
+                    ignoreInvFormatter = ignoreInvFormatter,
                     isInvertedTest = inverted,
                 )
             }
@@ -74,10 +81,19 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
         afterFilePath: String,
         withoutCustomLineIndentProvider: Boolean,
         ignoreFormatter: Boolean,
+        ignoreInvFormatter: Boolean,
         isInvertedTest: Boolean,
     ) {
         KotlinLineIndentProvider.useFormatter = true
-        typeAndCheck(beforeFilePath, afterFilePath, "with FormatterBasedLineIndentProvider", ignoreFormatter, isInvertedTest)
+        typeAndCheck(
+            beforeFilePath = beforeFilePath,
+            afterFilePath = afterFilePath,
+            errorMessage = "with FormatterBasedLineIndentProvider",
+            ignoreInvertedFormatter = ignoreInvFormatter,
+            ignoreFormatter = ignoreFormatter,
+            isInvertedTest = isInvertedTest,
+        )
+
         KotlinLineIndentProvider.useFormatter = false
 
         if (!withoutCustomLineIndentProvider) {
@@ -106,7 +122,8 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
         beforeFilePath: String,
         afterFilePath: String,
         errorMessage: String,
-        invertResult: Boolean = false,
+        ignoreInvertedFormatter: Boolean = false,
+        ignoreFormatter: Boolean = false,
         isInvertedTest: Boolean = false,
     ) {
         configureByFile(beforeFilePath)
@@ -121,10 +138,11 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
             KotlinTestUtils.assertEqualsToFile(errorMessage, File(afterFilePath), actualTextWithCaret)
         }
 
-        if (invertResult)
-            Assert.assertTrue("Remove // IGNORE_FORMATTER", isInvertedTest || result.isFailure)
-        else
-            result.getOrThrow()
+        when {
+            ignoreFormatter -> Assert.assertTrue("Remove // IGNORE_FORMATTER", isInvertedTest || result.isFailure)
+            isInvertedTest && ignoreInvertedFormatter -> Assert.assertTrue("Remove // IGNORE_INV_FORMATTER", result.isFailure)
+            else -> result.getOrThrow()
+        }
     }
 
     override fun getTestDataPath(): String = ""
