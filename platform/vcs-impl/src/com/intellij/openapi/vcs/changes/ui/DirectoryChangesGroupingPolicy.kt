@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.DIRECTORY_CACHE
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.PATH_NODE_BUILDER
 import javax.swing.tree.DefaultTreeModel
@@ -23,24 +22,18 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
       generateSequence(nodePath.parent) { it.parent }.forEach { parentPath ->
         DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]?.let {
           if (grandParent == it) {
-            GRAND_PARENT_CANDIDATE.set(subtreeRoot, it)
-            try {
-              createPathNode(parentPath)?.let { pathNode ->
-                val parentNode = GRAND_PARENT_CANDIDATE.get(subtreeRoot) ?: getParentNodeRecursive(parentPath)
-                model.insertNodeInto(pathNode, parentNode, parentNode.childCount)
-                return pathNode
-              }
-              return grandParent
+            createPathNode(parentPath)?.let { pathNode ->
+              val parentNode = grandParent
+              model.insertNodeInto(pathNode, parentNode, parentNode.childCount)
+              return pathNode
             }
-            finally {
-              GRAND_PARENT_CANDIDATE.set(subtreeRoot, null)
-            }
+            return grandParent
           }
           return it
         }
 
         createPathNode(parentPath)?.let { pathNode ->
-          val parentNode = GRAND_PARENT_CANDIDATE.get(subtreeRoot) ?: getParentNodeRecursive(parentPath)
+          val parentNode = getParentNodeRecursive(parentPath)
           model.insertNodeInto(pathNode, parentNode, parentNode.childCount)
           return pathNode
         }
@@ -61,9 +54,5 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
   class Factory : ChangesGroupingPolicyFactory() {
     override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): DirectoryChangesGroupingPolicy =
       DirectoryChangesGroupingPolicy(project, model)
-  }
-
-  companion object {
-    internal val GRAND_PARENT_CANDIDATE = Key.create<ChangesBrowserNode<*>?>("ChangesTree.GrandParentCandidate")
   }
 }
