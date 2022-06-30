@@ -34,10 +34,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -49,6 +46,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class SettingsEditor extends AbstractEditor implements DataProvider, Place.Navigator {
   private static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";
@@ -303,6 +301,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
     }
   }
 
+  @ApiStatus.Internal
   public void select(Configurable configurable) {
     myTreeView.select(configurable);
     myEditor.select(configurable);
