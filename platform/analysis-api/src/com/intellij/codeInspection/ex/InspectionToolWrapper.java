@@ -178,6 +178,10 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP == null ? getTool().isEnabledByDefault() : myEP.enabledByDefault;
   }
 
+  public boolean hasCustomSuppressor() {
+    return myEP != null && myEP.hasCustomSuppressor;
+  }
+
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return myEP == null ? getTool().getDefaultLevel() : myEP.getDefaultLevel();

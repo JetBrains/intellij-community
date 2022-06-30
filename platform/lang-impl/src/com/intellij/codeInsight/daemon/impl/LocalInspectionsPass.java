@@ -483,7 +483,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private boolean isSuppressedForFile(@NotNull LocalInspectionToolWrapper wrapper) {
     PsiFile file = getFile();
-    if (wrapper.isApplicable(file.getLanguage())) {
+    if (wrapper.isApplicable(file.getLanguage()) || wrapper.hasCustomSuppressor()) {
       return wrapper.getTool().isSuppressedFor(file);
     }
 
