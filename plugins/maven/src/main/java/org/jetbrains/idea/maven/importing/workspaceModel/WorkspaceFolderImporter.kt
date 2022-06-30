@@ -32,7 +32,7 @@ class WorkspaceFolderImporter(
   private val importingContext: FolderImportingContext) {
 
   fun createContentRoots(module: ModuleEntity, importData: MavenModuleImportData): CachedProjectFolders {
-    val allFolders = mutableListOf<ContentRootCollector.Folder>()
+    val allFolders = mutableListOf<ContentRootCollector.ImportedFolder>()
 
     val cachedFolders = importingContext.projectIdToCachedFolders.getOrPut(importData.mavenProject.mavenId.key) {
       collectMavenFolders(importData)
@@ -42,17 +42,16 @@ class WorkspaceFolderImporter(
     addSourceFolders(importData, allFolders)
     addCachedFolders(importData, cachedFolders, allFolders)
 
-    for (rootInfo in ContentRootCollector.collect(allFolders)) {
-      if (!File(rootInfo.path).exists()) continue
+    for (root in ContentRootCollector.collect(allFolders)) {
+      if (!File(root.path).exists()) continue
 
-      val excludedUrls = rootInfo.folders.filterIsInstance<ContentRootCollector.BaseExcludedFolder>().map {
-        virtualFileUrlManager.fromPath(it.path)
-      }
-      val contentRootEntity = builder.addContentRootEntity(virtualFileUrlManager.fromPath(rootInfo.path),
+      val excludedUrls = root.excludeFolders.map { exclude -> virtualFileUrlManager.fromPath(exclude.path) }
+      val contentRootEntity = builder.addContentRootEntity(virtualFileUrlManager.fromPath(root.path),
                                                            excludedUrls,
                                                            emptyList(), module)
-      rootInfo.folders.forEach {
-        if (it is ContentRootCollector.UserOrGeneratedSourceFolder) registerSourceRootFolder(contentRootEntity, it)
+      root.sourceFolders.forEach { folder ->
+        if (!File(folder.path).exists()) return@forEach
+        registerSourceRootFolder(contentRootEntity, folder)
       }
     }
 
@@ -60,19 +59,19 @@ class WorkspaceFolderImporter(
   }
 
   private fun addContentRoot(cachedFolders: CachedProjectFolders,
-                             allFolders: MutableList<ContentRootCollector.Folder>) {
+                             allFolders: MutableList<ContentRootCollector.ImportedFolder>) {
     val contentRoot = cachedFolders.projectContentRootPath
 
     // make sure we don't have overlapping content roots in different modules
     val alreadyRegisteredRoot = importingContext.alreadyRegisteredContentRoots.contains(contentRoot)
     if (alreadyRegisteredRoot) return
 
-    allFolders.add(ContentRootCollector.ContentRootFolder(contentRoot))
+    allFolders.add(ContentRootCollector.ProjectRootFolder(contentRoot))
     importingContext.alreadyRegisteredContentRoots.add(contentRoot)
   }
 
   private fun addSourceFolders(importData: MavenModuleImportData,
-                               allFolders: MutableList<ContentRootCollector.Folder>) {
+                               allFolders: MutableList<ContentRootCollector.ImportedFolder>) {
     val sourceFolders = when (importData.moduleData.type) {
       MavenModuleType.MAIN -> MavenFoldersImporter.getMainSourceFolders(importData.mavenProject)
       MavenModuleType.TEST -> MavenFoldersImporter.getTestSourceFolders(importData.mavenProject)
@@ -86,14 +85,14 @@ class WorkspaceFolderImporter(
 
   private fun addCachedFolders(importData: MavenModuleImportData,
                                cachedFolders: CachedProjectFolders,
-                               allFolders: MutableList<ContentRootCollector.Folder>) {
-    fun includeIf(it: ContentRootCollector.Folder, forTests: Boolean) =
+                               allFolders: MutableList<ContentRootCollector.ImportedFolder>) {
+    fun includeIf(it: ContentRootCollector.ImportedFolder, forTests: Boolean) =
       when (it) {
         is ContentRootCollector.UserOrGeneratedSourceFolder -> it.type.isForTests == forTests
         else -> true
       }
 
-    fun exceptSources(it: ContentRootCollector.Folder) = it !is ContentRootCollector.UserOrGeneratedSourceFolder
+    fun exceptSources(it: ContentRootCollector.ImportedFolder) = it !is ContentRootCollector.UserOrGeneratedSourceFolder
 
     allFolders.addAll(when (importData.moduleData.type) {
                         MavenModuleType.MAIN -> cachedFolders.folders.filter { includeIf(it, forTests = false) }
@@ -104,9 +103,7 @@ class WorkspaceFolderImporter(
   }
 
   private fun registerSourceRootFolder(contentRootEntity: ContentRootEntity,
-                                       folder: ContentRootCollector.UserOrGeneratedSourceFolder) {
-    if (!File(folder.path).exists()) return
-
+                                       folder: ContentRootCollector.SourceFolderResult) {
     val rootType = when (folder.type) {
       JavaSourceRootType.SOURCE -> JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID
       JavaSourceRootType.TEST_SOURCE -> JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID
@@ -123,13 +120,11 @@ class WorkspaceFolderImporter(
     val isResource = JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID == rootType
                      || JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID == rootType
 
-    val isGenerated = folder is ContentRootCollector.BaseGeneratedSourceFolder
-
     if (isResource) {
-      builder.addJavaResourceRootEntity(sourceRootEntity, isGenerated, "")
+      builder.addJavaResourceRootEntity(sourceRootEntity, folder.isGenerated, "")
     }
     else {
-      builder.addJavaSourceRootEntity(sourceRootEntity, isGenerated, "")
+      builder.addJavaSourceRootEntity(sourceRootEntity, folder.isGenerated, "")
     }
   }
 
@@ -141,12 +136,12 @@ class WorkspaceFolderImporter(
     val testOutputPath = toAbsolutePath(mavenProject.testOutputDirectory)
     val targetDirPath = toAbsolutePath(mavenProject.buildDirectory)
 
-    val folders = mutableListOf<ContentRootCollector.Folder>()
+    val folders = mutableListOf<ContentRootCollector.ImportedFolder>()
 
     if (importingSettings.isExcludeTargetFolder) {
       folders.add(ContentRootCollector.ExcludedFolder(targetDirPath))
     }
-    if (!FileUtil.isAncestor(targetDirPath, outputPath, false)) { //todo  remove ifs?
+    if (!FileUtil.isAncestor(targetDirPath, outputPath, false)) {
       folders.add(ContentRootCollector.ExcludedFolder(outputPath))
     }
     if (!FileUtil.isAncestor(targetDirPath, testOutputPath, false)) {
@@ -156,15 +151,15 @@ class WorkspaceFolderImporter(
     for (each in importData.mavenProject.suitableImporters) {
       val excludes = mutableListOf<String>()
       each.collectExcludedFolders(importData.mavenProject, excludes)
-      excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderAndPreventGeneratedSubfolders(toAbsolutePath(it))) }
+      excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(toAbsolutePath(it))) }
     }
 
     val generatedSourceFolders = GeneratedFoldersCollector(folders, JavaSourceRootType.SOURCE)
     val generatedTestSourceFolders = GeneratedFoldersCollector(folders, JavaSourceRootType.TEST_SOURCE)
 
     if (importingSettings.generatedSourcesFolder != MavenImportingSettings.GeneratedSourcesFolder.IGNORE) {
-      generatedSourceFolders.addOptional(File(mavenProject.getAnnotationProcessorDirectory(false)))
-      generatedTestSourceFolders.addOptional(File(mavenProject.getAnnotationProcessorDirectory(true)))
+      generatedSourceFolders.addAnnotationSources(File(mavenProject.getAnnotationProcessorDirectory(false)))
+      generatedTestSourceFolders.addAnnotationSources(File(mavenProject.getAnnotationProcessorDirectory(true)))
 
       val generatedDir = mavenProject.getGeneratedSourcesDirectory(false)
       val generatedDirTest = mavenProject.getGeneratedSourcesDirectory(true)
@@ -176,10 +171,10 @@ class WorkspaceFolderImporter(
     return CachedProjectFolders(importData.mavenProject.directory, outputPath, testOutputPath, folders)
   }
 
-  private class GeneratedFoldersCollector(val result: MutableList<ContentRootCollector.Folder>,
+  private class GeneratedFoldersCollector(val result: MutableList<ContentRootCollector.ImportedFolder>,
                                           val type: JpsModuleSourceRootType<*>) {
-    fun addExcplicit(dir: File) = doAdd(dir, ContentRootCollector.ExplicitGeneratedSourceFolder(dir.path, type))
-    fun addOptional(dir: File) = doAdd(dir, ContentRootCollector.OptionalGeneratedSourceFolder(dir.path, type))
+    fun addGeneratedSources(dir: File) = doAdd(dir, ContentRootCollector.GeneratedSourceFolder(dir.path, type))
+    fun addAnnotationSources(dir: File) = doAdd(dir, ContentRootCollector.AnnotationSourceFolder(dir.path, type))
 
     private fun doAdd(dir: File, info: ContentRootCollector.BaseGeneratedSourceFolder) {
       val isNotEmptyDirectory = !dir.listFiles().isNullOrEmpty()
@@ -190,15 +185,15 @@ class WorkspaceFolderImporter(
   }
 
   private fun addTargetFolders(targetDir: File, result: GeneratedFoldersCollector) {
-    fun addAllSubDirs(dir: File) = dir.listFiles()?.forEach { result.addExcplicit(it) } // todo add optional?
+    fun addAllSubDirs(dir: File) = dir.listFiles()?.forEach { result.addGeneratedSources(it) }
 
     when (importingSettings.generatedSourcesFolder) {
-      GENERATED_SOURCE_FOLDER -> result.addExcplicit(targetDir)
+      GENERATED_SOURCE_FOLDER -> result.addGeneratedSources(targetDir)
       SUBFOLDER -> addAllSubDirs(targetDir)
       AUTODETECT -> {
         for (it in JavaSourceRootDetectionUtil.suggestRoots(targetDir)) {
           val suggestedDir = it.directory
-          result.addExcplicit(suggestedDir)
+          result.addGeneratedSources(suggestedDir)
 
           val suggestedRootPointAtTargetDir = FileUtil.filesEqual(suggestedDir, targetDir)
           if (suggestedRootPointAtTargetDir) return
@@ -218,6 +213,6 @@ class WorkspaceFolderImporter(
     val projectContentRootPath: String,
     val outputPath: String,
     val testOutputPath: String,
-    val folders: List<ContentRootCollector.Folder>
+    val folders: List<ContentRootCollector.ImportedFolder>
   )
 }

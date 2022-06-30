@@ -8,14 +8,16 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
 object ContentRootCollector {
-  fun collect(folders: List<Folder>): Collection<Result> {
-    val result = mutableListOf<Result>()
+  fun collect(folders: List<ImportedFolder>): Collection<ContentRootResult> {
+    class ContentRootWithFolders(val path: String, val folders: MutableList<ImportedFolder> = mutableListOf())
+
+    val result = mutableListOf<ContentRootWithFolders>()
 
     folders.sorted().forEach { curr ->
       // 1. ADD CONTENT ROOT, IF NEEDED:
       var nearestRoot = result.lastOrNull()
       if (nearestRoot != null && FileUtil.isAncestor(nearestRoot.path, curr.path, false)) {
-        if (curr is ContentRootFolder) {
+        if (curr is ProjectRootFolder) {
           // don't add nested content roots
           return@forEach
         }
@@ -30,7 +32,7 @@ object ContentRootCollector {
           // don't add root when there is only an exclude folder under it
           return@forEach
         }
-        nearestRoot = Result(curr.path)
+        nearestRoot = ContentRootWithFolders(curr.path)
         result.add(nearestRoot)
       }
 
@@ -48,7 +50,7 @@ object ContentRootCollector {
           // don't add sub source folders
           return@forEach
         }
-        else if (prev is UserOrGeneratedSourceFolder && curr is OptionalGeneratedSourceFolder) {
+        else if (prev is UserOrGeneratedSourceFolder && curr is AnnotationSourceFolder) {
           // don't add optional generated folder under another source folder (including generated)
           return@forEach
         }
@@ -56,7 +58,7 @@ object ContentRootCollector {
           // don't add generated folder when there are sub source folder
           nearestRoot.folders.removeLast()
         }
-        else if (prev is ExcludedFolderAndPreventGeneratedSubfolders && curr is UserOrGeneratedSourceFolder) {
+        else if (prev is ExcludedFolderAndPreventSubfolders && curr is UserOrGeneratedSourceFolder) {
           // don't add source folders under corresponding exclude folders
           return@forEach
         }
@@ -78,7 +80,7 @@ object ContentRootCollector {
       val root = rootIterator.next()
 
       val folderIterator = root.folders.iterator()
-      var prev: Folder? = null
+      var prev: ImportedFolder? = null
       while (folderIterator.hasNext()) {
         val curr = folderIterator.next()
         if (prev is BaseExcludedFolder && curr is BaseExcludedFolder
@@ -91,11 +93,19 @@ object ContentRootCollector {
       }
     }
 
-    return result
+    return result.map { root ->
+      val sourceFolders = root.folders.asSequence().filterIsInstance<UserOrGeneratedSourceFolder>().map { folder ->
+        SourceFolderResult(folder.path, folder.type, folder is BaseGeneratedSourceFolder)
+      }
+      val excludeFolders = root.folders.asSequence().filterIsInstance<BaseExcludedFolder>().map { folder ->
+        ExcludedFolderResult(folder.path)
+      }
+      ContentRootResult(root.path, sourceFolders.toList(), excludeFolders.toList())
+    }
   }
 
-  sealed class Folder(val path: String, internal val rank: Int) : Comparable<Folder> {
-    override fun compareTo(other: Folder): Int {
+  sealed class ImportedFolder(val path: String, internal val rank: Int) : Comparable<ImportedFolder> {
+    override fun compareTo(other: ImportedFolder): Int {
       val result = FileUtil.comparePaths(path, other.path)
       if (result != 0) return result
       return Comparing.compare(rank, other.rank)
@@ -106,8 +116,8 @@ object ContentRootCollector {
     }
   }
 
-  abstract class UserOrGeneratedSourceFolder(path: String, val type: JpsModuleSourceRootType<*>, rank: Int) : Folder(path, rank) {
-    override fun compareTo(other: Folder): Int {
+  abstract class UserOrGeneratedSourceFolder(path: String, val type: JpsModuleSourceRootType<*>, rank: Int) : ImportedFolder(path, rank) {
+    override fun compareTo(other: ImportedFolder): Int {
       val result = super.compareTo(other)
       if (result != 0 || other !is UserOrGeneratedSourceFolder) return result
       return Comparing.compare(rootTypeRank, other.rootTypeRank)
@@ -127,22 +137,28 @@ object ContentRootCollector {
     }
   }
 
-  abstract class BaseExcludedFolder(path: String, rank: Int) : Folder(path, rank)
+  abstract class BaseExcludedFolder(path: String, rank: Int) : ImportedFolder(path, rank)
   abstract class BaseGeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>, rank: Int)
     : UserOrGeneratedSourceFolder(path, type, rank)
 
-  class ContentRootFolder(path: String) : Folder(path, 0)
+  class ProjectRootFolder(path: String) : ImportedFolder(path, 0)
   class SourceFolder(path: String, type: JpsModuleSourceRootType<*>) : UserOrGeneratedSourceFolder(path, type, 1)
-  class ExcludedFolderAndPreventGeneratedSubfolders(path: String) : BaseExcludedFolder(path, 2)
-  class ExplicitGeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>) : BaseGeneratedSourceFolder(path, type, 3)
-  class OptionalGeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>) : BaseGeneratedSourceFolder(path, type, 4)
+  class ExcludedFolderAndPreventSubfolders(path: String) : BaseExcludedFolder(path, 2)
+  class GeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>) : BaseGeneratedSourceFolder(path, type, 3)
+  class AnnotationSourceFolder(path: String, type: JpsModuleSourceRootType<*>) : BaseGeneratedSourceFolder(path, type, 4)
   class ExcludedFolder(path: String) : BaseExcludedFolder(path, 5)
 
-  class Result(val path: String) {
-    val folders = mutableListOf<Folder>()
+  class ContentRootResult(val path: String,
+                          val sourceFolders: List<SourceFolderResult>,
+                          val excludeFolders: List<ExcludedFolderResult>) {
+    override fun toString() = path
+  }
 
-    override fun toString(): String {
-      return path
-    }
+  class SourceFolderResult(val path: String, val type: JpsModuleSourceRootType<*>, val isGenerated: Boolean) {
+    override fun toString() = "$path ${if (isGenerated) "generated" else ""} rootType='${if (type.isForTests) "test" else "main"}  ${type.javaClass.simpleName}'"
+  }
+
+  class ExcludedFolderResult(val path: String) {
+    override fun toString() = path
   }
 }
