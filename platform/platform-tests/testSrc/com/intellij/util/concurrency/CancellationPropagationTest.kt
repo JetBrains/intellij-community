@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.UncaughtExceptionsExtension
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
@@ -117,18 +116,17 @@ class CancellationPropagationTest {
   @Test
   fun `cancelled invokeLater is not executed`(): Unit = timeoutPropagateRunBlocking {
     launch {
-        replaceThreadContext(coroutineContext).use {
-          ApplicationManager.getApplication().withModality {
-            val runnable = Runnable {
-              fail()
-            }
-            ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, Conditions.alwaysFalse<Nothing?>())
-            assertReferenced(LaterInvocator::class.java, runnable) // the runnable is queued
-            this@launch.cancel()
+      replaceThreadContext(coroutineContext).use {
+        ApplicationManager.getApplication().withModality {
+          val runnable = Runnable {
+            fail()
           }
+          ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, Conditions.alwaysFalse<Nothing?>())
+          assertReferenced(LaterInvocator::class.java, runnable) // the runnable is queued
+          this@launch.cancel()
         }
       }
-    .join()
+    }.join()
     pumpEDT()
   }
 
@@ -159,6 +157,7 @@ class CancellationPropagationTest {
       timeoutRunBlocking(action)
     }
   }
+
   @Test
   fun appScheduledExecutorService(): Unit = timeoutPropagateRunBlocking {
     doScheduledExecutorServiceTest(scheduledService)
