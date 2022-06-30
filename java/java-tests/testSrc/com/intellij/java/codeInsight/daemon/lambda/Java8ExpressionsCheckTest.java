@@ -29,6 +29,13 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testPolyExpressionOnRSideOfAssignment() {
+    configure();
+    PsiMethodCallExpression
+      call = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+    call.resolveMethodGenerics().isValidResult();
+  }
+
   public void testNestedLambdaReturnTypeCheck() {
     configure();
     PsiMethodCallExpression
