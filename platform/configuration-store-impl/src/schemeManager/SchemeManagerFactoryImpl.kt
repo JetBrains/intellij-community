@@ -4,6 +4,7 @@ package com.intellij.configurationStore.schemeManager
 import com.intellij.configurationStore.*
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
@@ -18,6 +19,8 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.throwIfNotEmpty
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -96,7 +99,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   final override suspend fun save() {
     val errors = SmartList<Throwable>()
-    withEdtContext(componentManager) {
+    withContext(Dispatchers.EDT) {
       for (registeredManager in managers) {
         try {
           registeredManager.save(errors)

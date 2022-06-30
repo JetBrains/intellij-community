@@ -3,6 +3,9 @@ package com.intellij.configurationStore
 
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.components.serviceIfCreated
@@ -11,6 +14,8 @@ import com.intellij.openapi.project.impl.UnableToSaveProjectNotification
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.containers.mapSmart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -22,7 +27,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
       return SaveResult.EMPTY
     }
 
-    val saveResult = withEdtContext(project) {
+    val saveResult = withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
       runWriteAction {
         val r = SaveResult()
         saveSessions(extraSessions, r)
@@ -56,7 +61,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
 
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
-    withEdtContext(project) {
+    withContext(Dispatchers.EDT) {
       runWriteAction {
         val r = SaveResult()
         for (entry in oldList) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
@@ -6,10 +6,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.*
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StorageScheme
@@ -21,6 +18,8 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.util.Disposer
@@ -67,6 +66,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
    * But even if `forceExecuteImmediately = true` specified, job is not re-added.
    * That's ok - client doesn't expect that `forceExecuteImmediately` means "executes immediately", it means "do save without regular delay".
    */
+  @OptIn(DelicateCoroutinesApi::class)
   private fun requestSave(forceExecuteImmediately: Boolean = false) {
     if (currentJob.get() != null) {
       return
@@ -225,8 +225,11 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
         override fun run(indicator: ProgressIndicator) {
           indicator.isIndeterminate = true
 
-          runBlocking {
-            isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
+          val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
+          runBlockingCancellable {
+            withContext(modalityState.asContextElement()) {
+              isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
+            }
           }
 
           if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
@@ -293,7 +296,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
     }
 
     if (files.isNotEmpty()) {
-      // refresh open files synchronously so it doesn't wait for potentially longish refresh request in the queue to finish
+      // refresh open files synchronously, so it doesn't wait for potentially longish refresh request in the queue to finish
       RefreshQueue.getInstance().refresh(false, false, null, files)
     }
   }

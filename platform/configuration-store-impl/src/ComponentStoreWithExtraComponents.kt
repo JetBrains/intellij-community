@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -14,6 +13,8 @@ import com.intellij.util.SmartList
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -55,11 +56,12 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     super.unloadComponent(component)
   }
 
-  internal suspend fun saveSettingsSavingComponentsAndCommitComponents(result: SaveResult, forceSavingAllSettings: Boolean,
+  internal suspend fun saveSettingsSavingComponentsAndCommitComponents(result: SaveResult,
+                                                                       forceSavingAllSettings: Boolean,
                                                                        saveSessionProducerManager: SaveSessionProducerManager) {
     coroutineScope {
       // expects EDT
-      launch(AppUIExecutor.onUiThread().expireWith(serviceContainer).coroutineDispatchingContext()) {
+      launch(Dispatchers.EDT) {
         val errors = SmartList<Throwable>()
         for (settingsSavingComponent in settingsSavingComponents) {
           runAndCollectException(errors) {
@@ -115,6 +117,9 @@ private inline fun <T> runAndCollectException(errors: MutableList<Throwable>, ru
     return runnable()
   }
   catch (e: ProcessCanceledException) {
+    throw e
+  }
+  catch (e: CancellationException) {
     throw e
   }
   catch (e: CompoundRuntimeException) {

@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
@@ -82,9 +83,9 @@ class StoreUtil private constructor() {
 
 @CalledInAny
 suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean {
-  //if (ApplicationManager.getApplication().isDispatchThread) {
-  //  (TransactionGuardImpl.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
-  //}
+  if (ApplicationManager.getApplication().isDispatchThread) {
+    (TransactionGuardImpl.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
+  }
 
   try {
     componentManager.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)

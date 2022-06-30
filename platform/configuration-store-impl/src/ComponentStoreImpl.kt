@@ -7,7 +7,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -25,6 +25,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.toArray
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jdom.Element
@@ -174,13 +175,10 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   internal abstract suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean)
 
-  internal suspend inline fun <T> withEdtContext(crossinline task: suspend () -> T): T {
-    return withEdtContext(storageManager.componentManager, task)
-  }
-
-  internal suspend fun commitComponentsOnEdt(saveResult: SaveResult, forceSavingAllSettings: Boolean,
+  internal suspend fun commitComponentsOnEdt(saveResult: SaveResult,
+                                             forceSavingAllSettings: Boolean,
                                              saveSessionProducerManager: SaveSessionProducerManager) {
-    withEdtContext {
+    withContext(Dispatchers.EDT) {
       val errors = SmartList<Throwable>()
       commitComponents(forceSavingAllSettings, saveSessionProducerManager, errors)
       saveResult.addErrors(errors)
@@ -703,16 +701,6 @@ internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: Save
   val saveSessionManager = createSaveSessionProducerManager()
   commitComponentsOnEdt(result, forceSavingAllSettings, saveSessionManager)
   saveSessionManager.save().appendTo(result)
-}
-
-internal suspend inline fun <T> withEdtContext(disposable: ComponentManager?, crossinline task: suspend () -> T): T {
-  var t = AppUIExecutor.onUiThread()
-  disposable?.let {
-    t = t.expireWith(it)
-  }
-  return withContext(t.coroutineDispatchingContext()) {
-    task()
-  }
 }
 
 private fun getComponentName(component: Any): String {

@@ -1,11 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -22,8 +23,10 @@ import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectStoreWithJpsContentReader
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.jps.util.JpsPathUtil
@@ -63,7 +66,11 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
     }
 
     for (projectNameProvider in ProjectNameProvider.EP_NAME.iterable) {
-      LOG.runAndLogException { projectNameProvider.getDefaultName(project)?.let { return it } }
+      runCatching {
+        projectNameProvider.getDefaultName(project)
+      }
+        .getOrLogException(LOG)
+        ?.let { return it }
     }
     return JpsPathUtil.getDefaultProjectName(projectDir)
   }
@@ -168,9 +175,9 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
       return emptyList()
     }
 
-    return withEdtContext {
-      // do no create with capacity because very rarely a lot of modules will be modified
-      val saveSessions: MutableList<SaveSession> = SmartList()
+    return withContext(Dispatchers.EDT) {
+      // do not create with capacity because very rarely a lot of modules will be modified
+      val saveSessions = ArrayList<SaveSession>()
       // commit components
       for (module in modules) {
         val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
@@ -215,7 +222,7 @@ internal class PlatformProjectStoreFactory : ProjectStoreFactoryImpl() {
 
 @CalledInAny
 internal suspend fun ensureFilesWritable(project: Project, files: Collection<VirtualFile>): ReadonlyStatusHandler.OperationStatus {
-  return withEdtContext(project) {
+  return withContext(Dispatchers.EDT) {
     ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
   }
 }

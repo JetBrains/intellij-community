@@ -5,12 +5,8 @@ import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -35,6 +31,7 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
@@ -158,7 +155,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
   override suspend fun reloadChangedStorageFiles() {
     val unfinishedRequest = changedFilesAlarm.getUnfinishedRequest() ?: return
-    withContext(AppUIExecutor.onUiThread().expireWith(this).coroutineDispatchingContext()) {
+    withContext(Dispatchers.EDT) {
       unfinishedRequest.run()
       // just to be sure
       changedFilesAlarm.getUnfinishedRequest()?.run()
