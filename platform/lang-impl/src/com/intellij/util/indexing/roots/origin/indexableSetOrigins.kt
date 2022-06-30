@@ -15,7 +15,8 @@ internal data class ModuleRootOriginImpl(override val module: Module,
 internal data class LibraryOriginImpl(override val classRootUrls: List<VirtualFilePointer>,
                                       override val sourceRootUrls: List<VirtualFilePointer>) : LibraryOrigin
 
-internal data class SyntheticLibraryOriginImpl(override val syntheticLibrary: SyntheticLibrary) : SyntheticLibraryOrigin
+internal data class SyntheticLibraryOriginImpl(override val syntheticLibrary: SyntheticLibrary,
+                                               override val rootsToIndex: Collection<VirtualFile>) : SyntheticLibraryOrigin
 
 internal data class SdkOriginImpl(override val sdk: Sdk) : SdkOrigin
 
