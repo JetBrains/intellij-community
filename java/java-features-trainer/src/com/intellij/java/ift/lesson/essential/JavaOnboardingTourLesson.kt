@@ -45,6 +45,7 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.tree.TreeVisitor
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerManager
@@ -385,11 +386,20 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     highlightRunToolbar()
 
     task {
-      text(JavaLessonsBundle.message("java.onboarding.temporary.configuration.description",
-                                     icon(AllIcons.Actions.Execute),
-                                     icon(AllIcons.Actions.StartDebugger),
-                                     icon(AllIcons.Actions.Profile),
-                                     icon(AllIcons.General.RunWithCoverage)))
+      val runOptionsText = if (PlatformUtils.isIdeaUltimate()) {
+        JavaLessonsBundle.message("java.onboarding.run.options.ultimate",
+                                  icon(AllIcons.Actions.Execute),
+                                  icon(AllIcons.Actions.StartDebugger),
+                                  icon(AllIcons.Actions.Profile),
+                                  icon(AllIcons.General.RunWithCoverage))
+      }
+      else {
+        JavaLessonsBundle.message("java.onboarding.run.options.community",
+                                  icon(AllIcons.Actions.Execute),
+                                  icon(AllIcons.Actions.StartDebugger),
+                                  icon(AllIcons.General.RunWithCoverage))
+      }
+      text(JavaLessonsBundle.message("java.onboarding.temporary.configuration.description") + " $runOptionsText")
       text(JavaLessonsBundle.message("java.onboarding.run.sample", icon(AllIcons.Actions.Execute), action("Run")))
       checkToolWindowState("Run", true)
       restoreIfModified(sample)
