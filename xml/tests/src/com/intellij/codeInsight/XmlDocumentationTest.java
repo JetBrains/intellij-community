@@ -87,6 +87,18 @@ public class XmlDocumentationTest extends BasePlatformTestCase {
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".svg");
   }
 
+  public void testXmlDoc8() {
+    String testName = getTestName(false);
+    DocumentationTestContext context = new DocumentationTestContext(testName + ".xml", testName + ".xsd");
+    assertNull(context.generateDoc());
+  }
+
+  public void testXmlDoc9() {
+    String testName = getTestName(false);
+    DocumentationTestContext context = new DocumentationTestContext(testName + ".xml", testName + ".xsd");
+    assertNull(context.generateDoc());
+  }
+
   private void doQuickDocGenerationTestWithCheckExpectedResult(final String... baseFileNames) throws Exception {
     doQuickDocGenerationTestWithCheckExpectedResult(null, baseFileNames);
   }
