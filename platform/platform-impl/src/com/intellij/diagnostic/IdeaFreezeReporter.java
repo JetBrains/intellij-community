@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginUtil;
@@ -50,7 +51,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
   IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    if (!DEBUG && PluginManagerCore.isRunningFromSources() || (!app.isEAP() && !app.isInternal())) {
+    if (!DEBUG && PluginManagerCore.isRunningFromSources()) {
       throw ExtensionNotApplicableException.create();
     }
 
@@ -68,43 +69,46 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           File[] files = dir.listFiles();
           if (files != null) {
             if (duration > FREEZE_THRESHOLD) {
-              List<Attachment> attachments = new ArrayList<>();
-              String message = null;
-              String appInfo = null;
-              Throwable throwable = null;
-              List<String> dumps = new ArrayList<>();
-              for (File file : files) {
-                String text = FileUtil.loadFile(file);
-                String name = file.getName();
-                if (MESSAGE_FILE_NAME.equals(name)) {
-                  message = text;
-                }
-                else if (THROWABLE_FILE_NAME.equals(name)) {
-                  try (FileInputStream fis = new FileInputStream(file); ObjectInputStream ois = new ObjectInputStream(fis)) {
-                    throwable = (Throwable)ois.readObject();
+              LifecycleUsageTriggerCollector.onDeadlockDetected();
+              if (app.isEAP() || app.isInternal()) {
+                List<Attachment> attachments = new ArrayList<>();
+                String message = null;
+                String appInfo = null;
+                Throwable throwable = null;
+                List<String> dumps = new ArrayList<>();
+                for (File file : files) {
+                  String text = FileUtil.loadFile(file);
+                  String name = file.getName();
+                  if (MESSAGE_FILE_NAME.equals(name)) {
+                    message = text;
                   }
-                  catch (Exception ignored) {
+                  else if (THROWABLE_FILE_NAME.equals(name)) {
+                    try (FileInputStream fis = new FileInputStream(file); ObjectInputStream ois = new ObjectInputStream(fis)) {
+                      throwable = (Throwable)ois.readObject();
+                    }
+                    catch (Exception ignored) {
+                    }
+                  }
+                  else if (APPINFO_FILE_NAME.equals(name)) {
+                    appInfo = text;
+                  }
+                  else if (name.startsWith(REPORT_PREFIX)) {
+                    attachments.add(createReportAttachment(duration, text));
+                  }
+                  else if (name.startsWith(PerformanceWatcher.DUMP_PREFIX)) {
+                    dumps.add(text);
                   }
                 }
-                else if (APPINFO_FILE_NAME.equals(name)) {
-                  appInfo = text;
-                }
-                else if (name.startsWith(REPORT_PREFIX)) {
-                  attachments.add(createReportAttachment(duration, text));
-                }
-                else if (name.startsWith(PerformanceWatcher.DUMP_PREFIX)) {
-                  dumps.add(text);
-                }
-              }
 
-              addDumpsAttachments(dumps, Function.identity(), attachments);
+                addDumpsAttachments(dumps, Function.identity(), attachments);
 
-              EP_NAME.forEachExtensionSafe(p -> attachments.addAll(p.getAttachments(dir)));
+                EP_NAME.forEachExtensionSafe(p -> attachments.addAll(p.getAttachments(dir)));
 
-              if (message != null && throwable != null && !attachments.isEmpty()) {
-                IdeaLoggingEvent event = LogMessage.createEvent(throwable, message, attachments.toArray(Attachment.EMPTY_ARRAY));
-                setAppInfo(event, appInfo);
-                report(event);
+                if (message != null && throwable != null && !attachments.isEmpty()) {
+                  IdeaLoggingEvent event = LogMessage.createEvent(throwable, message, attachments.toArray(Attachment.EMPTY_ARRAY));
+                  setAppInfo(event, appInfo);
+                  report(event);
+                }
               }
             }
             cleanup(dir);

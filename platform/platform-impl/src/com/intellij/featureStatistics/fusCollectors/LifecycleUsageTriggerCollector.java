@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
@@ -29,7 +29,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 62);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 63);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -70,6 +70,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
                                                                                errorSizeField,
                                                                                tooManyErrorsField);
   private static final EventId IDE_CRASH_DETECTED = LIFECYCLE.registerEvent("ide.crash.detected");
+
+  private static final EventId IDE_DEADLOCK_DETECTED = LIFECYCLE.registerEvent("ide.deadlock.detected");
 
   private enum ProjectOpenMode { New, Same, Attach }
   private static final EventField<ProjectOpenMode> projectOpenModeField = EventFields.Enum("mode", ProjectOpenMode.class, (mode) -> StringUtil.toLowerCase(mode.name()));
@@ -168,6 +170,10 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   public static void onCrashDetected() {
     IDE_CRASH_DETECTED.log();
+  }
+
+  public static void onDeadlockDetected() {
+    IDE_DEADLOCK_DETECTED.log();
   }
 
   @NotNull
