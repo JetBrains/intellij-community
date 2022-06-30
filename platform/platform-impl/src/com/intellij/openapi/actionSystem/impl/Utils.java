@@ -192,10 +192,7 @@ public final class Utils {
                                                                @Nullable Runnable onProcessed,
                                                                @Nullable JComponent menuItem) {
     boolean async = isAsyncDataContext(context);
-    boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
-    BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
-    ActionUpdater updater = new ActionUpdater(
-      presentationFactory, context, place, isContextMenu, false, null, queue0 != null ? queue0::offer : null);
+    ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, isContextMenu, false, null, null);
     ActionGroupExpander expander = ActionGroupExpander.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(context);
     List<AnAction> list;
@@ -229,14 +226,8 @@ public final class Utils {
       try (AccessToken ignore = cancelOnUserActivityInside(promise, PlatformDataKeys.CONTEXT_COMPONENT.getData(context), menuItem)) {
         ourExpandActionGroupImplEDTLoopLevel++;
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
-          if (queue0 != null) {
-            Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
-            if (runnable != null) runnable.run();
-          }
-          else {
-            AWTEvent event = queue.getNextEvent();
-            queue.dispatchEvent(event);
-          }
+          AWTEvent event = queue.getNextEvent();
+          queue.dispatchEvent(event);
         });
       }
       finally {
