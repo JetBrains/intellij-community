@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
@@ -177,10 +178,10 @@ val TEST_KOTLIN_MODEL_DIR = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testD
 
 private fun loadScriptingPlugin(configuration: CompilerConfiguration) {
     val pluginClasspath = listOf(
-        KotlinArtifacts.kotlinScriptingCompiler,
-        KotlinArtifacts.kotlinScriptingCompilerImpl,
-        KotlinArtifacts.kotlinScriptingCommon,
-        KotlinArtifacts.kotlinScriptingJvm
+        TestKotlinArtifacts.kotlinScriptingCompiler,
+        TestKotlinArtifacts.kotlinScriptingCompilerImpl,
+        TestKotlinArtifacts.kotlinScriptingCommon,
+        TestKotlinArtifacts.kotlinScriptingJvm
     )
 
     PluginCliParser.loadPluginsSafe(pluginClasspath.map { it.absolutePath }, null, configuration)

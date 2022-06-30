@@ -22,6 +22,10 @@ object TestKotlinArtifacts {
 
     val kotlinStdlibCommon: File by lazy { getJar("kotlin-stdlib-common") }
     val kotlinStdlibCommonSources: File by lazy { getSourcesJar("kotlin-stdlib-common") }
+    val kotlinScriptingCommon: File by lazy { getJar("kotlin-scripting-common") }
+    val kotlinScriptingJvm: File by lazy { getJar("kotlin-scripting-jvm") }
+    val kotlinScriptingCompiler: File by lazy { getJar("kotlin-scripting-compiler") }
+    val kotlinScriptingCompilerImpl: File by lazy { getJar("kotlin-scripting-compiler-impl") }
 
     val jsr305: File by lazy { getLibraryFile("com.google.code.findbugs", "jsr305", "jsr305.xml") }
     val junit3: File by lazy { getLibraryFile("junit", "junit", "JUnit3.xml") }
