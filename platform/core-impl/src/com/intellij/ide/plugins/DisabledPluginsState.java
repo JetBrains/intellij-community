@@ -55,7 +55,7 @@ public final class DisabledPluginsState implements PluginEnabler {
     ApplicationInfoEx applicationInfo = ApplicationInfoImpl.getShadowInstance();
     List<String> requiredPlugins = splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY);
 
-    boolean updateDisablePluginsList = false;
+    boolean updateFile = false;
     try (BufferedReader reader = Files.newBufferedReader(file)) {
       String id;
       while ((id = reader.readLine()) != null) {
@@ -64,17 +64,20 @@ public final class DisabledPluginsState implements PluginEnabler {
           continue;
         }
 
-        if (!requiredPlugins.contains(id) && !applicationInfo.isEssentialPlugin(id)) {
-          addIdTo(id, disabledPlugins);
+        if (!requiredPlugins.contains(id) &&
+            !applicationInfo.isEssentialPlugin(id)) {
+          disabledPlugins.add(PluginId.getId(id));
         }
         else {
-          updateDisablePluginsList = true;
+          updateFile = true;
         }
       }
 
-      for (String suppressedId : getNonEssentialSuppressedPlugins(applicationInfo)) {
-        if (addIdTo(suppressedId, disabledPlugins)) {
-          updateDisablePluginsList = true;
+      for (String suppressedId : splitByComma("idea.suppressed.plugins.id")) {
+        PluginId suppressedPluginId = PluginId.getId(suppressedId);
+        if (!applicationInfo.isEssentialPlugin(suppressedPluginId) &&
+            disabledPlugins.add(suppressedPluginId)) {
+          updateFile = true;
         }
       }
     }
@@ -82,7 +85,7 @@ public final class DisabledPluginsState implements PluginEnabler {
       getLogger().info("Unable to load disabled plugins list from " + file, e);
     }
     finally {
-      if (updateDisablePluginsList) {
+      if (updateFile) {
         trySaveDisabledPlugins(file, disabledPlugins, false);
       }
     }
@@ -173,7 +176,7 @@ public final class DisabledPluginsState implements PluginEnabler {
   public static void saveDisabledPlugins(@NotNull Path configDir, String... ids) throws IOException {
     List<PluginId> pluginIds = new ArrayList<>();
     for (String id : ids) {
-      addIdTo(id, pluginIds);
+      pluginIds.add(PluginId.getId(id));
     }
     saveDisabledPlugins(configDir.resolve(DISABLED_PLUGINS_FILENAME), pluginIds, true);
   }
@@ -204,25 +207,6 @@ public final class DisabledPluginsState implements PluginEnabler {
 
   static void invalidate() {
     ourDisabledPlugins = null;
-  }
-
-  private static boolean addIdTo(@NotNull String id, @NotNull Collection<PluginId> pluginIds) {
-    return pluginIds.add(PluginId.getId(id));
-  }
-
-  private static @NotNull List<String> getNonEssentialSuppressedPlugins(@NotNull ApplicationInfoEx applicationInfo) {
-    List<String> suppressedPlugins = splitByComma("idea.suppressed.plugins.id");
-    if (suppressedPlugins.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    List<String> result = new ArrayList<>(suppressedPlugins.size());
-    for (String suppressedPlugin : suppressedPlugins) {
-      if (!applicationInfo.isEssentialPlugin(suppressedPlugin)) {
-        result.add(suppressedPlugin);
-      }
-    }
-    return result;
   }
 
   private static @NotNull List<String> splitByComma(@NotNull String key) {
