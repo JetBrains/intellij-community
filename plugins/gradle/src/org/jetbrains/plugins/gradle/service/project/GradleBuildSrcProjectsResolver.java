@@ -192,11 +192,27 @@ public final class GradleBuildSrcProjectsResolver {
     // due to limitation caused by specific ordering requirement:  "include order is important if an included build provides a plugin which should be discovered very very early".
     // It can be improved in the future Gradle releases.
     if (gradleBaseVersion.compareTo(GradleVersion.version("6.7")) < 0) return;
-    for (BuildParticipant buildParticipant : compositeBuildData.getCompositeParticipants()) {
-      if (!FileUtil.pathsEqual(mainBuildPath, buildParticipant.getRootPath())) {
+    // since 7.2 including builds that transitively include current buildSrc will produce errors: https://github.com/gradle/gradle/issues/20898
+    for (BuildParticipant buildParticipant : excludeTransitiveParentsOf(mainBuildPath, compositeBuildData.getCompositeParticipants())) {
         buildSrcProjectSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getRootPath());
-      }
     }
+  }
+
+  @NotNull
+  private static Collection<BuildParticipant> excludeTransitiveParentsOf(@NotNull String path, @NotNull List<BuildParticipant> participants) {
+    Map<String, BuildParticipant> rootPathParticipantMap = new HashMap<>();
+
+    for (BuildParticipant participant : participants) {
+      rootPathParticipantMap.put(participant.getRootPath(), participant);
+    }
+
+    String currentPath = path;
+    while (currentPath != null) {
+      BuildParticipant removed = rootPathParticipantMap.remove(currentPath);
+      currentPath = removed != null ? removed.getParentRootPath() : null;
+    }
+
+    return rootPathParticipantMap.values();
   }
 
   @Nullable
