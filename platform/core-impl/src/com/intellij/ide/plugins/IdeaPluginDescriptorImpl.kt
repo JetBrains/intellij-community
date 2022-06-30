@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
@@ -81,7 +82,14 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   companion object {
     @ApiStatus.Internal
-    @JvmField var disableNonBundledPlugins = false
+    @JvmField
+    var disableNonBundledPlugins = false
+
+    @VisibleForTesting
+    const val ON_DEMAND_ENABLED_KEY = "idea.on.demand.plugins"
+
+    val isOnDemandEnabled
+      @ApiStatus.Experimental get() = java.lang.Boolean.getBoolean(ON_DEMAND_ENABLED_KEY)
   }
 
   @Transient @JvmField var jarFiles: List<Path>? = null
@@ -105,7 +113,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   @JvmField val isUseIdeaClassLoader = raw.isUseIdeaClassLoader
   @JvmField val isBundledUpdateAllowed = raw.isBundledUpdateAllowed
   @JvmField internal val implementationDetail = raw.implementationDetail
-  @JvmField internal val onDemand = raw.onDemand
+  @ApiStatus.Experimental @JvmField internal val onDemand = isOnDemandEnabled && raw.onDemand
   @JvmField internal val isRestartRequired = raw.isRestartRequired
   @JvmField val packagePrefix = raw.`package`
 

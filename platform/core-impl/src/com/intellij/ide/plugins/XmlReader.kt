@@ -18,7 +18,7 @@ import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.codehaus.stax2.XMLStreamReader2
 import org.codehaus.stax2.typed.TypedXMLStreamException
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.io.InputStream
@@ -31,9 +31,9 @@ import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
 
-@Internal const val PACKAGE_ATTRIBUTE = "package"
-@Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE = "implementation-detail"
-@Internal const val ON_DEMAND_ATTRIBUTE = "on-demand"
+@ApiStatus.Internal const val PACKAGE_ATTRIBUTE = "package"
+@ApiStatus.Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE = "implementation-detail"
+@ApiStatus.Experimental const val ON_DEMAND_ATTRIBUTE = "on-demand"
 
 private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
 

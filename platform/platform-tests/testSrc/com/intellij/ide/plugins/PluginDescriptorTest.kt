@@ -120,8 +120,7 @@ class PluginDescriptorTest {
   fun testProductionPlugins() {
     IoTestUtil.assumeMacOS()
     assumeNotUnderTeamcity()
-    val descriptors = loadAndInitDescriptors(pluginsPath = Paths.get("/Applications/Idea.app/Contents/plugins"))
-      .pluginSet
+    val descriptors = loadPluginSet(pluginsPath = Paths.get("/Applications/Idea.app/Contents/plugins"))
       .allPlugins
     assertThat(descriptors).isNotEmpty()
     assertThat(descriptors.find { it.pluginId.idString == "com.intellij.java" }).isNotNull
@@ -147,8 +146,8 @@ class PluginDescriptorTest {
     IoTestUtil.assumeMacOS()
 
     assumeNotUnderTeamcity()
-    val descriptors = loadAndInitDescriptors(pluginsPath = Paths.get("/Volumes/data/plugins"))
-      .pluginSet.allPlugins
+    val descriptors = loadPluginSet(pluginsPath = Paths.get("/Volumes/data/plugins"))
+      .allPlugins
     assertThat(descriptors).isNotEmpty()
   }
 
@@ -251,7 +250,7 @@ class PluginDescriptorTest {
         <version>2.0</version>
       </idea-plugin>""")
 
-    val pluginSet = loadAndInitDescriptors().pluginSet
+    val pluginSet = loadPluginSet()
     val plugins = pluginSet.enabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
@@ -341,9 +340,7 @@ class PluginDescriptorTest {
         <idea-version since-build="2.0" until-build="4.*"/>
       </idea-plugin>""")
 
-    val pluginSet = loadAndInitDescriptors(BuildNumber.fromString("3.12")!!)
-      .pluginSet
-
+    val pluginSet = loadPluginSet(BuildNumber.fromString("3.12")!!)
     val plugins = pluginSet.enabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
@@ -360,7 +357,7 @@ class PluginDescriptorTest {
     PluginBuilder().noDepends().id("foo").version("1.0").build(pluginsPath.resolve("foo_1-0"))
     PluginBuilder().noDepends().id("foo").version("1.0").build(pluginsPath.resolve("foo_another"))
 
-    val pluginSet = loadAndInitDescriptors().pluginSet
+    val pluginSet = loadPluginSet()
     val plugins = pluginSet.enabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
@@ -408,9 +405,7 @@ class PluginDescriptorTest {
   }
 
   private fun checkClassLoader() {
-    val list = loadAndInitDescriptors()
-      .pluginSet
-      .enabledPlugins
+    val list = loadPluginSet().enabledPlugins
     assertThat(list).hasSize(2)
 
     val bar = list[0]
@@ -513,8 +508,7 @@ class PluginDescriptorTest {
     PluginBuilder().noDepends().id("foo").depends("bar").build(pluginsPath.resolve("foo"))
     PluginBuilder().noDepends().id("bar").build(pluginsPath.resolve("bar"))
 
-    val pluginSet = loadAndInitDescriptors(disabledPlugins = setOf("bar"))
-      .pluginSet
+    val pluginSet = loadPluginSet(disabledPlugins = setOf("bar"))
     assertThat(pluginSet.enabledPlugins).isEmpty()
   }
 
@@ -537,8 +531,7 @@ class PluginDescriptorTest {
       .id("com.intellij.gradle")
       .build(pluginsPath.resolve("intellij.gradle"))
 
-    val result = loadAndInitDescriptors(disabledPlugins = setOf("com.intellij.gradle"))
-      .pluginSet
+    val result = loadPluginSet(disabledPlugins = setOf("com.intellij.gradle"))
     assertThat(result.enabledPlugins).isEmpty()
   }
 
@@ -551,12 +544,19 @@ class PluginDescriptorTest {
       .build(pluginsPath.resolve("foo"))
 
     PluginBuilder()
+      .noDepends()
       .id("bar")
       .pluginDependency("foo")
       .build(pluginsPath.resolve("bar"))
 
-    val pluginSet = loadAndInitDescriptors().pluginSet
-    assertThat(pluginSet.enabledPlugins).isEmpty()
+    assertThat(loadPluginSet().enabledPlugins).hasSize(2)
+
+    PlatformTestUtil.withSystemProperty<Throwable>(
+      /* key = */ IdeaPluginDescriptorImpl.ON_DEMAND_ENABLED_KEY,
+      /* value = */ "true",
+    ) {
+      assertThat(loadPluginSet().enabledPlugins).isEmpty()
+    }
   }
 
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
@@ -565,17 +565,17 @@ class PluginDescriptorTest {
       .write(data.trimIndent())
   }
 
-  private fun loadAndInitDescriptors(
+  private fun loadPluginSet(
     buildNumber: BuildNumber = PluginManagerCore.getBuildNumber(),
     pluginsPath: Path = this.pluginsPath,
     disabledPlugins: Set<String> = emptySet(),
-  ): PluginManagerState {
+  ): PluginSet {
     return PluginManagerCore.initializePlugins(
-      loadDescriptors(pluginsPath, buildNumber, disabledPlugins),
-      UrlClassLoader.build().get(),
-      false,
-      null,
-    )
+      /* context = */ loadDescriptors(pluginsPath, buildNumber, disabledPlugins),
+      /* coreLoader = */ UrlClassLoader.build().get(),
+      /* checkEssentialPlugins = */ false,
+      /* parentActivity = */ null,
+    ).pluginSet
   }
 }
 
