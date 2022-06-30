@@ -234,6 +234,7 @@
     </action>
     <action id="EditorSelectWord">
         <keyboard-shortcut first-keystroke="shift ctrl meta right" />
+        <keyboard-shortcut first-keystroke="ctrl shift right" />
     </action>
     <action id="EditorSplitLine">
         <keyboard-shortcut first-keystroke="ctrl o" />
@@ -303,7 +304,6 @@
     <action id="FindNext">
         <keyboard-shortcut first-keystroke="meta g" />
         <keyboard-shortcut first-keystroke="f3" />
-        <keyboard-shortcut first-keystroke="meta f3"/>
         <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta d"/>
     </action>
     <action id="FindPrevious">
@@ -344,7 +344,6 @@
     </action>
     <action id="EvaluateExpression" />
     <action id="GotoNextError">
-        <keyboard-shortcut first-keystroke="f8" />
         <keyboard-shortcut first-keystroke="alt f8"/>
     </action>
     <action id="GotoNextIncompletePropertyAction" />
@@ -567,6 +566,7 @@
     </action>
     <action id="SelectNextOccurrence">
         <keyboard-shortcut first-keystroke="meta d" />
+        <keyboard-shortcut first-keystroke="meta f3"/>
     </action>
     <action id="SendEOF" />
     <action id="SetShortcutAction" />
@@ -696,9 +696,6 @@
   <action id="Pause">
     <keyboard-shortcut first-keystroke="f6" />
   </action>
-  <action id="SmartSelect">
-    <keyboard-shortcut first-keystroke="ctrl shift right" />
-  </action>
   <action id="SelectInProjectView">
     <keyboard-shortcut first-keystroke="meta k" second-keystroke="e"/>
   </action>
@@ -752,8 +749,9 @@
     <keyboard-shortcut first-keystroke="meta SEMICOLON" second-keystroke="e" />
   </action>
   <action id="CodeCompletion">
-    <keyboard-shortcut first-keystroke="meta l" />
+    <keyboard-shortcut first-keystroke="meta i" />
     <keyboard-shortcut first-keystroke="alt ESCAPE" />
+    <keyboard-shortcut first-keystroke="ctrl space" />
   </action>
   <action id="CloseAllEditorsButActive">
     <keyboard-shortcut first-keystroke="meta alt t"  />
