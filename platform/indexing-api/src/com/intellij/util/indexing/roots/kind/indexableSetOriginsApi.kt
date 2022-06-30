@@ -33,6 +33,7 @@ interface SdkOrigin : IndexableSetOrigin {
 
 interface IndexableSetContributorOrigin : IndexableSetOrigin {
   val indexableSetContributor: IndexableSetContributor
+  val rootsToIndex: Set<VirtualFile>
 }
 
 interface ProjectFileOrDirOrigin : IndexableSetOrigin {

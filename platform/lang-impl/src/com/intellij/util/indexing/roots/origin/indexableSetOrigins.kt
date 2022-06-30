@@ -19,6 +19,7 @@ internal data class SyntheticLibraryOriginImpl(override val syntheticLibrary: Sy
 
 internal data class SdkOriginImpl(override val sdk: Sdk) : SdkOrigin
 
-internal data class IndexableSetContributorOriginImpl(override val indexableSetContributor: IndexableSetContributor) : IndexableSetContributorOrigin
+internal data class IndexableSetContributorOriginImpl(override val indexableSetContributor: IndexableSetContributor,
+                                                      override val rootsToIndex: Set<VirtualFile>) : IndexableSetContributorOrigin
 
 internal data class ProjectFileOrDirOriginImpl(override val fileOrDir: VirtualFile) : ProjectFileOrDirOrigin
