@@ -1380,8 +1380,6 @@
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.EmptyFsRootDataLoader"/>
 
     <projectBuildWarmupSupport implementation="com.intellij.warmup.PlatformBuildWarmupSupport" />
-    
-    <postStartupActivity implementation="com.intellij.find.FindSettingsMigration" />
    </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
