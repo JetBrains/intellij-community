@@ -24,3 +24,5 @@ public class JavaClassInvoke {
         public static OtherJavaClass OJC = new OtherJavaClass();
     }
 }
+// FIR_COMPARISON
+// IGNORE_FIR_LOG

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.PlatformIcons
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -12,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import javax.swing.Icon
 
 internal object KotlinFirIconProvider {
-    fun getIconFor(symbol: KtSymbol): Icon? {
+    fun KtAnalysisSession.getIconFor(symbol: KtSymbol): Icon? {
         symbol.psi?.let { referencedPsi ->
             if (referencedPsi !is KtElement) {
                 return getIconForJavaDeclaration(referencedPsi)
@@ -38,7 +39,7 @@ internal object KotlinFirIconProvider {
 
             return when (symbol.classKind) {
                 KtClassKind.CLASS -> if (isAbstract) KotlinIcons.ABSTRACT_CLASS else KotlinIcons.CLASS
-                KtClassKind.ENUM_CLASS, KtClassKind.ENUM_ENTRY -> KotlinIcons.ENUM
+                KtClassKind.ENUM_CLASS -> KotlinIcons.ENUM
                 KtClassKind.ANNOTATION_CLASS -> KotlinIcons.ANNOTATION
                 KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT -> KotlinIcons.OBJECT
                 KtClassKind.INTERFACE -> KotlinIcons.INTERFACE

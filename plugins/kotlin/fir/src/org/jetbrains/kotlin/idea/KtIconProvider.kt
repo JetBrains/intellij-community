@@ -21,8 +21,6 @@ import javax.swing.Icon
 object KtIconProvider {
     private val LOG = Logger.getInstance(KtIconProvider::class.java)
 
-    // KtAnalysisSession is unused, but we want to keep it here to force all access to this method has a KtAnalysisSession
-    @Suppress("UnusedReceiverParameter")
     fun KtAnalysisSession.getIcon(ktSymbol: KtSymbol): Icon? {
         // logic copied from org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
         val declaration = ktSymbol.psi
@@ -42,7 +40,7 @@ object KtIconProvider {
         }
     }
 
-    private fun getIcon(symbol: KtSymbol, flags: Int): Icon? {
+    private fun KtAnalysisSession.getIcon(symbol: KtSymbol, flags: Int): Icon? {
         var result: Icon = getBaseIcon(symbol) ?: return null
 
         if (flags and Iconable.ICON_FLAG_VISIBILITY > 0) {
@@ -54,7 +52,7 @@ object KtIconProvider {
         return result
     }
 
-    private fun getBaseIcon(symbol: KtSymbol): Icon? {
+    private fun KtAnalysisSession.getBaseIcon(symbol: KtSymbol): Icon? {
         val isAbstract = (symbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT
         return when (symbol) {
             is KtPackageSymbol -> PlatformIcons.PACKAGE_ICON
@@ -75,7 +73,7 @@ object KtIconProvider {
                         isAbstract -> KotlinIcons.ABSTRACT_CLASS
                         else -> KotlinIcons.CLASS
                     }
-                    KtClassKind.ENUM_CLASS, KtClassKind.ENUM_ENTRY -> KotlinIcons.ENUM
+                    KtClassKind.ENUM_CLASS -> KotlinIcons.ENUM
                     KtClassKind.ANNOTATION_CLASS -> KotlinIcons.ANNOTATION
                     KtClassKind.INTERFACE -> KotlinIcons.INTERFACE
                     KtClassKind.ANONYMOUS_OBJECT, KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT -> KotlinIcons.OBJECT
@@ -100,7 +98,7 @@ object KtIconProvider {
         }
     }
 
-    private fun getVisibilityIcon(symbol: KtSymbol): Icon? {
+    private fun KtAnalysisSession.getVisibilityIcon(symbol: KtSymbol): Icon? {
         return when ((symbol as? KtSymbolWithVisibility)?.visibility?.normalize()) {
             Visibilities.Public -> PlatformIcons.PUBLIC_ICON
             Visibilities.Protected -> PlatformIcons.PROTECTED_ICON

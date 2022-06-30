@@ -147,8 +147,10 @@ private fun singleJarMavenLibrary(
 
 private fun JpsLibrary.convertMavenUrlToCooperativeIfNeeded(artifactsMode: ArtifactMode, isCommunity: Boolean): JpsLibrary {
     fun convertUrl(url: JpsUrl): JpsUrl {
-        require(url.path is JpsPath.MavenRepository)
-        return JpsUrl.Jar(JpsPath.ProjectDir("../build/repo/${url.path}", isCommunity))
+        return when (url.path) {
+            is JpsPath.ProjectDir -> url
+            is JpsPath.MavenRepository -> JpsUrl.Jar(JpsPath.ProjectDir("../build/repo/${url.path.relativePath}", isCommunity))
+        }
     }
 
     return when (artifactsMode) {

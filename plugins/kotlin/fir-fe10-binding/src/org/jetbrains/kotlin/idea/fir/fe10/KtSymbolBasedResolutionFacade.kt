@@ -29,15 +29,15 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KtSymbolBasedResolutionFacade(
     override val project: Project,
-    val context: FE10BindingContext
+    val context: Fe10WrapperContext
 ) : ResolutionFacade {
-    override fun analyze(element: KtElement, bodyResolveMode: BodyResolveMode): BindingContext = KtSymbolBasedBindingContext(context)
+    override fun analyze(element: KtElement, bodyResolveMode: BodyResolveMode): BindingContext = context.bindingContext
 
     override fun analyze(elements: Collection<KtElement>, bodyResolveMode: BodyResolveMode): BindingContext =
-        KtSymbolBasedBindingContext(context)
+        context.bindingContext
 
     override fun analyzeWithAllCompilerChecks(elements: Collection<KtElement>, callback: DiagnosticSink.DiagnosticsCallback?): AnalysisResult {
-        return AnalysisResult.success(KtSymbolBasedBindingContext(context), context.moduleDescriptor)
+        return AnalysisResult.success(context.bindingContext, context.moduleDescriptor)
     }
 
     override fun resolveToDescriptor(declaration: KtDeclaration, bodyResolveMode: BodyResolveMode): DeclarationDescriptor {
@@ -90,10 +90,10 @@ class KtSymbolBasedKotlinCacheServiceImpl(val project: Project) : KotlinCacheSer
     }
 
     override fun getResolutionFacade(elements: List<KtElement>): ResolutionFacade =
-        KtSymbolBasedResolutionFacade(project, FE10BindingContextImpl(project, elements.first()))
+        KtSymbolBasedResolutionFacade(project, Fe10WrapperContextImpl(project, elements.first()))
 
     override fun getResolutionFacadeByFile(file: PsiFile, platform: TargetPlatform): ResolutionFacade? =
-        file.safeAs<KtFile>()?.let { KtSymbolBasedResolutionFacade(project, FE10BindingContextImpl(project, it)) }
+        file.safeAs<KtFile>()?.let { KtSymbolBasedResolutionFacade(project, Fe10WrapperContextImpl(project, it)) }
 
     override fun getSuppressionCache(): KotlinSuppressCache {
         return BindingContextSuppressCache(BindingContext.EMPTY)

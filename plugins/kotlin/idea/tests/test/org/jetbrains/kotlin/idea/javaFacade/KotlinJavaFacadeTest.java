@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.javaFacade;
 
@@ -9,14 +9,13 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.asJava.LightClassUtil;
 import org.jetbrains.kotlin.asJava.classes.KtLightClass;
-import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass;
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.jetbrains.kotlin.name.SpecialNames;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
 
@@ -289,11 +288,5 @@ public class KotlinJavaFacadeTest extends KotlinLightCodeInsightFixtureTestCase 
         KtLightClass lightClass = toLightClass(ktClass);
 
         assertNotNull(String.format("Failed to wrap ktClass '%s' to class", ktClass.getText()), lightClass);
-
-        if (!(lightClass instanceof KtUltraLightClass)){
-            // This invokes codegen with ClassBuilderMode = LIGHT_CLASSES
-            // No exception/error should happen here
-            lightClass.getClsDelegate();
-        }
     }
 }

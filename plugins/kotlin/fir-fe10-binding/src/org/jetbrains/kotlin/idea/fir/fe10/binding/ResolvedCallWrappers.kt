@@ -1,23 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
+import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.fir.declarations.FirValueParameter
-import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
-import org.jetbrains.kotlin.fir.realPsi
-import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
-import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
-import org.jetbrains.kotlin.fir.resolvedSymbol
-import org.jetbrains.kotlin.fir.symbols.SymbolInternals
-import org.jetbrains.kotlin.fir.symbols.impl.*
-import org.jetbrains.kotlin.fir.types.FirTypeProjectionWithVariance
-import org.jetbrains.kotlin.idea.fir.fe10.FE10BindingContext
-import org.jetbrains.kotlin.idea.fir.fe10.FirWeakReference
+import org.jetbrains.kotlin.idea.fir.fe10.Fe10WrapperContext
 import org.jetbrains.kotlin.idea.fir.fe10.toDeclarationDescriptor
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
 import org.jetbrains.kotlin.psi.Call
@@ -25,146 +21,123 @@ import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.calls.results.ResolutionStatus
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
+import org.jetbrains.kotlin.resolve.scopes.receivers.CastImplicitClassReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
-internal abstract class Fe10WrapperResolvedCall<C: Fe10WrapperCall<F>, F: FirQualifiedAccessExpression>(
-    private val call: C,
+internal abstract class Fe10WrapperResolvedCall<C : KtCallableMemberCall<*, *>>(
+    private val psiCall: Call,
+    protected val ktCall: C,
+    private val diagnostic: KtDiagnostic?,
+    protected val context: Fe10WrapperContext,
 ) : ResolvedCall<CallableDescriptor> {
-    protected val context: FE10BindingContext get() = call.context
-    protected val firAccessExpression: FirWeakReference<F> get() = call.firAccessExpression
+    private val _typeArguments: Map<TypeParameterDescriptor, KotlinType> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val ktTypeParameters = ktCall.partiallyAppliedSymbol.symbol.typeParameters
+        if (ktTypeParameters.isEmpty()) return@lazy emptyMap()
 
-    override fun getCall(): Call = call
+        val inferredTypeParametersByIndex: List<KtType?> = ktTypeParameters.map { ktCall.typeArgumentsMapping[it] }
+        if (inferredTypeParametersByIndex.size != candidateDescriptor.typeParameters.size) {
+            context.errorHandling("${inferredTypeParametersByIndex.size} != ${candidateDescriptor.typeParameters.size}")
+        }
 
-    override fun getExtensionReceiver(): ReceiverValue? {
-        if (firAccessExpression.getFir().extensionReceiver === FirNoReceiverExpression) return null
-
-        return firAccessExpression.getFir().extensionReceiver.toExpressionReceiverValue(context)
+        val typeArguments = linkedMapOf<TypeParameterDescriptor, KotlinType>()
+        for ((index, parameter) in candidateDescriptor.typeParameters.withIndex()) {
+            // If inference failed, old FE don't add anything into map
+            val kotlinType = inferredTypeParametersByIndex[index]?.toKotlinType(context) ?: continue
+            typeArguments[parameter] = kotlinType
+        }
+        typeArguments
     }
 
-    override fun getDispatchReceiver(): ReceiverValue? {
-        if (firAccessExpression.getFir().dispatchReceiver === FirNoReceiverExpression) return null
+    override fun getCall(): Call = psiCall
 
-        return firAccessExpression.getFir().dispatchReceiver.toExpressionReceiverValue(context)
+    override fun getExtensionReceiver(): ReceiverValue? = ktCall.partiallyAppliedSymbol.extensionReceiver?.asFe10ReceiverValue(context)
+
+    override fun getDispatchReceiver(): ReceiverValue? = ktCall.partiallyAppliedSymbol.dispatchReceiver?.asFe10ReceiverValue(context)
+
+    override fun getExplicitReceiverKind() =
+        if (extensionReceiver is ExpressionReceiver) {
+            if (dispatchReceiver is ExpressionReceiver) ExplicitReceiverKind.BOTH_RECEIVERS else ExplicitReceiverKind.EXTENSION_RECEIVER
+        } else {
+            if (dispatchReceiver is ExpressionReceiver) ExplicitReceiverKind.DISPATCH_RECEIVER else ExplicitReceiverKind.NO_EXPLICIT_RECEIVER
+        }
+
+    override fun getStatus(): ResolutionStatus {
+        if (diagnostic == null) return ResolutionStatus.SUCCESS
+        return when (diagnostic) {
+            is KtFirDiagnostic.NamedArgumentsNotAllowed,
+            is KtFirDiagnostic.NonVarargSpread,
+            is KtFirDiagnostic.ArgumentPassedTwice,
+            is KtFirDiagnostic.TooManyArguments,
+            is KtFirDiagnostic.NoValueForParameter,
+            is KtFirDiagnostic.NamedParameterNotFound,
+            is KtFirDiagnostic.NameForAmbiguousParameter
+            -> ResolutionStatus.ARGUMENTS_MAPPING_ERROR
+
+            else -> context.implementationPostponed(diagnostic.toString())
+        }
+
     }
 
-    override fun getExplicitReceiverKind(): ExplicitReceiverKind {
-        if (firAccessExpression.getFir().explicitReceiver === null) return ExplicitReceiverKind.NO_EXPLICIT_RECEIVER
-        if (firAccessExpression.getFir().explicitReceiver === firAccessExpression.getFir().extensionReceiver) return ExplicitReceiverKind.EXTENSION_RECEIVER
-        return ExplicitReceiverKind.DISPATCH_RECEIVER
-    }
+    override fun getTypeArguments(): Map<TypeParameterDescriptor, KotlinType> = _typeArguments
 
     override fun getContextReceivers(): List<ReceiverValue> = context.implementationPlanned()
     override fun getDataFlowInfoForArguments(): DataFlowInfoForArguments = context.noImplementation()
     override fun getSmartCastDispatchReceiverType(): KotlinType? = context.noImplementation()
 }
 
-internal class FunctionFe10WrapperResolvedCall(call: FunctionFe10WrapperCall) :
-    Fe10WrapperResolvedCall<FunctionFe10WrapperCall, FirFunctionCall>(call) {
+internal class FunctionFe10WrapperResolvedCall(psiCall: Call, call: KtFunctionCall<*>, diagnostic: KtDiagnostic?, context: Fe10WrapperContext) :
+    Fe10WrapperResolvedCall<KtFunctionCall<*>>(psiCall, call, diagnostic, context) {
+    private val ktFunctionSymbol: KtFunctionLikeSymbol = ktCall.partiallyAppliedSymbol.symbol
 
-    @OptIn(SymbolInternals::class)
-    private val ktFunctionSymbol: KtFunctionLikeSymbol = firAccessExpression.withFir {
-        when (val calleeReference = it.calleeReference) {
-            is FirResolvedNamedReference -> context.ktAnalysisSessionFacade.buildSymbol(calleeReference.resolvedSymbol.fir) as KtFunctionLikeSymbol
+    private val argumentsMap: Map<ValueParameterDescriptor, ResolvedValueArgument> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val allArguments: List<ValueArgument> = psiCall.valueArguments + psiCall.functionLiteralArguments
+        val ktParameterToResolvedValueArgument = hashMapOf<KtValueParameterSymbol, MutableList<ValueArgument>>()
 
-            // TODO: NPE in case of empty candidate
-            is FirErrorNamedReference -> context.ktAnalysisSessionFacade.buildSymbol(calleeReference.candidateSymbol!!.fir) as KtFunctionLikeSymbol
-            else -> context.noImplementation("calleeReferenceType: ${calleeReference::class.java}")
-        }
-    }
+        for (argument in allArguments) {
+            val parameter: KtValueParameterSymbol =
+                ktCall.argumentMapping[argument.getArgumentExpression()]?.symbol ?: context.errorHandling()
 
-    private val _typeArguments: Map<TypeParameterDescriptor, KotlinType> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-
-        if (firAccessExpression.getFir().typeArguments.isEmpty()) return@lazy emptyMap()
-
-        val typeArguments = linkedMapOf<TypeParameterDescriptor, KotlinType>()
-        for ((index, parameter) in candidateDescriptor.typeParameters.withIndex()) {
-            val firTypeProjectionWithVariance = firAccessExpression.getFir().typeArguments[index] as FirTypeProjectionWithVariance
-            val kotlinType = context.ktAnalysisSessionFacade.buildKtType(firTypeProjectionWithVariance.typeRef).toKotlinType(context)
-            typeArguments[parameter] = kotlinType
-        }
-        typeArguments
-    }
-
-    private val arguments: Map<ValueParameterDescriptor, ResolvedValueArgument> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        val firArguments = firAccessExpression.withFir { it.argumentMapping } ?: context.implementationPostponed()
-
-        val firParameterToResolvedValueArgument = hashMapOf<FirValueParameter, ResolvedValueArgument>()
-        val allArguments = call.valueArguments + call.functionLiteralArguments
-        var argumentIndex = 0
-        for ((firExpression, firValueParameter) in firArguments.entries) {
-            if (firExpression is FirVarargArgumentsExpression) {
-                val varargArguments = mutableListOf<ValueArgument>()
-                for (subExpression in firExpression.arguments) {
-                    val currentArgument = allArguments[argumentIndex]; argumentIndex++
-                    check(currentArgument.getArgumentExpression() === subExpression.realPsi) {
-                        "Different psi: ${currentArgument.getArgumentExpression()} !== ${subExpression.realPsi}"
-                    }
-                    varargArguments.add(currentArgument)
-                }
-                firParameterToResolvedValueArgument[firValueParameter] = VarargValueArgument(varargArguments)
-            } else {
-                val currentArgument = allArguments[argumentIndex]; argumentIndex++
-                check(currentArgument.getArgumentExpression() === firExpression.realPsi) {
-                    "Different psi: ${currentArgument.getArgumentExpression()} !== ${firExpression.realPsi}"
-                }
-                firParameterToResolvedValueArgument[firValueParameter] = ExpressionValueArgument(currentArgument)
-            }
+            ktParameterToResolvedValueArgument.getOrPut(parameter) { arrayListOf() }.add(argument)
         }
 
+        // linkedMap is important -- used in getValueArgumentsByIndex
         val arguments = linkedMapOf<ValueParameterDescriptor, ResolvedValueArgument>()
         for ((parameterIndex, parameter) in ktFunctionSymbol.valueParameters.withIndex()) {
-            val resolvedValueArgument = context.ktAnalysisSessionFacade.withFir(parameter) { it: FirValueParameter ->
-                firParameterToResolvedValueArgument[it]
-            } ?: DefaultValueArgument.DEFAULT
-            arguments[candidateDescriptor.valueParameters[parameterIndex]] = resolvedValueArgument
+            val argumentsForThisParameter: List<ValueArgument> = ktParameterToResolvedValueArgument[parameter] ?: emptyList()
+            val resolvedValueArgument = when(argumentsForThisParameter.size) {
+                0 -> DefaultValueArgument.DEFAULT
+                1 -> ExpressionValueArgument(argumentsForThisParameter.single())
+                else -> VarargValueArgument(argumentsForThisParameter)
+            }
+            arguments[resultingDescriptor.valueParameters[parameterIndex]] = resolvedValueArgument
         }
         arguments
     }
 
-    override fun getStatus(): ResolutionStatus =
-        if (firAccessExpression.getFir().calleeReference is FirResolvedNamedReference) ResolutionStatus.SUCCESS else ResolutionStatus.OTHER_ERROR
-
-
-    override fun getCandidateDescriptor(): CallableDescriptor {
-        return ktFunctionSymbol.toDeclarationDescriptor(context)
-    }
+    // For List<String>.add("") call ktFunctionSymbol is List<T>.add(T) i.e. we should substitute types from dispatch receiver
+    override fun getCandidateDescriptor(): CallableDescriptor =
+        context.incorrectImplementation {  ktFunctionSymbol.toDeclarationDescriptor(context) }
 
     // type arguments should be substituted
     override fun getResultingDescriptor(): CallableDescriptor = context.incorrectImplementation { candidateDescriptor }
 
-    override fun getValueArguments(): Map<ValueParameterDescriptor, ResolvedValueArgument> = arguments
+    override fun getValueArguments(): Map<ValueParameterDescriptor, ResolvedValueArgument> = argumentsMap
 
     override fun getValueArgumentsByIndex(): List<ResolvedValueArgument> = valueArguments.values.toList()
 
     override fun getArgumentMapping(valueArgument: ValueArgument): ArgumentMapping {
-        val firArguments = firAccessExpression.withFir { it.argumentMapping } ?: context.implementationPostponed()
-        val argumentExpression = valueArgument.getArgumentExpression() ?: context.implementationPostponed()
+        val ktParameter = ktCall.argumentMapping.get(valueArgument.getArgumentExpression())?.symbol
+        if (ktParameter == null) return ArgumentUnmapped
 
-        fun FirExpression.isMyArgument() = realPsi === valueArgument || realPsi === argumentExpression
+        val parameterIndex = ktFunctionSymbol.valueParameters.indexOf(ktParameter)
+        if (parameterIndex == -1) context.errorHandling("$ktParameter not found in $ktFunctionSymbol")
 
-        var targetFirParameter: FirValueParameter? = null
-        outer@ for ((firExpression, firValueParameter) in firArguments.entries) {
-            if (firExpression is FirVarargArgumentsExpression) {
-                for (subExpression in firExpression.arguments)
-                    if (subExpression.isMyArgument()) {
-                        targetFirParameter = firValueParameter
-                        break@outer
-                    }
-            } else if (firExpression.isMyArgument()) {
-                targetFirParameter = firValueParameter
-                break@outer
-            }
-        }
-        if (targetFirParameter == null) return ArgumentUnmapped
-
-        val parameterIndex = ktFunctionSymbol.valueParameters.indexOfFirst {
-            context.ktAnalysisSessionFacade.withFir(it) { parameter: FirValueParameter -> parameter === targetFirParameter }
-        }
-        if (parameterIndex == -1) error("Fir parameter not found :(")
-
-        val parameterDescriptor = candidateDescriptor.valueParameters[parameterIndex]
+        val parameterDescriptor = resultingDescriptor.valueParameters.getOrNull(parameterIndex) ?: context.errorHandling()
         val argumentMatch = ArgumentMatchImpl(parameterDescriptor)
         context.incorrectImplementation {
             // I'm not sure, when we should have not success status
@@ -172,25 +145,12 @@ internal class FunctionFe10WrapperResolvedCall(call: FunctionFe10WrapperCall) :
         }
         return argumentMatch
     }
-
-    override fun getTypeArguments(): Map<TypeParameterDescriptor, KotlinType> = _typeArguments
 }
 
-internal class VariableFe10WrapperResolvedCall(call: VariableFe10WrapperCall) :
-    Fe10WrapperResolvedCall<VariableFe10WrapperCall, FirPropertyAccessExpression>(call) {
+internal class VariableFe10WrapperResolvedCall(psiCall: Call, call: KtVariableAccessCall, diagnostic: KtDiagnostic?, context: Fe10WrapperContext) :
+    Fe10WrapperResolvedCall<KtVariableAccessCall>(psiCall, call, diagnostic, context) {
 
-    @OptIn(SymbolInternals::class)
-    private val ktVariableSymbol: KtVariableLikeSymbol = firAccessExpression.withFir {
-        val resolvedSymbol = it.calleeReference.resolvedSymbol
-        check(resolvedSymbol is FirVariableSymbol) {
-            "Expected FirVariableSymbol, but get: $resolvedSymbol"
-        }
-
-        context.ktAnalysisSessionFacade.buildSymbol(resolvedSymbol.fir) as KtVariableLikeSymbol
-    }
-
-
-    override fun getStatus(): ResolutionStatus = context.incorrectImplementation { ResolutionStatus.SUCCESS }
+    private val ktVariableSymbol: KtVariableLikeSymbol = ktCall.partiallyAppliedSymbol.symbol
 
     override fun getCandidateDescriptor(): CallableDescriptor = ktVariableSymbol.toDeclarationDescriptor(context) as CallableDescriptor
 
@@ -200,7 +160,33 @@ internal class VariableFe10WrapperResolvedCall(call: VariableFe10WrapperCall) :
     override fun getValueArguments(): Map<ValueParameterDescriptor, ResolvedValueArgument> = emptyMap()
     override fun getValueArgumentsByIndex(): List<ResolvedValueArgument> = emptyList()
     override fun getArgumentMapping(valueArgument: ValueArgument): ArgumentMapping =
-        error("Variable call has no arguments. fir: $firAccessExpression, valueArgument = $valueArgument")
+        error("Variable call has no arguments. ktVariableSymbol: $ktVariableSymbol, valueArgument = $valueArgument")
+}
 
-    override fun getTypeArguments(): Map<TypeParameterDescriptor, KotlinType> = emptyMap()
+private fun KtReceiverValue.asFe10ReceiverValue(context: Fe10WrapperContext, smartCastType: KotlinType? = null): ReceiverValue {
+    return when (this) {
+        is KtSmartCastedReceiverValue -> original.asFe10ReceiverValue(context, this.type.toKotlinType(context))
+        is KtExplicitReceiverValue -> ExpressionReceiver.create(
+            expression,
+            smartCastType ?: this.type.toKotlinType(context),
+            context.bindingContext
+        )
+
+        is KtImplicitReceiverValue -> {
+            val ktDeclaration = symbol.safeAs<KtReceiverParameterSymbol>()?.owningCallableSymbol ?: symbol
+            when (val descriptor = ktDeclaration.toDeclarationDescriptor(context)) {
+                is ClassDescriptor ->
+                    if (smartCastType != null) {
+                        CastImplicitClassReceiver(descriptor, smartCastType)
+                    } else {
+                        ImplicitClassReceiver(descriptor)
+                    }
+
+                is CallableDescriptor -> descriptor.extensionReceiverParameter?.value
+                    ?: context.errorHandling("$descriptor should have extension receiver")
+
+                else -> context.errorHandling("Unexpected descriptor: $descriptor")
+            }
+        }
+    }
 }

@@ -28,4 +28,4 @@ class Test {
     }
 }
 
-// FIR_IGNORE
+// FIR_COMPARISON

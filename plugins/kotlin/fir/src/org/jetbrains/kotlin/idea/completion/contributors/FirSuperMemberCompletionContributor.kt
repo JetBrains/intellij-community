@@ -47,7 +47,7 @@ internal class FirSuperMemberCompletionContributor(
         )
 
         val (nonExtensionMembers: Iterable<Pair<KtType, KtCallableSymbol>>, namesNeedDisambiguation: Set<Name>) = if (superType !is KtIntersectionType) {
-            val scope = superType.getTypeScope() ?: return
+            val scope = superType.getTypeScope()?.getDeclarationScope() ?: return
             collectNonExtensions(scope, visibilityChecker, scopeNameFilter).map { superType to it }.asIterable() to emptySet()
         } else {
             getSymbolsAndNamesNeedDisambiguation(superType.conjuncts, visibilityChecker)
@@ -94,7 +94,7 @@ internal class FirSuperMemberCompletionContributor(
         receiverType: KtType,
         visibilityChecker: CompletionVisibilityChecker
     ): Sequence<KtCallableSymbol> {
-        val possibleReceiverScope = receiverType.getTypeScope() ?: return emptySequence()
+        val possibleReceiverScope = receiverType.getTypeScope()?.getDeclarationScope() ?: return emptySequence()
         return collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter)
     }
 
@@ -133,7 +133,7 @@ internal class FirSuperMemberCompletionContributor(
             }
     }
 
-    private fun getInsertionStrategy(symbol: KtCallableSymbol): CallableInsertionStrategy = when (symbol) {
+    private fun KtAnalysisSession.getInsertionStrategy(symbol: KtCallableSymbol): CallableInsertionStrategy = when (symbol) {
         is KtFunctionLikeSymbol -> CallableInsertionStrategy.AsCall
         else -> CallableInsertionStrategy.AsIdentifier
     }
@@ -205,7 +205,7 @@ internal class FirSuperMemberCompletionContributor(
         }
     }
 
-    private fun wrapWithDisambiguationIfNeeded(
+    private fun KtAnalysisSession.wrapWithDisambiguationIfNeeded(
         insertionStrategy: CallableInsertionStrategy,
         superType: KtType,
         callableSymbol: KtCallableSymbol,

@@ -151,16 +151,6 @@
       <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
                          bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>
 
-      <registryKey key="kotlin.use.ultra.light.classes"
-                   description="Whether to use an experimental implementation of Kotlin-as-Java classes"
-                   defaultValue="true"
-                   restartRequired="false"/>
-
-      <registryKey key="kotlin.ultra.light.classes.error.on.old.backend"
-                   description="Throw an exception on attempt to use the backend from light classes"
-                   defaultValue="false"
-                   restartRequired="false"/>
-
       <registryKey key="kotlin.ultra.light.classes.empty.text.range"
                    description="Return 'null' text range as in old light class implementation"
                    defaultValue="false"

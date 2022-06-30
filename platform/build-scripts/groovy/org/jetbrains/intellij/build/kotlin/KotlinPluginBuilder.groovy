@@ -42,7 +42,6 @@ final class KotlinPluginBuilder {
   public static final List<String> FIR_IDE_MODULES = List.of(
     "kotlin.base.fir.analysis-api-providers",
     "kotlin.fir",
-    "kotlin.fir.fir-fe10-binding",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.fir-low-level-api-ide-impl",

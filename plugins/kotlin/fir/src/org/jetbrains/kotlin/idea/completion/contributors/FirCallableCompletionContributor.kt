@@ -95,7 +95,8 @@ internal open class FirCallableCompletionContributor(
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
     ) {
-        val (implicitScopes, implicitReceivers) = implicitScopesContext
+        val implicitScopes = implicitScopesContext.scopes
+        val implicitReceivers = implicitScopesContext.implicitReceivers
         val implicitReceiversTypes = implicitReceivers.map { it.type }
 
         val availableNonExtensions = collectNonExtensions(implicitScopes, visibilityChecker, scopeNameFilter) { filter(it) }
@@ -239,7 +240,7 @@ internal open class FirCallableCompletionContributor(
         context: WeighingContext,
         explicitReceiverTypeHint: KtType? = null
     ) {
-        val possibleReceiverScope = typeOfPossibleReceiver.getTypeScope() ?: return
+        val possibleReceiverScope = typeOfPossibleReceiver.getTypeScope()?.getDeclarationScope() ?: return
 
         val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter) { filter(it) }
         val extensionNonMembers = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)

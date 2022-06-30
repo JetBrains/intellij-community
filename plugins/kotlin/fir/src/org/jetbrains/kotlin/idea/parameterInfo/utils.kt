@@ -3,6 +3,10 @@ package org.jetbrains.kotlin.idea.parameterInfo
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -30,7 +34,8 @@ internal fun KtAnalysisSession.collectCallCandidates(callElement: KtElement): Li
         CandidateWithMapping(
             functionCall.partiallyAppliedSymbol.signature,
             functionCall.argumentMapping,
-            isApplicableBestCandidate = it is KtApplicableCallCandidateInfo && it.isInBestCandidates
+            isApplicableBestCandidate = it is KtApplicableCallCandidateInfo && it.isInBestCandidates,
+            token,
         )
     }
 }
@@ -106,4 +111,5 @@ internal data class CandidateWithMapping(
     val candidate: KtFunctionLikeSignature<KtFunctionLikeSymbol>,
     val argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
     val isApplicableBestCandidate: Boolean,
-)
+    override val token: KtLifetimeToken,
+) : KtLifetimeOwner

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.idea.completion.KotlinFirIconProvider
+import org.jetbrains.kotlin.idea.completion.KotlinFirIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
 import org.jetbrains.kotlin.idea.util.shortenReferencesInRange
 import org.jetbrains.kotlin.name.ClassId
@@ -23,7 +23,7 @@ internal fun KtAnalysisSession.withSymbolInfo(
     elementBuilder: LookupElementBuilder
 ): LookupElementBuilder = elementBuilder
     .withPsiElement(symbol.psi) // TODO check if it is a heavy operation and should be postponed
-    .withIcon(KotlinFirIconProvider.getIconFor(symbol))
+    .withIcon(getIconFor(symbol))
 
 
 // FIXME: This is a hack, we should think how we can get rid of it

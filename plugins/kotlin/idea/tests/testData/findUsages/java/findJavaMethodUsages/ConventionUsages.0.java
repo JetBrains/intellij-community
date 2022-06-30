@@ -5,3 +5,5 @@ public class Small {
         return true;
     }
 }
+// FIR_COMPARISON
+// IGNORE_FIR_LOG

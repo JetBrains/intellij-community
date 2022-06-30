@@ -6,23 +6,24 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.calls.KtDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.idea.util.withResolvedCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -104,7 +106,51 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
     }
 
     override fun getReceiverTypeSearcherInfo(psiElement: PsiElement, isDestructionDeclarationSearch: Boolean): ReceiverTypeSearcherInfo? {
-        return null
+        return when (psiElement) {
+            is KtCallableDeclaration -> {
+                analyzeWithReadAction(psiElement) {
+                    when (val elementSymbol = psiElement.getSymbol()) {
+                        is KtValueParameterSymbol ->
+                            null // TODO: Look for uses of component functions cf [isDestructionDeclarationSearch]
+                        is KtCallableSymbol -> {
+                            val receiverType =
+                                elementSymbol.receiverType
+                                    ?: getContainingClassType(elementSymbol)
+                                    ?: return@analyzeWithReadAction null
+
+                            val psi = receiverType.asPsiType(psiElement, KtTypeMappingMode.DEFAULT, false)
+                            val psiClass = (psi as? PsiClassReferenceType)?.resolve() ?: return@analyzeWithReadAction null
+
+                            ReceiverTypeSearcherInfo(psiClass) {
+                                // TODO: stubbed - not exercised by FindUsagesFir Test Suite
+                                true
+                            }
+                        }
+                        else ->
+                            null
+                    }
+                }
+            }
+            is PsiMethod -> {
+                val psiClass = psiElement.containingClass ?: return null
+                ReceiverTypeSearcherInfo(psiClass) {
+                    // TODO: Implement containsTypeOrDerivedInside callback that should determine whether the result type of
+                    //       the given KtDeclaration contains (or derived) the type from psiClass (see the discussion in
+                    //       CR-410 for details).
+                    true
+                }
+            }
+            is PsiMember ->
+                null // TODO: stubbed
+            else ->
+                null // TODO: stubbed? Possibly correct. Update KDoc on the interface to reflect the contract.
+        }
+    }
+
+    private fun KtAnalysisSession.getContainingClassType(symbol: KtCallableSymbol): KtType? {
+        val containingSymbol = symbol.getContainingSymbol() ?: return null
+        val classSymbol = containingSymbol as? KtNamedClassOrObjectSymbol ?: return null
+        return classSymbol.buildSelfClassType()
     }
 
     override fun forceResolveReferences(file: KtFile, elements: List<KtElement>) {
@@ -288,10 +334,15 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
     }
 
     override fun createConstructorHandle(psiMethod: PsiMethod): KotlinSearchUsagesSupport.ConstructorCallHandle {
-        //TODO FIR: This is the stub. Need to implement
         return object : KotlinSearchUsagesSupport.ConstructorCallHandle {
             override fun referencedTo(element: KtElement): Boolean {
-                return false
+                val callExpression = element.getNonStrictParentOfType<KtCallElement>() ?: return false
+                return withResolvedCall(callExpression) {call ->
+                    when (call) {
+                        is KtDelegatedConstructorCall -> call.symbol.psi == psiMethod
+                        else -> false
+                    }
+                } ?: false
             }
         }
     }

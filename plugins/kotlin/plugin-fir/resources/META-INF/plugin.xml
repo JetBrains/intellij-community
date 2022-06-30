@@ -42,7 +42,6 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="firInspections.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="firIntentions.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="fe10Binding.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="codeInsigts.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="light-classes-fir.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -61,6 +60,9 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <module name="kotlin.properties"/>
     <module name="kotlin.run-configurations.junit"/>
     <module name="kotlin.run-configurations.testng"/>
+
+    <module name="kotlin.gradle.gradle-idea"/>
+    <module name="kotlin.gradle.gradle-java"/>
   </content>
 
   <!--  <xi:include href="jvm-common.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
@@ -250,7 +252,10 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
     <runLineMarkerContributor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.fir.highlighter.KotlinFirMainRunLineMarkerContributor"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService"/>
 
 
   </extensions>
+
+
 </idea-plugin>

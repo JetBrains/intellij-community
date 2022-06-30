@@ -10,3 +10,5 @@ public class JavaClass {
         return 0;
     }
 }
+// FIR_COMPARISON
+// IGNORE_FIR_LOG

@@ -4,6 +4,7 @@
  */
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
@@ -55,7 +56,8 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
             createFix(diagnostic.expectedArrayType, diagnostic.psi)
         }
 
-    private fun createFix(expectedArrayType: KtType, psi: KtExpression): List<HLApplicatorTargetWithInput<KtExpression, Input>> {
+    @Suppress("unused")
+    private fun KtAnalysisSession.createFix(expectedArrayType: KtType, psi: KtExpression): List<HLApplicatorTargetWithInput<KtExpression, Input>> {
         val arrayClassId = (expectedArrayType as? KtUsualClassType)?.classId
         val primitiveType = arrayClassFqNameToPrimitiveType[arrayClassId?.asSingleFqName()?.toUnsafe()]
         val arrayOfCallName = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[primitiveType] ?: ArrayFqNames.ARRAY_OF_FUNCTION

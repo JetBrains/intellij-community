@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators.MultipleArgumentsInput as Input
-
+import org.jetbrains.kotlin.idea.fir.intentions.HLAddNameToArgumentIntention.Companion.getArgumentNameIfCanBeUsedForCalls
 class HLAddNamesToFollowingArgumentsIntention :
     AbstractHLIntention<KtValueArgument, Input>(KtValueArgument::class, applicator), LowPriorityAction {
     override val applicabilityRange = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
@@ -34,7 +34,7 @@ class HLAddNamesToFollowingArgumentsIntention :
 
         val argumentsExcludingPrevious = callElement.valueArgumentList?.arguments?.dropWhile { it != element } ?: return@inputProvider null
         Input(argumentsExcludingPrevious.associateWith {
-            HLAddNameToArgumentIntention.getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return@inputProvider null
+            getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return@inputProvider null
         })
     }
 

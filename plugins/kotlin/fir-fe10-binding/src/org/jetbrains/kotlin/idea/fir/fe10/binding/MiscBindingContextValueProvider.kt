@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
-import org.jetbrains.kotlin.idea.fir.fe10.withAnalysisSession
+import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.types.KotlinType
@@ -12,6 +12,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
 
     init {
         bindingContext.registerGetterByKey(BindingContext.TYPE, this::getType)
+        bindingContext.registerGetterByKey(BindingContext.THIS_TYPE_FOR_SUPER_EXPRESSION, this::getThisTypeForSuperExpression)
     }
 
     private fun getType(ktTypeReference: KtTypeReference): KotlinType {
@@ -19,4 +20,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
             ktTypeReference.getKtType()
         }.toKotlinType(context)
     }
+
+    private fun getThisTypeForSuperExpression(superExpression: KtSuperExpression): KotlinType =
+        context.withAnalysisSession { superExpression.getKtType() }?.toKotlinType(context) ?: context.errorHandling()
 }
