@@ -13,8 +13,7 @@ import javax.swing.ButtonGroup
 @ApiStatus.Internal
 internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeImpl(panel, startIndex), ButtonsGroup {
 
-  private val unboundRadioButtons = mutableSetOf<Cell<AbstractButton>>()
-  private val boundRadioButtons = mutableMapOf<Cell<AbstractButton>, Any>()
+  private val radioButtons = mutableMapOf<Cell<AbstractButton>, Any?>()
   private var groupBinding: GroupBinding<*>? = null
 
   override fun visible(isVisible: Boolean): ButtonsGroup {
@@ -46,12 +45,7 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
   }
 
   fun <T : AbstractButton> add(cell: Cell<T>, value: Any? = null) {
-    if (value == null) {
-      unboundRadioButtons += cell
-    }
-    else {
-      boundRadioButtons[cell] = value
-    }
+    radioButtons[cell] = value
   }
 
   fun postInit() {
@@ -64,12 +58,12 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
   }
 
   private fun postInitBound(groupBinding: GroupBinding<*>) {
-    if (unboundRadioButtons.isNotEmpty()) {
-      throw UiDslException("Radio button '${unboundRadioButtons.first().component.text}' is used without value for binding")
-    }
-
     val buttonGroup = ButtonGroup()
-    for ((cell, value) in boundRadioButtons) {
+    for ((cell, value) in radioButtons) {
+      if (value == null) {
+        throw UiDslException("Radio button '${cell.component.text}' is used without value for binding")
+      }
+
       groupBinding.validate(value)
       buttonGroup.add(cell.component)
 
@@ -81,13 +75,9 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
   }
 
   private fun postInitUnbound() {
-    if (boundRadioButtons.isNotEmpty()) {
-      throw UiDslException("Radio button '${boundRadioButtons.keys.first().component.text}' is used without ButtonsGroup.bind")
-    }
-
-    val buttonGroup = ButtonGroup()
-    for (cell in unboundRadioButtons) {
-      buttonGroup.add(cell.component)
+    val boundedRadioButton = radioButtons.filterValues { it != null }.keys.firstOrNull()
+    if (boundedRadioButton != null) {
+      throw UiDslException("Radio button '${boundedRadioButton.component.text}' is used without ButtonsGroup.bind")
     }
   }
 }

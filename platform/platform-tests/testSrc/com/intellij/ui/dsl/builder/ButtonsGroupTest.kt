@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.UiDslException
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.reflect.KMutableProperty0
+import kotlin.test.assertEquals
 
 class ButtonsGroupTest {
 
@@ -56,6 +58,42 @@ class ButtonsGroupTest {
     testButtonsGroup("b", "c", ::string)
     testButtonsGroup(Enum1.VALUE1, Enum1.VALUE2, ::enum1)
     testButtonsGroup(Enum2.VALUE1, Enum2.VALUE2, ::enum2)
+  }
+
+  @Test
+  fun testGroupsWithSelected() {
+    checkButtonsGroupWithSelected(-1, -1, false, false)
+    checkButtonsGroupWithSelected(1, -1, true, false)
+    checkButtonsGroupWithSelected(2, -1, false, true)
+    checkButtonsGroupWithSelected(-1, 1, true, false)
+    checkButtonsGroupWithSelected(-1, 2, false, true)
+    checkButtonsGroupWithSelected(1, 1, true, false)
+    checkButtonsGroupWithSelected(1, 2, true, false)
+    checkButtonsGroupWithSelected(2, 1, false, true)
+    checkButtonsGroupWithSelected(2, 2, false, true)
+  }
+
+  private fun checkButtonsGroupWithSelected(initValue: Int, selectedValue: Int,
+                                            expectedRadioButton1Selected: Boolean, expectedRadioButton2Selected: Boolean) {
+    val radioButtons = mutableListOf<JBRadioButton>()
+    int = initValue
+    panel {
+      buttonsGroup {
+        for (i in 1..2) {
+          row {
+            radioButtons.add(radioButton("radioButton$i", i)
+              .applyToComponent {
+                if (selectedValue == i) {
+                  isSelected = true
+                }
+              }
+              .component)
+          }
+        }
+      }.bind(::int)
+    }
+    assertEquals(radioButtons[0].isSelected, expectedRadioButton1Selected)
+    assertEquals(radioButtons[1].isSelected, expectedRadioButton2Selected)
   }
 
   private fun testButtonsGroup(value1: Any?, value2: Any?) {

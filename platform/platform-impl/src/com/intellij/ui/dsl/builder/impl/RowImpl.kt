@@ -43,6 +43,7 @@ import java.awt.event.KeyEvent
 import java.util.*
 import javax.swing.*
 
+@Suppress("OVERRIDE_DEPRECATION")
 @ApiStatus.Internal
 internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                             private val panelContext: PanelContext,
