@@ -10,21 +10,19 @@ import javax.swing.tree.DefaultTreeModel
 class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
     val grandParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot) ?: subtreeRoot
-    HIERARCHY_UPPER_BOUND.set(subtreeRoot, grandParent)
     val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
-    CACHING_ROOT.set(subtreeRoot, cachingRoot)
 
-    return ParentNodeBuilder(subtreeRoot).getParentNodeRecursive(nodePath)
+    return ParentNodeBuilder(subtreeRoot, grandParent, cachingRoot).getParentNodeRecursive(nodePath)
   }
 
-  private inner class ParentNodeBuilder(val subtreeRoot: ChangesBrowserNode<*>) {
+  private inner class ParentNodeBuilder(val subtreeRoot: ChangesBrowserNode<*>,
+                                        val grandParent: ChangesBrowserNode<*>,
+                                        val cachingRoot: ChangesBrowserNode<*>) {
 
     fun getParentNodeRecursive(nodePath: StaticFilePath): ChangesBrowserNode<*> {
       generateSequence(nodePath.parent) { it.parent }.forEach { parentPath ->
-        val cachingRoot = getCachingRoot(subtreeRoot)
-
         DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]?.let {
-          if (HIERARCHY_UPPER_BOUND.get(subtreeRoot) == it) {
+          if (grandParent == it) {
             GRAND_PARENT_CANDIDATE.set(subtreeRoot, it)
             try {
               return getPathNode(parentPath) ?: it
@@ -39,7 +37,7 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
         getPathNode(parentPath)?.let { return it }
       }
 
-      return HIERARCHY_UPPER_BOUND.getRequired(subtreeRoot)
+      return grandParent
     }
 
     private fun getPathNode(nodePath: StaticFilePath): ChangesBrowserNode<*>? {
@@ -47,7 +45,6 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
         it.markAsHelperNode()
 
         val grandParent = GRAND_PARENT_CANDIDATE.get(subtreeRoot) ?: getParentNodeRecursive(nodePath)
-        val cachingRoot = getCachingRoot(subtreeRoot)
 
         model.insertNodeInto(it, grandParent, grandParent.childCount)
         DIRECTORY_CACHE.getValue(cachingRoot)[nodePath.key] = it
@@ -64,9 +61,5 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
 
   companion object {
     internal val GRAND_PARENT_CANDIDATE = Key.create<ChangesBrowserNode<*>?>("ChangesTree.GrandParentCandidate")
-    internal val HIERARCHY_UPPER_BOUND = Key.create<ChangesBrowserNode<*>?>("ChangesTree.HierarchyUpperBound")
-    internal val CACHING_ROOT = Key.create<ChangesBrowserNode<*>?>("ChangesTree.CachingRoot")
-
-    internal fun getCachingRoot(subtreeRoot: ChangesBrowserNode<*>) = CACHING_ROOT.get(subtreeRoot) ?: subtreeRoot
   }
 }
