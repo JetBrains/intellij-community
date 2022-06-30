@@ -380,7 +380,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
-    if (!(runnable instanceof FutureTask) && propagateContextOrCancellation()) {
+    if (propagateContextOrCancellation()) {
       // see com.intellij.util.concurrency.AppScheduledExecutorService#handleCommand
       if (Propagation.propagateCancellation()) {
         //noinspection TestOnlyProblems

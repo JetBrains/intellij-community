@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.concurrency.ContextCallable;
+import com.intellij.concurrency.ContextRunnable;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -72,16 +74,26 @@ public final class Propagation {
     }
   }
 
+  @Internal
+  public static @NotNull Runnable handleContext(@NotNull Runnable runnable) {
+    if (propagateThreadContext()) {
+      return ThreadContext.captureThreadContext(runnable);
+    }
+    else {
+      return runnable;
+    }
+  }
+
   static <V> @NotNull FutureTask<V> handleTask(@NotNull Callable<V> callable) {
     if (propagateCancellation()) {
       //noinspection TestOnlyProblems
       Job currentJob = Cancellation.currentJob();
       CompletableDeferred<V> childDeferred = CompletableDeferred(currentJob);
       CancellationCallable<V> cancellationCallable = new CancellationCallable<>(childDeferred, callable);
-      return new CancellationFutureTask<>(childDeferred, handleContext(cancellationCallable));
+      return new CancellationFutureTask<>(childDeferred, handleTaskContext(cancellationCallable));
     }
     else {
-      return new FutureTask<>(handleContext(callable));
+      return new FutureTask<>(handleTaskContext(callable));
     }
   }
 
@@ -95,10 +107,19 @@ public final class Propagation {
       Job currentJob = Cancellation.currentJob();
       CompletableDeferred<V> childDeferred = CompletableDeferred(currentJob);
       CancellationCallable<V> cancellationCallable = new CancellationCallable<>(childDeferred, callable);
-      return wrapper.new CancellationScheduledFutureTask<>(childDeferred, handleContext(cancellationCallable), ns);
+      return wrapper.new CancellationScheduledFutureTask<>(childDeferred, handleTaskContext(cancellationCallable), ns);
     }
     else {
-      return wrapper.new MyScheduledFutureTask<>(handleContext(callable), ns);
+      return wrapper.new MyScheduledFutureTask<>(handleTaskContext(callable), ns);
+    }
+  }
+
+  private static <V> @NotNull Callable<V> handleTaskContext(@NotNull Callable<V> callable) {
+    if (propagateThreadContext()) {
+      return new ContextCallable<>(false, callable);
+    }
+    else {
+      return callable;
     }
   }
 
@@ -113,28 +134,19 @@ public final class Propagation {
       Job currentJob = Cancellation.currentJob();
       CompletableJob childJob = Job(currentJob);
       PeriodicCancellationRunnable cancellationRunnable = new PeriodicCancellationRunnable(childJob, runnable);
-      return wrapper.new CancellationScheduledFutureTask<>(childJob, handleContext(cancellationRunnable), ns, period);
+      return wrapper.new CancellationScheduledFutureTask<>(childJob, handleTaskContext(cancellationRunnable), ns, period);
     }
     else {
-      return wrapper.new MyScheduledFutureTask<Void>(handleContext(runnable), null, ns, period);
+      return wrapper.new MyScheduledFutureTask<Void>(handleTaskContext(runnable), null, ns, period);
     }
   }
 
-  public static @NotNull Runnable handleContext(@NotNull Runnable runnable) {
+  private static @NotNull Runnable handleTaskContext(@NotNull Runnable runnable) {
     if (propagateThreadContext()) {
-      return ThreadContext.captureThreadContext(runnable);
+      return new ContextRunnable(false, runnable);
     }
     else {
       return runnable;
-    }
-  }
-
-  private static <V> @NotNull Callable<V> handleContext(@NotNull Callable<V> callable) {
-    if (propagateThreadContext()) {
-      return ThreadContext.captureThreadContext(callable);
-    }
-    else {
-      return callable;
     }
   }
 }

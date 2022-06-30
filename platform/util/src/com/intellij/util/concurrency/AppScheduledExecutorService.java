@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -228,14 +228,6 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   static @NotNull Runnable handleCommand(@NotNull Runnable command) {
-    if (command instanceof FutureTask) {
-      // FutureTask.callable should handle propagation/cancellation.
-      // Known implementations:
-      // - CancellationFutureTask is created in newTaskFor;
-      // - java.util.concurrent.ExecutorCompletionService$QueueingFuture (wraps CancellationFutureTask) is created in invokeAny
-      // - com.intellij.util.concurrency.SchedulingWrapper$MyScheduledFutureTask;
-      return command;
-    }
     if (!propagateContextOrCancellation()) {
       return command;
     }
