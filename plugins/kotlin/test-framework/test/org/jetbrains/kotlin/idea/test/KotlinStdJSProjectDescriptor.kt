@@ -5,12 +5,18 @@ package org.jetbrains.kotlin.idea.test
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
-import org.jetbrains.kotlin.idea.base.platforms.KotlinLibraryData
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.VfsUtil
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 
 object KotlinStdJSProjectDescriptor : KotlinLightProjectDescriptor() {
     override fun getSdk(): Sdk? = null
 
     override fun configureModule(module: Module, model: ModifiableRootModel) {
-        ConfigLibraryUtil.addLibraries(model, KotlinLibraryData.KOTLIN_STDLIB_JS)
+        ConfigLibraryUtil.addLibrary(model, "kotlin-stdlib-js", KotlinJavaScriptLibraryKind) {
+            addRoot(VfsUtil.getUrlForLibraryRoot(KotlinArtifacts.kotlinStdlibJs), OrderRootType.CLASSES)
+            addRoot(VfsUtil.getUrlForLibraryRoot(KotlinArtifacts.kotlinStdlibSources), OrderRootType.SOURCES)
+        }
     }
 }
