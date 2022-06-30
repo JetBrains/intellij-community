@@ -11,7 +11,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
@@ -20,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.runBlocking
@@ -83,9 +82,9 @@ class StoreUtil private constructor() {
 
 @CalledInAny
 suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean {
-  if (ApplicationManager.getApplication().isDispatchThread) {
-    (TransactionGuardImpl.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
-  }
+  //if (ApplicationManager.getApplication().isDispatchThread) {
+  //  (TransactionGuardImpl.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
+  //}
 
   try {
     componentManager.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
@@ -175,22 +174,24 @@ fun getDefaultStoragePathSpec(state: State): String? {
   return storage?.let { getStoragePathSpec(storage) }
 }
 
-fun getStoragePathSpec(storage: Storage): String {
+private fun getStoragePathSpec(storage: Storage): String {
   @Suppress("DEPRECATION")
   val pathSpec = storage.value.ifEmpty { storage.file }
   return if (storage.roamingType == RoamingType.PER_OS) getOsDependentStorage(pathSpec) else pathSpec
 }
 
 fun getOsDependentStorage(storagePathSpec: String): String {
-  return getPerOsSettingsStorageFolderName() + "/" + storagePathSpec
+  return "${getPerOsSettingsStorageFolderName()}/$storagePathSpec"
 }
 
 fun getPerOsSettingsStorageFolderName(): String {
-  if (SystemInfo.isMac) return "mac"
-  if (SystemInfo.isWindows) return "windows"
-  if (SystemInfo.isLinux) return "linux"
-  if (SystemInfo.isFreeBSD) return "freebsd"
-  return if (SystemInfo.isUnix) "unix" else "other_os"
+  return when {
+    SystemInfoRt.isMac -> "mac"
+    SystemInfoRt.isWindows -> "windows"
+    SystemInfoRt.isLinux -> "linux"
+    SystemInfoRt.isFreeBSD -> "freebsd"
+    else -> if (SystemInfoRt.isUnix) "unix" else "other_os"
+  }
 }
 
 /**
