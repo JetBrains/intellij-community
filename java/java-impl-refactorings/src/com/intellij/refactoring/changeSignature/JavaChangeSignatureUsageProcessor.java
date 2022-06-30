@@ -1112,11 +1112,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                                                         final PsiParameterList list,
                                                         boolean[] toRemoveParm,
                                                         final PsiElement methodBody) throws IncorrectOperationException {
+    PsiUtilCore.ensureValid(list);
     List<FieldConflictsResolver> conflictResolvers = new ArrayList<>();
     for (PsiParameter parameter : newParms) {
       conflictResolvers.add(new FieldConflictsResolver(parameter.getName(), methodBody));
     }
     ChangeSignatureUtil.synchronizeList(list, Arrays.asList(newParms), ParameterList.INSTANCE, toRemoveParm);
+    LOG.assertTrue(list.getContainingFile() != null, "No containing file for: " + list.getClass());
     JavaCodeStyleManager.getInstance(list.getProject()).shortenClassReferences(list);
     for (FieldConflictsResolver fieldConflictsResolver : conflictResolvers) {
       fieldConflictsResolver.fix();
