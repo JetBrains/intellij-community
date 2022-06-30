@@ -22,17 +22,22 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
       generateSequence(nodePath.parent) { it.parent }.forEach { parentPath ->
         val cachedParent = DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]
         if (cachedParent != null) {
-          if (grandParent == cachedParent) {
-            createPathNode(parentPath)?.let { pathNode ->
-              model.insertNodeInto(pathNode, grandParent, grandParent.childCount)
-              return pathNode
-            }
+          if (grandParent != cachedParent) {
+            return cachedParent
+          }
+
+          val pathNode = createPathNode(parentPath)
+          if (pathNode != null) {
+            model.insertNodeInto(pathNode, grandParent, grandParent.childCount)
+            return pathNode
+          }
+          else {
             return grandParent
           }
-          return cachedParent
         }
 
-        createPathNode(parentPath)?.let { pathNode ->
+        val pathNode = createPathNode(parentPath)
+        if (pathNode != null) {
           val parentNode = getParentNodeRecursive(parentPath)
           model.insertNodeInto(pathNode, parentNode, parentNode.childCount)
           return pathNode
