@@ -65,14 +65,6 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
 }
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ModuleEntity, modification: ModuleEntity.Builder.() -> Unit) = modifyEntity(ModuleEntity.Builder::class.java, entity, modification)
-var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?
-    get() {
-        return referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()
-    }
-    set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(EclipseProjectPropertiesEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
-    }
-
 var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity?
     get() {
         return referrersx(FacetsOrderEntity::moduleEntity).singleOrNull()

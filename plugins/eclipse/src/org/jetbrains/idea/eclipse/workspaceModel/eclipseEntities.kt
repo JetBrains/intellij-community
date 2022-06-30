@@ -1,18 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.storage.bridgeEntities.api
+package org.jetbrains.idea.eclipse.config
 
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.referrersx
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-
-
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.referrersx
 
 
 /**
@@ -34,6 +37,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   val forceConfigureJdk: Boolean
   val expectedModuleSourcePlace: Int
   val srcPlace: Map<String, Int>
+
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(1)
@@ -68,9 +72,41 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   //endregion
 
 }
+
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: EclipseProjectPropertiesEntity, modification: EclipseProjectPropertiesEntity.Builder.() -> Unit) = modifyEntity(EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
+var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?
+    get() {
+        return referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()
+    }
+    set(value) {
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(EclipseProjectPropertiesEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
+    }
+
 //endregion
 
 val ModuleEntity.eclipseProperties: @Child EclipseProjectPropertiesEntity?
   get() = referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()
+
+data class EclipseProjectFile(
+  val classpathFile: VirtualFileUrl,
+  val internalSource: JpsFileEntitySource
+) : EntitySource, JpsFileDependentEntitySource {
+  override val originalSource: JpsFileEntitySource
+    get() = internalSource
+}
+
+fun MutableEntityStorage.addEclipseProjectPropertiesEntity(module: ModuleEntity, source: EntitySource): EclipseProjectPropertiesEntity {
+  val entity = EclipseProjectPropertiesEntity(source, LinkedHashMap(), ArrayList(), ArrayList(), ArrayList(), false, 0, LinkedHashMap()) {
+    this.module = module
+}
+  this.addEntity(entity)
+  return entity
+}
+
+
+fun EclipseProjectPropertiesEntity.Builder.setVariable(kind: String, name: String, path: String) {
+  variablePaths = variablePaths.toMutableMap().also { it[kind + path] = name }
+}
+
+fun EclipseProjectPropertiesEntity.getVariable(kind: String, path: String): String? = variablePaths[kind + path]

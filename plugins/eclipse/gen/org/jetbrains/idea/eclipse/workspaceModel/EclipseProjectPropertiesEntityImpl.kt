@@ -1,5 +1,9 @@
-package com.intellij.workspaceModel.storage.bridgeEntities.api
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.eclipse.config
 
+import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -8,6 +12,7 @@ import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -15,7 +20,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
-import com.intellij.workspaceModel.storage.referrersx
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
