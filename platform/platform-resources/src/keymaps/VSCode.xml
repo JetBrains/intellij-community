@@ -238,13 +238,11 @@
   </action>
   <action id="FindWordAtCaret" />
   <action id="FindNext">
-    <keyboard-shortcut first-keystroke="ctrl f3" />
     <keyboard-shortcut first-keystroke="f3" />
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="ctrl d" />
   </action>
   <action id="FindPrevious">
     <keyboard-shortcut first-keystroke="shift f3" />
-    <keyboard-shortcut first-keystroke="shift alt f5" />
     <keyboard-shortcut first-keystroke="ctrl shift f3" />
   </action>
   <action id="Forward">
@@ -274,7 +272,6 @@
   <action id="EvaluateExpression" />
   <action id="GotoNextError">
     <keyboard-shortcut first-keystroke="alt f8" />
-    <keyboard-shortcut first-keystroke="f8" />
   </action>
   <action id="GotoNextIncompletePropertyAction" />
   <action id="ForceStepOver" />
@@ -463,6 +460,7 @@
   </action>
   <action id="SelectNextOccurrence">
     <keyboard-shortcut first-keystroke="ctrl d" />
+    <keyboard-shortcut first-keystroke="ctrl f3" />
   </action>
   <action id="SendEOF" />
   <action id="ShelveChanges.UnshelveWithDialog" />
@@ -583,7 +581,7 @@
   <action id="Pause">
     <keyboard-shortcut first-keystroke="f6" />
   </action>
-  <action id="SmartSelect">
+  <action id="EditorSelectWord">
     <keyboard-shortcut first-keystroke="shift alt right" />
   </action>
   <action id="SmartUnSelect">
@@ -610,7 +608,6 @@
   <action id="QuickJavaDoc">
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="ctrl i"/>
   </action>
-  <action id="EditorSelectWord" />
   <action id="NextProjectWindow">
     <keyboard-shortcut first-keystroke="ctrl w"/>
   </action>
@@ -643,7 +640,8 @@
     <keyboard-shortcut first-keystroke="ctrl SEMICOLON" second-keystroke="e" />
   </action>
   <action id="CodeCompletion">
-    <keyboard-shortcut first-keystroke="ctrl l" />
+    <keyboard-shortcut first-keystroke="ctrl i" />
+    <keyboard-shortcut first-keystroke="ctrl space" />
   </action>
   <action id="CloseAllEditorsButActive">
     <!-- for "Close saved editors in group", no better alternative -->
