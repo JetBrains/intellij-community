@@ -8040,6 +8040,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             public void testCharEqStringSingleQuote() throws Exception {
                 runTest("testData/quickfix/equalityNotApplicable/charLiteralConversion/charEqStringSingleQuote.kt");
             }
+
+            @TestMetadata("interpolation.kt")
+            public void testInterpolation() throws Exception {
+                runTest("testData/quickfix/equalityNotApplicable/charLiteralConversion/interpolation.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
