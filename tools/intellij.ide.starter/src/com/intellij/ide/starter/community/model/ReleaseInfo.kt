@@ -10,6 +10,10 @@ data class ReleaseInfo(val date: LocalDate,
                        val build: String,
                        val downloads: Download)
 
-data class Download(val linux:OperatingSystem?, val mac:OperatingSystem?, val windows:OperatingSystem?)
-data class OperatingSystem(val link:String)
+data class Download(val linux: OperatingSystem?,
+                    val mac: OperatingSystem?,
+                    val macM1: OperatingSystem?,
+                    val windows: OperatingSystem?)
+
+data class OperatingSystem(val link: String)
 

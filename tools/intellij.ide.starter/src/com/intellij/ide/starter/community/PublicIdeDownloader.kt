@@ -25,7 +25,10 @@ object PublicIdeDownloader : IdeDownloader {
 
       val downloadLink: String = when (SystemInfo.getOsType()) {
         OsType.Linux -> possibleBuild.downloads.linux!!.link
-        OsType.MacOS -> possibleBuild.downloads.mac!!.link
+        OsType.MacOS -> {
+          if (SystemInfo.OS_ARCH == "aarch64") possibleBuild.downloads.macM1!!.link // macM1
+          else possibleBuild.downloads.mac!!.link
+        }
         OsType.Windows -> possibleBuild.downloads.windows!!.link
         else -> throw RuntimeException("Unsupported OS ${SystemInfo.getOsType()}")
       }
