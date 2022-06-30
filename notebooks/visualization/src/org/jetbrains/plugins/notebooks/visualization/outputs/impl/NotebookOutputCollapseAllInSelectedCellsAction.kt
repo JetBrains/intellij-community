@@ -1,9 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.outputs.impl
 
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.DumbAware
@@ -14,6 +11,8 @@ import org.jetbrains.plugins.notebooks.visualization.outputs.collapsingComponent
 import java.awt.event.MouseEvent
 
 internal class NotebookOutputCollapseAllAction private constructor() : ToggleAction(), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = e.notebookEditor != null
@@ -38,6 +37,8 @@ internal class NotebookOutputCollapseAllAction private constructor() : ToggleAct
 
 // same as Collapse All Action, but collapse outputs of selected cells
 internal class NotebookOutputCollapseAllInSelectedCellsAction private constructor() : ToggleAction(), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     val editor = e.notebookEditor
@@ -64,6 +65,8 @@ internal class NotebookOutputCollapseAllInSelectedCellsAction private constructo
 }
 
 internal class NotebookOutputCollapseAllInCellAction private constructor() : ToggleAction(), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = getCollapsingComponents(e) != null
@@ -84,6 +87,8 @@ internal class NotebookOutputCollapseAllInCellAction private constructor() : Tog
 }
 
 internal class NotebookOutputCollapseSingleInCellAction private constructor() : ToggleAction(), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = getCollapsingComponents(e) != null
