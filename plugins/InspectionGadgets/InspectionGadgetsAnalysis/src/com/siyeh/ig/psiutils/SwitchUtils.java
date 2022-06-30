@@ -525,8 +525,10 @@ public final class SwitchUtils {
   }
 
   /**
-   * Returns {@code true} if the element represents a {@code default} section
-   * or list of case labels contains default element, {@code false} otherwise.
+   * Checks if the given switch label statement contains a {@code default} case
+   *
+   * @param label a switch label statement to test
+   * @return {@code true} if the given switch label statement contains a {@code default} case, {@code false} otherwise
    */
   public static boolean isDefaultLabel(@Nullable PsiSwitchLabelStatementBase label) {
     if (label == null) return false;
@@ -536,10 +538,17 @@ public final class SwitchUtils {
     return ContainerUtil.exists(labelElementList.getElements(), element -> element instanceof PsiDefaultCaseLabelElement);
   }
 
-  public static boolean hasOnlyDefaultCase(@Nullable PsiSwitchLabelStatementBase statement) {
-    if (statement == null) return false;
-    if (statement.isDefaultCase()) return true;
-    PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
+  /**
+   * Checks if the given switch label statement contains only a {@code default} case and nothing else
+   *
+   * @param label a switch label statement to test
+   * @return {@code true} if the given switch label statement contains only a {@code default} case and nothing else,
+   * {@code false} otherwise.
+   */
+  public static boolean hasOnlyDefaultCase(@Nullable PsiSwitchLabelStatementBase label) {
+    if (label == null) return false;
+    if (label.isDefaultCase()) return true;
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
     return labelElementList != null &&
            labelElementList.getElementCount() == 1 &&
            labelElementList.getElements()[0] instanceof PsiDefaultCaseLabelElement;
