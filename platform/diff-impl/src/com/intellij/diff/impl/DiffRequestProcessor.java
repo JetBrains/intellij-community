@@ -709,7 +709,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     }
   }
 
-  private class ShowInExternalToolActionGroup extends ActionGroup {
+  private class ShowInExternalToolActionGroup extends ActionGroup implements DumbAware {
     private ShowInExternalToolActionGroup() {
       ActionUtil.copyFrom(this, "Diff.ShowInExternalTool");
     }
