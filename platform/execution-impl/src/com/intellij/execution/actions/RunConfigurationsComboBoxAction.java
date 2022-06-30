@@ -54,8 +54,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       return false;
     }
 
-    if (PlatformUtils.isIdeaUltimate()) return true;
-    if (PlatformUtils.isIdeaCommunity()) return true;
+    if (PlatformUtils.isIntelliJ()) return true;
     if (PlatformUtils.isPhpStorm()) return true;
     if (PlatformUtils.isWebStorm()) return true;
     if (PlatformUtils.isRubyMine()) return true;
