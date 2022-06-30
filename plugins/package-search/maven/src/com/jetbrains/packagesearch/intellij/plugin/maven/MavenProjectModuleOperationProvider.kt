@@ -21,7 +21,7 @@ import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.AbstractCoroutineProjectModuleOperationProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.AbstractProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
@@ -35,7 +35,7 @@ private val MAVEN_CENTRAL_UNIFIED_REPOSITORY = UnifiedDependencyRepository(
     "https://repo.maven.apache.org/maven2",
 )
 
-internal class MavenProjectModuleOperationProvider : AbstractCoroutineProjectModuleOperationProvider() {
+internal class MavenProjectModuleOperationProvider : AbstractProjectModuleOperationProvider() {
 
     companion object {
 
@@ -45,7 +45,7 @@ internal class MavenProjectModuleOperationProvider : AbstractCoroutineProjectMod
         fun hasSupportFor(project: Project, psiFile: PsiFile?) = MavenUtil.isPomFile(project, psiFile?.virtualFile)
     }
 
-    override suspend fun addDependencyToModule(
+    override fun addDependencyToModule(
         operationMetadata: DependencyOperationMetadata,
         module: ProjectModule
     ) = super.addDependencyToModule(
@@ -55,12 +55,14 @@ internal class MavenProjectModuleOperationProvider : AbstractCoroutineProjectMod
         module = module
     )
 
+    override fun usesSharedPackageUpdateInspection() = true
+
     override fun hasSupportFor(projectModuleType: ProjectModuleType) = Companion.hasSupportFor(projectModuleType)
 
     override fun hasSupportFor(project: Project, psiFile: PsiFile?) = Companion.hasSupportFor(project, psiFile)
 
     // This is a (sad) workaround for IDEA-267229 — when that's sorted, we shouldn't need this anymore.
-    override suspend fun listRepositoriesInModule(module: ProjectModule): List<UnifiedDependencyRepository> {
+    override fun listRepositoriesInModule(module: ProjectModule): Collection<UnifiedDependencyRepository> {
         val repositories = super.listRepositoriesInModule(module)
         return if (repositories.none { it.id == MAVEN_CENTRAL_UNIFIED_REPOSITORY.id })
             repositories + MAVEN_CENTRAL_UNIFIED_REPOSITORY

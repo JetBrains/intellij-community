@@ -16,42 +16,27 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.util
 
-import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.psi.PsiFile
 import com.intellij.util.flow.throttle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.AsyncModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.AsyncProjectModuleOperationProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -60,7 +45,6 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -71,8 +55,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration
 import kotlin.time.TimedValue
 import kotlin.time.measureTimedValue
@@ -222,6 +204,8 @@ internal suspend fun showBackgroundLoadingBar(
     isSafe: Boolean = true
 ): BackgroundLoadingBarController {
     val syncSignal = Mutex(true)
+    val upperMessageChannel = Channel<String>()
+    val lowerMessageChannel = Channel<String>()
     val cancellationRequested = Channel<Unit>()
     val externalScopeJob = coroutineContext.job
     val progressManager = ProgressManager.getInstance()
@@ -233,6 +217,8 @@ internal suspend fun showBackgroundLoadingBar(
             }
             indicator.text = upperMessage // ??? why does it work?
             runBlocking {
+                upperMessageChannel.consumeAsFlow().onEach { indicator.text = it }.launchIn(this)
+                lowerMessageChannel.consumeAsFlow().onEach { indicator.text2 = it }.launchIn(this)
                 indicator.text = upperMessage // ??? why does it work?
                 val indicatorCancelledPollingJob = launch {
                     while (true) {
@@ -246,103 +232,30 @@ internal suspend fun showBackgroundLoadingBar(
                 val internalJob = launch {
                     syncSignal.lock()
                 }
-                select {
+                select<Unit> {
                     internalJob.onJoin { }
                     externalScopeJob.onJoin { internalJob.cancel() }
                 }
                 indicatorCancelledPollingJob.cancel()
+                upperMessageChannel.close()
+                lowerMessageChannel.close()
             }
         }
     })
-    return BackgroundLoadingBarController(syncSignal)
+    return BackgroundLoadingBarController(
+        syncSignal,
+        upperMessageChannel,
+        lowerMessageChannel,
+        cancellationRequested.consumeAsFlow()
+    )
 }
 
-internal class BackgroundLoadingBarController(private val syncMutex: Mutex) {
+internal class BackgroundLoadingBarController(
+    private val syncMutex: Mutex,
+    val upperMessageChannel: SendChannel<String>,
+    val lowerMessageChannel: SendChannel<String>,
+    val cancellationFlow: Flow<Unit>
+) {
 
-    fun clear() {
-        runCatching { syncMutex.unlock() }
-    }
-}
-
-suspend fun <R> writeAction(action: () -> R): R = suspendCoroutine {
-    runWriteAction { it.resume(action()) }
-}
-
-internal fun ModuleTransformer.asCoroutine() = object : CoroutineModuleTransformer {
-    override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
-        this@asCoroutine.transformModules(project, nativeModules)
-}
-
-internal fun AsyncModuleTransformer.asCoroutine() = object : CoroutineModuleTransformer {
-    override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
-        this@asCoroutine.transformModules(project, nativeModules).await()
-}
-
-internal fun ModuleChangesSignalProvider.asCoroutine() = object : FlowModuleChangesSignalProvider {
-    override fun registerModuleChangesListener(project: Project) = callbackFlow {
-        val sub = registerModuleChangesListener(project) { trySend(Unit) }
-        awaitClose { sub.unsubscribe() }
-    }
-}
-
-internal fun ProjectModuleOperationProvider.asCoroutine() = object : CoroutineProjectModuleOperationProvider {
-
-    override fun hasSupportFor(project: Project, psiFile: PsiFile?) = this@asCoroutine.hasSupportFor(project, psiFile)
-
-    override fun hasSupportFor(projectModuleType: ProjectModuleType) = this@asCoroutine.hasSupportFor(projectModuleType)
-
-    override suspend fun addDependencyToModule(operationMetadata: DependencyOperationMetadata, module: ProjectModule) =
-        this@asCoroutine.addDependencyToModule(operationMetadata, module).toList()
-
-    override suspend fun removeDependencyFromModule(operationMetadata: DependencyOperationMetadata, module: ProjectModule) =
-        this@asCoroutine.removeDependencyFromModule(operationMetadata, module).toList()
-
-    override suspend fun updateDependencyInModule(operationMetadata: DependencyOperationMetadata, module: ProjectModule) =
-        this@asCoroutine.updateDependencyInModule(operationMetadata, module).toList()
-
-    override suspend fun declaredDependenciesInModule(module: ProjectModule) =
-        this@asCoroutine.declaredDependenciesInModule(module).toList()
-
-    override suspend fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>) =
-        this@asCoroutine.resolvedDependenciesInModule(module, scopes).toList()
-
-    override suspend fun addRepositoryToModule(repository: UnifiedDependencyRepository, module: ProjectModule) =
-        this@asCoroutine.addRepositoryToModule(repository, module).toList()
-
-    override suspend fun removeRepositoryFromModule(repository: UnifiedDependencyRepository, module: ProjectModule) =
-        this@asCoroutine.removeRepositoryFromModule(repository, module).toList()
-
-    override suspend fun listRepositoriesInModule(module: ProjectModule) =
-        this@asCoroutine.listRepositoriesInModule(module).toList()
-}
-
-internal fun AsyncProjectModuleOperationProvider.asCoroutine() = object : CoroutineProjectModuleOperationProvider {
-
-    override fun hasSupportFor(project: Project, psiFile: PsiFile?) = this@asCoroutine.hasSupportFor(project, psiFile)
-
-    override fun hasSupportFor(projectModuleType: ProjectModuleType) = this@asCoroutine.hasSupportFor(projectModuleType)
-
-    override suspend fun addDependencyToModule(operationMetadata: DependencyOperationMetadata, module: ProjectModule) =
-        this@asCoroutine.addDependencyToModule(operationMetadata, module).await().toList()
-
-    override suspend fun removeDependencyFromModule(operationMetadata: DependencyOperationMetadata, module: ProjectModule) =
-        this@asCoroutine.removeDependencyFromModule(operationMetadata, module).await().toList()
-
-    override suspend fun updateDependencyInModule(operationMetadata: DependencyOperationMetadata, module: ProjectModule) =
-        this@asCoroutine.updateDependencyInModule(operationMetadata, module).await().toList()
-
-    override suspend fun declaredDependenciesInModule(module: ProjectModule) =
-        this@asCoroutine.declaredDependenciesInModule(module).await().toList()
-
-    override suspend fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>) =
-        this@asCoroutine.resolvedDependenciesInModule(module, scopes).await().toList()
-
-    override suspend fun addRepositoryToModule(repository: UnifiedDependencyRepository, module: ProjectModule) =
-        this@asCoroutine.addRepositoryToModule(repository, module).await().toList()
-
-    override suspend fun removeRepositoryFromModule(repository: UnifiedDependencyRepository, module: ProjectModule) =
-        this@asCoroutine.removeRepositoryFromModule(repository, module).await().toList()
-
-    override suspend fun listRepositoriesInModule(module: ProjectModule) =
-        this@asCoroutine.listRepositoriesInModule(module).await().toList()
+    fun clear() = runCatching { syncMutex.unlock() }.getOrElse { }
 }

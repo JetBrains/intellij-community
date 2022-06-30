@@ -62,14 +62,15 @@ object CoroutineGradleTaskManager {
         project: Project,
         executionName: @Nls String,
         projectPath: String,
-        gradlePath: String
+        gradlePath: String,
+        progressExecutionMode: ProgressExecutionMode
     ): Boolean = suspendCoroutine { continuation ->
         GradleTaskManager.runCustomTaskScript(
             project,
             executionName,
             projectPath,
             gradlePath,
-            ProgressExecutionMode.IN_BACKGROUND_ASYNC,
+            progressExecutionMode,
             object : TaskCallback {
                 override fun onSuccess() = continuation.resume(true)
                 override fun onFailure() = continuation.resume(false)

@@ -21,11 +21,12 @@ package com.jetbrains.packagesearch.intellij.plugin.gradle
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
 import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.AbstractCoroutineProjectModuleOperationProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.AbstractProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
@@ -44,7 +45,7 @@ private const val FILE_TYPE_KOTLIN = "kotlin"
 private const val EXTENSION_GRADLE = "gradle"
 private const val EXTENSION_GRADLE_KTS = "gradle.kts"
 
-internal open class GradleProjectModuleOperationProvider : AbstractCoroutineProjectModuleOperationProvider() {
+internal open class GradleProjectModuleOperationProvider : AbstractProjectModuleOperationProvider() {
 
     companion object {
 
@@ -61,44 +62,17 @@ internal open class GradleProjectModuleOperationProvider : AbstractCoroutineProj
 
         fun hasSupportFor(projectModuleType: ProjectModuleType): Boolean =
             projectModuleType is GradleProjectModuleType
-
-        private fun getDependencyTaskScript(taskName: String, outputFile: File, scopes: Set<String>, gradlePath: String) =
-            // language=Groovy
-            """
-                allprojects {
-                    if (project.path == '${gradlePath}' || ':' + rootProject.projectDir.name + project.path == '$gradlePath}') {
-                        tasks.register('${taskName}') {
-                            def outputFile = project.file("${FileUtil.toCanonicalPath(outputFile.absolutePath)}")
-                            outputs.file(outputFile)
-                            doLast {
-                                def json = []
-                                def scopes = [${scopes.joinToString { "'$it'" }}]
-                                for (configuration in configurations) {
-                                    if (configuration.name in scopes) {
-                                        def deps = []
-                                        for (dependency in configuration.allDependencies) {
-                                            if (dependency.group != null && dependency.version != null) {
-                                                deps.add([groupId: dependency.group, artifactId: dependency.name, version: dependency.version])
-                                            }
-                                        }
-                                        json.add([configurationName: configuration.name, dependencies: deps])
-                                    }
-                                }
-                                outputFile.write(groovy.json.JsonOutput.toJson(json))
-                            }
-                        }
-                    }
-                }
-            """.trimIndent()
     }
 
     private val gradleMutex = Mutex()
+
+    override fun usesSharedPackageUpdateInspection() = true
 
     override fun hasSupportFor(project: Project, psiFile: PsiFile?) = Companion.hasSupportFor(psiFile)
 
     override fun hasSupportFor(projectModuleType: ProjectModuleType): Boolean = Companion.hasSupportFor(projectModuleType)
 
-    override suspend fun addDependencyToModule(
+    override fun addDependencyToModule(
         operationMetadata: DependencyOperationMetadata,
         module: ProjectModule
     ): List<OperationFailure<out OperationItem>> {
@@ -109,7 +83,7 @@ internal open class GradleProjectModuleOperationProvider : AbstractCoroutineProj
         return super.addDependencyToModule(operationMetadata, module)
     }
 
-    override suspend fun removeDependencyFromModule(
+    override fun removeDependencyFromModule(
         operationMetadata: DependencyOperationMetadata,
         module: ProjectModule
     ): List<OperationFailure<out OperationItem>> {
@@ -126,13 +100,40 @@ internal open class GradleProjectModuleOperationProvider : AbstractCoroutineProj
         }
     }
 
-    override suspend fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>): List<UnifiedDependency> {
-        if (scopes.isEmpty()) return emptyList()
-        val fullGradlePath = CachedModuleDataFinder.getGradleModuleData(module.nativeModule)?.fullGradlePath ?: return emptyList()
-        return getGradleConfigurations(module, fullGradlePath, scopes).flatMap { configuration ->
-            configuration.dependencies.map { UnifiedDependency(it.groupId, it.artifactId, it.version, configuration.configurationName) }
+//    override suspend fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>): List<UnifiedDependency> {
+//        if (scopes.isEmpty()) return emptyList()
+//        val fullGradlePath = CachedModuleDataFinder.getGradleModuleData(module.nativeModule)?.fullGradlePath ?: return emptyList()
+//        return getGradleConfigurations(module, fullGradlePath, scopes).flatMap { configuration ->
+//            configuration.dependencies.map { UnifiedDependency(it.groupId, it.artifactId, it.version, configuration.configurationName) }
+//        }
+//    }
+
+    private fun getDependencyTaskScript(taskName: String, outputFile: File, scopes: Set<String>, gradlePath: String) = """
+        allprojects {
+            if (project.path == '${gradlePath}' || ':' + rootProject.projectDir.name + project.path == '$gradlePath}') {
+                tasks.register('${taskName}') {
+                    def outputFile = project.file("${FileUtil.toCanonicalPath(outputFile.absolutePath)}")
+                    outputs.file(outputFile)
+                    doLast {
+                        def json = []
+                        def scopes = [${scopes.joinToString { "'$it'" }}]
+                        for (configuration in configurations) {
+                            if (configuration.name in scopes) {
+                                def deps = []
+                                for (dependency in configuration.allDependencies) {
+                                    if (dependency.group != null && dependency.version != null) {
+                                        deps.add([groupId: dependency.group, artifactId: dependency.name, version: dependency.version])
+                                    }
+                                }
+                                json.add([configurationName: configuration.name, dependencies: deps])
+                            }
+                        }
+                        outputFile.write(groovy.json.JsonOutput.toJson(json))
+                    }
+                }
+            }
         }
-    }
+    """.trimIndent()
 
     private suspend fun getGradleConfigurations(
         module: ProjectModule,
@@ -148,7 +149,8 @@ internal open class GradleProjectModuleOperationProvider : AbstractCoroutineProj
                 project = module.nativeModule.project,
                 executionName = GradleBundle.message("gradle.dependency.analyzer.loading"),
                 projectPath = module.buildFile.parent.path,
-                gradlePath = gradlePath
+                gradlePath = gradlePath,
+                progressExecutionMode = ProgressExecutionMode.IN_BACKGROUND_ASYNC
             )
         }
         val result: List<ConfigurationReport> = if (isTaskSuccessful) Json.decodeFromString(outputFile.readText()) else emptyList()

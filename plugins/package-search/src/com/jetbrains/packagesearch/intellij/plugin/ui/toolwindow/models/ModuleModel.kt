@@ -16,8 +16,9 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
+import com.intellij.openapi.application.readAction
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.RepositoryDeclaration
 
 data class ModuleModel(
@@ -27,13 +28,14 @@ data class ModuleModel(
 
     companion object {
 
-        suspend operator fun invoke(projectModule: ProjectModule) =
+        suspend operator fun invoke(projectModule: ProjectModule) = readAction {
             ModuleModel(
                 projectModule = projectModule,
-                declaredRepositories = CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
+                declaredRepositories = ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
                     ?.listRepositoriesInModule(projectModule)
                     ?.map { RepositoryDeclaration(it.id, it.name, it.url, projectModule) }
                     ?: emptyList()
             )
+        }
     }
 }

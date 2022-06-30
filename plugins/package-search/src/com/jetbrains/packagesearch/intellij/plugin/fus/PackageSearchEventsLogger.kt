@@ -25,8 +25,8 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
@@ -129,21 +129,22 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
             packageIdentifier: PackageIdentifier,
             packageVersion: PackageVersion,
             targetModule: ProjectModule
-        ) = runSafelyIfEnabled(packageInstalledEvent) {
-            val moduleOperationProvider = CoroutineProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
-            if (moduleOperationProvider != null) {
-                log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
-            } else {
-                logDebug { "Unable to log package installation for target module '${targetModule.name}': no operation provider available" }
+        ) =
+            runSafelyIfEnabled(packageInstalledEvent) {
+                val moduleOperationProvider = ProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
+                if (moduleOperationProvider != null) {
+                    log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
+                } else {
+                    logDebug { "Unable to log package installation for target module '${targetModule.name}': no operation provider available" }
+                }
             }
-        }
 
         fun logPackageRemoved(
             packageIdentifier: PackageIdentifier,
             packageVersion: PackageVersion,
             targetModule: ProjectModule
         ) = runSafelyIfEnabled(packageRemovedEvent) {
-            val moduleOperationProvider = CoroutineProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
+            val moduleOperationProvider = ProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
             if (moduleOperationProvider != null) {
                 log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
             } else {
@@ -157,7 +158,7 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
             packageVersion: PackageVersion,
             targetModule: ProjectModule
         ) = runSafelyIfEnabled(packageUpdatedEvent) {
-            val moduleOperationProvider = CoroutineProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
+            val moduleOperationProvider = ProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
             if (moduleOperationProvider != null) {
                 log(
                     packageIdField.with(packageIdentifier.rawValue),

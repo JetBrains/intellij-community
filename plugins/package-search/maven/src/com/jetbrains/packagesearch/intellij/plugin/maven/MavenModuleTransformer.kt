@@ -28,7 +28,6 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
-import kotlinx.coroutines.future.future
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.navigator.MavenNavigationUtil
 import org.jetbrains.idea.maven.project.MavenProject
@@ -63,31 +62,29 @@ internal class MavenModuleTransformer : CoroutineModuleTransformer {
             moduleType = MavenProjectModuleType,
             availableScopes = PackageSearchMavenConfiguration.getInstance(project).getMavenScopes(),
             dependencyDeclarationCallback = { dependency ->
-                project.lifecycleScope.future {
-                    readAction {
-                        val projectModel = MavenDomUtil.getMavenDomProjectModel(project, buildFile) ?: return@readAction null
+                readAction {
+                    val projectModel = MavenDomUtil.getMavenDomProjectModel(project, buildFile) ?: return@readAction null
 
-                        val mavenDependency = MavenNavigationUtil.findDependency(
-                            projectModel,
-                            dependency.groupId,
-                            dependency.artifactId,
-                            dependency.version,
-                            dependency.scope
+                    val mavenDependency = MavenNavigationUtil.findDependency(
+                        projectModel,
+                        dependency.groupId,
+                        dependency.artifactId,
+                        dependency.version,
+                        dependency.scope
+                    )
+                    val dependencyIndex = when (val elem = mavenDependency?.xmlElement) {
+                        is XmlTag -> elem.value.textElements.firstOrNull()?.startOffset
+                        else -> null
+                    }
+                    dependencyIndex?.let {
+                        DependencyDeclarationIndexes(
+                            wholeDeclarationStartIndex = it,
+                            coordinatesStartIndex = it,
+                            versionStartIndex = when (val elem = mavenDependency?.version?.xmlElement) {
+                                is XmlTag -> elem.value.textElements.firstOrNull()?.startOffset
+                                else -> null
+                            }
                         )
-                        val dependencyIndex = when (val elem = mavenDependency?.xmlElement) {
-                            is XmlTag -> elem.value.textElements.firstOrNull()?.startOffset
-                            else -> null
-                        }
-                        dependencyIndex?.let {
-                            DependencyDeclarationIndexes(
-                                wholeDeclarationStartIndex = it,
-                                coordinatesStartIndex = it,
-                                versionStartIndex = when (val elem = mavenDependency?.version?.xmlElement) {
-                                    is XmlTag -> elem.value.textElements.firstOrNull()?.startOffset
-                                    else -> null
-                                }
-                            )
-                        }
                     }
                 }
             }

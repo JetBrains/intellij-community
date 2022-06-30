@@ -19,7 +19,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import kotlinx.coroutines.CancellationException
 
@@ -38,7 +37,7 @@ fun logError(traceInfo: TraceInfo? = null, contextName: String? = null, throwabl
 }
 
 fun logError(message: String, throwable: Throwable? = null) {
-    if (isNotLoggable(throwable)) return
+    if (throwable is CancellationException) return
     logger.error(message, throwable)
 }
 
@@ -55,7 +54,7 @@ fun logWarn(traceInfo: TraceInfo? = null, contextName: String? = null, throwable
 }
 
 fun logWarn(message: String, throwable: Throwable? = null) {
-    if (isNotLoggable(throwable)) return
+    if (throwable is CancellationException) return
     logger.warn(message, throwable)
 }
 
@@ -72,7 +71,6 @@ fun logInfo(traceInfo: TraceInfo? = null, contextName: String? = null, throwable
 }
 
 fun logInfo(message: String, throwable: Throwable? = null) {
-    if (isNotLoggable(throwable)) return
     logger.info(message, throwable)
 }
 
@@ -89,7 +87,7 @@ fun logDebug(traceInfo: TraceInfo? = null, contextName: String? = null, throwabl
 }
 
 fun logDebug(message: String, throwable: Throwable? = null) {
-    if (!FeatureFlags.useDebugLogging || isNotLoggable(throwable)) return
+    if (!FeatureFlags.useDebugLogging) return
     if (!logger.isDebugEnabled) warnNotLoggable()
     logger.debug(message, throwable)
 }
@@ -155,10 +153,3 @@ private fun buildMessageFrom(
 
     append(messageProvider())
 }
-
-private fun isLoggable(ex: Throwable?) = when (ex) {
-    is CancellationException, is ProcessCanceledException -> false
-    else -> true
-}
-
-private fun isNotLoggable(ex: Throwable?) = !isLoggable(ex)

@@ -14,6 +14,8 @@
  * limitations under the License.
  ******************************************************************************/
 
+@file:Suppress("DEPRECATION")
+
 package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -36,6 +38,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.BackgroundLoadingBarCont
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.batchAtIntervals
 import com.jetbrains.packagesearch.intellij.plugin.util.catchAndLog
+import com.jetbrains.packagesearch.intellij.plugin.util.coroutineModuleTransformers
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
@@ -130,10 +133,16 @@ internal class PackageSearchProjectService(private val project: Project) {
             restartChannel.receiveAsFlow()
         )
         .mapLatestTimedWithLoading("projectModulesSharedFlow", projectModulesLoadingFlow) { modules ->
-            project.moduleTransformers
+            val moduleTransformations = project.moduleTransformers.map { transformer ->
+                async { readAction { runCatching { transformer.transformModules(project, modules) } }.getOrThrow() }
+            }
+
+            val coroutinesModulesTransformations = project.coroutineModuleTransformers
                 .map { async { it.transformModules(project, modules) } }
                 .awaitAll()
                 .flatten()
+
+            moduleTransformations.awaitAll().flatten() + coroutinesModulesTransformations
         }
         .catchAndLog(
             context = "${this::class.qualifiedName}#projectModulesSharedFlow",
@@ -288,7 +297,7 @@ internal class PackageSearchProjectService(private val project: Project) {
                     .filter { it.path in knownBuildFiles }.asFlow()
             }
             .mapNotNull { readAction { PsiManager.getInstance(project).findFile(it) } }
-            .onEach { readAction { DaemonCodeAnalyzer.getInstance(project).restart(it) } }
+            .onEach { DaemonCodeAnalyzer.getInstance(project).restart(it) }
             .launchIn(project.lifecycleScope)
 
         var controller: BackgroundLoadingBarController? = null

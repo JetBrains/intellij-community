@@ -34,7 +34,7 @@ internal class PackageSearchLifecycleScope : CoroutineScope, Disposable {
     private inline val threadCount
         get() = max(1, 2 * Runtime.getRuntime().availableProcessors() / 3)
 
-    internal val coroutineDispatcher =
+    internal val dispatcher =
         AppExecutorUtil.createBoundedApplicationPoolExecutor(
             /* name = */ this::class.simpleName!!,
             /* maxThreads = */ threadCount
@@ -42,10 +42,10 @@ internal class PackageSearchLifecycleScope : CoroutineScope, Disposable {
 
     private val supervisor = SupervisorJob()
 
-    override val coroutineContext = supervisor + CoroutineName(this::class.qualifiedName!!) + coroutineDispatcher
+    override val coroutineContext = supervisor + CoroutineName(this::class.qualifiedName!!) + dispatcher
 
     override fun dispose() {
-        supervisor.invokeOnCompletion { coroutineDispatcher.close() }
+        supervisor.invokeOnCompletion { dispatcher.close() }
         cancel("Disposing ${this::class.simpleName}")
     }
 }

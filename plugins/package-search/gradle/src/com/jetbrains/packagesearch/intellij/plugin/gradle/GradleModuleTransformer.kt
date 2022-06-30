@@ -21,24 +21,24 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.Dependency
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationCallback
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import kotlinx.coroutines.future.future
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
-internal class GradleModuleTransformer : CoroutineModuleTransformer {
+internal class GradleModuleTransformer : ModuleTransformer {
 
     companion object {
 
@@ -81,18 +81,19 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
         }
     }
 
-    override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
+    override fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
         nativeModules.filter { it.isNotGradleSourceSetModule() }
             .mapNotNull { nativeModule ->
                 val externalProject = findExternalProjectOrNull(project, nativeModule, recursiveSearch = false)
                     ?: return@mapNotNull null
                 val buildFile = externalProject.buildFile ?: return@mapNotNull null
                 val buildVirtualFile = LocalFileSystem.getInstance().findFileByPath(buildFile.absolutePath) ?: return@mapNotNull null
-                val buildSystemType = if (isKotlinDsl(project, buildVirtualFile)) {
-                    BuildSystemType.GRADLE_KOTLIN
-                } else {
-                    BuildSystemType.GRADLE_GROOVY
-                }
+                val buildSystemType =
+                    if (isKotlinDsl(project, buildVirtualFile)) {
+                        BuildSystemType.GRADLE_KOTLIN
+                    } else {
+                        BuildSystemType.GRADLE_GROOVY
+                    }
                 val scopes: List<String> = GradleExtensionsSettings.getInstance(project)
                     .getExtensionsFor(nativeModule)?.configurations?.keys?.toList() ?: emptyList()
 
@@ -110,14 +111,15 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
             .flatMap { getAllSubmodules(project, it) }
             .distinctBy { it.buildFile }
 
-    private suspend fun isKotlinDsl(
+    private fun isKotlinDsl(
         project: Project,
         buildVirtualFile: VirtualFile
-    ) = readAction { runCatching { PsiManager.getInstance(project).findFile(buildVirtualFile) } }
-        .getOrNull()
-        ?.language
-        ?.displayName
-        ?.contains("kotlin", ignoreCase = true) == true
+    ) =
+        runCatching { PsiManager.getInstance(project).findFile(buildVirtualFile) }
+            .getOrNull()
+            ?.language
+            ?.displayName
+            ?.contains("kotlin", ignoreCase = true) == true
 
     private fun Module.isNotGradleSourceSetModule(): Boolean {
         if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, this)) return false
@@ -221,13 +223,19 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
         project: Project,
         buildVirtualFile: VirtualFile
     ): DependencyDeclarationCallback = { dependency ->
-        project.lifecycleScope.future {
-            readAction {
-                PsiManager.getInstance(project)
-                    .findFile(buildVirtualFile)
-                    ?.let { findDependencyElementIndex(it, dependency) }
-            }
+        readAction {
+            PsiManager.getInstance(project)
+                .findFile(buildVirtualFile)
+                ?.let { findDependencyElementIndex(it, dependency) }
         }
     }
 }
 
+private fun StringBuilder.appendEscapedToRegexp(text: String) =
+    StringUtil.escapeToRegexp(text, this)
+
+val BuildSystemType.Companion.GRADLE_GROOVY
+    get() = BuildSystemType(name = "GRADLE", language = "groovy", dependencyAnalyzerKey = GradleConstants.SYSTEM_ID, statisticsKey = "gradle-groovy")
+
+val BuildSystemType.Companion.GRADLE_KOTLIN
+    get() = BuildSystemType(name = "GRADLE", language = "kotlin", dependencyAnalyzerKey = GradleConstants.SYSTEM_ID, statisticsKey = "gradle-kts")

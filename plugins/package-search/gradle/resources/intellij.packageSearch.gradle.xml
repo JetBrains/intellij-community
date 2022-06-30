@@ -24,16 +24,18 @@
                 hasStaticDescription="true"
                 level="WEAK WARNING"/>
 
-        <packagesearch.coroutineProjectModuleOperationProvider
+        <packagesearch.projectModuleOperationProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleProjectModuleOperationProvider"/>
-
-        <packagesearch.coroutineModuleTransformer
+        <packagesearch.moduleTransformer
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleTransformer"/>
 
-        <packagesearch.flowModuleChangesSignalProvider
+        <packagesearch.moduleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.ExternalProjectSignalProvider"/>
+
+        <packagesearch.moduleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.SmartModeSignalProvider"/>
 
-        <packagesearch.flowModuleChangesSignalProvider
+        <packagesearch.moduleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleLinkSignalProvider"/>
 
         <packagesearch.flowModuleChangesSignalProvider
