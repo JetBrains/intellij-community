@@ -27,6 +27,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -552,6 +553,28 @@ public final class SwitchUtils {
     return labelElementList != null &&
            labelElementList.getElementCount() == 1 &&
            labelElementList.getElements()[0] instanceof PsiDefaultCaseLabelElement;
+  }
+
+  /**
+   * Checks if the given switch label statement contains a {@code default} case or a total pattern
+   *
+   * @param label a switch label statement to test
+   * @return {@code true} if the given switch label statement contains a {@code default} case or a total pattern,
+   * {@code false} otherwise.
+   */
+  public static boolean isTotalLabel(@Nullable PsiSwitchLabelStatementBase label) {
+    if (label == null) return false;
+    if (isDefaultLabel(label)) return true;
+    PsiSwitchBlock switchBlock = label.getEnclosingSwitchBlock();
+    if (switchBlock == null) return false;
+    PsiExpression expression = switchBlock.getExpression();
+    if (expression == null) return false;
+    PsiType type = expression.getType();
+    if (type == null) return false;
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+    if (labelElementList == null) return false;
+    return StreamEx.of(labelElementList.getElements()).select(PsiPattern.class)
+      .anyMatch(pattern -> JavaPsiPatternUtil.isTotalForType(pattern, type));
   }
 
   private static class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {
