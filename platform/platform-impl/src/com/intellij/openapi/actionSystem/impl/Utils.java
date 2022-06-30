@@ -372,13 +372,13 @@ public final class Utils {
       AnAction action = list.get(i);
       Presentation presentation = presentationFactory.getPresentation(action);
       if (!presentation.isVisible()) {
-        String operationName = operationName(action, null);
-        LOG.error("Invisible menu item for " + operationName + " in '" + place + "'");
+        String operationName = operationName(action, null, place);
+        LOG.error("Invisible menu item for " + operationName);
         continue;
       }
       else if (!(action instanceof Separator) && StringUtil.isEmpty(presentation.getText())) {
-        String operationName = operationName(action, null);
-        String message = "Empty menu item text for " + operationName + " in '" + place + "'";
+        String operationName = operationName(action, null, place);
+        String message = "Empty menu item text for " + operationName;
         if (StringUtil.isEmpty(action.getTemplatePresentation().getText())) {
           message += ". The default action text must be specified in plugin.xml or its class constructor";
         }
@@ -448,13 +448,18 @@ public final class Utils {
     }
   }
 
-  public static @NotNull String operationName(@NotNull AnAction action, @Nullable String op) {
+  public static @NotNull String operationName(@NotNull AnAction action, @Nullable String op, @Nullable String place) {
     Class<?> c = action.getClass();
-    StringBuilder wrappers = new StringBuilder(0);
+    StringBuilder sb = new StringBuilder(200);
+    if (StringUtil.isNotEmpty(op)) sb.append("#").append(op);
+    if (StringUtil.isNotEmpty(place)) sb.append("@").append(place);
+    sb.append(" (");
     for (Object x = action; x instanceof ActionWithDelegate; x = ((ActionWithDelegate<?>)x).getDelegate(), c = x.getClass()) {
-      wrappers.append(c.getSimpleName()).append("/");
+      sb.append(c.getSimpleName()).append("/");
     }
-    return c.getSimpleName() + (StringUtil.isEmpty(op) ? "" : "#" + op) + " (" + wrappers + c.getName() + ")";
+    sb.append(c.getName()).append(")");
+    sb.insert(0, c.getSimpleName());
+    return sb.toString();
   }
 
   public static boolean isMultiChoiceGroup(@NotNull ActionGroup actionGroup) {
