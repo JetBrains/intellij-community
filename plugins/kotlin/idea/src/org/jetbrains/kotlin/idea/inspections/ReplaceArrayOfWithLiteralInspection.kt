@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -10,7 +13,7 @@ import org.jetbrains.kotlin.idea.intentions.isArrayOfFunction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
-class ReplaceArrayOfWithLiteralInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+class ReplaceArrayOfWithLiteralInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = callExpressionVisitor(fun(expression) {
         val calleeExpression = expression.calleeExpression as? KtNameReferenceExpression ?: return
 

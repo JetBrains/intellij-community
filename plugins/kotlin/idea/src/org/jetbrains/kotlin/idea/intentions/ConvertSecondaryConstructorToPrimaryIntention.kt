@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -37,7 +36,7 @@ class ConvertSecondaryConstructorToPrimaryInspection : IntentionBasedInspection<
         return true
     },
     problemText = KotlinBundle.message("convert.to.primary.constructor.before.text")
-), CleanupLocalInspectionTool {
+) {
     override fun inspectionTarget(element: KtSecondaryConstructor) = element.getConstructorKeyword()
 }
 

@@ -60,7 +60,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * any names. For these redundant markers, the inspection proposes a quick fix to remove the marker
  * or the entire unnecessary `@OptIn` annotation if it contains a single marker.
  */
-class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
 
     /**
      * Get the PSI element to which the given `@OptIn` annotation applies.

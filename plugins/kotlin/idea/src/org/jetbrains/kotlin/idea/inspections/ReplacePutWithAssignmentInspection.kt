@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
@@ -28,7 +27,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ReplacePutWithAssignmentInspection : AbstractApplicabilityBasedInspection<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java
-), CleanupLocalInspectionTool {
+) {
 
     override fun isApplicable(element: KtDotQualifiedExpression): Boolean {
         if (element.receiverExpression is KtSuperExpression) return false

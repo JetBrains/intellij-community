@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
@@ -28,7 +27,7 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.isStandaloneOnlyConstant
 import org.jetbrains.kotlin.resolve.jvm.annotations.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-class MayBeConstantInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+class MayBeConstantInspection : AbstractKotlinInspection() {
     enum class Status {
         NONE,
         MIGHT_BE_CONST,

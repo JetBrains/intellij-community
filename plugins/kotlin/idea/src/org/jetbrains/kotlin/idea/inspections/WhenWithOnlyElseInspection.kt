@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.whenExpressionVisitor
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 
-class WhenWithOnlyElseInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+class WhenWithOnlyElseInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return whenExpressionVisitor { expression ->
             val singleEntry = expression.entries.singleOrNull()

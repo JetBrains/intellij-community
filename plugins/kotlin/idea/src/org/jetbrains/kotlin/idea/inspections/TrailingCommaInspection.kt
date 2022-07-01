@@ -38,7 +38,7 @@ import kotlin.properties.Delegates
 class TrailingCommaInspection(
     @JvmField
     var addCommaWarning: Boolean = false
-) : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+) : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : TrailingCommaVisitor() {
         override val recursively: Boolean = false
         private var useTrailingComma by Delegates.notNull<Boolean>()

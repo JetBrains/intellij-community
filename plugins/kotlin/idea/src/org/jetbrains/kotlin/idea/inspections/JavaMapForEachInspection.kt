@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -21,7 +20,7 @@ import org.jetbrains.kotlin.synthetic.isResolvedWithSamConversions
 
 class JavaMapForEachInspection : AbstractApplicabilityBasedInspection<KtCallExpression>(
     KtCallExpression::class.java
-), CleanupLocalInspectionTool {
+) {
     override fun isApplicable(element: KtCallExpression): Boolean {
         val calleeExpression = element.calleeExpression ?: return false
         if (calleeExpression.text != "forEach") return false

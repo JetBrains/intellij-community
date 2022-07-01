@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 @Suppress("DEPRECATION")
-class UseWithIndexInspection : IntentionBasedInspection<KtForExpression>(UseWithIndexIntention::class), CleanupLocalInspectionTool
+class UseWithIndexInspection : IntentionBasedInspection<KtForExpression>(UseWithIndexIntention::class)
 
 class UseWithIndexIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,

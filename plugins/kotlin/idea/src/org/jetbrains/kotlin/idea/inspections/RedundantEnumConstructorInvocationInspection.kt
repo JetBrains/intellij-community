@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -18,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class RedundantEnumConstructorInvocationInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+class RedundantEnumConstructorInvocationInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = enumEntryVisitor(fun(enumEntry) {
         val valueArgumentList = enumEntry.valueArgumentListIfEmpty() ?: return
         holder.registerProblem(

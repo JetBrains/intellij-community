@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections.branchedTransformations
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -12,8 +11,7 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.introduceSub
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
-class IntroduceWhenSubjectInspection : AbstractApplicabilityBasedInspection<KtWhenExpression>(KtWhenExpression::class.java),
-                                       CleanupLocalInspectionTool {
+class IntroduceWhenSubjectInspection : AbstractApplicabilityBasedInspection<KtWhenExpression>(KtWhenExpression::class.java) {
 
     override fun isApplicable(element: KtWhenExpression) = element.getSubjectToIntroduce() != null
 

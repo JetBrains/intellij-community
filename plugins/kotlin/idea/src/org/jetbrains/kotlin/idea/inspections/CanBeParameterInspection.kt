@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -36,7 +35,7 @@ internal val CONSTRUCTOR_VAL_VAR_MODIFIERS = listOf(
     LATEINIT_KEYWORD
 )
 
-class CanBeParameterInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+class CanBeParameterInspection : AbstractKotlinInspection() {
     private fun PsiReference.usedAsPropertyIn(klass: KtClass): Boolean {
         if (this !is KtSimpleNameReference) return true
         val nameExpression = element

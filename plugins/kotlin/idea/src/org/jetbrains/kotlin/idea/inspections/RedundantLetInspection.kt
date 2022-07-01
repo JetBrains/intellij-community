@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -64,7 +63,7 @@ abstract class RedundantLetInspection : AbstractApplicabilityBasedInspection<KtC
     }
 }
 
-class SimpleRedundantLetInspection : RedundantLetInspection(), CleanupLocalInspectionTool {
+class SimpleRedundantLetInspection : RedundantLetInspection() {
     override fun isApplicable(
         element: KtCallExpression,
         bodyExpression: PsiElement,
@@ -77,7 +76,7 @@ class SimpleRedundantLetInspection : RedundantLetInspection(), CleanupLocalInspe
     }
 }
 
-class ComplexRedundantLetInspection : RedundantLetInspection(), CleanupLocalInspectionTool {
+class ComplexRedundantLetInspection : RedundantLetInspection() {
     override fun isApplicable(
         element: KtCallExpression,
         bodyExpression: PsiElement,

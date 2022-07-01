@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.isError
 
-class VerboseNullabilityAndEmptinessInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+class VerboseNullabilityAndEmptinessInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = binaryExpressionVisitor(fun(unwrappedNullCheckExpression) {
         val nullCheckExpression = findNullCheckExpression(unwrappedNullCheckExpression)
         val nullCheck = getNullCheck(nullCheckExpression) ?: return

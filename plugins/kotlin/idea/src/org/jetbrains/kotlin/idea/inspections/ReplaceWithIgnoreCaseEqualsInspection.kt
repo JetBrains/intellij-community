@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-class ReplaceWithIgnoreCaseEqualsInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+class ReplaceWithIgnoreCaseEqualsInspection : AbstractKotlinInspection() {
     companion object {
         private val caseConversionFunctionFqNames =
             listOf(FqName("kotlin.text.toUpperCase"), FqName("kotlin.text.toLowerCase")).associateBy { it.shortName().asString() }

@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-class ReplaceCollectionCountWithSizeInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+class ReplaceCollectionCountWithSizeInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return callExpressionVisitor(fun(callExpression: KtCallExpression) {
             if (callExpression.calleeExpression?.text != "count" || callExpression.valueArguments.isNotEmpty()) return

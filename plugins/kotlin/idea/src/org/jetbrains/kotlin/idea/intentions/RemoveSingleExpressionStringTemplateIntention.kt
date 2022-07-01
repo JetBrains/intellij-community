@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -23,7 +22,7 @@ class RemoveSingleExpressionStringTemplateInspection : IntentionBasedInspection<
             KotlinBuiltIns.isString(it.getType(it.analyze()))
         } ?: false
     }
-), CleanupLocalInspectionTool {
+) {
     override val problemText = KotlinBundle.message("redundant.string.template")
 }
 

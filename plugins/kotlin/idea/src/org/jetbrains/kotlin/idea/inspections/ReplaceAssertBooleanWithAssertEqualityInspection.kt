@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -23,7 +22,7 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
 class ReplaceAssertBooleanWithAssertEqualityInspection : AbstractApplicabilityBasedInspection<KtCallExpression>(
     KtCallExpression::class.java
-), CleanupLocalInspectionTool {
+) {
     override fun inspectionText(element: KtCallExpression) = KotlinBundle.message("replace.assert.boolean.with.assert.equality")
 
     override val defaultFixText get() = KotlinBundle.message("replace.assert.boolean.with.assert.equality")

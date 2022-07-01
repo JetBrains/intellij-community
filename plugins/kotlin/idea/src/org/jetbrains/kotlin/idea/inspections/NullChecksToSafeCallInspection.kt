@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.types.TypeUtils
 
-class NullChecksToSafeCallInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+class NullChecksToSafeCallInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         binaryExpressionVisitor { expression ->
             if (isNullChecksToSafeCallFixAvailable(expression)) {

@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.JPanel
 
-class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
     @Suppress("MemberVisibilityCanBePrivate")
     var ignorableAnnotations = OrderedSet(listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED))
 

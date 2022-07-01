@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -21,7 +20,7 @@ import org.jetbrains.kotlin.types.isFlexible
 @Suppress("DEPRECATION")
 class RemoveRedundantCallsOfConversionMethodsInspection : IntentionBasedInspection<KtQualifiedExpression>(
     RemoveRedundantCallsOfConversionMethodsIntention::class
-), CleanupLocalInspectionTool
+)
 
 class RemoveRedundantCallsOfConversionMethodsIntention : SelfTargetingRangeIntention<KtQualifiedExpression>(
     KtQualifiedExpression::class.java,

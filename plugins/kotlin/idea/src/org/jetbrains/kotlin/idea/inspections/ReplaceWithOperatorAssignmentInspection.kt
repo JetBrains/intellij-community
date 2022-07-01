@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -25,7 +24,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ReplaceWithOperatorAssignmentInspection : AbstractApplicabilityBasedInspection<KtBinaryExpression>(
     KtBinaryExpression::class.java
-), CleanupLocalInspectionTool {
+) {
 
     override fun isApplicable(element: KtBinaryExpression): Boolean {
         if (element.operationToken != KtTokens.EQ) return false

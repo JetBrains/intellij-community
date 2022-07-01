@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
@@ -25,7 +24,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 class ConvertTryFinallyToUseCallInspection : IntentionBasedInspection<KtTryExpression>(
     ConvertTryFinallyToUseCallIntention::class,
     problemText = KotlinBundle.message("convert.try.finally.to.use.before.text")
-), CleanupLocalInspectionTool {
+) {
     override fun inspectionTarget(element: KtTryExpression) = element.tryKeyword ?: element.tryBlock
 }
 
