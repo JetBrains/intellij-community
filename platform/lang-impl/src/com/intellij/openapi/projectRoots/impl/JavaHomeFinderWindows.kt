@@ -54,7 +54,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     if (wslJdks) {
       for (distro in WslDistributionManager.getInstance().installedDistributions) {
         val wslFinder = JavaHomeFinderWsl(distro)
-//        registerFinder { wslFinder.findExistingJdks() }
+        registerFinder { wslFinder.findExistingJdks() }
       }
     }
   }
