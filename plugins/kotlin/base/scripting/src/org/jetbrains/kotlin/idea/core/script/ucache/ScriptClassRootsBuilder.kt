@@ -25,7 +25,9 @@ class ScriptClassRootsBuilder(
         builder.classes.toMutableSet(),
         builder.sources.toMutableSet(),
         builder.scripts.toMutableMap()
-    )
+    ) {
+        sdks.sdks.putAll(builder.sdks.sdks)
+    }
 
     fun build(): ScriptClassRootsCache =
         ScriptClassRootsCache(

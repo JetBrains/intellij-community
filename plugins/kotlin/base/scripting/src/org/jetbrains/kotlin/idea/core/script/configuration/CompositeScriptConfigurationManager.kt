@@ -170,6 +170,12 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
     override fun getAllScriptDependenciesSources(): Collection<VirtualFile> =
         classpathRoots.allDependenciesSources
 
+    override fun getAllScriptsSdkDependenciesClassFiles(): Collection<VirtualFile> =
+        classpathRoots.sdks.nonIndexedClassRoots
+
+    override fun getAllScriptSdkDependenciesSources(): Collection<VirtualFile> =
+        classpathRoots.sdks.nonIndexedSourceRoots
+
     ///////////////////
     // Adapters for deprecated API
     //
