@@ -66,6 +66,7 @@ fun addModuleDependencyIfNeeded(
             return
         }
     }
+
     rootModel.addModuleOrderEntry(dependeeModule).also {
         it.scope = requiredScope
         it.isProductionOnTestDependency = dependOnTest || existingDependOnTest
