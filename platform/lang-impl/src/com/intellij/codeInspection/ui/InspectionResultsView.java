@@ -645,7 +645,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     if (paths == null || paths.length == 0) return null;
 
     if (paths.length > 1) {
-      if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
         RefEntity[] refElements = myTree.getSelectedElements();
         List<PsiElement> psiElements = new ArrayList<>();
         for (RefEntity refElement : refElements) {
@@ -662,6 +662,10 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
     TreePath path = paths[0];
     InspectionTreeNode selectedNode = (InspectionTreeNode)path.getLastPathComponent();
+
+    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+      return selectedNode;
+    }
 
     if (!CommonDataKeys.NAVIGATABLE.is(dataId) && !CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       return null;
@@ -685,9 +689,17 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         return psiElement.isValid() ? psiElement : null;
       }
     }
-    else if (selectedNode instanceof ProblemDescriptionNode && CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      Navigatable navigatable = getSelectedNavigatable(((ProblemDescriptionNode)selectedNode).getDescriptor());
-      return navigatable == null ? InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)selectedNode) : navigatable;
+    else if (selectedNode instanceof ProblemDescriptionNode) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+        Navigatable navigatable = getSelectedNavigatable(((ProblemDescriptionNode)selectedNode).getDescriptor());
+        return navigatable == null
+               ? InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)selectedNode)
+               : navigatable;
+      }
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        RefEntity item = ((ProblemDescriptionNode)selectedNode).getElement();
+        return item instanceof RefElement ? ((RefElement)item).getPsiElement() : null;
+      }
     }
 
     return null;
