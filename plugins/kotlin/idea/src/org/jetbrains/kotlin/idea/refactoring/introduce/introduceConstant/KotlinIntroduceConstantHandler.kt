@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.util.ElementKind
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.KotlinInplacePropertyIntroducer
@@ -127,7 +127,7 @@ class KotlinIntroduceConstantHandler(
             editor,
             file,
             KotlinBundle.message("title.select.target.code.block"),
-            listOf(CodeInsightUtils.ElementKind.EXPRESSION),
+            listOf(ElementKind.EXPRESSION),
             ::validateElements,
             { _, sibling ->
                 sibling.getExtractionContainers(strict = true, includeAll = true)

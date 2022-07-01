@@ -13,7 +13,7 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinNameHighlightingStateUtils;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils;
+import org.jetbrains.kotlin.idea.core.util.ElementKind;
 import org.jetbrains.kotlin.idea.highlighter.AbstractKotlinHighlightVisitor;
 import org.jetbrains.kotlin.idea.refactoring.ElementSelectionUtilsKt;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
 import org.jetbrains.kotlin.test.InTextDirectivesUtils;
 
 import java.io.File;
-import java.util.Arrays;
 
 import static org.jetbrains.kotlin.resolve.lazy.ResolveSession.areDescriptorsCreatedForDeclaration;
 
@@ -54,7 +53,6 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
     public void doTestWithInfos(@NotNull String filePath) throws Exception {
         myFixture.configureByFile(fileName());
 
-        //noinspection unchecked
         myFixture.enableInspections(SpellCheckingInspection.class);
 
         KotlinNameHighlightingStateUtils.withNameHighlightingDisabled(myFixture.getProject(), () -> {
@@ -76,8 +74,8 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
                             ((JavaCodeInsightTestFixtureImpl) myFixture).canChangeDocumentDuringHighlighting(true);
                         }
                         if (suppressHighlight && ktFile != null) {
-                            ElementSelectionUtilsKt.selectElement(myFixture.getEditor(), ktFile, Arrays.asList(
-                                    CodeInsightUtils.ElementKind.EXPRESSION), new Function1<PsiElement, Unit>() {
+                            ElementSelectionUtilsKt.selectElement(myFixture.getEditor(), ktFile, ElementKind.EXPRESSION,
+                                                                  new Function1<PsiElement, Unit>() {
                                 @Override
                                 public Unit invoke(PsiElement element) {
                                     if (element instanceof KtElement) {

@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.util.ElementKind
 import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.psi.*
@@ -33,7 +34,7 @@ fun selectElementsWithTargetSibling(
     editor: Editor,
     file: KtFile,
     @NlsContexts.DialogTitle title: String,
-    elementKinds: Collection<CodeInsightUtils.ElementKind>,
+    elementKinds: Collection<ElementKind>,
     elementValidator: (List<PsiElement>) -> String?,
     getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
     continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit
@@ -65,7 +66,7 @@ fun selectElementsWithTargetParent(
     editor: Editor,
     file: KtFile,
     @NlsContexts.DialogTitle title: String,
-    elementKinds: Collection<CodeInsightUtils.ElementKind>,
+    elementKinds: Collection<ElementKind>,
     elementValidator: (List<PsiElement>) -> String?,
     getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
     continuation: (elements: List<PsiElement>, targetParent: PsiElement) -> Unit
@@ -107,8 +108,8 @@ fun selectElementsWithTargetParent(
         val elements = elementKinds.flatMap { CodeInsightUtils.findElements(file, startOffset, endOffset, it).toList() }
         if (elements.isEmpty()) {
             return when (elementKinds.singleOrNull()) {
-                CodeInsightUtils.ElementKind.EXPRESSION -> showErrorHintByKey("cannot.refactor.no.expression")
-                CodeInsightUtils.ElementKind.TYPE_ELEMENT -> showErrorHintByKey("cannot.refactor.no.type")
+                ElementKind.EXPRESSION -> showErrorHintByKey("cannot.refactor.no.expression")
+                ElementKind.TYPE_ELEMENT -> showErrorHintByKey("cannot.refactor.no.type")
                 else -> showErrorHint(
                     file.project,
                     editor,
@@ -127,7 +128,7 @@ fun selectElementsWithTargetParent(
                 selectTargetContainer(listOf(expr))
             } else {
                 if (!editor.selectionModel.hasSelection()) {
-                    if (elementKinds.singleOrNull() == CodeInsightUtils.ElementKind.EXPRESSION) {
+                    if (elementKinds.singleOrNull() == ElementKind.EXPRESSION) {
                         val elementAtCaret = file.findElementAt(editor.caretModel.offset)
                         elementAtCaret?.getParentOfTypeAndBranch<KtProperty> { nameIdentifier }?.let {
                             return@selectElement selectTargetContainer(listOf(it))

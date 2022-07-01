@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterByUnresolvedRefActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterFromUsageFix
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.getPossibleTypeParameterContainers
@@ -51,6 +50,7 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.utils.keysToMap
+import org.jetbrains.kotlin.idea.core.util.ElementKind
 
 object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
     @NlsContexts.DialogTitle
@@ -63,7 +63,7 @@ object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
             editor,
             file,
             KotlinBundle.message("introduce.type.parameter.to.declaration"),
-            listOf(CodeInsightUtils.ElementKind.TYPE_ELEMENT),
+            listOf(ElementKind.TYPE_ELEMENT),
             { null },
             { _, parent -> getPossibleTypeParameterContainers(parent) },
             continuation

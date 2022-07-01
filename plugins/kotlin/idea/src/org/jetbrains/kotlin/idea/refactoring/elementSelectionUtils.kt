@@ -16,7 +16,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.util.ElementKind
+import org.jetbrains.kotlin.idea.core.util.findElement
 import org.jetbrains.kotlin.idea.refactoring.introduce.findExpressionOrStringFragment
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
@@ -36,15 +37,15 @@ import kotlin.math.min
 fun selectElement(
     editor: Editor,
     file: KtFile,
-    elementKinds: Collection<CodeInsightUtils.ElementKind>,
+    elementKind: ElementKind,
     callback: (PsiElement?) -> Unit
-) = selectElement(editor, file, true, elementKinds, callback)
+) = selectElement(editor, file, true, listOf(elementKind), callback)
 
 fun selectElement(
     editor: Editor,
     file: KtFile,
     failOnEmptySuggestion: Boolean,
-    elementKinds: Collection<CodeInsightUtils.ElementKind>,
+    elementKinds: Collection<ElementKind>,
     callback: (PsiElement?) -> Unit
 ) {
     if (editor.selectionModel.hasSelection()) {
@@ -62,7 +63,7 @@ fun findElementAtRange(
     file: KtFile,
     selectionStart: Int,
     selectionEnd: Int,
-    elementKinds: Collection<CodeInsightUtils.ElementKind>,
+    elementKinds: Collection<ElementKind>,
     failOnEmptySuggestion: Boolean
 ): PsiElement? {
     var adjustedStart = selectionStart
@@ -95,7 +96,7 @@ fun findElementAtRange(
 fun getSmartSelectSuggestions(
     file: PsiFile,
     offset: Int,
-    elementKind: CodeInsightUtils.ElementKind,
+    elementKind: ElementKind,
     isOriginalOffset: Boolean = true,
 ): List<KtElement> {
     if (offset < 0) return emptyList()
@@ -118,13 +119,13 @@ fun getSmartSelectSuggestions(
 
         if (element is KtTypeElement) {
             addElement =
-                elementKind == CodeInsightUtils.ElementKind.TYPE_ELEMENT
+                elementKind == ElementKind.TYPE_ELEMENT
                         && element.getParentOfTypeAndBranch<KtUserType>(true) { qualifier } == null
             if (!addElement) {
                 keepPrevious = false
             }
         } else if (element is KtExpression && element !is KtStatementExpression) {
-            addElement = elementKind == CodeInsightUtils.ElementKind.EXPRESSION
+            addElement = elementKind == ElementKind.EXPRESSION
 
             if (addElement) {
                 if (element is KtParenthesizedExpression) {
@@ -175,7 +176,7 @@ private fun smartSelectElement(
     file: PsiFile,
     offset: Int,
     failOnEmptySuggestion: Boolean,
-    elementKinds: Collection<CodeInsightUtils.ElementKind>,
+    elementKinds: Collection<ElementKind>,
     callback: (PsiElement?) -> Unit
 ) {
     val elements = elementKinds.flatMap { getSmartSelectSuggestions(file, offset, it) }
@@ -195,8 +196,8 @@ private fun smartSelectElement(
     val highlighter = ScopeHighlighter(editor)
     val title: String = if (elementKinds.size == 1) {
         when (elementKinds.iterator().next()) {
-            CodeInsightUtils.ElementKind.EXPRESSION -> KotlinBundle.message("popup.title.expressions")
-            CodeInsightUtils.ElementKind.TYPE_ELEMENT, CodeInsightUtils.ElementKind.TYPE_CONSTRUCTOR -> KotlinBundle.message("popup.title.types")
+            ElementKind.EXPRESSION -> KotlinBundle.message("popup.title.expressions")
+            ElementKind.TYPE_ELEMENT, ElementKind.TYPE_CONSTRUCTOR -> KotlinBundle.message("popup.title.types")
         }
     } else {
         KotlinBundle.message("popup.title.elements")
@@ -251,10 +252,10 @@ private fun findElement(
     startOffset: Int,
     endOffset: Int,
     failOnNoExpression: Boolean,
-    elementKind: CodeInsightUtils.ElementKind
+    elementKind: ElementKind
 ): PsiElement? {
-    var element = CodeInsightUtils.findElement(file, startOffset, endOffset, elementKind)
-    if (element == null && elementKind == CodeInsightUtils.ElementKind.EXPRESSION) {
+    var element = findElement(file, startOffset, endOffset, elementKind)
+    if (element == null && elementKind == ElementKind.EXPRESSION) {
         element = findExpressionOrStringFragment(file, startOffset, endOffset)
     }
     if (element == null) {

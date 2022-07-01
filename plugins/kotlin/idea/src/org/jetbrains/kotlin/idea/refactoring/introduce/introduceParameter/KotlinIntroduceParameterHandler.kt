@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -30,8 +29,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.core.moveInsideParenthesesAndReplaceWith
+import org.jetbrains.kotlin.idea.core.util.ElementKind
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
@@ -179,7 +179,7 @@ fun selectNewParameterContext(
         editor = editor,
         file = file,
         title = KotlinBundle.message("title.introduce.parameter.to.declaration"),
-        elementKinds = listOf(CodeInsightUtils.ElementKind.EXPRESSION),
+        elementKinds = listOf(ElementKind.EXPRESSION),
         elementValidator = ::validateExpressionElements,
         getContainers = { _, parent ->
             val parents = parent.parents

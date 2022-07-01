@@ -12,7 +12,7 @@ import com.intellij.refactoring.RefactoringActionHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.util.ElementKind
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
@@ -63,7 +63,7 @@ class KotlinIntroducePropertyHandler(
             editor,
             file,
             KotlinBundle.message("title.select.target.code.block"),
-            listOf(CodeInsightUtils.ElementKind.EXPRESSION),
+            listOf(ElementKind.EXPRESSION),
             ::validateExpressionElements,
             { _, parent ->
                 parent.getExtractionContainers(strict = true, includeAll = true)

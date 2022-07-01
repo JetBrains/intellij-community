@@ -15,14 +15,9 @@ import com.intellij.util.text.CharArrayUtil;
 import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.descriptors.ClassKind;
-import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
-import org.jetbrains.kotlin.resolve.BindingContext;
-import org.jetbrains.kotlin.resolve.scopes.receivers.ClassQualifier;
-import org.jetbrains.kotlin.resolve.scopes.receivers.Qualifier;
 import org.jetbrains.kotlin.types.KotlinType;
 
 import java.util.ArrayList;
@@ -32,79 +27,6 @@ import java.util.List;
 import static org.jetbrains.kotlin.builtins.KotlinBuiltIns.*;
 
 public class CodeInsightUtils {
-
-    @Nullable
-    public static PsiElement findElement(
-            @NotNull PsiFile file,
-            int startOffset,
-            int endOffset,
-            @NotNull CodeInsightUtils.ElementKind elementKind
-    ) {
-        Class<? extends KtElement> elementClass;
-        switch (elementKind) {
-            case EXPRESSION: elementClass = KtExpression.class;
-                break;
-            case TYPE_ELEMENT: elementClass = KtTypeElement.class;
-                break;
-            case TYPE_CONSTRUCTOR: elementClass = KtSimpleNameExpression.class;
-                break;
-            default: throw new IllegalArgumentException(elementKind.name());
-        }
-        PsiElement element = findElementOfClassAtRange(file, startOffset, endOffset, elementClass);
-
-        if (elementKind == ElementKind.TYPE_ELEMENT) return element;
-
-        if (elementKind == ElementKind.TYPE_CONSTRUCTOR) {
-            return element != null && KtPsiUtilKt.isTypeConstructorReference(element) ? element : null;
-        }
-
-        if (element instanceof KtScriptInitializer) {
-            element = ((KtScriptInitializer) element).getBody();
-        }
-
-        if (element == null) return null;
-
-        // TODO: Support binary operations in "Introduce..." refactorings
-        if (element instanceof KtOperationReferenceExpression
-            && ((KtOperationReferenceExpression) element).getReferencedNameElementType() != KtTokens.IDENTIFIER
-            && element.getParent() instanceof KtBinaryExpression) {
-            return null;
-        }
-
-        // For cases like 'this@outerClass', don't return the label part
-        if (KtPsiUtil.isLabelIdentifierExpression(element)) {
-            element = PsiTreeUtil.getParentOfType(element, KtExpression.class);
-        }
-
-        if (element instanceof KtBlockExpression) {
-            List<KtExpression> statements = ((KtBlockExpression) element).getStatements();
-            if (statements.size() == 1) {
-                KtExpression statement = statements.get(0);
-                if (statement.getText().equals(element.getText())) {
-                    return statement;
-                }
-            }
-        }
-
-        KtExpression expression = (KtExpression) element;
-
-        BindingContext context = ResolutionUtils.analyze(expression);
-
-        Qualifier qualifier = context.get(BindingContext.QUALIFIER, expression);
-        if (qualifier != null) {
-            if (!(qualifier instanceof ClassQualifier)) return null;
-            if (((ClassQualifier) qualifier).getDescriptor().getKind() != ClassKind.OBJECT) return null;
-        }
-
-        return expression;
-    }
-
-    public enum ElementKind {
-        EXPRESSION,
-        TYPE_ELEMENT,
-        TYPE_CONSTRUCTOR
-    }
-
     @NotNull
     public static PsiElement[] findElements(@NotNull PsiFile file, int startOffset, int endOffset, @NotNull ElementKind kind) {
         PsiElement element1 = getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset);
