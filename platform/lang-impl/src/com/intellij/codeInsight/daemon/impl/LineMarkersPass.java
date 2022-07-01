@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
@@ -170,11 +169,9 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     if (myMode != Mode.SLOW) {
-      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < elements.size(); i++) {
         PsiElement element = elements.get(i);
 
-        //noinspection ForLoopReplaceableByForEach
         for (int j = 0; j < providers.size(); j++) {
           ProgressManager.checkCanceled();
           LineMarkerProvider provider = providers.get(j);
@@ -207,7 +204,6 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
     Set<PsiFile> visitedInjectedFiles = new HashSet<>();
     // line markers for injected could be slow
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
 
@@ -215,7 +211,6 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     }
 
     List<LineMarkerInfo<?>> slowLineMarkers = new NotNullList<>();
-    //noinspection ForLoopReplaceableByForEach
     for (int j = 0; j < providers.size(); j++) {
       ProgressManager.checkCanceled();
       LineMarkerProvider provider = providers.get(j);
@@ -231,7 +226,6 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
       }
 
       if (!slowLineMarkers.isEmpty()) {
-        //noinspection ForLoopReplaceableByForEach
         for (int k = 0; k < slowLineMarkers.size(); k++) {
           LineMarkerInfo<?> slowInfo = slowLineMarkers.get(k);
           PsiElement element = slowInfo.getElement();
@@ -265,7 +259,6 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
           TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
           Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
           GutterIconNavigationHandler<PsiElement> navigationHandler = (GutterIconNavigationHandler<PsiElement>)injectedMarker.getNavigationHandler();
-          //noinspection deprecation
           LineMarkerInfo<PsiElement> converted = icon == null
                                                  ? new LineMarkerInfo<>(injectedElement, hostRange)
                                                  : new LineMarkerInfo<>(injectedElement, hostRange, icon,
