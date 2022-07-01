@@ -123,7 +123,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   public boolean supportModuleGroups() {
     return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
-           && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+           && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   public boolean supportsKeepingManualChanges() {
@@ -132,7 +132,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   public boolean supportsKeepingModulesFromPreviousImport() {
     return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
-           && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+           && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   public boolean supportsLegacyKeepingFoldersFromPreviousImport() {
@@ -145,7 +145,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   public boolean supportsCreateAggregatorOption() {
     return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
-           && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+           && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   protected void stopMavenImportManager() {
@@ -164,10 +164,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected String mn(String parent, String moduleName) {
-    if (MavenProjectImporter.isImportToWorkspaceModelEnabled() || !MavenProjectImporter.isImportToTreeStructureEnabled(myProject)) {
-      return moduleName;
+    if (MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject)) {
+      return parent + "." + moduleName;
     }
-    return parent + "." + moduleName;
+    return moduleName;
   }
 
   protected void assertModules(String... expectedNames) {

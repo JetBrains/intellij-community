@@ -60,7 +60,7 @@ interface MavenProjectImporter {
                                                importingSettings, modelsProvider, project)
       }
 
-      if (isImportToTreeStructureEnabled(project)) {
+      if (isLegacyImportToTreeStructureEnabled(project)) {
         return MavenProjectTreeLegacyImporter(project, projectsTree, projectsToImportWithChanges,
                                               modelsProvider, importingSettings)
       }
@@ -73,9 +73,10 @@ interface MavenProjectImporter {
     fun isImportToWorkspaceModelEnabled(): Boolean = Registry.`is`("maven.import.to.workspace.model")
 
     @JvmStatic
-    fun isImportToTreeStructureEnabled(project: Project?): Boolean {
-      if (project == null) return true
-      if (MavenProjectTreeLegacyImporter.isAlwaysUseTreeImport()) return true
+    fun isLegacyImportToTreeStructureEnabled(project: Project?): Boolean {
+      if (isImportToWorkspaceModelEnabled()) return false
+      if ("true" == System.getProperty("maven.import.use.tree.import")) return true
+      if (project == null) return false
       return MavenProjectsManager.getInstance(project).importingSettings.isImportToTreeStructure
     }
   }

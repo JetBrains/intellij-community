@@ -237,6 +237,7 @@ public class MavenImportingSettings implements Cloneable {
     this.autoDetectCompiler = autoDetectCompiler;
   }
 
+  @Deprecated //tree import will be replaced with WorkpsaceModel import
   public boolean isImportToTreeStructure() {
     return importToTreeStructure;
   }

@@ -31,10 +31,6 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
   private final LegacyMavenProjectImportContextProvider contextProvider;
   private volatile MavenModuleImportContext myContext;
 
-  public static boolean isAlwaysUseTreeImport() {
-    return "true".equals(System.getProperty("maven.import.use.tree.import"));
-  }
-
   public MavenProjectTreeLegacyImporter(@NotNull Project p,
                                         @NotNull MavenProjectsTree projectsTree,
                                         @NotNull Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
