@@ -25,7 +25,7 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
   private final MultiMap<LookupElement, LookupElement> myReversedToLift = createMultiMap(true);
   private final LiftingCondition myCondition;
   private final boolean myLiftBefore;
-  private int myCount = 0;
+  private volatile int myCount = 0;
 
   public LiftShorterItemsClassifier(@NonNls String name, Classifier<LookupElement> next, LiftingCondition condition, boolean liftBefore) {
     super(next, name);
@@ -35,20 +35,22 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
 
   @Override
   public void addElement(@NotNull LookupElement added, @NotNull ProcessingContext context) {
-    myCount++;
+    synchronized (this) {
+      myCount++;
 
-    for (String string : CompletionUtil.iterateLookupStrings(added)) {
-      if (string.length() == 0) continue;
+      for (String string : CompletionUtil.iterateLookupStrings(added)) {
+        if (string.length() == 0) continue;
 
-      myElements.putValue(string, added);
-      mySortedStrings.add(string);
-      final NavigableSet<String> after = mySortedStrings.tailSet(string, false);
-      for (String s : after) {
-        if (!s.startsWith(string)) {
-          break;
-        }
-        for (LookupElement longer : myElements.get(s)) {
-          updateLongerItem(added, longer);
+        myElements.putValue(string, added);
+        mySortedStrings.add(string);
+        final NavigableSet<String> after = mySortedStrings.tailSet(string, false);
+        for (String s : after) {
+          if (!s.startsWith(string)) {
+            break;
+          }
+          for (LookupElement longer : myElements.get(s)) {
+            updateLongerItem(added, longer);
+          }
         }
       }
     }
@@ -64,7 +66,7 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
     }
   }
 
-  private void calculateToLift(@NotNull LookupElement element) {
+  private synchronized void calculateToLift(@NotNull LookupElement element) {
     for (String string : CompletionUtil.iterateLookupStrings(element)) {
       for (int len = 1; len < string.length(); len++) {
         String prefix = string.substring(0, len);
@@ -105,15 +107,17 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
 
   @Override
   public void removeElement(@NotNull LookupElement element, @NotNull ProcessingContext context) {
-    for (String s : CompletionUtil.iterateLookupStrings(element)) {
-      myElements.remove(s, element);
-      if (myElements.get(s).isEmpty()) {
-        mySortedStrings.remove(s);
+    synchronized (this) {
+      for (String s : CompletionUtil.iterateLookupStrings(element)) {
+        myElements.remove(s, element);
+        if (myElements.get(s).isEmpty()) {
+          mySortedStrings.remove(s);
+        }
       }
-    }
 
-    removeFromMap(element, myToLift, myReversedToLift);
-    removeFromMap(element, myReversedToLift, myToLift);
+      removeFromMap(element, myToLift, myReversedToLift);
+      removeFromMap(element, myReversedToLift, myToLift);
+    }
 
     super.removeElement(element, context);
   }
@@ -157,7 +161,7 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
       Set<Collection<LookupElement>> arraysProcessed = new ReferenceOpenHashSet<>();
 
       final Iterable<? extends LookupElement> next = myNext == null ? mySource : myNext.classify(mySource, myContext);
-      Iterator<LookupElement> base = FilteringIterator.create(next.iterator(), element -> processed.add(element));
+      Iterator<LookupElement> base = FilteringIterator.create(next.iterator(), processed::add);
       return new FlatteningIterator<>(base) {
         @Override
         protected @NotNull Iterator<LookupElement> createValueIterator(LookupElement element) {

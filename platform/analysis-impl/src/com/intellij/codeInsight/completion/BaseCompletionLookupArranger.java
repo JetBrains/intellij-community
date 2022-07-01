@@ -54,7 +54,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     Collections.synchronizedMap(new LinkedHashMap<>());
   private final Key<CompletionSorterImpl> mySorterKey = Key.create("SORTER_KEY");
   private final CompletionFinalSorter myFinalSorter = CompletionFinalSorter.newSorter();
-  private int myPrefixChanges;
+  private volatile int myPrefixChanges;
 
   private String myLastLookupPrefix;
 
@@ -101,7 +101,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
       while (classifier != null) {
         Set<LookupElement> itemSet = new ReferenceOpenHashSet<>(thisSorterItems);
-        List<LookupElement> unsortedItems = ContainerUtil.filter(myItems, lookupElement -> itemSet.contains(lookupElement));
+        List<LookupElement> unsortedItems = ContainerUtil.filter(myItems, itemSet::contains);
         List<Pair<LookupElement, Object>> pairs = classifier.getSortingWeights(unsortedItems, context);
         if (!hideSingleValued || !haveSameWeights(pairs)) {
           for (Pair<LookupElement, Object> pair : pairs) {
@@ -163,19 +163,25 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     CompletionSorterImpl sorter = obtainSorter(element);
     ProcessingContext context = createContext();
     Classifier<LookupElement> classifier = myClassifiers.computeIfAbsent(sorter, s -> s.buildClassifier(new EmptyClassifier()));
-    synchronized (this) {
-      classifier.addElement(element, context);
+    classifier.addElement(element, context);
 
-      if (shouldSkip) {
-        mySkippedItems.add(element);
-      }
-
-      if (Boolean.TRUE.equals(isInBatchUpdate.get())) {
+    boolean batchUpdate = Boolean.TRUE.equals(isInBatchUpdate.get());
+    if (batchUpdate) {
+      synchronized (this) {
+        if (shouldSkip) {
+          mySkippedItems.add(element);
+        }
         batchItems.add(new Pair<>(element, presentation));
-      } else {
-        super.addElement(element, presentation);
-        trimToLimit(context);
       }
+    }
+    else {
+      synchronized (this) {
+        if (shouldSkip) {
+          mySkippedItems.add(element);
+        }
+        super.addElement(element, presentation);
+      }
+      trimToLimit(context);
     }
   }
 
@@ -199,11 +205,13 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     }
   }
 
-  private synchronized void flushBatch() {
-    for (Pair<LookupElement, LookupElementPresentation> pair: batchItems) {
-      super.addElement(pair.first, pair.second);
+  private void flushBatch() {
+    synchronized (this) {
+      for (Pair<LookupElement, LookupElementPresentation> pair: batchItems) {
+        super.addElement(pair.first, pair.second);
+      }
+      batchItems.clear();
     }
-    batchItems.clear();
     trimToLimit(createContext());
   }
 
@@ -218,34 +226,37 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   }
 
   private void trimToLimit(ProcessingContext context) {
-    if (myItems.size() < myLimit) return;
+    List<LookupElement> removed;
+    synchronized (this) {
+      if (myItems.size() < myLimit) return;
 
-    List<LookupElement> items = getMatchingItems();
-    Iterator<LookupElement> iterator = sortByRelevance(groupItemsBySorter(items)).iterator();
+      List<LookupElement> items = getMatchingItems();
+      Iterator<LookupElement> iterator = sortByRelevance(groupItemsBySorter(items)).iterator();
 
-    Set<LookupElement> retainedSet = new ReferenceOpenHashSet<>();
-    retainedSet.addAll(getPrefixItems(true));
-    retainedSet.addAll(getPrefixItems(false));
-    retainedSet.addAll(myFrozenItems);
-    while (retainedSet.size() < myLimit / 2 && iterator.hasNext()) {
-      retainedSet.add(iterator.next());
+      Set<LookupElement> retainedSet = new ReferenceOpenHashSet<>();
+      retainedSet.addAll(getPrefixItems(true));
+      retainedSet.addAll(getPrefixItems(false));
+      retainedSet.addAll(myFrozenItems);
+      while (retainedSet.size() < myLimit / 2 && iterator.hasNext()) {
+        retainedSet.add(iterator.next());
+      }
+
+      if (!iterator.hasNext()) return;
+
+      removed = retainItems(retainedSet);
+      if (!myOverflow) {
+        myOverflow = true;
+        myProcess.addAdvertisement(AnalysisBundle.message("completion.not.all.variants.are.shown"), null);
+
+        // restart completion on any prefix change
+        myProcess.addWatchedPrefix(0, StandardPatterns.string());
+
+        if (ApplicationManager.getApplication().isUnitTestMode()) printTestWarning();
+      }
     }
 
-    if (!iterator.hasNext()) return;
-
-    List<LookupElement> removed = retainItems(retainedSet);
     for (LookupElement element : removed) {
       removeItem(element, context);
-    }
-
-    if (!myOverflow) {
-      myOverflow = true;
-      myProcess.addAdvertisement(AnalysisBundle.message("completion.not.all.variants.are.shown"), null);
-
-      // restart completion on any prefix change
-      myProcess.addWatchedPrefix(0, StandardPatterns.string());
-
-      if (ApplicationManager.getApplication().isUnitTestMode()) printTestWarning();
     }
   }
 
@@ -284,7 +295,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   public Pair<List<LookupElement>, Integer> arrangeItems() {
     LookupElementListPresenter dummyListPresenter = new LookupElementListPresenter() {
       @Override
-      public String getAdditionalPrefix() {
+      public @NotNull String getAdditionalPrefix() {
         return "";
       }
 
