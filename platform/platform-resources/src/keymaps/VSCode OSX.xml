@@ -721,7 +721,12 @@
   <action id="NextProjectWindow">
     <keyboard-shortcut first-keystroke="ctrl w"/>
   </action>
-  <action id="RunConfiguration">
+  <!-- IJ java -->
+  <action id="CompileDirty">
+    <keyboard-shortcut first-keystroke="meta shfit b"/>
+  </action>
+  <!-- Rider -->
+  <action id="BuildSolutionAction">
     <keyboard-shortcut first-keystroke="meta shift b"/>
   </action>
   <action id="TerminalNewSession">
@@ -734,9 +739,6 @@
   <action id="Terminal.SplitVertically">
     <keyboard-shortcut first-keystroke="meta BACK_SLASH"/>
     <keyboard-shortcut first-keystroke="ctrl shift 5"/>
-  </action>
-  <action id="ChooseDebugConfiguration">
-    <keyboard-shortcut first-keystroke="meta SEMICOLON" second-keystroke="meta a"/>
   </action>
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="meta SEMICOLON" second-keystroke="l" />
