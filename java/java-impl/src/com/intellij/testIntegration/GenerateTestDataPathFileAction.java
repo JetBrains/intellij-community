@@ -84,7 +84,7 @@ public class GenerateTestDataPathFileAction extends GenerateTestDataPathCommon {
                 getSelectedMethod().forEach(fileName -> {
                   var requester = new Object();
                   var folder = VirtualFileManager.getInstance().findFileByNioPath(Path.of(annotationValue));
-                  WriteCommandAction.runWriteCommandAction(project, (Runnable)() -> {
+                  WriteCommandAction.runWriteCommandAction(project, () -> {
                     try {
                       folder.createChildData(requester, fileName + extensionField.getText());
                       if (isQFFileNeeded()) folder.createChildData(requester, fileName + ".after" + extensionField.getText());
