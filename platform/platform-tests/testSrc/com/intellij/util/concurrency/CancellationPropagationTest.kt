@@ -165,6 +165,24 @@ class CancellationPropagationTest {
   }
 
   @Test
+  fun edtExecutorService(): Unit = timeoutRunBlocking {
+    val service = EdtExecutorService.getInstance()
+    doExecutorServiceTest(service)
+    doTest {
+      service.execute(it, ModalityState.any())
+    }
+    doTest {
+      service.execute(it, ModalityState.any(), Conditions.alwaysFalse<Nothing?>())
+    }
+    doTest {
+      service.submit(it, ModalityState.any())
+    }
+    doTest {
+      service.submit(it.callable(), ModalityState.any())
+    }
+  }
+
+  @Test
   fun appExecutorService(): Unit = timeoutRunBlocking {
     doExecutorServiceTest(service)
     doTestInvokeAnyCancelsRunningCallables(service)
