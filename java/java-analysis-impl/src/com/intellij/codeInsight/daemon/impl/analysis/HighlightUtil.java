@@ -274,7 +274,7 @@ public final class HighlightUtil {
             HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
               .range(conjunct)
               .descriptionAndTooltip(JavaErrorBundle.message("repeated.interface")).create();
-            QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteRepeatedInterfaceFix(conjunct, conjList), null);
+            QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteRepeatedInterfaceFix(conjunct), null);
             return highlightInfo;
           }
         }
