@@ -135,11 +135,11 @@
     <keyboard-shortcut first-keystroke="control back_slash" second-keystroke="control T" />
   </action>
   <action id="CollapseBlock" />
-  <action id="EditorIncreaseFontSize">
+  <action id="EditorIncreaseFontSizeGlobal">
     <keyboard-shortcut first-keystroke="control shift PERIOD" /><!--View.ZoomIn-->
   </action>
   <action id="RecentChangedFiles" />
-  <action id="EditorDecreaseFontSize">
+  <action id="EditorDecreaseFontSizeGlobal">
     <keyboard-shortcut first-keystroke="control shift COMMA" /><!--View.ZoomOut-->
   </action>
   <action id="Diff.FocusOppositePane">
