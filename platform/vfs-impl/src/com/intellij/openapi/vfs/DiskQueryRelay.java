@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -14,8 +14,9 @@ import java.util.concurrent.Future;
 import java.util.function.Function;
 
 /**
- * A utility to run a potentially long function on a pooled thread, wait for it in an interruptible way and reuse that computation if it's
- * needed again if it's still running. Function results should be ready for concurrent access, preferably thread-safe.
+ * A utility to run a potentially long function on a pooled thread, wait for it in an interruptible way,
+ * and reuse that computation if it's needed again if it's still running.
+ * Function results should be ready for concurrent access, preferably thread-safe.
  */
 @ApiStatus.Internal
 public final class DiskQueryRelay<Param, Result> {
