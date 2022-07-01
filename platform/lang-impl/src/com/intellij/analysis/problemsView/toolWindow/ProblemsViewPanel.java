@@ -9,6 +9,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -221,7 +222,14 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     JScrollPane scrollPane = createScrollPane(myTree, true);
     if (ExperimentalUI.isNewUI()) {
       scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
-        Border border = event.getAdjustable().getValue() != 0 ? new CustomLineBorder(myToolbarInsets) : JBUI.Borders.empty(myToolbarInsets);
+        int orientation = ((ActionToolbarImpl)myToolbar).getOrientation();
+        Insets i = orientation == SwingConstants.VERTICAL ? UIManager.getInsets("ToolBar.verticalToolbarInsets")
+                                                          : UIManager.getInsets("ToolBar.horizontalToolbarInsets");
+        Border innerBorder = i != null ? JBUI.Borders.empty(i.top, i.left, i.bottom, i.right)
+                                       : JBUI.Borders.empty(2);
+
+        Border border = event.getAdjustable().getValue() != 0 ? JBUI.Borders.compound(new CustomLineBorder(myToolbarInsets), innerBorder)
+                                                              : innerBorder;
         myToolbar.getComponent().setBorder(border);
         myToolbar.getComponent().repaint();
       });
