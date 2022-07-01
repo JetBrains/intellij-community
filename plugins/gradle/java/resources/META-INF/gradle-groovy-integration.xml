@@ -38,6 +38,7 @@
     <gotoDeclarationHandler implementation="org.jetbrains.plugins.gradle.service.navigation.GradleVersionCatalogGotoDeclarationHandler"/>
 
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleSuppressHighlightingListener"/>
+    <trafficLightRendererContributor implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleGroovyTrafficLightRendererContributor"/>
 
     <lang.documentationProvider language="Groovy"
                                 implementationClass="org.jetbrains.plugins.gradle.documentation.GradleDocumentationProvider" order="first"/>
