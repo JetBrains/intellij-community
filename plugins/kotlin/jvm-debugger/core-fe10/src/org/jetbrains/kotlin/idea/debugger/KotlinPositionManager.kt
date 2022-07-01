@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger
 
@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
@@ -51,6 +50,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.kotlin.idea.debugger.breakpoints.SourcePositionRefiner
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getElementsAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
+import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil
 import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.getLineRange
@@ -60,9 +60,7 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
     private val stackFrameInterceptor: StackFrameInterceptor = debugProcess.project.service()
@@ -298,7 +296,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         currentLocationClassName: String
     ): KtFunction? {
         for (literal in this) {
-            if (InlineUtil.isInlinedArgument(literal, literal.analyze(BodyResolveMode.PARTIAL), true)) {
+            if (AnalysisApiBasedInlineUtil.isInlinedArgument(literal, true)) {
                 if (isInsideInlineArgument(literal, location, debugProcess as DebugProcessImpl)) {
                     return literal
                 }

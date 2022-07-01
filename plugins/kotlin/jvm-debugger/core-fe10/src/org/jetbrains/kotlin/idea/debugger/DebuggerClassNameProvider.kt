@@ -8,8 +8,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
+import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.Companion.getOrComputeClassNames
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames.Companion.Cached
@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
-import org.jetbrains.kotlin.resolve.inline.InlineUtil
 
 class DebuggerClassNameProvider(
     val project: Project, val searchScope: GlobalSearchScope,
@@ -213,16 +212,13 @@ class DebuggerClassNameProvider(
     private fun getNamesForLambda(element: KtElement, alreadyVisited: Set<PsiElement>): ComputedClassNames {
         val names = element.getNamesInReadAction()
         if (!names.isEmpty() && !alwaysReturnLambdaParentClass) {
-            if (element !is KtFunctionLiteral || !element.isInlinedArgument()) {
+            if (element !is KtFunctionLiteral || !AnalysisApiBasedInlineUtil.isInlinedArgument(element, true)) {
                 return names
             }
         }
 
         return names + getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
     }
-
-    private fun KtFunction.isInlinedArgument() =
-        InlineUtil.isInlinedArgument(this, analyze(), true)
 
     private fun KtElement.getNamesInReadAction() =
         runReadAction {
@@ -241,4 +237,3 @@ class DebuggerClassNameProvider(
 }
 
 private fun String.toJdiName() = replace('/', '.')
-
