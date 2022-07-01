@@ -292,7 +292,6 @@
     <group id="VcsHistoryInternalGroup.Popup">
       <reference ref="Diff.ShowDiff"/>
       <reference ref="Vcs.ShowDiffWithLocal"/>
-      <reference ref="VcsHistoryActionsGroup"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="Vcs.GetVersion"/>
       <reference ref="FileHistory.AnnotateRevision"/>
@@ -300,7 +299,6 @@
 
     <group id="VcsHistoryInternalGroup.Toolbar">
       <reference ref="Diff.ShowDiff"/>
-      <reference ref="VcsHistoryActionsGroup.Toolbar"/>
       <reference ref="Vcs.RefreshFileHistory"/>
     </group>
 
