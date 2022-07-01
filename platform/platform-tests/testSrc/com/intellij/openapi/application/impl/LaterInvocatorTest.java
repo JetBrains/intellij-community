@@ -622,7 +622,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
 
-    PlatformTestUtil.startPerformanceTest("Swing invokeLater", 15_000, () -> {
+    PlatformTestUtil.startPerformanceTest("Swing invokeLater", 20_000, () -> {
       for (int i = 0; i < N; i++) {
         if (i % 8192 == 0) {
           // decrease GC pressure, we're not measuring that
