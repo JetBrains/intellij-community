@@ -7,7 +7,8 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
-import com.intellij.openapi.externalSystem.util.*
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.util.refreshAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
 import com.intellij.openapi.observable.operations.ObservableOperationTrace
@@ -75,7 +76,7 @@ internal class GradleTestFixtureImpl private constructor(
     runAll(
       { fileFixture.root.refreshAndWait() },
       { projectOperations.waitForOperation() },
-      { project.closeProject() },
+      { if (_project.isInitialized) _project.closeProject() },
       { Disposer.dispose(testDisposable) },
       { fileFixture.tearDown() },
       { sdkFixture.tearDown() }

@@ -3,19 +3,17 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.openapi.externalSystem.util.runInEdtAndGet
 import com.intellij.openapi.externalSystem.util.runInEdtAndWait
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runAll
 import com.intellij.util.createException
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
 
 fun openProject(projectRoot: VirtualFile): Project {
-  return runInEdtAndGet {
-    ProjectUtil.openOrImport(projectRoot.toNioPath())!!
-  }
+  return runBlocking { ProjectUtil.openOrImportAsync(projectRoot.toNioPath())!! }
 }
 
 fun Project.closeProject(save: Boolean = false) {
@@ -32,8 +30,8 @@ fun openProjectAndWait(projectRoot: VirtualFile): Project {
   var project: Project? = null
   return runCatching {
     waitForProjectReload {
-      openProject(projectRoot)
-        .also { project = it }
+      project = openProject(projectRoot)
+      project!!
     }
   }.onFailureCatching {
     project?.closeProject()

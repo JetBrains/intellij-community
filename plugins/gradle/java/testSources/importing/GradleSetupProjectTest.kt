@@ -2,8 +2,9 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.action.AttachExternalProjectAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
@@ -17,20 +18,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.withContext
+import org.jetbrains.concurrency.asCompletableFuture
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
-import org.jetbrains.plugins.gradle.util.waitForProjectReload
+import org.jetbrains.plugins.gradle.util.getProjectDataLoadPromise
 import org.jetbrains.plugins.gradle.util.whenResolveTaskStarted
 import org.junit.runners.Parameterized
 import java.util.concurrent.atomic.AtomicInteger
 
 class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTestCase() {
-
   private lateinit var testDisposable: Disposable
   private lateinit var expectedImportActionsCounter: AtomicInteger
   private lateinit var actualImportActionsCounter: AtomicInteger
+
+  override fun runInDispatchThread() = false
 
   override fun setUp() {
     super.setUp()
@@ -88,30 +94,34 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
     assertEquals(settings.storeProjectFilesExternally, true)
   }
 
-  override fun assertDefaultProjectState(project: Project) {
+  override suspend fun assertDefaultProjectState(project: Project) {
     val notificationAware = AutoImportProjectNotificationAware.getInstance(myProject)
-    invokeAndWaitIfNeeded {
+    withContext(Dispatchers.EDT) {
       assertEmpty(notificationAware.getProjectsWithNotification())
     }
     assertEquals(expectedImportActionsCounter.get(), actualImportActionsCounter.get())
   }
 
-  override fun waitForImport(action: () -> Project): Project {
+  override suspend fun waitForImport(action: suspend () -> Project): Project {
     expectedImportActionsCounter.incrementAndGet()
-    return waitForProjectReload(action)
+    val result = action()
+    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+      getProjectDataLoadPromise().asCompletableFuture().asDeferred().await()
+    }
+    return result
   }
 
-  override fun attachProject(project: Project, projectFile: VirtualFile): Project {
+  override suspend fun attachProject(project: Project, projectFile: VirtualFile): Project {
     AttachExternalProjectAction().perform(project, selectedFile = projectFile)
     return project
   }
 
-  override fun attachProjectFromScript(project: Project, projectFile: VirtualFile): Project {
+  override suspend fun attachProjectFromScript(project: Project, projectFile: VirtualFile): Project {
     ImportProjectFromScriptAction().perform(project, selectedFile = projectFile)
     return project
   }
 
-  override fun cleanupProjectTestResources(project: Project) {
+  override suspend fun cleanupProjectTestResources(project: Project) {
     super.cleanupProjectTestResources(project)
     removeGradleJvmSdk(project)
   }
@@ -124,8 +134,8 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
     @JvmStatic
     fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(BASE_GRADLE_VERSION))
 
-    fun removeGradleJvmSdk(project: Project) {
-      ApplicationManager.getApplication().invokeAndWait {
+    suspend fun removeGradleJvmSdk(project: Project) {
+      withContext(Dispatchers.EDT) {
         runWriteAction {
           val projectJdkTable = ProjectJdkTable.getInstance()
           val settings = GradleSettings.getInstance(project)

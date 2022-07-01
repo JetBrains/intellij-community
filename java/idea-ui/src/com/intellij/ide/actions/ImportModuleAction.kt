@@ -5,6 +5,7 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.impl.ProjectUtil.findAndFocusExistingProjectForPath
 import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard
@@ -168,7 +169,11 @@ private fun doCreateFromWizard(project: Project?, wizard: AbstractProjectWizard)
         null
       }
       else {
-        (projectBuilder as DeprecatedProjectBuilderForImport).getProjectOpenProcessor().doOpenProject(file, null, false)
+        val openProcessor = (projectBuilder as DeprecatedProjectBuilderForImport).getProjectOpenProcessor()
+        runBlockingUnderModalProgress {
+          // openProjectAsync must be implemented
+          openProcessor.openProjectAsync(virtualFile = file, projectToClose = null, forceOpenInNewFrame = false)!!.orElse(null)
+        }
       }
     }
     else {

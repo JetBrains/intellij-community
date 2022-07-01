@@ -27,7 +27,7 @@ import java.nio.file.Path
 
 fun canOpenGradleProject(file: VirtualFile): Boolean = GradleOpenProjectProvider().canOpenProject(file)
 
-fun openGradleProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+suspend fun openGradleProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
   return GradleOpenProjectProvider().openProject(projectFile, projectToClose, forceOpenInNewFrame)
 }
 

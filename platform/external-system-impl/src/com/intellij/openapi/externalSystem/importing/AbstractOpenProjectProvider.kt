@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.importing
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware
@@ -16,6 +16,8 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.commons.lang.StringUtils
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -48,7 +50,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     return if (file.isDirectory) file.children.any(::isProjectFile) else isProjectFile(file)
   }
 
-  override fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+  override suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     LOG.debug("Open project from $projectFile")
     val projectDirectory = getProjectDirectory(projectFile)
     if (focusOnOpenedSameProject(projectDirectory.toNioPath())) {
@@ -69,7 +71,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
         else {
           project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
-          ApplicationManager.getApplication().invokeAndWait {
+          withContext(Dispatchers.EDT) {
             linkToExistingProject(projectFile, project)
           }
           ProjectUtil.updateLastProjectLocation(nioPath)
@@ -77,7 +79,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
         true
       }
     )
-    return ProjectManagerEx.getInstanceEx().openProject(nioPath, options)
+    return ProjectManagerEx.getInstanceEx().openProjectAsync(nioPath, options)
   }
 
   override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
