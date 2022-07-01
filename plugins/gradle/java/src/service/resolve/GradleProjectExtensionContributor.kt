@@ -83,12 +83,15 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
     val hostClass = hostClassType.resolve() ?: return hostClassType
     val parameters = mutableListOf<String>()
     val builder = StringBuilder()
-    var parameterStack = 0
+    var parameterStack = 1
     for (char in generifiedFqnClassName.substringAfter('<')) {
       if (char == '<') {
         parameterStack += 1
       } else if (char == '>') {
         parameterStack -= 1
+        if (parameterStack == 0) {
+          parameters.add(builder.toString().trim())
+        }
       } else if (char == ',') {
         if (parameterStack == 0) {
           parameters.add(builder.toString())

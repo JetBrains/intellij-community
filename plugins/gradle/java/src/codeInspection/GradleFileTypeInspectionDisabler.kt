@@ -23,7 +23,7 @@ class GradleFileTypeInspectionDisabler : FileTypeInspectionDisabler {
   override fun getDisableableInspections(): Set<Class<out LocalInspectionTool>> = if (shouldDisable) DISABLEABLE_INSPECTIONS else emptySet()
 
   override fun isTypecheckingDisabled(file: PsiFile): Boolean {
-    return (!ApplicationManager.getApplication().isUnitTestMode || shouldDisable) && lastImportHasErrors(file)
+    return lastImportHasErrors(file)
   }
 }
 
