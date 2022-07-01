@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables.actions.column
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
@@ -26,7 +28,9 @@ internal abstract class ColumnBasedTableAction: AnAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val editor = event.getRequiredData(CommonDataKeys.EDITOR)
     val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
-    val (table, columnIndex) = findTableAndIndex(event, file, editor)
+    val offset = event.getRequiredData(CommonDataKeys.CARET).offset
+    val document = editor.document
+    val (table, columnIndex) = findTableAndIndex(event, file, document, offset)
     requireNotNull(table)
     requireNotNull(columnIndex)
     performAction(editor, table, columnIndex)
@@ -37,56 +41,64 @@ internal abstract class ColumnBasedTableAction: AnAction() {
     val project = event.getData(CommonDataKeys.PROJECT)
     val editor = event.getData(CommonDataKeys.EDITOR)
     val file = event.getData(CommonDataKeys.PSI_FILE)
-    if (project == null || editor == null || file == null) {
+    val offset = event.getData(CommonDataKeys.CARET)?.offset
+    if (project == null || editor == null || file == null || offset == null) {
       event.presentation.isEnabledAndVisible = false
       return
     }
-    val (table, columnIndex) = findTableAndIndex(event, file, editor)
+    val document = editor.document
+    val (table, columnIndex) = findTableAndIndex(event, file, document, offset)
     event.presentation.isEnabledAndVisible = table != null && columnIndex != null
     update(event, table, columnIndex)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   protected abstract fun performAction(editor: Editor, table: MarkdownTable, columnIndex: Int)
 
   protected open fun update(event: AnActionEvent, table: MarkdownTable?, columnIndex: Int?) = Unit
 
-  private fun findTableAndIndex(event: AnActionEvent, file: PsiFile, editor: Editor): Pair<MarkdownTable?, Int?> {
-    return findTableAndIndex(event, file, editor, ::findTable, ::findColumnIndex)
+  private fun findTableAndIndex(event: AnActionEvent, file: PsiFile, document: Document, offset: Int): Pair<MarkdownTable?, Int?> {
+    return findTableAndIndex(event, file, document, offset, ::findTable, ::findColumnIndex)
   }
 
-  protected open fun findTable(file: PsiFile, editor: Editor): MarkdownTable? {
-    return TableUtils.findTable(file, editor.caretModel.currentCaret.offset)
+  protected open fun findTable(file: PsiFile, document: Document, offset: Int): MarkdownTable? {
+    return TableUtils.findTable(file, offset)
   }
 
-  protected open fun findColumnIndex(file: PsiFile, editor: Editor): Int? {
-    return TableUtils.findCellIndex(file, editor.caretModel.currentCaret.offset)
+  protected open fun findColumnIndex(file: PsiFile, document: Document, offset: Int): Int? {
+    return TableUtils.findCellIndex(file, offset)
   }
 
   companion object {
     fun findTableAndIndex(
       event: AnActionEvent,
       file: PsiFile,
-      editor: Editor,
-      tableGetter: (PsiFile, Editor) -> MarkdownTable?,
-      columnIndexGetter: (PsiFile, Editor) -> Int?
+      document: Document,
+      offset: Int,
+      tableGetter: (PsiFile, Document, Int) -> MarkdownTable?,
+      columnIndexGetter: (PsiFile, Document, Int) -> Int?
     ): Pair<MarkdownTable?, Int?> {
       val tableFromEvent = event.getData(TableActionKeys.ELEMENT)?.get() as? MarkdownTable
       val indexFromEvent = event.getData(TableActionKeys.COLUMN_INDEX)
       if (tableFromEvent != null && indexFromEvent != null) {
         return tableFromEvent to indexFromEvent
       }
-      val table = tableGetter(file, editor)?.takeIf { it.isValid }
-      val index = columnIndexGetter(file, editor)
+      val table = tableGetter(file, document, offset)?.takeIf { it.isValid }
+      val index = columnIndexGetter(file, document, offset)
       return table to index
     }
 
-    fun findTableAndIndex(event: AnActionEvent, file: PsiFile, editor: Editor): Pair<MarkdownTable?, Int?> {
+    fun findTableAndIndex(event: AnActionEvent, file: PsiFile, document: Document, offset: Int): Pair<MarkdownTable?, Int?> {
       return findTableAndIndex(
         event,
         file,
-        editor,
-        { file, editor -> TableUtils.findTable(file, editor.caretModel.currentCaret.offset) },
-        { file, editor -> TableUtils.findCellIndex(file, editor.caretModel.currentCaret.offset) }
+        document,
+        offset,
+        tableGetter = { file, document, offset -> TableUtils.findTable(file, offset) },
+        columnIndexGetter = { file, document, offset -> TableUtils.findCellIndex(file, offset) }
       )
     }
   }

@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.editor.tables.actions.column
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
@@ -20,13 +21,12 @@ internal abstract class InsertTableColumnAction(private val insertAfter: Boolean
     }
   }
 
-  override fun findColumnIndex(file: PsiFile, editor: Editor): Int? {
-    val caretOffset = editor.caretModel.currentCaret.offset
-    val cellIndex = TableUtils.findCellIndex(file, caretOffset)
+  override fun findColumnIndex(file: PsiFile, document: Document, offset: Int): Int? {
+    val cellIndex = TableUtils.findCellIndex(file, offset)
     if (cellIndex != null) {
       return cellIndex
     }
-    return TableUtils.findSeparatorRow(file, caretOffset)?.getColumnIndexFromOffset(caretOffset)
+    return TableUtils.findSeparatorRow(file, offset)?.getColumnIndexFromOffset(offset)
   }
 
   override fun update(event: AnActionEvent, table: MarkdownTable?, columnIndex: Int?) {
