@@ -450,9 +450,8 @@ public class StringUtil extends StringUtilRt {
             int start = i;
             for (i++; i < length; i++) {
               final char c = s.charAt(i);
-              if (mnemonics ? Character.isWhitespace(c) || c == '-' : !Character.isLetterOrDigit(s.charAt(i))) {
-                break;
-              }
+              if (mnemonics && (c == '&' || c == '_')) continue;
+              if (!Character.isLetterOrDigit(c)) break;
             }
             if (!title && i > start + 1 && !Character.isLowerCase(s.charAt(start + 1))) {
               // filter out abbreviations like I18n, SQL and CSS
@@ -468,8 +467,9 @@ public class StringUtil extends StringUtilRt {
               continue;
             }
             if (!isPreposition(s, start, i - 1, ourOtherNonCapitalizableWords)) {
-              boolean firstWord = start == 0 || prevPrevChar == '.' || prevPrevChar == '!' || prevPrevChar == ':' || prevPrevChar == '?';
-              if (!title || firstWord || i >= length /* last word */ || !isPreposition(s, start, i - 1, wordsToIgnore)) {
+              boolean firstWord = start == 0 || isPunctuation(prevPrevChar);
+              boolean lastWord = i >= length - 1|| isPunctuation(s.charAt(i + 1));
+              if (!title || firstWord || lastWord || !isPreposition(s, start, i - 1, wordsToIgnore)) {
                 if (buffer == null) {
                   buffer = new StringBuilder(s);
                 }
@@ -481,6 +481,10 @@ public class StringUtil extends StringUtilRt {
       }
     }
     return buffer == null ? s : buffer.toString();
+  }
+
+  private static boolean isPunctuation(char c) {
+    return c == '.' || c == '!' || c == ':' || c == '?';
   }
 
   private static final String[] ourLowerCaseWords = {
