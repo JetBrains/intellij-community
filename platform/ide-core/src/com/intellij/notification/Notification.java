@@ -53,7 +53,7 @@ public class Notification {
   public enum CollapseActionsDirection {KEEP_LEFTMOST, KEEP_RIGHTMOST}
 
   private static final Logger LOG = Logger.getInstance(Notification.class);
-  private static final DataKey<Notification> KEY = DataKey.create("Notification");
+  public static final DataKey<Notification> KEY = DataKey.create("Notification");
 
   public final @NotNull String id;
 
