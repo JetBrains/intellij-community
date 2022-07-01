@@ -227,7 +227,11 @@ fun TargetEnvironmentRequest.ensureProjectAndModuleDirsAreOnTarget(project: Proj
   }
   for(module in modules) {
     ModuleRootManager.getInstance(module).contentRoots.forEach {
-      addPathToVolume(it.toNioPath())
+      try {
+        addPathToVolume(it.toNioPath())
+      }
+      catch (_: UnsupportedOperationException) {
+      }
     }
   }
   project.basePath?.let { addPathToVolume(Path.of(it)) }
