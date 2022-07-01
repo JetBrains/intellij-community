@@ -70,15 +70,16 @@ class ReplOutputHandler(
             REPL_RESULT -> outputProcessor.printResultWithGutterIcon(content)
             READLINE_START -> runner.isReadLineMode = true
             READLINE_END -> runner.isReadLineMode = false
-            REPL_INCOMPLETE,
-            COMPILE_ERROR -> outputProcessor.highlightCompilerErrors(createCompilerMessages(content))
+            REPL_INCOMPLETE -> outputProcessor.highlightCompilerErrors(createCompilerMessages(content))
+            COMPILE_ERROR,
             RUNTIME_ERROR -> outputProcessor.printRuntimeError("${content.trim()}\n")
             INTERNAL_ERROR -> outputProcessor.printInternalErrorMessage(content)
+            ERRORS_REPORTED -> {}
             SUCCESS -> runner.commandHistory.lastUnprocessedEntry()?.entryText?.let { runner.successfulLine(it) }
             null -> logError(ReplOutputHandler::class.java, "Unexpected output type:\n$outputType")
         }
 
-        if (outputType in setOf(SUCCESS, COMPILE_ERROR, INTERNAL_ERROR, RUNTIME_ERROR, READLINE_END)) {
+        if (outputType in setOf(SUCCESS, ERRORS_REPORTED, READLINE_END)) {
             runner.commandHistory.entryProcessed()
         }
     }
