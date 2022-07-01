@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.function.Function;
 
 /**
- * <p>A standard interface to write to `%system%/log/idea.log` (or `%system%/testlog/idea.log` in tests).<p/>
+ * <p>A standard interface to write to {@code `%system%/log/idea.log`} (or {@code `%system%/testlog/idea.log`} in tests).<p/>
  *
  * <p>In addition to writing to log file, "error" methods result in showing "IDE fatal errors" dialog in the IDE
  * (in EAP versions or if "idea.fatal.error.notification" system property is set to "true").
