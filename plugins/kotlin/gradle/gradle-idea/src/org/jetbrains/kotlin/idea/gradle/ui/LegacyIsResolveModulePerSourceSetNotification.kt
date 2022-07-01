@@ -12,9 +12,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.PlatformUtils
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.lang.ref.WeakReference
 
 private var previouslyShownNotification = WeakReference<Notification>(null)
@@ -80,7 +80,7 @@ private fun createUpdateGradleProjectSettingsAction(
 
     runWriteAction {
         isResolveModulePerSourceSetSetting.isResolveModulePerSourceSet = true
-        ExternalSystemUtil.refreshProjects(ImportSpecBuilder(project, GRADLE_SYSTEM_ID))
+        ExternalSystemUtil.refreshProjects(ImportSpecBuilder(project, GradleConstants.SYSTEM_ID))
     }
 }
 
