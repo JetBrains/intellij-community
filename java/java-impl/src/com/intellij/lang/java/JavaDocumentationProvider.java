@@ -169,6 +169,14 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         generator.appendExpressionValue(buffer, constantInitializer);
       }
     }
+    else if (variable instanceof PsiEnumConstant) {
+      PsiEnumConstant enumConstant = (PsiEnumConstant)variable;
+      PsiExpressionList list = enumConstant.getArgumentList();
+      if (JavaDocInfoGenerator.canComputeArguments(list)) {
+        JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.create(variable.getProject(), null);
+        generator.generateExpressionText(enumConstant.getArgumentList(), buffer);
+      }
+    }
   }
 
   private static void generateModifiers(StringBuilder buffer, PsiModifierListOwner element) {

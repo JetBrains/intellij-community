@@ -1132,35 +1132,56 @@ public class JavaDocInfoGenerator {
 
   private void appendInitializer(StringBuilder buffer, PsiVariable variable, int variableSignatureLength) {
     PsiExpression initializer = variable.getInitializer();
-    if (initializer == null) return;
+    if (initializer != null) {
+      String initializerText = initializer.getText().trim();
+      if (variableSignatureLength + initializerText.length() < 80) {
+        // initializer should be printed on the same line
+        buffer.append(" ");
+      }
+      else {
+        // initializer should be printed on the new line
+        buffer.append("\n");
+        buffer.append(NBSP.repeat(CodeStyle.getIndentSize(variable.getContainingFile())));
+      }
+      appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), "= ");
 
-    String initializerText = initializer.getText().trim();
-    if (variableSignatureLength + initializerText.length() < 80) {
-      // initializer should be printed on the same line
-      buffer.append(" ");
+      int index = newLineIndex(initializerText);
+      if (index < initializerText.length()) {
+        initializerText = initializerText.substring(0, index);
+        buffer.append(StringUtil.escapeXmlEntities(initializerText));
+        buffer.append("...");
+      }
+      else {
+        generateExpressionText(initializer, buffer);
+      }
+      PsiExpression constantInitializer = calcInitializerExpression(variable);
+      if (constantInitializer != null) {
+        buffer.append(DocumentationMarkup.GRAYED_START);
+        appendExpressionValue(buffer, constantInitializer);
+        buffer.append(DocumentationMarkup.GRAYED_END);
+      }
     }
-    else {
-      // initializer should be printed on the new line
-      buffer.append("\n");
-      buffer.append(NBSP.repeat(CodeStyle.getIndentSize(variable.getContainingFile())));
+    else if (variable instanceof PsiEnumConstant) {
+      PsiExpressionList list = ((PsiEnumConstant)variable).getArgumentList();
+      if (canComputeArguments(list)) {
+        generateExpressionText(list, buffer);
+      }
     }
-    appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), "= ");
+  }
 
-    int index = newLineIndex(initializerText);
-    if (index < initializerText.length()) {
-      initializerText = initializerText.substring(0, index);
-      buffer.append(StringUtil.escapeXmlEntities(initializerText));
-      buffer.append("...");
+  public static boolean canComputeArguments(@Nullable PsiExpressionList list) {
+    if (list == null) return false;
+    PsiExpression[] args = list.getExpressions();
+    JavaPsiFacade instance = JavaPsiFacade.getInstance(list.getProject());
+    PsiConstantEvaluationHelper helper = instance.getConstantEvaluationHelper();
+    for (PsiExpression arg : args) {
+      if (helper.computeConstantExpression(arg) == null) return false;
     }
-    else {
-      initializer.accept(new MyVisitor(buffer));
-    }
-    PsiExpression constantInitializer = calcInitializerExpression(variable);
-    if (constantInitializer != null) {
-      buffer.append(DocumentationMarkup.GRAYED_START);
-      appendExpressionValue(buffer, constantInitializer);
-      buffer.append(DocumentationMarkup.GRAYED_END);
-    }
+    return true;
+  }
+
+  public void generateExpressionText(PsiElement initializer, StringBuilder buffer) {
+    initializer.accept(new MyVisitor(buffer));
   }
 
   private static int newLineIndex(String text) {
