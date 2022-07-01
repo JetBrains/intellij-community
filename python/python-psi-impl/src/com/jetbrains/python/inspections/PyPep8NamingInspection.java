@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -156,6 +157,12 @@ public class PyPep8NamingInspection extends PyInspection {
 
     public List<String> getBaseClassNames() {
       return myBaseClassNames;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      // The quick fix updates the inspection's settings, nothing changes in the current file
+      return IntentionPreviewInfo.EMPTY;
     }
   }
 
