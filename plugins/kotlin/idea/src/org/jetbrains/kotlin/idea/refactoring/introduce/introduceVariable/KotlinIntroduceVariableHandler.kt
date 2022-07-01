@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.computeTypeInfoInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
@@ -66,6 +65,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.sure
 import kotlin.math.min
+import org.jetbrains.kotlin.idea.core.util.ElementKind
 
 object KotlinIntroduceVariableHandler : RefactoringActionHandler {
     val INTRODUCE_VARIABLE get() = KotlinBundle.message("introduce.variable")
@@ -819,7 +819,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         if (file !is KtFile) return
 
         try {
-            selectElement(editor, file, listOf(CodeInsightUtils.ElementKind.EXPRESSION)) {
+            selectElement(editor, file, ElementKind.EXPRESSION) {
                 doRefactoring(project, editor, it as KtExpression?, false, null, null)
             }
         } catch (e: IntroduceRefactoringException) {

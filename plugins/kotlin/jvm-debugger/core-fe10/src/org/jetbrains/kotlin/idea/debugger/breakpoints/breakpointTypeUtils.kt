@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.resolve.inline.INLINE_ONLY_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import java.util.*
+import org.jetbrains.kotlin.idea.core.util.findElementsOfClassInRange
 
 interface KotlinBreakpointType
 
@@ -171,8 +172,7 @@ inline fun <reified T : PsiElement> getElementsAtLineIfAny(file: KtFile, line: I
         nextSibling = nextSibling.nextSibling
     }
 
-    return CodeInsightUtils.findElementsOfClassInRange(file, start, end, T::class.java)
-        .filterIsInstance<T>()
+    return findElementsOfClassInRange(file, start, end, T::class.java).filterIsInstance<T>()
 }
 
 fun getLambdasAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {

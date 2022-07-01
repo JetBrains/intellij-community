@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.util;
 
@@ -7,156 +7,21 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.lexer.KtTokens;
-import org.jetbrains.kotlin.psi.*;
-import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
+import org.jetbrains.kotlin.psi.KtBlockExpression;
 import org.jetbrains.kotlin.types.KotlinType;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import static org.jetbrains.kotlin.builtins.KotlinBuiltIns.*;
 
 public class CodeInsightUtils {
-    @NotNull
-    public static PsiElement[] findElements(@NotNull PsiFile file, int startOffset, int endOffset, @NotNull ElementKind kind) {
-        PsiElement element1 = getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset);
-        PsiElement element2 = getElementAtOffsetIgnoreWhitespaceAfter(file, endOffset);
-
-        if (element1 == null || element2 == null) return PsiElement.EMPTY_ARRAY;
-
-        startOffset = element1.getTextRange().getStartOffset();
-        endOffset = element2.getTextRange().getEndOffset();
-
-        if (startOffset >= endOffset) return PsiElement.EMPTY_ARRAY;
-
-        PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
-        if (parent == null) return PsiElement.EMPTY_ARRAY;
-        while (!(parent instanceof KtBlockExpression)) {
-            if (parent == null || parent instanceof KtFile) return PsiElement.EMPTY_ARRAY;
-            parent = parent.getParent();
-        }
-
-        element1 = getTopmostParentInside(element1, parent);
-        if (startOffset != element1.getTextRange().getStartOffset()) return PsiElement.EMPTY_ARRAY;
-
-        element2 = getTopmostParentInside(element2, parent);
-        if (endOffset != element2.getTextRange().getEndOffset()) return PsiElement.EMPTY_ARRAY;
-
-        List<PsiElement> array = new ArrayList<>();
-        PsiElement stopElement = element2.getNextSibling();
-        for (PsiElement currentElement = element1; currentElement != stopElement; currentElement = currentElement.getNextSibling()) {
-            if (!(currentElement instanceof PsiWhiteSpace)) {
-                array.add(currentElement);
-            }
-        }
-
-        for (PsiElement element : array) {
-            boolean correctType = kind == ElementKind.EXPRESSION && element instanceof KtExpression
-                                  || kind == ElementKind.TYPE_ELEMENT && element instanceof KtTypeElement
-                                  || kind == ElementKind.TYPE_CONSTRUCTOR && KtPsiUtilKt.isTypeConstructorReference(element);
-            if (!(correctType
-                  || element.getNode().getElementType() == KtTokens.SEMICOLON
-                  || element instanceof PsiWhiteSpace
-                  || element instanceof PsiComment)) {
-                return PsiElement.EMPTY_ARRAY;
-            }
-        }
-
-        return PsiUtilCore.toPsiElementArray(array);
-    }
-
-    @Nullable
-    public static <T extends PsiElement> T findElementOfClassAtRange(@NotNull PsiFile file, int startOffset, int endOffset, Class<T> aClass) {
-        // When selected range is this@Fo<select>o</select> we'd like to return `@Foo`
-        // But it's PSI looks like: (AT IDENTIFIER):JetLabel
-        // So if we search parent starting exactly at IDENTIFIER then we find nothing
-        // Solution is to retrieve label if we are on AT or IDENTIFIER
-        PsiElement element1 = getParentLabelOrElement(getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset));
-        PsiElement element2 = getParentLabelOrElement(getElementAtOffsetIgnoreWhitespaceAfter(file, endOffset));
-
-        if (element1 == null || element2 == null) return null;
-
-        startOffset = element1.getTextRange().getStartOffset();
-        endOffset = element2.getTextRange().getEndOffset();
-
-        T newElement = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, aClass);
-        if (newElement == null ||
-            newElement.getTextRange().getStartOffset() != startOffset ||
-            newElement.getTextRange().getEndOffset() != endOffset) {
-            return null;
-        }
-        return newElement;
-    }
-
-    private static PsiElement getParentLabelOrElement(@Nullable PsiElement element) {
-        if (element != null && element.getParent() instanceof KtLabelReferenceExpression) {
-            return element.getParent();
-        }
-        return element;
-    }
-
-    @SafeVarargs
-    @NotNull
-    public static List<PsiElement> findElementsOfClassInRange(@NotNull PsiFile file, int startOffset, int endOffset, Class<? extends PsiElement> ... classes) {
-        PsiElement element1 = getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset);
-        PsiElement element2 = getElementAtOffsetIgnoreWhitespaceAfter(file, endOffset);
-
-        if (element1 == null || element2 == null) return Collections.emptyList();
-
-        startOffset = element1.getTextRange().getStartOffset();
-        endOffset = element2.getTextRange().getEndOffset();
-
-        PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
-        if (parent == null) return Collections.emptyList();
-
-        element1 = getTopmostParentInside(element1, parent);
-        if (startOffset != element1.getTextRange().getStartOffset()) return Collections.emptyList();
-
-        element2 = getTopmostParentInside(element2, parent);
-        if (endOffset != element2.getTextRange().getEndOffset()) return Collections.emptyList();
-
-        PsiElement stopElement = element2.getNextSibling();
-        List<PsiElement> result = new ArrayList<>();
-        for (PsiElement currentElement = element1; currentElement != stopElement && currentElement != null; currentElement = currentElement.getNextSibling()) {
-            for (var aClass : classes) {
-                if (aClass.isInstance(currentElement)) {
-                    result.add(currentElement);
-                }
-                result.addAll(PsiTreeUtil.findChildrenOfType(currentElement, aClass));
-            }
-        }
-
-        if (!parent.equals(element1) && parent.getTextRange().getStartOffset() == startOffset) {
-            for (var aClass : classes) {
-                if (aClass.isInstance(parent)) {
-                    result.add(parent);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    @NotNull
-    private static PsiElement getTopmostParentInside(@NotNull PsiElement element, @NotNull PsiElement parent) {
-        if (!parent.equals(element)) {
-            while (!parent.equals(element.getParent())) {
-                element = element.getParent();
-            }
-        }
-        return element;
-    }
-
     @Nullable
     public static PsiElement getElementAtOffsetIgnoreWhitespaceBefore(@NotNull PsiFile file, int offset) {
         PsiElement element = file.findElementAt(offset);

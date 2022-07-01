@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.ElementKind
+import org.jetbrains.kotlin.idea.core.util.findElements
 import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.psi.*
@@ -105,7 +106,7 @@ fun selectElementsWithTargetParent(
         val startOffset = editor.selectionModel.selectionStart
         val endOffset = editor.selectionModel.selectionEnd
 
-        val elements = elementKinds.flatMap { CodeInsightUtils.findElements(file, startOffset, endOffset, it).toList() }
+        val elements = elementKinds.flatMap { findElements(file, startOffset, endOffset, it).toList() }
         if (elements.isEmpty()) {
             return when (elementKinds.singleOrNull()) {
                 ElementKind.EXPRESSION -> showErrorHintByKey("cannot.refactor.no.expression")
