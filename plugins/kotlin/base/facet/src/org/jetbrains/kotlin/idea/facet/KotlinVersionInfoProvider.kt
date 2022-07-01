@@ -84,7 +84,7 @@ private fun Iterable<IdeKotlinVersion>.addReleaseVersionIfNecessary(shouldAdd: B
 fun getRuntimeLibraryVersion(module: Module): IdeKotlinVersion? {
     val settingsProvider = KotlinFacetSettingsProvider.getInstance(module.project) ?: return null
     val targetPlatform = settingsProvider.getInitializedSettings(module).targetPlatform
-    val versions = getRuntimeLibraryVersions(module, null, JvmPlatforms.defaultJvmPlatform.idePlatformKind)
+    val versions = getRuntimeLibraryVersions(module, null, (targetPlatform ?: JvmPlatforms.defaultJvmPlatform).idePlatformKind)
     return versions.toSet().singleOrNull()
 }
 
