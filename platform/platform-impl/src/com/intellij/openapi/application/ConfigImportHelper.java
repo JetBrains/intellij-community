@@ -92,8 +92,11 @@ public final class ConfigImportHelper {
   private static final String PLIST = "Info.plist";
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
-  private static final Set<String> SESSION_FILES =
-    Set.of(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN, BundledPluginsState.BUNDLED_PLUGINS_FILENAME);
+  private static final Set<String> SESSION_FILES = Set.of(PORT_FILE,
+                                                          PORT_LOCK_FILE,
+                                                          TOKEN_FILE,
+                                                          USER_WEB_TOKEN,
+                                                          BundledPluginsState.BUNDLED_PLUGINS_FILENAME);
 
   private ConfigImportHelper() { }
 
