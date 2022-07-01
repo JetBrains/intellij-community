@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,15 +27,9 @@ public interface BranchRenameListener extends EventListener {
 
   /**
    * Invoked when a branch has been renamed.
+   * @param root    affected VCS root
    * @param oldName name before renaming
    * @param newName name after renaming
    */
-  void branchNameChanged(@NotNull String oldName, @NotNull String newName);
-
-  /**
-   * Invoked when a branch rename has been rolled back.
-   * @param oldName name to which the rollback rename was made
-   * @param newName name that was before the rolled back renaming
-   */
-  void branchNameRollback(@NotNull String oldName, @NotNull String newName);
+  void branchNameChanged(@NotNull VirtualFile root, @NotNull String oldName, @NotNull String newName);
 }

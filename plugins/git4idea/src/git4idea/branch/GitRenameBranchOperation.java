@@ -61,13 +61,13 @@ class GitRenameBranchOperation extends GitBranchOperation {
       if (result.success()) {
         repository.update();
         markSuccessful(repository);
+        notifyBranchNameChanged(repository, myCurrentName, myNewName);
       }
       else {
         fatalError(GitBundle.message("git.rename.branch.could.not.rename.from.to", myCurrentName, myNewName), result);
         return;
       }
     }
-    notifyBranchNameChanged(myCurrentName, myNewName);
     notifySuccess();
   }
 
@@ -78,12 +78,12 @@ class GitRenameBranchOperation extends GitBranchOperation {
     for (GitRepository repository : repositories) {
       result.append(repository, myGit.renameBranch(repository, myNewName, myCurrentName));
       repository.update();
+      notifyBranchNameChanged(repository, myNewName, myCurrentName);
     }
     if (result.totalSuccess()) {
       myNotifier.notifySuccess(BRANCH_RENAME_ROLLBACK_SUCCESS,
                                GitBundle.message("git.rename.branch.rollback.successful"),
                                GitBundle.message("git.rename.branch.renamed.back.to", myCurrentName));
-      notifyBranchNameRollback(myNewName, myCurrentName);
     }
     else {
       myNotifier.notifyError(BRANCH_RENAME_ROLLBACK_FAILED,
@@ -93,17 +93,10 @@ class GitRenameBranchOperation extends GitBranchOperation {
     }
   }
 
-  protected final void notifyBranchNameChanged(@NotNull String oldName, @NotNull String newName) {
+  protected final void notifyBranchNameChanged(@NotNull GitRepository repository, @NotNull String oldName, @NotNull String newName) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       if (myProject.isDisposed()) return;
-      myProject.getMessageBus().syncPublisher(BranchRenameListener.VCS_BRANCH_RENAMED).branchNameChanged(oldName, newName);
-    });
-  }
-
-  protected final void notifyBranchNameRollback(@NotNull String oldName, @NotNull String newName) {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (myProject.isDisposed()) return;
-      myProject.getMessageBus().syncPublisher(BranchRenameListener.VCS_BRANCH_RENAMED).branchNameRollback(oldName, newName);
+      myProject.getMessageBus().syncPublisher(BranchRenameListener.VCS_BRANCH_RENAMED).branchNameChanged(repository.getRoot(), oldName, newName);
     });
   }
 
