@@ -22,6 +22,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +50,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
 
   private volatile CompletionLocation myLocation;
   protected final CompletionProcessEx myProcess;
-  private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<>();
+  private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers =
+    Collections.synchronizedMap(new LinkedHashMap<>());
   private final Key<CompletionSorterImpl> mySorterKey = Key.create("SORTER_KEY");
   private final CompletionFinalSorter myFinalSorter = CompletionFinalSorter.newSorter();
   private int myPrefixChanges;
@@ -123,10 +126,6 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     element.putUserData(mySorterKey, sorter);
   }
 
-  public void clearClassifierCache() {
-    myClassifiers.clear();
-  }
-
   private static boolean haveSameWeights(List<? extends Pair<LookupElement, Object>> pairs) {
     if (pairs.isEmpty()) return true;
 
@@ -163,8 +162,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     element.putUserData(DEFAULT_PRESENTATION, presentation);
     CompletionSorterImpl sorter = obtainSorter(element);
     ProcessingContext context = createContext();
+    Classifier<LookupElement> classifier = myClassifiers.computeIfAbsent(sorter, s -> s.buildClassifier(new EmptyClassifier()));
     synchronized (this) {
-      Classifier<LookupElement> classifier = myClassifiers.computeIfAbsent(sorter, s -> s.buildClassifier(new EmptyClassifier()));
       classifier.addElement(element, context);
 
       if (shouldSkip) {
@@ -400,12 +399,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   }
 
   private void addFrozenItems(Set<? extends LookupElement> items, LinkedHashSet<? super LookupElement> model) {
-    for (Iterator<LookupElement> iterator = myFrozenItems.iterator(); iterator.hasNext(); ) {
-      LookupElement element = iterator.next();
-      if (!element.isValid() || !items.contains(element)) {
-        iterator.remove();
-      }
-    }
+    myFrozenItems.removeIf(element -> !element.isValid() || !items.contains(element));
     model.addAll(myFrozenItems);
   }
 
@@ -433,16 +427,15 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     }
   }
 
+  // thread safe
   private Iterable<LookupElement> sortByRelevance(MultiMap<CompletionSorterImpl, LookupElement> inputBySorter) {
     if (inputBySorter.isEmpty()) return Collections.emptyList();
 
-    final List<Iterable<LookupElement>> byClassifier = new ArrayList<>();
-    for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
-      ProcessingContext context = createContext();
-      byClassifier.add(myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context));
-    }
-    //noinspection unchecked
-    return ContainerUtil.concat(byClassifier.toArray(new Iterable[0]));
+    List<Map.Entry<CompletionSorterImpl, Classifier<LookupElement>>> entries = new ArrayList<>(myClassifiers.entrySet());
+    return EntryStream.of(entries.iterator())
+      .mapKeyValue((sorter, classifier) -> classifier.classify(inputBySorter.get(sorter), createContext()))
+      .flatMap(iterable -> StreamEx.of(iterable.iterator()))
+      .toList(); // need to collect, as the resulting Iterable can be iterated several times
   }
 
   private ProcessingContext createContext() {
