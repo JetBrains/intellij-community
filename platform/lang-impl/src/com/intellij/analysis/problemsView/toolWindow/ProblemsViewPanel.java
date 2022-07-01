@@ -15,8 +15,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -39,6 +37,7 @@ import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -292,10 +291,17 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   @Override
   public @NotNull @NlsContexts.TabTitle String getName(int count) {
     String name = myName.get();
-    if (count <= 0) return name;
-    return new HtmlBuilder().append(name).append(" ").append(
-      HtmlChunk.tag("font").attr("color", toHtmlColor(UIUtil.getInactiveTextColor())).addText(String.valueOf(count))
-    ).wrapWithHtmlBody().toString();
+    String padding = String.valueOf(count <= 0 ? 0 : JBUI.scale(8));
+    String fg = toHtmlColor(UIUtil.getInactiveTextColor());
+    String number = count <= 0 ? "" : String.valueOf(count);
+    @Language("HTML")
+    String labelWithCounter = "<html><body>" +
+                              "<table cellpadding='0' cellspacing='0'><tr>" +
+                                "<td>%s</td>" +
+                                "<td width='%s'></td>" +
+                                "<td><font color='%s'>%s</font></td>" +
+                              "</tr></table></body></html>";
+    return String.format(labelWithCounter, name, padding, fg, number);
   }
 
   @Override
