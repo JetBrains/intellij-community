@@ -34,7 +34,7 @@ interface Fe10WrapperContext {
     val fe10BindingSpecialConstructionFunctions: Fe10BindingSpecialConstructionsWrappers
 
     // This property used to disable some logic used locally for debug purposes
-    val enableLogging: Boolean get() = false
+    val enableLogging: Boolean get() = true
 
     fun <R> withAnalysisSession(f: KtAnalysisSession.() -> R): R
 
