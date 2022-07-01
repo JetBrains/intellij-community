@@ -15,6 +15,8 @@ internal class NodeMoveUpAction : NodeMoveAction(false, messagePointer("move.up.
 internal class NodeMoveDownAction : NodeMoveAction(true, messagePointer("move.down.action.name"))
 internal abstract class NodeMoveAction(val next: Boolean, dynamicText: Supplier<String>) : DumbAwareAction(dynamicText) {
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
   override fun update(event: AnActionEvent) = with(event.presentation) {
     isEnabledAndVisible = process(event, false)
     if (!isVisible) isVisible = !ActionPlaces.isPopupPlace(event.place)
@@ -26,7 +28,7 @@ internal abstract class NodeMoveAction(val next: Boolean, dynamicText: Supplier<
 
   private fun process(event: AnActionEvent, perform: Boolean): Boolean {
     val manager = event.bookmarksManager as? BookmarksManagerImpl ?: return false
-    val tree = event.bookmarksViewFromToolWindow?.tree ?: return false
+    val tree = event.bookmarksView?.tree ?: return false
     val path = TreeUtil.getSelectedPathIfOne(tree)
     val node1 = TreeUtil.getAbstractTreeNode(path)
     val node2 = TreeUtil.getAbstractTreeNode(when {

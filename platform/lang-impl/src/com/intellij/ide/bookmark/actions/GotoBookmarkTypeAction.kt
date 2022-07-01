@@ -3,6 +3,7 @@ package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.BookmarkBundle.messagePointer
 import com.intellij.ide.bookmark.BookmarkType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
@@ -10,6 +11,8 @@ internal open class GotoBookmarkTypeAction(private val type: BookmarkType, priva
   : DumbAwareAction(messagePointer("goto.bookmark.type.action.text", type.mnemonic)/*, type.icon*/) {
 
   constructor(type: BookmarkType) : this(type, { true })
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private fun canNavigate(event: AnActionEvent) = event.bookmarksManager?.getBookmark(type)?.canNavigate() ?: false
 
