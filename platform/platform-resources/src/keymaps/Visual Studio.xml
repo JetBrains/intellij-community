@@ -309,7 +309,9 @@
   <action id="GotoSuperMethod">
     <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>
-  <action id="RecentChangedFiles"/>
+  <action id="RecentChangedFiles">
+    <keyboard-shortcut first-keystroke="control shift COMMA"/>
+  </action>
   <action id="Refactorings.QuickListPopupAction">
     <keyboard-shortcut first-keystroke="control shift R"/>
   </action>
@@ -409,7 +411,6 @@
     <keyboard-shortcut first-keystroke="control M" second-keystroke="X"/>
     <keyboard-shortcut first-keystroke="control M" second-keystroke="control X"/>
   </action>
-  <action id="CollapseBlock"/>
   <action id="EditorScrollToCenter">
     <keyboard-shortcut first-keystroke="control M" second-keystroke="C"/>
     <keyboard-shortcut first-keystroke="control M" second-keystroke="control C"/>
@@ -576,12 +577,8 @@
     <keyboard-shortcut first-keystroke="alt PERIOD"/>
   </action>
 
-  <action id="EditorDecreaseFontSizeGlobal">
-    <keyboard-shortcut first-keystroke="control shift COMMA"/>
-  </action>
-  <action id="EditorIncreaseFontSizeGlobal">
-    <keyboard-shortcut first-keystroke="control shift PERIOD"/>
-  </action>
+  <action id="EditorDecreaseFontSizeGlobal"/>
+  <action id="EditorIncreaseFontSizeGlobal"/>
 
 
   <!--KNOWN CONFLICTS: https://youtrack.jetbrains.com/issue/IDEA-268674-->
