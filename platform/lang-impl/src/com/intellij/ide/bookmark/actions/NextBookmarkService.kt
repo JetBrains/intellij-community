@@ -20,14 +20,14 @@ internal abstract class IterateBookmarksAction(val forward: Boolean, dynamicText
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = when (val view = event.bookmarksViewFromToolWindow) {
+    event.presentation.isEnabled = when (val view = event.bookmarksView) {
       null -> event.nextBookmark != null
       else -> if (forward) view.hasNextOccurence() else view.hasPreviousOccurence()
     }
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    when (val view = event.bookmarksViewFromToolWindow) {
+    when (val view = event.bookmarksView) {
       null -> event.nextBookmark?.run { if (canNavigate()) navigate(true) }
       else -> if (forward) view.goNextOccurence() else view.goPreviousOccurence()
     }

@@ -15,14 +15,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.project.LightEditActionFactory
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
-import java.awt.Component
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
@@ -36,26 +33,14 @@ internal val AnActionEvent.bookmarksManager
 internal val AnActionEvent.bookmarksViewState
   get() = project?.let { BookmarksViewState.getInstance(it) }
 
-internal val AnActionEvent.bookmarksToolWindow
-  get() = project?.let { ToolWindowManager.getInstance(it).getToolWindow(ToolWindowId.BOOKMARKS) }
-
-internal val AnActionEvent.bookmarksViewFromToolWindow
-  get() = dataContext.getData(PlatformDataKeys.TOOL_WINDOW)?.bookmarksView
-
-internal val AnActionEvent.bookmarksViewFromComponent
-  get() = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT)?.bookmarksView
-
 internal val AnActionEvent.bookmarksView
-  get() = bookmarksViewFromComponent ?: bookmarksViewFromToolWindow
+  get() = getData(BookmarksView.BOOKMARKS_VIEW)
 
-internal val ToolWindow.bookmarksView
-  get() = contentManagerIfCreated?.selectedContent?.component as? BookmarksView
-
-private val Component.bookmarksView: BookmarksView?
-  get() = this as? BookmarksView ?: parent?.bookmarksView
+internal val AnActionEvent.bookmarkNodes: List<AbstractTreeNode<*>>?
+  get() = bookmarksView?.let { getData(PlatformDataKeys.SELECTED_ITEMS)?.asList() as? List<AbstractTreeNode<*>> }
 
 internal val AnActionEvent.selectedGroupNode
-  get() = bookmarksView?.selectedNode as? GroupNode
+  get() = bookmarkNodes?.singleOrNull() as? GroupNode
 
 internal val AnActionEvent.contextBookmark: Bookmark?
   get() {
@@ -102,7 +87,7 @@ internal fun JComponent.registerBookmarkTypeAction(parent: Disposable, type: Boo
  * Creates an action that navigates to a bookmark by its type, if speed search is not active.
  */
 private fun createBookmarkTypeAction(type: BookmarkType) = GotoBookmarkTypeAction(type) {
-  null == it.bookmarksViewFromComponent?.run { SpeedSearchSupply.getSupply(tree) }
+  null == it.bookmarksView?.run { SpeedSearchSupply.getSupply(tree) }
 }
 
 /**
