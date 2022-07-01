@@ -240,10 +240,6 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
     }
     if (!moduleProfile.isEnabled()) return null;
 
-    // TODO that's unclear condition. Let's relax it so that Workspace import works for regular (non .main/.test) modules
-    //  same way as the legacy import.
-    //  The correct code should check for actual content roots and set flags accordingly.
-    //if (MavenProjectImporter.isImportToTreeStructureEnabled(project)) {
     if (MavenModelUtil.isMainOrTestSubmodule(module.getName())) {
       moduleProfile.setOutputRelativeToContentRoot(false);
     }
