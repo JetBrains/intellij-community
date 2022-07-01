@@ -56,7 +56,11 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
 
         val diagnosticElement = diagnostic.psiElement
         if (diagnosticElement !is KtExpression) {
-            LOG.error("Unexpected element: " + diagnosticElement.text)
+            // INCOMPATIBLE_TYPES may be reported not only on expressions, but also on types.
+            // We ignore such cases here.
+            if (diagnostic.factory != Errors.INCOMPATIBLE_TYPES) {
+                LOG.error("Unexpected element: " + diagnosticElement.text)
+            }
             return emptyList()
         }
 
