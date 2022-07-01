@@ -91,13 +91,12 @@ internal class TextSearchContributor(
     FindModel.initStringToFind(model, pattern)
 
     val presentation = FindInProjectUtil.setupProcessPresentation(project, UsageViewPresentation())
-    val progressIndicator = indicator as? ProgressIndicatorEx ?: ProgressIndicatorBase()
 
     val scope = GlobalSearchScope.projectScope(project) // TODO use scope from model ?
     val recentItemRef = ThreadLocal<Reference<SearchEverywhereItem>>()
-    FindInProjectUtil.findUsages(model, project, progressIndicator, presentation, emptySet()) {
+    FindInProjectUtil.findUsages(model, project, indicator, presentation, emptySet()) {
       val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(it) as UsageInfo2UsageAdapter
-      progressIndicator.checkCanceled()
+      indicator.checkCanceled()
 
       val recentItem = SoftReference.dereference(recentItemRef.get())
       val newItem = if (recentItem != null && recentItem.usage.merge(usage)) {
