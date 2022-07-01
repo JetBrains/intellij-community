@@ -2109,6 +2109,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     else if (UIUtil.isCloseClick(e)) {
       processClose(e);
     }
+    else {
+      int logicalLineAtCursor = EditorUtil.yPositionToLogicalLine(myEditor, e);
+      myLastActionableClick = new ClickInfo(logicalLineAtCursor, e.getPoint());
+    }
   }
 
   private boolean isPopupAction(MouseEvent e) {
