@@ -706,4 +706,82 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
             runTest("../idea/tests/testData/intentions/convertToStringTemplate/unescapeSingleQuote.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/intentions/convertTryFinallyToUseCall")
+    public static class ConvertTryFinallyToUseCall extends AbstractFe10BindingIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("catch.kt")
+        public void testCatch() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/catch.kt");
+        }
+
+        @TestMetadata("example.kt")
+        public void testExample() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/example.kt");
+        }
+
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/implicitReceiver.kt");
+        }
+
+        @TestMetadata("notClose.kt")
+        public void testNotClose() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/notClose.kt");
+        }
+
+        @TestMetadata("notCloseableClose.kt")
+        public void testNotCloseableClose() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/notCloseableClose.kt");
+        }
+
+        @TestMetadata("notCloseableClose2.kt")
+        public void testNotCloseableClose2() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/notCloseableClose2.kt");
+        }
+
+        @TestMetadata("notOnlyClose.kt")
+        public void testNotOnlyClose() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/notOnlyClose.kt");
+        }
+
+        @TestMetadata("parameter.kt")
+        public void testParameter() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/parameter.kt");
+        }
+
+        @TestMetadata("safeCall.kt")
+        public void testSafeCall() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/safeCall.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/simple.kt");
+        }
+
+        @TestMetadata("this.kt")
+        public void testThis() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/this.kt");
+        }
+
+        @TestMetadata("thisLabeled.kt")
+        public void testThisLabeled() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/thisLabeled.kt");
+        }
+
+        @TestMetadata("triple.kt")
+        public void testTriple() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/triple.kt");
+        }
+
+        @TestMetadata("wrongCaret.kt")
+        public void testWrongCaret() throws Exception {
+            runTest("../idea/tests/testData/intentions/convertTryFinallyToUseCall/wrongCaret.kt");
+        }
+    }
 }

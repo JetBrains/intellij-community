@@ -231,6 +231,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/intentions/conventionNameCalls", pattern = pattern)
             model("testData/intentions/convertSecondaryConstructorToPrimary", pattern = pattern)
             model("testData/intentions/convertToStringTemplate", pattern = pattern)
+            model("testData/intentions/convertTryFinallyToUseCall", pattern = pattern)
         }
     }
 
