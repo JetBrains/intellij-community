@@ -13,6 +13,7 @@ import com.intellij.debugger.memory.agent.MemoryAgentActionResult;
 import com.intellij.debugger.memory.agent.ui.RetainedSizeDialog;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -96,6 +97,11 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
         LOG.info("command cancelled");
       }
     });
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

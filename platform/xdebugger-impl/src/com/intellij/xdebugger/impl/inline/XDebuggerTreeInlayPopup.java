@@ -67,6 +67,11 @@ public class XDebuggerTreeInlayPopup<D> extends XDebuggerTreePopup<D> {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
       node.calculateEvaluationExpression()
         .thenAsync(expr -> {
