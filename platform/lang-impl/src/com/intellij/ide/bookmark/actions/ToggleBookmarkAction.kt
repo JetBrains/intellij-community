@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons.Actions.Checked
 import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.editor.EditorGutter
@@ -14,6 +15,8 @@ import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 
 internal class ToggleBookmarkAction : Toggleable, DumbAwareAction(BookmarkBundle.messagePointer("bookmark.toggle.action.text")) {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
     val manager = event.bookmarksManager
