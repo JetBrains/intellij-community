@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinx.kotlinx-serialization-compiler-plugin-for-compilation" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:1.6.10-release-952" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:1.7.0-release-282" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.6.10-release-952/kotlinx-serialization-compiler-plugin-for-ide-1.6.10-release-952.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.7.0-release-282/kotlinx-serialization-compiler-plugin-for-ide-1.7.0-release-282.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.6.10-release-952/kotlinx-serialization-compiler-plugin-for-ide-1.6.10-release-952-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.7.0-release-282/kotlinx-serialization-compiler-plugin-for-ide-1.7.0-release-282-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

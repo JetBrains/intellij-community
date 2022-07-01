@@ -26,7 +26,7 @@
             </option>
             <option name="k2jvmCompilerArguments">
               <K2JVMCompilerArguments>
-                <option name="jvmTarget" value="1.6" />
+                <option name="jvmTarget" value="1.8" />
               </K2JVMCompilerArguments>
             </option>
             <option name="_commonCompilerArguments">
