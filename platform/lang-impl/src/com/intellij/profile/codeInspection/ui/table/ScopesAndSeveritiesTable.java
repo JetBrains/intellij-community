@@ -551,7 +551,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
         .createActionGroupPopup(LangBundle.message("scopes.chooser.popup.title.select.scope.to.change.its.settings"),
                                 scopesChooser.createPopupActionGroup(myTable), dataContext,
                                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
-      final RelativePoint point = new RelativePoint(myTable, new Point(myTable.getWidth() - popup.getContent().getPreferredSize().width, 0));
+      final RelativePoint point = new RelativePoint(myTable, new Point(0, 0));
       popup.show(point);
     }
 
