@@ -56,6 +56,16 @@ select
 ''')
   }
 
+  void testBareJoin() {
+    completeGinq('''\
+from x in [1]
+fullhashjoi<caret>
+''', '''\
+from x in [1]
+fullhashjoin x1 in  on
+''')
+  }
+
   void testJoin() {
     completeGinq('''\
 from x in [1] 

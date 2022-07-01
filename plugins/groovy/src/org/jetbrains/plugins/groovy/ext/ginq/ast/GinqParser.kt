@@ -94,44 +94,50 @@ private fun gatherGinqExpression(errors: MutableList<ParsingError>,
     return errors to null
   }
   val from = container.first() as? GinqFromFragment ?: return (errors + if (incompleteFrom) emptyList() else listOf (container.first().keyword to GroovyBundle.message("ginq.error.message.query.should.start.from.from"))) to null
-  val select = container.last() as? GinqSelectFragment ?: return (errors + listOf((container.last().keyword to GroovyBundle.message("ginq.error.message.query.should.end.with.select")))) to null
   // otherwise it is a valid ginq expression
   val joins: MutableList<GinqJoinFragment> = mutableListOf()
   var where: GinqWhereFragment? = null
   var groupBy: GinqGroupByFragment? = null
   var orderBy: GinqOrderByFragment? = null
   var limit: GinqLimitFragment? = null
+  var select: GinqSelectFragment? = null
   var index = 1
-  while (index < container.lastIndex) {
+  while (index <= container.lastIndex) {
     when (val currentFragment = container[index]) {
       is GinqJoinFragment -> {
-        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(where?.keyword, groupBy?.keyword, orderBy?.keyword, limit?.keyword).firstOrNull())
+        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(where?.keyword, groupBy?.keyword, orderBy?.keyword, limit?.keyword, select?.keyword).firstOrNull())
         if (currentFragment.onCondition == null && currentFragment.keyword.text != "crossjoin") {
           errors.add(currentFragment.keyword to GroovyBundle.message("ginq.error.message.on.is.expected.after.join"))
         }
         joins.add(container[index] as GinqJoinFragment)
       }
       is GinqWhereFragment -> {
-        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(groupBy?.keyword, orderBy?.keyword, limit?.keyword).firstOrNull())
+        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(groupBy?.keyword, orderBy?.keyword, limit?.keyword, select?.keyword).firstOrNull())
         where = currentFragment
       }
       is GinqGroupByFragment -> {
-        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(orderBy?.keyword, limit?.keyword).firstOrNull())
+        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(orderBy?.keyword, limit?.keyword, select?.keyword).firstOrNull())
         groupBy = currentFragment
       }
       is GinqOrderByFragment -> {
-        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(limit?.keyword).firstOrNull())
+        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(limit?.keyword, select?.keyword).firstOrNull())
         orderBy = currentFragment
       }
       is GinqLimitFragment -> {
+        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(select?.keyword).firstOrNull())
         limit = currentFragment
+      }
+      is GinqSelectFragment -> {
+        select = currentFragment
       }
       is GinqFromFragment -> errors.add(currentFragment.keyword to GroovyBundle.message("ginq.error.message.from.must.be.in.the.start.of.a.query"))
       is GinqHavingFragment -> errors.add(currentFragment.keyword to GroovyBundle.message("ginq.error.message.0.must.be.after.1", "having", "groupby"))
       is GinqOnFragment -> errors.add(currentFragment.keyword to GroovyBundle.message("ginq.error.message.on.is.expected.after.join"))
-      is GinqSelectFragment -> errors.add(currentFragment.keyword to GroovyBundle.message("ginq.error.message.select.must.be.in.the.end.of.a.query"))
     }
     index += 1
+  }
+  if (select == null) {
+    errors.add(from.keyword to GroovyBundle.message("ginq.error.message.query.should.end.with.select"))
   }
   return errors to GinqExpression(from, joins, where, groupBy, orderBy, limit, select)
 }
@@ -223,7 +229,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
     }
     if (callName == KW_ON) {
       val last = container.lastOrNull()
-      if (last is GinqJoinFragment && last.onCondition == null && argument is GrBinaryExpression) {
+      if (last is GinqJoinFragment && last.onCondition == null) {
         if (last.keyword.text == KW_CROSSJOIN) {
           recordError(methodCall, GroovyBundle.message("ginq.error.message.on.should.not.be.provided.after.crossjoin"))
         }

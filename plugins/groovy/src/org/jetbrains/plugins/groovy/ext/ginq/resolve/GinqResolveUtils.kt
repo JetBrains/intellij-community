@@ -140,7 +140,7 @@ object GinqResolveUtils : GinqSupport {
   }
 
   fun resolveToDistinct(place: PsiElement, name: String, tree: GinqExpression): PsiMethod? {
-    if (name != DISTINCT || tree.select.distinct != place) {
+    if (name != DISTINCT || tree.select?.distinct != place) {
       return null
     }
     val call = GrLightMethodBuilder(place.manager, DISTINCT)
