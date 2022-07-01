@@ -723,7 +723,7 @@
   </action>
   <!-- IJ java -->
   <action id="CompileDirty">
-    <keyboard-shortcut first-keystroke="meta shfit b"/>
+    <keyboard-shortcut first-keystroke="meta shift b"/>
   </action>
   <!-- Rider -->
   <action id="BuildSolutionAction">
