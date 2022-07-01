@@ -49,8 +49,9 @@ object Git {
       )
     }
     catch (e: Exception) {
-      logError("There is a problem in detecting git repo root. Trying to acquire working dir path")
-      return Paths.get("").toAbsolutePath()
+      val workDir = Paths.get("").toAbsolutePath()
+      logError("There is a problem in detecting git repo root. Trying to acquire working dir path: '$workDir'")
+      return workDir
     }
 
     // Takes first line from output like this:
