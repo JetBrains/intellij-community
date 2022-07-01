@@ -28,6 +28,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -931,6 +932,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
         final ToolbarDecorator wrappedTable = ToolbarDecorator
           .createDecorator(scopesAndScopesAndSeveritiesTable)
+          .setToolbarPosition(ActionToolbarPosition.LEFT)
           .disableUpDownActions()
           .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
           .setRemoveActionUpdater(
@@ -949,7 +951,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
           });
         severityPanel = wrappedTable.createPanel();
-        severityPanel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
+        severityPanel.setMinimumSize(new Dimension(getMinimumSize().width, 81));
         severityPanelWeightY = 0.3;
       }
 
@@ -1109,6 +1111,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     initOptionsAndDescriptionPanel();
     rightSplitter.setSecondComponent(myOptionsPanel);
     rightSplitter.setHonorComponentsMinimumSize(true);
+    rightSplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
 
     final JScrollPane tree = initTreeScrollPane();
 
