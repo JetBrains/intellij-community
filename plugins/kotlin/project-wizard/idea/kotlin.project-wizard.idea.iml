@@ -29,7 +29,7 @@
     <orderEntry type="module" module-name="kotlin.formatter" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

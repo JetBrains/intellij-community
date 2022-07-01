@@ -58,7 +58,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" exported="" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
     <orderEntry type="module" module-name="kotlin.formatter" exported="" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" exported="" />

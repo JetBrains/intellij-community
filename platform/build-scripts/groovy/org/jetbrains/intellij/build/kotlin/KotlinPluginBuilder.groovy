@@ -119,7 +119,7 @@ final class KotlinPluginBuilder {
     "kotlin.jvm-run-configurations",
     "kotlin.maven",
     "kotlin.gradle.gradle-tooling",
-    "kotlin.gradle.gradle-idea",
+    "kotlin.gradle.gradle",
     "kotlin.gradle.gradle-java",
     "kotlin.gradle.gradle-native",
     "kotlin.native",

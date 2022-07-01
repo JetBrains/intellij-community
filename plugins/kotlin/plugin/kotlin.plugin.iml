@@ -67,7 +67,7 @@
     <orderEntry type="module" module-name="kotlin.plugin-updater" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.preferences" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-configuration" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
