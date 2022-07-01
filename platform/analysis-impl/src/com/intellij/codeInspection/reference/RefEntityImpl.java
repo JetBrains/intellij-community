@@ -35,7 +35,7 @@ import java.util.List;
  *
  *      <tr valign="top"><td>9<td><pre>is permanent entry</pre><td>{@link RefElementImpl}
  *
- *      <tr valign="top"><td>10<td>-<td>-
+ *      <tr valign="top"><td>10<td><pre>references built</pre><td>{@link RefElementImpl}
  *
  *      <tr valign="top"><td>11<td><pre>is synthetic jsp element</pre><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}
  *
