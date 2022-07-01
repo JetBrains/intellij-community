@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.DialogWrapperDialog
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.TitlePanel
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.JBLabel
@@ -21,6 +22,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager
 import com.intellij.util.ui.DialogUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Contract
 import java.awt.Component
@@ -87,6 +89,14 @@ internal class ProgressDialogUI : Disposable {
     panel.add(progressAndButtonPanel, gridConstraints(
       row = 1, fill = FILL_BOTH, HSizePolicy = SIZE_POLICY_DEFAULT, VSizePolicy = SIZE_POLICY_DEFAULT
     ))
+    if (ExperimentalUI.isNewUI()) {
+      panel.background = JBUI.CurrentTheme.Popup.BACKGROUND
+      progressPanel.isOpaque = false
+      progressBar.isOpaque = false
+      buttonPanel.isOpaque = false
+      cancelButton.isOpaque = false
+      backgroundButton.isOpaque = false
+    }
 
     val moveListener = object : WindowMoveListener(myTitlePanel) {
       override fun getView(component: Component): Component {
