@@ -980,7 +980,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow {
     ApplicationManager.getApplication().assertIsDispatchThread()
 
-    val toolWindowPane = getDefaultToolWindowPaneIfInitialized()
+    // Try to get a previously saved tool window pane, if possible
+    val toolWindowPane = this.getLayout().getInfo(task.id)?.toolWindowPaneId?.let { getToolWindowPane(it) }
+                         ?: getDefaultToolWindowPaneIfInitialized()
     val entry = registerToolWindow(task, buttonManager = toolWindowPane.buttonManager)
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
 
