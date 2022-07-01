@@ -298,8 +298,8 @@
     </group>
 
     <group id="VcsHistoryInternalGroup.Toolbar">
-      <reference ref="Diff.ShowDiff"/>
       <reference ref="Vcs.RefreshFileHistory"/>
+      <reference ref="Diff.ShowDiff"/>
     </group>
 
     <group id="CommittedChangesToolbar">
