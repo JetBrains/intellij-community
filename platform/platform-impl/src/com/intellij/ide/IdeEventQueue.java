@@ -488,6 +488,7 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
     finally {
+      Thread.interrupted();
       if (performanceWatcher != null) {
         performanceWatcher.edtEventFinished();
       }
