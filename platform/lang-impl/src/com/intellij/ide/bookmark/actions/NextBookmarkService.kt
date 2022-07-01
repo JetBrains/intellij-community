@@ -1,13 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
+import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.BookmarkBundle.messagePointer
-import com.intellij.ide.bookmark.Bookmark
-import com.intellij.ide.bookmark.BookmarkGroup
-import com.intellij.ide.bookmark.BookmarkOccurrence
-import com.intellij.ide.bookmark.BookmarksListener
-import com.intellij.ide.bookmark.BookmarksManager
-import com.intellij.ide.bookmark.LineBookmark
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
@@ -20,6 +16,8 @@ internal class PreviousBookmarkAction : IterateBookmarksAction(false, messagePoi
 internal abstract class IterateBookmarksAction(val forward: Boolean, dynamicText: Supplier<String>) : DumbAwareAction(dynamicText) {
   private val AnActionEvent.nextBookmark
     get() = project?.service<NextBookmarkService>()?.next(forward, contextBookmark as? LineBookmark)
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabled = when (val view = event.bookmarksViewFromToolWindow) {
