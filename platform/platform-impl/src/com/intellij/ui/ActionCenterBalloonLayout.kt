@@ -293,9 +293,11 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
     }
 
     fun calculateSize() {
-      val insets = (balloon as BalloonImpl).shadowBorderInsets
-      fullHeight = balloon.preferredSize.height
-      height = fullHeight - JBUI.scale(7) - insets.top - insets.bottom
+      if (balloon is BalloonImpl) {
+        val insets = balloon.shadowBorderInsets
+        fullHeight = balloon.preferredSize.height
+        height = fullHeight - JBUI.scale(7) - insets.top - insets.bottom
+      }
     }
   }
 }
