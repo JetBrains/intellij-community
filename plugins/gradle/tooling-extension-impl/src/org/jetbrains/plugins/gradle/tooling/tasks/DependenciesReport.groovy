@@ -14,6 +14,7 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.FileCollectionDependency
 import org.gradle.api.artifacts.component.ComponentIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.component.ModuleComponentSelector
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.result.*
 import org.gradle.api.file.FileCollection
@@ -165,7 +166,12 @@ class DependenciesReport extends DefaultTask {
           node.dependencies.add(toNode(child, added, idGenerator, projectNameFunction))
         }
       } else if (dependency instanceof UnresolvedDependencyResult) {
-        node = new UnknownDependencyNode(id, dependency.attempted.displayName)
+        def attempted = dependency.attempted;
+        if (attempted instanceof ModuleComponentSelector) {
+          node = new ArtifactDependencyNodeImpl(id, attempted.getGroup(), attempted.getModule(), attempted.getVersion())
+        } else {
+          node = new UnknownDependencyNode(id, dependency.attempted.displayName)
+        }
         node.resolutionState = UNRESOLVED
         added.put(id, node)
       } else {

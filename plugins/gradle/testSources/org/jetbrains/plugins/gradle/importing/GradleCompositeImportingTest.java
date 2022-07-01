@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.importing;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings;
+import com.intellij.openapi.externalSystem.importing.GAVStateComponent;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
@@ -25,8 +26,12 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
@@ -110,6 +115,39 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
       assertTasksProjectPath("my-utils", path("../my-utils"));
     }
   }
+
+  @Test
+  @TargetVersions("5.0+")
+  public void testCompositeBuildWithNonGradleModule() throws Exception {
+
+    Registry.get("external.system.substitute.library.dependencies").setValue(true);
+
+    //This needs to be enabled for the test because in this test a jps module is used
+    Registry.get("external.system.map.jps.to.gav").setValue(true);
+
+    EdtTestUtil.runInEdtAndWait(() -> {
+
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        var module = ModuleManager.getInstance(myProject)
+          .newModule(myProject.getBasePath() + "/myart", ModuleTypeId.JAVA_MODULE);
+        myProject.getService(GAVStateComponent.class)
+          .addMapping(module.getName(), "mygrp", "myart", "1.0-SNAPSHOT");
+      });
+    });
+
+    createSettingsFile("rootProject.name='app'\n");
+
+    createProjectSubFile("build.gradle",
+                         createBuildScriptBuilder()
+                           .withMavenCentral()
+                           .withJavaLibraryPlugin()
+                           .addImplementationDependency("mygrp:myart:1.0-SNAPSHOT")
+                           .generate());
+
+    importProject();
+    assertModuleModuleDeps("app.main", "myart");
+  }
+
 
   @Test
   @TargetVersions("3.3+")
