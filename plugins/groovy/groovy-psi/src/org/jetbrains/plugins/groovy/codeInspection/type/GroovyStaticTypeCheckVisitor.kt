@@ -8,6 +8,7 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.groovy.codeInspection.isTypecheckingDisabled
 
 class GroovyStaticTypeCheckVisitor(private val holder: AnnotationHolder) : GroovyStaticTypeCheckVisitorBase() {
 
@@ -15,6 +16,9 @@ class GroovyStaticTypeCheckVisitor(private val holder: AnnotationHolder) : Groov
                              @InspectionMessage description: String,
                              fixes: Array<LocalQuickFix>?,
                              highlightType: ProblemHighlightType) {
+    if (isTypecheckingDisabled(location.containingFile)) {
+      return
+    }
     if (highlightType != ProblemHighlightType.GENERIC_ERROR) {
       return
     }

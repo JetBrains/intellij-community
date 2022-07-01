@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeExtension
+import com.intellij.psi.PsiFile
 
 @Service(Service.Level.APP)
 class FileTypeInspectionDisablers : FileTypeExtension<FileTypeInspectionDisabler>("org.intellij.groovy.inspectionDisabler")
@@ -19,6 +20,14 @@ fun getDisableableFileTypes(clazz : Class<out LocalInspectionTool>) : Set<FileTy
   return allDisablers.filterValues { disabler -> disabler.getDisableableInspections().contains(clazz) }.keys
 }
 
+internal fun isTypecheckingDisabled(file: PsiFile?) : Boolean {
+  file ?: return false
+  val disablers = ApplicationManager.getApplication().getService(FileTypeInspectionDisablers::class.java).allRegisteredExtensions
+  return disablers.values.any { it.isTypecheckingDisabled(file) }
+}
+
 interface FileTypeInspectionDisabler {
   fun getDisableableInspections(): Set<Class<out LocalInspectionTool>>
+
+  fun isTypecheckingDisabled(file: PsiFile): Boolean
 }

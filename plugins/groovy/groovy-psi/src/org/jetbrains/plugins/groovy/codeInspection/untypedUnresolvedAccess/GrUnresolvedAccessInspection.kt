@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionTool
+import org.jetbrains.plugins.groovy.codeInspection.isTypecheckingDisabled
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessChecker.shouldHighlightAsUnresolved
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
@@ -38,6 +39,9 @@ class GrUnresolvedAccessInspection : GroovyLocalInspectionTool() {
   private inner class Visitor(private val highlightSink: HighlightSink) : GroovyElementVisitor() {
 
     override fun visitReferenceExpression(@NotNull referenceExpression: GrReferenceExpression) {
+      if (isTypecheckingDisabled(referenceExpression.containingFile)) {
+        return
+      }
       if (isInStaticCompilationContext(referenceExpression)) {
         return
       }
