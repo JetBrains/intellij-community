@@ -12,9 +12,9 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.psiUtil.endOffset

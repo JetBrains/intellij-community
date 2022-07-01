@@ -21,7 +21,7 @@ import com.sun.jdi.Location
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.compute
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils.getTopmostElementAtOffset
+import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
 import org.jetbrains.kotlin.idea.debugger.isDexDebug
 import org.jetbrains.kotlin.idea.debugger.safeLocation

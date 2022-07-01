@@ -15,8 +15,8 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
+import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
 import org.jetbrains.kotlin.idea.debugger.findElementAtLine
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens

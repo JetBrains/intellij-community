@@ -28,7 +28,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import junit.framework.AssertionFailedError
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils.getTopmostElementAtOffset
+import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider

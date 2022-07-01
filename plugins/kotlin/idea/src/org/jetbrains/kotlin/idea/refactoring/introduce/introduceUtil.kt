@@ -13,7 +13,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
 import org.jetbrains.kotlin.idea.core.util.ElementKind
 import org.jetbrains.kotlin.idea.core.util.findElements
 import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.SmartList
 
 fun showErrorHint(project: Project, editor: Editor, @NlsContexts.DialogMessage message: String, @NlsContexts.DialogTitle title: String) {
-    CodeInsightUtils.showErrorHint(project, editor, message, title, null)
+    KotlinSurrounderUtils.showErrorHint(project, editor, message, title, null)
 }
 
 fun showErrorHintByKey(project: Project, editor: Editor, messageKey: String, @NlsContexts.DialogTitle title: String) {

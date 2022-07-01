@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.psiUtil.isTypeConstructorReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.scopes.receivers.ClassQualifier
+import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
 
 enum class ElementKind {
     EXPRESSION {

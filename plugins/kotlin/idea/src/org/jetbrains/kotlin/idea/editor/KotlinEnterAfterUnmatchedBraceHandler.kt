@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset

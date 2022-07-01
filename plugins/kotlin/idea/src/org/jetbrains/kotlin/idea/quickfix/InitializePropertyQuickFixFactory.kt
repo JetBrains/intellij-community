@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelaye
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.appendElement
 import org.jetbrains.kotlin.idea.core.getOrCreateBody
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.util.application.runWriteAction

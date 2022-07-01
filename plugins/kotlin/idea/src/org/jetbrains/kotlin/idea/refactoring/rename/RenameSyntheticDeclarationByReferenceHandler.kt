@@ -12,7 +12,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.RenameHandler
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.resolve.calls.tower.isSynthesized
 
@@ -27,7 +27,7 @@ class RenameSyntheticDeclarationByReferenceHandler : RenameHandler {
     override fun isRenaming(dataContext: DataContext) = isAvailableOnDataContext(dataContext)
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
-        CodeInsightUtils.showErrorHint(
+        KotlinSurrounderUtils.showErrorHint(
             project,
             editor,
             KotlinBundle.message("text.rename.is.not.applicable.to.synthetic.declarations"),

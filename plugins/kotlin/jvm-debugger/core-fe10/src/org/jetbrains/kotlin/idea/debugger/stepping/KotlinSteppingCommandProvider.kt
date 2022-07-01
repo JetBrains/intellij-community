@@ -16,7 +16,6 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.Range
 import com.sun.jdi.Location
 import com.sun.jdi.Method
-import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.debugger.findElementAtLine

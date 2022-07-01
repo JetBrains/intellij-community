@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils;
+import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils;
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle;
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager;
 import org.jetbrains.kotlin.lexer.KtTokens;

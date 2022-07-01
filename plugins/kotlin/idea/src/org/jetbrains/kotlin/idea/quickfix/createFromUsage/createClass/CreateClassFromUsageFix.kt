@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
 import org.jetbrains.kotlin.idea.quickfix.IntentionActionPriority
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
@@ -156,7 +156,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
         val targetFile = getOrCreateKotlinFile(fileName, targetDirectory)
         if (targetFile == null) {
             val filePath = "${targetDirectory.virtualFile.path}/$fileName"
-            CodeInsightUtils.showErrorHint(
+            KotlinSurrounderUtils.showErrorHint(
                 targetDirectory.project,
                 editor,
                 KotlinBundle.message("file.0.already.exists.but.does.not.correspond.to.kotlin.file", filePath),
