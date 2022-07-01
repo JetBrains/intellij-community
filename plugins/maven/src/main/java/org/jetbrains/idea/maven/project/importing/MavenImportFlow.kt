@@ -17,7 +17,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.exists
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -34,10 +33,8 @@ import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.server.MavenWrapperSupport
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.FileFinder
-import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.io.IOException
 import java.util.*
 
 @IntellijInternalApi
@@ -141,7 +138,16 @@ class MavenImportFlow {
     Disposer.dispose(d)
     val workingDir = getWorkingBaseDir(context)
     val wrapperData = MavenWrapperSupport.getWrapperDistributionUrl(workingDir)?.let { WrapperData(it, workingDir!!) }
+    readDoubleUpdateToWorkaroundIssueWhenProjectToBeReadTwice(context, projectsTree, indicator)
     return MavenReadContext(context.project, projectsTree, toResolve, errorsSet, context, wrapperData, indicator)
+  }
+
+  //TODO: Remove this. See StructureImportingTest.testProjectWithMavenConfigCustomUserSettingsXml
+  private fun readDoubleUpdateToWorkaroundIssueWhenProjectToBeReadTwice(context: MavenInitialImportContext,
+                        projectsTree: MavenProjectsTree,
+                        indicator: MavenProgressIndicator) {
+    context.generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
+    projectsTree.updateAll(true, context.generalSettings, indicator)
   }
 
   fun setupMavenWrapper(readContext: MavenReadContext, indicator: MavenProgressIndicator): MavenReadContext {
