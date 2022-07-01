@@ -996,6 +996,25 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/contextReceivers")
+    public static class ContextReceivers extends AbstractLoadJavaClsStubTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/loadJava/compiledKotlin/contextReceivers");
+            super.setUp();
+        }
+
+        @TestMetadata("SimpleContextReceivers.kt")
+        public void testSimpleContextReceivers() throws Exception {
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/contextReceivers/SimpleContextReceivers.kt"));
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/coroutines")
     public static class Coroutines extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
