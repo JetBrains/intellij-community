@@ -43,11 +43,6 @@ class CompletionLoggerInitializer : LookupTracker() {
       "c#" to 0.1,
       "go" to 0.4
     )
-
-    private fun shouldLogElementFeatures(language: Language): Boolean {
-      val experimentInfo = ExperimentStatus.getInstance().forLanguage(language)
-      return !experimentInfo.inExperiment || (experimentInfo.shouldCalculateFeatures && experimentInfo.shouldLogElementFeatures)
-    }
   }
   private val actionListener: LookupActionsListener by lazy { LookupActionsListener.getInstance() }
 
@@ -78,9 +73,16 @@ class CompletionLoggerInitializer : LookupTracker() {
                              storage: MutableLookupStorage,
                              experimentInfo: ExperimentInfo): CompletionActionsListener {
     val logger = CompletionLoggerProvider.getInstance().newCompletionLogger(getLoggingLanguageName(storage.language),
-                                                                            shouldLogElementFeatures(storage.language))
+                                                                            shouldLogElementFeatures(storage.language, lookup.project))
     val actionsTracker = CompletionActionsTracker(lookup, storage, logger, experimentInfo)
     return LoggerPerformanceTracker(actionsTracker, storage.performanceTracker)
+  }
+
+  private fun shouldLogElementFeatures(language: Language, project: Project): Boolean {
+    val experimentInfo = ExperimentStatus.getInstance().forLanguage(language)
+    return !experimentInfo.inExperiment ||
+           (experimentInfo.shouldCalculateFeatures && (experimentInfo.shouldLogElementFeatures ||
+                                                       CurrentProjectInfo.getInstance(project).isIdeaProject))
   }
 
   private fun sessionShouldBeLogged(experimentInfo: ExperimentInfo, language: Language, project: Project): Boolean {
