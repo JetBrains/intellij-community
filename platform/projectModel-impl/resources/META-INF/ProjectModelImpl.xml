@@ -10,8 +10,6 @@
                     dynamic="true"/>
     <extensionPoint name="projectPathMacroContributor" interface="com.intellij.openapi.components.impl.ProjectWidePathMacroContributor"
                     dynamic="true"/>
-    <extensionPoint name="directoryIndexAnalyticsReporter" interface="com.intellij.openapi.roots.impl.DirectoryIndexAnalyticsReporter"
-                    area="IDEA_PROJECT" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
