@@ -21,6 +21,8 @@ import java.lang.ref.Reference;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class LanguageLevelUtil {
   /**
@@ -117,26 +119,31 @@ public class LanguageLevelUtil {
     PsiClass containingClass = member.getContainingClass();
     if (containingClass instanceof PsiAnonymousClass) return null;
     if (member instanceof PsiClass && !(member.getParent() instanceof PsiClass || member.getParent() instanceof PsiFile)) return null;
-
-    Set<String> forbiddenApi = getForbiddenApi(languageLevel);
-    if (forbiddenApi == null) return null;
-    String signature = getSignature(member);
-    if (signature == null) return null;
-    LanguageLevel lastIncompatibleLanguageLevel = getLastIncompatibleLanguageLevelForSignature(signature, languageLevel, forbiddenApi);
-    if (lastIncompatibleLanguageLevel != null) return lastIncompatibleLanguageLevel;
-    return null;
-  }
-
-  private static LanguageLevel getLastIncompatibleLanguageLevelForSignature(@NotNull String signature, @NotNull LanguageLevel languageLevel, @NotNull Set<String> forbiddenApi) {
-    if (forbiddenApi.contains(signature)) {
-      return languageLevel;
-    }
-    if (languageLevel.compareTo(LanguageLevel.HIGHEST) == 0) {
+    if (member instanceof PsiMethod) {
+      List<LanguageLevel> latestIncompatible = Stream.concat(Stream.of((PsiMethod)member), Stream.of(((PsiMethod)member).findSuperMethods()))
+        .map(method -> {
+          String signature = getSignature(method);
+          if (signature == null) return null;
+          return getLastIncompatibleLanguageLevelForSignature(signature, languageLevel);
+        }).collect(Collectors.toList());
+      if (latestIncompatible.contains(null)) return null;
+      return latestIncompatible.stream().min(Comparator.comparing(LanguageLevel::toJavaVersion)).orElse(null);
+    } else {
+      String signature = getSignature(member);
+      if (signature == null) return null;
+      LanguageLevel lastIncompatibleLanguageLevel = getLastIncompatibleLanguageLevelForSignature(signature, languageLevel);
+      if (lastIncompatibleLanguageLevel != null) return lastIncompatibleLanguageLevel;
       return null;
     }
+  }
+
+  private static LanguageLevel getLastIncompatibleLanguageLevelForSignature(@NotNull String signature, @NotNull LanguageLevel languageLevel) {
+    Set<String> forbiddenApi = getForbiddenApi(languageLevel);
+    if (forbiddenApi == null) return null;
+    if (forbiddenApi.contains(signature)) return languageLevel;
+    if (languageLevel.compareTo(LanguageLevel.HIGHEST) == 0) return null;
     LanguageLevel nextLanguageLevel = LanguageLevel.values()[languageLevel.ordinal() + 1];
-    Set<String> nextForbiddenApi = getForbiddenApi(nextLanguageLevel);
-    return nextForbiddenApi != null ? getLastIncompatibleLanguageLevelForSignature(signature, nextLanguageLevel, nextForbiddenApi) : null;
+    return getLastIncompatibleLanguageLevelForSignature(signature, nextLanguageLevel);
   }
 
   public static Set<String> loadSignatureList(@NotNull URL resource) {
