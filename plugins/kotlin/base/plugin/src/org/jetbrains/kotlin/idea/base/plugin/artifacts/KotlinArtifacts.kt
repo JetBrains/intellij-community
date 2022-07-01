@@ -73,9 +73,6 @@ object KotlinArtifacts {
     val kotlinStdlibJs: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JS)
 
     @JvmStatic
-    val kotlinTest: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST)
-
-    @JvmStatic
     val kotlinMainKts: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_MAIN_KTS)
 
     @JvmStatic

@@ -279,8 +279,8 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         }
 
         return buildMap {
-            put("runtime-classes", listOf(KotlinArtifacts.kotlinStdlib))
-            put("runtime-source", listOf(KotlinArtifacts.kotlinStdlibSources))
+            put("runtime-classes", listOf(TestKotlinArtifacts.kotlinStdlib))
+            put("runtime-source", listOf(TestKotlinArtifacts.kotlinStdlibSources, TestKotlinArtifacts.kotlinStdlibCommonSources))
             libClasses?.let { put("lib-classes", listOf(it)) }
             libSrcDir?.let { put("lib-source", listOf(it)) }
             moduleClasses?.let { put("module-classes", listOf(it)) }
