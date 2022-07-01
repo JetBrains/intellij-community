@@ -67,7 +67,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   // should be used only for test debugging purpose
   private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
   private static final boolean useConservativeThreadCountPolicy =
-    SystemProperties.getBooleanProperty("idea.indexing.use.conservative.thread.count.policy", true);
+    SystemProperties.getBooleanProperty("idea.indexing.use.conservative.thread.count.policy", false);
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
 
   public enum TestMode {
