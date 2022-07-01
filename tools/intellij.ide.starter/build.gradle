@@ -31,6 +31,8 @@ repositories {
   maven { url = "https://www.jetbrains.com/intellij-repository/releases" }
   maven { url = "https://www.jetbrains.com/intellij-repository/snapshots" }
   maven { url = "https://www.jetbrains.com/intellij-repository/nightly" }
+
+  maven { url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public" }
 }
 
 dependencies {
@@ -47,6 +49,15 @@ dependencies {
   implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.3"
   implementation "commons-logging:commons-logging:1.2"
   implementation "com.jetbrains.qodana:qodana-sarif:0.1.99"
+
+  implementation('com.jetbrains.intellij.platform:lang-impl:LATEST-TRUNK-SNAPSHOT') {
+    exclude group: 'org.jetbrains.kotlinx'
+  }
+
+  implementation('com.jetbrains.intellij.platform:ide-impl:LATEST-TRUNK-SNAPSHOT') {
+    exclude group: 'org.jetbrains.kotlinx'
+    exclude group: 'com.jetbrains.intellij.remoteDev'
+  }
 
   implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
 

@@ -235,16 +235,16 @@ data class IDETestContext(
     collectNativeThreads: Boolean = false
   ): IDERunContext {
     return IDERunContext(testContext = this)
-    .copy(
-      commandLine = commandLine,
-      commands = commands,
-      codeBuilder = codeBuilder,
-      runTimeout = runTimeout,
-      useStartupScript = useStartupScript,
-      launchName = launchName,
-      expectedKill = expectedKill,
-      collectNativeThreads = collectNativeThreads
-    )
+      .copy(
+        commandLine = commandLine,
+        commands = commands,
+        codeBuilder = codeBuilder,
+        runTimeout = runTimeout,
+        useStartupScript = useStartupScript,
+        launchName = launchName,
+        expectedKill = expectedKill,
+        collectNativeThreads = collectNativeThreads
+      )
       .addVMOptionsPatch(patchVMOptions)
   }
 
@@ -342,8 +342,10 @@ data class IDETestContext(
       patchVMOptions = {
         val warmupReports = IDEStartupReports(paths.reportsDir / "warmUp")
         if (storeClassReport) {
-          this.enableStartupPerformanceLog(warmupReports).enableClassLoadingReport(paths.reportsDir / "warmUp" / "class-report.txt").patchVMOptions()
-        } else {
+          this.enableStartupPerformanceLog(warmupReports).enableClassLoadingReport(
+            paths.reportsDir / "warmUp" / "class-report.txt").patchVMOptions()
+        }
+        else {
           this
         }
       },
@@ -481,7 +483,8 @@ data class IDETestContext(
             }
           }
           compilerXml.writeText(newContent.toString())
-        } else if (heapSizeValue.isNotEmpty()) {
+        }
+        else if (heapSizeValue.isNotEmpty()) {
           compilerXml.toFile().readLines().forEach {
             if (it.contains("BUILD_PROCESS_HEAP_SIZE")) {
               val newLine = it.replace("value=\"\\d*\"".toRegex(), "value=\"$heapSize\"")
@@ -522,3 +525,4 @@ data class IDETestContext(
     return this
   }
 }
+
