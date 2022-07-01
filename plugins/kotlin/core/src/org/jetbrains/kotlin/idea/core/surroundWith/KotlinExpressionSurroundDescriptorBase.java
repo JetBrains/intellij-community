@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.core.util.ElementKind;
 import org.jetbrains.kotlin.psi.KtExpression;
-import static org.jetbrains.kotlin.idea.core.util.FindElementUtilKt.findElement;
+import static org.jetbrains.kotlin.idea.core.util.FindElementUtils.findElement;
 
 public abstract class KotlinExpressionSurroundDescriptorBase implements SurroundDescriptor {
     @Override
