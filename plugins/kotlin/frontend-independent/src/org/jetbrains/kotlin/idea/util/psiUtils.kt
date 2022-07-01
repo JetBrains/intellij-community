@@ -23,27 +23,6 @@ fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElemen
     CodeStyleManager.getInstance(it.project).reformat(it, canChangeWhiteSpacesOnly)
 }
 
-val KtAnnotated.hasNonSuppressAnnotation: Boolean
-    get() {
-        val annotationEntries = annotationEntries
-        return annotationEntries.size > 1 || annotationEntries.size == 1 && !hasSuppressAnnotation
-    }
-
-val KtAnnotated.hasSuppressAnnotation: Boolean get() = findSuppressAnnotation() != null
-
-fun KtAnnotated.findSuppressAnnotation(): KtAnnotationEntry? {
-    val alias = containingKtFile.findAliasByFqName(StandardNames.FqNames.suppress)?.name
-    return annotationEntries.find {
-        val shortName = it.shortName
-        shortName == StandardNames.FqNames.suppress.shortName() || alias != null && shortName?.asString() == alias
-    }
-}
-
-fun KtAnnotated.findSuppressedTools(): List<String>? {
-    val annotationEntry = findSuppressAnnotation() ?: return null
-    return annotationEntry.valueArguments.mapNotNull(ValueArgument::findSingleLiteralStringTemplateText)
-}
-
 fun ValueArgument.findSingleLiteralStringTemplateText(): String? {
     return getArgumentExpression()
         ?.safeAs<KtStringTemplateExpression>()
@@ -52,13 +31,6 @@ fun ValueArgument.findSingleLiteralStringTemplateText(): String? {
         ?.safeAs<KtLiteralStringTemplateEntry>()
         ?.text
 }
-
-val KtFile.jvmPackage: String?
-    get() = JvmFileClassUtil.findAnnotationEntryOnFileNoResolve(this, JvmNames.JVM_PACKAGE_NAME_SHORT)
-        ?.let(JvmFileClassUtil::getLiteralStringFromAnnotation)
-
-val KtFile.jvmPackageFqName: FqName get() = jvmPackage?.let(::FqName) ?: packageFqName
-val KtFile.psiPackage: PsiPackage? get() = JavaPsiFacade.getInstance(project).findPackage(jvmPackageFqName.asString())
 
 fun KtCallableDeclaration.numberOfArguments(countReceiver: Boolean = false): Int =
     valueParameters.size + (1.takeIf { countReceiver && receiverTypeReference != null } ?: 0)

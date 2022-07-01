@@ -16,8 +16,9 @@ import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils.findFilesWithExactPackage
-import org.jetbrains.kotlin.idea.stubindex.StaticFacadeIndexUtil
+import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
@@ -73,9 +74,14 @@ object DebuggerUtils {
                 return files.first()
             }
 
-            StaticFacadeIndexUtil.findFilesForFilePart(partFqName, scope, project)
-                .singleOrNull { it.name == fileName }
-                ?.let { return it }
+            val singleFile = runReadAction {
+                val matchingFiles = KotlinFileFacadeFqNameIndex.get(partFqName.asString(), project, scope)
+                PackagePartClassUtils.getFilesWithCallables(matchingFiles).singleOrNull { it.name == fileName }
+            }
+
+            if (singleFile != null) {
+                return singleFile
+            }
 
             return FileRankingCalculatorForIde.findMostAppropriateSource(files, location)
         }

@@ -67,6 +67,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.project-model",
     "kotlin.base.platforms",
     "kotlin.base.facet",
+    "kotlin.base.klib",
     "kotlin.base.project-structure",
     "kotlin.base.scripting",
     "kotlin.base.analysis-api-providers",

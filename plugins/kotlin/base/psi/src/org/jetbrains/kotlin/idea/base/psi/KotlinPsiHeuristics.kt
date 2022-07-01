@@ -2,15 +2,20 @@
 package org.jetbrains.kotlin.idea.base.psi
 
 import com.google.common.collect.HashMultimap
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.JvmNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_OVERLOADS_FQ_NAME
+import org.jetbrains.kotlin.types.expressions.OperatorConventions
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object KotlinPsiHeuristics {
     @JvmStatic
@@ -87,16 +92,50 @@ object KotlinPsiHeuristics {
     }
 
     @JvmStatic
+    fun getPackageName(file: KtFile): FqName? {
+        val entry = JvmFileClassUtil.findAnnotationEntryOnFileNoResolve(file, JvmNames.JVM_PACKAGE_NAME_SHORT) ?: return null
+        val customPackageName = JvmFileClassUtil.getLiteralStringFromAnnotation(entry)
+        if (customPackageName != null) {
+            return FqName(customPackageName)
+        }
+
+        return file.packageFqName
+    }
+
+    @JvmStatic
     fun getJvmName(declaration: KtClassOrObject): String? {
         val classId = declaration.classIdIfNonLocal ?: return null
         val jvmClassName = JvmClassName.byClassId(classId)
         return jvmClassName.fqNameForTopLevelClassMaybeWithDollars.asString()
     }
 
+    private fun checkAnnotationUseSiteTarget(annotationEntry: KtAnnotationEntry, useSiteTarget: AnnotationUseSiteTarget?): Boolean {
+        return useSiteTarget == null || annotationEntry.useSiteTarget?.getAnnotationUseSiteTarget() == useSiteTarget
+    }
+
     @JvmStatic
     fun findAnnotation(declaration: KtAnnotated, shortName: String, useSiteTarget: AnnotationUseSiteTarget? = null): KtAnnotationEntry? {
         return declaration.annotationEntries
-            .firstOrNull { it.useSiteTarget?.getAnnotationUseSiteTarget() == useSiteTarget && it.shortName?.asString() == shortName }
+            .firstOrNull { checkAnnotationUseSiteTarget(it, useSiteTarget) && it.shortName?.asString() == shortName }
+    }
+
+    @JvmStatic
+    fun findAnnotation(declaration: KtAnnotated, fqName: FqName, useSiteTarget: AnnotationUseSiteTarget? = null): KtAnnotationEntry? {
+        val targetShortName = fqName.shortName().asString()
+        val targetAliasName = declaration.containingKtFile.findAliasByFqName(fqName)?.name
+
+        for (annotationEntry in declaration.annotationEntries) {
+            if (!checkAnnotationUseSiteTarget(annotationEntry, useSiteTarget)) {
+                continue
+            }
+
+            val annotationShortName = annotationEntry.shortName?.asString() ?: continue
+            if (annotationShortName == targetShortName || annotationShortName == targetAliasName) {
+                return annotationEntry
+            }
+        }
+
+        return null
     }
 
     @JvmStatic
@@ -110,8 +149,13 @@ object KotlinPsiHeuristics {
     }
 
     @JvmStatic
+    fun hasAnnotation(declaration: KtAnnotated, fqName: FqName, useSiteTarget: AnnotationUseSiteTarget? = null): Boolean {
+        return findAnnotation(declaration, fqName, useSiteTarget) != null
+    }
+
+    @JvmStatic
     fun findJvmName(declaration: KtAnnotated, useSiteTarget: AnnotationUseSiteTarget? = null): String? {
-        val annotation = findAnnotation(declaration, JvmFileClassUtil.JVM_NAME_SHORT, useSiteTarget) ?: return null
+        val annotation = findAnnotation(declaration, JvmFileClassUtil.JVM_NAME, useSiteTarget) ?: return null
         return JvmFileClassUtil.getLiteralStringFromAnnotation(annotation)
     }
 
@@ -134,17 +178,66 @@ object KotlinPsiHeuristics {
     }
 
     @JvmStatic
+    fun findSuppressAnnotation(declaration: KtAnnotated): KtAnnotationEntry? {
+        return findAnnotation(declaration, StandardNames.FqNames.suppress)
+    }
+
+    @JvmStatic
+    fun hasSuppressAnnotation(declaration: KtAnnotated): Boolean {
+        return findSuppressAnnotation(declaration) != null
+    }
+
+    @JvmStatic
+    fun hasNonSuppressAnnotations(declaration: KtAnnotated): Boolean {
+        val annotationEntries = declaration.annotationEntries
+        return annotationEntries.size > 1 || annotationEntries.size == 1 && !hasSuppressAnnotation(declaration)
+    }
+
+    @JvmStatic
     fun hasJvmFieldAnnotation(declaration: KtAnnotated): Boolean {
-        return hasAnnotation(declaration, JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME.shortName())
+        return hasAnnotation(declaration, JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
     }
 
     @JvmStatic
     fun hasJvmOverloadsAnnotation(declaration: KtAnnotated): Boolean {
-        return hasAnnotation(declaration, JVM_OVERLOADS_FQ_NAME.shortName())
+        return hasAnnotation(declaration, JVM_OVERLOADS_FQ_NAME)
     }
 
     @JvmStatic
     fun hasJvmStaticAnnotation(declaration: KtAnnotated): Boolean {
-        return hasAnnotation(declaration, JVM_STATIC_ANNOTATION_FQ_NAME.shortName())
+        return hasAnnotation(declaration, JVM_STATIC_ANNOTATION_FQ_NAME)
+    }
+
+    @JvmStatic
+    fun getStringValue(argument: ValueArgument): String? {
+        return argument.getArgumentExpression()
+            ?.safeAs<KtStringTemplateExpression>()
+            ?.entries
+            ?.singleOrNull()
+            ?.safeAs<KtLiteralStringTemplateEntry>()
+            ?.text
+    }
+
+    @JvmStatic
+    fun findSuppressedEntities(declaration: KtAnnotated): List<String>? {
+        val entry = findSuppressAnnotation(declaration) ?: return null
+        return entry.valueArguments.mapNotNull(::getStringValue)
+    }
+
+    @JvmStatic
+    fun isPossibleOperator(declaration: KtNamedFunction): Boolean {
+        if (declaration.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
+            return true
+        } else if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
+            // Operator modifier could be omitted only for overridden function
+            return false
+        }
+
+        val name = declaration.name ?: return false
+        if (!OperatorConventions.isConventionName(Name.identifier(name))) {
+            return false
+        }
+
+        return true
     }
 }

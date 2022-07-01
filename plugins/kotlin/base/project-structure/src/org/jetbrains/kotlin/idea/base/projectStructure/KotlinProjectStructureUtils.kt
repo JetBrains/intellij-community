@@ -138,3 +138,14 @@ fun IdeaModuleInfo.findJvmStdlibAcrossDependencies(): LibraryInfo? {
     val project = project ?: return null
     return KotlinStdlibCache.getInstance(project).findStdlibInModuleDependencies(this)
 }
+
+fun IdeaModuleInfo.supportsFeature(project: Project, feature: LanguageFeature): Boolean {
+    return IDELanguageSettingsProvider
+        .getLanguageVersionSettings(this, project)
+        .supportsFeature(feature)
+}
+
+@ApiStatus.Internal
+fun IdeaModuleInfo.supportsAdditionalBuiltInsMembers(project: Project): Boolean {
+    return supportsFeature(project, LanguageFeature.AdditionalBuiltInsMembers)
+}
