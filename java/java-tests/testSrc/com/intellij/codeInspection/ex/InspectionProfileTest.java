@@ -115,12 +115,11 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
   public void testModificationWithoutModification() {
     InspectionProfileImpl profile = createProfile();
-    profile.getAllTools();
+    assertNotEmpty(profile.getAllTools());
     assertTrue(profile.wasInitialized());
-    assertNotEmpty(profile.myTools.keySet());
     profile.modifyProfile(m -> {});
     assertTrue(profile.wasInitialized());
-    assertNotEmpty(profile.myTools.keySet());
+    assertNotEmpty(profile.getAllTools());
   }
 
   public void testSameNameSharedProfile() {
