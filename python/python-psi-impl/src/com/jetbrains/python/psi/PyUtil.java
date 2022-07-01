@@ -765,7 +765,8 @@ public final class PyUtil {
   @Nullable
   public static <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<? super Document, ? extends T> func) {
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(anchor.getProject());
-    final Document document = manager.getDocument(anchor.getContainingFile());
+    // manager.getDocument(anchor.getContainingFile()) doesn't work with intention preview
+    final Document document = anchor.getContainingFile().getViewProvider().getDocument();
     if (document != null) {
       manager.doPostponedOperationsAndUnblockDocument(document);
       try {

@@ -321,7 +321,8 @@ public class PyFormatterTest extends PyTestCase {
       "    desired_impulse_response = {'dirac, '\n" +
       "    gaussian\n" +
       "    ', logistic_derivative'}\n" +
-      "    return desired, o";
+      "    return desired, o\n" +
+      "";
     assertEquals(expected, reformatted.getText());
   }
 
