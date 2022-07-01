@@ -77,7 +77,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   private @NotNull Map<VirtualFile, T> doGetMappings() {
-    return Collections.unmodifiableMap(ContainerUtil.map2MapNotNull(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).getValue())));
+    return Collections.unmodifiableMap(ContainerUtil.map2Map(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).getValue())));
   }
 
   private void cleanup() {
@@ -86,7 +86,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       VirtualFile file = entry.getKey();
       MappingValue<T> mapping = entry.getValue();
       if (file == null) continue;
-      if (mapping == null || !file.isValid() || isDefaultMapping(file, mapping.getValue())) {
+      if (mapping == null || !file.isValid() || mapping.getUnknownValue() == null && isDefaultMapping(file, mapping.getValue())) {
         it.remove();
       }
     }
@@ -189,9 +189,9 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       oldAndNewKeys.addAll(myMappings.keySet());
       oldAndNewKeys.addAll(mappings.keySet());
       for (VirtualFile key : oldAndNewKeys) {
-        MappingValue<T> oldMapping = myMappings.get(key);
+        T oldValue = doGetImmediateMapping(key);
         T newValue = mappings.get(key);
-        if (!Objects.equals(oldMapping != null ? oldMapping.getValue() : null, newValue)) {
+        if (!Objects.equals(oldValue, newValue)) {
           if (newValue == null) {
             myMappings.remove(key);
           }
@@ -279,7 +279,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   @Nullable
-  protected T handleUnknownMapping(VirtualFile file, String value) {
+  protected T handleUnknownMapping(@Nullable VirtualFile file, String value) {
     return null;
   }
 
@@ -325,16 +325,27 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       for (PerFileMappingState entry : state) {
         String url = entry.getUrl();
         String valueStr = entry.getValue();
-        VirtualFile file = "PROJECT".equals(url) ? null : VirtualFileManager.getInstance().findFileByUrl(url);
-        T value = valuesMap.get(valueStr);
-        boolean isUnknown = false;
-        if (value == null) {
-          isUnknown = true;
-          value = handleUnknownMapping(file, valueStr);
-          if (value == null) continue;
+        if (valueStr == null) continue;
+        VirtualFile file;
+        if ("PROJECT".equals(url)) {
+          file = null;
         }
-        if (file != null && !isDefaultMapping(file, value) || url.equals("PROJECT")) {
-          myMappings.put(file, isUnknown && valueStr != null ? MappingValue.unknown(value, valueStr) : MappingValue.known(value));
+        else {
+          file = VirtualFileManager.getInstance().findFileByUrl(url);
+          if (file == null) continue;
+        }
+
+        T value = valuesMap.get(valueStr);
+        if (value != null) {
+          if (file == null || !isDefaultMapping(file, value)) {
+            myMappings.put(file, MappingValue.known(value));
+          }
+        }
+        else {
+          value = handleUnknownMapping(file, valueStr);
+          if (value != null) {
+            myMappings.put(file, MappingValue.unknown(value, valueStr));
+          }
         }
       }
     }
