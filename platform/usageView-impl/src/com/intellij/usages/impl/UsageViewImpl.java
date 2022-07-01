@@ -28,6 +28,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -125,29 +126,23 @@ public class UsageViewImpl implements UsageViewEx {
 
   public static final Comparator<Usage> USAGE_COMPARATOR_BY_FILE_AND_OFFSET = (o1, o2) -> {
     if (o1 == o2) return 0;
-    if (o1 == NullUsage.INSTANCE) return -1;
-    if (o2 == NullUsage.INSTANCE) return 1;
-    if (o1 instanceof Comparable && o2 instanceof Comparable && o1.getClass() == o2.getClass()) {
-      //noinspection unchecked
-      int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
-      if (selfcompared != 0) return selfcompared;
-
-      if (o1 instanceof UsageInFile && o2 instanceof UsageInFile) {
-        UsageInFile u1 = (UsageInFile)o1;
-        UsageInFile u2 = (UsageInFile)o2;
-
-        VirtualFile f1 = u1.getFile();
-        VirtualFile f2 = u2.getFile();
-
-        if (f1 != null && f1.isValid() && f2 != null && f2.isValid()) {
-          return f1.getPresentableUrl().compareTo(f2.getPresentableUrl());
-        }
-      }
-
-      return 0;
-    }
+    if (o1 == NullUsage.INSTANCE || o1 == null) return -1;
+    if (o2 == NullUsage.INSTANCE || o2 == null) return 1;
+    int c = compareByFileAndOffset(o1, o2);
+    if (c != 0) return c;
     return o1.toString().compareTo(o2.toString());
   };
+
+  private static int compareByFileAndOffset(@NotNull Usage o1, @NotNull Usage o2) {
+    VirtualFile file1 = o1 instanceof UsageInFile ? ((UsageInFile)o1).getFile() : null;
+    VirtualFile file2 = o2 instanceof UsageInFile ? ((UsageInFile)o2).getFile() : null;
+    if (file1 == null || file2 == null) return 0;
+    if (file1.equals(file2)) {
+      return Integer.compare(o1.getNavigationOffset(), o2.getNavigationOffset());
+    }
+    return VfsUtilCore.compareByPath(file1, file2);
+  }
+
   @NonNls public static final String HELP_ID = "ideaInterface.find";
   private UsageContextPanel myCurrentUsageContextPanel; // accessed in EDT only
   private final List<UsageContextPanel> myAllUsageContextPanels = new ArrayList<>(); // accessed in EDT only
