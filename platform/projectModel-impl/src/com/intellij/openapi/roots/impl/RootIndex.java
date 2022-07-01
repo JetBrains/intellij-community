@@ -51,18 +51,15 @@ class RootIndex {
   private final RootFileSupplier myRootSupplier;
   final PackageDirectoryCache myPackageDirectoryCache;
   private OrderEntryGraph myOrderEntryGraph;
-  private final DirectoryIndexAnalyticsReporter.BuildRequestKind myBuildRequestKind;
 
-  RootIndex(@NotNull Project project, DirectoryIndexAnalyticsReporter.BuildRequestKind buildRequestKind) {
-    this(project, RootFileSupplier.INSTANCE, buildRequestKind);
+  RootIndex(@NotNull Project project) {
+    this(project, RootFileSupplier.INSTANCE);
   }
 
   RootIndex(@NotNull Project project,
-            @NotNull RootFileSupplier rootSupplier,
-            DirectoryIndexAnalyticsReporter.BuildRequestKind buildRequestKind) {
+            @NotNull RootFileSupplier rootSupplier) {
     myProject = project;
     myRootSupplier = rootSupplier;
-    myBuildRequestKind = buildRequestKind;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (project.isDefault()) {
@@ -73,46 +70,34 @@ class RootIndex {
       LOG.assertTrue(((ModuleManagerEx)manager).areModulesLoaded(), "Directory index can only be queried after project initialization");
     }
 
-    DirectoryIndexAnalyticsReporter.ActivityReporter activityReporter = logActivityStarted(DirectoryIndexAnalyticsReporter.BuildPart.MAIN);
-    try {
-      final RootInfo info = buildRootInfo(project, activityReporter);
+    final RootInfo info = buildRootInfo(project);
 
-      DirectoryIndexAnalyticsReporter.PhaseReporter phase = activityReporter.reportFinalizingPhaseStarted();
-      Set<VirtualFile> allRoots = info.getAllRoots();
-      MultiMap<String, VirtualFile> rootsByPackagePrefix = MultiMap.create(allRoots.size(), 0.75f);
-      myRootInfos = new HashMap<>(allRoots.size());
-      myHasNonDirectoryRoots = ContainerUtil.exists(allRoots, r -> !r.isDirectory());
-      myPackagePrefixByRoot = new HashMap<>(allRoots.size());
-      List<List<VirtualFile>> hierarchies = new ArrayList<>(allRoots.size());
-      for (VirtualFile root : allRoots) {
-        List<VirtualFile> hierarchy = getHierarchy(root, allRoots, info);
-        hierarchies.add(hierarchy);
-        Pair<DirectoryInfo, String> pair = hierarchy != null
-                                           ? calcDirectoryInfoAndPackagePrefix(root, hierarchy, info)
-                                           : new Pair<>(NonProjectDirectoryInfo.IGNORED, null);
-        myRootInfos.put(root, pair.first);
-        String packagePrefix = pair.second;
-        rootsByPackagePrefix.putValue(packagePrefix, root);
-        myPackagePrefixByRoot.put(root, packagePrefix);
+    Set<VirtualFile> allRoots = info.getAllRoots();
+    MultiMap<String, VirtualFile> rootsByPackagePrefix = MultiMap.create(allRoots.size(), 0.75f);
+    myRootInfos = new HashMap<>(allRoots.size());
+    myHasNonDirectoryRoots = ContainerUtil.exists(allRoots, r -> !r.isDirectory());
+    myPackagePrefixByRoot = new HashMap<>(allRoots.size());
+    List<List<VirtualFile>> hierarchies = new ArrayList<>(allRoots.size());
+    for (VirtualFile root : allRoots) {
+      List<VirtualFile> hierarchy = getHierarchy(root, allRoots, info);
+      hierarchies.add(hierarchy);
+      Pair<DirectoryInfo, String> pair = hierarchy != null
+                                         ? calcDirectoryInfoAndPackagePrefix(root, hierarchy, info)
+                                         : new Pair<>(NonProjectDirectoryInfo.IGNORED, null);
+      myRootInfos.put(root, pair.first);
+      String packagePrefix = pair.second;
+      rootsByPackagePrefix.putValue(packagePrefix, root);
+      myPackagePrefixByRoot.put(root, packagePrefix);
+    }
+    storeContentsBeneathExcluded(allRoots, hierarchies);
+    storeOutsideProjectRootsButHasContentInside();
+
+    myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
+      @Override
+      protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
+        return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
       }
-      storeContentsBeneathExcluded(allRoots, hierarchies);
-      storeOutsideProjectRootsButHasContentInside();
-
-      myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
-        @Override
-        protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
-          return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
-        }
-      };
-      phase.reportPhaseFinished();
-    }
-    finally {
-      activityReporter.reportFinished();
-    }
-  }
-
-  private DirectoryIndexAnalyticsReporter.ActivityReporter logActivityStarted(DirectoryIndexAnalyticsReporter.BuildPart part) {
-    return DirectoryIndexAnalyticsReporter.reportStarted(myProject, myBuildRequestKind, part);
+    };
   }
 
   private void storeOutsideProjectRootsButHasContentInside() {
@@ -190,12 +175,11 @@ class RootIndex {
   }
 
   @NotNull
-  private RootInfo buildRootInfo(@NotNull Project project, DirectoryIndexAnalyticsReporter.ActivityReporter activity) {
+  private RootInfo buildRootInfo(@NotNull Project project) {
     final RootInfo info = new RootInfo();
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     boolean includeProjectJdk = true;
 
-    DirectoryIndexAnalyticsReporter.PhaseReporter phase = activity.reportWorkspacePhaseStarted();
     for (final Module module : moduleManager.getModules()) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
 
@@ -266,19 +250,15 @@ class RootIndex {
         }
       }
     }
-    phase.reportPhaseFinished();
 
     if (includeProjectJdk) {
-      phase = activity.reportSdkPhaseStarted();
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null) {
         fillIndexWithLibraryRoots(info, sdk, myRootSupplier.getSdkRoots(sdk, OrderRootType.SOURCES),
                                   myRootSupplier.getSdkRoots(sdk, OrderRootType.CLASSES));
       }
-      phase.reportPhaseFinished();
     }
 
-    phase = activity.reportAdditionalLibrariesPhaseStarted();
     for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
       for (SyntheticLibrary library : libraries) {
@@ -312,9 +292,7 @@ class RootIndex {
         }
       }
     }
-    phase.reportPhaseFinished();
 
-    phase = activity.reportExclusionPolicyPhaseStarted();
     for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
       List<VirtualFile> files = ContainerUtil.mapNotNull(policy.getExcludeUrlsForProject(), myRootSupplier::findFileByUrl);
       info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> RootFileSupplier.ensureValid(file, project, policy)));
@@ -353,7 +331,6 @@ class RootIndex {
         }
       }
     }
-    phase.reportPhaseFinished();
 
     return info;
   }
@@ -385,18 +362,9 @@ class RootIndex {
   @NotNull
   private synchronized OrderEntryGraph getOrderEntryGraph() {
     if (myOrderEntryGraph == null) {
-      DirectoryIndexAnalyticsReporter.ActivityReporter activityReporter =
-        logActivityStarted(DirectoryIndexAnalyticsReporter.BuildPart.ORDER_ENTRY_GRAPH);
-      try {
-        RootInfo rootInfo = buildRootInfo(myProject, activityReporter);
-        DirectoryIndexAnalyticsReporter.PhaseReporter phase = activityReporter.reportFinalizingPhaseStarted();
-        Couple<MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();
-        myOrderEntryGraph = new OrderEntryGraph(myProject, rootInfo, pair.first, pair.second);
-        phase.reportPhaseFinished();
-      }
-      finally {
-        activityReporter.reportFinished();
-      }
+      RootInfo rootInfo = buildRootInfo(myProject);
+      Couple<MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();
+      myOrderEntryGraph = new OrderEntryGraph(myProject, rootInfo, pair.first, pair.second);
     }
     return myOrderEntryGraph;
   }
