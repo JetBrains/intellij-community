@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.model.ModelBranchImpl;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,13 +67,15 @@ public final class FilesScanExecutor {
         ProgressManager.getInstance().runProcess(runnable, ProgressWrapper.wrap(progress));
       }));
     }
-    // put the current thread to work too so the total thread count is `getNumberOfScanningThreads`
-    // and avoid thread starvation due to a recursive `runOnAllThreads` invocation
-    runnable.run();
-    for (Future<?> result : results) {
-      // complete the future to avoid waiting for it forever if `ourExecutor` is fully booked
-      ((FutureTask<?>)result).run();
-      ProgressIndicatorUtils.awaitWithCheckCanceled(result);
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      // put the current thread to work too so the total thread count is `getNumberOfScanningThreads`
+      // and avoid thread starvation due to a recursive `runOnAllThreads` invocation
+      runnable.run();
+      for (Future<?> result : results) {
+        // complete the future to avoid waiting for it forever if `ourExecutor` is fully booked
+        ((FutureTask<?>)result).run();
+        ProgressIndicatorUtils.awaitWithCheckCanceled(result);
+      }
     }
   }
 
