@@ -80,6 +80,11 @@ public class UltraLightFacadeClassTestGenerated extends AbstractUltraLightFacade
         runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/properties.kt"));
     }
 
+    @TestMetadata("script.kts")
+    public void testScript() throws Exception {
+        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/script.kts"));
+    }
+
     @TestMetadata("simpleFunctions.kt")
     public void testSimpleFunctions() throws Exception {
         runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/simpleFunctions.kt"));
