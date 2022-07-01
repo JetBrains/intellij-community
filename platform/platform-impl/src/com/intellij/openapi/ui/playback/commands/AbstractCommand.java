@@ -14,6 +14,8 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public abstract class AbstractCommand implements PlaybackCommand {
 
@@ -33,6 +35,14 @@ public abstract class AbstractCommand implements PlaybackCommand {
     else {
       return myText;
     }
+  }
+
+  public ArrayList<String> extractCommandList(String prefix, String delimiter) {
+    ArrayList<String> arguments = new ArrayList<>();
+    for (String argument: extractCommandArgument(prefix).split(delimiter)) {
+      arguments.add(argument.trim());
+    }
+    return arguments;
   }
 
   private final @NonNls @NotNull String myText;
