@@ -1,6 +1,4 @@
-/*******************************************************************************
- * Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
- ******************************************************************************/
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
@@ -23,16 +21,20 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.isCorePlugin
 import com.intellij.openapi.project.impl.waitAndProcessInvocationEventsInIdeEventQueue
 import com.intellij.openapi.startup.InitProjectActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.TimeoutUtil
@@ -177,7 +179,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.APP_STARTED, LoadingState.PROJECT_OPENED)
 
     if (app.isUnitTestMode && !app.isDispatchThread) {
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, ::runPostStartupActivities)
+      runPostStartupActivities()
     }
     else {
       // doesn't block project opening
@@ -190,11 +192,18 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         }
       }) {
         if (!project.isDisposed) {
-          try {
-            BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, ::runPostStartupActivities)
+          val rootCoroutine = GlobalScope.async(start = CoroutineStart.LAZY) {
+            runPostStartupActivities()
           }
-          catch (ignore: ProcessCanceledException) {
+
+          val coroutineDisposable = Disposable {
+            rootCoroutine.cancel()
           }
+          rootCoroutine.invokeOnCompletion {
+            Disposer.dispose(coroutineDisposable)
+          }
+          Disposer.register(project, coroutineDisposable)
+          rootCoroutine.start()
         }
       }
       if (app.isUnitTestMode) {
@@ -250,7 +259,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   }
 
   // Must be executed in a pooled thread outside of project loading modal task. The only exclusion - test mode.
-  private fun runPostStartupActivities() {
+  private suspend fun runPostStartupActivities() {
     try {
       LOG.assertTrue(isStartupActivitiesPassed)
       val snapshot = PerformanceWatcher.takeSnapshot()
@@ -262,34 +271,51 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       val uiFreezeWarned = AtomicBoolean()
       val counter = AtomicInteger()
       val dumbService = DumbService.getInstance(project)
-      StartupActivity.POST_STARTUP_ACTIVITY.processWithPluginDescriptor { extension, pluginDescriptor ->
+      val isProjectLightEditCompatible = project is LightEditCompatible
+      for (adapter in (StartupActivity.POST_STARTUP_ACTIVITY.point as ExtensionPointImpl<StartupActivity>).sortedAdapters) {
         if (project.isDisposed) {
-          return@processWithPluginDescriptor
+          return
         }
-        if (DumbService.isDumbAware(extension)) {
-          dumbService.runWithWaitForSmartModeDisabled {
-            runActivityAndMeasureDuration(extension, pluginDescriptor.pluginId)
+
+        val extension = adapter.createInstance<StartupActivity>(project) ?: continue
+        if (extension is ProjectPostStartupActivity) {
+          dumbService.runWithWaitForSmartModeDisabled().use {
+            runActivityAndMeasureDuration(extension, adapter.pluginDescriptor.pluginId, isProjectLightEditCompatible)
           }
-          return@processWithPluginDescriptor
+          continue
         }
-        if (edtActivity.get() == null) {
-          edtActivity.set(StartUpMeasurer.startActivity("project post-startup edt activities"))
-        }
-        // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
-        if (!LightEdit.owns(project)) {
-          counter.incrementAndGet()
-          val traceContext = Context.current()
-          dumbService.unsafeRunWhenSmart {
-            traceContext.makeCurrent()
-            val duration = runActivityAndMeasureDuration(extension, pluginDescriptor.pluginId)
-            if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
-              reportUiFreeze(uiFreezeWarned)
+        else {
+          @Suppress("SSBasedInspection")
+          if (extension is DumbAware) {
+            runUnderIndicator {
+              dumbService.runWithWaitForSmartModeDisabled().use {
+                runActivityAndMeasureDuration(extension, adapter.pluginDescriptor.pluginId)
+              }
+            }
+            continue
+          }
+          else {
+            if (edtActivity.get() == null) {
+              edtActivity.set(StartUpMeasurer.startActivity("project post-startup edt activities"))
             }
 
-            dumbUnawarePostActivitiesPassed(edtActivity, counter.decrementAndGet())
+            // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
+            if (!isProjectLightEditCompatible) {
+              counter.incrementAndGet()
+              val traceContext = Context.current()
+              dumbService.unsafeRunWhenSmart {
+                traceContext.makeCurrent()
+                val duration = runActivityAndMeasureDuration(extension, adapter.pluginDescriptor.pluginId)
+                if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
+                  reportUiFreeze(uiFreezeWarned)
+                }
+                dumbUnawarePostActivitiesPassed(edtActivity, counter.decrementAndGet())
+              }
+            }
           }
         }
       }
+
       dumbUnawarePostActivitiesPassed(edtActivity, counter.get())
 
       if (project.isDisposed) {
@@ -303,6 +329,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         scheduleBackgroundPostStartupActivities()
         addActivityEpListener(project)
       }
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Throwable) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -339,6 +368,23 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       indicator?.popState()
     }
 
+    return addCompletedActivity(startTime = startTime, runnableClass = activity.javaClass, pluginId = pluginId)
+  }
+
+  private suspend fun runActivityAndMeasureDuration(
+    activity: ProjectPostStartupActivity,
+    pluginId: PluginId,
+    isProjectLightEditCompatible: Boolean
+  ): Long {
+    val startTime = StartUpMeasurer.getCurrentTime()
+    tracer.spanBuilder("run activity")
+      .setAttribute(AttributeKey.stringKey("class"), activity.javaClass.name)
+      .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
+      .useWithScope {
+        if (!isProjectLightEditCompatible || activity is LightEditCompatible) {
+          activity.execute(project)
+        }
+      }
     return addCompletedActivity(startTime = startTime, runnableClass = activity.javaClass, pluginId = pluginId)
   }
 
@@ -433,26 +479,34 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   private var scheduledFuture: ScheduledFuture<*>? = null
   private fun scheduleBackgroundPostStartupActivities() {
     scheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule({
-      scheduledFuture = null
-      if (project.isDisposed) {
-        return@schedule
-      }
+                                                                                  scheduledFuture = null
+                                                                                  if (project.isDisposed) {
+                                                                                    return@schedule
+                                                                                  }
 
-      val startTimeNano = System.nanoTime()
-      // read action - dynamic plugin loading executed as a write action
-      val activities = ReadAction.compute<List<StartupActivity.Background>, RuntimeException> {
-        BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<StartupActivity.Background?> {
-          override fun extensionAdded(extension: StartupActivity.Background, pluginDescriptor: PluginDescriptor) {
-            AppExecutorUtil.getAppScheduledExecutorService().execute { runBackgroundPostStartupActivities(listOf(extension)) }
-          }
-        }, project)
-        BACKGROUND_POST_STARTUP_ACTIVITY.extensionList
-      }
-      runBackgroundPostStartupActivities(activities)
-      LOG.debug {
-        "Background post-startup activities done in ${TimeoutUtil.getDurationMillis(startTimeNano)}ms"
-      }
-    }, Registry.intValue("ide.background.post.startup.activity.delay").toLong(), TimeUnit.MILLISECONDS)
+                                                                                  val startTimeNano = System.nanoTime()
+                                                                                  // read action - dynamic plugin loading executed as a write action
+                                                                                  val activities = ReadAction.compute<List<StartupActivity.Background>, RuntimeException> {
+                                                                                    BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(
+                                                                                      object : ExtensionPointListener<StartupActivity.Background?> {
+                                                                                        override fun extensionAdded(extension: StartupActivity.Background,
+                                                                                                                    pluginDescriptor: PluginDescriptor) {
+                                                                                          AppExecutorUtil.getAppScheduledExecutorService().execute {
+                                                                                            runBackgroundPostStartupActivities(
+                                                                                              listOf(extension))
+                                                                                          }
+                                                                                        }
+                                                                                      }, project)
+                                                                                    BACKGROUND_POST_STARTUP_ACTIVITY.extensionList
+                                                                                  }
+                                                                                  runBackgroundPostStartupActivities(activities)
+                                                                                  LOG.debug {
+                                                                                    "Background post-startup activities done in ${
+                                                                                      TimeoutUtil.getDurationMillis(startTimeNano)
+                                                                                    }ms"
+                                                                                  }
+                                                                                }, Registry.intValue(
+      "ide.background.post.startup.activity.delay").toLong(), TimeUnit.MILLISECONDS)
   }
 
   override fun dispose() {

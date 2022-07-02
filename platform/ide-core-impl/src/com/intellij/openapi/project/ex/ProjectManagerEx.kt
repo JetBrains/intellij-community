@@ -59,6 +59,9 @@ abstract class ProjectManagerEx : ProjectManager() {
   abstract fun forceCloseProject(project: Project): Boolean
 
   @Internal
+  abstract suspend fun forceCloseProjectAsync(project: Project): Boolean
+
+  @Internal
   abstract fun saveAndForceCloseProject(project: Project): Boolean
 
   // return true if successful

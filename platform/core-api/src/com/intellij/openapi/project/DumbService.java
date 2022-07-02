@@ -2,6 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -416,7 +417,7 @@ public abstract class DumbService {
   public abstract void suspendIndexingAndRun(@NotNull @NlsContexts.ProgressText String activityName, @NotNull Runnable activity);
 
   @ApiStatus.Internal
-  public abstract void runWithWaitForSmartModeDisabled(@NotNull Runnable runnable);
+  public abstract AccessToken runWithWaitForSmartModeDisabled();
 
   /**
    * @see #DUMB_MODE

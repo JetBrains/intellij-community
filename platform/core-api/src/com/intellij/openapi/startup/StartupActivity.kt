@@ -1,36 +1,45 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.startup;
+package com.intellij.openapi.startup
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Runs an activity on project open.
- * <p>
- * If activity implements {@link com.intellij.openapi.project.DumbAware}, it is executed after project is opened
+ *
+ * If activity implements [com.intellij.openapi.project.DumbAware], it is executed after project is opened
  * on a background thread with no visible progress indicator. Otherwise, it is executed on EDT when indexes are ready.
- * </p>
- * <p>
- * See <a href="https://youtrack.jetbrains.com/articles/IDEA-A-219/Startup-Activity#Post-Startup-Activity">docs</a> for details.
+ *
+ * See [docs](https://youtrack.jetbrains.com/articles/IDEA-A-219/Startup-Activity#Post-Startup-Activity) for details.
  *
  * @see StartupManager
+ *
  * @see com.intellij.ide.util.RunOnceUtil
  */
-public interface StartupActivity {
-  ExtensionPointName<StartupActivity> POST_STARTUP_ACTIVITY = new ExtensionPointName<>("com.intellij.postStartupActivity");
+interface StartupActivity {
+  companion object {
+    @JvmField
+    val POST_STARTUP_ACTIVITY = ExtensionPointName<StartupActivity>("com.intellij.postStartupActivity")
+  }
 
-  void runActivity(@NotNull Project project);
+  fun runActivity(project: Project)
 
   /**
-   * Represents a startup activity that should be executed before {@link com.intellij.openapi.project.DumbService} switches to the "smart mode".
+   * Represents a startup activity that should be executed before [com.intellij.openapi.project.DumbService] switches to the "smart mode".
    */
-  interface RequiredForSmartMode extends StartupActivity {
-  }
+  interface RequiredForSmartMode : StartupActivity
 
-  interface DumbAware extends StartupActivity, com.intellij.openapi.project.DumbAware {
-  }
+  interface DumbAware : StartupActivity, com.intellij.openapi.project.DumbAware
 
-  interface Background extends StartupActivity, com.intellij.openapi.project.DumbAware {
+  interface Background : StartupActivity, com.intellij.openapi.project.DumbAware
+}
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+interface ProjectPostStartupActivity : StartupActivity {
+  suspend fun execute(project: Project)
+
+  override fun runActivity(project: Project) {
   }
 }

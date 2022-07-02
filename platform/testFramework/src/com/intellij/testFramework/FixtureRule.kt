@@ -178,8 +178,6 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
                   projectDescriptor: LightProjectDescriptor? = null) : ApplicationRule() {
   companion object {
     @JvmStatic
-    fun withoutRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = false)
-    @JvmStatic
     fun withRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = true)
 
     /**

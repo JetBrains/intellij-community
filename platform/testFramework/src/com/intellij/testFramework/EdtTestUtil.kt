@@ -7,7 +7,6 @@ import org.jetbrains.annotations.TestOnly
 
 /**
  * Consider using Kotlin coroutines and [Dispatchers.EDT][com.intellij.openapi.application.EDT].
- * @see com.intellij.openapi.application.AppUIExecutor.onUiThread
  */
 @TestOnly
 inline fun <V> runInEdtAndGet(crossinline compute: () -> V): V {
@@ -17,7 +16,6 @@ inline fun <V> runInEdtAndGet(crossinline compute: () -> V): V {
 
 /**
  * Consider using Kotlin coroutines and [Dispatchers.EDT][com.intellij.openapi.application.EDT].
- * @see com.intellij.openapi.application.AppUIExecutor.onUiThread
  */
 @TestOnly
 inline fun runInEdtAndWait(crossinline runnable: () -> Unit) {

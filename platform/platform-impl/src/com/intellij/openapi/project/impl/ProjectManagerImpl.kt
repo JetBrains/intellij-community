@@ -302,6 +302,15 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return closeProject(project = project, saveProject = false, dispose = true, checkCanClose = false)
   }
 
+  override suspend fun forceCloseProjectAsync(project: Project): Boolean {
+    return withContext(Dispatchers.EDT) {
+      if (project.isDisposed) {
+        return@withContext false
+      }
+      closeProject(project = project, saveProject = false, dispose = true, checkCanClose = false)
+    }
+  }
+
   override fun saveAndForceCloseProject(project: Project): Boolean {
     return closeProject(project = project, saveProject = true, dispose = true, checkCanClose = false)
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.codeWithMe.ClientId;
@@ -11,10 +11,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -638,14 +635,14 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public void runWithWaitForSmartModeDisabled(@NotNull Runnable runnable) {
-    try {
-      myWaitIntolerantThread = Thread.currentThread();
-      runnable.run();
-    }
-    finally {
-      myWaitIntolerantThread = null;
-    }
+  public AccessToken runWithWaitForSmartModeDisabled() {
+    myWaitIntolerantThread = Thread.currentThread();
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        myWaitIntolerantThread = null;
+      }
+    };
   }
 
   @Override
