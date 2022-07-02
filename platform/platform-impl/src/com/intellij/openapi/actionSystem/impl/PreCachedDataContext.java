@@ -80,7 +80,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     ApplicationManager.getApplication().assertIsDispatchThread();
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
       int count = ActivityTracker.getInstance().getCount();
-      if (ourPrevMapEventCount != count) {
+      if (ourPrevMapEventCount != count || ApplicationManager.getApplication().isUnitTestMode()) {
         ourPrevMaps.clear();
       }
       List<Component> components = ContainerUtil.reverse(
