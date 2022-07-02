@@ -12,9 +12,12 @@ import com.intellij.openapi.startup.StartupActivity
  *
  * @see IsUpToDateCheckConsumer
  */
-class IsUpToDateCheckStartupActivity : StartupActivity.Background {
+internal class IsUpToDateCheckStartupActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode) return
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
+
     val logger = thisLogger()
 
     val isUpToDateConsumers = IsUpToDateCheckConsumer.EP_NAME.extensionList.filter { it.isApplicable(project) }
@@ -27,9 +30,7 @@ class IsUpToDateCheckStartupActivity : StartupActivity.Background {
     }
 
     val compilerManager = CompilerManager.getInstance(project)
-    val projectCompileScope = compilerManager.createProjectCompileScope(project)
-    val isUpToDate = compilerManager.isUpToDate(projectCompileScope)
-
+    val isUpToDate = compilerManager.isUpToDate(compilerManager.createProjectCompileScope(project))
     logger.info("isUpToDate = $isUpToDate")
     for (consumer in isUpToDateConsumers) {
       consumer.isUpToDate(project, isUpToDate)
