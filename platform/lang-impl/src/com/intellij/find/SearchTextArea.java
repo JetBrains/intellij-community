@@ -427,8 +427,8 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   }
 
   private static final class MyActionButton extends ActionButton {
-    private MyActionButton(@NotNull AnAction action, boolean focusable, boolean fieldInplaceLook) {
-      super(action, action.getTemplatePresentation().clone(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    MyActionButton(@NotNull AnAction action, boolean focusable, boolean fieldInplaceLook) {
+      super(action, action.getTemplatePresentation().clone(), "SearchTextArea", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
       setLook(fieldInplaceLook ? FIELD_INPLACE_LOOK : ActionButtonLook.INPLACE_LOOK);
       setFocusable(focusable);
       updateIcon();
