@@ -35,14 +35,16 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open fun getVirtualFileResolver(): VirtualFileResolver? = null
 
-  final override fun <T: Scheme, MutableT : T> create(directoryName: String,
-                                                    processor: SchemeProcessor<T, MutableT>,
-                                                    presentableName: String?,
-                                                    roamingType: RoamingType,
-                                                    schemeNameToFileName: SchemeNameToFileName,
-                                                    streamProvider: StreamProvider?,
-                                                    directoryPath: Path?,
-                                                    isAutoSave: Boolean): SchemeManager<T> {
+  final override fun <T: Scheme, MutableT : T> create(
+    directoryName: String,
+    processor: SchemeProcessor<T, MutableT>,
+    presentableName: String?,
+    roamingType: RoamingType,
+    schemeNameToFileName: SchemeNameToFileName,
+    streamProvider: StreamProvider?,
+    directoryPath: Path?,
+    isAutoSave: Boolean
+  ): SchemeManager<T> {
     val path = checkPath(directoryName)
     val fileChangeSubscriber = when {
       streamProvider != null && streamProvider.isApplicable(path, roamingType) -> null
