@@ -44,7 +44,7 @@ internal abstract class SettingsSyncTestBase {
     val mainDir = tempDirManager.createDir()
     configDir = mainDir.resolve("rootconfig").createDirectories()
 
-    remoteCommunicator = if (System.getenv("settings.sync.test.cloud") == "real") {
+    remoteCommunicator = if (System.getenv("SETTINGS_SYNC_TEST_CLOUD") == "real") {
       TestCloudConfigRemoteCommunicator()
     } else {
       MockRemoteCommunicator()
