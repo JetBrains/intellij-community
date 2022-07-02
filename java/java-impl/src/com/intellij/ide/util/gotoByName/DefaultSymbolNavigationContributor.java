@@ -30,7 +30,7 @@ import java.util.function.Predicate;
 public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
   @Nullable
   @Override
-  public String getQualifiedName(NavigationItem item) {
+  public String getQualifiedName(@NotNull NavigationItem item) {
     if (item instanceof PsiClass) {
       return DefaultClassNavigationContributor.getQualifiedNameForClass((PsiClass)item);
     }
@@ -160,7 +160,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   public static class JavadocSeparatorContributor implements ChooseByNameContributorEx, GotoClassContributor {
     @Nullable
     @Override
-    public String getQualifiedName(NavigationItem item) {
+    public String getQualifiedName(@NotNull NavigationItem item) {
       return null;
     }
 
