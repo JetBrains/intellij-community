@@ -13057,6 +13057,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/ReplaceReadLineWithReadln/readln/qualified.kt");
             }
 
+            @TestMetadata("sameName.kt")
+            public void testSameName() throws Exception {
+                runTest("testData/inspectionsLocal/ReplaceReadLineWithReadln/readln/sameName.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("testData/inspectionsLocal/ReplaceReadLineWithReadln/readln/simple.kt");
@@ -13078,6 +13083,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("qualified.kt")
             public void testQualified() throws Exception {
                 runTest("testData/inspectionsLocal/ReplaceReadLineWithReadln/readlnOrNull/qualified.kt");
+            }
+
+            @TestMetadata("sameName.kt")
+            public void testSameName() throws Exception {
+                runTest("testData/inspectionsLocal/ReplaceReadLineWithReadln/readlnOrNull/sameName.kt");
             }
 
             @TestMetadata("simple.kt")

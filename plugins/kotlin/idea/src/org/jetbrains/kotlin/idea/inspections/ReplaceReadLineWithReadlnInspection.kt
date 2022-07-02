@@ -8,9 +8,11 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPostfixExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.callExpressionVisitor
@@ -48,7 +50,8 @@ class ReplaceReadLineWithReadlnInspection : AbstractKotlinInspection() {
         override fun getFamilyName() = name
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            descriptor.psiElement.replace(KtPsiFactory(project).createExpression("$functionName()"))
+            val replaced = descriptor.psiElement.replace(KtPsiFactory(project).createExpression("kotlin.io.$functionName()"))
+            ShortenReferences.DEFAULT.process(replaced as KtElement)
         }
     }
 }
