@@ -13,13 +13,17 @@ import org.jetbrains.kotlin.psi.KtWhenEntry
 class KotlinMissingWhenEntryBodyFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSmartEnterHandler>() {
     override fun apply(editor: Editor, processor: KotlinSmartEnterHandler, element: PsiElement) {
         if (element !is KtWhenEntry || element.expression != null) return
+        val doc = editor.document
         val arrow = element.arrow
         if (arrow != null) {
-            editor.document.insertString(arrow.range.end, "{\n}")
+            doc.insertString(arrow.range.end, "{\n}")
         } else {
             val lastCondition = element.conditions.lastOrNull() ?: return
             if (PsiTreeUtil.findChildOfType(lastCondition, PsiErrorElement::class.java) != null) return
-            editor.document.insertString(lastCondition.range.end, "-> {\n}")
+            val offset = lastCondition.range.end
+            val caretModel = editor.caretModel
+            if (doc.getLineNumber(caretModel.offset) == doc.getLineNumber(element.range.start)) caretModel.moveToOffset(offset)
+            doc.insertString(offset, "-> {\n}")
         }
     }
 }
