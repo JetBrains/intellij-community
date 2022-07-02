@@ -802,6 +802,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       project = instantiateProject(projectStoreBaseDir, options)
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
       initProject(projectStoreBaseDir, project, options.isRefreshVfsNeeded, options.preloadServices, template, indicator)
+
+      project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, true)
     }
     else {
       var conversionResult: ConversionResult? = null
@@ -821,7 +823,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
       project = instantiateProject(projectStoreBaseDir, options)
       // template as null here because it is not a new project
-      initProject(projectStoreBaseDir, project, options.isRefreshVfsNeeded, options.preloadServices, null, indicator)
+      initProject(file = projectStoreBaseDir,
+                  project = project,
+                  isRefreshVfsNeeded = options.isRefreshVfsNeeded,
+                  preloadServices = options.preloadServices,
+                  template = null,
+                  indicator = indicator)
       if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
         StartupManager.getInstance(project).runAfterOpened {
           conversionResult.postStartupActivity(project)
@@ -829,16 +836,17 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
 
-    project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, options.isNewProject)
-
     if (options.beforeOpen != null && !options.beforeOpen!!(project)) {
       return null
     }
 
-    if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty()) ||
-        project.isLoadedFromCacheButHasNoModules()) {
-      val module = PlatformProjectOpenProcessor
-        .runDirectoryProjectConfiguratorsV2(baseDir = projectStoreBaseDir, project = project, newProject = options.isProjectCreatedWithWizard)
+    if (options.runConfigurators &&
+        (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty()) || project.isLoadedFromCacheButHasNoModules()) {
+      val module = PlatformProjectOpenProcessor.runDirectoryProjectConfiguratorsV2(
+        baseDir = projectStoreBaseDir,
+        project = project,
+        newProject = options.isProjectCreatedWithWizard
+      )
       options.preparedToOpen?.invoke(module)
       return PrepareProjectResult(project, module)
     }
@@ -1170,7 +1178,7 @@ internal fun waitAndProcessInvocationEventsInIdeEventQueue(startupManager: Start
   }
 }
 
-private data class PrepareProjectResult(val project: Project, val module: Module?)
+private data class PrepareProjectResult(@JvmField val project: Project, @JvmField val module: Module?)
 
 private fun toCanonicalName(filePath: String): Path {
   val file = Paths.get(filePath)

@@ -208,7 +208,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     ApplicationManager.getApplication().invokeLater(
       () -> ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).dispatchEarlyNotifications(),
       ModalityState.NON_MODAL,
-      ignored -> frame == null);
+      __ -> frame == null);
   }
 
   @Override

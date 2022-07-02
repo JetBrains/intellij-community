@@ -10,8 +10,10 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.TaskSupport
 import com.intellij.openapi.progress.withModalProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -26,8 +28,8 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
@@ -74,11 +76,15 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       }
     }
 
-    frameManager = createFrameManager()
-    return withModalProgressIndicator(owner = ModalTaskOwner.window(frameManager!!.getWindow()), title = getProgressTitle()) {
-      coroutineScope {
-        // create project frame
-        launch { frameManager!!.init(this@ProjectUiFrameAllocator) }
+    return coroutineScope {
+      val deferredWindow = async {
+        val frameManager = createFrameManager()
+        this@ProjectUiFrameAllocator.frameManager = frameManager
+        frameManager.init(this@ProjectUiFrameAllocator)
+        frameManager.getWindow()
+      }
+
+      withModalProgressIndicator(owner = service<TaskSupport>().modalTaskOwner(deferredWindow), title = getProgressTitle()) {
         task()
       }
     }
@@ -104,11 +110,12 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       runActivity("create a frame") {
         val preAllocated = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
         if (preAllocated == null) {
-          if (options.frameManager is FrameInfo) {
-            SingleProjectUiFrameManager(options.frameManager as FrameInfo, createNewProjectFrame(options.frameManager as FrameInfo))
+          val frameInfo = options.frameInfo
+          if (frameInfo == null) {
+            DefaultProjectUiFrameManager(frame = createNewProjectFrame(null), frameHelper = null)
           }
           else {
-            DefaultProjectUiFrameManager(frame = createNewProjectFrame(null), frameHelper = null)
+            SingleProjectUiFrameManager(frameInfo = frameInfo, frame = createNewProjectFrame(frameInfo))
           }
         }
         else {
@@ -286,8 +293,8 @@ private class SingleProjectUiFrameManager(private val frameInfo: FrameInfo, priv
       frameHelper.toggleFullScreen(true)
     }
 
-    frame.isVisible = true
     frameHelper.init()
+    frame.isVisible = true
     this.frameHelper = frameHelper
   }
 }
@@ -305,3 +312,14 @@ private fun readProjectSelfie(projectWorkspaceId: String?, frame: IdeFrameImpl):
   }
   return null
 }
+
+internal val OpenProjectTask.frameInfo: FrameInfo?
+  get() = (implOptions as OpenProjectImplOptions?)?.frameInfo
+
+internal val OpenProjectTask.frameManager: ProjectUiFrameManager?
+  get() = (implOptions as OpenProjectImplOptions?)?.frameManager
+
+internal data class OpenProjectImplOptions(
+  @JvmField val frameInfo: FrameInfo? = null,
+  @JvmField val frameManager: ProjectUiFrameManager? = null,
+)

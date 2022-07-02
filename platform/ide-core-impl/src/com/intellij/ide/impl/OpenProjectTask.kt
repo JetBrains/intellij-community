@@ -19,7 +19,6 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
                                                 /** Whether to show welcome screen if failed to open project. */
                                                 val showWelcomeScreen: Boolean,
                                                 val callback: ProjectOpenedCallback? = null,
-                                                val frameManager: Any? = null,
                                                 val line: Int = -1,
                                                 val column: Int = -1,
                                                 val isRefreshVfsNeeded: Boolean,
@@ -41,7 +40,8 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
                                                 val beforeOpen: (suspend (Project) -> Boolean)?,
                                                 val preparedToOpen: ((Module) -> Unit)?,
                                                 val preventIprLookup: Boolean,
-                                                val processorChooser: ((List<Any>) -> Any)?) {
+                                                val processorChooser: ((List<Any>) -> Any)?,
+                                                val implOptions: Any? = null) {
   constructor(forceOpenInNewFrame: Boolean = false,
               projectToClose: Project? = null,
               isNewProject: Boolean = false,
@@ -53,7 +53,6 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
               /** Whether to show welcome screen if failed to open project. */
               showWelcomeScreen: Boolean = true,
               callback: ProjectOpenedCallback? = null,
-              frameManager: Any? = null,
               line: Int = -1,
               column: Int = -1,
               isRefreshVfsNeeded: Boolean = true,
@@ -68,7 +67,8 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
               runConversionBeforeOpen: Boolean = true,
               projectWorkspaceId: String? = null,
               isProjectCreatedWithWizard: Boolean = false,
-              preloadServices: Boolean = true) : this(
+              preloadServices: Boolean = true,
+              implOptions: Any? = null) : this(
     forceOpenInNewFrame = forceOpenInNewFrame,
     projectToClose = projectToClose,
     isNewProject = isNewProject,
@@ -79,7 +79,6 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
 
     showWelcomeScreen = showWelcomeScreen,
     callback = callback,
-    frameManager = frameManager,
     line = line,
     column = column,
     isRefreshVfsNeeded = isRefreshVfsNeeded,
@@ -96,6 +95,8 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
     preventIprLookup = false,
     preparedToOpen = null,
     processorChooser = null,
+
+    implOptions = implOptions,
   )
 
   companion object {
@@ -175,6 +176,8 @@ class OpenProjectTaskBuilder internal constructor() {
 
       preventIprLookup = preventIprLookup,
       processorChooser = processorChooser,
+
+      implOptions = null,
     )
   }
 }

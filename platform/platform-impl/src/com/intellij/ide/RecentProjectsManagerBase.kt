@@ -23,9 +23,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectUiFrameAllocator
-import com.intellij.openapi.project.impl.ProjectUiFrameManager
-import com.intellij.openapi.project.impl.createNewProjectFrame
+import com.intellij.openapi.project.impl.*
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -482,8 +480,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     val options = OpenProjectTask(
       forceOpenInNewFrame = true,
       showWelcomeScreen = false,
-      frameManager = value.frame,
-      projectWorkspaceId = value.projectWorkspaceId
+      projectWorkspaceId = value.projectWorkspaceId,
+      implOptions = OpenProjectImplOptions(frameInfo = value.frame),
     )
     val project = openProject(Path.of(key), options)
     val nextIndex = index + 1
@@ -540,8 +538,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
           val task = Pair(path, OpenProjectTask(
             forceOpenInNewFrame = true,
             showWelcomeScreen = false,
-            frameManager = frameManager,
             projectWorkspaceId = info.projectWorkspaceId,
+            implOptions = OpenProjectImplOptions(frameManager = frameManager),
           ))
           if (isActive) {
             activeTask = task
