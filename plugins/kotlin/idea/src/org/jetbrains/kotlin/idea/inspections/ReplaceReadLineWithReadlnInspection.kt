@@ -5,21 +5,22 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtPostfixExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
 class ReplaceReadLineWithReadlnInspection : AbstractKotlinInspection() {
     companion object {
         private val readLineFqName = FqName("kotlin.io.readLine")
-        private val readlnFqName = FqName("kotlin.io.readln")
-        private val readlnOrNullFqName = FqName("kotlin.io.readlnOrNull")
+        private const val readlnFunctionName = "readln"
+        private const val readlnOrNullFunctionName = "readlnOrNull"
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(callExpression) {
@@ -28,12 +29,11 @@ class ReplaceReadLineWithReadlnInspection : AbstractKotlinInspection() {
 
         val qualifiedOrCall = callExpression.getQualifiedExpressionForSelectorOrThis()
         val parent = qualifiedOrCall.parent
-        val (targetExpression, newFunction) = if (parent is KtPostfixExpression && parent.operationToken == KtTokens.EXCLEXCL) {
-            parent to readlnFqName
+        val (targetExpression, newFunctionName) = if (parent is KtPostfixExpression && parent.operationToken == KtTokens.EXCLEXCL) {
+            parent to readlnFunctionName
         } else {
-            qualifiedOrCall to readlnOrNullFqName
+            qualifiedOrCall to readlnOrNullFunctionName
         }
-        val newFunctionName = newFunction.shortName().asString()
 
         holder.registerProblem(
             targetExpression,
