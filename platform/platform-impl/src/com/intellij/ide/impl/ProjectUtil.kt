@@ -60,7 +60,6 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
-import java.util.function.Function
 
 private val LOG = Logger.getInstance(ProjectUtil::class.java)
 private var ourProjectsPath: String? = null
@@ -70,15 +69,8 @@ object ProjectUtil {
   private const val PROJECTS_DIR = "projects"
   private const val PROPERTY_PROJECT_PATH = "%s.project.path"
 
-  @Internal
-  @JvmField
-  val PREVENT_IPR_LOOKUP_KEY = Key.create<Boolean>("project.util.prevent.ipr.lookup")
-
-  @Internal
-  @JvmField
-  val PROCESSOR_CHOOSER_KEY = Key.create<Function<List<ProjectOpenProcessor>, ProjectOpenProcessor>>("project.util.processor.chooser")
-
-  @Deprecated("Use {@link #updateLastProjectLocation(Path)} ", ReplaceWith("updateLastProjectLocation(Path.of(projectFilePath))", "com.intellij.ide.impl.ProjectUtil.updateLastProjectLocation",
+  @Deprecated("Use {@link #updateLastProjectLocation(Path)} ", ReplaceWith("updateLastProjectLocation(Path.of(projectFilePath))",
+                                                                           "com.intellij.ide.impl.ProjectUtil.updateLastProjectLocation",
                                                                            "java.nio.file.Path"))
   fun updateLastProjectLocation(projectFilePath: String) {
     updateLastProjectLocation(Path.of(projectFilePath))
@@ -178,7 +170,7 @@ object ProjectUtil {
       return openResult(project, failure())
     }
 
-    if (PREVENT_IPR_LOOKUP_KEY.get(options) != java.lang.Boolean.TRUE && Files.isDirectory(file)) {
+    if (!options.preventIprLookup && Files.isDirectory(file)) {
       try {
         Files.newDirectoryStream(file).use { directoryStream ->
           for (child in directoryStream) {
@@ -200,12 +192,18 @@ object ProjectUtil {
     }
 
     val project = if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
-      ProjectManagerEx.getInstanceEx().openProject(file,
-                                                   options.asNewProject().withRunConfigurators().withBeforeOpenCallback { p: Project ->
-                                                     p.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR,
-                                                                   java.lang.Boolean.TRUE)
-                                                     true
-                                                   })
+      ProjectManagerEx.getInstanceEx().openProject(
+        projectStoreBaseDir = file,
+        options = options.copy(
+          isNewProject = true,
+          useDefaultProjectAsTemplate = true,
+          runConfigurators = true,
+          beforeOpen = {
+            it.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+            true
+          }
+        )
+      )
     }
     else {
       val virtualFile = lazyVirtualFile.value ?: return failure()
@@ -248,7 +246,7 @@ object ProjectUtil {
       return ProjectManagerEx.getInstanceEx().openProjectAsync(file, options.withRunConfigurators())
     }
 
-    if (PREVENT_IPR_LOOKUP_KEY.get(options) != true && Files.isDirectory(file)) {
+    if (!options.preventIprLookup && Files.isDirectory(file)) {
       try {
         Files.newDirectoryStream(file).use { directoryStream ->
           for (child in directoryStream) {
@@ -333,10 +331,10 @@ object ProjectUtil {
         processor = processors.first()
       }
       else {
-        val chooser = options.getUserData(PROCESSOR_CHOOSER_KEY)
+        val chooser = options.processorChooser
         if (chooser != null) {
           LOG.info("options.openProcessorChooser will handle the open processor dilemma")
-          processor = chooser.apply(processors)
+          processor = chooser(processors) as ProjectOpenProcessor
         }
         else {
           ApplicationManager.getApplication().invokeAndWait {
@@ -372,7 +370,7 @@ object ProjectUtil {
           processors.first()
         }
         else {
-          val chooser = PROCESSOR_CHOOSER_KEY.get(options)
+          val chooser = options.processorChooser
           if (chooser == null) {
             withContext(Dispatchers.EDT) {
               SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile)
@@ -380,7 +378,7 @@ object ProjectUtil {
           }
           else {
             LOG.info("options.openProcessorChooser will handle the open processor dilemma")
-            chooser.apply(processors)
+            chooser(processors) as ProjectOpenProcessor
           }
         }
       }
@@ -538,7 +536,7 @@ object ProjectUtil {
 
   @Deprecated("Use {@link #isSameProject(Path, Project)} ",
               ReplaceWith("projectFilePath != null && isSameProject(Path.of(projectFilePath), project)",
-                                        "com.intellij.ide.impl.ProjectUtil.isSameProject", "java.nio.file.Path"))
+                          "com.intellij.ide.impl.ProjectUtil.isSameProject", "java.nio.file.Path"))
   fun isSameProject(projectFilePath: String?, project: Project): Boolean {
     return projectFilePath != null && isSameProject(Path.of(projectFilePath), project)
   }

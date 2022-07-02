@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectExImpl
 import com.intellij.util.ThreeState
+import java.util.function.Predicate
 
 /**
  * Do not use in Kotlin, for Java only.
@@ -53,15 +55,24 @@ class OpenProjectTaskBuilder {
   }
 }
 
-fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true): OpenProjectTask {
-  // In tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times).
+@JvmOverloads
+fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true, beforeOpen: Predicate<Project>? = null): OpenProjectTask {
+  // In tests, it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times).
   // Also, cleanPersistedContents is called on start test application.
-  var task = OpenProjectTask(forceOpenInNewFrame = true,
-                             isRefreshVfsNeeded = false,
-                             runConversionBeforeOpen = false,
-                             runConfigurators = false,
-                             showWelcomeScreen = false,
-                             useDefaultProjectAsTemplate = false)
+  var task = OpenProjectTask {
+    forceOpenInNewFrame = true
+
+    isRefreshVfsNeeded = false
+    runConversionBeforeOpen = false
+    runConfigurators = false
+    showWelcomeScreen = false
+    useDefaultProjectAsTemplate = false
+    if (beforeOpen != null) {
+      this.beforeOpen = {
+        beforeOpen.test(it)
+      }
+    }
+  }
   if (!runPostStartUpActivities) {
     task = task.copy(beforeInit = {
       it.putUserData(ProjectExImpl.RUN_START_UP_ACTIVITIES, false)

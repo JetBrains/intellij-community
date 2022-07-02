@@ -176,7 +176,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   private void setUpProject() throws Exception {
-    OpenProjectTask options = OpenProjectTaskBuilderKt.createTestOpenProjectOptions(true).withBeforeOpenCallback(project -> {
+    OpenProjectTask options = OpenProjectTaskBuilderKt.createTestOpenProjectOptions(true, project -> {
       project.getMessageBus().simpleConnect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
         @Override
         public void moduleAdded(@NotNull Project __, @NotNull Module module) {

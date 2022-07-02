@@ -38,6 +38,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.BuildersKt;
 import kotlinx.coroutines.CoroutineStart;
@@ -56,6 +57,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.ide.impl.OpenProjectTaskKt.OpenProjectTask;
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
 import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
 
@@ -75,9 +77,13 @@ public final class CommandLineProcessor {
   public static @NotNull CommandLineProcessorResult doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
     Project project = null;
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
-      OpenProjectTask options = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null);
-      // do not check for .ipr files in the specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
-      ProjectUtil.PREVENT_IPR_LOOKUP_KEY.set(options, Boolean.TRUE);
+      OpenProjectTask options = OpenProjectTask(builder -> {
+        // do not check for .ipr files in the specified directory
+        // (@develar: it is existing behaviour, I am not fully sure that it is correct)
+        builder.setPreventIprLookup(true);
+        PlatformProjectOpenProcessor.configureToOpenDotIdeaOrCreateNewIfNotExists(builder, file, null);
+        return Unit.INSTANCE;
+      });
       OpenResult openResult = ProjectUtil.tryOpenOrImport(file, options);
       if (openResult instanceof OpenResult.Success) {
         project = ((OpenResult.Success)openResult).getProject();

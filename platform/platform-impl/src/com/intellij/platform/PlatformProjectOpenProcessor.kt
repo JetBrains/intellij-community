@@ -2,6 +2,7 @@
 package com.intellij.platform
 
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.OpenProjectTaskBuilder
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.lightEdit.LightEditService
@@ -263,6 +264,17 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
                              projectToClose = projectToClose,
                              isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode,  // doesn't make sense to refresh
                              useDefaultProjectAsTemplate = true)
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun OpenProjectTaskBuilder.configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?) {
+      runConfigurators = true
+      isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir)
+      this.projectToClose = projectToClose
+      // doesn't make sense to refresh
+      isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode
+      useDefaultProjectAsTemplate = true
     }
   }
 

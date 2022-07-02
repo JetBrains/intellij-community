@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.OpenProjectTaskKt;
 import com.intellij.ide.impl.TrustedPaths;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
@@ -35,6 +36,7 @@ import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.util.PairConsumer;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +67,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     super(Presentation.NULL_STRING, true);
     myCustomization = customization;
     updateActions();
-    EP_NAME.addChangeListener(() -> updateActions(), null);
+    EP_NAME.addChangeListener(this::updateActions, null);
   }
 
   @Override
@@ -188,10 +190,18 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
                                               @NotNull String locationString,
                                               @Nullable DirectoryProjectGenerator<T> generator,
                                               @NotNull T settings) {
-    OpenProjectTask options = OpenProjectTask.build()
-      .withProjectToClose(projectToClose)
-      .asNewProject().withRunConfigurators().withCreatedByWizard().withoutVfsRefresh()
-      .withBeforeOpenCallback(project -> { project.putUserData(CREATED_KEY, true); return true; });
+    OpenProjectTask options = OpenProjectTaskKt.OpenProjectTask(builder -> {
+      builder.setProjectToClose(projectToClose);
+      builder.asNewProject();
+      builder.setRunConfigurators(true);
+      builder.setProjectCreatedWithWizard(true);
+      builder.setRefreshVfsNeeded(false);
+      builder.withBeforeOpenCallback(project -> {
+        project.putUserData(CREATED_KEY, true);
+        return true;
+      });
+      return Unit.INSTANCE;
+    });
     return doGenerateProject(projectToClose, locationString, generator, settings, options);
   }
 
@@ -226,7 +236,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       String noText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.open.existing");
       int result = Messages.showYesNoDialog(projectToClose, message, title, yesText, noText, Messages.getQuestionIcon());
       if (result == Messages.NO) {
-        return PlatformProjectOpenProcessor.doOpenProject(location, new OpenProjectTask());
+        return PlatformProjectOpenProcessor.doOpenProject(location, OpenProjectTask.build());
       }
     }
 

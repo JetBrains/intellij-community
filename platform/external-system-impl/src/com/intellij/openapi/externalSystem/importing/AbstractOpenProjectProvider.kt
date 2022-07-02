@@ -59,11 +59,11 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     val nioPath = projectDirectory.toNioPath()
     val isValidIdeaProject = ProjectUtil.isValidProjectPath(nioPath)
 
-    val options = OpenProjectTask(
-      isNewProject = !isValidIdeaProject,
-      forceOpenInNewFrame = forceOpenInNewFrame,
-      projectToClose = projectToClose,
-      runConfigurators = false,
+    val options = OpenProjectTask {
+      isNewProject = !isValidIdeaProject
+      this.forceOpenInNewFrame = forceOpenInNewFrame
+      this.projectToClose = projectToClose
+      runConfigurators = false
       beforeOpen = { project ->
         if (isValidIdeaProject) {
           UnlinkedProjectNotificationAware.enableNotifications(project, systemId)
@@ -78,7 +78,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
         }
         true
       }
-    )
+    }
     return ProjectManagerEx.getInstanceEx().openProjectAsync(nioPath, options)
   }
 
