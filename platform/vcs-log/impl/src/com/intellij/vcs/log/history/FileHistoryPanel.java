@@ -156,7 +156,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   }
 
   private void invokeOnDoubleClick(@NotNull AnAction action, @NotNull JComponent component) {
-    new EmptyAction.MyDelegatingAction(action) {
+    new AnActionWrapper(action) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (e.getInputEvent() instanceof MouseEvent && myGraphTable.isResizingColumns()) {

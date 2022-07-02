@@ -91,7 +91,7 @@ public final class EmptyAction extends AnAction {
   /**
    * @deprecated Use {@link AnActionWrapper} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static class MyDelegatingAction extends AnActionWrapper {
     public MyDelegatingAction(@NotNull AnAction action) {
       super(action);
@@ -101,7 +101,7 @@ public final class EmptyAction extends AnAction {
   /**
    * @deprecated Use {@link ActionGroupWrapper} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static class MyDelegatingActionGroup extends ActionGroupWrapper {
 
     public MyDelegatingActionGroup(@NotNull ActionGroup group) {

@@ -85,14 +85,14 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
   public interface SpeedsearchAction {
   }
 
-  private static class MySpeedSearchAction extends EmptyAction.MyDelegatingAction implements SpeedsearchAction, DumbAware {
+  private static class MySpeedSearchAction extends AnActionWrapper implements SpeedsearchAction, DumbAware {
 
     MySpeedSearchAction(@NotNull AnAction action) {
       super(action);
     }
   }
 
-  private static class MySpeedSearchActionGroup extends EmptyAction.MyDelegatingActionGroup implements SpeedsearchAction, DumbAware, AlwaysVisibleActionGroup {
+  private static class MySpeedSearchActionGroup extends ActionGroupWrapper implements SpeedsearchAction, DumbAware, AlwaysVisibleActionGroup {
     MySpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
       super(actionGroup);
     }
