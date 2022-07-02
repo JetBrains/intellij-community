@@ -308,7 +308,7 @@ private fun createCommitChecksToolbar(target: JComponent): ActionToolbar =
   }
 
 private class RerunCommitChecksAction :
-  EmptyAction.MyDelegatingAction(ActionManager.getInstance().getAction("Vcs.RunCommitChecks")),
+  AnActionWrapper(ActionManager.getInstance().getAction("Vcs.RunCommitChecks")),
   TooltipDescriptionProvider {
 
   init {

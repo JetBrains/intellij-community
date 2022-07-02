@@ -495,9 +495,9 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     boolean shouldBeShown();
   }
 
-  private static final class HideableActionGroup extends EmptyAction.MyDelegatingActionGroup implements MoreHideableActionGroup,
-                                                                                                        DumbAware,
-                                                                                                        AlwaysVisibleActionGroup {
+  private static final class HideableActionGroup extends ActionGroupWrapper implements MoreHideableActionGroup,
+                                                                                       DumbAware,
+                                                                                       AlwaysVisibleActionGroup {
     @NotNull private final MoreAction myMoreAction;
 
     private HideableActionGroup(@NotNull ActionGroup actionGroup, @NotNull MoreAction moreAction) {

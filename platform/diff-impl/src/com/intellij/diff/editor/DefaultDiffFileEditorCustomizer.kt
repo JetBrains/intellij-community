@@ -5,8 +5,8 @@ import com.intellij.diff.DiffContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionWrapper
 import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.actionSystem.EmptyAction
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
@@ -35,4 +35,4 @@ private class DisposeDiffEditorEscapeAction(private val disposable: Disposable) 
   override fun actionPerformed(e: AnActionEvent) = Disposer.dispose(disposable)
 }
 
-private class DiffEditorEscapeDelegatingAction(delegate: AnAction) : EmptyAction.MyDelegatingAction(delegate), DiffEditorEscapeAction
+private class DiffEditorEscapeDelegatingAction(delegate: AnAction) : AnActionWrapper(delegate), DiffEditorEscapeAction
