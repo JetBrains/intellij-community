@@ -25,7 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +71,7 @@ public class LengthOneStringsInConcatenationInspection extends BaseInspection im
       }
       final String text = expression.getText();
       final String charLiteral = PsiLiteralUtil.charLiteralForCharString(text);
-      PsiReplacementUtil.replaceExpression(expression, charLiteral);
+      new CommentTracker().replaceAndRestoreComments(expression, charLiteral);
     }
   }
 
