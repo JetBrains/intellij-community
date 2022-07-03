@@ -42,7 +42,7 @@ public class CutAction extends DumbAwareAction implements LightEditCompatible {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    CopyAction.computeWithProviderDumbAware(event, PlatformDataKeys.CUT_PROVIDER, provider -> {
+    CopyAction.updateWithProvider(event, event.getData(PlatformDataKeys.CUT_PROVIDER), provider -> {
       boolean isEditorPopup = event.getPlace().equals(ActionPlaces.EDITOR_POPUP);
       event.getPresentation().setEnabled(provider.isCutEnabled(event.getDataContext()));
       event.getPresentation().setVisible(!isEditorPopup || provider.isCutVisible(event.getDataContext()));

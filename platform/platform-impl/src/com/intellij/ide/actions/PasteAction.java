@@ -14,7 +14,7 @@ public class PasteAction extends AnAction implements DumbAware, LightEditCompati
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    CopyAction.computeWithProviderDumbAware(event, PlatformDataKeys.PASTE_PROVIDER, provider -> {
+    CopyAction.updateWithProvider(event, event.getData(PlatformDataKeys.PASTE_PROVIDER), provider -> {
       boolean isEditorPopup = event.getPlace().equals(ActionPlaces.EDITOR_POPUP);
       boolean enabled = provider.isPastePossible(event.getDataContext());
       event.getPresentation().setEnabled(enabled);
