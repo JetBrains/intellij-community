@@ -45,6 +45,7 @@ internal abstract class SettingsSyncTestBase {
     configDir = mainDir.resolve("rootconfig").createDirectories()
 
     remoteCommunicator = if (System.getenv("SETTINGS_SYNC_TEST_CLOUD") == "real") {
+      System.setProperty(CloudConfigServerCommunicator.URL_PROPERTY, CloudConfigServerCommunicator.DEFAULT_PRODUCTION_URL)
       TestCloudConfigRemoteCommunicator()
     } else {
       MockRemoteCommunicator()

@@ -16,10 +16,6 @@ import java.util.*
 internal const val SETTINGS_SYNC_SNAPSHOT = "settings.sync.snapshot"
 internal const val SETTINGS_SYNC_SNAPSHOT_ZIP = "$SETTINGS_SYNC_SNAPSHOT.zip"
 
-private const val DEFAULT_PRODUCTION_URL = "https://cloudconfig.jetbrains.com/cloudconfig"
-private const val DEFAULT_DEBUG_URL = "https://stgn.cloudconfig.jetbrains.com/cloudconfig"
-private const val URL_PROPERTY = "idea.settings.sync.cloud.url"
-
 private const val TIMEOUT = 10000
 
 internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
@@ -195,6 +191,10 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   }
 
   companion object {
+    internal const val DEFAULT_PRODUCTION_URL = "https://cloudconfig.jetbrains.com/cloudconfig"
+    private const val DEFAULT_DEBUG_URL = "https://stgn.cloudconfig.jetbrains.com/cloudconfig"
+    internal const val URL_PROPERTY = "idea.settings.sync.cloud.url"
+
     internal val url get() = _url.value
 
     private val _url = lazy {
