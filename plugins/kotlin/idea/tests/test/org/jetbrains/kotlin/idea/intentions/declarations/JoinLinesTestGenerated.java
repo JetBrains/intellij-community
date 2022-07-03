@@ -479,4 +479,52 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
             runTest("testData/joinLines/stringTemplate/threeLines2.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/joinLines/whenEntry")
+    public static class WhenEntry extends AbstractJoinLinesTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("else.kt")
+        public void testElse() throws Exception {
+            runTest("testData/joinLines/whenEntry/else.kt");
+        }
+
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("testData/joinLines/whenEntry/hasComment.kt");
+        }
+
+        @TestMetadata("hasComment2.kt")
+        public void testHasComment2() throws Exception {
+            runTest("testData/joinLines/whenEntry/hasComment2.kt");
+        }
+
+        @TestMetadata("in.kt")
+        public void testIn() throws Exception {
+            runTest("testData/joinLines/whenEntry/in.kt");
+        }
+
+        @TestMetadata("is.kt")
+        public void testIs() throws Exception {
+            runTest("testData/joinLines/whenEntry/is.kt");
+        }
+
+        @TestMetadata("noSubject.kt")
+        public void testNoSubject() throws Exception {
+            runTest("testData/joinLines/whenEntry/noSubject.kt");
+        }
+
+        @TestMetadata("notSameExpression.kt")
+        public void testNotSameExpression() throws Exception {
+            runTest("testData/joinLines/whenEntry/notSameExpression.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/joinLines/whenEntry/simple.kt");
+        }
+    }
 }
