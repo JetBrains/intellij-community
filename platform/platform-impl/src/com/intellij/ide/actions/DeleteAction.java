@@ -61,7 +61,7 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
       return;
     }
 
-    CopyAction.computeWithProviderDumbAware(e, PlatformDataKeys.DELETE_ELEMENT_PROVIDER, provider -> {
+    CopyAction.updateWithProvider(e, getDeleteProvider(e.getDataContext()), provider -> {
       boolean isPopupPlace = ActionPlaces.isPopupPlace(e.getPlace());
       boolean enabled = provider.canDeleteElement(e.getDataContext());
       presentation.setEnabled(enabled);
