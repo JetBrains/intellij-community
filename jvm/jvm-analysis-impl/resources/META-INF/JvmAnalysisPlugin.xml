@@ -23,6 +23,11 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspection.test.failed.line.display.name"
                      implementationClass="com.intellij.codeInspection.test.TestFailedLineInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="MigrateAssertToMatcherAssert"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.migrate.assertion.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.HamcrestAssertionsConverterInspection"/>
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestInProductSource"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
