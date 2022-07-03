@@ -1,6 +1,7 @@
 package com.intellij.settingsSync
 
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.createDirectories
@@ -27,10 +28,9 @@ import kotlin.io.path.writeText
 internal class GitSettingsLogTest {
 
   private val tempDirManager = TemporaryDirectory()
+  private val appRule = ApplicationRule()
   private val disposableRule = DisposableRule()
-  @Rule
-  @JvmField
-  val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(disposableRule)
+  @Rule @JvmField val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(appRule).around(disposableRule)
 
   private lateinit var configDir: Path
   private lateinit var settingsSyncStorage: Path
