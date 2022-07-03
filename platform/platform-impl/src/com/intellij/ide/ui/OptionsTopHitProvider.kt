@@ -1,206 +1,194 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.ui;
+package com.intellij.ide.ui
 
-import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.SearchTopHitProvider;
-import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PreloadingActivity;
-import com.intellij.openapi.diagnostic.ControlFlowException;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.WordPrefixMatcher;
-import com.intellij.util.text.Matcher;
-import org.jetbrains.annotations.*;
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.SearchTopHitProvider
+import com.intellij.ide.ui.OptionsSearchTopHitProvider.ApplicationLevelProvider
+import com.intellij.ide.ui.OptionsSearchTopHitProvider.ProjectLevelProvider
+import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PreloadingActivity
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.codeStyle.WordPrefixMatcher
+import com.intellij.util.text.Matcher
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.CancellationException
+import java.util.function.Consumer
 
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Consumer;
+abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHitProvider {
+  companion object {
+    // project level here means not that EP itself in project area, but that extensions applicable for project only
+    @JvmField
+    val PROJECT_LEVEL_EP = ExtensionPointName<ProjectLevelProvider>("com.intellij.search.projectOptionsTopHitProvider")
 
-public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvider, SearchTopHitProvider {
-  // project level here means not that EP itself in project area, but that extensions applicable for project only
-  public static final ExtensionPointName<OptionsSearchTopHitProvider.ProjectLevelProvider>
-    PROJECT_LEVEL_EP = new ExtensionPointName<>("com.intellij.search.projectOptionsTopHitProvider");
-
-  private static @NotNull Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider,
-                                                                         @Nullable Project project,
-                                                                         @Nullable PluginDescriptor pluginDescriptor) {
-    TopHitCache cache = project == null || provider instanceof ApplicationLevelProvider
-       ? TopHitCache.getInstance()
-       : ProjectTopHitCache.getInstance(project);
-    return cache.getCachedOptions(provider, project, pluginDescriptor);
-  }
-
-  @Override
-  public final void consumeTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
-    consumeTopHits(this, pattern, collector, project);
-  }
-
-  static void consumeTopHits(@NotNull OptionsSearchTopHitProvider provider,
-                             @NotNull String pattern,
-                             @NotNull Consumer<Object> collector,
-                             @Nullable Project project) {
-    pattern = checkPattern(pattern);
-    if (pattern == null) {
-      return;
-    }
-
-    List<String> parts = StringUtil.split(pattern, " ");
-    if (!parts.isEmpty()) {
-      doConsumeTopHits(provider, pattern, parts.get(0), collector, project);
-    }
-  }
-
-  private static void doConsumeTopHits(@NotNull OptionsSearchTopHitProvider provider,
-                                       @NotNull String pattern,
-                                       @NotNull String id,
-                                       @NotNull Consumer<Object> collector,
-                                       @Nullable Project project) {
-    if (provider.getId().startsWith(id) || pattern.startsWith(" ")) {
-      pattern = pattern.startsWith(" ") ? pattern.trim() : pattern.substring(id.length()).trim();
-      consumeTopHitsForApplicableProvider(provider, buildMatcher(pattern), collector, project);
-    }
-  }
-
-  private static void consumeTopHitsForApplicableProvider(@NotNull OptionsSearchTopHitProvider provider,
-                                                          @NotNull Matcher matcher,
-                                                          @NotNull Consumer<Object> collector,
-                                                          @Nullable Project project) {
-    for (OptionDescription option : getCachedOptions(provider, project, null)) {
-      if (matcher.matches(option.getOption())) {
-        collector.accept(option);
+    @JvmStatic
+    fun consumeTopHits(provider: OptionsSearchTopHitProvider,
+                       rawPattern: String,
+                       collector: Consumer<Any>,
+                       project: Project?) {
+      val pattern = checkPattern(rawPattern) ?: return
+      val parts = pattern.split(' ')
+      if (!parts.isEmpty()) {
+        doConsumeTopHits(provider, pattern, parts[0], collector, project)
       }
     }
-  }
 
-  @NotNull
-  @VisibleForTesting
-  public static Matcher buildMatcher(String pattern) {
-    return new WordPrefixMatcher(pattern);
-  }
+    @VisibleForTesting
+    @JvmStatic
+    fun buildMatcher(pattern: String?): Matcher = WordPrefixMatcher(pattern)
 
-  private static @Nullable String checkPattern(@NotNull String pattern) {
-    if (!pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator())) {
-      return null;
+    @JvmStatic
+    fun messageApp(property: @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String): @Nls String {
+      return StringUtil.stripHtml(ApplicationBundle.message(property), false)
     }
 
-    pattern = pattern.substring(1);
-    return pattern;
+    @JvmStatic
+    fun messageIde(property: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String): @Nls String {
+      return StringUtil.stripHtml(IdeBundle.message(property), false)
+    }
   }
 
-  @Override
-  public abstract @NotNull String getId();
-
-  public static @Nls String messageApp(@PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String property) {
-    return StringUtil.stripHtml(ApplicationBundle.message(property), false);
+  override fun consumeTopHits(pattern: String, collector: Consumer<Any>, project: Project?) {
+    consumeTopHits(this, pattern, collector, project)
   }
 
-  public static @Nls String messageIde(@PropertyKey(resourceBundle = IdeBundle.BUNDLE) String property) {
-    return StringUtil.stripHtml(IdeBundle.message(property), false);
-  }
+  abstract override fun getId(): String
 
   /*
    * Marker interface for option provider containing only descriptors which are backed by toggle actions.
    * E.g. UiSettings.SHOW_STATUS_BAR is backed by View > Status Bar action.
    */
-  @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
-  @Deprecated
-  // for search everywhere only
-  public interface CoveredByToggleActions {
-  }
+  @Deprecated("") // for search everywhere only
+  interface CoveredByToggleActions
 
   // ours ProjectLevelProvider registered in ours projectOptionsTopHitProvider extension point,
   // not in common topHitProvider, so, this adapter is required to expose ours project level providers.
-  public static final class ProjectLevelProvidersAdapter implements SearchTopHitProvider {
-    @Override
-    public void consumeTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
+  internal class ProjectLevelProvidersAdapter : SearchTopHitProvider {
+    override fun consumeTopHits(pattern: String, collector: Consumer<Any>, project: Project?) {
       if (project == null) {
-        return;
+        return
       }
 
-      pattern = checkPattern(pattern);
-      if (pattern == null) {
-        return;
-      }
-
-      List<String> parts = StringUtil.split(pattern, " ");
+      val checkedPattern = checkPattern(pattern) ?: return
+      val parts = checkedPattern.split(' ')
       if (parts.isEmpty()) {
-        return;
+        return
       }
 
-      for (OptionsSearchTopHitProvider.ProjectLevelProvider provider : PROJECT_LEVEL_EP.getExtensionList()) {
-        doConsumeTopHits(provider, pattern, parts.get(0), collector, project);
+      for (provider in PROJECT_LEVEL_EP.extensionList) {
+        doConsumeTopHits(provider, checkedPattern, parts[0], collector, project)
       }
     }
 
-    public void consumeAllTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
-      Matcher matcher = buildMatcher(pattern);
-      for (OptionsSearchTopHitProvider.ProjectLevelProvider provider : PROJECT_LEVEL_EP.getExtensionList()) {
-        consumeTopHitsForApplicableProvider(provider, matcher, collector, project);
+    fun consumeAllTopHits(pattern: String, collector: Consumer<Any>, project: Project?) {
+      val matcher = buildMatcher(pattern)
+      for (provider in PROJECT_LEVEL_EP.extensionList) {
+        consumeTopHitsForApplicableProvider(provider, matcher, collector, project)
       }
     }
   }
 
-  static final class Activity extends PreloadingActivity implements StartupActivity.DumbAware {
-    Activity() {
-      Application app = ApplicationManager.getApplication();
-      if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-        throw ExtensionNotApplicableException.create();
+  internal class Activity : PreloadingActivity(), ProjectPostStartupActivity {
+    init {
+      val app = ApplicationManager.getApplication()
+      if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+        throw ExtensionNotApplicableException.create()
       }
     }
 
-    @Override
-    public void preload() {
+    override fun preload() {
       // for application
-      cacheAll(null);
+      cacheAll(null)
     }
 
-    @Override
-    public void runActivity(@NotNull Project project) {
+    override suspend fun execute(project: Project) {
       // for given project
-      cacheAll(project);
-    }
-
-    private static void cacheAll(@Nullable Project project) {
-      String name = project == null ? "application" : "project";
-      com.intellij.diagnostic.Activity activity = StartUpMeasurer.startActivity("cache options in " + name, ActivityCategory.DEFAULT);
-      SearchTopHitProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
-        if (provider instanceof OptionsSearchTopHitProvider && (project == null || !(provider instanceof ApplicationLevelProvider))) {
-          OptionsSearchTopHitProvider p = (OptionsSearchTopHitProvider)provider;
-          if (p.preloadNeeded() && (project == null || !project.isDisposed())) {
-            getCachedOptions(p, project, pluginDescriptor);
-          }
-        }
-      });
-
-      if (project != null) {
-        TopHitCache cache = ProjectTopHitCache.getInstance(project);
-        PROJECT_LEVEL_EP.processWithPluginDescriptor((provider, pluginDescriptor) -> {
-          if (project.isDisposed()) {
-            return;
-          }
-
-          try {
-            cache.getCachedOptions(provider, project, pluginDescriptor);
-          }
-          catch (Exception e) {
-            if (e instanceof ControlFlowException) {
-              throw e;
-            }
-            Logger.getInstance(OptionsTopHitProvider.class).error(e);
-          }
-        });
-      }
-      activity.end();
+      cacheAll(project)
     }
   }
+}
+
+private fun cacheAll(project: Project?) {
+  val name = if (project == null) "application" else "project"
+  val activity = StartUpMeasurer.startActivity("cache options in $name", ActivityCategory.DEFAULT)
+  SearchTopHitProvider.EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
+    if (provider is OptionsSearchTopHitProvider && (project == null || provider !is ApplicationLevelProvider)) {
+      val p = provider as OptionsSearchTopHitProvider
+      if (p.preloadNeeded() && (project == null || !project.isDisposed)) {
+        getCachedOptions(p, project, pluginDescriptor)
+      }
+    }
+  }
+  if (project != null) {
+    val cache = ProjectTopHitCache.getInstance(project)
+    OptionsTopHitProvider.PROJECT_LEVEL_EP.processWithPluginDescriptor { provider, pluginDescriptor ->
+      if (project.isDisposed) {
+        return@processWithPluginDescriptor
+      }
+      try {
+        cache.getCachedOptions(provider!!, project, pluginDescriptor)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Exception) {
+        if (e is ControlFlowException) {
+          throw e
+        }
+        logger<OptionsTopHitProvider>().error(e)
+      }
+    }
+  }
+  activity.end()
+}
+
+private fun getCachedOptions(provider: OptionsSearchTopHitProvider,
+                             project: Project?,
+                             pluginDescriptor: PluginDescriptor?): Collection<OptionDescription> {
+  val cache = if (project == null || provider is ApplicationLevelProvider) {
+    TopHitCache.getInstance()
+  }
+  else {
+    ProjectTopHitCache.getInstance(project)
+  }
+  return cache.getCachedOptions(provider, project, pluginDescriptor)
+}
+
+private fun doConsumeTopHits(provider: OptionsSearchTopHitProvider,
+                             rawPattern: String,
+                             id: String,
+                             collector: Consumer<Any>,
+                             project: Project?) {
+  var pattern = rawPattern
+  if (provider.id.startsWith(id) || pattern.startsWith(" ")) {
+    pattern = if (pattern.startsWith(' ')) pattern.trim { it <= ' ' } else pattern.substring(id.length).trim { it <= ' ' }
+    consumeTopHitsForApplicableProvider(provider, OptionsTopHitProvider.buildMatcher(pattern), collector, project)
+  }
+}
+
+private fun consumeTopHitsForApplicableProvider(provider: OptionsSearchTopHitProvider,
+                                                matcher: Matcher,
+                                                collector: Consumer<Any>,
+                                                project: Project?) {
+  for (option in getCachedOptions(provider = provider, project = project, pluginDescriptor = null)) {
+    if (matcher.matches(option.option)) {
+      collector.accept(option)
+    }
+  }
+}
+
+private fun checkPattern(pattern: String): String? {
+  return if (pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator())) pattern.substring(1) else null
 }

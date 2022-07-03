@@ -15,6 +15,7 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -24,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -243,7 +243,7 @@ private suspend fun prepareStart(app: ApplicationImpl, initAppActivity: Activity
 
         if (!app.isUnitTestMode && !app.isHeadlessEnvironment &&
             java.lang.Boolean.parseBoolean(System.getProperty("enable.activity.preloading", "true"))) {
-          launch { executePreloadActivities(app) }
+          executePreloadActivities(app)
         }
 
         if (!Main.isLightEdit()) {
@@ -497,75 +497,70 @@ suspend fun callAppInitialized(app: ApplicationImpl) {
   }
 }
 
-private suspend fun executePreloadActivity(activity: PreloadingActivity, descriptor: PluginDescriptor?) {
-  if (HeavyProcessLatch.INSTANCE.isRunning) {
-    delay(1)
-  }
-
-  val isDebugEnabled = LOG.isDebugEnabled
-  runUnderIndicator {
-    val measureActivity = if (descriptor == null) {
-      null
-    }
-    else {
-      StartUpMeasurer.startActivity(activity.javaClass.name, ActivityCategory.PRELOAD_ACTIVITY, descriptor.pluginId.idString)
-    }
-
-    try {
-      @Suppress("DEPRECATION")
-      activity.preload(null)
-      if (isDebugEnabled) {
-        LOG.debug("${activity.javaClass.name} finished")
-      }
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error("cannot execute preloading activity ${activity.javaClass.name}")
-    }
-    finally {
-      measureActivity?.end()
-    }
-  }
-}
-
 @OptIn(ExperimentalCoroutinesApi::class)
 private suspend fun executePreloadActivities(app: ApplicationImpl) {
+  val scope = CoroutineScope(Dispatchers.Default + CoroutineExceptionHandler { _, exception ->
+    LOG.error(exception)
+  })
+  val scopeDisposable = Disposable { scope.cancel("disposed") }
+  Disposer.register(app, scopeDisposable)
+
   // do not execute as a single long task, make sure that other more important tasks may slip in between
-  withContext(Dispatchers.Default.limitedParallelism(1)) {
+  scope.launch(Dispatchers.Default.limitedParallelism(1)) {
     val activity = StartUpMeasurer.startActivity("preloading activity executing")
     val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
-    extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, pluginDescriptor ->
-      val preloadingActivity: PreloadingActivity
-      try {
-        preloadingActivity = supplier.get() ?: return@processImplementations
+    val isDebugEnabled = LOG.isDebugEnabled
+    for (adapter in extensionPoint.sortedAdapters) {
+      val preloadingActivity = try {
+        adapter.createInstance<PreloadingActivity>(app) ?: continue
       }
       catch (e: CancellationException) {
         throw e
       }
       catch (e: Throwable) {
         LOG.error(e)
-        return@processImplementations
-      }
-
-      if (app.isDisposed) {
-        return@processImplementations
+        continue
       }
 
       launch {
-        if (app.isDisposed) {
-          return@launch
+        if (HeavyProcessLatch.INSTANCE.isRunning) {
+          delay(1)
         }
 
-        executePreloadActivity(preloadingActivity, pluginDescriptor)
+        executePreloadActivity(preloadingActivity, adapter.pluginDescriptor, isDebugEnabled)
       }
     }
     extensionPoint.reset()
 
     activity.end()
+  }.invokeOnCompletion { Disposer.dispose(scopeDisposable) }
+}
+
+private suspend fun executePreloadActivity(activity: PreloadingActivity, descriptor: PluginDescriptor?, isDebugEnabled: Boolean) {
+  val measureActivity = if (descriptor == null) {
+    null
+  }
+  else {
+    StartUpMeasurer.startActivity(activity.javaClass.name, ActivityCategory.PRELOAD_ACTIVITY, descriptor.pluginId.idString)
+  }
+
+  try {
+    @Suppress("DEPRECATION")
+    activity.execute()
+    if (isDebugEnabled) {
+      LOG.debug("${activity.javaClass.name} finished")
+    }
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: ProcessCanceledException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.error("cannot execute preloading activity ${activity.javaClass.name}")
+  }
+  finally {
+    measureActivity?.end()
   }
 }

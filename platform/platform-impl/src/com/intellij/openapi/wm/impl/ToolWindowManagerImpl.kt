@@ -75,7 +75,6 @@ import java.util.concurrent.TimeUnit
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
-import kotlin.collections.HashSet
 
 private val LOG = logger<ToolWindowManagerImpl>()
 
@@ -338,7 +337,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       toolWindow.windowInfo.safeToolWindowPaneId
     }
     else {
-      idToEntry[toolWindow.id]?.readOnlyWindowInfo?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+      idToEntry.get(toolWindow.id)?.readOnlyWindowInfo?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
     }
     return getToolWindowPane(paneId)
   }
@@ -347,11 +346,15 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   internal open fun getButtonManager(toolWindow: ToolWindow): ToolWindowButtonManager = getToolWindowPane(toolWindow).buttonManager
 
   internal fun addToolWindowPane(toolWindowPane: ToolWindowPane, parentDisposable: Disposable) {
-    toolWindowPanes[toolWindowPane.paneId] = toolWindowPane
+    toolWindowPanes.put(toolWindowPane.paneId, toolWindowPane)
     Disposer.register(parentDisposable) {
-      idToEntry.values.forEach {
+      for (it in idToEntry.values) {
         if (it.readOnlyWindowInfo.safeToolWindowPaneId == toolWindowPane.paneId) {
-          hideToolWindow(it.id, false, false, true, ToolWindowEventSource.CloseAction)
+          hideToolWindow(id = it.id,
+                         hideSide = false,
+                         moveFocus = false,
+                         removeFromStripe = true,
+                         source = ToolWindowEventSource.CloseAction)
         }
       }
       toolWindowPanes.remove(toolWindowPane.paneId)
@@ -458,7 +461,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
   }
 
-  fun init(frameHelper: ProjectFrameHelper) {
+  suspend fun init(frameHelper: ProjectFrameHelper) {
     // Make sure we haven't already created the root tool window pane. We might have created panes for secondary frames, as they get
     // registered differently, but we shouldn't have the main pane yet
     LOG.assertTrue(!toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID))
@@ -466,7 +469,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   @VisibleForTesting
-  fun doInit(frameHelper: ProjectFrameHelper, connection: MessageBusConnection) {
+  suspend fun doInit(frameHelper: ProjectFrameHelper, connection: MessageBusConnection) {
     val rootPane = frameHelper.rootPane!!
 
     connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
@@ -490,7 +493,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
     // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor. If we're
     // reopening other frames, their tool window panes will be already added, but we still need to initialise the tool windows themselves.
-    toolWindowPanes[toolWindowPane.paneId] = toolWindowPane
+    toolWindowPanes.put(toolWindowPane.paneId, toolWindowPane)
 
     toolWindowSetInitializer.initUi()
   }

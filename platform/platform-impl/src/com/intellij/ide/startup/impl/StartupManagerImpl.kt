@@ -29,12 +29,12 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.isCorePlugin
 import com.intellij.openapi.project.impl.waitAndProcessInvocationEventsInIdeEventQueue
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.TimeoutUtil
@@ -192,18 +192,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         }
       }) {
         if (!project.isDisposed) {
-          val rootCoroutine = GlobalScope.async(start = CoroutineStart.LAZY) {
+          (project as ProjectEx).coroutineScope.launch {
             runPostStartupActivities()
           }
-
-          val coroutineDisposable = Disposable {
-            rootCoroutine.cancel()
-          }
-          rootCoroutine.invokeOnCompletion {
-            Disposer.dispose(coroutineDisposable)
-          }
-          Disposer.register(project, coroutineDisposable)
-          rootCoroutine.start()
         }
       }
       if (app.isUnitTestMode) {

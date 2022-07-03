@@ -47,6 +47,7 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.io.BuiltInServer
@@ -219,9 +220,9 @@ fun start(mainClass: String,
   }
 
   // don't load EnvironmentUtil class in the main thread
-  shellEnvLoadFuture = forkJoinPool.submit<Boolean?> {
+  shellEnvLoadFuture = GlobalScope.async {
     EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading"))
-  }
+  }.asCompletableFuture()
   Thread.currentThread().uncaughtExceptionHandler = Thread.UncaughtExceptionHandler { _, e ->
     StartupAbortedException.processException(e)
   }

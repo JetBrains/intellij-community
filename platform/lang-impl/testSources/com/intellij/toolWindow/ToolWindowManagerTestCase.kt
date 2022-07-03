@@ -1,51 +1,56 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.toolWindow;
+package com.intellij.toolWindow
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.testFramework.SkipInHeadlessEnvironment;
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.SkipInHeadlessEnvironment
+import com.intellij.testFramework.replaceService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
-/**
- * @author Dmitry Avdeev
- */
 @SkipInHeadlessEnvironment
-public abstract class ToolWindowManagerTestCase extends LightPlatformCodeInsightTestCase {
-  protected ToolWindowManagerImpl manager;
+abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
+  @JvmField
+  protected var manager: ToolWindowManagerImpl? = null
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  final override fun runInDispatchThread() = false
 
-    Project project = getProject();
-    manager = new ToolWindowManagerImpl(project) {
-      @Override
-      protected void fireStateChanged(ToolWindowManagerListener.ToolWindowManagerEventType changeType) {
+  public override fun setUp() {
+    super.setUp()
+
+    runBlocking {
+      val project = project
+      manager = object : ToolWindowManagerImpl(project) {
+        override fun fireStateChanged(changeType: ToolWindowManagerEventType) {}
       }
-    };
-    ServiceContainerUtil.replaceService(project, ToolWindowManager.class, manager, getTestRootDisposable());
+      project.replaceService(ToolWindowManager::class.java, manager!!, testRootDisposable)
 
-    ProjectFrameHelper frame = new ProjectFrameHelper(new IdeFrameImpl(), null);
-    frame.init();
-    manager.doInit(frame, project.getMessageBus().connect(getTestRootDisposable()));
+      val frame = withContext(Dispatchers.EDT) {
+        val frame = ProjectFrameHelper(IdeFrameImpl(), null)
+        frame.init()
+        frame
+      }
+
+      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable))
+    }
   }
 
-  @Override
-  public void tearDown() throws Exception {
+  public override fun tearDown() {
     try {
-      manager.projectClosed();
-      manager = null;
+      manager!!.projectClosed()
+      manager = null
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
-      super.tearDown();
+      super.tearDown()
     }
   }
 }

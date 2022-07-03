@@ -3,6 +3,7 @@ package com.intellij.openapi.project.ex;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,10 @@ public interface ProjectEx extends Project {
   @NotNull
   @ApiStatus.Internal
   Disposable getEarlyDisposable();
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  CoroutineScope getCoroutineScope();
 
   @TestOnly
   default @Nullable String getCreationTrace() {

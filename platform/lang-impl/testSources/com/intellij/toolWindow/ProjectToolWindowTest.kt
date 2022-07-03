@@ -1,49 +1,45 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.toolWindow;
+package com.intellij.toolWindow
 
-import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.ProjectViewState;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowEP;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.impl.DesktopLayout;
-import com.intellij.openapi.wm.impl.WindowInfoImpl;
+import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.projectView.impl.ProjectViewState
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.wm.ToolWindowEP
+import com.intellij.openapi.wm.ToolWindowId
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
 
-import static org.assertj.core.api.Assertions.assertThat;
+class ProjectToolWindowTest : ToolWindowManagerTestCase() {
+  fun testProjectViewActivate() {
+    runBlocking {
+      withContext(Dispatchers.EDT) {
+        for (extension in ToolWindowEP.EP_NAME.extensionList) {
+          if (ToolWindowId.PROJECT_VIEW == extension.id) {
+            manager!!.initToolWindow(extension)
+          }
+        }
 
-/**
- * @author Dmitry Avdeev
- */
-public class ProjectToolWindowTest extends ToolWindowManagerTestCase {
-  public void testProjectViewActivate() {
-    for (ToolWindowEP extension : ToolWindowEP.EP_NAME.getExtensionList()) {
-      if (ToolWindowId.PROJECT_VIEW.equals(extension.id)) {
-        manager.initToolWindow(extension);
+        val layout = manager!!.getLayout()
+        val info = layout.getInfo(ToolWindowId.PROJECT_VIEW)
+        assertThat(info!!.isVisible).isFalse
+        info.isVisible = true
+        val window = manager!!.getToolWindow(ToolWindowId.PROJECT_VIEW)
+        // because change is not applied from desktop
+        assertThat(window!!.isVisible).isFalse
+        manager!!.showToolWindow(ToolWindowId.PROJECT_VIEW)
+        assertThat(window.isVisible).isTrue
+        ProjectView.getInstance(project)
+        ProjectViewState.getInstance(project).autoscrollFromSource = true
+        try {
+          window.activate(null)
+        }
+        finally {
+          // cleanup
+          info.isVisible = false
+        }
       }
-    }
-
-    DesktopLayout layout = manager.getLayout();
-    WindowInfoImpl info = layout.getInfo(ToolWindowId.PROJECT_VIEW);
-    assertThat(info.isVisible()).isFalse();
-    info.setVisible(true);
-
-    ToolWindow window = manager.getToolWindow(ToolWindowId.PROJECT_VIEW);
-    // because change is not applied from desktop
-    assertThat(window.isVisible()).isFalse();
-
-    manager.showToolWindow(ToolWindowId.PROJECT_VIEW);
-    assertThat(window.isVisible()).isTrue();
-
-    ProjectView.getInstance(getProject());
-
-    ProjectViewState.getInstance(getProject()).setAutoscrollFromSource(true);
-
-    try {
-      window.activate(null);
-    }
-    finally {
-      // cleanup
-      info.setVisible(false);
     }
   }
 }

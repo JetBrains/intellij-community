@@ -66,6 +66,12 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(
     ApplicationManager.getApplication().getService(ProjectStoreFactory::class.java).createStore(this)
   }
 
+  private val coroutineScope = CoroutineScope(Dispatchers.Default + CoroutineExceptionHandler { _, exception ->
+    LOG.error(exception)
+  })
+
+  override fun getCoroutineScope() = coroutineScope
+
   init {
     @Suppress("LeakingThis")
     putUserData(CREATION_TIME, System.nanoTime())
@@ -184,9 +190,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(
           container.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                                     activityPrefix = "project ",
                                     syncScope = this,
-                                    asyncScope = GlobalScope + CoroutineExceptionHandler { _, exception ->
-                                      LOG.error(exception)
-                                    },
+                                    asyncScope = coroutineScope,
                                     onlyIfAwait = isLight)
         }
       }
@@ -281,6 +285,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(
         "Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().")
     }
 
+    coroutineScope.cancel("Project.dispose is called")
     super.dispose()
 
     componentStoreValue.valueIfInitialized?.release()

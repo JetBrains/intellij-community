@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.toolWindow
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -16,6 +17,7 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.wm.*
@@ -24,16 +26,13 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.addIfNotNull
-import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Executor
-import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.AtomicReference
 
 @Suppress("SSBasedInspection")
@@ -54,28 +53,26 @@ internal class InitToolWindowSetActivity : InitProjectActivity {
     }
 
     LOG.debug(project) { "schedule init (project=$it)" }
-    app.invokeLater(
-      {
-        LOG.debug(project) { "init (project=$it)" }
+    // not as a part of a project modal dialog
+    (project as ProjectEx).coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      LOG.debug(project) { "init (project=$it)" }
 
-        // frame helper is set as part of `ProjectFrameAllocator.projectLoaded`
-        // - project frame must be presented at the moment of start-up activity executing.
-        val frameHelper = WindowManagerEx.getInstanceEx().getFrameHelper(project)!!
+      // frame helper is set as part of `ProjectFrameAllocator.projectLoaded`
+      // - project frame must be presented at the moment of start-up activity executing.
+      val frameHelper = WindowManagerEx.getInstanceEx().getFrameHelper(project)!!
 
-        val rootPane = frameHelper.rootPane!!
+      val rootPane = frameHelper.rootPane!!
 
-        runActivity("north components updating") {
-          rootPane.updateNorthComponents()
-        }
-        runActivity("tool window pane creation") {
-          (ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl)?.init(frameHelper)
-        }
-        runActivity("toolbar updating") {
-          rootPane.initOrCreateToolbar(project)
-        }
-      },
-      project.disposed
-    )
+      runActivity("north components updating") {
+        rootPane.updateNorthComponents()
+      }
+      runActivity("tool window pane creation") {
+        (ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl)?.init(frameHelper)
+      }
+      runActivity("toolbar updating") {
+        rootPane.initOrCreateToolbar(project)
+      }
+    }
   }
 }
 
@@ -84,7 +81,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
   @Volatile
   private var isInitialized = false
 
-  private val initFuture: CompletableFuture<Ref<List<RegisterToolWindowTask>?>>
+  private val initFuture: Deferred<Ref<List<RegisterToolWindowTask>?>>
   private val pendingLayout = AtomicReference<DesktopLayout?>()
 
   private val pendingTasks = ConcurrentLinkedQueue<Runnable>()
@@ -92,17 +89,14 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
   init {
     val app = ApplicationManager.getApplication()
     if (project.isDefault || app.isUnitTestMode || app.isHeadlessEnvironment) {
-      initFuture = CompletableFuture.completedFuture(Ref(null))
+      initFuture = CompletableDeferred(value = Ref())
     }
     else {
-      initFuture = CompletableFuture.supplyAsync(
-        {
-          Ref(runActivity("toolwindow init command creation") {
-            computeToolWindowBeans(project)
-          })
-        },
-        if (StartUpMeasurer.isEnabled()) ForkJoinPool.commonPool() else AppExecutorUtil.getAppExecutorService()
-      )
+      initFuture = (project as ProjectEx).coroutineScope.async {
+        Ref(runActivity("toolwindow init command creation") {
+          computeToolWindowBeans(project)
+        })
+      }
     }
   }
 
@@ -131,43 +125,34 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     else {
       pendingLayout.set(newLayout)
       app.invokeLater({
-        manager.setLayout(pendingLayout.getAndSet(null) ?: return@invokeLater)
-      }, project.disposed)
+                        manager.setLayout(pendingLayout.getAndSet(null) ?: return@invokeLater)
+                      }, project.disposed)
     }
   }
 
-  fun initUi() {
-    initFuture
-      .thenAcceptAsync(
-        { ref ->
-          val tasks = ref.get()
-          LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
-
-          ref.set(null)
-          createAndLayoutToolWindows(manager, tasks ?: return@thenAcceptAsync)
-
-          while (true) {
-            (pendingTasks.poll() ?: break).run()
-          }
-        },
-        Executor { command ->
-          if (EDT.isCurrentThreadEdt()) {
-            LOG.debug(project) { project -> "initialization will be performed right in the current EDT task (project=$project)" }
-            command.run()
-          }
-          else {
-            LOG.debug(project) { project -> "initialization is scheduled in EDT (project=$project)" }
-            ApplicationManager.getApplication().invokeLater(command, project.disposed)
-          }
-        }
-      )
-      .whenComplete { _, error ->
-        LOG.debug(project) { "initialization completed (project=$it, error=${error?.message})" }
-        isInitialized = true
-        error?.let {
-          LOG.error(it)
+  suspend fun initUi() {
+    try {
+      val ref = initFuture.await()
+      val tasks = ref.get()
+      LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
+      ref.set(null)
+      withContext(Dispatchers.EDT) {
+        createAndLayoutToolWindows(manager, tasks ?: return@withContext)
+        while (true) {
+          (pendingTasks.poll() ?: break).run()
         }
       }
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+    }
+    finally {
+      LOG.debug(project) { "initialization completed (project=$it)" }
+      isInitialized = true
+    }
   }
 
   // must be executed in EDT

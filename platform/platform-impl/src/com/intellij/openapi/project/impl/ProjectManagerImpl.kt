@@ -762,7 +762,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val project = instantiateProject(file, options)
     try {
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
-      runBlocking {
+      runUnderModalProgressIfIsEdt {
         initProject(
           file = file,
           project = project,

@@ -1,351 +1,390 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide;
+package com.intellij.ide
 
-import com.intellij.diagnostic.VMOptions;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
-import com.intellij.execution.process.ProcessIOExecutorService;
-import com.intellij.execution.process.UnixProcessManager;
-import com.intellij.ide.actions.EditCustomVmOptionsAction;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.idea.StartupUtil;
-import com.intellij.jna.JnaLoader;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.notification.impl.NotificationFullContent;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.PreloadingActivity;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.MathUtil;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.lang.JavaVersion;
-import com.intellij.util.system.CpuArch;
-import com.intellij.util.ui.IoErrorText;
-import com.sun.jna.*;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
-import org.jetbrains.jps.model.java.JdkVersionDetector;
+import com.intellij.diagnostic.VMOptions
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessIOExecutorService
+import com.intellij.execution.process.UnixProcessManager
+import com.intellij.ide.actions.EditCustomVmOptionsAction
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.shellEnvLoadFuture
+import com.intellij.jna.JnaLoader
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
+import com.intellij.notification.impl.NotificationFullContent
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.PreloadingActivity
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.MathUtil
+import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.lang.JavaVersion
+import com.intellij.util.system.CpuArch
+import com.intellij.util.ui.IoErrorText
+import com.sun.jna.*
+import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.jps.model.java.JdkVersionDetector
+import java.io.IOException
+import java.nio.file.FileStore
+import java.nio.file.Files
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import javax.swing.SwingUtilities
+import kotlin.system.exitProcess
 
-import javax.swing.*;
-import java.io.IOException;
-import java.nio.file.FileStore;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+internal class SystemHealthMonitor : PreloadingActivity() {
+  override suspend fun execute() {
+    checkInstallationIntegrity()
+    checkIdeDirectories()
+    checkRuntime()
+    checkReservedCodeCacheSize()
+    checkEnvironment()
+    checkSignalBlocking()
+    checkTempDirEnvVars()
+    startDiskSpaceMonitoring()
+  }
+}
 
-final class SystemHealthMonitor extends PreloadingActivity {
-  private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
-  private static final String NOTIFICATION_GROUP_ID = "System Health";
+private interface LibC : Library {
+  interface Handler : Callback {
+    fun callback(sig: Int)
 
-  @Override
-  public void preload() {
-    checkInstallationIntegrity();
-    checkIdeDirectories();
-    checkRuntime();
-    checkReservedCodeCacheSize();
-    checkEnvironment();
-    checkSignalBlocking();
-    checkTempDirEnvVars();
-    startDiskSpaceMonitoring();
+    companion object {
+      // ref: java.lang.Terminator
+      @JvmField
+      val TERMINATE: Handler = object : Handler {
+        override fun callback(sig: Int) = exitProcess(128 + sig)
+      }
+    }
   }
 
-  private static void checkInstallationIntegrity() {
-    if (SystemInfo.isUnix && !SystemInfo.isMac) {
-      try (Stream<Path> stream = Files.list(Path.of(PathManager.getLibPath()))) {
-        // see `LinuxDistributionBuilder#generateVersionMarker`
-        long markers = stream.filter(p -> p.getFileName().toString().startsWith("build-marker-")).count();
-        if (markers > 1) {
-          showNotification("mixed.bag.installation", false, null, ApplicationNamesInfo.getInstance().getFullProductName());
+  fun sigaction(sig: Int, action: Pointer?, oldAction: Pointer?): Int
+  fun signal(sig: Int, handler: Handler?): Pointer?
+
+  companion object {
+    @JvmField
+    val SIG_IGN = Pointer(1L)
+  }
+}
+
+private val LOG = logger<SystemHealthMonitor>()
+
+private class MyNotification(content: @NlsContexts.NotificationContent String,
+                             type: NotificationType,
+                             displayId: String?) : Notification(NOTIFICATION_GROUP_ID, content, type), NotificationFullContent {
+  init {
+    displayId?.let { setDisplayId(it) }
+  }
+}
+
+private const val NOTIFICATION_GROUP_ID = "System Health"
+private fun checkInstallationIntegrity() {
+  if (!SystemInfoRt.isUnix || SystemInfo.isMac) {
+    return
+  }
+
+  try {
+    Files.list(Path.of(PathManager.getLibPath())).use { stream ->
+      // see `LinuxDistributionBuilder#generateVersionMarker`
+      val markers = stream.filter { p: Path -> p.fileName.toString().startsWith("build-marker-") }.count()
+      if (markers > 1) {
+        showNotification("mixed.bag.installation", false, null, ApplicationNamesInfo.getInstance().fullProductName)
+      }
+    }
+  }
+  catch (e: IOException) {
+    LOG.warn("${e.javaClass.name}: ${e.message}")
+  }
+}
+
+private fun checkIdeDirectories() {
+  if (System.getProperty(PathManager.PROPERTY_PATHS_SELECTOR) != null) {
+    if (System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null && System.getProperty(PathManager.PROPERTY_PLUGINS_PATH) == null) {
+      showNotification(key = "implicit.plugin.directory.path", suppressable = true, action = null, shorten(PathManager.getPluginsPath()))
+    }
+    if (System.getProperty(PathManager.PROPERTY_SYSTEM_PATH) != null && System.getProperty(PathManager.PROPERTY_LOG_PATH) == null) {
+      showNotification(key = "implicit.log.directory.path", suppressable = true, action = null, shorten(PathManager.getLogPath()))
+    }
+  }
+}
+
+private fun shorten(pathStr: String): String {
+  val path = Path.of(pathStr).toAbsolutePath()
+  val userHome = Path.of(SystemProperties.getUserHome())
+  return if (path.startsWith(userHome)) {
+    val relative = userHome.relativize(path)
+    if (SystemInfoRt.isWindows) "%USERPROFILE%\\$relative" else "~/$relative"
+  }
+  else {
+    pathStr
+  }
+}
+
+private fun checkRuntime() {
+  if (!CpuArch.isEmulated()) {
+    return
+  }
+
+  LOG.info("${CpuArch.CURRENT} appears to be emulated")
+  if (SystemInfoRt.isMac && CpuArch.isIntel64()) {
+    val downloadAction = NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.m1.arch.message.download")) {
+      BrowserUtil.browse("https://www.jetbrains.com/products/#type=ide")
+    }
+    showNotification(key = "bundled.jre.m1.arch.message",
+                     suppressable = true,
+                     action = downloadAction,
+                     ApplicationNamesInfo.getInstance().fullProductName)
+  }
+  var jreHome = SystemProperties.getJavaHome()
+
+  if (PathManager.isUnderHomeDirectory(jreHome) || isModernJBR()) {
+    return
+  }
+
+  // boot JRE is non-bundled and is either non-JB or older than bundled
+  var switchAction: NotificationAction? = null
+  val directory = PathManager.getCustomOptionsDirectory()
+  if (directory != null && (SystemInfoRt.isWindows || SystemInfoRt.isMac || SystemInfoRt.isLinux) && isJbrOperational()) {
+    val scriptName = ApplicationNamesInfo.getInstance().scriptName
+    val configName = scriptName + (if (!SystemInfoRt.isWindows) "" else if (CpuArch.isIntel64()) "64.exe" else ".exe") + ".jdk"
+    val configFile = Path.of(directory, configName)
+    if (Files.isRegularFile(configFile)) {
+      switchAction = NotificationAction.createSimpleExpiring(IdeBundle.message("action.SwitchToJBR.text")) {
+        try {
+          Files.delete(configFile)
+          ApplicationManagerEx.getApplicationEx().restart(true)
+        }
+        catch (x: IOException) {
+          LOG.warn("cannot delete $configFile", x)
+          val content = IdeBundle.message("cannot.delete.jre.config", configFile, IoErrorText.message(x))
+          Notification(NOTIFICATION_GROUP_ID, content, NotificationType.ERROR).notify(null)
         }
       }
-      catch (IOException e) {
-        LOG.warn(e.getClass().getName() + ": " + e.getMessage());
-      }
     }
   }
+  jreHome = StringUtil.trimEnd(jreHome, "/Contents/Home")
+  showNotification(key = "bundled.jre.version.message",
+                   suppressable = false,
+                   action = switchAction,
+                   JavaVersion.current(), System.getProperty("java.vendor"), jreHome)
+}
 
-  private static void checkIdeDirectories() {
-    if (System.getProperty(PathManager.PROPERTY_PATHS_SELECTOR) != null) {
-      if (System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null && System.getProperty(PathManager.PROPERTY_PLUGINS_PATH) == null) {
-        showNotification("implicit.plugin.directory.path", true, null, shorten(PathManager.getPluginsPath()));
-      }
-      if (System.getProperty(PathManager.PROPERTY_SYSTEM_PATH) != null && System.getProperty(PathManager.PROPERTY_LOG_PATH) == null) {
-        showNotification("implicit.log.directory.path", true, null, shorten(PathManager.getLogPath()));
-      }
-    }
+// when can't detect a JBR version, give a user the benefit of the doubt
+private fun isModernJBR(): Boolean {
+  if (!SystemInfo.isJetBrainsJvm) {
+    return false
   }
 
-  private static String shorten(String pathStr) {
-    Path path = Path.of(pathStr).toAbsolutePath(), userHome = Path.of(SystemProperties.getUserHome());
-    if (path.startsWith(userHome)) {
-      Path relative = userHome.relativize(path);
-      return SystemInfo.isWindows ? "%USERPROFILE%\\" + relative : "~/" + relative;
+  // when can't detect a JBR version, give a user the benefit of the doubt
+  val jbrVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(PathManager.getBundledRuntimePath())
+  return jbrVersion == null || JavaVersion.current() >= jbrVersion.version
+}
+
+private fun isJbrOperational(): Boolean {
+  val bin = Path.of(PathManager.getBundledRuntimePath(), if (SystemInfoRt.isWindows) "bin/java.exe" else "bin/java")
+  if (Files.isRegularFile(bin) && (SystemInfoRt.isWindows || Files.isExecutable(bin))) {
+    try {
+      return CapturingProcessHandler(GeneralCommandLine(bin.toString(), "-version")).runProcess(30000).exitCode == 0
+    }
+    catch (e: ExecutionException) {
+      LOG.debug(e)
+    }
+  }
+  return false
+}
+
+private fun checkReservedCodeCacheSize() {
+  val reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true)
+  val minReservedCodeCacheSize = if (PluginManagerCore.isRunningFromSources()) 240 else 512
+  if (reservedCodeCacheSize in 1 until minReservedCodeCacheSize) {
+    val vmEditAction = EditCustomVmOptionsAction()
+    val action = if (vmEditAction.isEnabled()) {
+      NotificationAction.createExpiring(IdeBundle.message("vm.options.edit.action.cap")) { e, _ -> vmEditAction.actionPerformed(e!!) }
     }
     else {
-      return pathStr;
+      null
+    }
+    showNotification("code.cache.warn.message", true, action, reservedCodeCacheSize, minReservedCodeCacheSize)
+  }
+}
+
+private fun checkEnvironment() {
+  val usedVars = sequenceOf("_JAVA_OPTIONS", "JDK_JAVA_OPTIONS", "JAVA_TOOL_OPTIONS")
+    .filter { `var` -> System.getenv(`var`).isNotEmpty() }
+    .toList()
+  if (!usedVars.isEmpty()) {
+    showNotification("vm.options.env.vars", true, null, usedVars.joinToString(separator = ", "))
+  }
+  AppExecutorUtil.getAppExecutorService().execute {
+    try {
+      if (shellEnvLoadFuture!!.get() === java.lang.Boolean.FALSE) {
+        val action = NotificationAction.createSimpleExpiring(
+          IdeBundle.message("shell.env.loading.learn.more")) { BrowserUtil.browse("https://jb.gg/shell-env") }
+        val appName = ApplicationNamesInfo.getInstance().fullProductName
+        val shell = System.getenv("SHELL")
+        showNotification("shell.env.loading.failed", true, action, appName, shell)
+      }
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+    }
+  }
+}
+
+private fun checkSignalBlocking() {
+  if (!SystemInfoRt.isUnix || !JnaLoader.isLoaded()) {
+    return
+  }
+
+  try {
+    val sa = Memory(256)
+    val libC = Native.load("c", LibC::class.java)
+    if (libC.sigaction(UnixProcessManager.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN == sa.getPointer(0)) {
+      libC.signal(UnixProcessManager.SIGINT, LibC.Handler.TERMINATE)
+      LOG.info("restored ignored INT handler")
+    }
+  }
+  catch (e: Throwable) {
+    LOG.warn(e)
+  }
+}
+
+private fun checkTempDirEnvVars() {
+  val envVars = if (SystemInfoRt.isWindows) sequenceOf("TMP", "TEMP") else sequenceOf("TMPDIR")
+  for (name in envVars) {
+    val value = System.getenv(name) ?: continue
+    try {
+      if (!Files.isDirectory(Path.of(value))) {
+        showNotification(key = "temp.dir.env.invalid", suppressable = false, action = null, name, value)
+      }
+    }
+    catch (e: Exception) {
+      LOG.warn(e)
+      showNotification(key = "temp.dir.env.invalid", suppressable = false, action = null, name, value)
+    }
+  }
+}
+
+private fun showNotification(key: @PropertyKey(resourceBundle = "messages.IdeBundle") String?,
+                             suppressable: Boolean,
+                             action: NotificationAction?,
+                             vararg params: Any) {
+  if (suppressable) {
+    val ignored = PropertiesComponent.getInstance().isValueSet("ignore.$key")
+    LOG.warn("issue detected: $key${if (ignored) " (ignored)" else ""}")
+    if (ignored) {
+      return
     }
   }
 
-  private static void checkRuntime() {
-    if (!CpuArch.isEmulated()) return;
-    LOG.info(CpuArch.CURRENT + " appears to be emulated");
+  val notification = MyNotification(IdeBundle.message(key!!, *params), NotificationType.WARNING, key)
+  if (action != null) {
+    notification.addAction(action)
+  }
+  if (suppressable) {
+    notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("sys.health.acknowledge.action")) {
+      PropertiesComponent.getInstance().setValue("ignore.$key", "true")
+    })
+  }
+  notification.isImportant = true
+  notification.isSuggestionType = true
+  Notifications.Bus.notify(notification)
+}
 
-    if (SystemInfo.isMac && CpuArch.isIntel64()) {
-      NotificationAction downloadAction = NotificationAction.createSimpleExpiring(
-        IdeBundle.message("bundled.jre.m1.arch.message.download"),
-        () -> BrowserUtil.browse("https://www.jetbrains.com/products/#type=ide"));
-      showNotification("bundled.jre.m1.arch.message", true, downloadAction, ApplicationNamesInfo.getInstance().getFullProductName());
-    }
 
-    String jreHome = SystemProperties.getJavaHome();
-    if (!(PathManager.isUnderHomeDirectory(jreHome) || isModernJBR())) {
-      // boot JRE is non-bundled and is either non-JB or older than bundled
-      NotificationAction switchAction = null;
+private const val NO_DISK_SPACE_THRESHOLD = (1 shl 20).toLong()
+private const val LOW_DISK_SPACE_THRESHOLD = (50 shl 20).toLong()
+// 500 MB/s is (somewhat outdated) peak SSD write speed
+private const val MAX_WRITE_SPEED_IN_BPS = (500 shl 20).toLong()
 
-      String directory = PathManager.getCustomOptionsDirectory();
-      if (directory != null && (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
-        String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
-        String configName = scriptName + (!SystemInfo.isWindows ? "" : CpuArch.isIntel64() ? "64.exe" : ".exe") + ".jdk";
-        Path configFile = Path.of(directory, configName);
-        if (Files.isRegularFile(configFile)) {
-          switchAction = NotificationAction.createSimpleExpiring(IdeBundle.message("action.SwitchToJBR.text"), () -> {
-            try {
-              Files.delete(configFile);
-              ApplicationManagerEx.getApplicationEx().restart(true);
-            }
-            catch (IOException x) {
-              LOG.warn("cannot delete " + configFile, x);
-              String content = IdeBundle.message("cannot.delete.jre.config", configFile, IoErrorText.message(x));
-              new Notification(NOTIFICATION_GROUP_ID, content, NotificationType.ERROR).notify(null);
-            }
-          });
-        }
-      }
-
-      jreHome = StringUtil.trimEnd(jreHome, "/Contents/Home");
-      showNotification("bundled.jre.version.message", false, switchAction, JavaVersion.current(), System.getProperty("java.vendor"), jreHome);
-    }
+private fun startDiskSpaceMonitoring() {
+  if (SystemProperties.getBooleanProperty("idea.no.system.path.space.monitoring", false)) {
+    return
   }
 
-  private static boolean isModernJBR() {
-    if (!SystemInfo.isJetBrainsJvm) {
-      return false;
-    }
-    // when can't detect a JBR version, give a user the benefit of the doubt
-    JdkVersionDetector.JdkVersionInfo jbrVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(PathManager.getBundledRuntimePath());
-    return jbrVersion == null || JavaVersion.current().compareTo(jbrVersion.version) >= 0;
+  val dir: Path
+  val store: FileStore
+  try {
+    dir = Path.of(PathManager.getSystemPath())
+    store = Files.getFileStore(dir)
+  }
+  catch (e: IOException) {
+    LOG.error(e)
+    return
+  }
+  catch (e: InvalidPathException) {
+    LOG.error(e)
+    return
   }
 
-  private static boolean isJbrOperational() {
-    Path bin = Path.of(PathManager.getBundledRuntimePath(), SystemInfo.isWindows ? "bin/java.exe": "bin/java");
-    if (Files.isRegularFile(bin) && (SystemInfo.isWindows || Files.isExecutable(bin))) {
-      try {
-        return new CapturingProcessHandler(new GeneralCommandLine(bin.toString(), "-version")).runProcess(30_000).getExitCode() == 0;
-      }
-      catch (ExecutionException e) {
-        LOG.debug(e);
-      }
-    }
-
-    return false;
-  }
-
-  private static void checkReservedCodeCacheSize() {
-    int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
-    int minReservedCodeCacheSize = PluginManagerCore.isRunningFromSources() ? 240 : 512;
-    if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
-      EditCustomVmOptionsAction vmEditAction = new EditCustomVmOptionsAction();
-      NotificationAction action = vmEditAction.isEnabled() ? NotificationAction.createExpiring(
-        IdeBundle.message("vm.options.edit.action.cap"), (e, n) -> vmEditAction.actionPerformed(e)) : null;
-      showNotification("code.cache.warn.message", true, action, reservedCodeCacheSize, minReservedCodeCacheSize);
-    }
-  }
-
-  private static void checkEnvironment() {
-    List<String> usedVars = Stream.of("_JAVA_OPTIONS", "JDK_JAVA_OPTIONS", "JAVA_TOOL_OPTIONS")
-      .filter(var -> Strings.isNotEmpty(System.getenv(var)))
-      .collect(Collectors.toList());
-    if (!usedVars.isEmpty()) {
-      showNotification("vm.options.env.vars", true, null, String.join(", ", usedVars));
-    }
-
-    AppExecutorUtil.getAppExecutorService().execute(() -> {
-      try {
-        if (StartupUtil.getShellEnvLoadFuture().get() == Boolean.FALSE) {
-          NotificationAction action = NotificationAction.createSimpleExpiring(
-            IdeBundle.message("shell.env.loading.learn.more"), () -> BrowserUtil.browse("https://jb.gg/shell-env"));
-          String appName = ApplicationNamesInfo.getInstance().getFullProductName(), shell = System.getenv("SHELL");
-          showNotification("shell.env.loading.failed", true, action, appName, shell);
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    });
-  }
-
-  private static void checkSignalBlocking() {
-    if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
-      try {
-        Memory sa = new Memory(256);
-        LibC libC = Native.load("c", LibC.class);
-        if (libC.sigaction(UnixProcessManager.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
-          libC.signal(UnixProcessManager.SIGINT, LibC.Handler.TERMINATE);
-          LOG.info("restored ignored INT handler");
-        }
-      }
-      catch (Throwable t) {
-        LOG.warn(t);
-      }
-    }
-  }
-
-  private static void checkTempDirEnvVars() {
-    List<String> envVars = SystemInfo.isWindows ? List.of("TMP", "TEMP") : List.of("TMPDIR");
-    for (String name : envVars) {
-      String value = System.getenv(name);
-      if (value != null) {
-        try {
-          if (!Files.isDirectory(Path.of(value))) {
-            showNotification("temp.dir.env.invalid", false, null, name, value);
+  AppExecutorUtil.getAppScheduledExecutorService().schedule(object : Runnable {
+    @Volatile
+    private var freeSpaceCalculator: Future<Long>? = null
+    override fun run() {
+      var future = freeSpaceCalculator
+      if (future == null) {
+        future = ProcessIOExecutorService.INSTANCE.submit<Long> {
+          if (Files.exists(dir)) {
+            store.usableSpace
+          }
+          else {
+            MAX_WRITE_SPEED_IN_BPS * 60
           }
         }
-        catch (Exception e) {
-          LOG.warn(e);
-          showNotification("temp.dir.env.invalid", false, null, name, value);
-        }
+        // retry in a minute
+        freeSpaceCalculator = future
       }
-    }
-  }
-
-  private static void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key,
-                                       boolean suppressable,
-                                       @Nullable NotificationAction action,
-                                       Object... params) {
-    if (suppressable) {
-      boolean ignored = PropertiesComponent.getInstance().isValueSet("ignore." + key);
-      LOG.warn("issue detected: " + key + (ignored ? " (ignored)" : ""));
-      if (ignored) return;
-    }
-
-    Notification notification = new MyNotification(IdeBundle.message(key, params), NotificationType.WARNING, key);
-    if (action != null) {
-      notification.addAction(action);
-    }
-    if (suppressable) {
-      notification.addAction(NotificationAction.createSimpleExpiring(
-        IdeBundle.message("sys.health.acknowledge.action"), () -> PropertiesComponent.getInstance().setValue("ignore." + key, "true")));
-    }
-    notification.setImportant(true);
-    notification.setSuggestionType(true);
-
-    Notifications.Bus.notify(notification);
-  }
-
-  private static void startDiskSpaceMonitoring() {
-    if (SystemProperties.getBooleanProperty("idea.no.system.path.space.monitoring", false)) {
-      return;
-    }
-
-    Path dir;
-    FileStore store;
-    try {
-      dir = Path.of(PathManager.getSystemPath());
-      store = Files.getFileStore(dir);
-    }
-    catch (IOException | InvalidPathException e) {
-      LOG.error(e);
-      return;
-    }
-
-    AppExecutorUtil.getAppScheduledExecutorService().schedule(new Runnable() {
-      private static final long NO_DISK_SPACE_THRESHOLD = 1 << 20;
-      private static final long LOW_DISK_SPACE_THRESHOLD = 50 << 20;
-      private static final long MAX_WRITE_SPEED_IN_BPS = 500 << 20;  // 500 MB/s is (somewhat outdated) peak SSD write speed
-
-      private volatile @Nullable Future<Long> freeSpaceCalculator;
-
-      @Override
-      public void run() {
-        Future<Long> future = freeSpaceCalculator;
-        if (future == null) {
-          freeSpaceCalculator = future = ProcessIOExecutorService.INSTANCE.submit(
-            () -> Files.exists(dir) ? store.getUsableSpace() : MAX_WRITE_SPEED_IN_BPS * 60);  // retry in a minute
-        }
-        if (!future.isDone()) {
-          restart(1);
-          return;  // calculating...
-        }
-
-        long usableSpace;
-        try {
-          usableSpace = future.get();
-          freeSpaceCalculator = null;
-        }
-        catch (Exception e) {
-          LOG.error(e);
-          return;  // something went wrong, aborting
-        }
-
-        if (usableSpace < NO_DISK_SPACE_THRESHOLD) {
-          LOG.warn("Extremely low disk space: " + usableSpace);
-          SwingUtilities.invokeLater(() -> {
-            Messages.showErrorDialog(IdeBundle.message("no.disk.space.message", store.name()), IdeBundle.message("no.disk.space.title"));
-            restart(5);
-          });
-        }
-        else if (usableSpace < LOW_DISK_SPACE_THRESHOLD) {
-          LOG.warn("Low disk space: " + usableSpace);
-          new MyNotification(IdeBundle.message("low.disk.space.message", store.name()), NotificationType.WARNING, "low.disk")
-            .setTitle(IdeBundle.message("low.disk.space.title"))
-            .whenExpired(() -> restart(5))
-            .notify(null);
-        }
-        else {
-          restart(MathUtil.clamp((usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS, 5, 3600));
-        }
+      if (!future!!.isDone) {
+        restart(1)
+        // calculating...
+        return
       }
 
-      private void restart(long delaySeconds) {
-        AppExecutorUtil.getAppScheduledExecutorService().schedule(this, delaySeconds, TimeUnit.SECONDS);
+      val usableSpace: Long
+      try {
+        usableSpace = future.get()
+        freeSpaceCalculator = null
       }
-    }, 1, TimeUnit.SECONDS);
-  }
-
-  private static final class MyNotification extends Notification implements NotificationFullContent {
-    private MyNotification(@NlsContexts.NotificationContent String content, NotificationType type, @Nullable String displayId) {
-      super(NOTIFICATION_GROUP_ID, content, type);
-      if (displayId != null) setDisplayId(displayId);
+      catch (e: Exception) {
+        LOG.error(e)
+        // something went wrong, aborting
+        return
+      }
+      if (usableSpace < NO_DISK_SPACE_THRESHOLD) {
+        LOG.warn("Extremely low disk space: $usableSpace")
+        SwingUtilities.invokeLater {
+          Messages.showErrorDialog(IdeBundle.message("no.disk.space.message", store.name()), IdeBundle.message("no.disk.space.title"))
+          restart(5)
+        }
+      }
+      else if (usableSpace < LOW_DISK_SPACE_THRESHOLD) {
+        LOG.warn("Low disk space: $usableSpace")
+        MyNotification(IdeBundle.message("low.disk.space.message", store.name()), NotificationType.WARNING, "low.disk")
+          .setTitle(IdeBundle.message("low.disk.space.title"))
+          .whenExpired { restart(5) }
+          .notify(null)
+      }
+      else {
+        restart(MathUtil.clamp((usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS, 5, 3600))
+      }
     }
-  }
 
-  private interface LibC extends Library {
-    Pointer SIG_IGN = new Pointer(1L);
-
-    interface Handler extends Callback {
-      void callback(int sig);
-
-      Handler TERMINATE = sig -> System.exit(128 + sig);  // ref: java.lang.Terminator
+    private fun restart(delaySeconds: Long) {
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(this, delaySeconds, TimeUnit.SECONDS)
     }
-
-    int sigaction(int sig, Pointer action, Pointer oldAction);
-    Pointer signal(int sig, Handler handler);
-  }
+  }, 1, TimeUnit.SECONDS)
 }
