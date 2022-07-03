@@ -81,7 +81,7 @@ public final class DirectByteBufferAllocator {
   }
 
   DirectByteBufferAllocator() {
-    this(100 * PagedFileStorage.MB);
+    this(FilePageCache.ALLOCATOR_SIZE);
   }
 
   public @NotNull ByteBuffer allocate(int size) {

@@ -33,7 +33,7 @@ public class PagedFileStorage implements Forceable {
   static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(SystemProperties.getIntProperty("paged.file.storage.open.channel.cache.capacity", 400));
 
   public static final int MB = 1024 * 1024;
-  public static final int BUFFER_SIZE = FilePageCache.BUFFER_SIZE;
+  public static final int BUFFER_SIZE = FilePageCache.PAGE_SIZE;
 
   @NotNull
   private final static ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
