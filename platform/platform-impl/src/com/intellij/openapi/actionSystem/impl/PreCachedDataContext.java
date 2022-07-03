@@ -164,8 +164,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     ProviderData map = myCachedData.get(0);
     if (answer == null && rulesAllowed && !map.nullsByContextRules.get(keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1))) {
       answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> {
-        Object o = getDataInner(id, !CommonDataKeys.PROJECT.is(id), true);
-        return o == EXPLICIT_NULL ? null : o;
+        return getDataInner(id, !CommonDataKeys.PROJECT.is(id), true);
       });
       if (answer != null) {
         map.nullsByRules.clear(keyIndex);
@@ -217,8 +216,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       if (!rulesAllowed || map.nullsByRules.get(keyIndex)) continue;
 
       answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.PROVIDER, id -> {
-        Object o = Objects.equals(id, dataId) ? null : map.get(id);
-        return o == EXPLICIT_NULL ? null : o;
+        return Objects.equals(id, dataId) ? null : map.get(id);
       });
 
       if (answer == null) {

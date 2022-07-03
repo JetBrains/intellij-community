@@ -22,8 +22,7 @@ public abstract class CustomizedDataContext implements DataContext {
 
   @ApiStatus.Internal
   public final @Nullable Object getCustomData(@NotNull String dataId) {
-    Object data = getRawCustomData(dataId);
-    return data == EXPLICIT_NULL ? null : data;
+    return getRawCustomData(dataId);
   }
 
   @Override
