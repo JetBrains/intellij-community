@@ -18,6 +18,13 @@ object TestKotlinArtifacts {
         downloadArtifactForIdeFromSources("kotlinc_kotlin_stdlib.xml", artifactId)
     private fun getSourcesJar(artifactId: String) =
         downloadArtifactForIdeFromSources("kotlinc_kotlin_stdlib.xml", artifactId, suffix = "-sources.jar")
+            .copyTo(                                       // Some tests hardcode jar names in their test data
+                File(PathManager.getCommunityHomePath())   // (KotlinReferenceTypeHintsProviderTestGenerated).
+                    .resolve("out")                        // That's why we need to strip version from the jar name
+                    .resolve("kotlin-from-sources-deps-renamed")
+                    .resolve("$artifactId-sources.jar"),
+                overwrite = true
+            )
 
     @JvmStatic val androidExtensionsRuntime: File by lazy { getJar("android-extensions-compiler-plugin-for-ide") }
     @JvmStatic val kotlinAnnotationsJvm: File by lazy { getJar("kotlin-annotations-jvm") }
