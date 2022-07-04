@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform") version "{{kotlin_plugin_version}}" apply false
-    id("com.android.library") version "3.6.4" apply false
+    id("com.android.library") version "{{android_gradle_plugin_version}}" apply false
 }
 
 buildscript {
@@ -8,7 +8,7 @@ buildscript {
         {{kts_kotlin_plugin_repositories}}
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:3.6.4")
+        classpath("com.android.tools.build:gradle:{{android_gradle_plugin_version}}")
     }
 }
 
