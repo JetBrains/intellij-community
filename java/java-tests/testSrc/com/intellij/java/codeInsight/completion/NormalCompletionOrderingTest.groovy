@@ -13,6 +13,8 @@ import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.DumpLookupElementWeights
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
@@ -677,8 +679,16 @@ interface TxANotAnno {}
 
   void testLiveTemplateOrdering() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
-    checkPreferredItems(0, 'return')
-    assert lookup.items.find { it.lookupString == 'ritar'} != null
+
+    RegistryValue value = Registry.get("ide.completion.show.live.templates.on.top")
+    boolean defaultShowLiveTemplatesOnTop = value.asBoolean()
+    try {
+      value.setValue(false)
+      checkPreferredItems(0, 'return')
+      assert lookup.items.find { it.lookupString == 'ritar' } != null
+    } finally {
+      value.setValue(defaultShowLiveTemplatesOnTop)
+    }
   }
 
   @NeedsIndex.ForStandardLibrary
