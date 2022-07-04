@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
@@ -117,7 +118,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
 
             // Emulate project root change, as after changing Kotlin language settings in the preferences
             runWriteActionAndWait {
-                myProject.invalidateProjectRoots()
+                myProject.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
             }
 
             val languageVersionSettingsAfter = module.languageVersionSettings

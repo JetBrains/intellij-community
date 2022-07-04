@@ -25,15 +25,6 @@ fun Module.isAndroidModule(modelsProvider: IdeModifiableModelsProvider? = null):
     return facets.any { it.javaClass.simpleName == "AndroidFacet" }
 }
 
-/**
- * This method is equivalent to {@sample invalidateProjectRoots(RootsChangeRescanningInfo.TOTAL_RESCAN)}
- * Consider using optimised instance of  [com.intellij.util.indexing.BuildableRootsChangeRescanningInfo]
- */
-@ApiStatus.Internal
-fun Project.invalidateProjectRoots() {
-    ProjectRootManagerEx.getInstanceEx(this).makeRootsChange(EmptyRunnable.INSTANCE, false, true)
-}
-
 @ApiStatus.Internal
 fun Project.invalidateProjectRoots(info: RootsChangeRescanningInfo) {
     ProjectRootManagerEx.getInstanceEx(this).makeRootsChange(EmptyRunnable.INSTANCE, info)
