@@ -4,6 +4,8 @@ package com.intellij.java.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromMethodReferenceFix;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
@@ -34,6 +36,15 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     PsiMethodCallExpression
       call = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
     assertFalse(call.resolveMethodGenerics().isValidResult());
+  }
+
+  public void testCreateMethodFromMethodReferenceAvailability() {
+    configure();
+    PsiFile file = getFile();
+    Editor editor = getEditor();
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiMethodReferenceExpression methodReference = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
+    assertTrue(new CreateMethodFromMethodReferenceFix(methodReference).isAvailable(getProject(), editor, file));
   }
 
   public void testNestedLambdaReturnTypeCheck() {

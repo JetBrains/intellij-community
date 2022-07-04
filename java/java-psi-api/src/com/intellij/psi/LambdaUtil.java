@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -486,7 +486,10 @@ public final class LambdaUtil {
         if (results != null) {
           final Set<PsiType> types = new HashSet<>();
           for (JavaResolveResult result : results) {
-            final PsiType functionalExpressionType = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(functionalExpression, false, () -> getSubstitutedType(functionalExpression, true, lambdaIdx, result));
+            Computable<PsiType> computeType = () -> getSubstitutedType(functionalExpression, true, lambdaIdx, result);
+            final PsiType functionalExpressionType = results.length == 1
+                                                     ? computeType.compute() 
+                                                     : MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(functionalExpression, false, computeType);
             if (functionalExpressionType != null && types.add(functionalExpressionType)) {
               overloadProcessor.consume(functionalExpressionType);
             }
