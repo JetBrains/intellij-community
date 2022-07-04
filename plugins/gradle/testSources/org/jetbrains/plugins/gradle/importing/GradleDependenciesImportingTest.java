@@ -29,6 +29,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.GradleManager;
+import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
@@ -47,6 +48,7 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getSourceSetName;
 
 /**
@@ -1900,6 +1902,39 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       assertModuleLibDeps("project.main", "Gradle: junit:junit:4.12", "Gradle: org.hamcrest:hamcrest-core:1.3");
       assertModuleLibDeps("project.customSrc", "Gradle: org.hamcrest:hamcrest-core:1.3");
     }
+  }
+
+  @Test
+  @TargetVersions("7.4+")
+  public void testVersionCatalogsModelImport() throws Exception {
+    final VirtualFile toml1 = createProjectSubFile("my_versions.toml", "[libraries]\n" +
+                                                                      "mylib = \"junit:junit:4.12\"");
+    final VirtualFile toml2 = createProjectSubFile("my_versions_2.toml", "[libraries]\n" +
+                                                                         "myOtherLib = \"org.hamcrest:hamcrest-core:1.3\"");
+    createSettingsFile("dependencyResolutionManagement {\n" +
+                       "    versionCatalogs {\n" +
+                       "        libs1 {\n" +
+                       "            from(files('my_versions.toml'))\n" +
+                       "        }\n" +
+                       "        libs2 {\n" +
+                       "            from(files('my_versions_2.toml'))\n" +
+                       "        }\n" +
+                       "    }\n" +
+                       "}" +
+                       "");
+    importProject(createBuildScriptBuilder()
+                    .withJavaPlugin()
+                    .addPostfix(
+                      "dependencies {",
+                      "  testImplementation libs1.mylib",
+                      "  testImplementation libs2.myOtherLib",
+                      "}"
+                    ).generate());
+
+    VersionCatalogsLocator locator = myProject.getService(VersionCatalogsLocator.class);
+    final Map<String, String> stringStringMap = locator.getVersionCatalogsForModule(getModule("project.main"));
+    assertThat(stringStringMap).containsOnly(entry("libs1", toml1.getPath()),
+                                             entry("libs2", toml2.getPath()));
   }
 
   @SuppressWarnings("SameParameterValue")

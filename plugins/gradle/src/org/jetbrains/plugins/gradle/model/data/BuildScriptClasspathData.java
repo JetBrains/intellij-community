@@ -9,6 +9,8 @@ import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.DependencyAccessorsModel;
+import org.jetbrains.plugins.gradle.model.VersionCatalogsModel;
 
 import java.io.File;
 import java.util.List;
@@ -19,6 +21,8 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
   @NotNull
   public static final Key<BuildScriptClasspathData> KEY =
     Key.create(BuildScriptClasspathData.class, ProjectKeys.LIBRARY_DEPENDENCY.getProcessingWeight() + 1);
+  public static final Key<VersionCatalogsModel> VERSION_CATALOGS = Key.create(VersionCatalogsModel.class, KEY.getProcessingWeight());
+  public static final Key<DependencyAccessorsModel> ACCESSORS = Key.create(DependencyAccessorsModel.class, KEY.getProcessingWeight());
 
   @Nullable
   private File gradleHomeDir;

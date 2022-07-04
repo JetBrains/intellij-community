@@ -12,3 +12,4 @@ org.jetbrains.plugins.gradle.tooling.builder.IntelliJSettingsBuilder
 org.jetbrains.plugins.gradle.tooling.builder.IntelliJProjectSettingsBuilder
 org.jetbrains.plugins.gradle.tooling.builder.DependencyAccessorsModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.MavenRepositoriesModelBuilder
+org.jetbrains.plugins.gradle.tooling.builder.VersionCatalogsModelBuilder
