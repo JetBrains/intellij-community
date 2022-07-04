@@ -975,7 +975,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     fireImportAndResolveScheduled(spec);
     AsyncPromise<List<Module>> promise = scheduleResolve();
     promise.onProcessed(m -> {
-      ApplicationManager.getApplication().executeOnPooledThread(()->completeMavenSyncOnImportCompletion(activity));
+      completeMavenSyncOnImportCompletion(activity);
     });
     return promise;
   }
