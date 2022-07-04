@@ -38,6 +38,7 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
 
   init {
     comboBox.renderer = listCellRenderer { value, _, _ -> text = renderer(value) }
+    segmentedButtonComponent.isOpaque = false
     rebuild()
   }
 

@@ -192,7 +192,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun checkBox(@NlsContexts.Checkbox text: String): CellImpl<JBCheckBox> {
-    return cell(JBCheckBox(text))
+    return cell(JBCheckBox(text)).applyToComponent {
+      isOpaque = false
+    }
   }
 
   override fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton> {
@@ -202,7 +204,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
     val buttonsGroup = dialogPanelConfig.context.getButtonsGroup() ?: throw UiDslException(
       "Button group must be defined before using radio button")
-    val result = cell(JBRadioButton(text))
+    val result = cell(JBRadioButton(text)).applyToComponent {
+      isOpaque = false
+    }
     buttonsGroup.add(result, value)
     return result
   }
@@ -210,6 +214,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): CellImpl<JButton> {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener(actionListener)
+    button.isOpaque = false
     return cell(button)
   }
 
@@ -333,7 +338,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                                          project: Project?,
                                          fileChooserDescriptor: FileChooserDescriptor,
                                          fileChosen: ((chosenFile: VirtualFile) -> String)?): Cell<TextFieldWithBrowseButton> {
-    val result = cell(textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen))
+    val result = cell(textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)).applyToComponent {
+      isOpaque = false
+      textField.isOpaque = false
+    }
     result.columns(COLUMNS_SHORT)
     return result
   }
@@ -383,11 +391,15 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun spinner(range: IntRange, step: Int): CellImpl<JBIntSpinner> {
-    return cell(JBIntSpinner(range.first, range.first, range.last, step))
+    return cell(JBIntSpinner(range.first, range.first, range.last, step)).applyToComponent {
+      isOpaque = false
+    }
   }
 
   override fun spinner(range: ClosedRange<Double>, step: Double): Cell<JSpinner> {
-    return cell(JSpinner(SpinnerNumberModel(range.start, range.start, range.endInclusive, step)))
+    return cell(JSpinner(SpinnerNumberModel(range.start, range.start, range.endInclusive, step))).applyToComponent {
+      isOpaque = false
+    }
   }
 
   override fun textArea(): Cell<JBTextArea> {
