@@ -295,7 +295,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   @Override
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
     Tracer tracer = TraceManager.INSTANCE.getTracer("codeInspection");
-    runToolsSpan = tracer.spanBuilder("global_inspection").setNoParent().startSpan();
+    runToolsSpan = tracer.spanBuilder("inspection_execution_time").setNoParent().startSpan();
     myInspectionStartedTimestamp = System.currentTimeMillis();
     ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (!(progressIndicator instanceof ProgressIndicatorWithDelayedPresentation)) {
