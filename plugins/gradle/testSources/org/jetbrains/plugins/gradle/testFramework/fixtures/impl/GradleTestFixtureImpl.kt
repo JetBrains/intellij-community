@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -13,6 +14,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
 import com.intellij.openapi.observable.operations.ObservableOperationTrace
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,13 +22,18 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.testFramework.runAll
 import com.intellij.testFramework.runInEdtAndWait
+import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.util.*
+import org.jetbrains.plugins.gradle.testFramework.util.closeProject
+import org.jetbrains.plugins.gradle.testFramework.util.generateWrapper
+import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.getProjectDataLoadPromise
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
 import java.util.concurrent.TimeUnit
 
@@ -56,7 +63,7 @@ internal class GradleTestFixtureImpl private constructor(
     GradleTestFixtureFactory.getFixtureFactory().createFileTestFixture("GradleTestFixture/$gradleVersion/$projectName") {
       configureProject()
       withFiles { generateWrapper(it, gradleVersion) }
-      withFiles { createProjectCaches(it) }
+      withFiles { runBlocking { createProjectCaches(it) } }
     }
   )
 
@@ -69,7 +76,7 @@ internal class GradleTestFixtureImpl private constructor(
     installTaskExecutionWatcher()
     installProjectReloadWatcher()
 
-    _project = openProject(fileFixture.root)
+    _project = runBlocking { ProjectUtil.openOrImportAsync(fileFixture.root.toNioPath())!! }
   }
 
   override fun tearDown() {
@@ -139,12 +146,30 @@ internal class GradleTestFixtureImpl private constructor(
       }
     }
 
-    private fun createProjectCaches(projectRoot: VirtualFile) {
+    private suspend fun createProjectCaches(projectRoot: VirtualFile) {
       val project = openProjectAndWait(projectRoot)
-      runAll(
-        { projectRoot.refreshAndWait() },
-        { project.closeProject(save = true) }
-      )
+      try {
+        projectRoot.refreshAndWait()
+      }
+      finally {
+        ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project = project, save = true)
+      }
     }
   }
+}
+
+private suspend fun openProjectAndWait(projectRoot: VirtualFile): Project {
+  val project = ProjectUtil.openOrImportAsync(projectRoot.toNioPath())!!
+  try {
+    getProjectDataLoadPromise().asDeferred().await()
+  }
+  catch (e: Throwable) {
+    try {
+      ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project)
+    }
+    catch (ignore: Throwable) {
+    }
+    throw e
+  }
+  return project
 }

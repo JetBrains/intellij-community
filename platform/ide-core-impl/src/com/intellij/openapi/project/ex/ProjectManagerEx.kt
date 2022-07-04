@@ -56,13 +56,17 @@ abstract class ProjectManagerEx : ProjectManager() {
   /**
    * The project and the app settings will be not saved.
    */
-  abstract fun forceCloseProject(project: Project): Boolean
+  @TestOnly
+  fun forceCloseProject(project: Project): Boolean = forceCloseProject(project, save = false)
+
+  @TestOnly
+  abstract fun forceCloseProject(project: Project, save: Boolean): Boolean
 
   @Internal
-  abstract suspend fun forceCloseProjectAsync(project: Project): Boolean
+  abstract suspend fun forceCloseProjectAsync(project: Project, save: Boolean = false): Boolean
 
   @Internal
-  abstract fun saveAndForceCloseProject(project: Project): Boolean
+  fun saveAndForceCloseProject(project: Project): Boolean = forceCloseProject(project, save = true)
 
   // return true if successful
   abstract fun closeAndDisposeAllProjects(checkCanClose: Boolean): Boolean

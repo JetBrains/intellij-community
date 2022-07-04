@@ -296,21 +296,18 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return closeProject(project = project, saveProject = true, dispose = false, checkCanClose = true)
   }
 
-  override fun forceCloseProject(project: Project): Boolean {
-    return closeProject(project = project, saveProject = false, dispose = true, checkCanClose = false)
+  override fun forceCloseProject(project: Project, save: Boolean): Boolean {
+    return closeProject(project = project, saveProject = save, dispose = true, checkCanClose = false)
   }
 
-  override suspend fun forceCloseProjectAsync(project: Project): Boolean {
-    return withContext(Dispatchers.EDT) {
+  override suspend fun forceCloseProjectAsync(project: Project, save: Boolean): Boolean {
+    // ModalityState.NON_MODAL for write-safe context
+    return withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
       if (project.isDisposed) {
         return@withContext false
       }
-      closeProject(project = project, saveProject = false, dispose = true, checkCanClose = false)
+      closeProject(project = project, saveProject = save, dispose = true, checkCanClose = false)
     }
-  }
-
-  override fun saveAndForceCloseProject(project: Project): Boolean {
-    return closeProject(project = project, saveProject = true, dispose = true, checkCanClose = false)
   }
 
   // return true if successful
