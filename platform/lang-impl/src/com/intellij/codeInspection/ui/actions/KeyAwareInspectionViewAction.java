@@ -142,10 +142,12 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
       if (element != null) {
         return element;
       }
-      Object node = e.getData(PlatformCoreDataKeys.SELECTED_ITEM);
-      if (node instanceof InspectionTreeNode) {
+      Object[] nodes = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+      if (nodes != null) {
         HashSet<RefEntity> entities = new HashSet<>();
-        InspectionTree.addElementsInNode((InspectionTreeNode)node, entities);
+        for (Object node : nodes) {
+          InspectionTree.addElementsInNode((InspectionTreeNode)node, entities);
+        }
         RefEntity refEntity = ContainerUtil.find(entities, entity -> entity instanceof RefElement);
         return refEntity != null ? ((RefElement)refEntity).getPsiElement() : null;
       }

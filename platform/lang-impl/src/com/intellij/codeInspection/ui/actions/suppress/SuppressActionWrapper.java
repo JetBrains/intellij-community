@@ -124,23 +124,25 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
     }
 
     private Set<SuppressableInspectionTreeNode> getNodesToSuppress(AnActionEvent e) {
-      Object selectedNode = e.getData(PlatformCoreDataKeys.SELECTED_ITEM);
-      if (!(selectedNode instanceof InspectionTreeNode)) return Collections.emptySet();
+      Object[] selectedNodes = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+      if (selectedNodes == null) return Collections.emptySet();
       final Set<SuppressableInspectionTreeNode> result = new HashSet<>();
-      if (!TreeUtil.treeNodeTraverser((TreeNode)selectedNode).traverse().processEach(node1 -> {    //fetch leaves
-        final InspectionTreeNode n = (InspectionTreeNode)node1;
-        if (n instanceof SuppressableInspectionTreeNode &&
-            ((SuppressableInspectionTreeNode)n).canSuppress() &&
-            n.isValid()) {
-          if (((SuppressableInspectionTreeNode)n).getAvailableSuppressActions().contains(mySuppressAction)) {
-            result.add((SuppressableInspectionTreeNode)n);
-          } else {
-            return false;
+      for (Object selectedNode : selectedNodes) {
+        if (!TreeUtil.treeNodeTraverser((TreeNode)selectedNode).traverse().processEach(node1 -> {    //fetch leaves
+          final InspectionTreeNode n = (InspectionTreeNode)node1;
+          if (n instanceof SuppressableInspectionTreeNode &&
+              ((SuppressableInspectionTreeNode)n).canSuppress() &&
+              n.isValid()) {
+            if (((SuppressableInspectionTreeNode)n).getAvailableSuppressActions().contains(mySuppressAction)) {
+              result.add((SuppressableInspectionTreeNode)n);
+            } else {
+              return false;
+            }
           }
+          return true;
+        })) {
+          return Collections.emptySet();
         }
-        return true;
-      })) {
-        return Collections.emptySet();
       }
       return result;
     }
