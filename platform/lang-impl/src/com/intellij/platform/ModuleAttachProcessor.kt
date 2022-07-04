@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
@@ -79,9 +80,11 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
     if (!dotIdeaDir.exists()) {
       val options = OpenProjectTask(useDefaultProjectAsTemplate = true, isNewProject = true)
       val newProject = ProjectManagerEx.getInstanceEx().newProject(projectDir, options) ?: return false
-      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir = projectDir,
-                                                                    project = newProject,
-                                                                    newProject = true)
+      runUnderModalProgressIfIsEdt {
+        PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir = projectDir,
+                                                                      project = newProject,
+                                                                      newProject = true)
+      }
       StoreUtil.saveSettings(newProject)
       runWriteAction { Disposer.dispose(newProject) }
     }

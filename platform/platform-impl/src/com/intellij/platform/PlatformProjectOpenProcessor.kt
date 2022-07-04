@@ -174,32 +174,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
-    @JvmStatic
-    fun runDirectoryProjectConfigurators(baseDir: Path, project: Project, newProject: Boolean): Module {
-      project.putUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR, true)
-      val moduleRef = Ref<Module>()
-      val virtualFile = ProjectUtilCore.getFileAndRefresh(baseDir)!!
-      EP_NAME.forEachExtensionSafe { configurator ->
-        fun task() {
-          configurator.configureProject(project, virtualFile, moduleRef, newProject)
-        }
-        if (configurator.isEdtRequired) {
-          ApplicationManager.getApplication().invokeAndWait {
-            task()
-          }
-        }
-        else {
-          task()
-        }
-      }
-      val module = moduleRef.get()
-      if (module == null) {
-        LOG.error("No extension configured a module for $baseDir; extensions = ${EP_NAME.extensionList}")
-      }
-      return module
-    }
-
-    suspend fun runDirectoryProjectConfiguratorsV2(baseDir: Path, project: Project, newProject: Boolean): Module {
+    suspend fun runDirectoryProjectConfigurators(baseDir: Path, project: Project, newProject: Boolean): Module {
       project.putUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR, true)
 
       val moduleRef = Ref<Module>()
@@ -210,18 +185,17 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       for (configurator in EP_NAME.iterable) {
-        fun task() {
-          configurator.configureProject(project, virtualFile, moduleRef, newProject)
-        }
-
         try {
-          if (configurator.isEdtRequired) {
+          if (configurator is DirectoryProjectConfigurator.AsyncDirectoryProjectConfigurator) {
+            configurator.configure(project, virtualFile, moduleRef, newProject)
+          }
+          else if (configurator.isEdtRequired) {
             withContext(Dispatchers.EDT) {
-              task()
+              configurator.configureProject(project, virtualFile, moduleRef, newProject)
             }
           }
           else {
-            task()
+            configurator.configureProject(project, virtualFile, moduleRef, newProject)
           }
         }
         catch (e: ProcessCanceledException) {

@@ -851,7 +851,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     if (options.runConfigurators &&
         (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty()) || project.isLoadedFromCacheButHasNoModules()) {
-      val module = PlatformProjectOpenProcessor.runDirectoryProjectConfiguratorsV2(
+      val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
         baseDir = projectStoreBaseDir,
         project = project,
         newProject = options.isProjectCreatedWithWizard
