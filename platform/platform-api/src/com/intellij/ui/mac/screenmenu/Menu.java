@@ -274,7 +274,7 @@ public class Menu extends MenuItem {
 
     IS_ENABLED = false;
 
-    if (!SystemInfo.isMac) return false;
+    if (!SystemInfo.isMacOSMojave) return false;
     if (!Boolean.getBoolean("jbScreenMenuBar.enabled")) return false;
     if (Boolean.getBoolean("apple.laf.useScreenMenuBar")) {
       Logger.getInstance(Menu.class).info("apple.laf.useScreenMenuBar==true, default screen menu implementation will be used");
