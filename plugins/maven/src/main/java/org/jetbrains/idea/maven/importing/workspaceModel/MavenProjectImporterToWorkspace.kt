@@ -145,10 +145,10 @@ class MavenProjectImporterToWorkspace(
         val importedModuleNames = createdModules.mapTo(mutableSetOf()) { it.moduleId.name }
         current
           .entities(ModuleEntity::class.java)
-          .filter { !isMainEntity(it.entitySource) && it.name in importedModuleNames }
+          .filter { !isMavenEntity(it.entitySource) && it.name in importedModuleNames }
           .forEach { current.removeEntity(it) }
 
-        current.replaceBySource({ isMainEntity(it) }, builder)
+        current.replaceBySource({ isMavenEntity(it) }, builder)
       }
       val storage = WorkspaceModel.getInstance(myProject).entityStorage.current
       for ((moduleId, mavenProject, moduleType) in createdModules) {
@@ -164,7 +164,7 @@ class MavenProjectImporterToWorkspace(
     return importModuleData
   }
 
-  private fun isMainEntity(it: EntitySource) =
+  private fun isMavenEntity(it: EntitySource) =
     (it as? JpsImportedEntitySource)?.externalSystemId == WorkspaceModuleImporter.EXTERNAL_SOURCE_ID
 
   private fun finalizeImport(modules: List<AppliedModuleData>,
