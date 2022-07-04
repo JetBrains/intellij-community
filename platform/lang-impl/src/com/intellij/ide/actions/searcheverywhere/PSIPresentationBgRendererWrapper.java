@@ -33,7 +33,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
-public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting, AutoCompletionContributor{
+public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
+                                                         AutoCompletionContributor, PossibleSlowContributor{
   private final AbstractGotoSEContributor myDelegate;
 
   public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) { myDelegate = delegate; }
@@ -43,6 +44,11 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
     return myDelegate instanceof AutoCompletionContributor
            ? ((AutoCompletionContributor)myDelegate).getAutocompleteItems(pattern, caretPosition)
            : Collections.emptyList();
+  }
+
+  @Override
+  public boolean isSlow() {
+    return PossibleSlowContributor.checkSlow(myDelegate);
   }
 
   public static SearchEverywhereContributor<Object> wrapIfNecessary(AbstractGotoSEContributor delegate) {

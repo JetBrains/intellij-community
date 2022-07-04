@@ -220,7 +220,7 @@ public class MultiThreadSearchTest extends BasePlatformTestCase {
     }
   }
 
-  private static class SearchResultsCollector implements SESearcher.Listener {
+  private static class SearchResultsCollector implements SearchListener {
 
     private final Map<String, List<String>> myMap = new ConcurrentHashMap<>();
     private final AtomicBoolean myFinished = new AtomicBoolean(false);
@@ -257,6 +257,9 @@ public class MultiThreadSearchTest extends BasePlatformTestCase {
         list.remove(info.getElement());
       });
     }
+
+    @Override
+    public void contributorWaits(@NotNull SearchEverywhereContributor<?> contributor) { }
 
     @Override
     public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {

@@ -75,6 +75,8 @@ abstract class SearchListModel extends AbstractListModel<Object> {
 
   public abstract void clearMoreItems();
 
+  public void freezeElements() {}
+
   public abstract int getIndexToScroll(int currentIndex, boolean scrollDown);
 
   public void clear() {
