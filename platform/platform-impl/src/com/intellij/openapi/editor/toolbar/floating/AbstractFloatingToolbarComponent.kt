@@ -44,6 +44,8 @@ abstract class AbstractFloatingToolbarComponent(
 
   override fun scheduleHide() = componentAnimator.scheduleHide()
 
+  protected fun hideImmediately() = componentAnimator.hideImmediately()
+
   override fun paintComponent(g: Graphics) {
     val graphics = g.create()
     try {
