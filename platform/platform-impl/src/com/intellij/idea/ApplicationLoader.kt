@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
-@file:ApiStatus.Internal
+@file:Internal
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.idea
@@ -46,7 +46,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import net.miginfocom.layout.PlatformDefaults
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.EventQueue
@@ -552,7 +551,6 @@ private suspend fun executePreloadActivity(activity: PreloadingActivity, descrip
   }
 
   try {
-    @Suppress("DEPRECATION")
     activity.execute()
     if (isDebugEnabled) {
       LOG.debug("${activity.javaClass.name} finished")

@@ -290,7 +290,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       scheduleInitialVfsRefresh();
     }
 
-    int totalFiles = providerToFiles.values().stream().mapToInt(it -> it.size()).sum();
+    int totalFiles = providerToFiles.values().stream().mapToInt(List::size).sum();
     if (totalFiles == 0) {
       LOG.info("Finished for " + myProject.getName() + ". No files to index with loading content.");
       return;
@@ -325,7 +325,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   private void indexFiles(@NotNull Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles,
                           @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
                           @NotNull ProgressIndicator progressIndicator) {
-    int totalFiles = providerToFiles.values().stream().mapToInt(it -> it.size()).sum();
+    int totalFiles = providerToFiles.values().stream().mapToInt(List::size).sum();
     ConcurrentTasksProgressManager concurrentTasksProgressManager = new ConcurrentTasksProgressManager(progressIndicator, totalFiles);
 
     int numberOfIndexingThreads = getNumberOfIndexingThreads();
@@ -390,8 +390,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
   private static @NotNull String getLogScanningCompletedStageMessage(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory) {
     List<JsonScanningStatistics> statistics = projectIndexingHistory.getScanningStatistics();
-    int numberOfScannedFiles = statistics.stream().mapToInt(s -> s.getNumberOfScannedFiles()).sum();
-    int numberOfFilesForIndexing = statistics.stream().mapToInt(s -> s.getNumberOfFilesForIndexing()).sum();
+    int numberOfScannedFiles = statistics.stream().mapToInt(JsonScanningStatistics::getNumberOfScannedFiles).sum();
+    int numberOfFilesForIndexing = statistics.stream().mapToInt(JsonScanningStatistics::getNumberOfFilesForIndexing).sum();
     return "Scanning completed for " +
            projectIndexingHistory.getProject().getName() +
            ". Number of scanned files: " +
@@ -427,8 +427,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     return Boolean.TRUE.equals(project.getUserData(CONTENT_SCANNED));
   }
 
-  @NotNull
-  private static List<IndexableFilesIterator> collectProviders(@NotNull Project project, FileBasedIndexImpl index) {
+  private static @NotNull List<IndexableFilesIterator> collectProviders(@NotNull Project project, FileBasedIndexImpl index) {
     List<IndexableFilesIterator> originalOrderedProviders = index.getIndexableFilesProviders(project);
 
     List<IndexableFilesIterator> orderedProviders = new ArrayList<>();
@@ -447,8 +446,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     return null;
   }
 
-  @NotNull
-  private Map<IndexableFilesIterator, List<VirtualFile>> collectIndexableFilesConcurrently(
+  private @NotNull Map<IndexableFilesIterator, List<VirtualFile>> collectIndexableFilesConcurrently(
     @NotNull Project project,
     @NotNull ProgressIndicator indicator,
     @NotNull List<IndexableFilesIterator> providers,

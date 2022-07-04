@@ -449,7 +449,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         return;
       }
       switched = new CountDownLatch(1);
-      myRunWhenSmartQueue.addLast(() -> switched.countDown());
+      myRunWhenSmartQueue.addLast(switched::countDown);
     }
 
     while (myState.get() != State.SMART && !myProject.isDisposed()) {
