@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.SyntheticLibrary;
@@ -17,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -120,7 +120,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     }
   }
 
-  public void testExcludeFileFromLibrary() throws IOException {
+  public void testExcludeFileFromLibrary() {
     /*
       root/      (library root)
         dir/
@@ -147,7 +147,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     assertIndexableContent(Collections.singletonList(java), Arrays.asList(txt1, txt2));
   }
 
-  public void testExcludeDirectoryFromLibrary() throws IOException {
+  public void testExcludeDirectoryFromLibrary() {
     /*
       root/      (library root)
         dir/     <- excluded directory
@@ -200,7 +200,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     assertIndexableContent(Arrays.asList(java, txt1, txt2), null);
   }
 
-  public void testExcludeLibraryRoot() throws IOException {
+  public void testExcludeLibraryRoot() {
     /*
       root/  (library root)  <- excluded library root
         a.txt
@@ -234,7 +234,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     assertIndexableContent(Arrays.asList(txt, java), null);
   }
 
-  public void testExcludeOnlyFiles() throws IOException {
+  public void testExcludeOnlyFiles() {
     /*
       root/   (library root)
         dir/
@@ -265,6 +265,6 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
                   SyntheticLibrary.newImmutableLibrary(Collections.singletonList(root), Collections.emptyList(), Collections.emptySet(), excludePattern)
                 ) : Collections.emptyList();
               }
-            }, getTestRootDisposable()), false, true));
+            }, getTestRootDisposable()), RootsChangeRescanningInfo.TOTAL_RESCAN));
   }
 }

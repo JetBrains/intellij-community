@@ -135,7 +135,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       }
     });
     Runnable rootsExtensionPointListener = () -> ApplicationManager.getApplication().invokeLater(() ->
-      WriteAction.run(() -> makeRootsChange(EmptyRunnable.getInstance(), false, true))
+      WriteAction.run(() -> makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.TOTAL_RESCAN))
     );
     AdditionalLibraryRootsProvider.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
     OrderEnumerationHandler.EP_NAME.addChangeListener(rootsExtensionPointListener, this);

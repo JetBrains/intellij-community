@@ -33,6 +33,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -296,7 +297,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     app.invokeAndWait(() -> {
       if (reusedProject.get()) {
         // clear all caches, reindex
-        WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true));
+        WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(),
+                                                                                          RootsChangeRescanningInfo.TOTAL_RESCAN));
       }
 
       MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);

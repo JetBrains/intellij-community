@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.EmptyRunnable
@@ -108,7 +109,7 @@ abstract class IndexableFilesBaseTest {
 
   private fun iterateIndexableFiles(processor: (VirtualFile) -> Boolean, project: Project, expectedNumberOfSkippedFiles: Int) {
     val fileBasedIndexEx = FileBasedIndex.getInstance() as FileBasedIndexEx
-    val providers = fileBasedIndexEx.getIndexableFilesProviders (project)
+    val providers = fileBasedIndexEx.getIndexableFilesProviders(project)
     val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
     for (provider in providers) {
       provider.iterateFiles(project, processor, indexableFilesDeduplicateFilter)
@@ -131,7 +132,7 @@ abstract class IndexableFilesBaseTest {
   }
 
   protected fun fireRootsChanged() {
-    ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true)
+    ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.TOTAL_RESCAN)
   }
 
   protected val ContentSpec.file: VirtualFile get() = resolveVirtualFile()
