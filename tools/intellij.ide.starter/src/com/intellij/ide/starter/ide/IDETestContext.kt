@@ -516,6 +516,25 @@ data class IDETestContext(
     return this
   }
 
+  @Suppress("unused")
+  fun setLicense(pathToFileWithLicense: Path): IDETestContext {
+    val licenseKeyFileName: String = when(this.ide.productCode) {
+      "IU" -> "idea.key"
+      "RM" -> "rubymine.key"
+      "WS" -> "webstorm.key"
+      "PS" -> "phpstorm.key"
+      "GO" -> "goland.key"
+      "PY" -> "pycharm.key"
+      "DG" -> "datagrip.key"
+      else -> error("Setting license to the product ${this.ide.productCode} is not supported")
+    }
+
+    val keyFile = paths.configDir.resolve(licenseKeyFileName)
+    keyFile.toFile().createNewFile()
+    keyFile.toFile().writeText(pathToFileWithLicense.toFile().readText())
+    return this
+  }
+
   fun publishArtifact(source: Path,
                       artifactPath: String = testName,
                       artifactName: String = source.fileName.toString()) = ciServer.publishArtifact(source, artifactPath, artifactName)
