@@ -949,6 +949,7 @@ public final class PluginManagerCore {
                          openOptions);
   }
 
+  @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableList")
   @ApiStatus.Internal
   public synchronized static void writePluginIdsToFile(@NotNull Path path,
                                                        @NotNull Stream<PluginId> pluginIds,
@@ -974,7 +975,8 @@ public final class PluginManagerCore {
       .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + descriptor.getName() + " (" + descriptor.getVendor() + ')')
       .collect(Collectors.joining("<br>"));
     String text = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
-    String[] buttons = {CoreBundle.message("third.party.plugins.privacy.note.accept"), CoreBundle.message("third.party.plugins.privacy.note.disable")};
+    String[] buttons =
+      {CoreBundle.message("third.party.plugins.privacy.note.accept"), CoreBundle.message("third.party.plugins.privacy.note.disable")};
     int choice = JOptionPane.showOptionDialog(null, text, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
                                               AllIcons.General.WarningDialog, buttons, buttons[0]);
     return choice == 0;
