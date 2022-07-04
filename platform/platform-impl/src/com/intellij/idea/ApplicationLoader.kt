@@ -47,6 +47,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.EventQueue
 import java.io.IOException
@@ -497,13 +498,19 @@ suspend fun callAppInitialized(app: ApplicationImpl) {
   }
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
-private suspend fun executePreloadActivities(app: ApplicationImpl) {
+@Internal
+internal fun createAppCoroutineScope(app: Application): Pair<CoroutineScope, Disposable> {
   val scope = CoroutineScope(Dispatchers.Default + CoroutineExceptionHandler { _, exception ->
     LOG.error(exception)
   })
   val scopeDisposable = Disposable { scope.cancel("disposed") }
   Disposer.register(app, scopeDisposable)
+  return Pair(scope, scopeDisposable)
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+private suspend fun executePreloadActivities(app: ApplicationImpl) {
+  val (scope, scopeDisposable) = createAppCoroutineScope(app)
 
   // do not execute as a single long task, make sure that other more important tasks may slip in between
   scope.launch(Dispatchers.Default.limitedParallelism(1)) {
@@ -558,7 +565,7 @@ private suspend fun executePreloadActivity(activity: PreloadingActivity, descrip
     throw e
   }
   catch (e: Throwable) {
-    LOG.error("cannot execute preloading activity ${activity.javaClass.name}")
+    LOG.error("cannot execute preloading activity ${activity.javaClass.name}", e)
   }
   finally {
     measureActivity?.end()

@@ -5,11 +5,11 @@ import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.process.UnixProcessManager
 import com.intellij.ide.actions.EditCustomVmOptionsAction
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.createAppCoroutineScope
 import com.intellij.idea.shellEnvLoadFuture
 import com.intellij.jna.JnaLoader
 import com.intellij.notification.Notification
@@ -17,9 +17,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.notification.impl.NotificationFullContent
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.PreloadingActivity
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Messages
@@ -27,13 +25,12 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.MathUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.IoErrorText
 import com.sun.jna.*
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.io.IOException
@@ -41,9 +38,6 @@ import java.nio.file.FileStore
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
-import javax.swing.SwingUtilities
 import kotlin.system.exitProcess
 
 internal class SystemHealthMonitor : PreloadingActivity() {
@@ -92,17 +86,19 @@ private class MyNotification(content: @NlsContexts.NotificationContent String,
 }
 
 private const val NOTIFICATION_GROUP_ID = "System Health"
+
 private fun checkInstallationIntegrity() {
-  if (!SystemInfoRt.isUnix || SystemInfo.isMac) {
+  if (!SystemInfoRt.isUnix || SystemInfoRt.isMac) {
     return
   }
 
   try {
     Files.list(Path.of(PathManager.getLibPath())).use { stream ->
       // see `LinuxDistributionBuilder#generateVersionMarker`
-      val markers = stream.filter { p: Path -> p.fileName.toString().startsWith("build-marker-") }.count()
+      val markers = stream.filter { p -> p.fileName.toString().startsWith("build-marker-") }.count()
       if (markers > 1) {
-        showNotification("mixed.bag.installation", false, null, ApplicationNamesInfo.getInstance().fullProductName)
+        showNotification(key = "mixed.bag.installation", suppressable = false, action = null,
+                         ApplicationNamesInfo.getInstance().fullProductName)
       }
     }
   }
@@ -222,26 +218,27 @@ private fun checkReservedCodeCacheSize() {
   }
 }
 
-private fun checkEnvironment() {
+private suspend fun checkEnvironment() {
   val usedVars = sequenceOf("_JAVA_OPTIONS", "JDK_JAVA_OPTIONS", "JAVA_TOOL_OPTIONS")
-    .filter { `var` -> System.getenv(`var`).isNotEmpty() }
+    .filter { `var` -> !System.getenv(`var`).isNullOrEmpty() }
     .toList()
   if (!usedVars.isEmpty()) {
     showNotification("vm.options.env.vars", true, null, usedVars.joinToString(separator = ", "))
   }
-  AppExecutorUtil.getAppExecutorService().execute {
-    try {
-      if (shellEnvLoadFuture!!.get() === java.lang.Boolean.FALSE) {
-        val action = NotificationAction.createSimpleExpiring(
-          IdeBundle.message("shell.env.loading.learn.more")) { BrowserUtil.browse("https://jb.gg/shell-env") }
-        val appName = ApplicationNamesInfo.getInstance().fullProductName
-        val shell = System.getenv("SHELL")
-        showNotification("shell.env.loading.failed", true, action, appName, shell)
+
+  try {
+    @Suppress("UNCHECKED_CAST")
+    if ((shellEnvLoadFuture!! as Deferred<Boolean?>).await() == false) {
+      val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) {
+        BrowserUtil.browse("https://jb.gg/shell-env")
       }
+      val appName = ApplicationNamesInfo.getInstance().fullProductName
+      val shell = System.getenv("SHELL")
+      showNotification("shell.env.loading.failed", true, action, appName, shell)
     }
-    catch (e: Exception) {
-      LOG.error(e)
-    }
+  }
+  catch (e: Exception) {
+    LOG.error(e)
   }
 }
 
@@ -331,60 +328,42 @@ private fun startDiskSpaceMonitoring() {
     return
   }
 
-  AppExecutorUtil.getAppScheduledExecutorService().schedule(object : Runnable {
-    @Volatile
-    private var freeSpaceCalculator: Future<Long>? = null
-    override fun run() {
-      var future = freeSpaceCalculator
-      if (future == null) {
-        future = ProcessIOExecutorService.INSTANCE.submit<Long> {
-          if (Files.exists(dir)) {
-            store.usableSpace
-          }
-          else {
-            MAX_WRITE_SPEED_IN_BPS * 60
-          }
+  val (scope) = createAppCoroutineScope(ApplicationManager.getApplication())
+  monitorDiskSpace(scope, dir, store, initialDelay = 1)
+}
+
+private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore, initialDelay: Long) {
+  scope.launch {
+    delay(initialDelay)
+
+    while (isActive) {
+      val usableSpace = withContext(Dispatchers.IO) {
+        if (Files.exists(dir)) {
+          store.usableSpace
         }
-        // retry in a minute
-        freeSpaceCalculator = future
-      }
-      if (!future!!.isDone) {
-        restart(1)
-        // calculating...
-        return
+        else {
+          MAX_WRITE_SPEED_IN_BPS * 60
+        }
       }
 
-      val usableSpace: Long
-      try {
-        usableSpace = future.get()
-        freeSpaceCalculator = null
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-        // something went wrong, aborting
-        return
-      }
       if (usableSpace < NO_DISK_SPACE_THRESHOLD) {
         LOG.warn("Extremely low disk space: $usableSpace")
-        SwingUtilities.invokeLater {
+        withContext(Dispatchers.EDT) {
           Messages.showErrorDialog(IdeBundle.message("no.disk.space.message", store.name()), IdeBundle.message("no.disk.space.title"))
-          restart(5)
         }
+
+        delay(5)
       }
       else if (usableSpace < LOW_DISK_SPACE_THRESHOLD) {
         LOG.warn("Low disk space: $usableSpace")
         MyNotification(IdeBundle.message("low.disk.space.message", store.name()), NotificationType.WARNING, "low.disk")
           .setTitle(IdeBundle.message("low.disk.space.title"))
-          .whenExpired { restart(5) }
+          .whenExpired { monitorDiskSpace(scope, dir, store, initialDelay = 5) }
           .notify(null)
       }
       else {
-        restart(MathUtil.clamp((usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS, 5, 3600))
+        delay(((usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS).coerceIn(5, 3600))
       }
     }
-
-    private fun restart(delaySeconds: Long) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(this, delaySeconds, TimeUnit.SECONDS)
-    }
-  }, 1, TimeUnit.SECONDS)
+  }
 }

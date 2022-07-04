@@ -47,7 +47,6 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.io.BuiltInServer
@@ -95,7 +94,8 @@ private const val PROJECTOR_LAUNCHER_CLASS_NAME = "org.jetbrains.projector.serve
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 private var socketLock: SocketLock? = null
 
-internal var shellEnvLoadFuture: Future<Boolean?>? = null
+// Deferred<Boolean?>
+internal var shellEnvLoadFuture: Any? = null
   private set
 
 /** Called via reflection from [Main.bootstrap].  */
@@ -222,7 +222,7 @@ fun start(mainClass: String,
   // don't load EnvironmentUtil class in the main thread
   shellEnvLoadFuture = GlobalScope.async {
     EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading"))
-  }.asCompletableFuture()
+  }
   Thread.currentThread().uncaughtExceptionHandler = Thread.UncaughtExceptionHandler { _, e ->
     StartupAbortedException.processException(e)
   }
