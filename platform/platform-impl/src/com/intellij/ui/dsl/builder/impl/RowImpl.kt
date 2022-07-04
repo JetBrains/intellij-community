@@ -322,7 +322,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun textField(): CellImpl<JBTextField> {
-    val result = cell(JBTextField())
+    val result = cell(JBTextField()).applyToComponent {
+      isOpaque = false
+    }
     result.columns(COLUMNS_SHORT)
     return result
   }
