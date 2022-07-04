@@ -43,9 +43,10 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
     AnActionEvent event = AnActionEvent.createFromInputEvent(
       relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU, null, EditorUtil.getEditorDataContext(editor));
     if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) return;
-    ActionUtil.doPerformActionOrShowPopup(myAction, event, popup -> {
-      popup.showInBestPositionFor(editor);
-    });
+    ActionUtil.performDumbAwareWithCallbacks(myAction, event, () ->
+      ActionUtil.doPerformActionOrShowPopup(myAction, event, popup -> {
+        popup.showInBestPositionFor(editor);
+      }));
   }
 
   @NotNull
