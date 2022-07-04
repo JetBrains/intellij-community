@@ -16,7 +16,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectExImpl
+import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
@@ -195,7 +195,7 @@ open class ClientAppSessionImpl(
 @ApiStatus.Internal
 open class ClientProjectSessionImpl(
   clientId: ClientId,
-  final override val project: ProjectExImpl,
+  final override val project: ProjectImpl,
 ) : ClientSessionImpl(clientId, project), ClientProjectSession {
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.projectContainerDescriptor

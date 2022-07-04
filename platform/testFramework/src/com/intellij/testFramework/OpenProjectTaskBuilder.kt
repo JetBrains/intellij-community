@@ -4,7 +4,7 @@ package com.intellij.testFramework
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectExImpl
+import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.util.ThreeState
 import java.util.function.Predicate
 
@@ -36,7 +36,7 @@ class OpenProjectTaskBuilder {
 
     return options.copy(beforeInit = { project ->
       if (!runPostStartUpActivities) {
-        project.putUserData(ProjectExImpl.RUN_START_UP_ACTIVITIES, false)
+        project.putUserData(ProjectImpl.RUN_START_UP_ACTIVITIES, false)
       }
       if (componentStoreLoadingEnabled != ThreeState.UNSURE) {
         project.putUserData(IProjectStore.COMPONENT_STORE_LOADING_ENABLED, componentStoreLoadingEnabled.toBoolean())
@@ -75,7 +75,7 @@ fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true, befor
   }
   if (!runPostStartUpActivities) {
     task = task.copy(beforeInit = {
-      it.putUserData(ProjectExImpl.RUN_START_UP_ACTIVITIES, false)
+      it.putUserData(ProjectImpl.RUN_START_UP_ACTIVITIES, false)
     })
   }
   return task

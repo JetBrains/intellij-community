@@ -9,7 +9,7 @@ import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.impl.ProjectExImpl;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectLoadHelper;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -23,7 +23,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-final class LightEditProjectImpl extends ProjectExImpl implements LightEditCompatible {
+final class LightEditProjectImpl extends ProjectImpl implements LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(LightEditProjectImpl.class);
   private static final String NAME = "LightEditProject";
 
@@ -36,7 +36,7 @@ final class LightEditProjectImpl extends ProjectExImpl implements LightEditCompa
 
     ProjectLoadHelper.registerComponents(this);
     customizeRegisteredComponents();
-    getStateStore().setPath(projectPath, false, null);
+    getComponentStore().setPath(projectPath, false, null);
     try {
       BuildersKt.runBlocking(EmptyCoroutineContext.INSTANCE, (scope, continuation) -> {
         init$intellij_platform_ide_impl(true, null, continuation);

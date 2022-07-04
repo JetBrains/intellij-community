@@ -11,7 +11,6 @@ import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.project.impl.ProjectExImpl
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.project.TestProjectManager.Companion.getCreationPlace
@@ -64,7 +63,7 @@ open class TestProjectManager : ProjectManagerImpl() {
   }
 
   override fun openProject(project: Project): Boolean {
-    if (project is ProjectExImpl && project.isLight) {
+    if (project is ProjectImpl && project.isLight) {
       project.setTemporarilyDisposed(false)
       val isInitialized = StartupManagerEx.getInstanceEx(project).startupActivityPassed()
       if (isInitialized) {
@@ -186,7 +185,7 @@ open class TestProjectManager : ProjectManagerImpl() {
   }
 
   override fun isRunStartUpActivitiesEnabled(project: Project): Boolean {
-    val runStartUpActivitiesFlag = project.getUserData(ProjectExImpl.RUN_START_UP_ACTIVITIES)
+    val runStartUpActivitiesFlag = project.getUserData(ProjectImpl.RUN_START_UP_ACTIVITIES)
     return runStartUpActivitiesFlag == null || runStartUpActivitiesFlag
   }
 }

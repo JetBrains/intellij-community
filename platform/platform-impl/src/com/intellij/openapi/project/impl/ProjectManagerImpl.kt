@@ -102,10 +102,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         ApplicationManager.getApplication().messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(file, project)
         activity.end()
         registerComponents(project)
-        project.stateStore.setPath(file, isRefreshVfsNeeded, template)
-        if (project is ProjectExImpl) {
-          project.init(preloadServices, indicator)
-        }
+        project.componentStore.setPath(file, isRefreshVfsNeeded, template)
+        project.init(preloadServices, indicator)
       }
       catch (initThrowable: Throwable) {
         try {
@@ -215,7 +213,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override fun loadProject(path: Path): Project {
-    val project = ProjectExImpl(path, null)
+    val project = ProjectImpl(filePath = path, projectName = null)
     runBlocking {
       initProject(
         file = path,
@@ -339,7 +337,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (isLight(project)) {
       // if we close project at the end of the test, just mark it closed;
       // if we are shutting down the entire test framework, proceed to full dispose
-      val projectImpl = project as ProjectExImpl
+      val projectImpl = project as ProjectImpl
       if (!projectImpl.isTemporarilyDisposed) {
         ApplicationManager.getApplication().runWriteAction {
           projectImpl.disposeEarlyDisposable()
@@ -357,7 +355,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           project.stopServicePreloading()
         }
         ApplicationManager.getApplication().runWriteAction {
-          if (project is ProjectExImpl) {
+          if (project is ProjectImpl) {
             project.disposeEarlyDisposable()
             project.startDispose()
           }
@@ -389,7 +387,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       fireProjectClosing(project)
       app.runWriteAction {
         removeFromOpened(project)
-        if (project is ProjectExImpl) {
+        if (project is ProjectImpl) {
           // ignore dispose flag (dispose is passed only via deprecated API that used only by some 3d-party plugins)
           project.disposeEarlyDisposable()
           if (dispose) {
@@ -797,7 +795,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   protected open fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
     val activity = StartUpMeasurer.startActivity("project instantiation")
-    val project = ProjectExImpl(projectStoreBaseDir, options.projectName)
+    val project = ProjectImpl(filePath = projectStoreBaseDir, projectName = options.projectName)
     activity.end()
     options.beforeInit?.invoke(project)
     return project
@@ -810,7 +808,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       removeProjectConfigurationAndCaches(projectStoreBaseDir)
       project = instantiateProject(projectStoreBaseDir, options)
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
-      initProject(projectStoreBaseDir, project, options.isRefreshVfsNeeded, options.preloadServices, template, indicator)
+      initProject(file = projectStoreBaseDir,
+                  project = project,
+                  isRefreshVfsNeeded = options.isRefreshVfsNeeded,
+                  preloadServices = options.preloadServices,
+                  template = template,
+                  indicator = indicator)
 
       project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, true)
     }
