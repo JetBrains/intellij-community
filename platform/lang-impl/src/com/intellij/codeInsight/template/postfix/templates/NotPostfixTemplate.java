@@ -18,15 +18,26 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class NotPostfixTemplate extends PostfixTemplateWithExpressionSelector {
 
   @NotNull
   private final PostfixTemplatePsiInfo myPsiInfo;
 
+  /**
+   * @deprecated use {@link #NotPostfixTemplate(PostfixTemplatePsiInfo, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
+   */
+  @Deprecated(forRemoval = true)
   public NotPostfixTemplate(@NotNull PostfixTemplatePsiInfo info,
                             @NotNull PostfixTemplateExpressionSelector selector) {
-    super("not", "!expr", selector);
+    this(info, selector, null);
+  }
+
+  public NotPostfixTemplate(@NotNull PostfixTemplatePsiInfo info,
+                            @NotNull PostfixTemplateExpressionSelector selector,
+                            @Nullable PostfixTemplateProvider provider) {
+    super(null, "not", "!expr", selector, provider);
     myPsiInfo = info;
   }
 
