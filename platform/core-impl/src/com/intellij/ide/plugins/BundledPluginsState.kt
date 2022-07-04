@@ -32,15 +32,13 @@ class BundledPluginsState {
       val bundledPluginIds = loadedPluginIds
 
       ProcessIOExecutorService.INSTANCE.execute {
-        runCatching {
+        try {
           writePluginIdsToFile(bundledPluginIds)
-        }.onFailure { e ->
-          when (e) {
-            is IOException -> LOG.warn("Unable to save bundled plugins list", e)
-            else -> throw e
-          }
-        }.onSuccess {
+
           PropertiesComponent.getInstance().savedBuildNumber = currentBuildNumber
+        }
+        catch (e: IOException) {
+          LOG.warn("Unable to save bundled plugins list", e)
         }
       }
     }
