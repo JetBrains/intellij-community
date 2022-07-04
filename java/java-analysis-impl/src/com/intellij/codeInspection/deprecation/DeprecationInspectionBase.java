@@ -67,7 +67,10 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       return;
     }
 
-    if (ignoreApiDeclaredInThisProject && element.getManager().isInProject(element)) return;
+    if (ignoreApiDeclaredInThisProject && element.getManager().isInProject(element) && forRemoval) {
+      forRemoval = false;
+      highlightType = ProblemHighlightType.LIKE_DEPRECATED;
+    }
     
     if (ignoreInSameOutermostClass && areElementsInSameOutermostClass(element, elementToHighlight)) return;
 

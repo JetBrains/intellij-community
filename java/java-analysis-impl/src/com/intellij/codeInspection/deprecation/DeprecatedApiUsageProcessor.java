@@ -115,12 +115,14 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
       return;
     }
 
-    if (myIgnoreApiDeclaredInThisProject && overriddenMethod.getManager().isInProject(overriddenMethod)) return;
-    
     if (overriddenMethod.isDeprecated() && myForRemoval == isForRemovalAttributeSet(overriddenMethod)) {
+      ProblemHighlightType highlightType = myHighlightType;
+      if (myIgnoreApiDeclaredInThisProject && myForRemoval && overriddenMethod.getManager().isInProject(overriddenMethod)) {
+        highlightType = ProblemHighlightType.LIKE_DEPRECATED;
+      }
       String description = JavaErrorBundle.message(myForRemoval ? "overrides.marked.for.removal.method" : "overrides.deprecated.method",
                                                    getPresentableName(aClass));
-      myHolder.registerProblem(methodNameElement, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
+      myHolder.registerProblem(methodNameElement, getDescription(description, highlightType == ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL, highlightType), highlightType);
     }
   }
 
