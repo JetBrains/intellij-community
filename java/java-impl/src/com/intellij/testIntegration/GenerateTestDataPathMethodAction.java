@@ -21,6 +21,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class GenerateTestDataPathMethodAction extends GenerateTestDataPathCommon {
@@ -96,8 +97,7 @@ public class GenerateTestDataPathMethodAction extends GenerateTestDataPathCommon
 
   private static String capitalizeFirstChar(@NotNull String inString) {
     if (Character.isUpperCase(inString.charAt(0))) return inString;
-    if (inString.length() == 1) return inString.toUpperCase();
-    return inString.charAt(0) + inString.substring(1);
+    return inString.substring(0, 1).toUpperCase(Locale.ROOT) + inString.substring(1);
   }
 
   private static String normalizeMethodName(@NotNull String inString) {
