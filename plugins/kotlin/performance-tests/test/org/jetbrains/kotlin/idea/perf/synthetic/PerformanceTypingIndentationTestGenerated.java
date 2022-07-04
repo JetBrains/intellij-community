@@ -2137,9 +2137,19 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/InEnumInitializerListNotEmpty.after.inv.kt");
             }
 
+            @TestMetadata("NotFirstParameter.after.inv.kt")
+            public void testNotFirstParameter() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/NotFirstParameter.after.inv.kt");
+            }
+
             @TestMetadata("SettingAlignMultilineParametersInCalls.after.inv.kt")
             public void testSettingAlignMultilineParametersInCalls() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/SettingAlignMultilineParametersInCalls.after.inv.kt");
+            }
+
+            @TestMetadata("SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.inv.kt")
+            public void testSmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.inv.kt");
             }
         }
     }
