@@ -391,21 +391,16 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       holder.clear();
 
       // include infos which we got while visiting nested elements with the same range
-      while (true) {
-        if (!nestedRange.empty() && TextRange.contains(elementRange, nestedRange.peek())) {
-          long oldRange = nestedRange.pop();
-          List<HighlightInfo> oldInfos = nestedInfos.pop();
-          if (elementRange == oldRange) {
-            if (infosForThisRange == null) {
-              infosForThisRange = oldInfos;
-            }
-            else if (oldInfos != null) {
-              infosForThisRange.addAll(oldInfos);
-            }
+      while (!nestedRange.empty() && TextRange.contains(elementRange, nestedRange.peek())) {
+        long oldRange = nestedRange.pop();
+        List<HighlightInfo> oldInfos = nestedInfos.pop();
+        if (elementRange == oldRange) {
+          if (infosForThisRange == null) {
+            infosForThisRange = oldInfos;
           }
-        }
-        else {
-          break;
+          else if (oldInfos != null) {
+            infosForThisRange.addAll(oldInfos);
+          }
         }
       }
       nestedRange.push(elementRange);

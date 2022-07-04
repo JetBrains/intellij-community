@@ -206,11 +206,8 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
       e = assignmentExpression.getParent();
     }
 
-    while (true) {
-      if (e instanceof PsiFile) {
-        break;
-      }
-      else if (e instanceof GrClosableBlock) {
+    while (!(e instanceof PsiFile)) {
+      if (e instanceof GrClosableBlock) {
         PsiElement eCall = e.getParent();
         if (!(eCall instanceof GrMethodCall)) return null;
 
@@ -225,7 +222,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
         e = call.getParent();
       }
       else if (e instanceof GrBlockStatement || e instanceof GrOpenBlock || e instanceof GrIfStatement || e instanceof GrForStatement
-          || e instanceof GrWhileStatement || e instanceof GrTryCatchStatement) {
+               || e instanceof GrWhileStatement || e instanceof GrTryCatchStatement) {
         e = e.getParent();
       }
       else {

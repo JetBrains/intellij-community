@@ -64,7 +64,7 @@ public class ControlFlowGraph implements CodeConstants {
 
     for (BasicBlock block : blocks) {
       buf.append("----- Block ").append(block.id).append(" -----").append(new_line_separator);
-      buf.append(block.toString());
+      buf.append(block);
       buf.append("----- Edges -----").append(new_line_separator);
 
       List<BasicBlock> suc = block.getSuccessors();
