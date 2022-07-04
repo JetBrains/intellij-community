@@ -276,7 +276,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
           removeTemplate(template);
         }
       }
-    });
+    }, null, null, SettingsCategory.CODE);
 
     doLoadTemplates(mySchemeManager.loadSchemes());
 

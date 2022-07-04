@@ -1,14 +1,12 @@
 package com.intellij.settingsSync
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
+import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
-import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.openapi.keymap.impl.KEYMAPS_DIR_PATH
+import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.profile.codeInspection.InspectionProfileManager
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.settingsSync.config.SettingsSyncUiGroup
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
@@ -53,14 +51,17 @@ private fun getCategory(componentClasses: List<Class<PersistentStateComponent<An
 }
 
 private fun getSchemeCategory(fileSpec: String): SettingsCategory? {
+  // fileSpec is e.g. keymaps/mykeymap.xml
   val separatorIndex = fileSpec.indexOf("/")
   if (separatorIndex >= 0) {
-    when (fileSpec.substring(0, separatorIndex)) {
-      CodeStyleSchemesImpl.CODE_STYLES_DIR_PATH -> return SettingsCategory.CODE
-      EditorColorsManagerImpl.FILE_SPEC -> return SettingsCategory.UI
-      KEYMAPS_DIR_PATH -> return SettingsCategory.KEYMAP
-      InspectionProfileManager.INSPECTION_DIR -> return SettingsCategory.CODE
+    val directoryName = fileSpec.substring(0, separatorIndex) // e.g. 'keymaps'
+    var settingsCategory: SettingsCategory? = null
+    (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
+      if (it.fileSpec == directoryName) {
+        settingsCategory = it.getSettingsCategory()
+      }
     }
+    return settingsCategory
   }
   return null
 }

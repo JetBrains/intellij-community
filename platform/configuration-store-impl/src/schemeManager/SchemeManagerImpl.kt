@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
@@ -49,7 +50,8 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
   val presentableName: String? = null,
   private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
   private val fileChangeSubscriber: FileChangeSubscriber? = null,
-  private val virtualFileResolver: VirtualFileResolver? = null
+  private val virtualFileResolver: VirtualFileResolver? = null,
+  private val settingsCategory: SettingsCategory = SettingsCategory.OTHER
 ) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor),
     SafeWriteRequestor,
     StorageManagerFileWriteRequestor {
@@ -357,6 +359,10 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
         removeDirectoryIfEmpty(errors)
       }
     }
+  }
+
+  override fun getSettingsCategory(): SettingsCategory {
+    return settingsCategory
   }
 
   private fun removeDirectoryIfEmpty(errors: MutableList<Throwable>) {

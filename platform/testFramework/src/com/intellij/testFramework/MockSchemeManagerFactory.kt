@@ -4,6 +4,7 @@ package com.intellij.testFramework
 import com.intellij.configurationStore.SchemeNameToFileName
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.options.*
 import java.nio.file.Path
 
@@ -18,7 +19,8 @@ class MockSchemeManagerFactory : SchemeManagerFactory() {
     schemeNameToFileName: SchemeNameToFileName,
     streamProvider: StreamProvider?,
     directoryPath: Path?,
-    isAutoSave: Boolean
+    isAutoSave: Boolean,
+    settingsCategory: SettingsCategory
   ): SchemeManager<SCHEME> {
 
     @Suppress("UNCHECKED_CAST")

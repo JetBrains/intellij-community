@@ -184,7 +184,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         });
       }
     };
-    mySchemeManager = SchemeManagerFactory.getInstance().create(FILE_SPEC, abstractTypesProcessor);
+    mySchemeManager = SchemeManagerFactory.getInstance().create(FILE_SPEC, abstractTypesProcessor, null, null, SettingsCategory.CODE);
 
     myDetectionService = new FileTypeDetectionService(this);
     Disposer.register(this, myDetectionService);

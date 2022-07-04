@@ -104,7 +104,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @NonInjectable
   public EditorColorsManagerImpl(@NotNull SchemeManagerFactory schemeManagerFactory) {
     Map<String, List<AdditionalTextAttributesEP>> additionalTextAttributes = collectAdditionalTextAttributesEPs();
-    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor(additionalTextAttributes));
+    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor(additionalTextAttributes),
+                                                  null, null, SettingsCategory.UI);
     initDefaultSchemes();
     loadBundledSchemes();
     loadSchemesFromThemes();

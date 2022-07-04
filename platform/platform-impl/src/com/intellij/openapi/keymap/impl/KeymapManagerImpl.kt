@@ -68,7 +68,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
           }
         }
       }
-    })
+    }, settingsCategory = SettingsCategory.KEYMAP)
 
     val defaultKeymapManager = DefaultKeymap.getInstance()
     val systemDefaultKeymap = WelcomeWizardUtil.getWizardMacKeymap() ?: defaultKeymapManager.defaultKeymapName

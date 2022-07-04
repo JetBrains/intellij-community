@@ -6,6 +6,7 @@ import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.Scheme
@@ -43,7 +44,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
     schemeNameToFileName: SchemeNameToFileName,
     streamProvider: StreamProvider?,
     directoryPath: Path?,
-    isAutoSave: Boolean
+    isAutoSave: Boolean,
+    settingsCategory: SettingsCategory
   ): SchemeManager<T> {
     val path = checkPath(directoryName)
     val fileChangeSubscriber = when {
@@ -58,7 +60,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                     presentableName = presentableName,
                                     schemeNameToFileName = schemeNameToFileName,
                                     fileChangeSubscriber = fileChangeSubscriber,
-                                    virtualFileResolver = getVirtualFileResolver())
+                                    virtualFileResolver = getVirtualFileResolver(),
+                                    settingsCategory = settingsCategory)
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
