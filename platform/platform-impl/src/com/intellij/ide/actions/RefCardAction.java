@@ -1,15 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.DiskQueryRelay;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,9 +19,9 @@ import java.nio.file.Path;
 
 public class RefCardAction extends DumbAwareAction {
   private final NullableLazyValue<Path> myRefCardPath = NullableLazyValue.lazyNullable(() -> {
-    var relay = new DiskQueryRelay<Path, Path>(file -> Files.isRegularFile(file) ? file : null);
-    var file = Path.of(PathManager.getHomePath() + "/help/" + (SystemInfo.isMac ? "ReferenceCardForMac.pdf" : "ReferenceCard.pdf"));
-    return relay.accessDiskWithCheckCanceled(file);
+    var file = Path.of(PathManager.getHomePath() + "/help/ReferenceCard" + (SystemInfo.isMac ? "ForMac" : "") + ".pdf");
+    var future = ProcessIOExecutorService.INSTANCE.submit(() -> Files.exists(file) ? file : null);
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
   });
 
   @Override
@@ -40,9 +41,9 @@ public class RefCardAction extends DumbAwareAction {
       BrowserUtil.browse(file);
     }
     else {
-      var webUrl = getKeymapUrl();
-      if (webUrl != null) {
-        BrowserUtil.browse(webUrl);
+      var url = getKeymapUrl();
+      if (url != null) {
+        BrowserUtil.browse(url);
       }
     }
   }
