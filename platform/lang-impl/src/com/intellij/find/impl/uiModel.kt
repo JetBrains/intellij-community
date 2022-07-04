@@ -11,10 +11,13 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.TextChunk
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 
-internal class FindPopupItem(
+
+@ApiStatus.Internal
+class FindPopupItem(
   val usage: UsageInfoAdapter,
   val presentation: UsagePresentation?,
 ) {
@@ -22,6 +25,9 @@ internal class FindPopupItem(
   val path: String = usage.path
   val line: Int = usage.line
   val navigationOffset: Int = usage.navigationOffset
+
+  val presentableText: String?
+    get() = presentation?.text?.joinToString("")
 
   fun withPresentation(presentation: UsagePresentation?): FindPopupItem {
     return FindPopupItem(usage, presentation)
@@ -38,7 +44,8 @@ internal class SearchEverywhereItem(
   }
 }
 
-internal class UsagePresentation(
+@ApiStatus.Internal
+class UsagePresentation(
   val text: Array<out TextChunk>,
   val backgroundColor: Color?,
   val fileString: @Nls String,
