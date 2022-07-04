@@ -70,7 +70,7 @@ public class PyDocstringTypesInspection extends PyInspection {
           String dynamicType = signature.getArgTypeQualifiedName(param);
           if (dynamicType != null) {
             @NlsSafe String dynamicTypeShortName = getShortestImportableName(function, dynamicType);
-            if (!match(function, dynamicType, type.getValue())) {
+            if (dynamicTypeShortName != null && !match(function, dynamicType, type.getValue())) {
               registerProblem(node, PyPsiBundle.message("INSP.docstring.types.dynamically.inferred.type.does.not.match.specified.type",
                                                         dynamicTypeShortName, type),
                               ProblemHighlightType.WEAK_WARNING, null, type.getTextRange(),
@@ -127,7 +127,7 @@ public class PyDocstringTypesInspection extends PyInspection {
     private final Substring myTypeSubstring;
     private final String myNewType;
 
-    private ChangeTypeQuickFix(String name, Substring substring, String type) {
+    private ChangeTypeQuickFix(@NotNull String name, @NotNull Substring substring, @NotNull String type) {
       myParamName = name;
       myTypeSubstring = substring;
       myNewType = type;
