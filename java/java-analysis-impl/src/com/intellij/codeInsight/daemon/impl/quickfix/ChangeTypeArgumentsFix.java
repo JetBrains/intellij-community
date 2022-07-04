@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -21,22 +23,35 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityAction {
+public class ChangeTypeArgumentsFix implements IntentionActionWithFixAllOption, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(ChangeTypeArgumentsFix.class);
 
-  private final PsiMethod myTargetMethod;
-  private final PsiClass myPsiClass;
-  private final PsiExpression[] myExpressions;
+  private final @NotNull PsiMethod myTargetMethod;
+  private final @NotNull PsiClass myPsiClass;
+  private final PsiExpression @NotNull [] myExpressions;
   private final PsiNewExpression myNewExpression;
 
   ChangeTypeArgumentsFix(@NotNull PsiMethod targetMethod,
-                         PsiClass psiClass,
+                         @NotNull PsiClass psiClass,
                          PsiExpression @NotNull [] expressions,
                          @NotNull PsiElement context) {
+    this(targetMethod, psiClass, expressions, PsiTreeUtil.getParentOfType(context, PsiNewExpression.class));
+  }
+
+  private ChangeTypeArgumentsFix(@NotNull PsiMethod targetMethod,
+                                 @NotNull PsiClass psiClass,
+                                 PsiExpression @NotNull [] expressions,
+                                 PsiNewExpression newExpression) {
     myTargetMethod = targetMethod;
     myPsiClass = psiClass;
     myExpressions = expressions;
-    myNewExpression = PsiTreeUtil.getParentOfType(context, PsiNewExpression.class);
+    myNewExpression = newExpression;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new ChangeTypeArgumentsFix(myTargetMethod, myPsiClass, myExpressions,
+                                      PsiTreeUtil.findSameElementInCopy(myNewExpression, target));
   }
 
   @Override
