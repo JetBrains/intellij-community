@@ -89,8 +89,11 @@ public class TextComponentEmptyText extends StatusText {
   @Override
   protected @NotNull Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
     Dimension size = component.getPreferredSize();
+    int width = Math.min(size.width, bounds.width);
+    int height = Math.min(size.height, bounds.height);
+
     return component == getComponent()
-           ? new Rectangle(bounds.x, bounds.y, size.width, bounds.height)
-           : new Rectangle(bounds.x + bounds.width - size.width, bounds.y, size.width, bounds.height);
+           ? new Rectangle(bounds.x, bounds.y, width, height)
+           : new Rectangle(bounds.x + bounds.width - width, bounds.y, width, height);
   }
 }
