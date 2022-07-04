@@ -37,6 +37,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     const val SIDE_BORDER = 14
     const val INTERNAL_BORDER = 10
     const val EXTERNAL_BORDER = 14
+    const val VCS_LOG_DESCRIPTION_MIN_WIDTH = 40
   }
 
   private val statusesActionGroup = DefaultActionGroup()
@@ -74,7 +75,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
         addToCenter(hashAndAuthorPanel)
       }
 
-      val componentLayout = CC().minWidth("0").grow().push()
+      val componentLayout = CC().minWidth("$VCS_LOG_DESCRIPTION_MIN_WIDTH").grow().push()
       add(messagePanel, componentLayout)
       add(metadataPanel, componentLayout)
       add(branchesPanel, componentLayout)
