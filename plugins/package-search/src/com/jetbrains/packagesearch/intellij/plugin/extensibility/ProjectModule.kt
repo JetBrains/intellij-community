@@ -25,6 +25,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import kotlinx.serialization.Serializable
+import java.util.concurrent.CompletableFuture
 
 /**
  * Class representing a native [Module] enriched with Package Search data.
@@ -48,7 +49,7 @@ data class ProjectModule @JvmOverloads constructor(
     val buildSystemType: BuildSystemType,
     val moduleType: ProjectModuleType,
     val availableScopes: List<String> = emptyList(),
-    val dependencyDeclarationCallback: DependencyDeclarationCallback = { _ -> null }
+    val dependencyDeclarationCallback: DependencyDeclarationCallback = { _ -> CompletableFuture.completedFuture(null) }
 ) {
 
     @Suppress("UNUSED_PARAMETER")
@@ -128,7 +129,7 @@ private fun Module.hashCodeOrZero() =
     runCatching { moduleFilePath.hashCode() + 31 * name.hashCode() }
         .getOrDefault(0)
 
-typealias DependencyDeclarationCallback = suspend (Dependency) -> DependencyDeclarationIndexes?
+typealias DependencyDeclarationCallback = (Dependency) -> CompletableFuture<DependencyDeclarationIndexes?>
 
 /**
  * Container class for declaration coordinates for a dependency in a build file. \

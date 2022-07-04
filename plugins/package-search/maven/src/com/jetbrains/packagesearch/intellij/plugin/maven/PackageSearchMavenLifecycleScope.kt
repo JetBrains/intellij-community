@@ -14,9 +14,7 @@
  * limitations under the License.
  ******************************************************************************/
 
-@file:Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
-
-package com.jetbrains.packagesearch.intellij.plugin.lifecycle
+package com.jetbrains.packagesearch.intellij.plugin.maven
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -26,23 +24,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
-import kotlin.math.max
 
 @Service(Service.Level.PROJECT)
-internal class PackageSearchLifecycleScope : CoroutineScope, Disposable {
+internal class PackageSearchMavenLifecycleScope : CoroutineScope, Disposable {
 
-    private inline val threadCount
-        get() = max(1, 2 * Runtime.getRuntime().availableProcessors() / 3)
-
-    internal val coroutineDispatcher =
-        AppExecutorUtil.createBoundedApplicationPoolExecutor(
-            /* name = */ this::class.simpleName!!,
-            /* maxThreads = */ threadCount
-        ).asCoroutineDispatcher()
+    private val coroutineDispatcher =
+        AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
 
     private val supervisor = SupervisorJob()
 
-    override val coroutineContext = supervisor + CoroutineName(this::class.qualifiedName!!) + coroutineDispatcher
+    override val coroutineContext = SupervisorJob() + CoroutineName(this::class.qualifiedName!!) + coroutineDispatcher
 
     override fun dispose() {
         supervisor.invokeOnCompletion { coroutineDispatcher.close() }

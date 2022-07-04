@@ -23,9 +23,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.DigestUtil
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.asDependency
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.key
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.DependencyUsageInfo
@@ -45,6 +45,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
@@ -125,16 +126,18 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
 
     val cacheFile = File(cacheDirectory.absolutePathString(), "$fileHashCode.json")
 
-    if (!cacheFile.exists()) withContext(Dispatchers.IO) {
-        cacheFile.apply { parentFile.mkdirs() }.createNewFile()
+    if (!cacheFile.exists()) {
+        withContext(Dispatchers.IO) {
+            cacheFile.apply { parentFile.mkdirs() }.createNewFile()
+        }
     }
 
     val sha256Deferred: Deferred<String> = async(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
         StringUtil.toHexString(DigestUtil.sha256().digest(buildFile.contentsToByteArray()))
     }
 
-    val cachedContents = withContext(Dispatchers.IO) { kotlin.runCatching { cacheFile.readText() } }
-        .onFailure { logDebug("installedDependencies", it) { "Someone messed with our cache file UGH ${cacheFile.absolutePath}" } }
+    val cachedContents = runCatching { cacheFile.readText() }
+        .onFailure { logDebug("installedDependencies", it) { "Unable to load caches from \"${cacheFile.absolutePath}\"" } }
         .getOrNull()
         ?.takeIf { it.isNotBlank() }
 
@@ -157,9 +160,10 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     ) {
         return@coroutineScope cache.dependencies
     }
+    val operationProvider = CoroutineProjectModuleOperationProvider.forProjectModuleType(moduleType)
 
     val declaredDependencies =
-        runCatching { ProjectModuleOperationProvider.forProjectModuleType(moduleType)?.declaredDependenciesInModule(this@installedDependencies) }
+        runCatching { operationProvider?.declaredDependenciesInModule(this@installedDependencies) }
             .onFailure { logDebug("installedDependencies", it) { "Unable to list dependencies in module $name" } }
             .getOrNull()
             ?.toList()
@@ -169,8 +173,7 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
 
     val resolvedDependenciesMapJob = async {
         runCatching {
-            ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-                ?.resolvedDependenciesInModule(this@installedDependencies, scopes)
+            operationProvider?.resolvedDependenciesInModule(this@installedDependencies, scopes)
                 ?.mapNotNull { dep -> dep.key?.let { it to dep.coordinates.version } }
                 ?.toMap()
                 ?: emptyMap()
@@ -181,7 +184,7 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     val dependenciesLocationMap = declaredDependencies
         .mapNotNull {
             it.asDependency()
-                ?.let { dependencyDeclarationCallback(it) }
+                ?.let { dependencyDeclarationCallback(it).await() }
                 ?.let { location -> it to location }
         }
         .toMap()

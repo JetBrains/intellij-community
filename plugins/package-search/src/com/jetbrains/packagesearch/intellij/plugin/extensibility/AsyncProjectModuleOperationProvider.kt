@@ -23,42 +23,19 @@ import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpgradeQuickFix
 import com.jetbrains.packagesearch.intellij.plugin.util.asCoroutine
+import java.util.concurrent.CompletableFuture
 
-/**
- * Extension point that allows to modify the dependencies of a specific project.
- */
-@Deprecated(
-    "Use async version. Either AsyncProjectModuleOperationProvider or CoroutineProjectModuleOperationProvider." +
-        " Remember to change the extension point type in the xml",
-    ReplaceWith(
-        "ProjectAsyncModuleOperationProvider",
-        "com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectAsyncModuleOperationProvider"
-    ),
-    DeprecationLevel.WARNING
-)
-interface ProjectModuleOperationProvider {
+interface AsyncProjectModuleOperationProvider {
 
     companion object {
 
         private val extensionPointName
-            get() = ExtensionPointName.create<ProjectModuleOperationProvider>("com.intellij.packagesearch.projectModuleOperationProvider")
+            get() = ExtensionPointName.create<AsyncProjectModuleOperationProvider>("com.intellij.packagesearch.asyncProjectModuleOperationProvider")
 
         internal val extensions
             get() = extensionPointName.extensions.map { it.asCoroutine() }
     }
-
-    /**
-     * Returns whether the implementation of the interface uses the shared "packages update available"
-     * inspection and quickfix. This is `false` by default; override this property and return `true`
-     * to opt in to [PackageUpdateInspection].
-     *
-     * @return `true` opt in to [PackageUpdateInspection], false otherwise.
-     * @see PackageUpdateInspection
-     * @see PackageSearchDependencyUpgradeQuickFix
-     */
-    fun usesSharedPackageUpdateInspection(): Boolean = false
 
     /**
      * Checks if current implementation has support in the given [project] for the current [psiFile].
@@ -79,7 +56,7 @@ interface ProjectModuleOperationProvider {
     fun addDependencyToModule(
         operationMetadata: DependencyOperationMetadata,
         module: ProjectModule
-    ): Collection<OperationFailure<out OperationItem>> = emptyList()
+    ): CompletableFuture<Collection<OperationFailure<out OperationItem>>>
 
     /**
      * Removes a dependency from the given [module] using [operationMetadata].
@@ -88,7 +65,7 @@ interface ProjectModuleOperationProvider {
     fun removeDependencyFromModule(
         operationMetadata: DependencyOperationMetadata,
         module: ProjectModule
-    ): Collection<OperationFailure<out OperationItem>> = emptyList()
+    ): CompletableFuture<Collection<OperationFailure<out OperationItem>>>
 
     /**
      * Modify a dependency in the given [module] using [operationMetadata].
@@ -97,7 +74,7 @@ interface ProjectModuleOperationProvider {
     fun updateDependencyInModule(
         operationMetadata: DependencyOperationMetadata,
         module: ProjectModule
-    ): Collection<OperationFailure<out OperationItem>> = emptyList()
+    ): CompletableFuture<Collection<OperationFailure<out OperationItem>>>
 
     /**
      * Lists all dependencies declared in the given [module]. A declared dependency
@@ -106,7 +83,7 @@ interface ProjectModuleOperationProvider {
      */
     fun declaredDependenciesInModule(
         module: ProjectModule
-    ): Collection<UnifiedDependency> = emptyList()
+    ): CompletableFuture<Collection<UnifiedDependency>>
 
     /**
      * Lists all resolved dependencies in the given [module].
@@ -115,7 +92,7 @@ interface ProjectModuleOperationProvider {
     fun resolvedDependenciesInModule(
         module: ProjectModule,
         scopes: Set<String> = emptySet()
-    ): Collection<UnifiedDependency> = emptyList()
+    ): CompletableFuture<Collection<UnifiedDependency>>
 
     /**
      * Adds the [repository] to the given [module].
@@ -124,17 +101,16 @@ interface ProjectModuleOperationProvider {
     fun addRepositoryToModule(
         repository: UnifiedDependencyRepository,
         module: ProjectModule
-    ): Collection<OperationFailure<out OperationItem>> = emptyList()
+    ): CompletableFuture<Collection<OperationFailure<out OperationItem>>>
 
     /**
      * Removes the [repository] from the given [module].
      * @return A list containing all failures encountered during the operation. If the list is empty, the operation was successful.
      */
-
     fun removeRepositoryFromModule(
         repository: UnifiedDependencyRepository,
         module: ProjectModule
-    ): Collection<OperationFailure<out OperationItem>> = emptyList()
+    ): CompletableFuture<Collection<OperationFailure<out OperationItem>>>
 
     /**
      * Lists all repositories in the given [module].
@@ -142,5 +118,5 @@ interface ProjectModuleOperationProvider {
      */
     fun listRepositoriesInModule(
         module: ProjectModule
-    ): Collection<UnifiedDependencyRepository> = emptyList()
+    ): CompletableFuture<Collection<UnifiedDependencyRepository>>
 }

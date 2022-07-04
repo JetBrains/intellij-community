@@ -14,20 +14,11 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.jetbrains.packagesearch.intellij.plugin.extensibility
+package com.jetbrains.packagesearch.intellij.plugin.maven
 
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CoroutineScope
 
-class BuildSystemType @JvmOverloads constructor(
-    val name: String,
-    val language: String,
-    @Suppress("unused")
-    @Deprecated("This property will be removed soon as it is unused.")
-    @ScheduledForRemoval
-    val statisticsKey: String,
-    val dependencyAnalyzerKey: ProjectSystemId? = null
-) {
-
-    companion object
-}
+internal val Project.lifecycleScope: CoroutineScope
+    get() = service<PackageSearchMavenLifecycleScope>()

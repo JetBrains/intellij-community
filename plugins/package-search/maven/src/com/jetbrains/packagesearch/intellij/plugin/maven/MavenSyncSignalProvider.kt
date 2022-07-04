@@ -17,25 +17,25 @@
 package com.jetbrains.packagesearch.intellij.plugin.maven
 
 import com.intellij.openapi.project.Project
-import com.intellij.util.messages.SimpleMessageBusConnection
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.DumbAwareMessageBusModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.FileWatcherSignalProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.invoke
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
+import com.jetbrains.packagesearch.intellij.plugin.util.awaitSmart
+import com.jetbrains.packagesearch.intellij.plugin.util.dumbService
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.messageBusFlow
 import org.jetbrains.idea.maven.project.MavenImportListener
 import java.nio.file.Paths
 
-internal class MavenSyncSignalProvider : DumbAwareMessageBusModuleChangesSignalProvider() {
+internal class MavenSyncSignalProvider : FlowModuleChangesSignalProvider {
 
-    override fun registerDumbAwareModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Runnable) {
-        bus.subscribe(
-            MavenImportListener.TOPIC,
+    override fun registerModuleChangesListener(project: Project) =
+        project.messageBusFlow(MavenImportListener.TOPIC) {
+            project.dumbService.awaitSmart()
             MavenImportListener { _, _ ->
                 logDebug("MavenModuleChangesSignalProvider#registerModuleChangesListener#ProjectDataImportListener")
-                listener()
+                trySend(Unit)
             }
-        )
-    }
+        }
 }
 
 internal class GlobalMavenSettingsChangedSignalProvider

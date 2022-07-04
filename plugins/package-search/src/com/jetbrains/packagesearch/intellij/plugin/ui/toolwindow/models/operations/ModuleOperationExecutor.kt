@@ -25,9 +25,9 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
@@ -46,7 +46,7 @@ internal class ModuleOperationExecutor {
         companion object {
 
             fun from(operation: PackageSearchOperation<*>, operationFailures: List<OperationFailure<out OperationItem>>) =
-                if (operationFailures.isEmpty()) Result.Success(operation) else Result.Failure(operation, operationFailures)
+                if (operationFailures.isEmpty()) Success(operation) else Failure(operation, operationFailures)
         }
 
         abstract val operation: PackageSearchOperation<*>
@@ -87,7 +87,7 @@ internal class ModuleOperationExecutor {
     private suspend fun installPackage(operation: PackageSearchOperation.Package.Install): List<OperationFailure<out OperationItem>> {
         val projectModule = operation.projectModule
         val operationProvider =
-            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
+            CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
                 projectModule
             )
 
@@ -123,7 +123,7 @@ internal class ModuleOperationExecutor {
     private suspend fun removePackage(operation: PackageSearchOperation.Package.Remove): List<OperationFailure<out OperationItem>> {
         val projectModule = operation.projectModule
         val operationProvider =
-            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
+            CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
                 projectModule
             )
 
@@ -155,7 +155,7 @@ internal class ModuleOperationExecutor {
     private suspend fun changePackage(operation: PackageSearchOperation.Package.ChangeInstalled): List<OperationFailure<out OperationItem>> {
         val projectModule = operation.projectModule
         val operationProvider = readAction {
-            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
+            CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
                 ?: throw OperationException.unsupportedBuildSystem(projectModule)
         }
 
@@ -202,7 +202,7 @@ internal class ModuleOperationExecutor {
     private suspend fun installRepository(operation: PackageSearchOperation.Repository.Install): List<OperationFailure<out OperationItem>> {
         val projectModule = operation.projectModule
         val operationProvider =
-            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
+            CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
                 projectModule
             )
 
@@ -228,7 +228,7 @@ internal class ModuleOperationExecutor {
     private suspend fun removeRepository(operation: PackageSearchOperation.Repository.Remove): List<OperationFailure<out OperationItem>> {
         val projectModule = operation.projectModule
         val operationProvider =
-            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
+            CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
                 projectModule
             )
 

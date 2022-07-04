@@ -40,21 +40,22 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.UiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchCachesService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchProjectCachesService
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.merge
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlin.experimental.ExperimentalTypeInference
-import kotlin.streams.toList
 
 internal val Project.packageSearchProjectService
     get() = service<PackageSearchProjectService>()
@@ -78,10 +79,10 @@ internal val Project.toolWindowManagerFlow
     }
 
 @OptIn(ExperimentalTypeInference::class)
-internal fun <L : Any, K> Project.messageBusFlow(
+fun <L : Any, K> Project.messageBusFlow(
     topic: Topic<L>,
     initialValue: (suspend () -> K)? = null,
-    @BuilderInference listener: ProducerScope<K>.() -> L
+    @BuilderInference listener: suspend ProducerScope<K>.() -> L
 ) = callbackFlow {
     initialValue?.let { send(it()) }
     val connection = messageBus.simpleConnect()
@@ -131,10 +132,16 @@ val Project.filesChangedEventFlow
 internal fun Project.getNativeModules(): List<Module> = ModuleManager.getInstance(this).modules.toList()
 
 internal val Project.moduleChangesSignalFlow
-    get() = merge(ModuleChangesSignalProvider.listenToModuleChanges(this), FlowModuleChangesSignalProvider.listenToModuleChanges(this))
+    get() = merge(
+        *ModuleChangesSignalProvider.extensions(this),
+        *FlowModuleChangesSignalProvider.extensions(this)
+    )
 
 internal val Project.lifecycleScope: PackageSearchLifecycleScope
     get() = service()
+
+internal val ProjectModule.lifecycleScope: PackageSearchLifecycleScope
+    get() = nativeModule.project.lifecycleScope
 
 internal val Project.uiStateModifier: UiStateModifier
     get() = service<UiCommandsService>()
@@ -142,14 +149,15 @@ internal val Project.uiStateModifier: UiStateModifier
 internal val Project.uiStateSource: UiStateSource
     get() = service<UiCommandsService>()
 
-internal val Project.dumbService: DumbService
+val Project.dumbService: DumbService
     get() = DumbService.getInstance(this)
 
-internal val Project.moduleTransformers: List<ModuleTransformer>
-    get() = ModuleTransformer.extensionPointName.extensions(this).toList()
+suspend fun DumbService.awaitSmart(): Unit = suspendCoroutine {
+    runWhenSmart { it.resume(Unit) }
+}
 
-internal val Project.coroutineModuleTransformers: List<CoroutineModuleTransformer>
-    get() = CoroutineModuleTransformer.extensionPointName.extensions(this).toList()
+internal val Project.moduleTransformers: List<CoroutineModuleTransformer>
+    get() = CoroutineModuleTransformer.extensions(this) + ModuleTransformer.extensions(this)
 
 internal val Project.lookAndFeelFlow
     get() = messageBusFlow(LafManagerListener.TOPIC, { LafManager.getInstance()!! }) {
