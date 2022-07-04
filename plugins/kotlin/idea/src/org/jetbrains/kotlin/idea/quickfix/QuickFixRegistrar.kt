@@ -536,6 +536,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         NON_LOCAL_RETURN_NOT_ALLOWED.registerFactory(AddInlineModifierFix.CrossInlineFactory)
         USAGE_IS_NOT_INLINABLE.registerFactory(AddInlineModifierFix.NoInlineFactory)
+        USAGE_IS_NOT_INLINABLE_WARNING.registerFactory(AddInlineModifierFix.NoInlineFactory)
 
         UNRESOLVED_REFERENCE.registerFactory(MakeConstructorParameterPropertyFix)
         DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE.registerFactory(SpecifyOverrideExplicitlyFix)

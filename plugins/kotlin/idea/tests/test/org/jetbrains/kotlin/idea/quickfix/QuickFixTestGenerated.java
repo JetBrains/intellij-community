@@ -1216,6 +1216,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/addNoinline/basic.kt");
         }
 
+        @TestMetadata("extensionCalls.kt")
+        public void testExtensionCalls() throws Exception {
+            runTest("testData/quickfix/addNoinline/extensionCalls.kt");
+        }
+
         @TestMetadata("suspend.kt")
         public void testSuspend() throws Exception {
             runTest("testData/quickfix/addNoinline/suspend.kt");
