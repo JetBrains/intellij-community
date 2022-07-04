@@ -301,7 +301,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(expr)) {
           return;
         }
-        ContainerUtil.addIfNotNull(fixes, getTrueFalseQuickFix(expr, refText));
+        ContainerUtil.addIfNotNull(fixes, getTrueFalseQuickFix(refText));
         ContainerUtil.addAll(fixes, getAddSelfFixes(myTypeEvalContext, node, expr));
         ContainerUtil.addIfNotNull(fixes, getCreateFunctionQuickFix(expr));
         ContainerUtil.addIfNotNull(fixes, getAddParameterQuickFix(refName, expr));
@@ -950,9 +950,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return null;
   }
 
-  LocalQuickFix getTrueFalseQuickFix(PyReferenceExpression expr, String refText) {
+  @Nullable LocalQuickFix getTrueFalseQuickFix(@NotNull String refText) {
     if (refText.equals("true") || refText.equals("false")) {
-      return new UnresolvedRefTrueFalseQuickFix(expr);
+      return new UnresolvedRefTrueFalseQuickFix(refText);
     }
     return null;
   }
