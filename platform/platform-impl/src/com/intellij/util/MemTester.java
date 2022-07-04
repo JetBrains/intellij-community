@@ -25,6 +25,8 @@ public final class MemTester {
     return ourMemTesterSupported.getValue();
   }
 
+  private static Boolean isRunning = false;
+
   private static final NotNullLazyValue<Boolean> ourMemTesterSupported = NotNullLazyValue.atomicLazy(() -> {
     String problem;
 
@@ -66,9 +68,14 @@ public final class MemTester {
    * @exception IOException If memtester is not supported on this platform
    */
   public static void scheduleMemTester(String memSize, String iterations, String outputFilePath) throws IOException {
+    if (isRunning) {
+      Logger.getInstance(MemTester.class).info("Memtester is running already, can't run twice");
+      throw new IOException("Cannot start memtester application: already running.");
+    }
     if (SystemInfo.isMac || SystemInfo.isUnix) {
       startMemTesterOnMacAndUnix(memSize, iterations, outputFilePath);
     } else {
+      Logger.getInstance(MemTester.class).info("not supported on this system");
       throw new IOException("Cannot start memtester application: not supported.");
     }
   }
@@ -90,6 +97,7 @@ public final class MemTester {
     ProcessBuilder processBuilder = new ProcessBuilder(memtesterArgs);
     processBuilder.redirectOutput(outputFile);
     processBuilder.start();
+    isRunning = true;
   }
 
 }
