@@ -797,7 +797,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         );
 
         // Highlighting
-        final HighlightingChooser highlightingChooser = new HighlightingChooser() {
+        final HighlightingChooser highlightingChooser = new HighlightingChooser(myProfile.getProfileManager().getSeverityRegistrar()) {
           @Override
           void onKeyChosen(@NotNull TextAttributesKey key) {
             final List<InspectionConfigTreeNode.Tool> toUpdate = new SmartList<>();

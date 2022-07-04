@@ -33,6 +33,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   private final Supplier<@Nls String> myCapitalizedDisplayName;
   @Nullable
   private final Supplier<@Nls String> myCountMessageTemplate;
+  private boolean myUserCreated;
 
   /**
    * The standard severity level for information annotations.
@@ -143,6 +144,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
     myDisplayName = displayName;
     myCapitalizedDisplayName = capitalizedDisplayName;
     myCountMessageTemplate = countMessageTemplate;
+    myUserCreated = false;
   }
 
   public HighlightSeverity(@NotNull String name, int val) {
@@ -151,6 +153,14 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
 
   public HighlightSeverity(@NotNull Element element) {
     this(readField(element, "myName"), Integer.parseInt(readField(element, "myVal")), null, null, null);
+  }
+
+  public boolean isUserCreated() {
+    return myUserCreated;
+  }
+
+  public void setUserCreated(boolean userCreated) {
+    myUserCreated = userCreated;
   }
 
   private static String readField(Element element, String name) {
