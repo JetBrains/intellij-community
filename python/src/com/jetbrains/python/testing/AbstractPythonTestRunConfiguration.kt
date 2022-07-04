@@ -11,6 +11,7 @@ import com.intellij.execution.target.value.constant
 import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
 import com.intellij.execution.target.value.joinToStringFunction
 import com.intellij.execution.testframework.AbstractTestProxy
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyBundle
@@ -88,7 +89,12 @@ protected constructor(project: Project, factory: ConfigurationFactory, val requi
    * Check if framework is available on SDK
    */
   fun isFrameworkInstalled(): Boolean {
-    val sdk = sdk ?: return false // No SDK -- no tests
+    val sdk = sdk
+    if (sdk == null) {
+      // No SDK -- no tests
+      logger<AbstractPythonRunConfiguration<*>>().warn("SDK is null")
+      return false
+    }
     val requiredPackage = this.requiredPackage ?: return true // Installed by default
     return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
   }

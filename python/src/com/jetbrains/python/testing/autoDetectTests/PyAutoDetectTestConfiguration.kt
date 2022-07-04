@@ -24,7 +24,7 @@ class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionCo
         it.createTemplateConfiguration(project)
       }.filter {
         it.isFrameworkInstalled()
-      }.first()
+      }.firstOrNull() ?: return null
 
     copyTo(getProperties(conf))
     for (accessor in BeanBinding.getAccessors(PyAbstractTestConfiguration::class.java)) {
