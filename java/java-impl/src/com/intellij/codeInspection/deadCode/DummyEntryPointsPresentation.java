@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -8,7 +8,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefJavaElement;
-import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.codeInspection.ui.InspectionTreeModel;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
@@ -66,20 +66,15 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (e.getPresentation().isEnabled()) {
-        final InspectionResultsView view = getInvoker(e);
-        boolean permanentFound = false;
-        for (RefEntity point : view.getTree().getSelectedElements()) {
-          if (point instanceof RefJavaElement && ((RefJavaElement)point).isEntry()) {
-            if (((RefJavaElement)point).isPermanentEntry()) {
-              permanentFound = true;
-              break;
-            }
+        for (RefEntity point : InspectionTree.getSelectedRefElements(e)) {
+          if (point instanceof RefJavaElement &&
+              ((RefJavaElement)point).isEntry() && 
+              ((RefJavaElement)point).isPermanentEntry()) {
+            return;
           }
         }
 
-        if (!permanentFound) {
-          e.getPresentation().setEnabled(false);
-        }
+        e.getPresentation().setEnabled(false);
       }
     }
 

@@ -18,8 +18,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -212,6 +211,33 @@ public class InspectionTree extends Tree {
     return resultWrapper;
   }
 
+  @Nullable
+  public static InspectionToolWrapper<?, ?> findWrapper(Object[] selectedNode) {
+    InspectionToolWrapper<?, ?> resultWrapper = null;
+    for (Object node : selectedNode) {
+      if (node instanceof InspectionGroupNode) {
+        return null;
+      }
+
+      InspectionToolWrapper wrapper = null;
+      if (node instanceof InspectionNode) {
+        wrapper = ((InspectionNode)node).getToolWrapper();
+      }
+      else if (node instanceof SuppressableInspectionTreeNode) {
+        wrapper = ((SuppressableInspectionTreeNode)node).getPresentation().getToolWrapper();
+      }
+      if (wrapper != null) {
+        if (resultWrapper == null) {
+          resultWrapper = wrapper;
+        }
+        else if (resultWrapper != wrapper) {
+          return null;
+        }
+      }
+    }
+    return resultWrapper;
+  }
+
   @Override
   public String getToolTipText(MouseEvent e) {
     TreePath path = getPathForLocation(e.getX(), e.getY());
@@ -321,10 +347,28 @@ public class InspectionTree extends Tree {
     }
     if (paths == null) return Collections.emptyList();
     // key can be node or VirtualFile (if problem descriptor node parent is a file/member RefElementNode).
-    MultiMap<Object, CommonProblemDescriptor> parentToChildNode = new MultiMap<>();
     //TODO expected thread
+    List<InspectionTreeNode> nodes = ContainerUtil.map(paths, p -> (InspectionTreeNode)p.getLastPathComponent());
+    return getSelectedDescriptors(sortedByPosition, readOnlyFilesSink, allowResolved, nodes);
+  }
+
+   public CommonProblemDescriptor @NotNull [] getSelectedDescriptors(AnActionEvent e) {
+     Object[] selectedNodes = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+     if (selectedNodes == null) {
+       return CommonProblemDescriptor.EMPTY_ARRAY;
+     }
+     List<CommonProblemDescriptor[]> descriptors = getSelectedDescriptors(false, null, false, ContainerUtil.map(selectedNodes, o -> (InspectionTreeNode)o));
+     return BatchModeDescriptorsUtil.flattenDescriptors(descriptors);
+  }
+  
+  @NotNull
+  private List<CommonProblemDescriptor[]> getSelectedDescriptors(boolean sortedByPosition,
+                                                                 @Nullable Set<? super VirtualFile> readOnlyFilesSink,
+                                                                 boolean allowResolved,
+                                                                 List<InspectionTreeNode> nodes) {
+    MultiMap<Object, CommonProblemDescriptor> parentToChildNode = new MultiMap<>();
     TreeTraversal.PLAIN_BFS.traversal(
-      ContainerUtil.map(paths, p -> (InspectionTreeNode)p.getLastPathComponent()),
+        nodes,
       (InspectionTreeNode n) -> myModel.getChildren(n))
       .filter(ProblemDescriptionNode.class)
       .filter(node -> node.getDescriptor() != null && isNodeValidAndIncluded(node, allowResolved))
@@ -552,6 +596,29 @@ public class InspectionTree extends Tree {
       }
     }
     return entity;
+  }
+
+  @Nullable
+  public static PsiElement getSelectedElement(AnActionEvent e) {
+    PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
+    if (element != null) {
+      return element;
+    }
+    RefEntity[] entities = getSelectedRefElements(e);
+    RefEntity refEntity = ContainerUtil.find(entities, entity -> entity instanceof RefElement);
+    return refEntity != null ? ((RefElement)refEntity).getPsiElement() : null;
+  }
+
+  public static RefEntity[] getSelectedRefElements(AnActionEvent e) {
+    Object[] nodes = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+    if (nodes != null) {
+      HashSet<RefEntity> entities = new HashSet<>();
+      for (Object node : nodes) {
+        addElementsInNode((InspectionTreeNode)node, entities);
+      }
+      return entities.toArray(entities.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY));
+    }
+    return RefEntity.EMPTY_ELEMENTS_ARRAY;
   }
 
   private class MyOccurrenceNavigator implements OccurenceNavigator {

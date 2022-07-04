@@ -6,15 +6,13 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -23,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -48,33 +45,6 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
   protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
     InspectionToolWrapper<?, ?> wrapper = getToolWrapper(e);
     return wrapper != null && HighlightDisplayKey.find(wrapper.getShortName()) != null;
-  }
-
-  @Nullable
-  protected static InspectionToolWrapper<?, ?> getToolWrapper(AnActionEvent e) {
-    Object selectedNode = e.getData(PlatformCoreDataKeys.SELECTED_ITEM);
-    InspectionToolWrapper<?, ?> wrapper = null;
-    if (selectedNode instanceof InspectionGroupNode) {
-      return null;
-    }
-    if (selectedNode instanceof InspectionNode) {
-      wrapper = ((InspectionNode)selectedNode).getToolWrapper();
-    }
-    else if (selectedNode instanceof SuppressableInspectionTreeNode) {
-      wrapper = ((SuppressableInspectionTreeNode)selectedNode).getPresentation().getToolWrapper();
-    }
-    if (wrapper != null) {
-      return wrapper;
-    }
-    InspectionResultsView view = getView(e);
-    if (view != null && view.isSingleInspectionRun()) {
-      InspectionProfileImpl profile = view.getCurrentProfile();
-      String singleToolName = profile.getSingleTool();
-      if (singleToolName != null) {
-        return profile.getInspectionTool(singleToolName, e.getProject());
-      }
-    }
-    return null;
   }
 
   public static class DisableInspection extends KeyAwareInspectionViewAction {
@@ -133,25 +103,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
 
     @Override
     protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
-      return super.isEnabled(view, e) && getSelectedElements(e) != null;
-    }
-
-    @Nullable
-    private static PsiElement getSelectedElements(AnActionEvent e) {
-      PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
-      if (element != null) {
-        return element;
-      }
-      Object[] nodes = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
-      if (nodes != null) {
-        HashSet<RefEntity> entities = new HashSet<>();
-        for (Object node : nodes) {
-          InspectionTree.addElementsInNode((InspectionTreeNode)node, entities);
-        }
-        RefEntity refEntity = ContainerUtil.find(entities, entity -> entity instanceof RefElement);
-        return refEntity != null ? ((RefElement)refEntity).getPsiElement() : null;
-      }
-      return null;
+      return super.isEnabled(view, e) && InspectionTree.getSelectedElement(e) != null;
     }
 
     @Override
