@@ -247,7 +247,6 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.java.debugger.streams"),
     simplePlugin("intellij.sh"),
     simplePlugin("intellij.vcs.changeReminder"),
-    simplePlugin("intellij.vcs.refactoring.detector"),
     plugin("intellij.featuresTrainer") {
       withProjectLibrary("assertJ")
       withProjectLibrary("assertj-swing")

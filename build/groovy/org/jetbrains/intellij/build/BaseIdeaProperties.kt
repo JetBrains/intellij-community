@@ -113,7 +113,6 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       "intellij.statsCollector",
       "intellij.sh",
       "intellij.vcs.changeReminder",
-      "intellij.vcs.refactoring.detector",
       "intellij.markdown",
       "intellij.webp",
       "intellij.grazie",
