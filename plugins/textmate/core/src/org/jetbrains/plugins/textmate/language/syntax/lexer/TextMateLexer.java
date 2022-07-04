@@ -48,13 +48,19 @@ public final class TextMateLexer {
 
   private final CharSequence myLanguageScopeName;
   private final int myLineLimit;
+  private final boolean myStripWhitespaces;
   private final Runnable myCheckCancelledCallback;
   private final TextMateLexerState myLanguageInitialState;
 
   public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor, int lineLimit) {
+    this(languageDescriptor, lineLimit, false);
+  }
+
+  public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor, int lineLimit, boolean stripWhitespaces) {
     myLanguageScopeName = languageDescriptor.getScopeName();
     myLanguageInitialState = TextMateLexerState.notMatched(languageDescriptor.getRootSyntaxNode());
     myLineLimit = lineLimit;
+    myStripWhitespaces = stripWhitespaces;
     myCheckCancelledCallback = SyntaxMatchUtils.getCheckCancelledCallback();
   }
 
@@ -305,8 +311,30 @@ public final class TextMateLexer {
 
   private void addToken(@NotNull Queue<Token> output, int position) {
     if (position > myCurrentOffset) {
-      final boolean newState = myCurrentScope.getParent() == null;
-      output.offer(new Token(myCurrentScope, myCurrentOffset, position, newState));
+      boolean newState = myCurrentScope.getParent() == null;
+      int wsStart = myCurrentOffset;
+      while (myStripWhitespaces && position > myCurrentOffset && Character.isWhitespace(myText.charAt(myCurrentOffset))) {
+        myCurrentOffset++;
+      }
+
+      if (wsStart < myCurrentOffset) {
+        output.offer(new Token(TextMateScope.WHITESPACE, wsStart, myCurrentOffset, newState));
+        newState = false;
+      }
+
+      int wsEnd = Math.min(position, myText.length());
+      while (myStripWhitespaces && wsEnd > myCurrentOffset && Character.isWhitespace(myText.charAt(wsEnd - 1))) {
+        wsEnd--;
+      }
+
+      if (myCurrentOffset < wsEnd) {
+        output.offer(new Token(myCurrentScope, myCurrentOffset, wsEnd, newState));
+      }
+
+      if (wsEnd < position) {
+        output.offer(new Token(TextMateScope.WHITESPACE, wsEnd, position, newState));
+      }
+
       myCurrentOffset = position;
       setLastSuccessState(myStates);
     }
