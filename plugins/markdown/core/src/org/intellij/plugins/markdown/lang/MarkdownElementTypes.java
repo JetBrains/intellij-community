@@ -59,6 +59,19 @@ public interface MarkdownElementTypes {
   TemplateDataElementType MARKDOWN_TEMPLATE_DATA =
     new TemplateDataElementType("MARKDOWN_TEMPLATE_DATA", MarkdownLanguage.INSTANCE, HTML_BLOCK_CONTENT, MARKDOWN_OUTER_BLOCK);
 
+  /**
+   * CommonMark autolinks are wrapped with <> brackets, so parser creates a composite node:
+   * <pre>
+   * {@code
+   * CompositeNode(AUTOLINK):
+   * |-->LeafNode(<)
+   * |-->LeafNode(AUTOLINK)
+   * |-->LeafNode(>)
+   * }
+   * </pre>
+   * Both composite and leaf nodes have AUTOLINK type, but first one comes from {@link MarkdownElementTypes}
+   * and the second one comes from {@link MarkdownTokenTypes}.
+   */
   IElementType AUTOLINK = platformType(org.intellij.markdown.MarkdownElementTypes.AUTOLINK);
 
   IElementType TABLE = platformType(GFMElementTypes.TABLE);

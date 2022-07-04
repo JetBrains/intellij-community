@@ -73,6 +73,9 @@ public interface MarkdownTokenTypes extends TokenType {
   IElementType LINK_TITLE = platformType(org.intellij.markdown.MarkdownTokenTypes.LINK_TITLE);
 
   IElementType GFM_AUTOLINK = platformType(GFMTokenTypes.GFM_AUTOLINK);
+  /**
+   * @see MarkdownElementTypes#AUTOLINK
+   */
   IElementType AUTOLINK = platformType(org.intellij.markdown.MarkdownTokenTypes.AUTOLINK);
   IElementType EMAIL_AUTOLINK = platformType(org.intellij.markdown.MarkdownTokenTypes.EMAIL_AUTOLINK);
   IElementType HTML_TAG = platformType(org.intellij.markdown.MarkdownTokenTypes.HTML_TAG);
