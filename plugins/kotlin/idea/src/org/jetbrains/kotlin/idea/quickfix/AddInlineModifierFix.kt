@@ -47,7 +47,11 @@ class AddInlineModifierFix(
 
     object NoInlineFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val casted = Errors.USAGE_IS_NOT_INLINABLE.cast(diagnostic)
+            val casted = when (diagnostic.factory) {
+                Errors.USAGE_IS_NOT_INLINABLE -> Errors.USAGE_IS_NOT_INLINABLE.cast(diagnostic)
+                Errors.USAGE_IS_NOT_INLINABLE_WARNING -> Errors.USAGE_IS_NOT_INLINABLE_WARNING.cast(diagnostic)
+                else -> return null
+            }
             val reference = casted.a as? KtNameReferenceExpression ?: return null
             val parameter = reference.findParameterWithName(reference.getReferencedName()) ?: return null
             return AddInlineModifierFix(parameter, KtTokens.NOINLINE_KEYWORD)
