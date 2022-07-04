@@ -146,9 +146,15 @@ public class MultiThreadSearchDeadlockTest extends BasePlatformTestCase {
     public void contributorWaits(@NotNull SearchEverywhereContributor<?> contributor) { }
 
     @Override
+    public void contributorFinished(@NotNull SearchEverywhereContributor<?> contributor, boolean hasMore) { }
+
+    @Override
     public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
       latch.countDown();
     }
+
+    @Override
+    public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) { }
 
     public List<Object> getFoundItems(String contributorID) {
       return resultsMap.get(contributorID);

@@ -296,6 +296,9 @@ class MixingMultiThreadSearchTest extends BasePlatformTestCase {
     void contributorWaits(@NotNull SearchEverywhereContributor<?> contributor) {}
 
     @Override
+    void contributorFinished(@NotNull SearchEverywhereContributor<?> contributor, boolean hasMore) {}
+
+    @Override
     void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
       hasMoreContributors.entrySet()
         .stream()
@@ -312,5 +315,8 @@ class MixingMultiThreadSearchTest extends BasePlatformTestCase {
 
       myPhaser.arrive()
     }
+
+    @Override
+    void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {}
   }
 }

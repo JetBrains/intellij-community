@@ -128,6 +128,7 @@ class MixedSearchListModel extends SearchListModel {
   public void freezeElements() {
     if (listElements.isEmpty()) return;
     myMaxFrozenIndex = listElements.size() - 1;
+    if (listElements.get(myMaxFrozenIndex) == MORE_ELEMENT) myMaxFrozenIndex--;
   }
 
   @Override
