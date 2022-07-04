@@ -92,7 +92,6 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
 
   public void registerSeverity(@NotNull SeverityBasedTextAttributes info, @Nullable Color renderColor) {
     HighlightSeverity severity = info.getType().getSeverity(null);
-    severity.setUserCreated(true);
     myMap.put(severity.getName(), info);
     if (renderColor != null) {
       myRendererColors.put(severity.getName(), renderColor);
@@ -385,7 +384,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return Collections.unmodifiableCollection(myMap.values());
   }
   @NotNull
-  static Collection<HighlightInfoType> standardSeverities() {
+  public static Collection<HighlightInfoType> standardSeverities() {
     return STANDARD_SEVERITIES.values();
   }
 }

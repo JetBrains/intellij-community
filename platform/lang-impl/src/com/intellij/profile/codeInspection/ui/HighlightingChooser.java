@@ -3,6 +3,7 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.ColorSettingsUtil;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
@@ -35,6 +36,7 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.Collection;
 import java.util.function.Consumer;
 
 public abstract class HighlightingChooser extends ComboBoxAction implements DumbAware {
@@ -74,9 +76,11 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
       group.add(new HighlightAction(stripColorOptionCategory(pair.second), pair.first, this::onKeyChosen));
     }
 
+    final Collection<HighlightInfoType> standardSeverities = SeverityRegistrar.standardSeverities();
     for (HighlightSeverity severity : mySeverityRegistrar.getAllSeverities()) {
-      if (!severity.isUserCreated()) continue;
-      final var attributes = mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+      final var highlightInfoType = mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      if (standardSeverities.contains(highlightInfoType)) continue;
+      final TextAttributesKey attributes = mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
       group.add(new HighlightAction(severity.getDisplayName(), attributes, this::onKeyChosen));
     }
 
