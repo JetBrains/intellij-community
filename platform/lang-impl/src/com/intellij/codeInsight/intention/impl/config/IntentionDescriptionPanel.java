@@ -250,6 +250,10 @@ public class IntentionDescriptionPanel {
     usagePanels.clear();
   }
 
+  /**
+   * @deprecated Used in an older version of intention configuration UI.
+   */
+  @Deprecated
   public void init(final int preferredWidth) {
   }
 }
