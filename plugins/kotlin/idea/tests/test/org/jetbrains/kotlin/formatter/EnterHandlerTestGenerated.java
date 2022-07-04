@@ -2137,9 +2137,19 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 runTest("testData/editor/enterHandler/InEnumInitializerListNotEmpty.after.inv.kt");
             }
 
+            @TestMetadata("NotFirstParameter.after.inv.kt")
+            public void testNotFirstParameter() throws Exception {
+                runTest("testData/editor/enterHandler/NotFirstParameter.after.inv.kt");
+            }
+
             @TestMetadata("SettingAlignMultilineParametersInCalls.after.inv.kt")
             public void testSettingAlignMultilineParametersInCalls() throws Exception {
                 runTest("testData/editor/enterHandler/SettingAlignMultilineParametersInCalls.after.inv.kt");
+            }
+
+            @TestMetadata("SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.inv.kt")
+            public void testSmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters() throws Exception {
+                runTest("testData/editor/enterHandler/SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.inv.kt");
             }
         }
     }
