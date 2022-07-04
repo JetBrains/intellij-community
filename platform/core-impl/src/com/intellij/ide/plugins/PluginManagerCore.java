@@ -46,7 +46,6 @@ import java.util.stream.StreamSupport;
  *
  * @implNote Prefer to use only JDK classes. Any post start-up functionality should be placed in {@link PluginManager} class.
  */
-@SuppressWarnings("SSBasedInspection")
 public final class PluginManagerCore {
   public static final @NonNls String META_INF = "META-INF/";
 
