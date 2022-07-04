@@ -37,6 +37,7 @@ import java.awt.image.BufferedImage
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.util.function.Supplier
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
@@ -86,32 +87,29 @@ abstract class ToolWindowHeader internal constructor(
     @Suppress("LeakingThis")
     add(westPanel)
     ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true, true)
+    val commonActionsGroup = DefaultActionGroup(DockToolWindowAction(), ShowOptionsAction(), HideAction())
     toolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLWINDOW_TITLE,
       object : ActionGroup(), DumbAware {
-        private val children by lazy<Array<AnAction>> {
-          val tabListAction = ActionManager.getInstance().getAction("TabList")
-          arrayOf(tabListAction, actionGroup, DockToolWindowAction(), ShowOptionsAction(), HideAction())
-        }
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
         override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-          val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(e?.getData(PlatformDataKeys.CONTEXT_COMPONENT))
-          val b = if (nearestDecorator is Component) ClientProperty.get(nearestDecorator as Component?,
-                                                                        InternalDecoratorImpl.HIDE_COMMON_TOOLWINDOW_BUTTONS)
+          if (e == null) return EMPTY_ARRAY
+          val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(e.getData(PlatformDataKeys.CONTEXT_COMPONENT))
+          val hideCommonActions = if (nearestDecorator is Component) ClientProperty.get(
+            nearestDecorator as Component?, InternalDecoratorImpl.HIDE_COMMON_TOOLWINDOW_BUTTONS)
           else null
-          if (b == true) {
-            return (children.filter { it !is DockToolWindowAction && it !is ShowOptionsAction && it !is HideAction }).toTypedArray()
+          val tabListAction = e.actionManager.getAction("TabList")
+          if (hideCommonActions == true) {
+            return arrayOf(tabListAction, actionGroup)
           }
-          return children
+          return arrayOf(tabListAction, actionGroup, commonActionsGroup)
         }
-
-        override fun isDumbAware() = true
       },
       true
     )
 
-    @Suppress("LeakingThis")
-    toolbar.targetComponent = this
+    toolbar.targetComponent = toolbar.component
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     toolbar.setReservePlaceAutoPopupIcon(false)
     val component = toolbar.component
@@ -358,10 +356,11 @@ abstract class ToolWindowHeader internal constructor(
 
     override fun actionPerformed(e: AnActionEvent) {
       if (myPopupState.isRecentlyHidden) return // do not show new popup
-      val inputEvent = e.inputEvent
       val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, gearProducer.get())
+      popupMenu.setTargetComponent(e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as? JComponent ?: this@ToolWindowHeader)
       var x = 0
       var y = 0
+      val inputEvent = e.inputEvent
       if (inputEvent is MouseEvent) {
         x = inputEvent.x
         y = inputEvent.y
