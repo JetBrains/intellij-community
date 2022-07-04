@@ -468,7 +468,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    * Updates tab color for the specified {@code file}. The {@code file}
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
-  private void updateFileColor(@NotNull VirtualFile file) {
+  @Override
+  public void updateFileColor(@NotNull VirtualFile file) {
     Set<EditorsSplitters> all = getAllSplitters();
     for (EditorsSplitters each : all) {
       each.updateFileColor(file);

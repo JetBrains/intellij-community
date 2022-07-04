@@ -271,4 +271,6 @@ public abstract class FileEditorManager {
    * @param file refreshed file
    */
   public void updateFilePresentation(@NotNull VirtualFile file) { }
+
+  public void updateFileColor(@NotNull VirtualFile file) { }
 }
