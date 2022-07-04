@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.util.Disposer
@@ -226,7 +225,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
           indicator.isIndeterminate = true
 
           val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
-          runBlockingCancellable {
+          runBlocking {
             withContext(modalityState.asContextElement()) {
               isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
             }
