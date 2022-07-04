@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Base for surrounding postfix templates that utilize existing {@link Surrounder} implementations.
@@ -18,11 +19,23 @@ public abstract class SurroundPostfixTemplateBase extends PostfixTemplateWithExp
 
   @NotNull protected final PostfixTemplatePsiInfo myPsiInfo;
 
+  /**
+   * @deprecated use {@link #SurroundPostfixTemplateBase(String, String, PostfixTemplatePsiInfo, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
+   */
+  @Deprecated(forRemoval = true)
   protected SurroundPostfixTemplateBase(@NotNull @NlsSafe String name,
                                         @NotNull @NlsSafe String descr,
                                         @NotNull PostfixTemplatePsiInfo psiInfo,
                                         @NotNull PostfixTemplateExpressionSelector selector) {
-    super(name, descr, selector);
+    this(name, descr, psiInfo, selector, null);
+  }
+
+  protected SurroundPostfixTemplateBase(@NotNull @NlsSafe String name,
+                                        @NotNull @NlsSafe String descr,
+                                        @NotNull PostfixTemplatePsiInfo psiInfo,
+                                        @NotNull PostfixTemplateExpressionSelector selector,
+                                        @Nullable PostfixTemplateProvider provider) {
+    super(null, name, descr, selector, provider);
     myPsiInfo = psiInfo;
   }
 
