@@ -19,7 +19,7 @@ import org.jetbrains.idea.maven.project.SupportedRequestType;
 
 import java.util.*;
 
-import static org.jetbrains.idea.maven.importing.MavenModuleImporter.*;
+import static org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.*;
 
 public class MavenModuleImportDependencyProvider {
   public static final int INITIAL_CAPACITY_TEST_DEPENDENCY_LIST = 4;

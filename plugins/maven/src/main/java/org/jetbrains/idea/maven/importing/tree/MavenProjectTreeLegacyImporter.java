@@ -58,7 +58,7 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
 
     if (myProject.isDisposed()) return null;
 
-    final List<MavenModuleImporter> importers = new ArrayList<>();
+    final List<MavenLegacyModuleImporter> importers = new ArrayList<>();
     if (myContext.hasChanges) {
       hasChanges = true;
 
@@ -125,12 +125,12 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
       myModelsProvider = modelsProvider;
     }
 
-    public List<MavenModuleImporter> configModules(List<MavenTreeModuleImportData> allModules,
-                                                   Map<MavenProject, String> moduleNameByProject) {
-      List<MavenModuleImporter> importers = new ArrayList<>();
+    public List<MavenLegacyModuleImporter> configModules(List<MavenTreeModuleImportData> allModules,
+                                                         Map<MavenProject, String> moduleNameByProject) {
+      List<MavenLegacyModuleImporter> importers = new ArrayList<>();
 
       for (MavenTreeModuleImportData importData : allModules) {
-        MavenModuleImporter moduleImporter = createModuleImporter(importData, moduleNameByProject);
+        MavenLegacyModuleImporter moduleImporter = createModuleImporter(importData, moduleNameByProject);
         importers.add(moduleImporter);
 
         if (!importData.hasChanges()) continue;
@@ -151,7 +151,7 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
     }
 
     private static void configModule(@NotNull MavenTreeModuleImportData importData,
-                                     @NotNull MavenModuleImporter moduleImporter,
+                                     @NotNull MavenLegacyModuleImporter moduleImporter,
                                      @NotNull MavenRootModelAdapter rootModelAdapter) {
       MavenModuleType type = importData.getModuleData().getType();
       rootModelAdapter.init(importData.getLegacyModuleData().isNewModule());
@@ -166,16 +166,16 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
       }
     }
 
-    private MavenModuleImporter createModuleImporter(MavenTreeModuleImportData importData,
-                                                     Map<MavenProject, String> moduleNameByProject) {
-      return new MavenModuleImporter(importData.getLegacyModuleData().getModule(),
-                                     myProjectsTree,
-                                     importData.getMavenProject(),
-                                     importData.getChanges(),
-                                     moduleNameByProject,
-                                     myImportingSettings,
-                                     myModelsProvider,
-                                     importData.getModuleData().getType());
+    private MavenLegacyModuleImporter createModuleImporter(MavenTreeModuleImportData importData,
+                                                           Map<MavenProject, String> moduleNameByProject) {
+      return new MavenLegacyModuleImporter(importData.getLegacyModuleData().getModule(),
+                                           myProjectsTree,
+                                           importData.getMavenProject(),
+                                           importData.getChanges(),
+                                           moduleNameByProject,
+                                           myImportingSettings,
+                                           myModelsProvider,
+                                           importData.getModuleData().getType());
     }
   }
 

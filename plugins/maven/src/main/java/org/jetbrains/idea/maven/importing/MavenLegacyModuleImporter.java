@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public final class MavenModuleImporter {
+public final class MavenLegacyModuleImporter {
   public static final String SUREFIRE_PLUGIN_LIBRARY_NAME = "maven-surefire-plugin urls";
   public static final Set<String> IMPORTED_CLASSIFIERS = Set.of("client");
 
@@ -61,14 +61,14 @@ public final class MavenModuleImporter {
 
   private IdeModifiableModelsProvider myProviderForExtensions;
 
-  public MavenModuleImporter(Module module,
-                             MavenProjectsTree mavenTree,
-                             MavenProject mavenProject,
-                             @Nullable MavenProjectChanges changes,
-                             Map<MavenProject, String> mavenProjectToModuleName,
-                             MavenImportingSettings settings,
-                             ModifiableModelsProviderProxy modifiableModelsProvider,
-                             @Nullable MavenModuleType moduleType) {
+  public MavenLegacyModuleImporter(Module module,
+                                   MavenProjectsTree mavenTree,
+                                   MavenProject mavenProject,
+                                   @Nullable MavenProjectChanges changes,
+                                   Map<MavenProject, String> mavenProjectToModuleName,
+                                   MavenImportingSettings settings,
+                                   ModifiableModelsProviderProxy modifiableModelsProvider,
+                                   @Nullable MavenModuleType moduleType) {
     myModule = module;
     myMavenTree = mavenTree;
     myMavenProject = mavenProject;
@@ -83,13 +83,13 @@ public final class MavenModuleImporter {
     }
   }
 
-  public MavenModuleImporter(Module module,
-                             MavenProjectsTree mavenTree,
-                             MavenProject mavenProject,
-                             @Nullable MavenProjectChanges changes,
-                             Map<MavenProject, String> mavenProjectToModuleName,
-                             MavenImportingSettings settings,
-                             ModifiableModelsProviderProxy modifiableModelsProvider) {
+  public MavenLegacyModuleImporter(Module module,
+                                   MavenProjectsTree mavenTree,
+                                   MavenProject mavenProject,
+                                   @Nullable MavenProjectChanges changes,
+                                   Map<MavenProject, String> mavenProjectToModuleName,
+                                   MavenImportingSettings settings,
+                                   ModifiableModelsProviderProxy modifiableModelsProvider) {
     this(module, mavenTree, mavenProject, changes, mavenProjectToModuleName, settings, modifiableModelsProvider, null);
   }
 

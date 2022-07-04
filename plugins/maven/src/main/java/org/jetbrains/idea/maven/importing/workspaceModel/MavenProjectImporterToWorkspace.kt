@@ -16,8 +16,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModu
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter
 import org.jetbrains.idea.maven.importing.MavenModelUtil
-import org.jetbrains.idea.maven.importing.MavenModuleImporter
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper
 import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportContext
@@ -171,19 +171,18 @@ class MavenProjectImporterToWorkspace(
                              moduleNameByProject: Map<MavenProject, String>,
                              projectChanges: Map<MavenProject, MavenProjectChanges>,
                              postTasks: List<MavenProjectsProcessorTask>) {
-    val importers = mutableListOf<MavenModuleImporter>()
+    val legacyImporters = mutableListOf<MavenLegacyModuleImporter>()
     for ((module, mavenProject, moduleType) in modules) {
-      importers.add(MavenModuleImporter(module,
-                                        myProjectsTree,
-                                        mavenProject,
-                                        projectChanges[mavenProject],
-                                        moduleNameByProject,
-                                        myImportingSettings,
-                                        myModelsProvider,
-                                        moduleType))
+      legacyImporters.add(MavenLegacyModuleImporter(module,
+                                                    myProjectsTree,
+                                                    mavenProject,
+                                                    projectChanges[mavenProject],
+                                                    moduleNameByProject,
+                                                    myImportingSettings,
+                                                    myModelsProvider,
+                                                    moduleType))
     }
-
-    configFacets(importers, postTasks)
+    configFacets(legacyImporters, postTasks)
 
     MavenUtil.invokeAndWaitWriteAction(myProject) { removeOutdatedCompilerConfigSettings() }
 

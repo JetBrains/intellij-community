@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -20,9 +21,8 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.importing.ArtifactsDownloadingTestCase;
-import org.jetbrains.idea.maven.importing.MavenModuleImporter;
+import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter;
 import org.junit.Test;
 
 import java.io.File;
@@ -917,7 +917,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     assertModules("m1");
 
     assertModuleModuleDeps("m1");
-    assertModuleLibDeps("m1", "Maven: junit:junit:4.0", MavenModuleImporter.SUREFIRE_PLUGIN_LIBRARY_NAME);
+    assertModuleLibDeps("m1", "Maven: junit:junit:4.0", MavenLegacyModuleImporter.SUREFIRE_PLUGIN_LIBRARY_NAME);
 
     setupJdkForModules("m1");
 

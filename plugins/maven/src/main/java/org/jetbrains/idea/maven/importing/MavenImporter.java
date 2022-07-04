@@ -28,7 +28,6 @@ import java.util.*;
 
 /**
  * Extension point for customization maven module import process.
- * Main import logic {@link MavenModuleImporter}.
  */
 public abstract class MavenImporter {
   public static final ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");

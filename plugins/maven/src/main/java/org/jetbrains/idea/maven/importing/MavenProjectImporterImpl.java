@@ -26,10 +26,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -89,7 +85,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     if (myProject.isDisposed()) return null;
 
     final boolean projectsHaveChanges = projectsToImportHaveChanges(myProjectsToImportWithChanges.values());
-    final List<MavenModuleImporter> importers = new ArrayList<>();
+    final List<MavenLegacyModuleImporter> importers = new ArrayList<>();
     if (projectsHaveChanges) {
       hasChanges = true;
       importers.addAll(importModules());
@@ -340,7 +336,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
                               myImportingSettings.getDedicatedModuleDir());
   }
 
-  private List<MavenModuleImporter> importModules() {
+  private List<MavenLegacyModuleImporter> importModules() {
     Map<MavenProject, MavenProjectChanges> projectsWithChanges = myProjectsToImportWithChanges;
 
     Set<MavenProject> projectsWithNewlyCreatedModules = new HashSet<>();
@@ -351,7 +347,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
       }
     }
 
-    List<MavenModuleImporter> importers = new ArrayList<>();
+    List<MavenLegacyModuleImporter> importers = new ArrayList<>();
 
     for (Map.Entry<MavenProject, MavenProjectChanges> each : projectsWithChanges.entrySet()) {
       MavenProject project = each.getKey();
@@ -360,7 +356,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
       MavenId mavenId = project.getMavenId();
       myModelsProvider.registerModulePublication(
         module, new ProjectId(mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion()));
-      MavenModuleImporter moduleImporter = createModuleImporter(module, project, each.getValue());
+      MavenLegacyModuleImporter moduleImporter = createModuleImporter(module, project, each.getValue());
       importers.add(moduleImporter);
 
       MavenRootModelAdapter rootModelAdapter =
@@ -442,14 +438,14 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     });
   }
 
-  private MavenModuleImporter createModuleImporter(Module module, MavenProject mavenProject, @Nullable MavenProjectChanges changes) {
-    return new MavenModuleImporter(module,
-                                   myProjectsTree,
-                                   mavenProject,
-                                   changes,
-                                   myMavenProjectToModuleName,
-                                   myImportingSettings,
-                                   myModelsProvider);
+  private MavenLegacyModuleImporter createModuleImporter(Module module, MavenProject mavenProject, @Nullable MavenProjectChanges changes) {
+    return new MavenLegacyModuleImporter(module,
+                                         myProjectsTree,
+                                         mavenProject,
+                                         changes,
+                                         myMavenProjectToModuleName,
+                                         myImportingSettings,
+                                         myModelsProvider);
   }
 
   private void configModuleGroups() {

@@ -65,7 +65,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     return !project.isAggregator() || myImportingSettings.isCreateModulesForAggregators();
   }
 
-  protected void configFacets(List<MavenModuleImporter> importers, List<MavenProjectsProcessorTask> postTasks) {
+  protected void configFacets(List<MavenLegacyModuleImporter> importers, List<MavenProjectsProcessorTask> postTasks) {
     if (!importers.isEmpty()) {
       IdeModifiableModelsProvider provider;
       if (myIdeModifiableModelsProvider instanceof IdeUIModifiableModelsProvider) {
@@ -76,7 +76,8 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
       }
 
       try {
-        List<MavenModuleImporter> toRun = ContainerUtil.filter(importers, it -> !it.isModuleDisposed() && !it.isAggregatorMainTestModule());
+        List<MavenLegacyModuleImporter> toRun =
+          ContainerUtil.filter(importers, it -> !it.isModuleDisposed() && !it.isAggregatorMainTestModule());
 
         toRun.forEach(importer -> importer.setModifiableModelsProvider(provider));
         toRun.forEach(importer -> importer.preConfigFacets());
