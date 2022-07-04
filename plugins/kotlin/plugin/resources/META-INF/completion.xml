@@ -27,7 +27,7 @@
     <completion.contributor
             language="kotlin"
             id="KotlinCompletionContributor"
-            order="first"
+            order="first, after liveTemplates"
             implementationClass="org.jetbrains.kotlin.idea.completion.KotlinCompletionContributor"/>
     <completion.contributor
             language="kotlin"
