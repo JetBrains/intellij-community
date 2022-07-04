@@ -17,10 +17,7 @@ import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
@@ -159,5 +156,15 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
 
     override fun isApplicableTo(element: KtTypeArgumentList): Boolean = isApplicableTo(element, approximateFlexible = false)
 
-    override fun applyTo(element: KtTypeArgumentList, editor: Editor?) = element.delete()
+    override fun applyTo(element: KtTypeArgumentList, editor: Editor?) {
+        val prevCallExpression = element.getPrevSiblingIgnoringWhitespaceAndComments() as? KtCallExpression
+        val isBetweenLambdaArguments = prevCallExpression?.lambdaArguments?.isNotEmpty() == true &&
+                element.getNextSiblingIgnoringWhitespaceAndComments() is KtLambdaArgument
+
+        element.delete()
+
+        if (isBetweenLambdaArguments) {
+            prevCallExpression?.replace(KtPsiFactory(element).createExpressionByPattern("($0)", prevCallExpression))
+        }
+    }
 }
