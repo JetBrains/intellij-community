@@ -78,6 +78,10 @@ dependencies {
   testImplementation 'org.mockito:mockito-junit-jupiter:3.12.4'
 }
 
+configurations {
+  testImplementation.exclude(group: 'com.jetbrains.intellij.remoteDev')
+}
+
 compileKotlin {
   sourceCompatibility = JavaVersion.VERSION_11
   targetCompatibility = JavaVersion.VERSION_11
