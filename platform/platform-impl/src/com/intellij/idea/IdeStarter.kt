@@ -18,10 +18,7 @@ import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationStarter
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
@@ -37,9 +34,10 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.ui.accessibility.ScreenReader
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.awt.EventQueue
+import kotlinx.coroutines.withContext
 import java.beans.PropertyChangeListener
 import java.nio.file.Path
 import java.util.*
@@ -87,17 +85,14 @@ open class IdeStarter : ApplicationStarter {
 
       val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
       openProjectIfNeeded(args, app, lifecyclePublisher)
-      reportPluginErrors()
 
-      if (!app.isHeadlessEnvironment) {
-        postOpenUiTasks(app)
-      }
+      launch { reportPluginErrors() }
 
       StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
       lifecyclePublisher.appStarted()
 
-      if (!app.isHeadlessEnvironment && PluginManagerCore.isRunningFromSources()) {
-        AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+      if (!app.isHeadlessEnvironment) {
+        postOpenUiTasks(app)
       }
     }
   }
@@ -231,6 +226,10 @@ private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): P
 
 private suspend fun postOpenUiTasks(app: Application) {
   coroutineScope {
+    if (PluginManagerCore.isRunningFromSources()) {
+      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+    }
+
     if (SystemInfoRt.isMac) {
       launch {
         runActivity("mac touchbar on app init") {
@@ -259,28 +258,28 @@ private suspend fun postOpenUiTasks(app: Application) {
   }
 }
 
-private fun invokeLaterWithAnyModality(name: String, task: () -> Unit) {
-  EventQueue.invokeLater {
+private suspend fun invokeLaterWithAnyModality(name: String, task: () -> Unit) {
+  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     runActivity(name, task = task)
   }
 }
 
-private fun reportPluginErrors() {
+private suspend fun reportPluginErrors() {
   val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
   if (pluginErrors.isEmpty()) {
     return
   }
 
-  ApplicationManager.getApplication().invokeLater({
-                                                    val title = IdeBundle.message("title.plugin.error")
-                                                    val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
-                                                    @Suppress("DEPRECATION")
-                                                    NotificationGroupManager.getInstance().getNotificationGroup(
-                                                      "Plugin Error").createNotification(title, content, NotificationType.ERROR)
-                                                      .setListener { notification, event ->
-                                                        notification.expire()
-                                                        PluginManagerMain.onEvent(event.description)
-                                                      }
-                                                      .notify(null)
-                                                  }, ModalityState.NON_MODAL)
+  withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    val title = IdeBundle.message("title.plugin.error")
+    val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
+    @Suppress("DEPRECATION")
+    NotificationGroupManager.getInstance().getNotificationGroup(
+      "Plugin Error").createNotification(title, content, NotificationType.ERROR)
+      .setListener { notification, event ->
+        notification.expire()
+        PluginManagerMain.onEvent(event.description)
+      }
+      .notify(null)
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import com.intellij.ide.IdeBundle
@@ -9,14 +9,18 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsConfiguration
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.util.ReflectionUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.Component
 import java.awt.Container
-import java.awt.EventQueue
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.*
@@ -30,7 +34,7 @@ private var IS_NOTIFICATION_REGISTERED = false
 
 // TODO: consider to detect IM-freezes and then notify user (offer to disable IM)
 
-internal fun disableInputMethodsIfPossible() {
+internal suspend fun disableInputMethodsIfPossible() {
   if (!SystemInfo.isXWindow || !SystemInfo.isJetBrainsJvm) {
     return
   }
@@ -40,7 +44,7 @@ internal fun disableInputMethodsIfPossible() {
   if (muted) {
     val auto = properties.isTrueValue(PERSISTENT_SETTING_AUTO_DISABLE_KEY)
     if (auto) {
-      EventQueue.invokeLater {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         disableInputMethdosImpl()
       }
     }
