@@ -266,7 +266,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         if (parent instanceof PsiTypeElement) {
           final PsiClass containingClass = refClass.getContainingClass();
           if (containingClass != null && containingClass.hasTypeParameters()) {
-            if (parent.getParent() instanceof PsiInstanceOfExpression) {
+            if (parent.getParent() instanceof PsiInstanceOfExpression || parent.getParent() instanceof PsiPatternVariable) {
               return false;
             }
             if (!refClass.hasModifierProperty(PsiModifier.STATIC)) {
