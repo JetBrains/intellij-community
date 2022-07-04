@@ -49,7 +49,6 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
 
   private volatile boolean myDisposed;
   private volatile RootIndex myRootIndex;
-  private volatile boolean myInInitialState;
 
   public DirectoryIndexImpl(@NotNull Project project) {
     myProject = project;
@@ -160,7 +159,6 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
       myRootIndex = rootIndex = new RootIndex(myProject);
-      myInInitialState = false;
     }
     return rootIndex;
   }
