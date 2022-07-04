@@ -27,7 +27,7 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public boolean hasSelection() {
-    return false;
+    return myEnd > myStart;
   }
 
   @NotNull

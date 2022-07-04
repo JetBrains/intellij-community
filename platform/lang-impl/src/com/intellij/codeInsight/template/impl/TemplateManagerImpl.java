@@ -160,7 +160,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     }
     Runnable r = () -> {
       if (selectionString != null) {
-        ApplicationManager.getApplication().runWriteAction(() -> EditorModificationUtil.deleteSelectedText(editor));
+        templateState.performWrite(() -> EditorModificationUtilEx.deleteSelectedText(editor));
       }
       else {
         editor.getSelectionModel().removeSelection();

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ public class ImaginarySelectionModel implements SelectionModel {
   @Nullable
   @Override
   public String getSelectedText(boolean allCarets) {
-    return null;
+    return myEditor.getDocument().getText(TextRange.create(getSelectionStart(), getSelectionEnd()));
   }
 
   @Override

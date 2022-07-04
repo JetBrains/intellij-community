@@ -124,12 +124,12 @@ public class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public void runForEachCaret(@NotNull CaretAction action) {
-    throw notImplemented();
+    action.perform(myCaret);
   }
 
   @Override
   public void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder) {
-    throw notImplemented();
+    action.perform(myCaret);
   }
 
   @Override

@@ -73,6 +73,27 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
                  "  }", text);
   }
 
+  public void testIntentionPreviewIterate() {
+    configureFromFileText("Test.java",
+                          "class Test {\n" +
+                          "    void f(Iterable<String> it) {\n" +
+                          "      <caret>it;\n" +
+                          "    }\n" +
+                          "  }");
+    IntentionAction action = findActionWithText("Iterate over Iterable<String>");
+    assertNotNull(action);
+
+    String text = getPreviewText(action);
+    assertEquals("class Test {\n" +
+                 "    void f(Iterable<String> it) {\n" +
+                 "        for (String s : it) {\n" +
+                 "\n" +
+                 "        }\n" +
+                 "\n" +
+                 "    }\n" +
+                 "  }", text);
+  }
+
   public void testIntentionPreviewInjection() {
     configureFromFileText("Test.java",
                           "import java.util.regex.Pattern;\n" +

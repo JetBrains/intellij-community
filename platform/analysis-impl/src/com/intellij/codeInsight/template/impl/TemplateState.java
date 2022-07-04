@@ -393,11 +393,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         }
       }
     };
-    if (requiresWriteAction()) {
-      ApplicationManager.getApplication().runWriteAction(action);
-    } else {
-      action.run();
-    }
+    performWrite(action);
   }
 
   private String getRangesDebugInfo() {
@@ -417,6 +413,10 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       getSegments().setSegmentsGreedy(true);
       restoreEmptyVariables(indices);
     };
+    performWrite(action);
+  }
+
+  void performWrite(Runnable action) {
     if (requiresWriteAction()) {
       ApplicationManager.getApplication().runWriteAction(action);
     } else {
@@ -436,7 +436,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   private void shortenReferences() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    performWrite(() -> {
       final PsiFile file = getPsiFile();
       if (file != null) {
         IntList indices = initEmptyVariables();
