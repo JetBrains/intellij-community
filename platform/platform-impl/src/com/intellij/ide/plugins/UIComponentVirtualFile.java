@@ -13,6 +13,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public abstract class UIComponentVirtualFile extends LightVirtualFile implements VirtualFileWithoutContent {
 
   private final @Nullable Icon myIcon;
