@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -10,8 +10,9 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.function.Function;
 
@@ -107,11 +107,11 @@ public abstract class InspectionRVContentProvider {
     return tools.getTools();
   }
 
-  public boolean hasQuickFixes(InspectionTree tree) {
-    final TreePath[] treePaths = tree.getSelectionPaths();
-    if (treePaths == null) return false;
-    for (TreePath selectionPath : treePaths) {
-      if (!TreeUtil.treeNodeTraverser((TreeNode)selectionPath.getLastPathComponent())
+  public boolean hasQuickFixes(@NotNull AnActionEvent e) {
+    final Object[] selection = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+    if (selection == null) return false;
+    for (Object selectedNode : selection) {
+      if (!TreeUtil.treeNodeTraverser((TreeNode)selectedNode)
         .traverse(TreeTraversal.PRE_ORDER_DFS)
         .processEach(node -> {
         if (!((InspectionTreeNode) node).isValid()) return true;
@@ -131,14 +131,16 @@ public abstract class InspectionRVContentProvider {
     return false;
   }
 
-  public abstract QuickFixAction @NotNull [] getCommonQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
+  public abstract QuickFixAction @NotNull [] getCommonQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree,
+                                                                 CommonProblemDescriptor @NotNull [] descriptors,
+                                                                 RefEntity @NotNull [] refElements);
 
-  public QuickFixAction @NotNull [] getPartialQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree) {
+  public QuickFixAction @NotNull [] getPartialQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree,
+                                                         CommonProblemDescriptor @NotNull [] selectedDescriptors) {
     GlobalInspectionContextImpl context = tree.getContext();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
     Map<String, FixAndOccurrences> result = new LinkedHashMap<>();
-    for (CommonProblemDescriptor d : descriptors) {
+    for (CommonProblemDescriptor d : selectedDescriptors) {
       QuickFix<?>[] fixes = d.getFixes();
       if (fixes == null || fixes.length == 0) continue;
       for (QuickFix<?> fix : fixes) {
@@ -175,7 +177,7 @@ public abstract class InspectionRVContentProvider {
     return result
       .values()
       .stream()
-      .filter(fixAndOccurrence -> fixAndOccurrence.occurrences != descriptors.length)
+      .filter(fixAndOccurrence -> fixAndOccurrence.occurrences != selectedDescriptors.length)
       .sorted(Comparator.comparingInt((FixAndOccurrences fixAndOccurrence) -> fixAndOccurrence.occurrences).reversed())
       .map(fixAndOccurrence -> {
         QuickFixAction fix = fixAndOccurrence.fix;
