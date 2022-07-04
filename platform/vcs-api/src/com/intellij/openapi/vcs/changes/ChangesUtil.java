@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,7 @@ public final class ChangesUtil {
     Comparator.<LocalChangeList>comparingInt(list -> list.isDefault() ? -1 : 0)
       .thenComparing(list -> list.getName(), String::compareToIgnoreCase);
 
-  private ChangesUtil() {}
+  private ChangesUtil() { }
 
   @NotNull
   public static FilePath getFilePath(@NotNull Change change) {
@@ -138,6 +139,19 @@ public final class ChangesUtil {
   }
 
   @NotNull
+  public static JBIterable<FilePath> iteratePathsCaseSensitive(@NotNull Change change) {
+    FilePath beforePath = getBeforePath(change);
+    FilePath afterPath = getAfterPath(change);
+
+    if (CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath)) {
+      return JBIterable.of(beforePath);
+    }
+    else {
+      return JBIterable.of(beforePath, afterPath).filterNotNull();
+    }
+  }
+
+  @NotNull
   public static Stream<VirtualFile> getFiles(@NotNull Stream<? extends Change> changes) {
     return getPaths(changes)
       .map(FilePath::getVirtualFile)
@@ -164,15 +178,19 @@ public final class ChangesUtil {
     return getFiles(changes.stream()).toArray(VirtualFile[]::new);
   }
 
-  public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, VirtualFile @NotNull [] files) {
-    return getNavigatableArray(project, Stream.of(files));
-  }
-
   public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, @NotNull Stream<? extends VirtualFile> files) {
     return files
       .filter(file -> !file.isDirectory())
       .map(file -> new OpenFileDescriptor(project, file))
       .toArray(Navigatable[]::new);
+  }
+
+  public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, @NotNull Iterable<? extends VirtualFile> files) {
+    return JBIterable.from(files)
+      .filter(file -> !file.isDirectory())
+      .map(file -> new OpenFileDescriptor(project, file))
+      .toList()
+      .toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
   }
 
   @Nullable

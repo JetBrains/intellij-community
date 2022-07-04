@@ -209,7 +209,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   public @NotNull JBIterable<ChangesBrowserNode<?>> traverse() {
-    JBIterable<?> iterable = TreeUtil.treeNodeTraverser(this).traverse();
+    JBIterable<?> iterable = TreeUtil.treeNodeTraverser(this).preOrderDfsTraversal();
     //noinspection unchecked
     return (JBIterable<ChangesBrowserNode<?>>)iterable;
   }

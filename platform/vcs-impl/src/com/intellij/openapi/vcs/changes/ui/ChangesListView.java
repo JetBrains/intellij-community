@@ -165,7 +165,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
                                                                        .createNavigatable(myProject, file, 0) : null;
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return getNavigatableArray(myProject, StreamEx.of(getNavigatableFiles().iterator()));
+      return getNavigatableArray(myProject, getNavigatableFiles());
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return getSelectionObjects().find(userObject -> !(userObject instanceof ChangeList)) != null

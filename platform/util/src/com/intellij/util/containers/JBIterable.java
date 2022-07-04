@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * An in-house and immutable version of {@code com.google.common.collect.FluentIterable}
@@ -379,6 +381,11 @@ public abstract class JBIterable<E> implements Iterable<E> {
   public final @NotNull <T> JBIterable<T> filter(@NotNull Class<T> type) {
     //noinspection unchecked
     return (JBIterable<T>)filter(Conditions.instanceOf(type));
+  }
+
+  public final @NotNull JBIterable<@NotNull E> filterNotNull() {
+    //noinspection unchecked
+    return (JBIterable<@NotNull E>)filter(Objects::nonNull);
   }
 
   public final @NotNull JBIterable<E> take(int count) {
@@ -863,6 +870,10 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   public final @NotNull <K> Map<K, E> toReverseMap(@NotNull Convertor<? super E, ? extends K> toKey) {
     return toMap(toKey, Convertor.self());
+  }
+
+  public final @NotNull Stream<E> toStream() {
+    return StreamSupport.stream(spliterator(), false);
   }
 
   /**
