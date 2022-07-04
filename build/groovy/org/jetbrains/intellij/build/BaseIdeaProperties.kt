@@ -112,7 +112,6 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       "intellij.completionMlRankingModels",
       "intellij.statsCollector",
       "intellij.sh",
-      "intellij.vcs.changeReminder",
       "intellij.markdown",
       "intellij.webp",
       "intellij.grazie",
