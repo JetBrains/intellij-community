@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
-import com.intellij.configurationStore.StoreUtil.Companion.saveSettings
+import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.configurationStore.saveSettings
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
@@ -363,7 +364,13 @@ open class ProjectImpl(filePath: Path, projectName: String?)
       LOG.debug("Skip save for $name: not initialized")
       return
     }
-    saveSettings(componentManager = this, forceSavingAllSettings = false)
+
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
+    runInAutoSaveDisabledMode {
+      runBlocking {
+        saveSettings(componentManager = this@ProjectImpl, forceSavingAllSettings = false)
+      }
+    }
   }
 
   @TestOnly

@@ -119,8 +119,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -926,7 +925,7 @@ public final class BuildManager implements Disposable {
         }
 
         String mappedProjectPath = pathMapper.apply(projectPath);
-        List<String> mappedPaths = ContainerUtil.map(paths, (p) -> pathMapper.apply(p));
+        List<String> mappedPaths = ContainerUtil.map(paths, pathMapper::apply);
         final CmdlineRemoteProto.Message.ControllerMessage params;
         if (isRebuild) {
           params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, Collections.emptyList(), userData, globals, null, null);
@@ -971,7 +970,7 @@ public final class BuildManager implements Disposable {
                   // ensure project model is saved on disk, so that automake sees the latest model state.
                   // For ordinary make all project, app settings and unsaved docs are always saved before build starts.
                   try {
-                    ApplicationManager.getApplication().invokeAndWait(project::save);
+                    project.save();
                   }
                   catch (Throwable e) {
                     LOG.info(e);
@@ -1042,7 +1041,7 @@ public final class BuildManager implements Disposable {
               }
             }
           });
-          delegatesToWait = Arrays.asList(future, new TaskFutureAdapter<>(buildFuture));
+          delegatesToWait = List.of(future, new TaskFutureAdapter<>(buildFuture));
         }
         catch (Throwable e) {
           handleProcessExecutionFailure(sessionId, e);
@@ -1242,7 +1241,6 @@ public final class BuildManager implements Disposable {
             }
             catch (Throwable t) {
               LOG.info(t);
-              compilerPath = null;
             }
             if (compilerPath == null) {
               throw new ExecutionException(JavaCompilerBundle.message("build.process.no.javac.found"));
@@ -1324,7 +1322,7 @@ public final class BuildManager implements Disposable {
       }
       if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_16)) {
         // enable javac-related reflection tricks in JPS
-        ClasspathBootstrap.configureReflectionOpenPackages(p -> cmdLine.addParameter(p));
+        ClasspathBootstrap.configureReflectionOpenPackages(cmdLine::addParameter);
       }
     }
     if (IS_UNIT_TEST_MODE) {
