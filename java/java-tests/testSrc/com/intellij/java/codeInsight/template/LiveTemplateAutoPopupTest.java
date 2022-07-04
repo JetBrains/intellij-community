@@ -39,7 +39,7 @@ public class LiveTemplateAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     myFixture.configureByText("a.java", "class C { int aaaA; { <caret> }}");
     createTemplate("aaa-bbb");
     type("aaa");
-    assertOrderedEquals(myFixture.getLookupElementStrings(), "aaaA", "aaa-bbb");
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "aaa-bbb", "aaaA");
     type("-");
     assertOrderedEquals(myFixture.getLookupElementStrings(), "aaa-bbb");
 
