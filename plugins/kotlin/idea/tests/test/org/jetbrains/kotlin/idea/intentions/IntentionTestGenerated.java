@@ -16020,6 +16020,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("betweenTypeArguments.kt")
+        public void testBetweenTypeArguments() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/betweenTypeArguments.kt");
+        }
+
         @TestMetadata("blockValue.kt")
         public void testBlockValue() throws Exception {
             runTest("testData/intentions/removeExplicitTypeArguments/blockValue.kt");
