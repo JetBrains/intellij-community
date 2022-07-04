@@ -108,7 +108,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
 
     // trimming the result
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    Document document = documentManager.getDocument(file);
+    Document document = file.getViewProvider().getDocument();
     assert document != null;
     documentManager.commitDocument(document);
     String trimmed = element.getValue().trim();
