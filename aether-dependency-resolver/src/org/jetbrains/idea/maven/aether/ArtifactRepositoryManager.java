@@ -211,7 +211,7 @@ public final class ArtifactRepositoryManager {
   }
 
   /**
-   * Returns list of classes corresponding to classpath entries for this this module.
+   * Returns list of classes corresponding to classpath entries for this module.
    */
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
   public static Class<?>[] getClassesFromDependencies() {
@@ -284,7 +284,7 @@ public final class ArtifactRepositoryManager {
       // RepositorySystem.resolveDependencies() ignores classifiers, so we need to set classifiers explicitly for discovered dependencies.
       // Because of that we have to first discover deps and then resolve corresponding artifacts
       try {
-        final List<ArtifactRequest> requests = new ArrayList<>();;
+        final List<ArtifactRequest> requests = new ArrayList<>();
         final Set<VersionConstraint> constraints;
         if (kind == ArtifactKind.ANNOTATIONS) {
           constraints = relaxForAnnotations(originalConstraints);
