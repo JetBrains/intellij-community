@@ -310,6 +310,7 @@ public final class TextMateLexer {
 
 
   private void addToken(@NotNull Queue<Token> output, int position) {
+    position = Math.min(position, myText.length());
     if (position > myCurrentOffset) {
       boolean newState = myCurrentScope.getParent() == null;
       int wsStart = myCurrentOffset;
@@ -322,7 +323,7 @@ public final class TextMateLexer {
         newState = false;
       }
 
-      int wsEnd = Math.min(position, myText.length());
+      int wsEnd = position;
       while (myStripWhitespaces && wsEnd > myCurrentOffset && Character.isWhitespace(myText.charAt(wsEnd - 1))) {
         wsEnd--;
       }
