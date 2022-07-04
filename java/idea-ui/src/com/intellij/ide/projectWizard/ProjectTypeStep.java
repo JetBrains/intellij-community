@@ -117,7 +117,12 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
         TemplatesGroup groupToSelect = ContainerUtil.find(myTemplatesMap.keySet(), group -> group.getId().equals(placeId));
         if (groupToSelect != null) {
           myProjectTypeList.setSelectedValue(groupToSelect, true);
-          configure.accept(getCustomStep());
+          try {
+            configure.accept(getCustomStep());
+          }
+          catch (Throwable exception) {
+            throw new IllegalStateException("Cannot switch on " + placeId + ", current step " + myCurrentCard, exception);
+          }
         }
       }
     });
