@@ -137,7 +137,7 @@ final class CompletionAssertions {
                   insertedElement.getNode().getChars())) {
       throw new RuntimeExceptionWithAttachments(
         "Inconsistent completion tree",
-        "range=" + range,
+        "range=" + range + "; fileLength=" + fileCopyText.length(),
         createFileTextAttachment(fileCopy, originalFile),
         createAstAttachment(fileCopy, originalFile),
         new Attachment("Element at caret.txt", insertedElement.getText()));
