@@ -130,6 +130,15 @@ class CoroutineLaterInvocatorTest {
   }
 
   @Test
+  fun `modal delays default non-modal`(): Unit = timeoutRunBlocking {
+    val modalCoroutine = launchModalCoroutineAndWait(this)
+    val nonModalCoroutine = launch(Dispatchers.EDT) {} // modality is not specified
+    processSwingQueue()
+    assertFalse(nonModalCoroutine.isCompleted)
+    modalCoroutine.cancel()
+  }
+
+  @Test
   fun `modal delays modal`(): Unit = timeoutRunBlocking {
     withDifferentInitialModalities {
       val modalCoroutine = launchModalCoroutineAndWait(cs = this@withDifferentInitialModalities)
@@ -142,7 +151,7 @@ class CoroutineLaterInvocatorTest {
 
   @Test
   fun `any edt coroutine is resumed while modal is running`(): Unit = timeoutRunBlocking {
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val modalCoroutine = launch {
         withModalContext {
           awaitCancellation()

@@ -3,7 +3,6 @@ package com.intellij.openapi.application
 
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asContextElement
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -90,13 +89,14 @@ suspend fun <T> constrainedReadActionBlocking(vararg constraints: ReadConstraint
 private fun readActionSupport() = ApplicationManager.getApplication().getService(ReadActionSupport::class.java)
 
 /**
- * The code [without][ModalityState.any] context modality state must only perform pure UI operations,
- * it must not access any PSI, VFS, project model, or indexes.
+ * The code within [ModalityState.any] context modality state must only perform pure UI operations,
+ * it must not access any PSI, VFS, project model, or indexes. It also must not show any modal dialogs.
  */
 fun ModalityState.asContextElement(): CoroutineContext = coroutineSupport().asContextElement(this)
 
 /**
- * @return UI dispatcher which dispatches within the [context modality state][asContextElement].
+ * UI dispatcher which dispatches within the [context modality state][asContextElement].
+ * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.NON_MODAL] modality state.
  */
 @Suppress("UnusedReceiverParameter")
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()
