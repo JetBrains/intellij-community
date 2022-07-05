@@ -420,7 +420,7 @@ class EntityStorageSerializerImpl(
 
       // Write entity data and references
       kryo.writeClassAndObject(output, storage.entitiesByType)
-      kryo.writeClassAndObject(output, storage.refs)
+      kryo.writeObject(output, storage.refs)
 
       // Write indexes
       storage.indexes.softLinks.writeSoftLinks(output, kryo)
@@ -553,7 +553,7 @@ class EntityStorageSerializerImpl(
     for (key in index.keys) {
       val value: Set<PersistentEntityId<*>> = index.getValues(key)
 
-      kryo.writeClassAndObject(output, key.toSerializableEntityId())
+      kryo.writeObject(output, key.toSerializableEntityId())
       kryo.writeClassAndObject(output, value)
     }
   }
@@ -562,7 +562,7 @@ class EntityStorageSerializerImpl(
   private fun readSoftLinks(input: Input, kryo: Kryo, classesCache: MutableMap<TypeInfo, Int>): MultimapStorageIndex {
     val index = MultimapStorageIndex.MutableMultimapStorageIndex.from(MultimapStorageIndex())
     repeat(input.readInt()) {
-      val entityId = (kryo.readClassAndObject(input) as SerializableEntityId).toEntityId(classesCache)
+      val entityId = kryo.readObject(input, SerializableEntityId::class.java).toEntityId(classesCache)
       val values = kryo.readClassAndObject(input) as Set<PersistentEntityId<*>>
       index.index(entityId, values)
     }
@@ -676,7 +676,7 @@ class EntityStorageSerializerImpl(
 
         // Read entity data and references
         val entitiesBarrel = kryo.readClassAndObject(input) as ImmutableEntitiesBarrel
-        val refsTable = kryo.readClassAndObject(input) as RefsTable
+        val refsTable = kryo.readObject(input, RefsTable::class.java)
 
         // Read indexes
         val softLinks = readSoftLinks(input, kryo, classesCache)
