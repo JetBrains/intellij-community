@@ -11,13 +11,15 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
+import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 
-internal fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
+@ApiStatus.Internal
+fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
     if (CodeStyle.getSettings(project).kotlinCodeStyleDefaults() == KotlinStyleGuideCodeStyle.CODE_STYLE_ID) return
     if (SuppressKotlinCodeStyleComponent.getInstance(project).state.disableForAll) {
         return
@@ -32,8 +34,8 @@ internal fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
     NotificationGroupManager.getInstance()
         .getNotificationGroup("Update Kotlin code style")
         .createNotification(
-            KotlinBundle.message("configuration.kotlin.code.style"),
-            KotlinBundle.htmlMessage("configuration.notification.update.code.style.to.official"),
+            KotlinMigrationBundle.message("configuration.kotlin.code.style"),
+            KotlinMigrationBundle.htmlMessage("configuration.notification.update.code.style.to.official"),
             NotificationType.WARNING,
         )
         .setSuggestionType(true)
@@ -55,7 +57,7 @@ private fun dontAskAgainAction() = NotificationAction.createExpiring(
 }
 
 private fun applyCodeStyleAction() = NotificationAction.createExpiring(
-    KotlinBundle.message("configuration.apply.new.code.style")
+    KotlinMigrationBundle.message("configuration.apply.new.code.style")
 ) { e, _ ->
     e.project
         ?.takeIf { !it.isDisposed }

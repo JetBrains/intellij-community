@@ -14,12 +14,12 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 
 @VisibleForTesting
 const val LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME = "kotlin.updates.whats.new.shown.for"
@@ -51,7 +51,7 @@ fun showNewKotlinCompilerAvailableNotificationIfNeeded(project: Project) {
     NotificationGroupManager.getInstance()
         .getNotificationGroup("kotlin.external.compiler.updates")
         .createNotification(
-            KotlinBundle.message("kotlin.external.compiler.updates.notification.content.0", bundledKotlinVersion),
+            KotlinMigrationBundle.message("kotlin.external.compiler.updates.notification.content.0", bundledKotlinVersion),
             NotificationType.INFORMATION,
         )
         .setSuggestionType(true)
@@ -95,7 +95,7 @@ private fun findLastBundledCompilerVersion(): KotlinVersion? {
 }
 
 private fun createWhatIsNewAction(kotlinVersion: KotlinVersion): AnAction = BrowseNotificationAction(
-    KotlinBundle.message("kotlin.external.compiler.updates.notification.learn.what.is.new.action"),
+    KotlinMigrationBundle.message("kotlin.external.compiler.updates.notification.learn.what.is.new.action"),
     whatIsNewPageUrl(kotlinVersion),
 )
 

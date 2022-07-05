@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -282,8 +281,8 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         NotificationGroupManager.getInstance()
           .getNotificationGroup("Kotlin Maven project import")
           .createNotification(
-            KotlinBundle.message("configuration.maven.jvm.target.1.6.title"),
-            KotlinBundle.message("configuration.maven.jvm.target.1.6.content"),
+            KotlinMavenBundle.message("configuration.maven.jvm.target.1.6.title"),
+            KotlinMavenBundle.message("configuration.maven.jvm.target.1.6.content"),
             NotificationType.WARNING,
           )
           .setImportant(true)

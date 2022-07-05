@@ -166,6 +166,7 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea-base",
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
+    "kotlin.migration",
     "kotlin.inspections",
     "kotlin.inspections-fe10",
     "kotlin.features-trainer"

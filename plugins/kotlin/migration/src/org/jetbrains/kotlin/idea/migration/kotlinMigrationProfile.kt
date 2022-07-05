@@ -11,7 +11,6 @@ import com.intellij.openapi.util.WriteExternalException
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElement
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 
 fun createMigrationProfile(
@@ -29,7 +28,7 @@ fun createMigrationProfile(
         rootProfile.collectDependentInspections(toolWrapper, allWrappers, managerEx.project)
     }
 
-    val model = createSimple(KotlinBundle.message("inspection.migration.profile.name"), managerEx.project, migrationFixWrappers)
+    val model = createSimple(KotlinMigrationBundle.message("inspection.migration.profile.name"), managerEx.project, migrationFixWrappers)
     try {
         val element = Element("toCopy")
         for (wrapper in migrationFixWrappers) {

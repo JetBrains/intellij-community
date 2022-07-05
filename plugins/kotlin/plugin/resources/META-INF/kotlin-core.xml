@@ -363,6 +363,7 @@
             id="Kotlin EAP Survey"
             displayType="STICKY_BALLOON"
             key="kotlin.eap.survey.notification.group.name"
+            bundle="messages.KotlinMigrationBundle"
     />
     <notificationGroup
             id="Kotlin EAP"

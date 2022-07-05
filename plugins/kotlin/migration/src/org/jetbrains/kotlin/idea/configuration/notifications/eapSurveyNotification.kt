@@ -6,13 +6,15 @@ import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 import java.time.LocalDate
 
-internal fun showEapSurveyNotification(project: Project) {
+@ApiStatus.Internal
+fun showEapSurveyNotification(project: Project) {
     if (LocalDate.now() > LocalDate.of(/* year = */ 2022, /* month = */ 5, /* dayOfMonth = */ 8)) return
 
     val compilerVersion = KotlinPluginLayout.ideCompilerVersion
@@ -24,14 +26,14 @@ internal fun showEapSurveyNotification(project: Project) {
         NotificationGroupManager.getInstance()
             .getNotificationGroup("Kotlin EAP Survey")
             .createNotification(
-                KotlinBundle.message("kotlin.eap.survey.notification.title"),
-                KotlinBundle.message("kotlin.eap.survey.notification.text"),
+                KotlinMigrationBundle.message("kotlin.eap.survey.notification.title"),
+                KotlinMigrationBundle.message("kotlin.eap.survey.notification.text"),
                 NotificationType.INFORMATION,
             )
             .addAction(
                 BrowseNotificationAction(
-                    KotlinBundle.message("kotlin.eap.survey.notification.action"),
-                    KotlinBundle.message("kotlin.eap.survey.notification.link"),
+                    KotlinMigrationBundle.message("kotlin.eap.survey.notification.action"),
+                    KotlinMigrationBundle.message("kotlin.eap.survey.notification.link"),
                 )
             )
             .setSuggestionType(true)

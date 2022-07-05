@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -33,6 +32,7 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConf
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinJsGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider
@@ -50,7 +50,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         val propertiesComponent = PropertiesComponent.getInstance()
 
         val kotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
-        val notificationText = KotlinBundle.message(
+        val notificationText = KotlinMigrationBundle.message(
             "kotlin.external.compiler.updates.notification.content.0",
             kotlinVersion.kotlinVersion,
         )

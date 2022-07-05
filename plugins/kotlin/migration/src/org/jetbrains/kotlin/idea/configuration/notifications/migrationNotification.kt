@@ -10,20 +10,20 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.migration.CodeMigrationAction
+import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 import org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectFUSCollector
 import org.jetbrains.kotlin.idea.migration.MigrationInfo
 
 internal fun showMigrationNotification(project: Project, migrationInfo: MigrationInfo) {
     @NlsSafe
     val detectedChangeMessage = buildString {
-        appendBr(KotlinBundle.message("configuration.migration.text.detected.migration"))
+        appendBr(KotlinMigrationBundle.message("configuration.migration.text.detected.migration"))
 
         if (migrationInfo.oldLanguageVersion != migrationInfo.newLanguageVersion) {
             appendIndentBr(
-                KotlinBundle.message(
+                KotlinMigrationBundle.message(
                     "configuration.migration.text.language.version",
                     migrationInfo.oldLanguageVersion,
                     migrationInfo.newLanguageVersion
@@ -33,7 +33,7 @@ internal fun showMigrationNotification(project: Project, migrationInfo: Migratio
 
         if (migrationInfo.oldApiVersion != migrationInfo.newApiVersion) {
             appendIndentBr(
-                KotlinBundle.message(
+                KotlinMigrationBundle.message(
                     "configuration.migration.text.api.version",
                     migrationInfo.oldApiVersion,
                     migrationInfo.newApiVersion
@@ -46,12 +46,12 @@ internal fun showMigrationNotification(project: Project, migrationInfo: Migratio
     NotificationGroupManager.getInstance()
         .getNotificationGroup("Kotlin Migration")
         .createNotification(
-            KotlinBundle.message("configuration.migration.title.kotlin.migration"),
-            "${KotlinBundle.message("configuration.migration.text.migrations.for.kotlin.code.are.available")}<br/><br/>$detectedChangeMessage",
+            KotlinMigrationBundle.message("configuration.migration.title.kotlin.migration"),
+            "${KotlinMigrationBundle.message("configuration.migration.text.migrations.for.kotlin.code.are.available")}<br/><br/>$detectedChangeMessage",
             NotificationType.WARNING
         )
         .setSuggestionType(true)
-        .addAction(NotificationAction.createExpiring(KotlinBundle.message("configuration.migration.text.run.migrations")) { notificationAction, notification ->
+        .addAction(NotificationAction.createExpiring(KotlinMigrationBundle.message("configuration.migration.text.run.migrations")) { notificationAction, notification ->
             val notificationProject = notificationAction.project ?: return@createExpiring
             val projectContext = SimpleDataContext.getProjectContext(notificationProject)
             val migrationAction = ActionManager.getInstance().getAction(CodeMigrationAction.ACTION_ID)

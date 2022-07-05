@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersi
 import org.jetbrains.kotlin.idea.maven.*
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
-import org.jetbrains.kotlin.idea.quickfix.ChangeGeneralLanguageFeatureSupportFix
+import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 
 abstract class KotlinMavenConfigurator
@@ -258,7 +258,7 @@ protected constructor(
     ) {
         val sinceVersion = feature.sinceApiVersion
 
-        val messageTitle = ChangeGeneralLanguageFeatureSupportFix.getFixText(feature, state)
+        val messageTitle = AbstractChangeFeatureSupportLevelFix.getFixText(state, feature.presentableName)
         if (state != LanguageFeature.State.DISABLED && getRuntimeLibraryVersionOrDefault(module).apiVersion < sinceVersion) {
             Messages.showErrorDialog(
                 module.project,

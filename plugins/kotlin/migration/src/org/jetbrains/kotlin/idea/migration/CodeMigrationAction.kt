@@ -3,11 +3,10 @@
 package org.jetbrains.kotlin.idea.migration
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.jetbrains.kotlin.idea.KotlinBundle
 
 class CodeMigrationAction : CodeInspectionAction(
-    KotlinBundle.message("inspection.migration.title"),
-    KotlinBundle.message("inspection.migration.title")
+    KotlinMigrationBundle.message("inspection.migration.title"),
+    KotlinMigrationBundle.message("inspection.migration.title")
 ) {
     override fun update(e: AnActionEvent) {
         super.update(e)

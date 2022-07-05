@@ -57,6 +57,7 @@
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.preferences" />
     <orderEntry type="module" module-name="kotlin.plugin-updater" />
+    <orderEntry type="module" module-name="kotlin.migration" />
     <orderEntry type="module" module-name="kotlin.inspections-fe10" />
     <orderEntry type="module" module-name="kotlin.project-configuration" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
