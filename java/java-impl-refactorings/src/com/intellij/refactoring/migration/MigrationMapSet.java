@@ -1,5 +1,5 @@
 
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.migration;
 
 import com.intellij.application.options.CodeStyle;
@@ -48,7 +48,7 @@ public class MigrationMapSet {
   public MigrationMapSet() {
   }
 
-  public void addMap(MigrationMap map) {
+  public synchronized void addMap(MigrationMap map) {
     if (myMaps == null){
       loadMaps();
     }
@@ -57,7 +57,7 @@ public class MigrationMapSet {
   }
 
   @Nullable
-  public MigrationMap findMigrationMap(@NotNull String name) {
+  public synchronized MigrationMap findMigrationMap(@NotNull String name) {
     if (myMaps == null) {
       loadMaps();
     }
@@ -69,15 +69,7 @@ public class MigrationMapSet {
     return null;
   }
 
-  public void replaceMap(MigrationMap oldMap, MigrationMap newMap) {
-    for(int i = 0; i < myMaps.size(); i++){
-      if (myMaps.get(i) == oldMap){
-        myMaps.set(i, newMap);
-      }
-    }
-  }
-
-  public void removeMap(MigrationMap map) {
+  public synchronized void removeMap(MigrationMap map) {
     if (myMaps == null){
       loadMaps();
     }
@@ -94,7 +86,7 @@ public class MigrationMapSet {
     return false;
   }
 
-  public MigrationMap[] getMaps() {
+  public synchronized MigrationMap[] getMaps() {
     if (myMaps == null){
       loadMaps();
     }
@@ -150,7 +142,7 @@ public class MigrationMapSet {
     return ret;
   }
 
-  private void loadMaps() {
+  private synchronized void loadMaps() {
     myMaps = new ArrayList<>();
 
     File dir = getMapDirectory();
@@ -247,7 +239,7 @@ public class MigrationMapSet {
     return map;
   }
 
-  public void saveMaps() throws IOException{
+  public synchronized void saveMaps() throws IOException{
     File dir = getMapDirectory();
     if (dir == null) {
       return;
