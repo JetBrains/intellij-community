@@ -39,7 +39,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * See <a href="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md">Plugin Model</a> documentation.
@@ -837,7 +836,11 @@ public final class PluginManagerCore {
     }
 
     Activity activity = parentActivity == null ? null : parentActivity.startChild("3rd-party plugins consent");
-    Collection<? extends IdeaPluginDescriptor> aliens = get3rdPartyPlugins(idMap);
+    List<IdeaPluginDescriptorImpl> aliens = get3rdPartyPluginIds()
+      .stream()
+      .map(idMap::get)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
     if (!aliens.isEmpty()) {
       check3rdPartyPluginsPrivacyConsent(aliens);
     }
@@ -888,7 +891,7 @@ public final class PluginManagerCore {
     return new PluginManagerState(pluginSet, disabledRequired, disabledAfterInit);
   }
 
-  private static void check3rdPartyPluginsPrivacyConsent(Collection<? extends IdeaPluginDescriptor> aliens) {
+  private static void check3rdPartyPluginsPrivacyConsent(@NotNull List<IdeaPluginDescriptorImpl> aliens) {
     if (GraphicsEnvironment.isHeadless()) {
       getLogger().info("3rd-party plugin privacy note not accepted yet; disabling plugins for this headless session");
       aliens.forEach(descriptor -> descriptor.setEnabled(false));
@@ -924,20 +927,20 @@ public final class PluginManagerCore {
     }
   }
 
-  private static Collection<IdeaPluginDescriptorImpl> get3rdPartyPlugins(Map<PluginId, IdeaPluginDescriptorImpl> descriptors) {
+  @ReviseWhenPortedToJDK(value = "10", description = "Set.of")
+  private static @NotNull Set<PluginId> get3rdPartyPluginIds() {
     Path file = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE);
     try {
       Set<PluginId> ids = readPluginIdsFromFile(file);
       if (!ids.isEmpty()) {
         Files.delete(file);
       }
-      return ids.stream().map(descriptors::get).filter(descriptor -> descriptor != null).collect(Collectors.toList());
+      return ids;
     }
     catch (IOException e) {
       getLogger().error(file.toString(), e);
+      return Collections.emptySet();
     }
-
-    return Collections.emptyList();
   }
 
   @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableSet, Set.of")
@@ -984,9 +987,9 @@ public final class PluginManagerCore {
                 openOptions);
   }
 
-  private static boolean ask3rdPartyPluginsPrivacyConsent(Iterable<? extends IdeaPluginDescriptor> descriptors) {
+  private static boolean ask3rdPartyPluginsPrivacyConsent(@NotNull List<IdeaPluginDescriptorImpl> descriptors) {
     String title = CoreBundle.message("third.party.plugins.privacy.note.title");
-    String pluginList = StreamSupport.stream(descriptors.spliterator(), false)
+    String pluginList = descriptors.stream()
       .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + descriptor.getName() + " (" + descriptor.getVendor() + ')')
       .collect(Collectors.joining("<br>"));
     String text = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
