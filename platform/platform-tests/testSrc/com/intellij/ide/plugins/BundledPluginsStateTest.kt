@@ -3,7 +3,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -21,13 +20,13 @@ class BundledPluginsStateTest : LightPlatformTestCase() {
       .toSet()
 
     BundledPluginsState.writePluginIdsToFile(pluginIds)
-    assertThat(BundledPluginsState.getBundledPlugins())
+    assertThat(BundledPluginsState.readPluginIdsFromFile())
       .hasSameElementsAs(pluginIds)
   }
 
   @Test
   fun testSavingState() {
-    assertThat(BundledPluginsState.getBundledPlugins(PathManager.getConfigDir()))
+    assertThat(BundledPluginsState.readPluginIdsFromFile())
       .hasSameElementsAs(BundledPluginsState.loadedPluginIds)
 
     val savedBuildNumber = PropertiesComponent.getInstance().savedBuildNumber

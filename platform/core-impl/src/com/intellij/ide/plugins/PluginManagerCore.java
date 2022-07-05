@@ -925,19 +925,34 @@ public final class PluginManagerCore {
   }
 
   private static Collection<IdeaPluginDescriptorImpl> get3rdPartyPlugins(Map<PluginId, IdeaPluginDescriptorImpl> descriptors) {
-    Path file = Paths.get(PathManager.getConfigPath(), THIRD_PARTY_PLUGINS_FILE);
-    if (Files.exists(file)) {
-      try {
-        List<String> ids = Files.readAllLines(file);
+    Path file = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE);
+    try {
+      Set<PluginId> ids = readPluginIdsFromFile(file);
+      if (!ids.isEmpty()) {
         Files.delete(file);
-        return ids.stream().map(id -> descriptors.get(PluginId.getId(id))).filter(descriptor -> descriptor != null).collect(Collectors.toList());
       }
-      catch (IOException e) {
-        getLogger().error(file.toString(), e);
-      }
+      return ids.stream().map(descriptors::get).filter(descriptor -> descriptor != null).collect(Collectors.toList());
+    }
+    catch (IOException e) {
+      getLogger().error(file.toString(), e);
     }
 
     return Collections.emptyList();
+  }
+
+  @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableSet, Set.of")
+  @ApiStatus.Internal
+  public synchronized static @NotNull Set<PluginId> readPluginIdsFromFile(@NotNull Path path,
+                                                                          LinkOption... linkOptions) throws IOException {
+    if (!Files.exists(path, linkOptions) ||
+        !Files.isRegularFile(path, linkOptions)) {
+      return Collections.emptySet();
+    }
+
+    try (Stream<String> lines = Files.lines(path)) {
+      return lines.map(PluginId::getId)
+        .collect(Collectors.toSet());
+    }
   }
 
   @ApiStatus.Internal

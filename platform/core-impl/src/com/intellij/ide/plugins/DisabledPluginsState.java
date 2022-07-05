@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -9,12 +10,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.*;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class DisabledPluginsState implements PluginEnabler.Headless {
@@ -53,34 +53,23 @@ public final class DisabledPluginsState implements PluginEnabler.Headless {
   public static @NotNull Set<PluginId> loadDisabledPlugins() {
     Set<PluginId> disabledPlugins = new LinkedHashSet<>();
 
-    Path file = getDefaultFilePath();
-    if (!Files.isRegularFile(file)) {
-      return disabledPlugins;
-    }
-
+    Path path = getDefaultFilePath();
     ApplicationInfoEx applicationInfo = ApplicationInfoImpl.getShadowInstance();
-    List<String> requiredPlugins = splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY);
+    Set<PluginId> requiredPlugins = splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY);
 
     boolean updateFile = false;
-    try (BufferedReader reader = Files.newBufferedReader(file)) {
-      String id;
-      while ((id = reader.readLine()) != null) {
-        id = id.trim();
-        if (id.isEmpty()) {
-          continue;
-        }
-
+    try {
+      for (PluginId id : PluginManagerCore.readPluginIdsFromFile(path)) {
         if (!requiredPlugins.contains(id) &&
             !applicationInfo.isEssentialPlugin(id)) {
-          disabledPlugins.add(PluginId.getId(id));
+          disabledPlugins.add(id);
         }
         else {
           updateFile = true;
         }
       }
 
-      for (String suppressedId : splitByComma("idea.suppressed.plugins.id")) {
-        PluginId suppressedPluginId = PluginId.getId(suppressedId);
+      for (PluginId suppressedPluginId : splitByComma("idea.suppressed.plugins.id")) {
         if (!applicationInfo.isEssentialPlugin(suppressedPluginId) &&
             disabledPlugins.add(suppressedPluginId)) {
           updateFile = true;
@@ -88,7 +77,7 @@ public final class DisabledPluginsState implements PluginEnabler.Headless {
       }
     }
     catch (IOException e) {
-      getLogger().info("Unable to load disabled plugins list from " + file, e);
+      getLogger().info("Unable to load disabled plugins list from " + path, e);
     }
     finally {
       if (updateFile) {
@@ -211,11 +200,11 @@ public final class DisabledPluginsState implements PluginEnabler.Headless {
     ourDisabledPlugins = null;
   }
 
-  private static @NotNull List<String> splitByComma(@NotNull String key) {
-    String[] strings = System.getProperty(key, "").split(",");
-    return strings.length == 0 || strings.length == 1 && strings[0].isEmpty() ?
-           Collections.emptyList() :
-           Arrays.asList(strings);
+  @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableSet")
+  private static @NotNull Set<PluginId> splitByComma(@NotNull String key) {
+    return Arrays.stream(System.getProperty(key, "").split(","))
+      .map(PluginId::getId)
+      .collect(Collectors.toSet());
   }
 
   private static @NotNull String joinedPluginIds(@NotNull Collection<PluginId> pluginIds, boolean enabled) {

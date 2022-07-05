@@ -12,10 +12,7 @@ import com.intellij.openapi.util.BuildNumber
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.exists
-import kotlin.io.path.readLines
 
 @ApiStatus.Internal
 class BundledPluginsState {
@@ -69,21 +66,12 @@ class BundledPluginsState {
       )
     }
 
-    fun getBundledPlugins(configDir: Path = PathManager.getConfigDir()): Set<PluginId> {
-      val file = configDir.resolve(BUNDLED_PLUGINS_FILENAME)
-      if (!file.exists()
-          || !Files.isRegularFile(file)) {
-        return emptySet()
-      }
-
+    fun readPluginIdsFromFile(configDir: Path = PathManager.getConfigDir()): Set<PluginId> {
       return try {
-        file.readLines()
-          .asSequence()
-          .map { PluginId.getId(it) }
-          .toSet()
+        PluginManagerCore.readPluginIdsFromFile(configDir.resolve(BUNDLED_PLUGINS_FILENAME))
       }
       catch (e: IOException) {
-        LOG.warn("Unable to load bundled plugins list from $file", e)
+        LOG.warn("Unable to load bundled plugins list", e)
         emptySet()
       }
     }
