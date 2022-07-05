@@ -17,11 +17,6 @@ buildscript {
 
 sourceSets {
   main.kotlin.srcDirs += 'src'
-  test.kotlin.srcDirs += 'testSrc'
-  test.resources {
-    srcDirs "testResources"
-    includes = ["**/*.*"]
-  }
 }
 
 repositories {
@@ -37,6 +32,8 @@ dependencies {
   implementation('com.jetbrains.intellij.platform:lang-impl:LATEST-TRUNK-SNAPSHOT') {
     exclude group: 'org.jetbrains.kotlinx'
   }
+
+  implementation("com.jetbrains.intellij.ide:ide-starter:LATEST-TRUNK-SNAPSHOT")
 }
 
 
