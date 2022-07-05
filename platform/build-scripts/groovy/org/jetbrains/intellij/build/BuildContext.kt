@@ -43,11 +43,6 @@ interface BuildContext: CompilationContext {
   var bootClassPathJarNames: List<String>
 
   /**
-   * Allows to customize classpath for buildSearchableOptions and builtinModules
-   */
-  var classpathCustomizer: (MutableSet<String>) -> Unit
-
-  /**
    * Add file to be copied into application.
    */
   fun addDistFile(file: Map.Entry<Path, String>)

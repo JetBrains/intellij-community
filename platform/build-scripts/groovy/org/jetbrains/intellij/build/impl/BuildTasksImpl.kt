@@ -217,8 +217,7 @@ private fun buildProvidedModuleList(targetFile: Path, state: DistributionBuilder
     runApplicationStarter(context = context,
                           tempDir = context.paths.tempDir.resolve("builtinModules"),
                           ideClasspath = ideClasspath,
-                          arguments = listOf("listBundledPlugins", targetFile.toString()),
-                          classpathCustomizer = context.classpathCustomizer)
+                          arguments = listOf("listBundledPlugins", targetFile.toString()))
     if (Files.notExists(targetFile)) {
       context.messages.error("Failed to build provided modules list: $targetFile doesn\'t exist")
     }
@@ -686,7 +685,7 @@ private fun doBuildDistributions(context: BuildContext) {
     else {
       Span.current().addEvent("skip building product distributions because " +
                               "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
-      distributionJARsBuilder.buildSearchableOptions(context, context.classpathCustomizer)
+      distributionJARsBuilder.buildSearchableOptions(context)
       distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, context)!!.fork().join()
     }
   }
