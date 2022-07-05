@@ -726,7 +726,7 @@ public final class PluginManagerCore {
   }
 
   public static boolean isCompatible(@NotNull IdeaPluginDescriptor descriptor) {
-    return !isIncompatible(descriptor);
+    return isCompatible(descriptor, null);
   }
 
   public static boolean isCompatible(@NotNull IdeaPluginDescriptor descriptor, @Nullable BuildNumber buildNumber) {
@@ -734,14 +734,13 @@ public final class PluginManagerCore {
   }
 
   public static boolean isIncompatible(@NotNull IdeaPluginDescriptor descriptor) {
-    return isIncompatible(descriptor, getBuildNumber());
+    return isIncompatible(descriptor, null);
   }
 
-  public static boolean isIncompatible(@NotNull IdeaPluginDescriptor descriptor, @Nullable BuildNumber buildNumber) {
-    if (buildNumber == null) {
-      buildNumber = getBuildNumber();
-    }
-    return checkBuildNumberCompatibility(descriptor, buildNumber) != null;
+  public static boolean isIncompatible(@NotNull IdeaPluginDescriptor descriptor,
+                                       @Nullable BuildNumber buildNumber) {
+    return checkBuildNumberCompatibility(descriptor,
+                                         buildNumber != null ? buildNumber : getBuildNumber()) != null;
   }
 
   public static @Nullable PluginLoadingError checkBuildNumberCompatibility(@NotNull IdeaPluginDescriptor descriptor,
