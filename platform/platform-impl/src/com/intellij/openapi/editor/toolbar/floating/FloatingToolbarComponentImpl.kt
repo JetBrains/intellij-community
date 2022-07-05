@@ -8,8 +8,10 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.observable.util.whenKeyPressed
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
+import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 class FloatingToolbarComponentImpl(
@@ -18,38 +20,40 @@ class FloatingToolbarComponentImpl(
   parentDisposable: Disposable
 ) : AbstractFloatingToolbarComponent(provider.actionGroup, provider.autoHideable) {
 
-  private var ignoreMouseMotionRectangle: Rectangle? = null
-
   init {
     init(editor.contentComponent)
-    editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
-      override fun mouseMoved(e: EditorMouseEvent) {
-        if (provider.autoHideable) {
-          ignoreMouseMotionRectangle?.let {
-            if (!it.contains(e.mouseEvent.locationOnScreen)) {
-              ignoreMouseMotionRectangle = null
-            }
-          }
-          if (ignoreMouseMotionRectangle == null) {
-            scheduleShow()
-          }
-        }
-      }
-    })
-    editor.contentComponent.whenKeyPressed(parentDisposable) {
-      if (it.keyCode == KeyEvent.VK_ESCAPE) {
-        if (isVisible) {
-          val visibleRectOnScreen = visibleRect
-          if (visibleRectOnScreen != null) {
-            visibleRectOnScreen.location = locationOnScreen
-            ignoreMouseMotionRectangle = visibleRectOnScreen
-          }
-        }
-        hideImmediately()
-      }
+
+    if (provider.autoHideable) {
+      initAutoHideableListeners(editor)
     }
 
     provider.register(editor.dataContext, this, this)
     Disposer.register(parentDisposable, this)
+  }
+
+  private fun initAutoHideableListeners(editor: EditorEx) {
+    var ignoreMouseMotionRectangle: Rectangle? = null
+    editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
+      override fun mouseMoved(e: EditorMouseEvent) {
+        ignoreMouseMotionRectangle?.let {
+          if (!it.contains(e.mouseEvent.locationOnScreen)) {
+            ignoreMouseMotionRectangle = null
+          }
+        }
+        if (ignoreMouseMotionRectangle == null) {
+          scheduleShow()
+        }
+      }
+    }, this)
+    editor.contentComponent.whenKeyPressed(this) {
+      if (it.keyCode == KeyEvent.VK_ESCAPE) {
+        if (isVisible) {
+          val location = Point()
+          SwingUtilities.convertPointToScreen(location, this)
+          ignoreMouseMotionRectangle = Rectangle(location, size)
+        }
+        hideImmediately()
+      }
+    }
   }
 }
