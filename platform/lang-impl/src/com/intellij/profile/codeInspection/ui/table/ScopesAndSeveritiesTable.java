@@ -5,6 +5,7 @@ import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.ColorSettingsUtil;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.Descriptor;
@@ -115,7 +116,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
     severityColumn.setCellEditor(renderer);
 
     final TableColumn highlightingColumn = columnModel.getColumn(HIGHLIGHTING_COLUMN);
-    final HighlightingRenderer highlightingRenderer = new HighlightingRenderer(getEditorAttributesKeysAndNames(), tableSettings.getProject()) {
+    final HighlightingRenderer highlightingRenderer = new HighlightingRenderer(getEditorAttributesKeysAndNames(tableSettings.getInspectionProfile()), tableSettings.getProject()) {
       @Override
       void openColorSettings() {
         final var dataContext = DataManager.getInstance().getDataContext(this);
@@ -259,8 +260,18 @@ public class ScopesAndSeveritiesTable extends JBTable {
     return previousValue != null ? previousValue : MIXED_FAKE_KEY;
   }
 
-  private static ArrayList<Pair<TextAttributesKey, @Nls String>> getEditorAttributesKeysAndNames() {
+  private static ArrayList<Pair<TextAttributesKey, @Nls String>> getEditorAttributesKeysAndNames(InspectionProfileImpl profile) {
     final var textAttributes = ColorSettingsUtil.getErrorTextAttributes();
+
+    final Collection<HighlightInfoType> standardSeverities = SeverityRegistrar.standardSeverities();
+    final var registrar = profile.getProfileManager().getSeverityRegistrar();
+    for (HighlightSeverity severity : registrar.getAllSeverities()) {
+      final var highlightInfoType = registrar.getHighlightInfoTypeBySeverity(severity);
+      if (standardSeverities.contains(highlightInfoType)) continue;
+      final TextAttributesKey attributes = registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+      textAttributes.add(new Pair<>(attributes, severity.getDisplayName()));
+    }
+
     textAttributes.add(new Pair<>(EDIT_HIGHLIGHTING, InspectionsBundle.message("inspection.edit.highlighting.action")));
     return textAttributes;
   }
