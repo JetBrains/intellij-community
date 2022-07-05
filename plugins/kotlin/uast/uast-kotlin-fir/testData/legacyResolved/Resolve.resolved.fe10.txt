@@ -57,6 +57,8 @@ UBlockExpression -> UQualifiedReferenceExpression -> Kotlin_Light_Method: foo
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = entries) -> null: null
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = first) -> Decompiled_Method: first
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = setValue) -> Decompiled_Method: setValue
+    UTypeReferenceExpression (name = kotlin.ranges.ClosedRange<java.lang.Long>) -> USimpleNameReferenceExpression (identifier = ClosedRange) -> Decompiled_Class: ClosedRange
+    UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> Decompiled_Class: Long
     UBinaryExpression (operator = ..) -> USimpleNameReferenceExpression (identifier = ..) -> null: null
     UBlockExpression -> UQualifiedReferenceExpression -> Decompiled_Method: longRangeContains
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = intRange) -> Kotlin_Light_Variable: intRange
