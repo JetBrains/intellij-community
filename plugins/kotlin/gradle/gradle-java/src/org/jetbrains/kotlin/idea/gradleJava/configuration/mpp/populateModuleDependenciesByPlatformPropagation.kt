@@ -38,6 +38,16 @@ private fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesB
     val propagatedDependencies = mppModel.getCompilations(sourceSet)
         .map { compilation -> resolveVisibleDependencies(compilation) }
         .dependencyIntersection()
+        /*
+         Dependency Propagation is also allowed for root or intermediate 'Android' source sets.
+         However, this mechanism is relying on the mpp model to propagate dependencies, which
+         is not capable of transforming aar dependencies.
+
+         For now, only non-aar (jar) dependencies can be propagated.
+         Android aar dependencies are not supported in source sets like 'commonMain',
+         even when 'commonMain' is considered 'Android'
+         */
+        .filter { it.packaging != "aar" }
 
     /*
     Dependency Propagation will not work for project <-> project dependencies.
