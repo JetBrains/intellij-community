@@ -941,11 +941,11 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return null;
   }
 
-  LocalQuickFix getCreateFunctionQuickFix(PyReferenceExpression expr) {
+  @Nullable LocalQuickFix getCreateFunctionQuickFix(@NotNull PyReferenceExpression expr) {
     PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(expr);
     if (callExpression != null && (!(callExpression.getCallee() instanceof PyQualifiedExpression) ||
                                    ((PyQualifiedExpression)callExpression.getCallee()).getQualifier() == null)) {
-      return new UnresolvedRefCreateFunctionQuickFix(callExpression, expr);
+      return new UnresolvedRefCreateFunctionQuickFix(expr);
     }
     return null;
   }

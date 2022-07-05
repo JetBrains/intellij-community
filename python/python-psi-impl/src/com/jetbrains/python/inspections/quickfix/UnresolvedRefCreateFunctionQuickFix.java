@@ -10,8 +10,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
@@ -22,20 +20,17 @@ import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * User: catherine
- *
+ * <p>
  * QuickFix to create function to unresolved unqualified reference
  */
 public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
   private final String myFunctionName;
-  private final SmartPsiElementPointer<PyCallExpression> myCallExpr;
-  private final SmartPsiElementPointer<PyReferenceExpression> myReferenceExpr;
 
-  public UnresolvedRefCreateFunctionQuickFix(PyCallExpression element, PyReferenceExpression reference) {
-    final SmartPointerManager manager = SmartPointerManager.getInstance(element.getProject());
-    myCallExpr = manager.createSmartPsiElementPointer(element);
-    myReferenceExpr = manager.createSmartPsiElementPointer(reference);
+  public UnresolvedRefCreateFunctionQuickFix(@NotNull PyReferenceExpression reference) {
     myFunctionName = reference.getReferencedName();
   }
 
@@ -54,10 +49,10 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PyCallExpression callExpr = myCallExpr.getElement();
-    final PyReferenceExpression referenceExpr = myReferenceExpr.getElement();
+    final PyReferenceExpression referenceExpr = as(descriptor.getPsiElement(), PyReferenceExpression.class);
+    final PyCallExpression callExpr = PsiTreeUtil.getParentOfType(referenceExpr, PyCallExpression.class);
 
-    if (callExpr == null || !callExpr.isValid() || referenceExpr == null || !referenceExpr.isValid()) {
+    if (referenceExpr == null || callExpr == null) {
       return;
     }
 
