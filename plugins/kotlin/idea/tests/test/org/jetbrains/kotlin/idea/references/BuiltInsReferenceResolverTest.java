@@ -71,6 +71,9 @@ public class BuiltInsReferenceResolverTest extends KotlinLightCodeInsightFixture
 
     public void testAllReferencesResolved() {
         for (DeclarationDescriptor descriptor : getAllStandardDescriptors()) {
+            // ExperimentalStdlibApi is incorrectly written in built-ins, see KT-53073
+            if (descriptor.getName().toString().equals("ExperimentalStdlibApi")) continue;
+
             assertNotNull("Can't resolve " + descriptor, DescriptorToSourceUtilsIde.INSTANCE.getAnyDeclaration(getProject(), descriptor));
         }
     }
