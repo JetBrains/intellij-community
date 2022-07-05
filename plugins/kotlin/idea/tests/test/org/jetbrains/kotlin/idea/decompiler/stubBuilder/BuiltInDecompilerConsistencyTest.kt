@@ -44,7 +44,11 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
     }
 
     fun testSameAsClsDecompilerForCompiledBuiltInClasses() {
-        doTest("kotlin")
+        doTest(
+            "kotlin",
+            // ExperimentalStdlibApi is incorrectly written in built-ins, see KT-53073
+            excludedClasses = setOf("ExperimentalStdlibApi")
+        )
         doTest("kotlin.annotation")
         doTest("kotlin.collections")
         doTest("kotlin.ranges")
