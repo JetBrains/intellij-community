@@ -9,8 +9,6 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.colors.CodeInsightColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -97,7 +95,6 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
 
-    @JvmStatic
     fun stopOpenFilesActivity(project: Project) {
       project.getUserData(OPEN_FILES_ACTIVITY)?.let { activity ->
         activity.end()

@@ -5,6 +5,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.Future;
 
 /**
  * Allows registering activities that are run during project loading.
@@ -66,4 +69,7 @@ public abstract class StartupManager {
    * @see com.intellij.openapi.application.Application#invokeLater(Runnable)
    */
   public abstract void runWhenProjectIsInitialized(@NotNull Runnable runnable);
+
+  @ApiStatus.Internal
+  public abstract @NotNull Future<@Nullable Object> getAllActivitiesPassedFuture();
 }

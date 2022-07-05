@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -45,8 +45,8 @@ import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
@@ -218,9 +218,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   @Override
-  public ActionCallback type(final String text) {
-    final ActionCallback result = new ActionCallback();
-    UIUtil.invokeLaterIfNeeded(() -> myEditor.type(text).notify(result));
+  public ActionCallback type(String text) {
+    ActionCallback result = new ActionCallback();
+    EdtInvocationManager.invokeLaterIfNeeded(() -> myEditor.type(text).notify(result));
     return result;
   }
 
@@ -255,7 +255,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     Project project = myEditor.getProject();
     if (project != null) {
-      EditorsSplitters.stopOpenFilesActivity(project);
+      EditorsSplitters.Companion.stopOpenFilesActivity(project);
     }
   }
 

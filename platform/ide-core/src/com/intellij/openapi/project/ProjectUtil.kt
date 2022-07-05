@@ -36,7 +36,6 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
-import java.util.function.Consumer
 import javax.swing.JComponent
 
 val NOTIFICATIONS_SILENT_MODE = Key.create<Boolean>("NOTIFICATIONS_SILENT_MODE")
@@ -255,16 +254,6 @@ fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, ha
 fun runWhenProjectOpened(project : Project, handler: Runnable) {
   runWhenProjectOpened(project) {
     handler.run()
-  }
-}
-
-/**
- * Add one-time first projectOpened listener.
- */
-@JvmOverloads
-fun runWhenProjectOpened(project: Project? = null, handler: Consumer<Project>) {
-  runWhenProjectOpened(project) {
-    handler.accept(it)
   }
 }
 

@@ -301,8 +301,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override suspend fun forceCloseProjectAsync(project: Project, save: Boolean): Boolean {
-    // ModalityState.NON_MODAL for write-safe context
-    return withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    return withContext(Dispatchers.EDT) {
       if (project.isDisposed) {
         return@withContext false
       }

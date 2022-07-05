@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -55,7 +55,7 @@ class DelayedProjectSynchronizer : StartupActivity.Background {
     suspend fun backgroundPostStartupProjectLoading(project: Project) {
       // Due to making [DelayedProjectSynchronizer] as backgroundPostStartupActivity we should have this hack because
       // background activity doesn't start in the tests
-      val allActivitiesPassedFuture = StartupManagerEx.getInstanceEx(project).allActivitiesPassedFuture as CompletableFuture<*>
+      val allActivitiesPassedFuture = StartupManager.getInstance(project).allActivitiesPassedFuture as CompletableFuture<*>
       allActivitiesPassedFuture.asDeferred().join()
       doSync(project)
     }
