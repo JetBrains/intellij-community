@@ -735,7 +735,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             return PathUtilRt.suggestFileName(moduleName.toString(), true, false)
         }
 
-        private fun createExternalSourceSet(
+        fun createExternalSourceSet(
             compilation: KotlinCompilation,
             compilationData: GradleSourceSetData,
             mppModel: KotlinMPPGradleModel
@@ -773,7 +773,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         }
 
 
-        private fun createExternalSourceSet(
+        fun createExternalSourceSet(
             ktSourceSet: KotlinSourceSet,
             ktSourceSetData: GradleSourceSetData,
             mppModel: KotlinMPPGradleModel
