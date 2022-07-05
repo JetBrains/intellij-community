@@ -760,6 +760,9 @@ public class SingleInspectionProfilePanel extends JPanel {
       JPanel severityPanel = new JPanel(new GridBagLayout());
       final JPanel configPanelAnchor = new JPanel(new GridLayout());
 
+      final boolean showOptionPanel;
+      final double severityPanelWeightY;
+
       final Set<String> scopesNames = new HashSet<>();
       for (final InspectionConfigTreeNode.Tool node : nodes) {
         final List<ScopeToolState> nonDefaultTools = myProfile.getNonDefaultTools(node.getDefaultDescriptor().getKey().toString(), project);
@@ -772,6 +775,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       myOptionsLabel = new JBLabel(AnalysisBundle.message("inspections.settings.options.title"));
 
       if (scopesNames.isEmpty()) {
+
         final HighlightSeverity severity = ScopesAndSeveritiesTable.getSeverity(
           ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState())
         );
@@ -890,6 +894,9 @@ public class SingleInspectionProfilePanel extends JPanel {
           myOptionsLabel.setText(AnalysisBundle.message("inspections.settings.options.title"));
         }
         scopesAndScopesAndSeveritiesTable = null;
+
+        showOptionPanel = configPanelAnchor.getComponentCount() != 0;
+        severityPanelWeightY = 0;
       }
       else {
         if (singleNode != null) {
@@ -952,9 +959,9 @@ public class SingleInspectionProfilePanel extends JPanel {
         severityPanel.setMinimumSize(panelSize);
         severityPanel.setPreferredSize(panelSize);
         severityPanel.setMaximumSize(panelSize);
+        showOptionPanel = configPanelAnchor.getComponentCount() != 0;
+        severityPanelWeightY = showOptionPanel ? 0 : 1;
       }
-      final boolean notEmptyOptions = configPanelAnchor.getComponentCount() != 0;
-      final double severityPanelWeightY = notEmptyOptions ? 0 : 1;
 
       final GridBag constraint = new GridBag()
         .setDefaultWeightX(1.0)
@@ -962,7 +969,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       myOptionsPanel.add(severityPanel, constraint.nextLine().weighty(severityPanelWeightY).fillCell().insetTop(SECTION_GAP));
 
       GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
-      if (notEmptyOptions) {
+      if (showOptionPanel) {
         if (showDefaultConfigurationOptions) {
           myOptionsPanel.add(new ToolOptionsSeparator(configPanelAnchor, scopesAndScopesAndSeveritiesTable), constraint.nextLine().weighty(0).fillCellHorizontally());
         }
