@@ -72,21 +72,24 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
       import org.hamcrest.MatcherAssert;
       import org.hamcrest.Matchers;
       import org.junit.Assert;
+      
+      import static org.hamcrest.MatcherAssert.*;
+      import static org.hamcrest.Matchers.*;
 
       class MigrationTest {
         void migrate() {
-          MatcherAssert.assertThat(2, Matchers.not(Matchers.is(3)));
-          MatcherAssert.assertThat(2, Matchers.is(3));
-          MatcherAssert.assertThat(2, Matchers.greaterThan(3));
-          MatcherAssert.assertThat(2, Matchers.lessThan(3));
-          MatcherAssert.assertThat(2, Matchers.greaterThanOrEqualTo(3));
-          MatcherAssert.assertThat(2, Matchers.lessThanOrEqualTo(3));
-          MatcherAssert.assertThat(2, Matchers.is(3));
-          MatcherAssert.assertThat(2, Matchers.not(Matchers.is(3)));
-          MatcherAssert.assertThat(2, Matchers.lessThanOrEqualTo(3));
-          MatcherAssert.assertThat(2, Matchers.greaterThanOrEqualTo(3));
-          MatcherAssert.assertThat(2, Matchers.lessThan(3));
-          MatcherAssert.assertThat(2, Matchers.greaterThan(3));
+          assertThat(2, not(is(3)));
+          assertThat(2, is(3));
+          assertThat(2, greaterThan(3));
+          assertThat(2, lessThan(3));
+          assertThat(2, greaterThanOrEqualTo(3));
+          assertThat(2, lessThanOrEqualTo(3));
+          assertThat(2, is(3));
+          assertThat(2, not(is(3)));
+          assertThat(2, lessThanOrEqualTo(3));
+          assertThat(2, greaterThanOrEqualTo(3));
+          assertThat(2, lessThan(3));
+          assertThat(2, greaterThan(3));
         }
       }
     """.trimIndent(), "Replace with 'assertThat()'")
@@ -107,12 +110,15 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
       import org.hamcrest.MatcherAssert;
       import org.hamcrest.Matchers;
       import org.junit.Assert;
+      
+      import static org.hamcrest.MatcherAssert.*;
+      import static org.hamcrest.Matchers.*;
 
       class Foo {
         void migrate() {
-          MatcherAssert.assertThat("asd", Matchers.is("zxc"));
-          MatcherAssert.assertThat("asd", Matchers.sameInstance("zxc"));
-          MatcherAssert.assertThat("asd", Matchers.containsString("qwe"));
+          assertThat("asd", is("zxc"));
+          assertThat("asd", sameInstance("zxc"));
+          assertThat("asd", containsString("qwe"));
         }
       }
     """.trimIndent(), "Replace with 'assertThat()'")
@@ -122,6 +128,9 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
     myFixture.testAllQuickfixes(ULanguage.JAVA, """
       import org.junit.Assert;
       import java.util.Collection;
+      
+      import static org.hamcrest.MatcherAssert.*;
+      import static org.hamcrest.Matchers.*;      
 
       class Foo {
         void migrate(Collection<String> c, String o) {
@@ -134,19 +143,20 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
         }
       }      
     """.trimIndent(), """
-      import org.hamcrest.MatcherAssert;
-      import org.hamcrest.Matchers;
       import org.junit.Assert;
       import java.util.Collection;
+      
+      import static org.hamcrest.MatcherAssert.*;
+      import static org.hamcrest.Matchers.*;      
 
       class Foo {
         void migrate(Collection<String> c, String o) {
-          MatcherAssert.assertThat(c, Matchers.hasItem(o));
-          MatcherAssert.assertThat(o, Matchers.is(c));
-          MatcherAssert.assertThat("msg", o, Matchers.is(c));
-          MatcherAssert.assertThat(c, Matchers.notNullValue());
-          MatcherAssert.assertThat(c, Matchers.nullValue());
-          MatcherAssert.assertThat(c, Matchers.not(Matchers.hasItem(o)));
+          assertThat(c, hasItem(o));
+          assertThat(o, is(c));
+          assertThat("msg", o, is(c));
+          assertThat(c, notNullValue());
+          assertThat(c, nullValue());
+          assertThat(c, not(hasItem(o)));
         }
       }      
     """.trimIndent(), "Replace with 'assertThat()'")
@@ -165,10 +175,13 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
       import org.hamcrest.MatcherAssert;
       import org.hamcrest.Matchers;
       import org.junit.Assert;
+      
+      import static org.hamcrest.MatcherAssert.*;
+      import static org.hamcrest.Matchers.*;
 
       class Foo {
         void migrate(int[] a, int[] b) {
-          MatcherAssert.assertThat(b, Matchers.is(a));
+          assertThat(b, is(a));
         }
       }
     """.trimIndent(), "Replace with 'assertThat()'")

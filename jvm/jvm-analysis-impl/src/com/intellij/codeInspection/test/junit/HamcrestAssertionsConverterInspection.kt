@@ -15,16 +15,17 @@ import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UastElementFactory
 import org.jetbrains.uast.generate.getUastElementFactory
+import org.jetbrains.uast.generate.importMemberOnDemand
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import javax.swing.JComponent
 
 class HamcrestAssertionsConverterInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
-  var myStaticallyImportMatchers = true
+  var importMemberOnDemand = true
 
   override fun createOptionsPanel(): JComponent = SingleCheckboxOptionsPanel(
-    JvmAnalysisBundle.message("jvm.inspections.migrate.assert.to.matcher.option"), this, "myStaticallyImportMatchers"
+    JvmAnalysisBundle.message("jvm.inspections.migrate.assert.to.matcher.option"), this, "importMemberOnDemand"
   )
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -35,7 +36,7 @@ class HamcrestAssertionsConverterInspection : AbstractBaseUastLocalInspectionToo
 
     return UastHintedVisitorAdapter.create(
       holder.file.language,
-      HamcrestAssertionsConverterVisitor(holder, matcherFqn),
+      HamcrestAssertionsConverterVisitor(holder, matcherFqn, importMemberOnDemand),
       arrayOf(UCallExpression::class.java),
       directOnly = true
     )
@@ -44,7 +45,8 @@ class HamcrestAssertionsConverterInspection : AbstractBaseUastLocalInspectionToo
 
 private class HamcrestAssertionsConverterVisitor(
   private val holder: ProblemsHolder,
-  private val matcherFqn: String
+  private val matcherFqn: String,
+  private val importMemberOnDemand: Boolean,
 ) : AbstractUastNonRecursiveVisitor() {
   private fun isBooleanAssert(methodName: String) = methodName == "assertTrue" || methodName == "assertFalse"
 
@@ -61,7 +63,7 @@ private class HamcrestAssertionsConverterVisitor(
       if (args.last() is UBinaryExpression && psiFacade.findClass(ORG_HAMCREST_NUMBER_ORDERING_COMPARISON, resolveScope) == null) return true
     }
     val message = JvmAnalysisBundle.message("jvm.inspections.migrate.assert.to.matcher.description", "assertThat()")
-    holder.registerUProblem(node, message, MigrateToAssertThatQuickFix(matcherFqn))
+    holder.registerUProblem(node, message, MigrateToAssertThatQuickFix(matcherFqn, importMemberOnDemand))
     return true
   }
 
@@ -76,7 +78,7 @@ private class HamcrestAssertionsConverterVisitor(
   }
 }
 
-private class MigrateToAssertThatQuickFix(val matcherClassFqn: String) : LocalQuickFix {
+private class MigrateToAssertThatQuickFix(private val matcherClassFqn: String, private val importMemberOnDemand: Boolean) : LocalQuickFix {
   override fun getFamilyName(): String = CommonQuickFixBundle.message("fix.replace.with.x", "assertThat()")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
@@ -143,9 +145,15 @@ private class MigrateToAssertThatQuickFix(val matcherClassFqn: String) : LocalQu
       }
       else -> return
     }
-
-    val assertThatCall = factory.createAssertThat(listOfNotNull(message, left, right)) ?: return
-    call.getQualifiedParentOrThis().replace(assertThatCall)
+    if (importMemberOnDemand) {
+      val assertThatCall = factory.createAssertThat(listOfNotNull(message, left, right)) ?: return
+      val replaced = call.getQualifiedParentOrThis().replace(assertThatCall)?.castSafelyTo<UQualifiedReferenceExpression>() ?: return
+      var toImport = replaced
+      while (true) {
+        val imported = toImport.importMemberOnDemand()?.castSafelyTo<UCallExpression>() ?: return
+        toImport = imported.valueArguments.lastOrNull()?.castSafelyTo<UQualifiedReferenceExpression>() ?: return
+      }
+    }
   }
 
   private fun UastElementFactory.createAssertThat(params: List<UExpression>): UExpression? {
