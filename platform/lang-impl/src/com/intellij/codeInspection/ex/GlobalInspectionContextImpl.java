@@ -245,16 +245,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
     runToolsSpan.end();
     LOG.info("Code inspection finished. Took " + elapsed + " ms");
-    if (ApplicationManagerEx.isInIntegrationTest()) {
-      String logPath = PathManager.getLogPath();
-      Path perfMetrics = Paths.get(logPath).resolve("performance-metrics").resolve("inspectionMetrics.json");
-      try {
-        FileUtil.writeToFile(perfMetrics.toFile(), "{\n\t\"inspection_execution_time\" : " + elapsed + "\n}");
-      }
-      catch (IOException ex) {
-        LOG.info("Could not create json file " + perfMetrics + " with the performance metrics.");
-      }
-    }
     if (getProject().isDisposed()) return;
 
     InspectionResultsView oldView = myView;
