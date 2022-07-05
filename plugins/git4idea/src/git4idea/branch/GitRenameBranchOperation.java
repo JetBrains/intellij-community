@@ -42,11 +42,11 @@ class GitRenameBranchOperation extends GitBranchOperation {
   @NotNull @NlsSafe private final String myNewName;
 
   GitRenameBranchOperation(@NotNull Project project,
-                                  @NotNull Git git,
-                                  @NotNull GitBranchUiHandler uiHandler,
-                                  @NotNull @NlsSafe String currentName,
-                                  @NotNull @NlsSafe String newName,
-                                  @NotNull List<? extends GitRepository> repositories) {
+                           @NotNull Git git,
+                           @NotNull GitBranchUiHandler uiHandler,
+                           @NotNull @NlsSafe String currentName,
+                           @NotNull @NlsSafe String newName,
+                           @NotNull List<? extends GitRepository> repositories) {
     super(project, git, uiHandler, repositories);
     myCurrentName = currentName;
     myNewName = newName;
