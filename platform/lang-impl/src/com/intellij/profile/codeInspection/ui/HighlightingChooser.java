@@ -43,12 +43,23 @@ import java.util.function.Consumer;
 public abstract class HighlightingChooser extends ComboBoxAction implements DumbAware {
   private HighlightPopup myPopup = null;
   private final SeverityRegistrar mySeverityRegistrar;
+  private final TextAttributesKey informationKey;
 
-  public HighlightingChooser(@NotNull SeverityRegistrar severityRegistrar) { mySeverityRegistrar = severityRegistrar; }
+  public HighlightingChooser(@NotNull SeverityRegistrar severityRegistrar) {
+    mySeverityRegistrar = severityRegistrar;
+    informationKey = severityRegistrar
+      .getHighlightInfoTypeBySeverity(HighlightSeverity.INFORMATION)
+      .getAttributesKey();
+  }
 
   abstract void onKeyChosen(@NotNull TextAttributesKey key);
 
   public void setChosen(@NotNull TextAttributesKey key) {
+    if (key.equals(informationKey)) {
+      getTemplatePresentation().setText("");
+      return;
+    }
+
     final var attributes = ColorSettingsUtil.getErrorTextAttributes();
     String displayName = key.getExternalName();
     for (Pair<TextAttributesKey, @Nls String> pair: attributes) {
