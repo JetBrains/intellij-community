@@ -10,7 +10,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.table.JBTable
 import org.jetbrains.kotlin.compiler.plugin.CliOptionValue
-import org.jetbrains.kotlin.compiler.plugin.parsePluginOption
+import org.jetbrains.kotlin.compiler.plugin.parseLegacyPluginOption
 import org.jetbrains.kotlin.idea.KotlinBundle
 import java.awt.BorderLayout
 import java.awt.Component
@@ -26,7 +26,7 @@ class KotlinFacetCompilerPluginsTab(
 ) : FacetEditorTab() {
     companion object {
         fun parsePluginOptions(configuration: KotlinFacetConfiguration) =
-            configuration.settings.compilerArguments?.pluginOptions?.mapNotNull(::parsePluginOption) ?: emptyList()
+            configuration.settings.compilerArguments?.pluginOptions?.mapNotNull(::parseLegacyPluginOption) ?: emptyList()
     }
 
     class PluginInfo(val id: String, var options: List<String>)
@@ -114,7 +114,7 @@ class KotlinFacetCompilerPluginsTab(
 
     private inner class OptionValidator : FacetEditorValidator() {
         override fun check(): ValidationResult {
-            val invalidOptions = optionsByTable.filter { parsePluginOption(it) == null }
+            val invalidOptions = optionsByTable.filter { parseLegacyPluginOption(it) == null }
             if (invalidOptions.isNotEmpty()) {
                 @NlsSafe
                 val message = buildString {
