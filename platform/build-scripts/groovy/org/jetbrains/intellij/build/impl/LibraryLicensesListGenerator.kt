@@ -18,9 +18,12 @@ import java.nio.file.Path
 
 class LibraryLicensesListGenerator(private val libraryLicenses: List<LibraryLicense>) {
   companion object {
-    fun create(project: JpsProject, licensesList: List<LibraryLicense>, usedModulesNames: Set<String>): LibraryLicensesListGenerator {
+    fun create(project: JpsProject,
+               licensesList: List<LibraryLicense>,
+               usedModulesNames: Set<String>,
+               allowEmpty: Boolean = false): LibraryLicensesListGenerator {
       val licences = generateLicenses(project, licensesList, usedModulesNames)
-      check(!licences.isEmpty()) {
+      check(allowEmpty || !licences.isEmpty()) {
         "Empty licenses table for ${licensesList.size} licenses and ${usedModulesNames.size} used modules names"
       }
       return LibraryLicensesListGenerator(licences)
