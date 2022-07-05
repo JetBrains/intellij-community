@@ -102,6 +102,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("CLOSE_TAB_BUTTON_ON_THE_RIGHT")
   var closeTabButtonOnTheRight by property(true)
   @get:OptionTag("EDITOR_TAB_PLACEMENT")
+  @get:ReportValue
   var editorTabPlacement: Int by property(SwingConstants.TOP)
   @get:OptionTag("SHOW_FILE_ICONS_IN_TABS")
   var showFileIconInTabs by property(true)
