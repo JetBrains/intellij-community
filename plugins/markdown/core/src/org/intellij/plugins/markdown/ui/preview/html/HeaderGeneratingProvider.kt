@@ -7,8 +7,10 @@ import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.SimpleTagProvider
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
+import org.jetbrains.annotations.ApiStatus
 
-internal class HeaderGeneratingProvider(headerTag: String): SimpleTagProvider(headerTag) {
+@ApiStatus.Internal
+class HeaderGeneratingProvider(headerTag: String): SimpleTagProvider(headerTag) {
   override fun openTag(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
     val anchorText = buildAnchorText(node, text)
     if (anchorText == null) {

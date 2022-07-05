@@ -4,8 +4,8 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import junit.framework.TestCase
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 
-class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
-  private val firstElement
+open class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
+  protected val firstElement
     get() = file.firstChild?.firstChild!!
 
   fun `test simple`() {
@@ -98,7 +98,7 @@ class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     doTest(content, "--foo--bar--baz")
   }
 
-  private fun doTest(content: String, expected: String) {
+  protected open fun doTest(content: String, expected: String) {
     configureFromFileText("some.md", content)
     val header = firstElement as MarkdownHeader
     val anchorText = header.anchorText
