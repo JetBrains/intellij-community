@@ -141,8 +141,7 @@ fun runApplicationStarter(context: BuildContext,
                           arguments: List<String>,
                           systemProperties: Map<String, Any> = emptyMap(),
                           vmOptions: List<String> = emptyList(),
-                          timeoutMillis: Long = DEFAULT_TIMEOUT,
-                          classpathCustomizer: ((MutableSet<String>) -> Unit)? = null) {
+                          timeoutMillis: Long = DEFAULT_TIMEOUT) {
   Files.createDirectories(tempDir)
   val jvmArgs = ArrayList<String>()
   val systemDir = tempDir.resolve("system")
@@ -174,7 +173,6 @@ fun runApplicationStarter(context: BuildContext,
       }
     }
   }
-  classpathCustomizer?.invoke(effectiveIdeClasspath)
   disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), additionalPluginIds)
   runJava(context, "com.intellij.idea.Main", arguments, jvmArgs, effectiveIdeClasspath, timeoutMillis) {
     val logFile = systemDir.resolve("log").resolve("idea.log")

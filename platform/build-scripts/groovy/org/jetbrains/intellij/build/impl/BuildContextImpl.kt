@@ -45,8 +45,6 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
 
   override var bootClassPathJarNames = persistentListOf("util.jar", "util_rt.jar")
 
-  override var classpathCustomizer: (MutableSet<String>) -> Unit = {}
-
   override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(project, productProperties, options).patch(this)
   private var builtinModulesData: BuiltinModulesFileData? = null
 
