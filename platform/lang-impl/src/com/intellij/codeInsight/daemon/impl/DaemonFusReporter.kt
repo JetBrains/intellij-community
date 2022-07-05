@@ -28,8 +28,8 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     val registrar = SeverityRegistrar.getSeverityRegistrar(project)
     val errorIndex = registrar.getSeverityIdx(HighlightSeverity.ERROR)
     val warningIndex = registrar.getSeverityIdx(HighlightSeverity.WARNING)
-    val errorCount = errorCounts?.let { it[errorIndex] } ?: -1
-    val warningCount = errorCounts?.let { it[warningIndex] } ?: -1
+    val errorCount = errorCounts?.getOrNull(errorIndex) ?: -1
+    val warningCount = errorCounts?.getOrNull(warningIndex) ?: -1
     val lines = editor?.document?.lineCount?.roundToOneSignificantDigit() ?: -1
     val elapsedTime = System.currentTimeMillis() - daemonStartTime
     val fileType = editor?.let { FileDocumentManager.getInstance().getFile(it.document)?.fileType }
