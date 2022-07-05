@@ -196,8 +196,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean {
         analyzeForUast(ktCallElement) {
-            val resolvedFunctionLikeSymbol = ktCallElement.resolveCall().singleFunctionCallOrNull()?.symbol ?: return false
-            return resolvedFunctionLikeSymbol.isExtension
+            val ktCall = ktCallElement.resolveCall().singleFunctionCallOrNull() ?: return false
+            return isExtension(ktCall)
         }
     }
 
@@ -392,18 +392,14 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
         analyzeForUast(ktCallElement) {
             val ktCall = ktCallElement.resolveCall().singleFunctionCallOrNull() ?: return null
-            val ktType = ktCall.partiallyAppliedSymbol.signature.receiverType ?: return null
-            if (ktType is KtClassErrorType) return null
-            return toPsiType(ktType, source, ktCallElement, ktCallElement.typeOwnerKind, boxed = true)
+            return receiverType(ktCall, source, ktCallElement)
         }
     }
 
     override fun getAccessorReceiverType(ktSimpleNameExpression: KtSimpleNameExpression, source: UElement): PsiType? {
         analyzeForUast(ktSimpleNameExpression) {
             val ktCall = ktSimpleNameExpression.resolveCall()?.singleCallOrNull<KtVariableAccessCall>() ?: return null
-            val ktType = ktCall.partiallyAppliedSymbol.signature.receiverType ?: return null
-            if (ktType is KtClassErrorType) return null
-            return toPsiType(ktType, source, ktSimpleNameExpression, ktSimpleNameExpression.typeOwnerKind, boxed = true)
+            return receiverType(ktCall, source, ktSimpleNameExpression)
         }
     }
 

@@ -7,6 +7,8 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
@@ -141,6 +143,29 @@ internal fun KtAnalysisSession.toPsiType(
         KtTypeMappingMode.DEFAULT_UAST,
         isAnnotationMethod = false
     ) ?: UastErrorType
+}
+
+internal fun KtAnalysisSession.isExtension(
+    ktCall: KtCallableMemberCall<*, *>
+): Boolean {
+    return ktCall.symbol.isExtension
+}
+
+internal fun KtAnalysisSession.receiverType(
+    ktCall: KtCallableMemberCall<*, *>,
+    source: UElement,
+    context: KtElement,
+): PsiType? {
+    var ktType = ktCall.partiallyAppliedSymbol.signature.receiverType
+    if (ktType == null) {
+        ktType =
+            if (isExtension(ktCall))
+                ktCall.partiallyAppliedSymbol.extensionReceiver?.type
+            else
+                ktCall.partiallyAppliedSymbol.dispatchReceiver?.type
+    }
+    if (ktType == null || ktType is KtClassErrorType) return null
+    return toPsiType(ktType, source, context, context.typeOwnerKind, boxed = true)
 }
 
 internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {

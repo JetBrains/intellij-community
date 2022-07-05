@@ -814,6 +814,30 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             return qualifiedName?.endsWith("NotNull") == true || qualifiedName?.endsWith("Nullable") == true
         }
 
+    fun checkImplicitReceiverType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+            public class MyBundle {
+              public void putString(String key, String value) { }
+            }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                fun foo() {
+                  MyBundle().apply {
+                    <caret>putString("k", "v")
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("putString", uCallExpression.methodName)
+        TestCase.assertEquals("PsiType:MyBundle", uCallExpression.receiverType?.toString())
+    }
+
     fun checkSubstitutedReceiverType(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
