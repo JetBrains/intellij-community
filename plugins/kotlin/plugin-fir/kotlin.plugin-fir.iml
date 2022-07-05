@@ -42,6 +42,10 @@
     <orderEntry type="module" module-name="kotlin.copyright" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-native" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.native" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.grazie" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.inspections" scope="PROVIDED" />

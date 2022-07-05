@@ -50,6 +50,10 @@
     <orderEntry type="module" module-name="kotlin.native" exported="" />
     <orderEntry type="module" module-name="kotlin.ml-completion" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-native" exported="" />
     <orderEntry type="module" module-name="kotlin.grazie" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />
