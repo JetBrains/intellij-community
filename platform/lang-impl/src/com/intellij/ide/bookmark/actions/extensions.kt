@@ -60,7 +60,7 @@ internal val AnActionEvent.contextBookmark: Bookmark?
     // TODO mouse shortcuts as in gutter/LOGICAL_LINE_AT_CURSOR
     val items = getData(PlatformDataKeys.SELECTED_ITEMS)
     if (items != null && items.size > 1) return null
-    val item = items?.get(0) ?: getData(CommonDataKeys.PSI_ELEMENT) ?: getData(CommonDataKeys.VIRTUAL_FILE)
+    val item = items?.firstOrNull() ?: getData(CommonDataKeys.PSI_ELEMENT) ?: getData(CommonDataKeys.VIRTUAL_FILE)
     return when (item) {
       is AbstractTreeNode<*> -> manager.createBookmark(item.value)
       is SmartElementDescriptor -> manager.createBookmark(item.psiElement)
