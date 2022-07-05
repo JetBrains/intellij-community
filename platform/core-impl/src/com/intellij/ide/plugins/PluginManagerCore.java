@@ -942,18 +942,18 @@ public final class PluginManagerCore {
     }
   }
 
-  @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableSet, Set.of")
+  @ReviseWhenPortedToJDK(value = "10, 11", description = "toUnmodifiableSet, Set.of, String.isBlank")
   @ApiStatus.Internal
-  public synchronized static @NotNull Set<PluginId> readPluginIdsFromFile(@NotNull Path path,
-                                                                          LinkOption... linkOptions) throws IOException {
-    if (!Files.exists(path, linkOptions) ||
-        !Files.isRegularFile(path, linkOptions)) {
-      return Collections.emptySet();
-    }
-
+  public synchronized static @NotNull Set<PluginId> readPluginIdsFromFile(@NotNull Path path) throws IOException {
     try (Stream<String> lines = Files.lines(path)) {
-      return lines.map(PluginId::getId)
+      return lines
+        .map(String::trim)
+        .filter(line -> !line.isEmpty())
+        .map(PluginId::getId)
         .collect(Collectors.toSet());
+    }
+    catch (NoSuchFileException ignored) {
+      return Collections.emptySet();
     }
   }
 
