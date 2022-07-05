@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.DynamicBundle;
@@ -27,8 +27,8 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
-import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.ui.mac.screenmenu.MenuBar;
+import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.*;
@@ -375,8 +375,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   // NOTE: for OSX only
-  private void updateAppMenu() {
-    if (!Menu.isJbScreenMenuEnabled()) return;
+  private static void updateAppMenu() {
+    if (!Menu.isJbScreenMenuEnabled()) {
+      return;
+    }
 
     // 1. rename with localized
     Menu.renameAppMenuItems(new DynamicBundle("messages.MacAppMenuBundle"));

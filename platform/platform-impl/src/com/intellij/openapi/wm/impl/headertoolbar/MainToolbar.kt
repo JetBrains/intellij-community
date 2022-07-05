@@ -43,14 +43,14 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     if (IdeRootPane.isMenuButtonInToolbar()) {
       mainMenuButton = MainMenuButton()
       Disposer.register(disposable, mainMenuButton.menuShortcutHandler)
-    } else {
+    }
+    else {
       mainMenuButton = null
     }
   }
 
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
-  // as part of EDT task scheduled in a start-up activity, do fill it.
-  // That's to avoid flickering due to resizing
+  // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
   fun init(project: Project?) {
     mainMenuButton?.let {
       addWidget(it.button, Position.Left)
@@ -154,6 +154,6 @@ private class VisibleComponentsPool {
 }
 
 @JvmOverloads internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
-  return ((SystemInfoRt.isMac && Registry.`is`("ide.experimental.ui.title.toolbar.in.macos"))
+  return ((SystemInfoRt.isMac && Registry.`is`("ide.experimental.ui.title.toolbar.in.macos", true))
           || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle)) && IdeFrameDecorator.isCustomDecorationAvailable()
 }

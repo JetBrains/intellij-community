@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.util.ThreeState
 import com.intellij.util.io.isAncestor
@@ -14,6 +13,10 @@ import kotlin.io.path.pathString
 @State(name = "Trusted.Paths", storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.APP)
 class TrustedPaths : SimplePersistentStateComponent<TrustedPaths.State>(State()) {
+  companion object {
+    @JvmStatic
+    fun getInstance(): TrustedPaths = service()
+  }
 
   class State : BaseState() {
     @get:OptionTag("TRUSTED_PROJECT_PATHS")
@@ -34,10 +37,5 @@ class TrustedPaths : SimplePersistentStateComponent<TrustedPaths.State>(State())
   @ApiStatus.Internal
   fun setProjectPathTrusted(path: Path, value: Boolean) {
     state.trustedPaths[path.pathString] = value
-  }
-
-  companion object {
-    @JvmStatic
-    fun getInstance(): TrustedPaths = ApplicationManager.getApplication().getService(TrustedPaths::class.java)
   }
 }

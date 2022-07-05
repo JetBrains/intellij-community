@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -41,7 +41,9 @@ public final class ToolbarUtil {
   }
 
   public static void removeSystemTitleBar(@NotNull JRootPane rootPane) {
-    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewUI()) return;
+    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewUI()) {
+      return;
+    }
 
     rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
     rootPane.putClientProperty("apple.awt.fullWindowContent", true);
@@ -51,7 +53,9 @@ public final class ToolbarUtil {
   public static void setCustomTitleForToolbar(@NotNull Window window,
                                               @NotNull JRootPane rootPane,
                                               Consumer<? super Runnable> onDispose) {
-    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewUI()) return;
+    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewUI()) {
+      return;
+    }
 
     JBInsets topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane));
     AbstractBorder customBorder = new AbstractBorder() {

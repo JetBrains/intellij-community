@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
@@ -33,7 +33,7 @@ internal class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame) {
     super.updateActive()
   }
 
-  override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
+  override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
     val buttons = buttonPanes as ResizableCustomFrameTitleButtons
     val hitTestSpots = ArrayList<Pair<RelativeRectangle, Int>>()
     hitTestSpots.add(Pair(RelativeRectangle(productIcon), OTHER_HIT_SPOT))
@@ -42,6 +42,6 @@ internal class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame) {
     hitTestSpots.add(Pair(RelativeRectangle(buttons.restoreButton), MAXIMIZE_BUTTON))
     hitTestSpots.add(Pair(RelativeRectangle(buttons.closeButton), CLOSE_BUTTON))
     hitTestSpots.addAll(customDecorationTitle.getBoundList().map { Pair(it, OTHER_HIT_SPOT) })
-    return hitTestSpots
+    return hitTestSpots.asSequence()
   }
 }
