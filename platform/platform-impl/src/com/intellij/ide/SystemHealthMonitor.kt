@@ -227,8 +227,7 @@ private suspend fun checkEnvironment() {
   }
 
   try {
-    @Suppress("UNCHECKED_CAST")
-    if ((shellEnvLoadFuture!! as Deferred<Boolean?>).await() == false) {
+    if (shellEnvLoadFuture!!.await() == false) {
       val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) {
         BrowserUtil.browse("https://jb.gg/shell-env")
       }

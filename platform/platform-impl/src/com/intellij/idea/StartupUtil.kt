@@ -94,8 +94,8 @@ private const val PROJECTOR_LAUNCHER_CLASS_NAME = "org.jetbrains.projector.serve
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 private var socketLock: SocketLock? = null
 
-// Deferred<Boolean?>
-internal var shellEnvLoadFuture: Any? = null
+// checked - using Deferred type doesn't lead to loading this class on StartupUtil init
+internal var shellEnvLoadFuture: Deferred<Boolean?>? = null
   private set
 
 /** Called via reflection from [Main.bootstrap].  */
@@ -201,20 +201,21 @@ fun start(mainClass: String,
   if (!checkJdkVersion()) {
     exitProcess(Main.JDK_CHECK_FAILED)
   }
-  forkJoinPool.execute {
+  GlobalScope.launch(CoroutineExceptionHandler { _, error ->
+    StartupAbortedException.processException(error)
+  }) {
     setupSystemLibraries()
     loadSystemLibraries(log)
 
     // JNA and Swing are used - invoke only after both are loaded
     if (!isHeadless && SystemInfoRt.isMac) {
-      initUiFuture.thenRunAsync(
-        {
-          val subActivity = StartUpMeasurer.startActivity("mac app init")
-          MacOSApplicationProvider.initApplication(log)
-          subActivity.end()
-        },
-        forkJoinPool
-      )
+      GlobalScope.launch {
+        initUiFuture.asDeferred().join()
+
+        val subActivity = StartUpMeasurer.startActivity("mac app init")
+        MacOSApplicationProvider.initApplication(log)
+        subActivity.end()
+      }
     }
     logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance(), args)
   }
@@ -238,11 +239,8 @@ fun start(mainClass: String,
 
     // runBlocking must be used - coroutine's thread is a daemon and doesn't stop application to exit,
     // see ApplicationImpl.preventAwtAutoShutdown
-    val appStarter: AppStarter
-    runBlocking {
-      appStarter = appStarterFuture.asDeferred().await()
-      mainClassLoadingWaitingActivity.end()
-    }
+    val appStarter = appStarterFuture.join()
+    mainClassLoadingWaitingActivity.end()
 
     if (!isHeadless && configImportNeeded) {
       showEuaIfNeededFuture.join()
