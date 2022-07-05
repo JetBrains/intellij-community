@@ -173,8 +173,8 @@ class MarkdownHeader: MarkdownHeaderImpl {
   }
 
   companion object {
-    private val garbageRegex = Regex("[^\\w\\- ]")
-    private val additionalSymbolsRegex = Regex("[^-_a-z0-9\\s]")
+    internal val garbageRegex = Regex("[^\\w\\- ]")
+    internal val additionalSymbolsRegex = Regex("[^-_a-z0-9\\s]")
 
     fun obtainAnchorText(header: MarkdownHeader): String? {
       return CachedValuesManager.getCachedValue(header) {
