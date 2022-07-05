@@ -607,10 +607,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                 doOpenProject(project, indicator, isRunStartUpActivitiesEnabled(project), waitEdtActivity)
               }
           }
-          catch (e: ProcessCanceledException) {
-            // todo check cancellation
+          catch (e: CancellationException) {
             handleProjectOpenCancelOrFailure(project)
-            throw CancellationException("PCE", e)
+            throw e
           }
         }
 
@@ -618,10 +617,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
     catch (e: CancellationException) {
-      frameAllocator.projectNotLoaded(error = null)
-      throw e
-    }
-    catch (e: ProcessCanceledException) {
       frameAllocator.projectNotLoaded(error = null)
       throw e
     }
@@ -650,12 +645,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return project
   }
 
-  private fun handleProjectOpenCancelOrFailure(project: Project) {
-    val app = ApplicationManager.getApplication()
-    app.invokeAndWait {
+  private suspend fun handleProjectOpenCancelOrFailure(project: Project) {
+    withContext(Dispatchers.EDT) {
       closeProject(project, saveProject = false, dispose = true, checkCanClose = false)
     }
-    app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
+    ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
   }
 
   /**

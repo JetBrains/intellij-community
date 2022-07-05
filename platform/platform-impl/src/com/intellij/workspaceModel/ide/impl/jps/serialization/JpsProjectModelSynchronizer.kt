@@ -9,9 +9,7 @@ import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
@@ -133,8 +131,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         val addedUrls = ArrayList<String>()
         val removedUrls = ArrayList<String>()
         val changedUrls = ArrayList<String>()
-        //JPS model is loaded from *.iml files, files in .idea directory (modules.xml), files from directories in .idea (libraries) and *.ipr file
-        // so we can ignore all other events to speed up processing
+        // JPS model is loaded from *.iml files, files in .idea directory (modules.xml),
+        // files from directories in .idea (libraries) and *.ipr file, so we can ignore all other events to speed up processing
         for (event in events) {
           if (isFireStorageFileChangedEvent(event)) {
             when (event) {
@@ -206,7 +204,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       return
     }
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
       ApplicationManager.getApplication().runWriteAction {
         if (project.isDisposed) return@runWriteAction
         childActivity = childActivity?.endAndStart("applying loaded changes")

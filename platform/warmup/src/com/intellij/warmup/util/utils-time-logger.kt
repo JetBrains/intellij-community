@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Formats
 import kotlinx.coroutines.*
 import kotlinx.coroutines.time.delay
 import java.io.File
 import java.time.Duration
-import java.util.ArrayDeque
+import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 
@@ -16,7 +16,7 @@ class TimeCookie {
   private val now = System.currentTimeMillis()
   fun formatDuration(): String {
     val duration = max(0L, TimeCookie().now - this.now)
-    return StringUtil.formatDuration(duration)
+    return Formats.formatDuration(duration)
   }
 }
 
@@ -46,6 +46,7 @@ private class TaskAndLogTimeElement : CoroutineContext.Element {
   }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 suspend fun <Y> runTaskAndLogTime(
   progressName: String,
   action: suspend CoroutineScope.(TimeCookie) -> Y
@@ -56,7 +57,6 @@ suspend fun <Y> runTaskAndLogTime(
   val stackElement = coroutineContext[TaskAndLogTimeKey] ?: TaskAndLogTimeElement()
   stackElement.push(progressName)
 
-  @Suppress("EXPERIMENTAL_API_USAGE")
   val loggerJob = GlobalScope.launch(Dispatchers.IO) {
     launch {
       while (true) {

@@ -1,14 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.*
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.withContext
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
 
@@ -34,9 +32,9 @@ suspend fun yieldThroughInvokeLater() {
   runTaskAndLogTime("Later Invocations in EDT") {
     //we use an updated version of UIUtil::dispatchPendingFlushes that works from a non-EDT thread
     check(!SwingUtilities.isEventDispatchThread()) { "Must not call from EDT" }
-    val semaphore = Semaphore(1, 1)
-    invokeLater(ModalityState.any()) { semaphore.release() }
-    semaphore.acquire()
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      // just wait
+    }
   }
 }
 

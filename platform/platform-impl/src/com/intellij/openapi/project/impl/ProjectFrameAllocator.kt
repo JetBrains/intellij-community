@@ -10,9 +10,10 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.TaskSupport
 import com.intellij.openapi.progress.withModalProgressIndicator
 import com.intellij.openapi.project.Project
@@ -46,7 +47,7 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
       saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
     }
     // we have to open project in a write-safe context
-    return withModalProgressIndicator(owner = ModalTaskOwner.guess(), title = "") {
+    return withContext(ModalityState.NON_MODAL.asContextElement()) {
       task()
     }
   }

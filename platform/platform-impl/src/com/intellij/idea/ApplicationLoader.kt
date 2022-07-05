@@ -188,7 +188,10 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
             }
           }
           else {
-            starter.main(args)
+            // todo run "IDEA - generate project shared index" to check why wrapping is required
+            CompletableFuture.runAsync {
+              starter.main(args)
+            }.asDeferred().join()
           }
           // no need to use pool once plugins are loaded
           ZipFilePool.POOL = null
