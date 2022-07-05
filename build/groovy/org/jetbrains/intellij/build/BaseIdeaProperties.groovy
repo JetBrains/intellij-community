@@ -80,7 +80,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.statsCollector",
     "intellij.ml.models.local",
     "intellij.sh",
-    "intellij.vcs.changeReminder",
     "intellij.markdown",
     "intellij.webp",
     "intellij.grazie",
