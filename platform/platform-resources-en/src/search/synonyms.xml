@@ -159,7 +159,7 @@
   </configurable>
 
   <configurable id="preferences.editor" configurable_name="Editor">
-
+    <synonym>Testing kek</synonym>
   </configurable>
 
   <configurable id="preferences.externalTools" configurable_name="External Tools">
