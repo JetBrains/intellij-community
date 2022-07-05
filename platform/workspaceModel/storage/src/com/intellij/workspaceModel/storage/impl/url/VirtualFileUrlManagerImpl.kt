@@ -23,6 +23,11 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return add(url)
   }
 
+  override fun fromUrlSegments(urls: List<String>): VirtualFileUrl {
+    if (urls.isEmpty()) return getEmptyUrl()
+    return addSegments(null, urls)
+  }
+
   override fun fromPath(path: String): VirtualFileUrl {
     return fromUrl("file://${toSystemIndependentName(path)}")
   }
@@ -81,6 +86,10 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
 
   internal fun add(path: String, parentNode: FilePathNode? = null): VirtualFileUrl {
     val segments = splitNames(path)
+    return addSegments(parentNode, segments)
+  }
+
+  private fun addSegments(parentNode: FilePathNode?, segments: List<String>): VirtualFileUrl {
     var latestNode: FilePathNode? = parentNode ?: findRootNode(segments.first())
     val latestElement = segments.size - 1
     for (index in segments.indices) {

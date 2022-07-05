@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId.ConnectionType
 import com.intellij.workspaceModel.storage.impl.containers.*
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntFunction
 
 class ConnectionId private constructor(
@@ -76,6 +77,19 @@ class ConnectionId private constructor(
       isParentNullable: Boolean
     ): ConnectionId {
       val connectionId = ConnectionId(parentClass.toClassId(), childClass.toClassId(), connectionType, isParentNullable)
+      return interner.intern(connectionId)
+    }
+
+    /** This function should be [@Synchronized] because interner is not thread-save */
+    @Synchronized
+    @ApiStatus.Internal
+    fun create(
+      parentClass: Int,
+      childClass: Int,
+      connectionType: ConnectionType,
+      isParentNullable: Boolean
+    ): ConnectionId {
+      val connectionId = ConnectionId(parentClass, childClass, connectionType, isParentNullable)
       return interner.intern(connectionId)
     }
 
