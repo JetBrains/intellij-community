@@ -72,7 +72,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.grazie" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.groovy" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.i18n" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.injection" scope="RUNTIME" />

@@ -35,7 +35,7 @@
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.idea.tests" />
     <orderEntry type="module" module-name="kotlin.jvm" />
-    <orderEntry type="module" module-name="kotlin.groovy" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />

@@ -98,7 +98,7 @@
     <orderEntry type="module" module-name="kotlin.run-configurations.junit-fe10" exported="" />
     <orderEntry type="module" module-name="kotlin.grazie" exported="" />
     <orderEntry type="module" module-name="kotlin.ml-completion" exported="" />
-    <orderEntry type="module" module-name="kotlin.groovy" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" exported="" />
     <orderEntry type="module" module-name="kotlin.copyright" exported="" />
     <orderEntry type="module" module-name="kotlin.spellchecker" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" exported="" />
