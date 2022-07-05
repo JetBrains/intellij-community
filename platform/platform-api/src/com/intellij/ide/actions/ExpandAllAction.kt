@@ -15,7 +15,7 @@ class ExpandAllAction : DumbAwareAction {
   private val getTreeExpander: (AnActionEvent) -> TreeExpander?
 
   constructor() : super() {
-    getTreeExpander = { TREE_EXPANDER.getData(it.dataContext) ?: CollapseAllAction.findTreeExpander(it) }
+    getTreeExpander = { TREE_EXPANDER.getData(it.dataContext) }
   }
 
   constructor(getExpander: (AnActionEvent) -> TreeExpander?) : super() {
