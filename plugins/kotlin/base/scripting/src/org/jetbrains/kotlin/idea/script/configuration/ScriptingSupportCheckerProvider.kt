@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.Nls
 
 abstract class ScriptingSupportCheckerProvider {
-
     @get:Nls
     abstract val title: String
 

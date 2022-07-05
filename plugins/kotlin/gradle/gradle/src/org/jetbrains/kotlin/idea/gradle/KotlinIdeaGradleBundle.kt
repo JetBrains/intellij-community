@@ -13,5 +13,13 @@ private const val BUNDLE = "messages.KotlinIdeaGradleBundle"
 object KotlinIdeaGradleBundle : AbstractKotlinBundle(BUNDLE) {
     @Nls
     @JvmStatic
-    fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+    fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String {
+        return getMessage(key, *params)
+    }
+
+    @Nls
+    @JvmStatic
+    fun htmlMessage(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String {
+        return getMessage(key, *params).withHtml()
+    }
 }

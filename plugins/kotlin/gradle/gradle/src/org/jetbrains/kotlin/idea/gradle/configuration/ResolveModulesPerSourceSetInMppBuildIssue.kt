@@ -12,7 +12,7 @@ import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefres
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -38,7 +38,7 @@ class ResolveModulesPerSourceSetInMppBuildIssue(
     }
 
     override val title: String
-        get() = KotlinBundle.message("configuration.is.resolve.module.per.source.set")
+        get() = KotlinIdeaGradleBundle.message("configuration.is.resolve.module.per.source.set")
 
     override val description: String =
         "Kotlin Multiplatform Projects require resolving modules per source set\n" +

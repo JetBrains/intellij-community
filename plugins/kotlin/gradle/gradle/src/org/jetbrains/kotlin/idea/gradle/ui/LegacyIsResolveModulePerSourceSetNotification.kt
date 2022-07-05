@@ -10,8 +10,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.PlatformUtils
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -58,8 +58,8 @@ private fun createNotification(
     )
     return Notification(
         KOTLIN_UPDATE_IS_RESOLVE_MODULE_PER_SOURCE_SET_GROUP_ID,
-        KotlinBundle.message("configuration.is.resolve.module.per.source.set"),
-        KotlinBundle.htmlMessage("configuration.update.is.resolve.module.per.source.set"),
+        KotlinIdeaGradleBundle.message("configuration.is.resolve.module.per.source.set"),
+        KotlinIdeaGradleBundle.htmlMessage("configuration.update.is.resolve.module.per.source.set"),
         NotificationType.WARNING
     ).apply {
         isSuggestionType = true
@@ -72,7 +72,7 @@ private fun createNotification(
 private fun createUpdateGradleProjectSettingsAction(
     isResolveModulePerSourceSetSetting: IsResolveModulePerSourceSetSetting
 ) = NotificationAction.create(
-    KotlinBundle.message("configuration.apply.is.resolve.module.per.source.set"),
+    KotlinIdeaGradleBundle.message("configuration.apply.is.resolve.module.per.source.set"),
 ) { event: AnActionEvent, notification: Notification ->
     notification.expire()
     val project = event.project ?: return@create
@@ -87,7 +87,7 @@ private fun createUpdateGradleProjectSettingsAction(
 private fun createSuppressNotificationAction(
     notificationSuppressState: SuppressResolveModulePerSourceSetNotificationState
 ) = NotificationAction.create(
-    KotlinBundle.message("configuration.do.not.suggest.update.is.resolve.module.per.source.set")
+    KotlinIdeaGradleBundle.message("configuration.do.not.suggest.update.is.resolve.module.per.source.set")
 ) { event: AnActionEvent, notification: Notification ->
     notification.expire()
     val project = event.project ?: return@create
