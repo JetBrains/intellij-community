@@ -176,14 +176,16 @@ fun runApplicationStarter(context: BuildContext,
   disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), additionalPluginIds)
   runJava(context, "com.intellij.idea.Main", arguments, jvmArgs, effectiveIdeClasspath, timeoutMillis) {
     val logFile = systemDir.resolve("log").resolve("idea.log")
-    val logFileToPublish = File.createTempFile("idea-", ".log")
-    logFile.copyTo(logFileToPublish.toPath(), true)
-    context.notifyArtifactBuilt(logFileToPublish.toPath())
-    try {
-      context.messages.error("Log file: ${logFileToPublish.canonicalPath} attached to build artifacts")
-    }
-    catch (_: BuildScriptsLoggedError) {
-      // skip exception thrown by logger.error
+    if (Files.exists(logFile)) {
+      val logFileToPublish = File.createTempFile("idea-", ".log")
+      logFile.copyTo(logFileToPublish.toPath(), true)
+      context.notifyArtifactBuilt(logFileToPublish.toPath())
+      try {
+        context.messages.error("Log file: ${logFileToPublish.canonicalPath} attached to build artifacts")
+      }
+      catch (_: BuildScriptsLoggedError) {
+        // skip exception thrown by logger.error
+      }
     }
   }
 }
