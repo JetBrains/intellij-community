@@ -38,6 +38,7 @@
     <orderEntry type="module" module-name="kotlin.inspections" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
     <orderEntry type="module" module-name="intellij.groovy.psi" />
