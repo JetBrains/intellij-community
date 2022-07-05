@@ -28,7 +28,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -769,7 +768,6 @@ public class SingleInspectionProfilePanel extends JPanel {
         }
       }
 
-      final double severityPanelWeightY;
       ScopesAndSeveritiesTable scopesAndScopesAndSeveritiesTable;
       myOptionsLabel = new JBLabel(AnalysisBundle.message("inspections.settings.options.title"));
 
@@ -882,7 +880,6 @@ public class SingleInspectionProfilePanel extends JPanel {
           .createPanel();
         severityPanel.add(highlightChooserPanel, constraint.next());
 
-        severityPanelWeightY = 0.0;
         if (toolState != null) {
           if (!showDefaultConfigurationOptions) {
             severityLevelChooserPanel.setVisible(false);
@@ -951,9 +948,13 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
           });
         severityPanel = wrappedTable.createPanel();
-        severityPanel.setMinimumSize(new Dimension(getMinimumSize().width, 81));
-        severityPanelWeightY = 0.3;
+        final Dimension panelSize = new Dimension(getMinimumSize().width, 81);
+        severityPanel.setMinimumSize(panelSize);
+        severityPanel.setPreferredSize(panelSize);
+        severityPanel.setMaximumSize(panelSize);
       }
+      final boolean notEmptyOptions = configPanelAnchor.getComponentCount() != 0;
+      final double severityPanelWeightY = notEmptyOptions ? 0 : 1;
 
       final GridBag constraint = new GridBag()
         .setDefaultWeightX(1.0)
@@ -961,7 +962,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       myOptionsPanel.add(severityPanel, constraint.nextLine().weighty(severityPanelWeightY).fillCell().insetTop(SECTION_GAP));
 
       GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
-      if (configPanelAnchor.getComponentCount() != 0) {
+      if (notEmptyOptions) {
         if (showDefaultConfigurationOptions) {
           myOptionsPanel.add(new ToolOptionsSeparator(configPanelAnchor, scopesAndScopesAndSeveritiesTable), constraint.nextLine().weighty(0).fillCellHorizontally());
         }
@@ -1100,8 +1101,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     initToolStates();
     fillTreeData(myProfileFilter != null ? myProfileFilter.getFilter() : null, true);
 
-    JBSplitter rightSplitter =
-      new JBSplitter(true, "SingleInspectionProfilePanel.HORIZONTAL_DIVIDER_PROPORTION", DIVIDER_PROPORTION_DEFAULT);
+    OnePixelSplitter rightSplitter = new OnePixelSplitter(true,
+                                                    "SingleInspectionProfilePanel.HORIZONTAL_DIVIDER_PROPORTION",
+                                                    DIVIDER_PROPORTION_DEFAULT);
 
     JBScrollPane descriptionPanel = new JBScrollPane(myDescription);
     descriptionPanel.setBorder(JBUI.Borders.empty());
@@ -1110,8 +1112,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     myOptionsPanel = new JPanel(new GridBagLayout());
     initOptionsAndDescriptionPanel();
     rightSplitter.setSecondComponent(myOptionsPanel);
-    rightSplitter.setHonorComponentsMinimumSize(true);
-    rightSplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
 
     final JScrollPane tree = initTreeScrollPane();
 
@@ -1128,7 +1128,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     mainSplitter.setFirstComponent(tree);
     mainSplitter.setSecondComponent(rightSplitter);
     mainSplitter.setHonorComponentsMinimumSize(false);
-    mainSplitter.setDividerWidth(20);
+    mainSplitter.setDividerWidth(SECTION_GAP);
 
     final JPanel inspectionTreePanel = new JPanel(new BorderLayout());
     inspectionTreePanel.add(northPanel, BorderLayout.NORTH);
