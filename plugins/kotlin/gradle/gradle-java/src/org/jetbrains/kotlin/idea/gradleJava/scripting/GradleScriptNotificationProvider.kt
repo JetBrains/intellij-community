@@ -16,8 +16,8 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
+import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleJavaBundle
 import org.jetbrains.kotlin.idea.gradleJava.scripting.legacy.GradleStandaloneScriptActionsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsLocator.NotificationKind.*
@@ -80,7 +80,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
                                     text(KotlinIdeaGradleBundle.message("notification.text.script.configuration.has.been.changed"))
                                 }
 
-                                createActionLabel(KotlinIdeaCoreBundle.message("notification.action.text.load.script.configuration")) {
+                                createActionLabel(KotlinGradleJavaBundle.message("notification.action.text.load.script.configuration")) {
                                     actions.reload()
                                 }
 
@@ -144,7 +144,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
                                     KotlinIdeaGradleBundle.message("notification.text.script.configuration.has.been.changed")
                         )
 
-                        createActionLabel(KotlinIdeaCoreBundle.message("notification.action.text.load.script.configuration")) {
+                        createActionLabel(KotlinGradleJavaBundle.message("notification.action.text.load.script.configuration")) {
                             actions.reload()
                         }
 

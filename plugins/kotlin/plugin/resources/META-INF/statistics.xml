@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.projectWizard.WizardStatsService"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.WizardStatsService"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector"/>
     <statistics.counterUsagesCollector

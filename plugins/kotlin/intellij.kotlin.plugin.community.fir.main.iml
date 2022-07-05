@@ -54,6 +54,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" exported="" />
     <orderEntry type="module" module-name="kotlin.grazie" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />

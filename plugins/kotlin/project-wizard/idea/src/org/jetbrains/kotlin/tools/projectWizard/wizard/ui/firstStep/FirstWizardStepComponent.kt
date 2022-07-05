@@ -20,7 +20,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference

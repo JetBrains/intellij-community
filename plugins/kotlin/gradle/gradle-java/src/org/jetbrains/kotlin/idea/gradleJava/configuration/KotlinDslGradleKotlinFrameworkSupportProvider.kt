@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManip
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.getKotlinModuleDependencySnippet
 import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
 import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
 import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider

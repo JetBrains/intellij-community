@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.gradleJava.testing
 
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
+import com.intellij.openapi.project.modules
 import com.intellij.psi.PsiPackage
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.gradleJava.run.MultiplatformTestTasksChooser
-import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
@@ -28,7 +28,7 @@ class KotlinMultiplatformAllInPackageConfigurationProducer: AllInPackageGradleCo
         chosenElements: List<PsiPackage>
     ): List<TestTasksToRun> {
 
-        if (context.project.allModules().none { it.isMultiPlatformModule })
+        if (context.project.modules.none { it.isMultiPlatformModule })
             return emptyList()
 
         val psiLocation = context.psiLocation ?: return emptyList()

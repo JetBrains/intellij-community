@@ -24,9 +24,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.EDT
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.UiEditorUsageStats
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.ProjectCreationStats
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.UiEditorUsageStats
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.div

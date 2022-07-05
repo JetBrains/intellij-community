@@ -26,12 +26,12 @@ import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinAndroidSourceSets
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
+import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
+import org.jetbrains.kotlin.idea.gradleJava.pathAsUrl
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
-import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
-import org.jetbrains.kotlin.idea.roots.pathAsUrl
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform

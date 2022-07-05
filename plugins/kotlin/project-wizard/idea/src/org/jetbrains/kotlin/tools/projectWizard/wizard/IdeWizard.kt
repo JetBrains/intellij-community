@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
 import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription
-import org.jetbrains.kotlin.idea.projectWizard.WizardLoggingSession
+import org.jetbrains.kotlin.idea.statistics.WizardLoggingSession
 import org.jetbrains.kotlin.tools.projectWizard.core.ContextComponents
 import org.jetbrains.kotlin.tools.projectWizard.core.PluginsCreator
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference

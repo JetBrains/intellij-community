@@ -44,10 +44,10 @@ import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNa
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
+import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheHolder
-import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.impl.isCommon

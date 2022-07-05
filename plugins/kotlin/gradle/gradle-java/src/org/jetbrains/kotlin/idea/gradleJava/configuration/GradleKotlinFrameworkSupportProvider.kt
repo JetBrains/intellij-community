@@ -32,8 +32,8 @@ import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.ProjectCreationStats
 import org.jetbrains.kotlin.idea.versions.*
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider

@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.config.getFacetPlatformByConfigurationElement
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJvmStdlibDetectorFacility
+import org.jetbrains.kotlin.idea.base.projectStructure.getMigratedSourceRootTypeWithProperties
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform

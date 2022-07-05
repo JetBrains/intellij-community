@@ -20,8 +20,8 @@ import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.projectConfiguration.JSLibraryStdDescription
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.ProjectCreationStats
 
 import javax.swing.JComponent
 
