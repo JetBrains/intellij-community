@@ -44,6 +44,7 @@ data class IDETestContext(
 ) {
   companion object {
     const val TEST_RESULT_FILE_PATH_PROPERTY = "test.result.file.path"
+    const val OPENTELEMETRY_FILE = "opentelemetry.json"
   }
 
   val resolvedProjectHome: Path
@@ -186,7 +187,7 @@ data class IDETestContext(
   }
 
   fun collectOpenTelemetry() = addVMOptionsPatch {
-    addSystemProperty("idea.diagnostic.opentelemetry.file", paths.logsDir.resolve("opentelemetry.json"))
+    addSystemProperty("idea.diagnostic.opentelemetry.file", paths.logsDir.resolve(OPENTELEMETRY_FILE))
   }
 
   fun enableWorkspaceModelVerboseLogs() = addVMOptionsPatch {
