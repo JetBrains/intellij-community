@@ -115,6 +115,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkSyntheticEnumMethods(myFixture)
     }
 
+    fun testImplicitReceiverType() {
+        checkImplicitReceiverType(myFixture)
+    }
+
     fun testSubstitutedReceiverType() {
         checkSubstitutedReceiverType(myFixture)
     }
