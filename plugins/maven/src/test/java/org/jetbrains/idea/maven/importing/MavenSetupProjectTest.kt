@@ -61,13 +61,13 @@ class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTest
   }
 
   override suspend fun attachProject(project: Project, projectFile: VirtualFile): Project {
-    AddManagedFilesAction().perform(project, selectedFile = projectFile)
+    performAction(AddManagedFilesAction(), project, selectedFile = projectFile)
     waitForImportCompletion(project)
     return project
   }
 
   override suspend fun attachProjectFromScript(project: Project, projectFile: VirtualFile): Project {
-    AddFileAsMavenProjectAction().perform(project, selectedFile = projectFile)
+    performAction(AddFileAsMavenProjectAction(), project, selectedFile = projectFile)
     waitForImportCompletion(project)
     return project
   }

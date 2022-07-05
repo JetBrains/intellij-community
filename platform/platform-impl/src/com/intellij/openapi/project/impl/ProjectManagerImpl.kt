@@ -98,7 +98,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           indicator.text = ProjectBundle.message("project.loading.components")
         }
         val activity = StartUpMeasurer.startActivity("project before loaded callbacks")
-        @Suppress("DEPRECATION")
+        @Suppress("DEPRECATION", "removal")
         ApplicationManager.getApplication().messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(file, project)
         activity.end()
         registerComponents(project)
@@ -430,11 +430,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return
     }
 
-    var listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY)
-    if (listeners == null) {
-      listeners = (project as UserDataHolderEx)
-        .putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, ContainerUtil.createLockFreeCopyOnWriteList())
-    }
+    val listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY)
+                    ?: (project as UserDataHolderEx).putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY,
+                                                                         ContainerUtil.createLockFreeCopyOnWriteList())
     listeners.add(listener)
   }
 
@@ -473,9 +471,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         LOG.error(e)
       }
     }
+
     for (listener in getAllListeners(project)) {
       try {
-        @Suppress("DEPRECATION")
+        @Suppress("DEPRECATION", "removal")
         val canClose = if (listener is VetoableProjectManagerListener) listener.canClose(project) else listener.canCloseProject(project)
         if (!canClose) {
           LOG.debug("close canceled by $listener")
@@ -499,7 +498,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
   }
 
-  @Suppress("OVERRIDE_DEPRECATION")
+  @Suppress("OVERRIDE_DEPRECATION", "removal")
   final override fun createProject(name: String?, path: String): Project? {
     return newProject(toCanonicalName(path), OpenProjectTask(isNewProject = true, runConfigurators = false, projectName = name))
   }
@@ -581,14 +580,14 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           return@run null
         }
 
-        if (!checkOldTrustedStateAndMigrate(project, projectStoreBaseDir)) {
-          handleProjectOpenCancelOrFailure(project)
-          return@run null
-        }
-
         coroutineScope {
           launch {
             frameAllocator.projectLoaded(project)
+          }
+
+          if (!options.isNewProject && !checkOldTrustedStateAndMigrate(project, projectStoreBaseDir)) {
+            handleProjectOpenCancelOrFailure(project)
+            return@coroutineScope null
           }
 
           try {
@@ -610,9 +609,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             handleProjectOpenCancelOrFailure(project)
             throw e
           }
-        }
 
-        result
+          result
+        }
       }
     }
     catch (e: CancellationException) {
@@ -678,30 +677,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       // => most probably we already asked about its trusted state before
       // the only exception is: the project stayed in the UNKNOWN state in the previous version because it didn't utilize any dangerous features
       // in this case we will ask since no UNKNOWN state is allowed, but on a later stage, when we'll be able to look into the project-wide storage
-      return true
-    }
-
-    return confirmOpeningAndSetProjectTrustedStateIfNeeded(projectStoreBaseDir)
-  }
-
-  /**
-   * Checks if the project was trusted using the previous API.
-   * Migrates the setting to the new API, shows the Trust Project dialog if needed.
-   *
-   * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
-   */
-  private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStoreBaseDir: Path): Boolean {
-    val trustedPaths = TrustedPaths.getInstance()
-    val trustedState = trustedPaths.getProjectPathTrustedState(projectStoreBaseDir)
-    if (trustedState != ThreeState.UNSURE) {
-      return true
-    }
-
-    @Suppress("DEPRECATION")
-    val previousTrustedState = project.service<TrustedProjectSettings>().trustedState
-    if (previousTrustedState != ThreeState.UNSURE) {
-      // we were asking about this project in the previous IDE version => migrate
-      trustedPaths.setProjectPathTrusted(projectStoreBaseDir, previousTrustedState.toBoolean())
       return true
     }
 
@@ -795,7 +770,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val project: Project?
     val indicator = ProgressManager.getInstance().progressIndicator
     if (options.isNewProject) {
-      removeProjectConfigurationAndCaches(projectStoreBaseDir)
+      withContext(Dispatchers.IO) {
+        removeProjectConfigurationAndCaches(projectStoreBaseDir)
+      }
       project = instantiateProject(projectStoreBaseDir, options)
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
       initProject(file = projectStoreBaseDir,
@@ -1056,7 +1033,7 @@ private val publisher: ProjectManagerListener
   get() = ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC)
 
 private fun handleListenerError(e: Throwable, listener: ProjectManagerListener) {
-  if (e is ProcessCanceledException) {
+  if (e is ProcessCanceledException || e is CancellationException) {
     throw e
   }
   else {
@@ -1156,30 +1133,6 @@ class UnableToSaveProjectNotification(project: Project, readOnlyFiles: List<Virt
   }
 }
 
-
-// allow `invokeAndWait` inside startup activities
-@TestOnly
-internal fun waitAndProcessInvocationEventsInIdeEventQueue(startupManager: StartupManagerImpl) {
-  ApplicationManager.getApplication().assertIsDispatchThread()
-  val eventQueue = IdeEventQueue.getInstance()
-  if (startupManager.postStartupActivityPassed()) {
-    ApplicationManager.getApplication().invokeLater {}
-  }
-  else {
-    // make sure eventQueue.nextEvent will unblock
-    startupManager.registerPostStartupActivity(DumbAwareRunnable { ApplicationManager.getApplication().invokeLater { } })
-  }
-  while (true) {
-    val event = eventQueue.nextEvent
-    if (event is InvocationEvent) {
-      eventQueue.dispatchEvent(event)
-    }
-    if (startupManager.postStartupActivityPassed() && eventQueue.peekEvent() == null) {
-      break
-    }
-  }
-}
-
 private data class PrepareProjectResult(@JvmField val project: Project, @JvmField val module: Module?)
 
 private fun toCanonicalName(filePath: String): Path {
@@ -1217,4 +1170,28 @@ private fun removeProjectConfigurationAndCaches(projectFile: Path) {
   }
   catch (ignored: IOException) {
   }
+}
+
+/**
+ * Checks if the project was trusted using the previous API.
+ * Migrates the setting to the new API, shows the Trust Project dialog if needed.
+ *
+ * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
+ */
+private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStoreBaseDir: Path): Boolean {
+  val trustedPaths = TrustedPaths.getInstance()
+  val trustedState = trustedPaths.getProjectPathTrustedState(projectStoreBaseDir)
+  if (trustedState != ThreeState.UNSURE) {
+    return true
+  }
+
+  @Suppress("DEPRECATION")
+  val previousTrustedState = project.service<TrustedProjectSettings>().trustedState
+  if (previousTrustedState != ThreeState.UNSURE) {
+    // we were asking about this project in the previous IDE version => migrate
+    trustedPaths.setProjectPathTrusted(projectStoreBaseDir, previousTrustedState.toBoolean())
+    return true
+  }
+
+  return confirmOpeningAndSetProjectTrustedStateIfNeeded(projectStoreBaseDir)
 }

@@ -840,10 +840,8 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend () -> T): T {
 fun <T> runBlockingUnderModalProgress(task: suspend () -> T): T {
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
-    runBlockingCancellable {
-      withContext(modalityState.asContextElement()) {
-        task()
-      }
+    runBlocking(modalityState.asContextElement()) {
+      task()
     }
   }, "", true, null)
 }

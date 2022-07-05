@@ -4,16 +4,14 @@ package com.intellij.ide.startup.impl
 import com.intellij.diagnostic.*
 import com.intellij.diagnostic.opentelemetry.TraceManager
 import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -31,7 +29,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.isCorePlugin
-import com.intellij.openapi.project.impl.waitAndProcessInvocationEventsInIdeEventQueue
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.startup.StartupActivity
@@ -48,6 +45,7 @@ import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.awt.event.InvocationEvent
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
@@ -278,10 +276,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         else {
           @Suppress("SSBasedInspection")
           if (extension is DumbAware) {
-            runUnderIndicator {
-              dumbService.runWithWaitForSmartModeDisabled().use {
-                runActivityAndMeasureDuration(extension, adapter.pluginDescriptor.pluginId)
-              }
+            dumbService.runWithWaitForSmartModeDisabled().use {
+              runActivityAndMeasureDuration(extension, adapter.pluginDescriptor.pluginId)
             }
             continue
           }
@@ -346,11 +342,13 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         .setAttribute(AttributeKey.stringKey("class"), activity.javaClass.name)
         .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
         .useWithScope {
-          runStartupActivity(activity, project)
+          if (project !is LightEditCompatible || activity is LightEditCompatible) {
+            activity.runActivity(project)
+          }
         }
     }
     catch (e: Throwable) {
-      if (e is ControlFlowException) {
+      if (e is ControlFlowException || e is CancellationException) {
         throw e
       }
       LOG.error(e)
@@ -513,7 +511,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           return@runUnderDisposeAwareIndicator
         }
         try {
-          runStartupActivity(activity, project)
+          if (project !is LightEditCompatible || activity is LightEditCompatible) {
+            activity.runActivity(project)
+          }
         }
         catch (e: Throwable) {
           if (e is ControlFlowException) {
@@ -571,12 +571,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   }
 }
 
-private fun runStartupActivity(activity: StartupActivity, project: Project) {
-  if (project !is LightEditCompatible || activity is LightEditCompatible) {
-    activity.runActivity(project)
-  }
-}
-
 private fun addCompletedActivity(startTime: Long, runnableClass: Class<*>, pluginId: PluginId): Long {
   return StartUpMeasurer.addCompletedActivity(
     startTime,
@@ -599,5 +593,29 @@ private fun reportUiFreeze(uiFreezeWarned: AtomicBoolean) {
     LOG.info("Some post-startup activities freeze UI for noticeable time. " +
              "Please consider making them DumbAware to run them in background under modal progress," +
              " or just making them faster to speed up project opening.")
+  }
+}
+
+// allow `invokeAndWait` inside startup activities
+private suspend fun waitAndProcessInvocationEventsInIdeEventQueue(startupManager: StartupManagerImpl) {
+  ApplicationManager.getApplication().assertIsDispatchThread()
+  val eventQueue = IdeEventQueue.getInstance()
+  if (startupManager.postStartupActivityPassed()) {
+    withContext(Dispatchers.EDT) {
+    }
+  }
+  else {
+    // make sure eventQueue.nextEvent will unblock
+    startupManager.registerPostStartupActivity(DumbAwareRunnable { ApplicationManager.getApplication().invokeLater { } })
+  }
+
+  while (true) {
+    val event = eventQueue.nextEvent
+    if (event is InvocationEvent) {
+      eventQueue.dispatchEvent(event)
+    }
+    if (startupManager.postStartupActivityPassed() && eventQueue.peekEvent() == null) {
+      break
+    }
   }
 }

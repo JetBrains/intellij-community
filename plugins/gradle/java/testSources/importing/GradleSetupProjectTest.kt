@@ -3,8 +3,6 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.action.AttachExternalProjectAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
@@ -19,9 +17,9 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
-import org.jetbrains.concurrency.asCompletableFuture
+import kotlinx.coroutines.withTimeout
+import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.buildscript
@@ -30,6 +28,7 @@ import org.jetbrains.plugins.gradle.util.getProjectDataLoadPromise
 import org.jetbrains.plugins.gradle.util.whenResolveTaskStarted
 import org.junit.runners.Parameterized
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.minutes
 
 class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTestCase() {
   private lateinit var testDisposable: Disposable
@@ -104,20 +103,21 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
 
   override suspend fun waitForImport(action: suspend () -> Project): Project {
     expectedImportActionsCounter.incrementAndGet()
+    val promise = getProjectDataLoadPromise()
     val result = action()
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
-      getProjectDataLoadPromise().asCompletableFuture().asDeferred().await()
+    withTimeout(1.minutes) {
+      promise.asDeferred().join()
     }
     return result
   }
 
   override suspend fun attachProject(project: Project, projectFile: VirtualFile): Project {
-    AttachExternalProjectAction().perform(project, selectedFile = projectFile)
+    performAction(AttachExternalProjectAction(), project, selectedFile = projectFile)
     return project
   }
 
   override suspend fun attachProjectFromScript(project: Project, projectFile: VirtualFile): Project {
-    ImportProjectFromScriptAction().perform(project, selectedFile = projectFile)
+    performAction(ImportProjectFromScriptAction(), project, selectedFile = projectFile)
     return project
   }
 

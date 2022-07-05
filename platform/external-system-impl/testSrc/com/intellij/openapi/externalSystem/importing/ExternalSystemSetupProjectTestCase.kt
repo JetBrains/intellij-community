@@ -9,8 +9,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -65,15 +63,9 @@ interface ExternalSystemSetupProjectTestCase {
   suspend fun openProjectFrom(virtualFile: VirtualFile) = ProjectUtil.openOrImportAsync(virtualFile.toNioPath())!!
 
   suspend fun importProjectFrom(projectFile: VirtualFile): Project {
-    return detectOpenedProject {
-      ImportModuleAction().perform(selectedFile = projectFile)
-    }
-  }
-
-  private suspend fun detectOpenedProject(action: suspend () -> Unit): Project {
     val projectManager = ProjectManager.getInstance()
-    val openProjects = projectManager.openProjects.toSet()
-    action()
+    val openProjects = projectManager.openProjects.toHashSet()
+    performAction(action = ImportModuleAction(), selectedFile = projectFile)
     return projectManager.openProjects.first { it !in openProjects }
   }
 
@@ -88,10 +80,10 @@ interface ExternalSystemSetupProjectTestCase {
     )
   }
 
-  suspend fun AnAction.perform(project: Project? = null, selectedFile: VirtualFile? = null) {
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
-      withSelectedFileIfNeeded(selectedFile) {
-        actionPerformed(TestActionEvent {
+  suspend fun performAction(action: AnAction, project: Project? = null, selectedFile: VirtualFile? = null) {
+    withSelectedFileIfNeeded(selectedFile) {
+      withContext(Dispatchers.EDT) {
+        action.actionPerformed(TestActionEvent {
           when {
             ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.`is`(it) -> getSystemId()
             CommonDataKeys.PROJECT.`is`(it) -> project
@@ -103,8 +95,10 @@ interface ExternalSystemSetupProjectTestCase {
     }
   }
 
-  private fun <R> withSelectedFileIfNeeded(selectedFile: VirtualFile?, action: () -> R): R {
-    if (selectedFile == null) return action()
+  private inline fun <R> withSelectedFileIfNeeded(selectedFile: VirtualFile?, action: () -> R): R {
+    if (selectedFile == null) {
+      return action()
+    }
 
     Disposer.newDisposable().use {
       ApplicationManager.getApplication().replaceService(FileChooserFactory::class.java, object : FileChooserFactoryImpl() {
@@ -140,9 +134,7 @@ interface ExternalSystemSetupProjectTestCase {
         if (save) {
           saveSettings(project, forceSavingAllSettings = true)
         }
-        withContext(Dispatchers.EDT) {
-          projectManager.forceCloseProject(project)
-        }
+        projectManager.forceCloseProjectAsync(project, save = save)
       }
     }
   }

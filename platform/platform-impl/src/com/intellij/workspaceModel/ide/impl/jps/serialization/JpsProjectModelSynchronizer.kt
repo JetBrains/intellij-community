@@ -204,7 +204,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       return
     }
 
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {
         if (project.isDisposed) return@runWriteAction
         childActivity = childActivity?.endAndStart("applying loaded changes")

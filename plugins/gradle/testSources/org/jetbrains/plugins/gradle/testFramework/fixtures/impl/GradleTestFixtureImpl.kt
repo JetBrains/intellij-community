@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
@@ -22,7 +23,10 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.testFramework.runAll
 import com.intellij.testFramework.runInEdtAndWait
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.gradle.util.GradleVersion
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.asDeferred
@@ -36,6 +40,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getProjectDataLoadPromise
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.minutes
 
 internal class GradleTestFixtureImpl private constructor(
   override val projectName: String,
@@ -159,15 +164,21 @@ internal class GradleTestFixtureImpl private constructor(
 }
 
 private suspend fun openProjectAndWait(projectRoot: VirtualFile): Project {
+  val deferred = getProjectDataLoadPromise()
   val project = ProjectUtil.openOrImportAsync(projectRoot.toNioPath())!!
   try {
-    getProjectDataLoadPromise().asDeferred().await()
+    withContext(Dispatchers.EDT) {
+      withTimeout(10.minutes) {
+        deferred.asDeferred().join()
+      }
+    }
   }
   catch (e: Throwable) {
     try {
       ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project)
     }
-    catch (ignore: Throwable) {
+    catch (closeException: Throwable) {
+      e.addSuppressed(closeException)
     }
     throw e
   }
