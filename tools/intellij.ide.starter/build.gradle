@@ -47,8 +47,6 @@ dependencies {
   implementation "commons-logging:commons-logging:1.2"
 
   implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:222-EAP-SNAPSHOT'
-  testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-maven-commands:222-EAP-SNAPSHOT'
-  testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-gradle-commands:222-EAP-SNAPSHOT'
 
   testImplementation 'junit:junit:4.13.2'
 
