@@ -9,11 +9,11 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants
-import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
-import org.jetbrains.kotlin.idea.roots.findGradleProjectStructure
+import org.jetbrains.kotlin.idea.extensions.gradle.findGradleProjectStructure
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase

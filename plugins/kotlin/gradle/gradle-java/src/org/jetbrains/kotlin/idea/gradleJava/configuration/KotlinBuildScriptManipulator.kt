@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.repla
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.extensions.gradle.*
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
@@ -26,12 +25,11 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 
 class KotlinBuildScriptManipulator(
     override val scriptFile: KtFile,
-    override val preferNewSyntax: Boolean,
-    private val versionProvider: GradleVersionProvider
+    override val preferNewSyntax: Boolean
 ) : GradleBuildScriptManipulator<KtFile> {
     override fun isApplicable(file: PsiFile): Boolean = file is KtFile
 
-    private val gradleVersion = versionProvider.fetchGradleVersion(scriptFile)
+    private val gradleVersion = GradleVersionProvider.fetchGradleVersion(scriptFile)
 
     override fun isConfiguredWithOldSyntax(kotlinPluginName: String) = runReadAction {
         scriptFile.containsApplyKotlinPlugin(kotlinPluginName) && scriptFile.containsCompileStdLib()
@@ -42,7 +40,7 @@ class KotlinBuildScriptManipulator(
     }
 
     override fun configureProjectBuildScript(kotlinPluginName: String, version: IdeKotlinVersion): Boolean {
-        if (useNewSyntax(kotlinPluginName, gradleVersion, versionProvider)) return false
+        if (useNewSyntax(kotlinPluginName, gradleVersion)) return false
 
         val originalText = scriptFile.text
         scriptFile.getBuildScriptBlock()?.apply {
@@ -69,7 +67,7 @@ class KotlinBuildScriptManipulator(
         jvmTarget: String?
     ): Boolean {
         val originalText = scriptFile.text
-        val useNewSyntax = useNewSyntax(kotlinPluginName, gradleVersion, versionProvider)
+        val useNewSyntax = useNewSyntax(kotlinPluginName, gradleVersion)
         scriptFile.apply {
             if (useNewSyntax) {
                 createPluginInPluginsGroupIfMissing(kotlinPluginExpression, version)
@@ -78,7 +76,7 @@ class KotlinBuildScriptManipulator(
                     val repository = getRepositoryForVersion(version)
                     if (repository != null) {
                         scriptFile.module?.getBuildScriptSettingsPsiFile()?.let {
-                            with(KotlinGradleFacadeImpl.getManipulator(it)) {
+                            with(GradleBuildScriptSupport.getManipulator(it)) {
                                 addPluginRepository(repository)
                                 addMavenCentralPluginRepository()
                                 addPluginRepository(DEFAULT_GRADLE_PLUGIN_REPOSITORY)
@@ -577,7 +575,7 @@ class KotlinBuildScriptManipulator(
                 KotlinGradleModuleConfigurator.KOTLIN
             }
 
-        if (useNewSyntax(kotlinPluginName, gradleVersion, versionProvider)) {
+        if (useNewSyntax(kotlinPluginName, gradleVersion)) {
             return "$compileScope(${getKotlinModuleDependencySnippet(artifactId)})"
         }
 

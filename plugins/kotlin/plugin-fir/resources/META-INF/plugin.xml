@@ -62,6 +62,8 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <module name="kotlin.run-configurations.testng"/>
 
     <module name="kotlin.gradle.gradle"/>
+    <module name="kotlin.gradle.code-insight-common"/>
+    <module name="kotlin.gradle.code-insight-groovy"/>
     <module name="kotlin.gradle.gradle-java"/>
   </content>
 

@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="kotlin.base.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.base.inspections" exported="" />
     <orderEntry type="module" module-name="kotlin.base.jps" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.external-build-system" exported="" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" exported="" />
     <orderEntry type="module" module-name="kotlin.base.resources" exported="" />
     <orderEntry type="module" module-name="kotlin.base.statistics" exported="" />
@@ -61,9 +62,11 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" exported="" />
     <orderEntry type="module" module-name="kotlin.idea" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.idea" exported="" />
+    <orderEntry type="module" module-name="kotlin.inspections" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.new" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.old" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.services" exported="" />

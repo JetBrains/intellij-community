@@ -12,13 +12,15 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
+import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.extensions.gradle.*
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsScriptBuilder
 import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -31,16 +33,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 
 object GroovyGradleBuildScriptSupport : GradleBuildScriptSupport {
-    override fun createManipulator(
-        file: PsiFile,
-        preferNewSyntax: Boolean,
-        versionProvider: GradleVersionProvider
-    ): GroovyBuildScriptManipulator? {
+    override fun createManipulator(file: PsiFile, preferNewSyntax: Boolean): GroovyBuildScriptManipulator? {
         if (file !is GroovyFile) {
             return null
         }
 
-        return GroovyBuildScriptManipulator(file, preferNewSyntax, versionProvider)
+        return GroovyBuildScriptManipulator(file, preferNewSyntax)
     }
 
     override fun createScriptBuilder(file: PsiFile): SettingsScriptBuilder<*>? {
@@ -50,12 +48,11 @@ object GroovyGradleBuildScriptSupport : GradleBuildScriptSupport {
 
 class GroovyBuildScriptManipulator(
     override val scriptFile: GroovyFile,
-    override val preferNewSyntax: Boolean,
-    private val versionProvider: GradleVersionProvider
+    override val preferNewSyntax: Boolean
 ) : GradleBuildScriptManipulator<GroovyFile> {
     override fun isApplicable(file: PsiFile) = file is GroovyFile
 
-    private val gradleVersion = versionProvider.fetchGradleVersion(scriptFile)
+    private val gradleVersion = GradleVersionProvider.fetchGradleVersion(scriptFile)
 
     override fun isConfiguredWithOldSyntax(kotlinPluginName: String): Boolean {
         val fileText = runReadAction { scriptFile.text }
@@ -81,7 +78,7 @@ class GroovyBuildScriptManipulator(
     ): Boolean {
         val oldText = scriptFile.text
 
-        val useNewSyntax = useNewSyntax(kotlinPluginName, gradleVersion, versionProvider)
+        val useNewSyntax = useNewSyntax(kotlinPluginName, gradleVersion)
         if (useNewSyntax) {
             scriptFile
                 .getPluginsBlock()
@@ -91,7 +88,7 @@ class GroovyBuildScriptManipulator(
                 val gradleFacade = KotlinGradleFacade.instance
                 if (repository != null && gradleFacade != null) {
                     scriptFile.module?.getBuildScriptSettingsPsiFile()?.let {
-                        with(gradleFacade.getManipulator(it)) {
+                        with(GradleBuildScriptSupport.getManipulator(it)) {
                             addPluginRepository(repository)
                             addMavenCentralPluginRepository()
                             addPluginRepository(DEFAULT_GRADLE_PLUGIN_REPOSITORY)
@@ -139,7 +136,7 @@ class GroovyBuildScriptManipulator(
     }
 
     override fun configureProjectBuildScript(kotlinPluginName: String, version: IdeKotlinVersion): Boolean {
-        if (useNewSyntax(kotlinPluginName, gradleVersion, versionProvider)) return false
+        if (useNewSyntax(kotlinPluginName, gradleVersion)) return false
 
         val oldText = scriptFile.text
         scriptFile.apply {
@@ -382,7 +379,7 @@ class GroovyBuildScriptManipulator(
         withVersion: Boolean,
         gradleVersion: GradleVersionInfo
     ): String {
-        val configuration = gradleVersion.scope("implementation", versionProvider)
+        val configuration = gradleVersion.scope("implementation")
         return "$configuration \"org.jetbrains.kotlin:$artifactName${if (withVersion) ":\$kotlin_version" else ""}\""
     }
 
@@ -444,7 +441,7 @@ class GroovyBuildScriptManipulator(
 
     private fun GrStatement.replaceWithStatementFromText(snippet: String): GrStatement {
         val newStatement = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(snippet)
-        newStatement.reformatted()
+        newStatement.reformat()
         return replaceWithStatement(newStatement)
     }
 
@@ -500,7 +497,7 @@ class GroovyBuildScriptManipulator(
             if (statements.any { StringUtil.equalsIgnoreWhitespaces(it.text, text) }) return false
             val psiFactory = GroovyPsiElementFactory.getInstance(project)
             val newStatement = if (isStatement) psiFactory.createStatementFromText(text) else psiFactory.createExpressionFromText(text)
-            newStatement.reformatted()
+            newStatement.reformat()
             if (!isFirst && statements.isNotEmpty()) {
                 val lastStatement = statements[statements.size - 1]
                 if (lastStatement != null) {

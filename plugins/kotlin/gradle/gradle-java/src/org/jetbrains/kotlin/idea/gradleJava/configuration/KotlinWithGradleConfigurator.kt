@@ -30,16 +30,14 @@ import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GRADLE_PLUGIN_ID
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GROUP_ID
 import org.jetbrains.kotlin.idea.extensions.gradle.getBuildScriptPsiFile
-import org.jetbrains.kotlin.idea.extensions.gradle.getManipulator
 import org.jetbrains.kotlin.idea.extensions.gradle.getTopLevelBuildScriptPsiFile
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
-import org.jetbrains.kotlin.idea.gradle.configuration.scope
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl.findManipulator
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.extensions.gradle.GradleBuildScriptSupport
+import org.jetbrains.kotlin.idea.extensions.gradle.scope
 import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
 import org.jetbrains.kotlin.idea.util.application.executeCommand
@@ -94,7 +92,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     protected fun PsiFile.isKtDsl() = this is KtFile
 
     private fun isFileConfigured(buildScript: PsiFile): Boolean {
-        val manipulator = findManipulator(buildScript) ?: return false
+        val manipulator = GradleBuildScriptSupport.findManipulator(buildScript) ?: return false
         return with(manipulator) {
             isConfiguredWithOldSyntax(kotlinPluginName) || isConfigured(getKotlinPluginExpression(buildScript.isKtDsl()))
         }
@@ -169,7 +167,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     protected fun configureModuleBuildScript(file: PsiFile, version: IdeKotlinVersion): Boolean {
         val sdk = ModuleUtil.findModuleForPsiElement(file)?.let { ModuleRootManager.getInstance(it).sdk }
         val jvmTarget = getJvmTarget(sdk, version)
-        return KotlinGradleFacadeImpl.getManipulator(file).configureModuleBuildScript(
+        return GradleBuildScriptSupport.getManipulator(file).configureModuleBuildScript(
             kotlinPluginName,
             getKotlinPluginExpression(file.isKtDsl()),
             getStdlibArtifactName(sdk, version),
@@ -191,7 +189,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         version: IdeKotlinVersion
     ): Boolean {
         if (!isTopLevelProjectFile) {
-            var wasModified = KotlinGradleFacadeImpl.getManipulator(file).configureProjectBuildScript(kotlinPluginName, version)
+            var wasModified = GradleBuildScriptSupport.getManipulator(file).configureProjectBuildScript(kotlinPluginName, version)
             wasModified = wasModified or configureModuleBuildScript(file, version)
             return wasModified
         }
@@ -298,7 +296,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 return
             }
 
-            KotlinGradleFacadeImpl.getManipulator(buildScript).addKotlinLibraryToModuleBuildScript(module, scope, libraryDescriptor)
+            GradleBuildScriptSupport.getManipulator(buildScript).addKotlinLibraryToModuleBuildScript(module, scope, libraryDescriptor)
 
             buildScript.virtualFile?.let {
                 NotificationMessageCollector.create(buildScript.project)
@@ -313,12 +311,12 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             state: LanguageFeature.State,
             forTests: Boolean
         ) = changeBuildGradle(module) {
-            KotlinGradleFacadeImpl.getManipulator(it).changeLanguageFeatureConfiguration(feature, state, forTests)
+            GradleBuildScriptSupport.getManipulator(it).changeLanguageFeatureConfiguration(feature, state, forTests)
         }
 
         fun changeLanguageVersion(module: Module, languageVersion: String?, apiVersion: String?, forTests: Boolean) =
             changeBuildGradle(module) { buildScriptFile ->
-                val manipulator = KotlinGradleFacadeImpl.getManipulator(buildScriptFile)
+                val manipulator = GradleBuildScriptSupport.getManipulator(buildScriptFile)
                 var result: PsiElement? = null
                 if (languageVersion != null) {
                     result = manipulator.changeLanguageVersion(languageVersion, forTests)
@@ -338,7 +336,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             }
 
         fun getKotlinStdlibVersion(module: Module): String? = module.getBuildScriptPsiFile()?.let {
-            KotlinGradleFacadeImpl.getManipulator(it).getKotlinStdlibVersion()
+            GradleBuildScriptSupport.getManipulator(it).getKotlinStdlibVersion()
         }
 
         private fun canConfigureFile(file: PsiFile): Boolean = WritingAccessProvider.isPotentiallyWritable(file.virtualFile, null)

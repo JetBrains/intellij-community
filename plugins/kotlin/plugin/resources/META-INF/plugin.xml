@@ -231,9 +231,10 @@ The plugin supports Kotlin 1.7 and lower.
     <module name="kotlin.base.fe10.analysis-api-providers"/>
     <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.gradle.gradle"/>
+    <module name="kotlin.gradle.code-insight-common"/>
+    <module name="kotlin.gradle.code-insight-groovy"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.gradle.gradle-native"/>
-    <module name="kotlin.gradle.code-insight-groovy"/>
     <module name="kotlin.maven"/>
     <module name="kotlin.project-wizard.idea"/>
     <module name="kotlin.project-wizard.gradle"/>

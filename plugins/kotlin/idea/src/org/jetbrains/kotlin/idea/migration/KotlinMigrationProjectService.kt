@@ -75,14 +75,3 @@ private class MigrationState(
     val languageVersion: LanguageVersion,
     val apiVersion: ApiVersion,
 )
-
-class MigrationInfo(
-    val oldApiVersion: ApiVersion,
-    val newApiVersion: ApiVersion,
-    val oldLanguageVersion: LanguageVersion,
-    val newLanguageVersion: LanguageVersion,
-)
-
-fun MigrationInfo.isLanguageVersionUpdate(untilOldVersion: LanguageVersion, sinceNewVersion: LanguageVersion): Boolean {
-    return oldLanguageVersion <= untilOldVersion && newLanguageVersion >= sinceNewVersion
-}

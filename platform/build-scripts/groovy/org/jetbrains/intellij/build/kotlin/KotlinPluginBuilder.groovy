@@ -69,6 +69,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.facet",
     "kotlin.base.klib",
     "kotlin.base.project-structure",
+    "kotlin.base.external-build-system",
     "kotlin.base.scripting",
     "kotlin.base.analysis-api-providers",
     "kotlin.base.analysis",
@@ -120,6 +121,7 @@ final class KotlinPluginBuilder {
     "kotlin.maven",
     "kotlin.gradle.gradle-tooling",
     "kotlin.gradle.gradle",
+    "kotlin.gradle.code-insight-common",
     "kotlin.gradle.gradle-java",
     "kotlin.gradle.gradle-native",
     "kotlin.gradle.code-insight-groovy",
@@ -165,6 +167,7 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea-base",
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
+    "kotlin.inspections",
     "kotlin.inspections-fe10",
     "kotlin.features-trainer"
   )

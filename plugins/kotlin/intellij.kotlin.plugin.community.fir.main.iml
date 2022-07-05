@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="kotlin.base.resources" exported="" />
     <orderEntry type="module" module-name="kotlin.base.statistics" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.external-build-system" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" exported="" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.base.inspections" exported="" />
@@ -41,6 +42,7 @@
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-fir" exported="" />
+    <orderEntry type="module" module-name="kotlin.inspections" exported="" />
     <orderEntry type="module" module-name="kotlin.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.copyright" exported="" />
     <orderEntry type="module" module-name="kotlin.coverage" exported="" />

@@ -31,7 +31,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
 
@@ -126,23 +125,4 @@ fun isForGeneratedSources(sourceFolder: SourceFolder): Boolean {
     return properties != null && properties.isForGeneratedSources
             || (javaResourceProperties != null && javaResourceProperties.isForGeneratedSources)
             || (kotlinResourceProperties != null && kotlinResourceProperties.isForGeneratedSources)
-}
-
-class NodeWithData<T>(val node: DataNode<*>, val data: T)
-
-fun <T : Any> DataNode<*>.findAll(key: Key<T>): List<NodeWithData<T>> {
-    val nodes = ExternalSystemApiUtil.findAll(this, key)
-    return nodes.mapNotNull {
-        val data = it.getData(key) ?: return@mapNotNull null
-        NodeWithData(it, data)
-    }
-}
-
-fun findGradleProjectStructure(file: PsiFile) =
-    ModuleUtilCore.findModuleForFile(file.virtualFile, file.project)?.let { findGradleProjectStructure(it) }
-
-fun findGradleProjectStructure(module: Module): DataNode<ProjectData>? {
-    val externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
-    val projectInfo = ExternalSystemUtil.getExternalProjectInfo(module.project, GRADLE_SYSTEM_ID, externalProjectPath) ?: return null
-    return projectInfo.externalProjectStructure
 }

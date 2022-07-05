@@ -6,12 +6,14 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.allModules
 import org.jetbrains.kotlin.idea.base.projectStructure.getWholeModuleGroup
-import org.jetbrains.kotlin.idea.configuration.parseExternalLibraryName
+import org.jetbrains.kotlin.idea.base.util.substringAfterLastOrNull
+import org.jetbrains.kotlin.idea.base.util.substringBeforeLastOrNull
 import org.jetbrains.kotlin.idea.extensions.gradle.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
 import org.jetbrains.kotlin.idea.inspections.ReplaceStringInDocumentFix
 import org.jetbrains.kotlin.idea.versions.DEPRECATED_LIBRARIES_INFORMATION
@@ -89,6 +91,8 @@ class DeprecatedGradleDependencyInspection : BaseInspection(), CleanupLocalInspe
 
     }
 
+    private class ExternalLibraryInfo(val artifactId: String, val version: String)
+
     companion object {
         fun libraryVersionFromOrderEntry(file: PsiFile, libraryId: String): String? {
             val module = ProjectRootManager.getInstance(file.project).fileIndex.getModuleForFile(file.virtualFile) ?: return null
@@ -111,6 +115,19 @@ class DeprecatedGradleDependencyInspection : BaseInspection(), CleanupLocalInspe
             }
 
             return null
+        }
+
+        private fun parseExternalLibraryName(library: Library): ExternalLibraryInfo? {
+            val libName = library.name ?: return null
+
+            val versionWithKind = libName.substringAfterLastOrNull(":") ?: return null
+            val version = versionWithKind.substringBefore("@")
+
+            val artifactId = libName.substringBeforeLastOrNull(":")?.substringAfterLastOrNull(":") ?: return null
+
+            if (version.isBlank() || artifactId.isBlank()) return null
+
+            return ExternalLibraryInfo(artifactId, version)
         }
     }
 }

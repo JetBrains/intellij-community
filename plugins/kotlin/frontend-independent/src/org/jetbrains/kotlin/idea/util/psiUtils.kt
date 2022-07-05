@@ -3,25 +3,16 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.CodeStyleManager
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
-import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.JvmNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-
-fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElement = let {
-    CodeStyleManager.getInstance(it.project).reformat(it, canChangeWhiteSpacesOnly)
-}
 
 fun ValueArgument.findSingleLiteralStringTemplateText(): String? {
     return getArgumentExpression()

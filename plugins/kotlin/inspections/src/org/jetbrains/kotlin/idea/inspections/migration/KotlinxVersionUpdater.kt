@@ -1,16 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.inspections.KotlinInspectionsBundle
 import org.jetbrains.kotlin.idea.versions.LibInfo
-
-interface VersionUpdater {
-    fun updateVersion(currentVersion: String): String
-}
 
 object KotlinxVersionUpdater : VersionUpdater {
     override fun updateVersion(currentVersion: String): String {
@@ -36,7 +31,7 @@ private fun kotlinxCoroutinesDeprecation(name: String): DeprecatedForKotlinLibIn
         lib = LibInfo("org.jetbrains.kotlinx", name),
         sinceKotlinLanguageVersion = LanguageVersion.KOTLIN_1_3,
         versionUpdater = KotlinxVersionUpdater,
-        message = KotlinBundle.message("library.should.be.updated.to.be.compatible.with.kotlin.1.3")
+        message = KotlinInspectionsBundle.message("library.should.be.updated.to.be.compatible.with.kotlin.1.3")
     )
 }
 

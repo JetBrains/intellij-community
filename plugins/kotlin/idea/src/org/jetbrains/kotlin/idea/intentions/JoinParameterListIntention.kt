@@ -6,10 +6,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaContext
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -35,7 +35,9 @@ abstract class AbstractJoinListIntention<TList : KtElement, TElement : KtElement
         val elements = element.elements()
         val pointer = element.createSmartPointer()
 
-        elements.forEach { it.reformatted() }
+        for (element in elements) {
+            element.reformat()
+        }
 
         nextBreak(elements.last())?.let { document.deleteString(it.startOffset, it.endOffset) }
         elements.dropLast(1).asReversed().forEach { tElement ->

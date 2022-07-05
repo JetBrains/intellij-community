@@ -23,3 +23,15 @@ fun String.collapseSpaces(): String {
     }
     return builder.toString()
 }
+
+@ApiStatus.Internal
+fun String.substringBeforeLastOrNull(delimiter: String): String? {
+    val index = lastIndexOf(delimiter)
+    return if (index == -1) null else substring(0, index)
+}
+
+@ApiStatus.Internal
+fun String.substringAfterLastOrNull(delimiter: String): String? {
+    val index = lastIndexOf(delimiter)
+    return if (index == -1) null else substring(index + 1, length)
+}

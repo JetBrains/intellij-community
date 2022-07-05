@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -8,7 +7,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
-import org.jetbrains.kotlin.idea.KotlinBundle
 
 class ReplaceStringInDocumentFix(element: PsiElement, private val oldString: String, private val newString: String) : LocalQuickFix {
     private val elementRef = SmartPointerManager.getInstance(element.project).createSmartPsiElementPointer(element)
@@ -31,5 +29,5 @@ class ReplaceStringInDocumentFix(element: PsiElement, private val oldString: Str
         document.replaceString(start, end, newString)
     }
 
-    override fun getFamilyName() = KotlinBundle.message("replace.0.with.1", oldString, newString)
+    override fun getFamilyName() = KotlinInspectionsBundle.message("replace.0.with.1", oldString, newString)
 }

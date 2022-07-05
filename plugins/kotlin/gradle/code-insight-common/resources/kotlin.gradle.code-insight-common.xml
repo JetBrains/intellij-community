@@ -1,0 +1,14 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.gradleCodeInsightCommon">
+  <dependencies>
+    <plugin id="com.intellij.gradle"/>
+    <module name="kotlin.gradle.gradle-tooling"/>
+    <module name="kotlin.gradle.gradle"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.gradleBuildScriptSupport"
+            interface="org.jetbrains.kotlin.idea.extensions.gradle.GradleBuildScriptSupport"
+            dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>
