@@ -55,10 +55,40 @@ interface UastCodeGenerationPlugin {
    * Replaces fully-qualified class names in the contents of the specified element with
    * non-qualified names and adds import statements as necessary.
    *
+   * Example:
+   * ```
+   * com.jetbrains.uast.generate.UastCodeGenerationPlugin.byLanguage(...)
+   * ```
+   * Becomes:
+   * ```
+   * import com.jetbrains.uast.generate.UastCodeGenerationPlugin
+   *
+   * UastCodeGenerationPlugin.byLanguage(...)
+   * ```
+   *
    * @param reference the element to shorten references in.
-   * @return the element in the PSI tree after the shorten references operation corresponding to the original element.
+   * @return the element after the shorten references operation corresponding to the original element.
    */
   fun shortenReference(reference: UReferenceExpression): UReferenceExpression?
+
+  /**
+   * Import the qualifier of the specified element as an on demand import (star import).
+   *
+   * Example:
+   * ```
+   * UastCodeGenerationPlugin.byLanguage(...)
+   * ```
+   * Becomes:
+   * ```
+   * import com.jetbrains.uast.generate.UastCodeGenerationPlugin.*
+   *
+   * byLanguage(...)
+   * ```
+   *
+   * @param reference the qualified element to import
+   * @return the selector part of the qualified reference after importing
+   */
+  fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression?
 }
 
 /**
@@ -150,6 +180,9 @@ fun UReferenceExpression.bindToElement(element: PsiElement): PsiElement? =
 
 fun UReferenceExpression.shortenReference(): UReferenceExpression? =
   UastCodeGenerationPlugin.byLanguage(this.lang)?.shortenReference(this)
+
+fun UQualifiedReferenceExpression.importMemberOnDemand(): UExpression? =
+  UastCodeGenerationPlugin.byLanguage(this.lang)?.importMemberOnDemand(this)
 
 @ApiStatus.Experimental
 inline fun <reified T : UElement> T.refreshed() = sourcePsi?.also {
