@@ -441,19 +441,18 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
     if (windows.isEmpty()) {
       return
     }
-    val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
+
     for (window in windows) {
       val composite = window!!.getComposite(file)
       LOG.assertTrue(composite != null)
       val index = window.findCompositeIndex(composite!!)
       LOG.assertTrue(index != -1)
-      window.setForegroundAt(index, manager.getFileColor(file))
-      var attributes = if (manager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
+      var resultAttributes = getTextAttributesForFile(project = manager.project, file = file)
       if (composite.isPreview) {
         val italic = TextAttributes(null, null, null, null, Font.ITALIC)
-        attributes = if (attributes == null) italic else TextAttributes.merge(italic, attributes)
+        resultAttributes = TextAttributes.merge(italic, resultAttributes)
       }
-      window.setTextAttributes(index, attributes)
+      window.setTextAttributes(index, resultAttributes)
     }
   }
 
