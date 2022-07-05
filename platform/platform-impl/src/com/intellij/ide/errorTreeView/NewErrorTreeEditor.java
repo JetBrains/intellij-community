@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
@@ -133,15 +133,15 @@ public final class NewErrorTreeEditor extends AbstractCellEditor implements Tree
       myPanel.add(myRight.getTreeCellEditorComponent(tree, value, selected, expanded, leaf, row), BorderLayout.EAST);
 
       if (UIUtil.isFullRowSelectionLAF()) {
-        myPanel.setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
+        myPanel.setBackground(selected ? UIUtil.getTreeSelectionBackground(true) : null);
       }
       else if (WideSelectionTreeUI.isWideSelection(tree)) {
         if (selected) {
-          myPanel.setBackground(UIUtil.getTreeSelectionBackground());
+          myPanel.setBackground(UIUtil.getTreeSelectionBackground(true));
         }
       }
       else if (selected) {
-        myPanel.setBackground(UIUtil.getTreeSelectionBackground());
+        myPanel.setBackground(UIUtil.getTreeSelectionBackground(true));
       }
       else {
         myPanel.setBackground(null);

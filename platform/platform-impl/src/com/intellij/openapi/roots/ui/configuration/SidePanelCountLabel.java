@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -54,7 +54,7 @@ public class SidePanelCountLabel extends JLabel {
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     g.fillRoundRect(0, 3, getWidth() - 6 - 1, getHeight() - 6, getHeight() - 6, getHeight() - 6);
     config.restore();
-    setForeground(isSelected() ? deepBlue.darker() : UIUtil.getListForeground(true));
+    setForeground(isSelected() ? deepBlue.darker() : UIUtil.getListForeground(true, true));
 
     super.paintComponent(g);
   }

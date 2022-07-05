@@ -39,7 +39,7 @@ public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer
 
     // Background and foreground
     if(selected){
-      setForeground(UIUtil.getTableSelectionForeground());
+      setForeground(UIUtil.getTableSelectionForeground(true));
       setBackground(UIUtil.getTableSelectionBackground(true));
     }else{
       setForeground(UIUtil.getTableForeground());
