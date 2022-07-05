@@ -64,16 +64,16 @@ private fun KotlinMppPopulateModuleDependenciesContext.isDependencyPropagationAl
     }
 
     /*
-    Single jvm target, intermediate source set use case.
+    Single jvm target | Single android target, intermediate source set use case.
     This source set shall also just propagate platform dependencies
-     */
-    if (sourceSetVisibilityGraph.successors(sourceSet).isNotEmpty() &&
-        sourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.JVM
+    */
+    if (mppModel.sourceSetsByName.values.any { otherSourceSet -> sourceSet.name in otherSourceSet.declaredDependsOnSourceSets } &&
+        (sourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.JVM ||
+                sourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.ANDROID)
     ) return true
 
     return false
 }
-
 
 private fun KotlinMppPopulateModuleDependenciesContext.resolveVisibleDependencies(compilation: KotlinCompilation): CompilationDependencies {
     return compilation.associateCompilations.mapNotNull { coordinates -> mppModel.findCompilation(coordinates) }.plus(compilation)
