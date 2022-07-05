@@ -3,7 +3,10 @@ package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.hint.ImplementationViewSession;
 import com.intellij.codeInsight.hint.ImplementationViewSessionFactory;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -33,11 +36,6 @@ public class QuickPreviewAction extends ShowImplementationsAction {
     } else {
       e.getPresentation().setEnabled(false);
     }
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.OLD_EDT;
   }
 
   protected boolean isQuickPreviewAvailableFor(AnActionEvent e) {
