@@ -39,7 +39,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   private boolean myUseLigatures;
   private float myLineSpacing = DEFAULT_LINE_SPACING;
 
-  @Nullable private EventDispatcher<ChangeListener> myChangeListener = EventDispatcher.create(ChangeListener.class);
+  @NotNull private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
   /**
    * Font size to use by default. Default value is {@link #DEFAULT_FONT_SIZE}.
@@ -47,11 +47,11 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   private float myTemplateFontSize = DEFAULT_FONT_SIZE;
 
   public void addChangeListener(@NotNull ChangeListener changeListener) {
-    myChangeListener.addListener(changeListener);
+    myEventDispatcher.addListener(changeListener);
   }
 
-  public void addChangeListener(@NotNull ChangeListener changeListener, Disposable parentDisposable) {
-    myChangeListener.addListener(changeListener, parentDisposable);
+  public void addChangeListener(@NotNull ChangeListener changeListener, @NotNull Disposable parentDisposable) {
+    myEventDispatcher.addListener(changeListener, parentDisposable);
   }
 
   @Override
@@ -71,9 +71,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   }
 
   private void notifyStateChanged() {
-    if (myChangeListener != null) {
-      myChangeListener.getMulticaster().stateChanged(new ChangeEvent(this));
-    }
+    myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
   }
 
   @Override
