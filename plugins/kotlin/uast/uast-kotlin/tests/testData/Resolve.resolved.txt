@@ -57,6 +57,8 @@ UBlockExpression -> UQualifiedReferenceExpression -> KtUltraLightMethodForSource
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = entries) -> null: null
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:first) -> USimpleNameReferenceExpression (identifier = first) -> PsiMethod:first: first
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:setValue) -> USimpleNameReferenceExpression (identifier = setValue) -> PsiMethod:setValue: setValue
+    UTypeReferenceExpression (name = kotlin.ranges.ClosedRange<java.lang.Long>) -> USimpleNameReferenceExpression (identifier = ClosedRange) -> PsiClass:ClosedRange: ClosedRange
+    UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
     UBinaryExpression (operator = ..) -> USimpleNameReferenceExpression (identifier = ..) -> null: null
     UBlockExpression -> UQualifiedReferenceExpression -> PsiMethod:longRangeContains: longRangeContains
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = intRange) -> LightVariableBuilder:intRange: intRange
