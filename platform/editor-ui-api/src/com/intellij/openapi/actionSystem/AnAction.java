@@ -23,6 +23,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.NlsActions.ActionDescription;
@@ -227,8 +228,9 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     if (component == null) return;
     List<AnAction> actionList = ComponentUtil.getClientProperty(component, ACTIONS_KEY);
     if (actionList == null) {
-      List<AnAction> value = actionList = new SmartList<>();
+      List<AnAction> value = new CopyOnWriteArrayList<>();
       ComponentUtil.putClientProperty(component, ACTIONS_KEY, value);
+      actionList = Objects.requireNonNullElse(ComponentUtil.getClientProperty(component, ACTIONS_KEY), value);
     }
     if (!actionList.contains(this)) {
       actionList.add(this);
