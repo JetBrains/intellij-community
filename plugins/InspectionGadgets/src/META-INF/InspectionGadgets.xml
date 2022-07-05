@@ -2269,6 +2269,10 @@
                      key="literal.as.arg.to.string.equals.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.LiteralAsArgToStringEqualsInspection" cleanupTool="true"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="EscapedSpace" bundle="messages.InspectionGadgetsBundle"
+                     key="inspection.use.of.slash.s.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.style.EscapedSpaceInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MissortedModifiers" bundle="messages.InspectionGadgetsBundle" key="missorted.modifiers.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" cleanupTool="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.MissortedModifiersInspection"/>
