@@ -118,12 +118,12 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
                     if (isTrackableProperty(target)) {
                         val parent = expr.parent
                         var qualifier: DfaVariableValue? = null
+                        if (target.parent is KtClassBody && target.parent.parent is KtObjectDeclaration) {
+                            // property in object: singleton, can track
+                            return varFactory.createVariableValue(KtVariableDescriptor(target), null)
+                        }
                         if (parent is KtQualifiedExpression && parent.selectorExpression == expr) {
                             val receiver = parent.receiverExpression
-                            if (receiver.mainReference?.resolve() is KtObjectDeclaration) {
-                                // property in object: singleton, can track
-                                return varFactory.createVariableValue(KtVariableDescriptor(target), null)
-                            }
                             qualifier = createFromSimpleName(factory, receiver)
                         } else {
                             if (target.parent is KtFile) {
