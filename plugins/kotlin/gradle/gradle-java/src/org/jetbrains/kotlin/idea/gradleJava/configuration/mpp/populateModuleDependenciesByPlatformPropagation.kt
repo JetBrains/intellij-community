@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.getCompilations
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesByPlatformPropagation(
@@ -34,11 +35,19 @@ private fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesB
     val sourceSetDataNode = getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
         ?: return
 
-    val dependencies = mppModel.getCompilations(sourceSet)
+    val propagatedDependencies = mppModel.getCompilations(sourceSet)
         .map { compilation -> resolveVisibleDependencies(compilation) }
         .dependencyIntersection()
 
-    val preprocessedDependencies = dependenciesPreprocessor(dependencies)
+    /*
+    Dependency Propagation will not work for project <-> project dependencies.
+    Source sets that shall receive propagated dependencies still report proper project <-> project dependencies.
+    Note: This includes sourceSet dependencies as transformed by the 'DependencyAdjuster' where the source set
+    is mentioned as the configuration of the project dependency!
+    */
+    val projectDependencies = getDependencies(sourceSet).filterIsInstance<ExternalProjectDependency>().toSet()
+
+    val preprocessedDependencies = dependenciesPreprocessor(propagatedDependencies + projectDependencies)
     buildDependencies(resolverCtx, sourceSetMap, artifactsMap, sourceSetDataNode, preprocessedDependencies, ideProject)
 }
 
@@ -78,13 +87,13 @@ private fun KotlinMppPopulateModuleDependenciesContext.resolveVisibleDependencie
  *
  * @return The intersection of all dependencies listed by their dependency ID
  */
-private fun List<CompilationDependencies>.dependencyIntersection(): List<KotlinDependency> {
-    if (this.isEmpty()) return emptyList()
+private fun List<CompilationDependencies>.dependencyIntersection(): Set<KotlinDependency> {
+    if (this.isEmpty()) return emptySet()
 
     val idIntersection = map { dependencies -> dependencies.map { it.id }.toSet() }
         .reduce { acc, ids -> acc intersect ids }
 
-    return first().filter { dependency -> dependency.id in idIntersection }
+    return first().filter { dependency -> dependency.id in idIntersection }.toSet()
 }
 
 //endregion
