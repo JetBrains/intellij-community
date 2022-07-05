@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.Maps;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -199,9 +198,6 @@ public final class PyUtil {
    */
   public static void addListNode(PsiElement parent, PsiElement newItem, ASTNode beforeThis,
                                  boolean isFirst, boolean isLast, boolean addWhitespace) {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(parent)) {
-      return;
-    }
     ASTNode node = parent.getNode();
     assert node != null;
     ASTNode itemNode = newItem.getNode();
