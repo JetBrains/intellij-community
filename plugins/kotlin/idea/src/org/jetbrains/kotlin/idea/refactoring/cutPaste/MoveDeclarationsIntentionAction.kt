@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.refactoring.cutPaste
 
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.codeInspection.HintAction
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
@@ -12,7 +14,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.refactoring.BaseRefactoringIntentionAction
 import com.intellij.refactoring.suggested.range
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
@@ -20,7 +21,7 @@ class MoveDeclarationsIntentionAction(
     private val processor: MoveDeclarationsProcessor,
     private val bounds: RangeMarker,
     private val modificationCount: Long
-) : BaseRefactoringIntentionAction(), HintAction {
+) : PsiElementBaseIntentionAction(), HintAction, HighPriorityAction {
 
     override fun startInWriteAction() = false
 

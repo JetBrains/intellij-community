@@ -15,16 +15,17 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class RunRefactoringAction extends BaseRefactoringIntentionAction {
+public class RunRefactoringAction extends PsiElementBaseIntentionAction implements HighPriorityAction {
   private final RefactoringActionHandler myHandler;
   private final @IntentionName String myCommandName;
 

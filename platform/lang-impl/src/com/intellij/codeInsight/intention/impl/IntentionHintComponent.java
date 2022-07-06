@@ -37,7 +37,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.LightweightHint;
@@ -220,16 +219,11 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   @NotNull
   private static Icon getIcon(CachedIntentions cachedIntentions) {
-    boolean showRefactoringsBulb = ContainerUtil.exists(cachedIntentions.getInspectionFixes(),
-                                                        descriptor -> IntentionActionDelegate
-                                                          .unwrap(descriptor.getAction()) instanceof BaseRefactoringIntentionAction);
-    boolean showFix = !showRefactoringsBulb && ContainerUtil.exists(cachedIntentions.getErrorFixes(),
-                                                                    descriptor -> IntentionManagerSettings.getInstance()
-                                                                      .isShowLightBulb(descriptor.getAction()));
+    boolean showFix = ContainerUtil.exists(cachedIntentions.getErrorFixes(),
+                                           descriptor -> IntentionManagerSettings.getInstance()
+                                             .isShowLightBulb(descriptor.getAction()));
 
-    return showRefactoringsBulb
-           ? AllIcons.Actions.RefactoringBulb
-           : showFix ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
+    return showFix ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
   }
 
   @NotNull
