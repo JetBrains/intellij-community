@@ -560,6 +560,50 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         )
     }
 
+    fun checkMapFunctions(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+            fun foo(map: MutableMap<String, String>) {
+              map.getOrDefault("a", "b")
+              map.remove("a", "b")
+            }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+
+        val getOrDefault = uFile.findElementByTextFromPsi<UCallExpression>("getOrDefault", strict = false)
+            .orFail("cant convert to UCallExpression")
+        val getOrDefaultResolved = getOrDefault.resolve()
+            .orFail("cant resolve from $getOrDefault")
+        TestCase.assertEquals("getOrDefault", getOrDefaultResolved.name)
+        TestCase.assertEquals("Map", getOrDefaultResolved.containingClass?.name)
+
+        val remove = uFile.findElementByTextFromPsi<UCallExpression>("remove", strict = false)
+            .orFail("cant convert to UCallExpression")
+        val removeResolved = remove.resolve()
+            .orFail("cant resolve from $remove")
+        TestCase.assertEquals("remove", removeResolved.name)
+        TestCase.assertEquals("Map", removeResolved.containingClass?.name)
+    }
+
+    fun checkListIterator(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+            fun foo() {
+              val li = ArrayList<String>().listIterator()
+              li.<caret>add("test")
+            }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+        TestCase.assertEquals("add", resolved.name)
+        TestCase.assertEquals("ListIterator", resolved.containingClass?.name)
+    }
+
     fun checkArgumentMappingDefaultValue(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
