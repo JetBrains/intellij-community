@@ -8,6 +8,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.ui.DocumentAdapter
 import javax.swing.AbstractButton
 import javax.swing.JComboBox
+import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
 
@@ -35,6 +36,26 @@ class ComboBoxPredicate<T>(private val comboBox: JComboBox<T>, private val predi
     comboBox.addActionListener {
       listener(predicate(comboBox.selectedItem as T?))
     }
+  }
+}
+
+/**
+ * Used for editable ComboBoxes
+ */
+fun JComboBox<*>.editableValueMatches(predicate: (Any?) -> Boolean): ComponentPredicate {
+  return EditableComboBoxPredicate(this, predicate)
+}
+
+private class EditableComboBoxPredicate(private val comboBox: JComboBox<*>, private val predicate: (Any?) -> Boolean) : ComponentPredicate() {
+  override fun invoke(): Boolean = predicate(comboBox.editor.item)
+
+  override fun addListener(listener: (Boolean) -> Unit) {
+    val textField = comboBox.editor.editorComponent as JTextField
+    textField.document.addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent) {
+        listener(invoke())
+      }
+    })
   }
 }
 

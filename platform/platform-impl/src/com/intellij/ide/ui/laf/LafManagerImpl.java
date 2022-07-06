@@ -93,6 +93,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static final String DARCULA_EDITOR_THEME_KEY = "Darcula.SavedEditorTheme";
   private static final String DEFAULT_EDITOR_THEME_KEY = "Default.SavedEditorTheme";
 
+  private static final String INTER_NAME = "Inter";
+  private static final int INTER_SIZE = 13;
+
   private static final LafReference SEPARATOR = new LafReference("", null, null);
 
   private static final @PropertyKey(resourceBundle = IdeBundle.BUNDLE) @NonNls String[] fileChooserTextKeys = {
@@ -162,6 +165,23 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   public UIManager.LookAndFeelInfo getDefaultDarkLaf() {
     return defaultDarkLaf.getValue();
+  }
+
+  @NotNull
+  public Font getDefaultFont() {
+    UISettings uiSettings = UISettings.getInstance();
+    Font result;
+    if (useInterFont()) {
+      float userScaleFactor = getDefaultUserScaleFactor();
+      result = StartupUiUtil.getFontWithFallback(INTER_NAME, Font.PLAIN, (int)(INTER_SIZE * userScaleFactor));
+    }
+    else if (uiSettings.getOverrideLafFonts()) {
+      result = getStoredLafFont();
+    }
+    else {
+      result = null;
+    }
+    return result == null ? JBFont.label() : result;
   }
 
   private static @Nullable UIManager.LookAndFeelInfo createLafInfo(@NotNull String fqn) {
@@ -1042,7 +1062,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     else if (useInterFont()) {
       storeOriginalFontDefaults(uiDefaults);
       float userScaleFactor = getDefaultUserScaleFactor();
-      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback("Inter", Font.PLAIN, (int)(13 * userScaleFactor)));
+      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(INTER_NAME, Font.PLAIN, (int)(INTER_SIZE * userScaleFactor)));
       JBUIScale.setUserScaleFactor(userScaleFactor);
     }
     else {
@@ -1055,10 +1075,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private float getDefaultUserScaleFactor() {
+    Font font = getStoredLafFont();
+    if (font == null) {
+      font = JBFont.label();
+    }
+    return JBUIScale.getFontScale(font.getSize());
+  }
+
+  @Nullable
+  private Font getStoredLafFont() {
     LafReference lf = myCurrentLaf == null ? null : getLookAndFeelReference();
     Map<String, Object> lfDefaults = myStoredDefaults.get(lf);
-    Font font = lfDefaults == null ? JBFont.label() : ((Font)lfDefaults.get("Label.font"));
-    return JBUIScale.getFontScale(font.getSize());
+    return lfDefaults == null ? null : (Font)lfDefaults.get("Label.font");
   }
 
   private void restoreOriginalFontDefaults(UIDefaults defaults) {
