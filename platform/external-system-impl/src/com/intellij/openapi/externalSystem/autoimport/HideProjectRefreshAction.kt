@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.DumbAwareAction
@@ -18,6 +19,8 @@ class HideProjectRefreshAction : DumbAwareAction() {
     val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
     e.presentation.isEnabled = notificationAware.isNotificationVisible()
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   init {
     templatePresentation.text = ExternalSystemBundle.message("external.system.reload.notification.action.hide.text")

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.navigator.actions;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -37,5 +38,10 @@ public class RemoveMavenRunConfigurationAction extends AnAction {
 
     boolean enabled = settings != null && project != null;
     e.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }
