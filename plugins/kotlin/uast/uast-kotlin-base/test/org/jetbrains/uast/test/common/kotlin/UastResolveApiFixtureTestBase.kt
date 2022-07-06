@@ -872,4 +872,83 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals(UastCallKind.CONSTRUCTOR_CALL, uCallExpression.kind)
     }
 
+    fun checkOperatorOverloads(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                data class Point(val x: Int, val y: Int) {
+                  operator fun unaryMinus() = Point(-x, -y)
+                  operator fun inc() = Point(x + 1, y + 1)
+                  
+                  operator fun plus(increment: Int) = Point(x + increment, y + increment)
+                  operator fun plus(other: Point) = Point(x + other.x, y + other.y)
+                }
+                operator fun Point.unaryPlus() = Point(+x, +y)
+                operator fun Point.dec() = Point(x - 1, y - 1)
+                
+                fun foo(u: Point, v: Point) {
+                  -u
+                  +u
+                  --u
+                  ++u
+                  u--
+                  u++
+                  u + 1
+                  u + v
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val minusU = uFile.findElementByTextFromPsi<UPrefixExpression>("-u", strict = false)
+            .orFail("cant convert to UPrefixExpression")
+        val unaryMinus = minusU.resolveOperator()
+        TestCase.assertEquals("unaryMinus", unaryMinus?.name)
+        TestCase.assertEquals("Point", unaryMinus?.containingClass?.name)
+
+        val plusU = uFile.findElementByTextFromPsi<UPrefixExpression>("+u", strict = false)
+            .orFail("cant convert to UPrefixExpression")
+        val unaryPlus = plusU.resolveOperator()
+        TestCase.assertEquals("unaryPlus", unaryPlus?.name)
+        TestCase.assertEquals("MainKt", unaryPlus?.containingClass?.name)
+
+        val minusMinusU = uFile.findElementByTextFromPsi<UPrefixExpression>("--u", strict = false)
+            .orFail("cant convert to UPrefixExpression")
+        val dec1 = minusMinusU.resolveOperator()
+        TestCase.assertEquals("dec", dec1?.name)
+        TestCase.assertEquals("MainKt", dec1?.containingClass?.name)
+
+        val plusPlusU = uFile.findElementByTextFromPsi<UPrefixExpression>("++u", strict = false)
+            .orFail("cant convert to UPrefixExpression")
+        val inc1 = plusPlusU.resolveOperator()
+        TestCase.assertEquals("inc", inc1?.name)
+        TestCase.assertEquals("Point", inc1?.containingClass?.name)
+
+        val uMinusMinus = uFile.findElementByTextFromPsi<UPostfixExpression>("u--", strict = false)
+            .orFail("cant convert to UPostfixExpression")
+        val dec2 = uMinusMinus.resolveOperator()
+        TestCase.assertEquals("dec", dec2?.name)
+        TestCase.assertEquals("MainKt", dec2?.containingClass?.name)
+
+        val uPlusPlus = uFile.findElementByTextFromPsi<UPostfixExpression>("u++", strict = false)
+            .orFail("cant convert to UPostfixExpression")
+        val inc2 = uPlusPlus.resolveOperator()
+        TestCase.assertEquals("inc", inc2?.name)
+        TestCase.assertEquals("Point", inc2?.containingClass?.name)
+
+        val uPlusOne = uFile.findElementByTextFromPsi<UBinaryExpression>("u + 1", strict = false)
+            .orFail("cant convert to UBinaryExpression")
+        val plusOne = uPlusOne.resolveOperator()
+        TestCase.assertEquals("plus", plusOne?.name)
+        TestCase.assertEquals("increment", plusOne?.parameters?.get(0)?.name)
+        TestCase.assertEquals("Point", plusOne?.containingClass?.name)
+
+        val uPlusV = uFile.findElementByTextFromPsi<UBinaryExpression>("u + v", strict = false)
+            .orFail("cant convert to UBinaryExpression")
+        val plusPoint = uPlusV.resolveOperator()
+        TestCase.assertEquals("plus", plusPoint?.name)
+        TestCase.assertEquals("other", plusPoint?.parameters?.get(0)?.name)
+        TestCase.assertEquals("Point", plusPoint?.containingClass?.name)
+    }
+
 }
