@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="kotlin.base.platforms" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.project-model" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.psi" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.resources" scope="RUNTIME" />

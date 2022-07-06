@@ -13,6 +13,7 @@ import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.*
@@ -191,7 +192,7 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
             addArguments(context, element, lookupObject)
             context.commitDocument()
 
-            shortenReferencesForFirCompletion(targetFile, TextRange(context.startOffset, context.tailOffset))
+            shortenReferencesInRange(targetFile, TextRange(context.startOffset, context.tailOffset))
         } else {
             addArguments(context, element, lookupObject)
             context.commitDocument()

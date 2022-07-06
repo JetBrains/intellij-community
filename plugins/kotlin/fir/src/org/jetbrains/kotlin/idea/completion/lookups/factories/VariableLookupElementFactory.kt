@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderVariable
@@ -132,7 +133,7 @@ private object VariableInsertionHandler : InsertHandler<LookupElement> {
                 )
 
                 context.commitDocument()
-                shortenReferencesForFirCompletion(targetFile, TextRange(context.startOffset, context.tailOffset))
+                shortenReferencesInRange(targetFile, TextRange(context.startOffset, context.tailOffset))
             }
 
             is ImportStrategy.DoNothing -> {

@@ -10,11 +10,11 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.shortenReferencesForFirCompletion
 import org.jetbrains.kotlin.idea.completion.lookups.withSymbolInfo
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -52,7 +52,7 @@ private object ClassifierInsertionHandler : InsertHandler<LookupElement> {
             context.document.replaceString(context.startOffset, context.tailOffset, fqName.render())
             context.commitDocument()
 
-            shortenReferencesForFirCompletion(targetFile, TextRange(context.startOffset, context.tailOffset))
+            shortenReferencesInRange(targetFile, TextRange(context.startOffset, context.tailOffset))
         }
     }
 }

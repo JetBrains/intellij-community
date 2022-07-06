@@ -63,6 +63,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.code-insight",
     "kotlin.base.inspections",
     "kotlin.base.jps",
+    "kotlin.base.analysis-api.utils",
     "kotlin.base.compiler-configuration-ui",
     "kotlin.base.obsolete-compat",
     "kotlin.base.resources",

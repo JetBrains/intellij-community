@@ -12,10 +12,10 @@ import org.jetbrains.kotlin.builtins.StandardNames.FqNames.arrayClassFqNameToPri
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.api.applicator.applicator
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.fir.api.fixes.HLApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.fir.api.fixes.withInput
-import org.jetbrains.kotlin.idea.util.shortenReferences
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.ArrayFqNames

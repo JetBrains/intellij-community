@@ -11,15 +11,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtReferenceShortenerMixIn
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.api.applicator.applicator
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.intentions.ChooseValueExpression
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.shortenReferences
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory

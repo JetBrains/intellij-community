@@ -35,6 +35,7 @@
     <orderEntry type="module" module-name="kotlin.base.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.statistics" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.obsolete-compat" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fe10.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" scope="RUNTIME" />

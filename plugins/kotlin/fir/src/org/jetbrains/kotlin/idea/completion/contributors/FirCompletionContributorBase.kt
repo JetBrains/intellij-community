@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.shortenReferencesInRange
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue

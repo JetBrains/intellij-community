@@ -11,9 +11,9 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.KotlinFirIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
-import org.jetbrains.kotlin.idea.util.shortenReferencesInRange
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSuperExpression
@@ -42,15 +42,6 @@ internal fun CharSequence.indexOfSkippingSpace(c: Char, startIndex: Int): Int? {
         if (currentChar != ' ' && currentChar != '\t') return null
     }
     return null
-}
-
-internal fun shortenReferencesForFirCompletion(targetFile: KtFile, textRange: TextRange) {
-    val shortenings = withAllowedResolve {
-        analyze(targetFile) {
-            collectPossibleReferenceShortenings(targetFile, textRange)
-        }
-    }
-    shortenings.invokeShortening()
 }
 
 
