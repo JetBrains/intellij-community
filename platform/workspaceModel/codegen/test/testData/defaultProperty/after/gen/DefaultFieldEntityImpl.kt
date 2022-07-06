@@ -1,6 +1,6 @@
-package com.intellij.workspaceModel.storage.entities.test.api
+package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.deft.api.annotations.Ignore
+import com.intellij.workspaceModel.deft.api.annotations.Default
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -13,36 +13,35 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class IgnoredFieldsEntityImpl: IgnoredFieldsEntity, WorkspaceEntityBase() {
-    
+open class DefaultFieldEntityImpl: DefaultFieldEntity, WorkspaceEntityBase() {
+
     companion object {
-        
-        
+
+
         val connections = listOf<ConnectionId>(
         )
 
     }
-        
-    @JvmField var _descriptor: AnotherDataClass? = null
-    override val descriptor: AnotherDataClass
-        get() = _descriptor!!
-                        
-    override var description: String = super<IgnoredFieldsEntity>.description
-    
-    override var anotherVersion: Int = super<IgnoredFieldsEntity>.anotherVersion
-    
+
+    override var version: Int = 0
+    @JvmField var _data: TestData? = null
+    override val data: TestData
+        get() = _data!!
+
+    override var anotherVersion: Int = super<DefaultFieldEntity>.anotherVersion
+
+    override var description: String = super<DefaultFieldEntity>.description
+
     override fun connectionIdList(): List<ConnectionId> {
         return connections
     }
 
-    class Builder(val result: IgnoredFieldsEntityData?): ModifiableWorkspaceEntityBase<IgnoredFieldsEntity>(), IgnoredFieldsEntity.Builder {
-        constructor(): this(IgnoredFieldsEntityData())
-        
+    class Builder(val result: DefaultFieldEntityData?): ModifiableWorkspaceEntityBase<DefaultFieldEntity>(), DefaultFieldEntity.Builder {
+        constructor(): this(DefaultFieldEntityData())
+
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
@@ -50,61 +49,61 @@ open class IgnoredFieldsEntityImpl: IgnoredFieldsEntity, WorkspaceEntityBase() {
                     return
                 }
                 else {
-                    error("Entity IgnoredFieldsEntity is already created in a different builder")
+                    error("Entity DefaultFieldEntity is already created in a different builder")
                 }
             }
-            
+
             this.diff = builder
             this.snapshot = builder
             addToBuilder()
             this.id = getEntityData().createEntityId()
-            
+
             // Process linked entities that are connected without a builder
             processLinkedEntities(builder)
             checkInitialization() // TODO uncomment and check failed tests
         }
-    
+
         fun checkInitialization() {
             val _diff = diff
-            if (!getEntityData().isDescriptorInitialized()) {
-                error("Field IgnoredFieldsEntity#descriptor should be initialized")
-            }
             if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field IgnoredFieldsEntity#entitySource should be initialized")
+                error("Field DefaultFieldEntity#entitySource should be initialized")
+            }
+            if (!getEntityData().isDataInitialized()) {
+                error("Field DefaultFieldEntity#data should be initialized")
             }
         }
-        
+
         override fun connectionIdList(): List<ConnectionId> {
             return connections
         }
-    
-        
-        override var descriptor: AnotherDataClass
-            get() = getEntityData().descriptor
+
+
+        override var version: Int
+            get() = getEntityData().version
             set(value) {
                 checkModificationAllowed()
-                getEntityData().descriptor = value
-                changedProperty.add("descriptor")
-                
+                getEntityData().version = value
+                changedProperty.add("version")
             }
-            
+
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
                 checkModificationAllowed()
                 getEntityData().entitySource = value
                 changedProperty.add("entitySource")
-                
+
             }
-            
-        override var description: String
-            get() = getEntityData().description
+
+        override var data: TestData
+            get() = getEntityData().data
             set(value) {
                 checkModificationAllowed()
-                getEntityData().description = value
-                changedProperty.add("description")
+                getEntityData().data = value
+                changedProperty.add("data")
+
             }
-            
+
         override var anotherVersion: Int
             get() = getEntityData().anotherVersion
             set(value) {
@@ -112,21 +111,31 @@ open class IgnoredFieldsEntityImpl: IgnoredFieldsEntity, WorkspaceEntityBase() {
                 getEntityData().anotherVersion = value
                 changedProperty.add("anotherVersion")
             }
-        
-        override fun getEntityData(): IgnoredFieldsEntityData = result ?: super.getEntityData() as IgnoredFieldsEntityData
-        override fun getEntityClass(): Class<IgnoredFieldsEntity> = IgnoredFieldsEntity::class.java
+
+        override var description: String
+            get() = getEntityData().description
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().description = value
+                changedProperty.add("description")
+            }
+
+        override fun getEntityData(): DefaultFieldEntityData = result ?: super.getEntityData() as DefaultFieldEntityData
+        override fun getEntityClass(): Class<DefaultFieldEntity> = DefaultFieldEntity::class.java
     }
 }
-    
-class IgnoredFieldsEntityData : WorkspaceEntityData<IgnoredFieldsEntity>() {
-    lateinit var descriptor: AnotherDataClass
-    var description: String = "Default description"
+
+class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
+    var version: Int = 0
+    lateinit var data: TestData
     var anotherVersion: Int = 0
+    var description: String = "Default description"
 
-    fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<IgnoredFieldsEntity> {
-        val modifiable = IgnoredFieldsEntityImpl.Builder(null)
+    fun isDataInitialized(): Boolean = ::data.isInitialized
+
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<DefaultFieldEntity> {
+        val modifiable = DefaultFieldEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
           modifiable.snapshot = diff
@@ -137,11 +146,12 @@ class IgnoredFieldsEntityData : WorkspaceEntityData<IgnoredFieldsEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: EntityStorage): IgnoredFieldsEntity {
-        val entity = IgnoredFieldsEntityImpl()
-        entity._descriptor = descriptor
-        entity.description = description
+    override fun createEntity(snapshot: EntityStorage): DefaultFieldEntity {
+        val entity = DefaultFieldEntityImpl()
+        entity.version = version
+        entity._data = data
         entity.anotherVersion = anotherVersion
+        entity.description = description
         entity.entitySource = entitySource
         entity.snapshot = snapshot
         entity.id = createEntityId()
@@ -149,7 +159,7 @@ class IgnoredFieldsEntityData : WorkspaceEntityData<IgnoredFieldsEntity>() {
     }
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
-        return IgnoredFieldsEntity::class.java
+        return DefaultFieldEntity::class.java
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
@@ -161,33 +171,36 @@ class IgnoredFieldsEntityData : WorkspaceEntityData<IgnoredFieldsEntity>() {
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false
-        
-        other as IgnoredFieldsEntityData
-        
-        if (this.descriptor != other.descriptor) return false
+
+        other as DefaultFieldEntityData
+
+        if (this.version != other.version) return false
         if (this.entitySource != other.entitySource) return false
-        if (this.description != other.description) return false
+        if (this.data != other.data) return false
         if (this.anotherVersion != other.anotherVersion) return false
+        if (this.description != other.description) return false
         return true
     }
 
     override fun equalsIgnoringEntitySource(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false
-        
-        other as IgnoredFieldsEntityData
-        
-        if (this.descriptor != other.descriptor) return false
-        if (this.description != other.description) return false
+
+        other as DefaultFieldEntityData
+
+        if (this.version != other.version) return false
+        if (this.data != other.data) return false
         if (this.anotherVersion != other.anotherVersion) return false
+        if (this.description != other.description) return false
         return true
     }
 
     override fun hashCode(): Int {
         var result = entitySource.hashCode()
-        result = 31 * result + descriptor.hashCode()
-        result = 31 * result + description.hashCode()
+        result = 31 * result + version.hashCode()
+        result = 31 * result + data.hashCode()
         result = 31 * result + anotherVersion.hashCode()
+        result = 31 * result + description.hashCode()
         return result
     }
 }

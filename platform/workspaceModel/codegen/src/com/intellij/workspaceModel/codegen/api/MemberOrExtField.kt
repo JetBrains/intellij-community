@@ -2,8 +2,6 @@ package com.intellij.workspaceModel.codegen.deft
 
 import org.jetbrains.deft.Obj
 import com.intellij.workspaceModel.codegen.deft.model.DefField
-import com.intellij.workspaceModel.codegen.deft.ObjType
-import com.intellij.workspaceModel.codegen.deft.ValueType
 
 abstract class MemberOrExtField<P : Obj, V>(
   val owner: ObjType<P, *>,
@@ -18,7 +16,7 @@ abstract class MemberOrExtField<P : Obj, V>(
   var constructorField = false
   var hasDefault: Field.Default = Field.Default.none
   var defaultValue: String? = null
-  var ignored: Boolean = false
+  var final: Boolean = false
 
   val hasSetter: Boolean
     get() =

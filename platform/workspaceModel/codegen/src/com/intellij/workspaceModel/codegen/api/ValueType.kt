@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.codegen.deft
 
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
-import com.intellij.workspaceModel.codegen.deft.Field
 
 sealed class ValueType<V> {
   open fun link(linker: ObjModule) = Unit
@@ -101,7 +100,7 @@ class TStructure<T : Obj, B : ObjBuilder<T>>(
         else _allFields.add(it)
       }
     }
-    _allFields.addAll(_declaredFields.filter { !it.ignored })
+    _allFields.addAll(_declaredFields.filter { !it.final })
 
     if (allFields.isEmpty()) {
       minFieldId = 0

@@ -46,6 +46,14 @@ class EntityCodeGenTest: KotlinLightCodeInsightFixtureTestCase() {
     doTest()
   }
 
+  fun testFinalProperty() {
+    doTest()
+  }
+
+  fun testDefaultProperty() {
+    doTest()
+  }
+
   private fun doTest() {
     runWriteActionAndWait {
       CodeWriter.generate(project, getSourceRootVfu(), false) { genFolder }
