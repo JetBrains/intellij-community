@@ -21,7 +21,7 @@ import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.lz
 
 @ApiStatus.Internal
-class UastFakeLightMethod(
+open class UastFakeLightMethod(
     original: KtFunction,
     containingClass: PsiClass,
 ) : UastFakeLightMethodBase<KtFunction>(original, containingClass) {

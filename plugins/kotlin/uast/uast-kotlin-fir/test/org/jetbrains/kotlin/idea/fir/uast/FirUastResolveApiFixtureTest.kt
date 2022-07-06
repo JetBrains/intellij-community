@@ -142,6 +142,14 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("AssigningArrayElementType", ::checkAssigningArrayElementType)
     }
 
+    fun testMapFunctions() {
+        doCheck("MapFunctions", ::checkMapFunctions)
+    }
+
+    fun testListIterator() {
+        doCheck("ListIterator", ::checkListIterator)
+    }
+
     fun testDivByZero() {
         doCheck("DivByZero", ::checkDivByZero)
     }
