@@ -4,6 +4,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.find.SearchSession;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,11 @@ public class ToggleWholeWordsOnlyAction extends EditorHeaderToggleAction impleme
           AllIcons.Actions.Words,
           AllIcons.Actions.WordsHovered,
           AllIcons.Actions.WordsSelected);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

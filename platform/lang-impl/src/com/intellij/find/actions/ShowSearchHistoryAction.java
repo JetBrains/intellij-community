@@ -3,6 +3,7 @@ package com.intellij.find.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,11 @@ public class ShowSearchHistoryAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     //do nothing, it's just shortcut-holding action
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
