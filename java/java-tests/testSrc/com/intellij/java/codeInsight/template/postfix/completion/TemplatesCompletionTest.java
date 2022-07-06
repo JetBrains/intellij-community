@@ -11,7 +11,6 @@ import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLooku
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.util.containers.ContainerUtil;
@@ -183,15 +182,8 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
 
     configureByFile();
-    RegistryValue value = Registry.get("ide.completion.show.live.templates.on.top");
-    boolean defaultShowLiveTemplatesOnTop = value.asBoolean();
-    try {
-      value.setValue(false);
-      type(".");
-      myFixture.assertPreferredCompletionItems(0, "parents");
-    } finally {
-      value.setValue(defaultShowLiveTemplatesOnTop);
-    }
+    type(".");
+    myFixture.assertPreferredCompletionItems(0, "parents");
 
     type("\t");
     assertNull(getLookup());
