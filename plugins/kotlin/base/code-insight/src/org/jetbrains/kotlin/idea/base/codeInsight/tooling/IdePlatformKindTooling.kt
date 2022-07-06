@@ -19,6 +19,8 @@ abstract class IdePlatformKindTooling {
 
     abstract val libraryKind: PersistentLibraryKind<*>?
 
+    abstract val testIconProvider: AbstractGenericTestIconProvider
+
     abstract fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon?
 
     abstract fun acceptsAsEntryPoint(function: KtFunction): Boolean

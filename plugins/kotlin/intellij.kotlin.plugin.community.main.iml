@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="kotlin.base.platforms" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.analysis-api-helpers" exported="" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" exported="" />
     <orderEntry type="module" module-name="kotlin.base.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.base.facet" exported="" />

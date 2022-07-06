@@ -7,12 +7,12 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 @ApiStatus.Internal
-interface KotlinMainFunctionLocatingService {
+interface KotlinMainFunctionDetector {
     fun isMain(function: KtNamedFunction): Boolean
 
     fun hasMain(declarations: List<KtDeclaration>): Boolean
 
     companion object {
-        fun getInstance(): KotlinMainFunctionLocatingService = service()
+        fun getInstance(): KotlinMainFunctionDetector = service()
     }
 }

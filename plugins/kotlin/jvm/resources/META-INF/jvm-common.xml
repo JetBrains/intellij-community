@@ -105,8 +105,8 @@
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
-        <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService"
-                            serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFE10MainFunctionLocatingService"/>
+        <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector"
+                            serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFE10MainFunctionDetector"/>
 
         <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
         <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceRootDetector"/>
@@ -201,7 +201,7 @@
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JvmIdePlatformKindTooling"/>
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JsIdePlatformKindTooling"/>
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10NativeIdePlatformKindTooling"/>
-        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.codeInsight.tooling.CommonIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10CommonIdePlatformKindTooling"/>
 
         <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.DiagnosticSuppressorForDebugger"/>
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
@@ -229,10 +229,6 @@
         <kotlinTestFramework id="delegateTestFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinDelegatingTestFramework"/>
     </extensions>
 
-    <extensionPoints>
-      <extensionPoint qualifiedName="org.jetbrains.kotlin.kotlinTestFramework"
-                      interface="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework" dynamic="true"/>
-    </extensionPoints>
     <resource-bundle>messages.KotlinBundle</resource-bundle>
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider"

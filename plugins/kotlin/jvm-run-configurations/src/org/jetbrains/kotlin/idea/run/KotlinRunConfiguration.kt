@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle.message
-import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService
+import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
@@ -469,7 +469,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 return true
             }
 
-            return KotlinMainFunctionLocatingService.getInstance().hasMain(mainFunCandidates)
+            return KotlinMainFunctionDetector.getInstance().hasMain(mainFunCandidates)
         }
 
     }

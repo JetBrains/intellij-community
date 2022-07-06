@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService
+import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.psi.*
@@ -27,7 +27,7 @@ private fun getMainFunCandidates(psiClass: PsiClass): Collection<KtNamedFunction
 }
 
 internal fun findMainInClass(psiClass: PsiClass): KtNamedFunction? {
-    val mainLocatingService = KotlinMainFunctionLocatingService.getInstance()
+    val mainLocatingService = KotlinMainFunctionDetector.getInstance()
 
     return getMainFunCandidates(psiClass).find { mainLocatingService.isMain(it) }
 }
@@ -36,7 +36,7 @@ internal fun findMainInClass(psiClass: PsiClass): KtNamedFunction? {
  * Allows to find the nearest container (i.e. a class, an object or a file) which
  * has a 'main' function.
  *
- * Uses [KotlinMainFunctionLocatingService] to detect the main.
+ * Uses [KotlinMainFunctionDetector] to detect the main.
  */
 object EntryPointContainerFinder {
     fun find(locationElement: PsiElement): KtDeclarationContainer? {
@@ -44,7 +44,7 @@ object EntryPointContainerFinder {
         val psiFile = locationElement.containingFile
         if (!(psiFile is KtFile && RootKindFilter.projectAndLibrarySources.matches(psiFile))) return null
 
-        val mainLocatingService = KotlinMainFunctionLocatingService.getInstance()
+        val mainLocatingService = KotlinMainFunctionDetector.getInstance()
 
         var currentElement = locationElement.declarationContainer(false)
         // look up outside: from the inner declaration to the most top level declarations
@@ -61,7 +61,7 @@ object EntryPointContainerFinder {
     }
 
     private fun findInFile(locationElement: KtFile): KtDeclarationContainer? {
-        val mainLocatingService = KotlinMainFunctionLocatingService.getInstance()
+        val mainLocatingService = KotlinMainFunctionDetector.getInstance()
         // look up inside declarations
         fun KtClassOrObject.lookupDeepFirstMainDeclarations(): KtDeclarationContainer? {
             if (this.isLocal) return null

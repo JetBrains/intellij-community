@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import javax.swing.Icon
 
-internal class CommonIdePlatformKindTooling : IdePlatformKindTooling() {
+abstract class AbstractCommonIdePlatformKindTooling : IdePlatformKindTooling() {
     private companion object {
         // TODO: KotlinCommonMavenConfigurator
         private const val MAVEN_COMMON_STDLIB_ID = "kotlin-stdlib-common"

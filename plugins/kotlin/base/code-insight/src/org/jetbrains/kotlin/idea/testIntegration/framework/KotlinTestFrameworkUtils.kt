@@ -1,22 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
-internal object KotlinTestFrameworkUtils {
-    /**
-     * Checks whether a class with [qualifiedName] exists in the (module + its dependencies) scope.
-     * @param namedDeclaration defines the module.
-     */
-    fun hasClass(qualifiedName: String, namedDeclaration: KtNamedDeclaration) =
-        JavaPsiFacade.getInstance(namedDeclaration.project)
-            .findClass(qualifiedName, namedDeclaration.resolveScope) != null
-
+@ApiStatus.Internal
+object KotlinTestFrameworkUtils {
     inline fun <reified T : Any, E : KtElement> cached(element: E, crossinline function: (E) -> T?): T? {
         return CachedValuesManager.getCachedValue(element) {
             CachedValueProvider.Result.create({ function(element) }, PsiModificationTracker.MODIFICATION_COUNT)

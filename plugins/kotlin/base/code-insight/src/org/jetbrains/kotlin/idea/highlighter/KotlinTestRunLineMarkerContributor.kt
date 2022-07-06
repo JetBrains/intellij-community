@@ -9,7 +9,7 @@ import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinBaseCodeInsightBundle
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService
+import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
@@ -113,7 +113,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
     }
 
     private fun getOrder(declaration: KtNamedDeclaration): Int {
-        val mainFunctionDetector = KotlinMainFunctionLocatingService.getInstance()
+        val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
 
         if (declaration is KtClassOrObject && mainFunctionDetector.hasMain(declaration.companionObjects)) {
             return 1
