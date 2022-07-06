@@ -39,9 +39,21 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public abstract class HighlightingChooser extends ComboBoxAction implements DumbAware {
+  public static final Map<TextAttributesKey, Supplier<@Nls String>> ATTRIBUTES_CUSTOM_NAMES = new HashMap<>();
+
+  static {
+    ATTRIBUTES_CUSTOM_NAMES.put(CodeInsightColors.INFORMATION_ATTRIBUTES,
+                                InspectionsBundle.messagePointer("inspection.no.highlighting"));
+    ATTRIBUTES_CUSTOM_NAMES.put(CodeInsightColors.CONSIDERATION_ATTRIBUTES,
+                                InspectionsBundle.messagePointer("inspection.choose.highlighting"));
+  }
+
   private HighlightPopup myPopup = null;
   private final SeverityRegistrar mySeverityRegistrar;
 
@@ -52,8 +64,8 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
   abstract void onKeyChosen(@NotNull TextAttributesKey key);
 
   public void setChosen(@NotNull TextAttributesKey key) {
-    if (key.equals(CodeInsightColors.INFORMATION_ATTRIBUTES)) {
-      getTemplatePresentation().setText(InspectionsBundle.message("inspection.no.highlighting"));
+    if (ATTRIBUTES_CUSTOM_NAMES.containsKey(key)) {
+      getTemplatePresentation().setText(ATTRIBUTES_CUSTOM_NAMES.get(key));
       return;
     }
 
