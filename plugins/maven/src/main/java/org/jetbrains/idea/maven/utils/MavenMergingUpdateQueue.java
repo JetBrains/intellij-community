@@ -134,7 +134,7 @@ public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
         mySuspendCounter.set(0);
         // todo ask build team to investigate why MavenSetupProjectTest `test project import` failed with that error
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          LOG.error("Invalid suspend counter state", new Exception());
+          LOG.warn("Invalid suspend counter state", new Exception());
         }
       }
 

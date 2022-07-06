@@ -139,7 +139,8 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
       openFile(file, project);
     }
     else {
-      PlatformProjectOpenProcessor.createTempProjectAndOpenFile(filePath, OpenProjectTask.build().withProjectToClose(project));
+      PlatformProjectOpenProcessor.Companion
+        .createTempProjectAndOpenFile$intellij_platform_ide_impl(filePath, OpenProjectTask.build().withProjectToClose(project));
     }
   }
 

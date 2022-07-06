@@ -10,7 +10,8 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.FileCopyPasteUtil
-import com.intellij.ide.impl.ProjectUtil.tryOpenFiles
+import com.intellij.ide.impl.ProjectUtil.openOrImportFilesAsync
+import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
@@ -222,7 +223,9 @@ private fun createDropFileTarget(): DnDNativeTarget {
     override fun drop(event: DnDEvent) {
       val files = FileCopyPasteUtil.getFileListFromAttachedObject(event.attachedObject)
       if (!files.isEmpty()) {
-        tryOpenFiles(project = null, list = files.map(File::toPath), location = "WelcomeFrame")
+        runBlockingUnderModalProgress {
+          openOrImportFilesAsync(list = files.map(File::toPath), location = "WelcomeFrame")
+        }
       }
     }
   }

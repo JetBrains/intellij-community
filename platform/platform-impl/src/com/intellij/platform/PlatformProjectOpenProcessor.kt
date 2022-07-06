@@ -43,6 +43,7 @@ private val EP_NAME = ExtensionPointName<DirectoryProjectConfigurator>("com.inte
 class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectOpenProcessor {
   enum class Option {
     FORCE_NEW_FRAME,
+
     @Suppress("unused")
     TEMP_PROJECT
   }
@@ -97,9 +98,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return doOpenProject(Path.of(virtualFile.path), openProjectOptions)
     }
 
-    @ApiStatus.Internal
-    @JvmStatic
-    fun createTempProjectAndOpenFile(file: Path, options: OpenProjectTask): Project? {
+    internal fun createTempProjectAndOpenFile(file: Path, options: OpenProjectTask): Project? {
       val dummyProjectName = file.fileName.toString()
       val baseDir = FileUtilRt.createTempDirectory(dummyProjectName, null, true).toPath()
       val copy = options.copy(isNewProject = true, projectName = dummyProjectName, runConfigurators = true, preparedToOpen = { module ->
@@ -119,13 +118,39 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
+    private suspend fun createTempProjectAndOpenFileAsync(file: Path, options: OpenProjectTask): Project? {
+      val dummyProjectName = file.fileName.toString()
+      val baseDir = FileUtilRt.createTempDirectory(dummyProjectName, null, true).toPath()
+      val copy = options.copy(
+        isNewProject = true,
+        projectName = dummyProjectName,
+        runConfigurators = true,
+        preparedToOpen = { module ->
+          // adding content root for chosen (single) file
+          ModuleRootModificationUtil.updateModel(module) { model ->
+            val entries = model.contentEntries
+            // remove custom content entry created for temp directory
+            if (entries.size == 1) {
+              model.removeContentEntry(entries[0])
+            }
+            model.addContentEntry(VfsUtilCore.pathToUrl(file.toString()))
+          }
+        }
+      )
+      TrustedPaths.getInstance().setProjectPathTrusted(baseDir, true)
+      val project = ProjectManagerEx.getInstanceEx().openProjectAsync(baseDir, copy) ?: return null
+      openFileFromCommandLine(project, file, copy.line, copy.column)
+      return project
+    }
+
     @ApiStatus.Internal
     @JvmStatic
     fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
       LOG.info("Opening $file")
 
       if (Files.isDirectory(file)) {
-        return ProjectManagerEx.getInstanceEx().openProject(file, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null))
+        return ProjectManagerEx.getInstanceEx().openProject(file,
+                                                            createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null))
       }
 
       var options = originalOptions
@@ -167,7 +192,69 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         LOG.info("Project directory found: $baseDir")
       }
 
-      val project = ProjectManagerEx.getInstanceEx().openProject(baseDir, if (baseDir == file) options else options.copy(projectName = file.fileName.toString()))
+      val project = ProjectManagerEx.getInstanceEx().openProject(
+        projectStoreBaseDir = baseDir,
+        options = if (baseDir == file) options else options.copy(projectName = file.fileName.toString())
+      )
+      if (project != null && file != baseDir) {
+        openFileFromCommandLine(project, file, options.line, options.column)
+      }
+      return project
+    }
+
+    suspend fun openProjectAsync(file: Path, originalOptions: OpenProjectTask = OpenProjectTask()): Project? {
+      LOG.info("Opening $file")
+
+      if (Files.isDirectory(file)) {
+        return ProjectManagerEx.getInstanceEx().openProjectAsync(
+          projectStoreBaseDir = file,
+          options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null),
+        )
+      }
+
+      var options = originalOptions
+      if (LightEditService.getInstance() != null) {
+        if (LightEditService.getInstance().isForceOpenInLightEditMode) {
+          val lightEditProject = LightEditService.getInstance().openFile(file, false)
+          if (lightEditProject != null) {
+            return lightEditProject
+          }
+        }
+      }
+
+      var baseDirCandidate = file.parent
+      while (baseDirCandidate != null && !Files.exists(baseDirCandidate.resolve(Project.DIRECTORY_STORE_FOLDER))) {
+        baseDirCandidate = baseDirCandidate.parent
+      }
+
+      val baseDir: Path
+      // no reasonable directory -> create new temp one or use parent
+      if (baseDirCandidate == null) {
+        LOG.info("No project directory found")
+        if (LightEditService.getInstance() != null) {
+          if (LightEditService.getInstance().isLightEditEnabled && !LightEditService.getInstance().isPreferProjectMode) {
+            val lightEditProject = LightEditService.getInstance().openFile(file, true)
+            if (lightEditProject != null) {
+              return lightEditProject
+            }
+          }
+        }
+        if (Registry.`is`("ide.open.file.in.temp.project.dir")) {
+          return createTempProjectAndOpenFileAsync(file, options)
+        }
+
+        baseDir = file.parent
+        options = options.copy(isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)))
+      }
+      else {
+        baseDir = baseDirCandidate
+        LOG.info("Project directory found: $baseDir")
+      }
+
+      val project = ProjectManagerEx.getInstanceEx().openProjectAsync(
+        projectStoreBaseDir = baseDir,
+        options = if (baseDir == file) options else options.copy(projectName = file.fileName.toString())
+      )
       if (project != null && file != baseDir) {
         openFileFromCommandLine(project, file, options.line, options.column)
       }
@@ -260,7 +347,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
-    return doOpenProject(baseDir, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(forceOpenInNewFrame = forceOpenInNewFrame))
+    return doOpenProject(baseDir, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(
+      forceOpenInNewFrame = forceOpenInNewFrame))
   }
 
   // force open in a new frame if temp project

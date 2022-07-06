@@ -679,14 +679,50 @@ object ProjectUtil {
     return result
   }
 
+  suspend fun openOrImportFilesAsync(list: List<Path>, location: String, projectToClose: Project? = null): Project? {
+    for (file in list) {
+      openOrImportAsync(file = file, options = OpenProjectTask {
+        this.projectToClose = projectToClose
+        forceOpenInNewFrame = true
+      })?.let { return it }
+    }
+
+    var result: Project? = null
+    for (file in list) {
+      if (!Files.exists(file)) {
+        continue
+      }
+
+      LOG.debug("$location: open file ", file)
+      if (projectToClose == null) {
+        val processor = CommandLineProjectOpenProcessor.getInstanceIfExists()
+        if (processor != null) {
+          val opened = PlatformProjectOpenProcessor.openProjectAsync(file)
+          if (opened != null && result == null) {
+            result = opened
+          }
+        }
+      }
+      else {
+        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.toString()))
+        if (virtualFile != null && virtualFile.isValid) {
+          OpenFileAction.openFile(virtualFile, projectToClose)
+        }
+        result = projectToClose
+      }
+    }
+    return result
+  }
+
   //todo: merge somehow with getBaseDir
   @JvmStatic
   fun getProjectsPath(): @SystemDependent String {
     val application = ApplicationManager.getApplication()
     val fromSettings = if (application == null || application.isHeadlessEnvironment) null else GeneralSettings.getInstance().defaultProjectDirectory
-    if (StringUtil.isNotEmpty(fromSettings)) {
-      return PathManager.getAbsolutePath(fromSettings!!)
+    if (!fromSettings.isNullOrEmpty()) {
+      return PathManager.getAbsolutePath(fromSettings)
     }
+
     if (ourProjectsPath == null) {
       val produceName = ApplicationNamesInfo.getInstance().productName.lowercase()
       val propertyName = String.format(PROPERTY_PROJECT_PATH, produceName)
