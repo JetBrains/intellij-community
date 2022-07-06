@@ -4,6 +4,7 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.StoreReloadManager
+import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
 import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
@@ -257,6 +258,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override suspend fun forceCloseProjectAsync(project: Project, save: Boolean): Boolean {
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
+    if (save) {
+      // HeadlessSaveAndSyncHandler doesn't save, but if `save` is requested,
+      // it means that we must save in any case (for example, see GradleSourceSetsTest)
+      saveSettings(project, forceSavingAllSettings = true)
+    }
     return withContext(Dispatchers.EDT) {
       if (project.isDisposed) {
         return@withContext false
