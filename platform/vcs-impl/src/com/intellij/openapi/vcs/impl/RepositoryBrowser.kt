@@ -126,7 +126,7 @@ class RepositoryBrowserPanel(
     actionGroup.add(ActionManager.getInstance().getAction(VcsActions.DIFF_AFTER_WITH_LOCAL))
     fileSystemTree.registerMouseListener(actionGroup)
 
-    val scrollPane = ScrollPaneFactory.createScrollPane(fileSystemTree.tree)
+    val scrollPane = ScrollPaneFactory.createScrollPane(fileSystemTree.tree, true)
 
     add(scrollPane, BorderLayout.CENTER)
   }
