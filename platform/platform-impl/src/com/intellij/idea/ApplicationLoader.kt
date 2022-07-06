@@ -225,7 +225,7 @@ private suspend fun prepareStart(app: ApplicationImpl, initAppActivity: Activity
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
     }
 
-    getServerFuture().asDeferred().await()
+    getServerFutureAsync().join()
   }
 
   coroutineScope {

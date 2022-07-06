@@ -12,6 +12,12 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandlerContext;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
+import kotlinx.coroutines.CoroutineStart;
+import kotlinx.coroutines.Deferred;
+import kotlinx.coroutines.GlobalScope;
+import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
@@ -28,7 +34,8 @@ import java.nio.file.*;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -55,7 +62,7 @@ public final class SocketLock {
   private final Path myConfigPath;
   private final Path mySystemPath;
   private final List<AutoCloseable> myLockedFiles = new ArrayList<>(4);
-  private volatile CompletableFuture<BuiltInServer> myBuiltinServerFuture;
+  private volatile Deferred<BuiltInServer> builtinServerFuture;
 
   public SocketLock(@NotNull Path configPath, @NotNull Path systemPath) {
     myConfigPath = configPath;
@@ -106,23 +113,12 @@ public final class SocketLock {
   }
 
   @Nullable BuiltInServer getServer() {
-    Future<BuiltInServer> future = myBuiltinServerFuture;
-    if (future != null) {
-      try {
-        return future.get();
-      }
-      catch (InterruptedException e) {
-        throw new IllegalStateException(e);
-      }
-      catch (ExecutionException e) {
-        throw new IllegalStateException(e.getCause());
-      }
-    }
-    return null;
+    Deferred<BuiltInServer> future = builtinServerFuture;
+    return future == null ? null : FutureKt.asCompletableFuture(future).join();
   }
 
-  @Nullable CompletableFuture<BuiltInServer> getServerFuture() {
-    return myBuiltinServerFuture;
+  @Nullable Deferred<BuiltInServer> getServerFuture() {
+    return builtinServerFuture;
   }
 
   public @NotNull Map.Entry<@NotNull ActivationStatus, @Nullable CliResult> lockAndTryActivate(@NotNull String @NotNull [] args) throws Exception {
@@ -144,41 +140,43 @@ public final class SocketLock {
       }
     }
 
-    myBuiltinServerFuture = CompletableFuture.supplyAsync(() -> {
-      Activity activity = StartUpMeasurer.startActivity("built-in server launch", ActivityCategory.DEFAULT);
+    builtinServerFuture =
+      BuildersKt.async(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
+        Activity activity = StartUpMeasurer.startActivity("built-in server launch", ActivityCategory.DEFAULT);
 
-      String token = UUID.randomUUID().toString();
-      Path[] lockedPaths = {myConfigPath, mySystemPath};
-      BuiltInServer server = BuiltInServer.Companion.start(6942, 50, false, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef::get, token));
-      try {
-        byte[] portBytes = Integer.toString(server.getPort()).getBytes(StandardCharsets.UTF_8);
-        Files.write(myConfigPath.resolve(PORT_FILE), portBytes);
-        Files.write(mySystemPath.resolve(PORT_FILE), portBytes);
+        String token = UUID.randomUUID().toString();
+        Path[] lockedPaths = {myConfigPath, mySystemPath};
+        BuiltInServer server =
+          BuiltInServer.Companion.start(6942, 50, false, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef::get, token));
+        try {
+          byte[] portBytes = Integer.toString(server.getPort()).getBytes(StandardCharsets.UTF_8);
+          Files.write(myConfigPath.resolve(PORT_FILE), portBytes);
+          Files.write(mySystemPath.resolve(PORT_FILE), portBytes);
 
-        Path tokenFile = mySystemPath.resolve(TOKEN_FILE);
-        Files.write(tokenFile, token.getBytes(StandardCharsets.UTF_8));
-        PosixFileAttributeView view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView.class);
-        if (view != null) {
-          try {
-            view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+          Path tokenFile = mySystemPath.resolve(TOKEN_FILE);
+          Files.write(tokenFile, token.getBytes(StandardCharsets.UTF_8));
+          PosixFileAttributeView view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView.class);
+          if (view != null) {
+            try {
+              view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+            }
+            catch (IOException e) {
+              log(e);
+            }
           }
-          catch (IOException e) {
-            log(e);
-          }
+
+          unlockPortFiles();
+        }
+        catch (RuntimeException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          throw new CompletionException(e);
         }
 
-        unlockPortFiles();
-      }
-      catch (RuntimeException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        throw new CompletionException(e);
-      }
-
-      activity.end();
-      return server;
-    }, ForkJoinPool.commonPool());
+        activity.end();
+        return server;
+      });
 
     log("exit: lock(): succeed");
     return new AbstractMap.SimpleEntry<>(ActivationStatus.NO_INSTANCE, null);
