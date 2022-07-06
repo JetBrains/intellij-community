@@ -3,6 +3,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -27,6 +28,11 @@ public class ToggleShowImportPopupsAction extends ToggleAction {
     if (file != null) {
       DaemonCodeAnalyzer.getInstance(file.getProject()).setImportHintsEnabled(file, state);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
