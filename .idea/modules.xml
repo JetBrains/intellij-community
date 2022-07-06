@@ -1110,8 +1110,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle/kotlin.gradle.gradle.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle/kotlin.gradle.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-java/kotlin.gradle.gradle-java.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-java/kotlin.gradle.gradle-java.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-java/tests/kotlin.gradle.gradle-java.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-java/tests/kotlin.gradle.gradle-java.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-native/kotlin.gradle.gradle-native.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-native/kotlin.gradle.gradle-native.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-native/tests/kotlin.gradle.gradle-native.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-native/tests/kotlin.gradle.gradle-native.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-tooling/kotlin.gradle.gradle-tooling.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-tooling/kotlin.gradle.gradle-tooling.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-tooling/tests/kotlin.gradle.gradle-tooling.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-tooling/tests/kotlin.gradle.gradle-tooling.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/grazie/kotlin.grazie.iml" filepath="$PROJECT_DIR$/plugins/kotlin/grazie/kotlin.grazie.iml" />

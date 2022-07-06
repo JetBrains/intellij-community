@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.gradle.native
+package org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native
 
 import com.intellij.ProjectTopics
 import com.intellij.notification.Notification
@@ -137,15 +137,15 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project): 
                 is LibraryGroup.FromDistribution -> {
                     val libraryNamesInOneLine = libraries
                         .joinToString(limit = MAX_LIBRARY_NAMES_IN_ONE_LINE) { (libraryName, _) -> libraryName }
-                    val text = KotlinGradleNativeBundle.message(
+                    val text = KotlinGradleCodeInsightCommonBundle.message(
                         "error.incompatible.libraries",
                         libraries.size, libraryGroup.kotlinVersion, libraryNamesInOneLine
                     )
                     val explanation = when (isOldMetadata) {
-                        true -> KotlinGradleNativeBundle.message("error.incompatible.libraries.older")
-                        false -> KotlinGradleNativeBundle.message("error.incompatible.libraries.newer")
+                        true -> KotlinGradleCodeInsightCommonBundle.message("error.incompatible.libraries.older")
+                        false -> KotlinGradleCodeInsightCommonBundle.message("error.incompatible.libraries.newer")
                     }
-                    val recipe = KotlinGradleNativeBundle.message(
+                    val recipe = KotlinGradleCodeInsightCommonBundle.message(
                         "error.incompatible.libraries.recipe",
                         KotlinPluginLayout.standaloneCompilerVersion.rawVersion
                     )
@@ -153,11 +153,11 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project): 
                 }
                 is LibraryGroup.ThirdParty -> {
                     val text = when (isOldMetadata) {
-                        true -> KotlinGradleNativeBundle.message("error.incompatible.3p.libraries.older", libraries.size)
-                        false -> KotlinGradleNativeBundle.message("error.incompatible.3p.libraries.newer", libraries.size)
+                        true -> KotlinGradleCodeInsightCommonBundle.message("error.incompatible.3p.libraries.older", libraries.size)
+                        false -> KotlinGradleCodeInsightCommonBundle.message("error.incompatible.3p.libraries.newer", libraries.size)
                     }
                     val librariesLineByLine = libraries.joinToString(separator = "\n") { (libraryName, _) -> libraryName }
-                    val recipe = KotlinGradleNativeBundle.message(
+                    val recipe = KotlinGradleCodeInsightCommonBundle.message(
                         "error.incompatible.3p.libraries.recipe",
                         KotlinPluginLayout.standaloneCompilerVersion.rawVersion
                     )
@@ -176,15 +176,15 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project): 
                                 ?.let { "${'$'}project/$it" }
                         } ?: libraryRoot
 
-                        return KotlinGradleNativeBundle.message("library.name.0.at.1.relative.root", libraryName, relativeRoot)
+                        return KotlinGradleCodeInsightCommonBundle.message("library.name.0.at.1.relative.root", libraryName, relativeRoot)
                     }
 
                     val text = when (isOldMetadata) {
-                        true -> KotlinGradleNativeBundle.message("error.incompatible.user.libraries.older", libraries.size)
-                        false -> KotlinGradleNativeBundle.message("error.incompatible.user.libraries.newer", libraries.size)
+                        true -> KotlinGradleCodeInsightCommonBundle.message("error.incompatible.user.libraries.older", libraries.size)
+                        false -> KotlinGradleCodeInsightCommonBundle.message("error.incompatible.user.libraries.newer", libraries.size)
                     }
                     val librariesLineByLine = libraries.joinToString(separator = "\n", transform = ::getLibraryTextToPrint)
-                    val recipe = KotlinGradleNativeBundle.message(
+                    val recipe = KotlinGradleCodeInsightCommonBundle.message(
                         "error.incompatible.user.libraries.recipe",
                         KotlinPluginLayout.standaloneCompilerVersion.rawVersion
                     )
@@ -231,7 +231,7 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project): 
 
         private const val MAX_LIBRARY_NAMES_IN_ONE_LINE = 5
 
-        private val NOTIFICATION_TITLE get() = KotlinGradleNativeBundle.message("error.incompatible.libraries.title")
+        private val NOTIFICATION_TITLE get() = KotlinGradleCodeInsightCommonBundle.message("error.incompatible.libraries.title")
         private const val NOTIFICATION_GROUP_ID = "Incompatible Kotlin/Native libraries"
 
         fun getInstance(project: Project): KotlinNativeABICompatibilityCheckerService = project.service()

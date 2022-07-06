@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.gradle.native
+package org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native
 
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
@@ -37,7 +37,7 @@ open class KotlinNativeGradleConfigurator : KotlinWithGradleConfigurator() {
 
     companion object {
         const val NAME = "KotlinNative"
-        val PRESENTABLE_TEXT get() = KotlinGradleNativeBundle.message("native.gradle.name.short")
+        val PRESENTABLE_TEXT get() = KotlinGradleCodeInsightCommonBundle.message("native.gradle.name.short")
     }
 }
 

@@ -61,7 +61,6 @@
     <orderEntry type="module" module-name="kotlin.formatter" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" exported="" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-native" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" exported="" />
     <orderEntry type="module" module-name="kotlin.idea" exported="" />

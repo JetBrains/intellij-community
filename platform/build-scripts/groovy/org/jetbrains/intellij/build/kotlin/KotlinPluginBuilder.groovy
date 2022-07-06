@@ -123,7 +123,6 @@ final class KotlinPluginBuilder {
     "kotlin.gradle.gradle",
     "kotlin.gradle.code-insight-common",
     "kotlin.gradle.gradle-java",
-    "kotlin.gradle.gradle-native",
     "kotlin.gradle.code-insight-groovy",
     "kotlin.native",
     "kotlin.grazie",
