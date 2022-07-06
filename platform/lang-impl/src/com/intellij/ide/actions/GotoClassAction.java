@@ -21,10 +21,9 @@ public class GotoClassAction extends SearchEverywhereBaseAction implements DumbA
 
   public GotoClassAction() {
     //we need to change the template presentation to show the proper text for the action in Settings | Keymap
-    Presentation presentation = getTemplatePresentation();
-    presentation.setText(() -> IdeBundle.message("go.to.class.title.prefix", GotoClassPresentationUpdater.getActionTitle() + "..."));
-    presentation.setDescription(() -> IdeBundle.message("go.to.class.action.description",
-                                                        StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), "/")));
+    Presentation p = getTemplatePresentation();
+    p.setText(IdeBundle.messagePointer("go.to.class.title.prefix", GotoClassPresentationUpdater.getActionTitle() + "..."));
+    p.setDescription(IdeBundle.messagePointer("go.to.class.action.description", StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), "/")));
     addTextOverride(ActionPlaces.MAIN_MENU, () -> GotoClassPresentationUpdater.getActionTitle() + "...");
   }
 
