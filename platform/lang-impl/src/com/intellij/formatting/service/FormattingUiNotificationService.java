@@ -6,6 +6,7 @@ import com.intellij.formatting.FormattingContext;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -18,6 +19,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class FormattingUiNotificationService implements FormattingNotificationService {
 
@@ -32,6 +35,15 @@ public class FormattingUiNotificationService implements FormattingNotificationSe
                           @NotNull @NlsContexts.NotificationTitle String title,
                           @NotNull @NlsContexts.NotificationContent String message) {
     Notifications.Bus.notify(new Notification(groupId, title, message, NotificationType.ERROR), myProject);
+  }
+
+  @Override
+  public void reportError(@NotNull String groupId,
+                          @NotNull @NlsContexts.NotificationTitle String title,
+                          @NotNull @NlsContexts.NotificationContent String message, AnAction... actions) {
+    Notification notification = new Notification(groupId, title, message, NotificationType.ERROR);
+    notification.addActions(List.of(actions));
+    Notifications.Bus.notify(notification, myProject);
   }
 
   @Override

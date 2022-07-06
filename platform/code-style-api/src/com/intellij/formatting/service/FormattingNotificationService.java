@@ -2,6 +2,7 @@
 package com.intellij.formatting.service;
 
 import com.intellij.formatting.FormattingContext;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -21,6 +22,12 @@ public interface FormattingNotificationService {
   void reportError(@NotNull String groupId,
                    @NotNull @NlsContexts.NotificationTitle String title,
                    @NotNull @NlsContexts.NotificationContent String message);
+
+  default void reportError(@NotNull String groupId,
+                   @NotNull @NlsContexts.NotificationTitle String title,
+                   @NotNull @NlsContexts.NotificationContent String message, AnAction... actions) {
+    reportError(groupId, title, message);
+  }
 
   void reportErrorAndNavigate(@NotNull String groupId,
                               @NotNull @NlsContexts.NotificationTitle String title,

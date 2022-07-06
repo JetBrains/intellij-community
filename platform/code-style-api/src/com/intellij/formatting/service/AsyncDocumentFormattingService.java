@@ -3,6 +3,7 @@ package com.intellij.formatting.service;
 
 import com.intellij.CodeStyleBundle;
 import com.intellij.formatting.FormattingContext;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -265,7 +266,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
           if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
             FormattingNotificationService.getInstance(myContext.getProject()).reportError(
               getNotificationGroupId(), getName(),
-              CodeStyleBundle.message("async.formatting.service.timeout", getName(), Long.toString(getTimeout().getSeconds())));
+              CodeStyleBundle.message("async.formatting.service.timeout", getName(), Long.toString(getTimeout().getSeconds())), getTimeoutActions(myContext));
           }
           else if (myResult != null) {
             if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
@@ -335,6 +336,10 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
                                      .reportErrorAndNavigate(getNotificationGroupId(), title, message, myContext, offset);
       }
     }
+  }
+
+  protected AnAction[] getTimeoutActions(@NotNull FormattingContext context) {
+    return AnAction.EMPTY_ARRAY;
   }
 
 
