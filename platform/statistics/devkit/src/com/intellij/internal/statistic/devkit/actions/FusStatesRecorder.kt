@@ -1,20 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions
 
-import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.EventLogListenersManager
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider
-import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectEx
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
@@ -40,8 +42,15 @@ internal object FusStatesRecorder {
       try {
         val logApplicationStatesFuture = statesLogger.logApplicationStates()
         val logProjectStatesFuture = statesLogger.logProjectStates(project, indicator)
-        val settingsFuture = CompletableFuture.allOf(
-          *FeatureUsageStateEventTracker.EP_NAME.extensions.map { it.reportNow() }.toTypedArray())
+        val settingsFuture = (project as ProjectEx).coroutineScope.async {
+          coroutineScope {
+            for (extension in FeatureUsageStateEventTracker.EP_NAME.extensions) {
+              launch {
+                extension.reportNow()
+              }
+            }
+          }
+        }.asCompletableFuture()
         CompletableFuture.allOf(logApplicationStatesFuture, logProjectStatesFuture, settingsFuture)
           .thenCompose { val logger = getEventLogProvider(recorderId).logger
             if (logger is StatisticsFileEventLogger) {

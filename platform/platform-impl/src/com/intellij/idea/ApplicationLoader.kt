@@ -501,7 +501,7 @@ suspend fun callAppInitialized(app: ApplicationImpl) {
 }
 
 @Internal
-internal fun createAppCoroutineScope(app: Application): Pair<CoroutineScope, Disposable> {
+fun createAppCoroutineScope(app: Application): Pair<CoroutineScope, Disposable> {
   val scope = CoroutineScope(Dispatchers.Default + CoroutineExceptionHandler { _, exception ->
     LOG.error(exception)
   })
