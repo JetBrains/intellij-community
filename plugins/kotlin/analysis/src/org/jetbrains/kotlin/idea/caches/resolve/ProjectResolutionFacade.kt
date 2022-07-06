@@ -100,14 +100,14 @@ internal class ProjectResolutionFacade(
                 }
             }
 
-            val allDependencies = resolverForProjectDependencies + listOf(
-                KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
-            )
-            CachedValueProvider.Result.create(results, allDependencies)
+            CachedValueProvider.Result.create(results, resolverForProjectDependencies)
         }, false
     )
 
-    private val resolverForProjectDependencies = dependencies + listOf(globalContext.exceptionTracker)
+    private val resolverForProjectDependencies = dependencies + listOf(
+        KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker,
+        globalContext.exceptionTracker
+    )
 
     private fun computeModuleResolverProvider(): ResolverForProject<IdeaModuleInfo> {
         val delegateResolverForProject: ResolverForProject<IdeaModuleInfo> =
