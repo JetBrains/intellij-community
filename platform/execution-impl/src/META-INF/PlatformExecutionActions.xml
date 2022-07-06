@@ -49,6 +49,7 @@
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSlotManager"/>
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSettings"/>
+    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunWidgetResizeController"/>
     <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" />
     <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
     <projectService serviceInterface="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"
