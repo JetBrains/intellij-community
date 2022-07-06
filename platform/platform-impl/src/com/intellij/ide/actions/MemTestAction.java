@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.execution.process.OSProcessUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -24,13 +25,19 @@ public class MemTestAction extends DumbAwareAction {
       // redirecting  the output to memtester_$ideapid.log in user home folder
       OperatingSystemMXBean bean = (OperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
       long totalPhysMemorySize = bean.getTotalPhysicalMemorySize();
-      long totalPhysMemorySizeToTestInMb = totalPhysMemorySize/3/(1024*1024);
+      long totalPhysMemorySizeToTestInMb = totalPhysMemorySize / 3 / (1024 * 1024);
       String testingSizeArgument = totalPhysMemorySizeToTestInMb + "M";
       String pathToSaveLog = SystemProperties.getUserHome() + "/memtester_" + OSProcessUtil.getApplicationPid() + ".log";
       MemTester.scheduleMemTester(testingSizeArgument, "1", pathToSaveLog);
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       Logger.getInstance(MemTestAction.class).info("MemTester failed to launch");
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

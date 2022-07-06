@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.TreeExpander
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -27,6 +28,8 @@ class CollapseAllAction : DumbAwareAction {
     val expander = getTreeExpander(event) ?: return
     if (expander.canCollapse()) expander.collapseAll()
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(event: AnActionEvent) {
     val expander = getTreeExpander(event)
