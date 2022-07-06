@@ -162,7 +162,18 @@ class NewPropertyAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
     if (!myEnabledForce) {
       final FileEditor editor = e.getData(PlatformCoreDataKeys.FILE_EDITOR);
       e.getPresentation().setEnabledAndVisible(editor instanceof ResourceBundleEditor);

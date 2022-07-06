@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.editor;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -50,7 +51,13 @@ public class ChooseSubsequentPropertyValueEditorAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getNext(e).getContentComponent(), true));
+    IdeFocusManager.getGlobalInstance()
+      .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getNext(e).getContentComponent(), true));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
