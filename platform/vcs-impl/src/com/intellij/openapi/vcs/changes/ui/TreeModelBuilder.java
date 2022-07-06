@@ -178,7 +178,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   private TreeModelBuilder insertSpecificFilePathNodeToModel(@NotNull List<? extends FilePath> specificFiles,
-                                                             @NotNull ChangesBrowserSpecificFilePathsNode node,
+                                                             @NotNull ChangesBrowserSpecificFilePathsNode<?> node,
                                                              @NotNull FileStatus status) {
     insertSubtreeRoot(node);
     if (!node.isManyFiles()) {
@@ -225,7 +225,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     if (lists.size() != 1) return false;
     ChangeList single = lists.iterator().next();
     if (!(single instanceof LocalChangeList)) return false;
-    return ((LocalChangeList) single).isBlank();
+    return ((LocalChangeList)single).isBlank();
   }
 
   @NotNull
@@ -465,7 +465,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @Nullable
-  private static ChangesBrowserNode<?> collapseParentWithOnlyChild(@NotNull ChangesBrowserNode<?> parent, @NotNull ChangesBrowserNode<?> child) {
+  private static ChangesBrowserNode<?> collapseParentWithOnlyChild(@NotNull ChangesBrowserNode<?> parent,
+                                                                   @NotNull ChangesBrowserNode<?> child) {
     if (child.isLeaf()) return null;
 
     Object parentUserObject = parent.getUserObject();

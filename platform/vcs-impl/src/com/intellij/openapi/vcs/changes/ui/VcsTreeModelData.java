@@ -65,7 +65,7 @@ public abstract class VcsTreeModelData {
   }
 
   @NotNull
-  public static VcsTreeModelData allUnder(@NotNull ChangesBrowserNode node) {
+  public static VcsTreeModelData allUnder(@NotNull ChangesBrowserNode<?> node) {
     return new AllUnderData(node);
   }
 

@@ -71,44 +71,44 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   @NotNull
-  public static ChangesBrowserNode createRoot() {
-    ChangesBrowserNode root = new ChangesBrowserRootNode();
+  public static ChangesBrowserNode<?> createRoot() {
+    ChangesBrowserNode<?> root = new ChangesBrowserRootNode();
     root.markAsHelperNode();
     return root;
   }
 
   @NotNull
-  public static ChangesBrowserNode createChange(@Nullable Project project, @NotNull Change userObject) {
+  public static ChangesBrowserNode<?> createChange(@Nullable Project project, @NotNull Change userObject) {
     return new ChangesBrowserChangeNode(project, userObject, null);
   }
 
   @NotNull
-  public static ChangesBrowserNode createFile(@Nullable Project project, @NotNull VirtualFile userObject) {
+  public static ChangesBrowserNode<?> createFile(@Nullable Project project, @NotNull VirtualFile userObject) {
     return new ChangesBrowserFileNode(project, userObject);
   }
 
   @NotNull
-  public static ChangesBrowserNode createFilePath(@NotNull FilePath userObject, @Nullable FileStatus status) {
+  public static ChangesBrowserNode<?> createFilePath(@NotNull FilePath userObject, @Nullable FileStatus status) {
     return new ChangesBrowserFilePathNode(userObject, status);
   }
 
   @NotNull
-  public static ChangesBrowserNode createFilePath(@NotNull FilePath userObject) {
+  public static ChangesBrowserNode<?> createFilePath(@NotNull FilePath userObject) {
     return createFilePath(userObject, null);
   }
 
   @NotNull
-  public static ChangesBrowserNode createLogicallyLocked(@Nullable Project project, @NotNull VirtualFile file, @NotNull LogicalLock lock) {
+  public static ChangesBrowserNode<?> createLogicallyLocked(@Nullable Project project, @NotNull VirtualFile file, @NotNull LogicalLock lock) {
     return new ChangesBrowserLogicallyLockedFile(project, file, lock);
   }
 
   @NotNull
-  public static ChangesBrowserNode createLockedFolders(@NotNull Project project) {
+  public static ChangesBrowserNode<?> createLockedFolders(@NotNull Project project) {
     return new ChangesBrowserLockedFoldersNode(project);
   }
 
   @NotNull
-  public static ChangesBrowserNode createLocallyDeleted(@NotNull LocallyDeletedChange change) {
+  public static ChangesBrowserNode<?> createLocallyDeleted(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
   }
 
