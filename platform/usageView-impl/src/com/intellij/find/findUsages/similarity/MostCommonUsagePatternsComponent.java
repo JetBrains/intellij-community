@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -52,7 +51,6 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private final @NotNull RefreshAction myRefreshAction;
   private @NotNull Set<Usage> mySelectedUsages;
   private @Nullable ClusteringSearchSession mySession;
-  private boolean isDisposed = false;
   private @Nullable BackgroundableProcessIndicator myProcessIndicator;
   private int myAlreadyRenderedSnippets;
 
@@ -83,8 +81,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
 
         @Override
         public void update(@NotNull AnActionEvent event) {
-          Presentation presentation = event.getPresentation();
-          presentation.setEnabled(true);
+          event.getPresentation().setEnabled(true);
         }
       };
     myMostCommonUsagesToolbar = new MostCommonUsagesToolbar(this, UsageViewBundle.message("similar.usages.0.results", mySelectedUsages.size()), myRefreshAction);
@@ -108,70 +105,52 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
         setToolbar(null);
         setToolbar(new SimilarUsagesToolbar(similarComponent, UsageViewBundle.message("0.similar.usages", usagesToRender.size() - 1),
                                             myRefreshAction,
-                                            new ActionLink(UsageViewBundle.message("0.similar.usages.back.to.search.results", UIUtil.leftArrow()), event -> {
-            removeAll();
-            setToolbar(myMostCommonUsagesToolbar);
-            setContent(myMostCommonUsageScrollPane);
-            revalidate();
-          }
-        )));
-
-      JScrollPane similarUsagesScrollPane = ScrollPaneFactory.createScrollPane(similarComponent, true);
-      final JScrollBar scrollBar = similarUsagesScrollPane.getVerticalScrollBar();
-      similarComponent.renderOriginalUsage();
-      similarComponent.renderSimilarUsages(usagesToRender);
-      BoundedRangeModelThresholdListener.install(scrollBar, () -> {
-        similarComponent.renderSimilarUsages(usagesToRender);
-        return Unit.INSTANCE;
+                                            new ActionLink(
+                                              UsageViewBundle.message("0.similar.usages.back.to.search.results", UIUtil.leftArrow()),
+                                              event -> {
+                                                removeAll();
+                                                setToolbar(myMostCommonUsagesToolbar);
+                                                setContent(myMostCommonUsageScrollPane);
+                                                revalidate();
+                                              }
+                                            )));
+        setContent(similarComponent.createLazyLoadingScrollPane(usagesToRender));
+        revalidate();
       });
-      setContent(similarUsagesScrollPane);
-      revalidate();
-    });
     actionLink.setLinkIcon();
     return actionLink;
   }
 
   @Override
   public void dispose() {
-    isDisposed = true;
     if (myProcessIndicator != null && myProcessIndicator.isRunning()) {
       myProcessIndicator.cancel();
     }
   }
 
-  private @NotNull JPanel createSummaryComponent(@Nullable ClusteringSearchSession session,
-                                                 @NotNull Collection<UsageCluster> clusterToShow) {
-    JPanel summaryPanel = new JPanel(new VerticalLayout(0));
-    if (session == null) return summaryPanel;
-    clusterToShow.stream().limit(CLUSTER_LIMIT).forEach(cluster -> {
-      renderClusterDescription(summaryPanel, cluster.getUsages());
+  private void createSummaryComponent(@Nullable ClusteringSearchSession session, @NotNull Collection<UsageCluster> clustersToShow) {
+    if (session == null) return;
+    clustersToShow.stream().limit(CLUSTER_LIMIT).forEach(cluster -> {
+      renderClusterDescription(cluster.getUsages());
     });
     final JScrollBar verticalScrollBar = myMostCommonUsageScrollPane.getVerticalScrollBar();
     BoundedRangeModelThresholdListener.install(verticalScrollBar, () -> {
-      clusterToShow.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
-        renderClusterDescription(summaryPanel, cluster.getUsages());
+      clustersToShow.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
+        renderClusterDescription(cluster.getUsages());
       });
       return Unit.INSTANCE;
     });
-    return summaryPanel;
   }
 
-  private void renderClusterDescription(@NotNull JPanel summaryPanel, @NotNull Collection<SimilarUsage> selectedUsages) {
-    final Set<SimilarUsage> usageFilteredByGroup = new HashSet<>(selectedUsages);
-    SimilarUsage usage = ContainerUtil.getFirstItem(usageFilteredByGroup);
+  private void renderClusterDescription(@NotNull Collection<SimilarUsage> clusterUsages) {
+    final Set<SimilarUsage> usagesFilteredByGroup = new HashSet<>(clusterUsages);
+    SimilarUsage usage = ContainerUtil.getFirstItem(usagesFilteredByGroup);
     if (usage instanceof UsageInfo2UsageAdapter) {
       final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
-      final PsiElement element = Objects.requireNonNull(usageInfo.getElement());
-      UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(element);
-      if (!isDisposed) {
-        Disposer.register(this, summaryRendererComponent);
-      }
-      final JPanel headerPanel = createHeaderPanel(usageInfo, summaryRendererComponent.getEditor().getBackgroundColor());
-      if (usageFilteredByGroup.size() > 1) {
-        headerPanel.add(createOpenSimilarUsagesActionLink(usageInfo, usageFilteredByGroup));
-      }
-      summaryPanel.add(headerPanel);
-      summaryPanel.add(summaryRendererComponent);
+      UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(Objects.requireNonNull(usageInfo.getElement()));
+      Disposer.register(this, summaryRendererComponent);
+      myMainPanel.add(createHeaderPanel(usageInfo, usagesFilteredByGroup));
+      myMainPanel.add(summaryRendererComponent);
       myAlreadyRenderedSnippets++;
     }
   }
@@ -184,7 +163,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
         @Override
         public void onSuccess() {
           if (!sortedClusters.isNull()) {
-            myMainPanel.add(createSummaryComponent(getSession(), sortedClusters.get()));
+            createSummaryComponent(getSession(), sortedClusters.get());
             myMainPanel.revalidate();
           }
         }
@@ -215,13 +194,17 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     return null;
   }
 
-  public static @NotNull JPanel createHeaderPanel(@NotNull UsageInfo info, @NotNull Color backgroundColor) {
+  private @NotNull JPanel createHeaderPanel(@NotNull UsageInfo info,
+                                            @NotNull Set<SimilarUsage> usageFilteredByGroup) {
     final LocationLinkComponent component = new LocationLinkComponent(info);
     final JPanel header = new JPanel();
-    header.setBackground(backgroundColor);
+    header.setBackground(UIUtil.getTextFieldBackground());
     header.setLayout(new FlowLayout(FlowLayout.LEFT));
     header.add(component.getComponent());
     header.setBorder(JBUI.Borders.customLineTop(new JBColor(Gray.xCD, Gray.x51)));
+    if (usageFilteredByGroup.size() > 1) {
+      header.add(createOpenSimilarUsagesActionLink(info, usageFilteredByGroup));
+    }
     return header;
   }
 }

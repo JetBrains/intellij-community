@@ -4,10 +4,7 @@ package com.intellij.find.findUsages.similarity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -15,11 +12,14 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+import java.util.Set;
 
 public class SimilarUsagesComponent extends JPanel implements Disposable {
 
@@ -78,5 +78,16 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  public @NotNull JScrollPane createLazyLoadingScrollPane(@NotNull Set<SimilarUsage> usagesToRender) {
+    JScrollPane similarUsagesScrollPane = ScrollPaneFactory.createScrollPane(this, true);
+    renderOriginalUsage();
+    renderSimilarUsages(usagesToRender);
+    BoundedRangeModelThresholdListener.install(similarUsagesScrollPane.getVerticalScrollBar(), () -> {
+      renderSimilarUsages(usagesToRender);
+      return Unit.INSTANCE;
+    });
+    return similarUsagesScrollPane;
   }
 }

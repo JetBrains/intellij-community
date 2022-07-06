@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.usageView.UsageInfo;
@@ -27,23 +26,17 @@ import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static com.intellij.find.findUsages.similarity.MostCommonUsagePatternsComponent.findClusteringSessionInUsageView;
 
 public class SimilarUsagesContextPanel extends UsageContextPanelBase {
 
   private @NotNull final UsageViewImpl myUsageView;
-  private @Nullable JScrollPane myScrollPane;
   private @Nullable ClusteringSearchSession mySession;
   private @Nullable SimilarUsagesComponent mySimilarUsagesComponent;
 
@@ -56,7 +49,6 @@ public class SimilarUsagesContextPanel extends UsageContextPanelBase {
   @Override
   public void dispose() {
     super.dispose();
-    myScrollPane = null;
     if (mySimilarUsagesComponent != null) {
       Disposer.dispose(mySimilarUsagesComponent);
     }
@@ -88,17 +80,7 @@ public class SimilarUsagesContextPanel extends UsageContextPanelBase {
         removeAll();
         mainPanel.setLayout(new VerticalLayout(0));
         mySimilarUsagesComponent = new SimilarUsagesComponent(info, this);
-        mainPanel.add(mySimilarUsagesComponent);
-        mySimilarUsagesComponent.renderOriginalUsage();
-        final Set<SimilarUsage> usagesSnapshot = new HashSet<>(cluster.getUsages());
-        mySimilarUsagesComponent.renderSimilarUsages(usagesSnapshot);
-        myScrollPane = ScrollPaneFactory.createScrollPane(mainPanel);
-        myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        BoundedRangeModelThresholdListener.install(myScrollPane.getVerticalScrollBar(), () -> {
-          mySimilarUsagesComponent.renderSimilarUsages(usagesSnapshot);
-          return Unit.INSTANCE;
-        });
-        add(myScrollPane, BorderLayout.CENTER);
+        mainPanel.add(mySimilarUsagesComponent.createLazyLoadingScrollPane(new HashSet<SimilarUsage>(cluster.getUsages())));
       }).expireWith(this).submit(AppExecutorUtil.getAppExecutorService());
   }
 
