@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ToolWindowEmptyStateAction.rebuildContentUi
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -39,7 +40,7 @@ private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
     super.updateState(toolWindow)
 
     toolWindow.stripeTitle = ProjectLevelVcsManager.getInstance(toolWindow.project).allActiveVcss.singleOrNull()?.displayName
-                             ?: ChangesViewContentManager.TOOLWINDOW_ID
+                             ?: IdeBundle.message("toolwindow.stripe.Version_Control")
   }
 
   override fun isAvailable(project: Project) = project.isTrusted()
