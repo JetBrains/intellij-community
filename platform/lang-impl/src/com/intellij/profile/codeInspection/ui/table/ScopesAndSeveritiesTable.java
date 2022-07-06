@@ -116,7 +116,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
     severityColumn.setCellEditor(renderer);
 
     final TableColumn highlightingColumn = columnModel.getColumn(HIGHLIGHTING_COLUMN);
-    final HighlightingRenderer highlightingRenderer = new HighlightingRenderer(getEditorAttributesKeysAndNames(tableSettings.getInspectionProfile()), tableSettings.getProject()) {
+    final HighlightingRenderer highlightingRenderer = new HighlightingRenderer(getEditorAttributesKeysAndNames(tableSettings.getInspectionProfile())) {
       @Override
       void openColorSettings() {
         final var dataContext = DataManager.getInstance().getDataContext(this);

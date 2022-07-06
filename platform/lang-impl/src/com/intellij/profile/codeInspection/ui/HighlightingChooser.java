@@ -10,6 +10,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -43,20 +44,16 @@ import java.util.function.Consumer;
 public abstract class HighlightingChooser extends ComboBoxAction implements DumbAware {
   private HighlightPopup myPopup = null;
   private final SeverityRegistrar mySeverityRegistrar;
-  private final TextAttributesKey informationKey;
 
   public HighlightingChooser(@NotNull SeverityRegistrar severityRegistrar) {
     mySeverityRegistrar = severityRegistrar;
-    informationKey = severityRegistrar
-      .getHighlightInfoTypeBySeverity(HighlightSeverity.INFORMATION)
-      .getAttributesKey();
   }
 
   abstract void onKeyChosen(@NotNull TextAttributesKey key);
 
   public void setChosen(@NotNull TextAttributesKey key) {
-    if (key.equals(informationKey)) {
-      getTemplatePresentation().setText("");
+    if (key.equals(CodeInsightColors.INFORMATION_ATTRIBUTES)) {
+      getTemplatePresentation().setText(InspectionsBundle.message("inspection.no.highlighting"));
       return;
     }
 
