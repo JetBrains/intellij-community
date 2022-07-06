@@ -339,9 +339,11 @@ public abstract class TodoTreeBuilder implements Disposable {
     SingleAlarm alarm = new SingleAlarm(() -> uiUpdater.accept(files), 1000, uiUpdater, Alarm.ThreadToUse.SWING_THREAD, ModalityState.NON_MODAL);
     ReadAction.nonBlocking(() -> {
       collectFiles(virtualFile -> {
-        if (uiUpdater.isDisposed()) return false;
-        if (files.add(virtualFile)) {
-          alarm.request();
+        synchronized (LOCK) {
+          if (uiUpdater.isDisposed()) return false;
+          if (files.add(virtualFile)) {
+            alarm.request();
+          }
         }
         return true;
       });
