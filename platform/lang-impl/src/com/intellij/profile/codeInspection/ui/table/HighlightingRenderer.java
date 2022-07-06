@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -30,9 +28,11 @@ public abstract class HighlightingRenderer extends ComboBoxTableRenderer<TextAtt
 
   @Override
   protected @Nls String getTextFor(@NotNull TextAttributesKey value) {
+    if (HighlightingChooser.ATTRIBUTES_CUSTOM_NAMES.containsKey(value)) {
+      return HighlightingChooser.ATTRIBUTES_CUSTOM_NAMES.get(value).get();
+    }
+
     String text = value.getExternalName();
-    if (value.equals(CodeInsightColors.INFORMATION_ATTRIBUTES))
-      return InspectionsBundle.message("inspection.no.highlighting");
     for (Pair<TextAttributesKey, @Nls String> pair: myEditorAttributesKey) {
       if (value == pair.first) {
         text = pair.second;
