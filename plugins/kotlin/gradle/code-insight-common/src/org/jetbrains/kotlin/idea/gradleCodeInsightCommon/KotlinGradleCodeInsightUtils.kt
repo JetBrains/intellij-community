@@ -2,7 +2,7 @@
 
 @file:JvmName("KotlinGradleCodeInsightUtils")
 
-package org.jetbrains.kotlin.idea.extensions.gradle
+package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData

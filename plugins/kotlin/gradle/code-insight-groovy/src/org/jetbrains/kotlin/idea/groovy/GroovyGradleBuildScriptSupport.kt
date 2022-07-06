@@ -16,8 +16,7 @@ import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
-import org.jetbrains.kotlin.idea.extensions.gradle.*
-import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsScriptBuilder
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.*
 import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.idea.util.application.runReadAction

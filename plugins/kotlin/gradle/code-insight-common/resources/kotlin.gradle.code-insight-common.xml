@@ -8,7 +8,7 @@
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.gradleBuildScriptSupport"
-            interface="org.jetbrains.kotlin.idea.extensions.gradle.GradleBuildScriptSupport"
+            interface="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport"
             dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

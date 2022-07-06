@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.allModules
 import org.jetbrains.kotlin.idea.base.projectStructure.getWholeModuleGroup
 import org.jetbrains.kotlin.idea.base.util.substringAfterLastOrNull
 import org.jetbrains.kotlin.idea.base.util.substringBeforeLastOrNull
-import org.jetbrains.kotlin.idea.extensions.gradle.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
 import org.jetbrains.kotlin.idea.inspections.ReplaceStringInDocumentFix
 import org.jetbrains.kotlin.idea.versions.DEPRECATED_LIBRARIES_INFORMATION
 import org.jetbrains.kotlin.idea.versions.DeprecatedLibInfo

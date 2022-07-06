@@ -19,7 +19,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.idea.configuration.toKotlinRepositorySnippet
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.extensions.gradle.GradleBuildScriptSupport
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsScriptBuilder
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.psi.KtFile

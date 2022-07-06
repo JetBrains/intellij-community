@@ -2,7 +2,7 @@
 
 @file:JvmName("GradleBuildScriptManipulatorUtils")
 
-package org.jetbrains.kotlin.idea.extensions.gradle
+package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope

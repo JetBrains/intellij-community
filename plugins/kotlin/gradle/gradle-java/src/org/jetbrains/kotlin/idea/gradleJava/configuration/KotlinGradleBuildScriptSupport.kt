@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.extensions.gradle.GradleBuildScriptSupport
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsScriptBuilder
 import org.jetbrains.kotlin.psi.KtFile
 

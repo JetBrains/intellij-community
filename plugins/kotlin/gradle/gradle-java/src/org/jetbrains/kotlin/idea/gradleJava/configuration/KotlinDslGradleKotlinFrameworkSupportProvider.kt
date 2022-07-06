@@ -18,11 +18,11 @@ import org.jetbrains.kotlin.idea.configuration.DEFAULT_GRADLE_PLUGIN_REPOSITORY
 import org.jetbrains.kotlin.idea.configuration.LAST_SNAPSHOT_VERSION
 import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
 import org.jetbrains.kotlin.idea.configuration.toKotlinRepositorySnippet
-import org.jetbrains.kotlin.idea.extensions.gradle.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.GSK_KOTLIN_VERSION_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.getKotlinGradlePluginClassPathSnippet
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.getKotlinModuleDependencySnippet

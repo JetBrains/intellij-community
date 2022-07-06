@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.build
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
-import org.jetbrains.kotlin.idea.extensions.gradle.*
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.*
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
