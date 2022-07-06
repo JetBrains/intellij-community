@@ -507,7 +507,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       final PsiSubstitutor substitutor = methodCallExpression.resolveMethodGenerics().getSubstitutor();
       for (final PsiTypeParameter typeParameter : methodTypeParameters) {
         final PsiType type = substitutor.substitute(typeParameter);
-        if (type == null || PsiType.NULL.equals(type) || !PsiTypesUtil.isDenotableType(type, methodCallExpression)) {
+        if (!PsiTypesUtil.isDenotableType(type, methodCallExpression)) {
           return "";
         }
         typeSignature.add(type.getPresentableText());
