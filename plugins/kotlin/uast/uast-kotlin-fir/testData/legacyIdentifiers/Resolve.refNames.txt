@@ -41,6 +41,8 @@ to -> USimpleNameReferenceExpression (identifier = to) from KtOperationReference
 entries -> USimpleNameReferenceExpression (identifier = entries) from KtNameReferenceExpression
 first -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression
 setValue -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
+ClosedRange -> USimpleNameReferenceExpression (identifier = ClosedRange) from KtNameReferenceExpression
+Long -> USimpleNameReferenceExpression (identifier = Long) from KtNameReferenceExpression
 contains -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtDotQualifiedExpression
 intRange -> USimpleNameReferenceExpression (identifier = intRange) from KtNameReferenceExpression
 contains -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
