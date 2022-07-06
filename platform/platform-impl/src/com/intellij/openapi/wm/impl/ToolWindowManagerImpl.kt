@@ -1564,14 +1564,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     toolWindowPane!!.validateAndRepaint()
   }
 
-  @Deprecated("Please use fireStateChanged(ToolWindowManagerEventType)",
-              ReplaceWith("fireStateChanged(ToolWindowManagerEventType)"))
-  protected open fun fireStateChanged() {
-    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged(this)
+  protected open fun fireStateChanged(changeType: ToolWindowManagerEventType) {
+    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged(this, changeType)
   }
 
-  protected fun fireStateChanged(changeType: ToolWindowManagerEventType) {
-    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged(this, changeType)
+  protected open fun fireResized() {
+    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).resized(this)
   }
 
   private fun fireToolWindowShown(toolWindow: ToolWindow) {
@@ -1890,6 +1888,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         getRegisteredMutableInfoOrLogError(another.toolWindow.id).weight = paneWeight
       }
     }
+    fireResized()
   }
 
   private fun focusToolWindowByDefault() {

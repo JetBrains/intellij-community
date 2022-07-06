@@ -41,6 +41,8 @@ public interface ToolWindowManagerListener extends EventListener {
     stateChanged(toolWindowManager);
   }
 
+  default void resized(@NotNull ToolWindowManager toolWindowManager) { }
+
   /**
    * Invoked when tool window is shown.
    *
