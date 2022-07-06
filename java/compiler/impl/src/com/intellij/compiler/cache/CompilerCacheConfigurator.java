@@ -29,7 +29,7 @@ public class CompilerCacheConfigurator {
 
     Map<String, String> authHeaders = CompilerCacheServerAuthUtil.getRequestHeaders(project, true);
     if (authHeaders.isEmpty()) return null;
-    Pair<String, Integer> commit = getCommitToDownload(project, serverUrl);
+    Pair<String, Integer> commit = getCommitToDownload(project, serverUrl, CompilerCacheLoadingSettings.getForceUpdateValue());
     if (commit == null) return null;
 
     CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings.Builder builder =
@@ -51,14 +51,14 @@ public class CompilerCacheConfigurator {
   }
 
   @Nullable
-  private static Pair<String, Integer> getCommitToDownload(@NotNull Project project, @NotNull String serverUrl) {
+  private static Pair<String, Integer> getCommitToDownload(@NotNull Project project, @NotNull String serverUrl, boolean forceUpdate) {
     Map<String, Set<String>> availableCommitsPerRemote = CompilerCachesServerClient.getCacheKeysPerRemote(project, serverUrl);
     GitCommitsIterator commitsIterator = new GitCommitsIterator(project, INTELLIJ_REPO_NAME);
     String latestDownloadedCommit = GitRepositoryUtil.getLatestDownloadedCommit();
     String latestBuiltCommit = GitRepositoryUtil.getLatestBuiltMasterCommitId();
     Set<String> availableCommitsForRemote = availableCommitsPerRemote.get(commitsIterator.getRemote());
     if (availableCommitsForRemote == null) {
-      LOG.warn("Not found any caches for the latest commits in the branch");
+      LOG.warn("Not found any caches for the remote: " + commitsIterator.getRemote());
       return null;
     }
 
@@ -84,7 +84,7 @@ public class CompilerCacheConfigurator {
       if (latestBuiltCommitFound && !commitToDownload.isEmpty()) break;
     }
 
-    if (commitsCountBetweenCompilation == 0) {
+    if (!forceUpdate && commitsCountBetweenCompilation == 0) {
       LOG.warn("No new commits since last success compilation");
       return null;
     }
@@ -94,12 +94,12 @@ public class CompilerCacheConfigurator {
     }
     LOG.info("Non Compiled commits count: " + commitsCountBetweenCompilation + ". " + commitsBehind + " commits behind the master. " +
              "Commit to download: " + commitToDownload);
-    if (commitToDownload.equals(latestDownloadedCommit)) {
+    if (!forceUpdate && commitToDownload.equals(latestDownloadedCommit)) {
       LOG.info("The system contains up-to-date caches");
       return null;
     }
-    if (commitToDownload.equals(latestBuiltCommit)) {
-      LOG.info("Caches for the built commit won't be downloaded");
+    if (!forceUpdate && commitToDownload.equals(latestBuiltCommit)) {
+      LOG.info("Commit already compiled, thus caches for it won't be download");
       return null;
     }
     return Pair.create(commitToDownload, commitsCountBetweenCompilation);
