@@ -95,8 +95,12 @@ private fun readActionSupport() = ApplicationManager.getApplication().getService
 fun ModalityState.asContextElement(): CoroutineContext = coroutineSupport().asContextElement(this)
 
 /**
- * UI dispatcher which dispatches within the [context modality state][asContextElement].
+ * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
  * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.NON_MODAL] modality state.
+ *
+ * This dispatcher is also installed as [Dispatchers.Main].
+ * Use [Dispatchers.EDT] when in doubt, use [Dispatchers.Main] if the coroutine doesn't care about IJ model,
+ * e.g. when it is also able to be executed outside of IJ process.
  */
 @Suppress("UnusedReceiverParameter")
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()
