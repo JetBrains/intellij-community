@@ -11,6 +11,7 @@ import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.json.JsonFileType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -29,6 +30,10 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = shouldActionBeEnabled(e)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   private fun shouldActionBeEnabled(e: AnActionEvent): Boolean {

@@ -32,4 +32,9 @@ public class ExportToTextFileAction extends DumbAwareAction {
     presentation.setEnabled(
       CommonDataKeys.PROJECT.getData(dataContext) != null && exporterToTextFile != null && exporterToTextFile.canExport());
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

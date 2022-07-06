@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PsiNavigationSupport
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
@@ -147,6 +148,10 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
   override fun template(): String =
     "# custom ${ApplicationNamesInfo.getInstance().fullProductName} properties (expand/override 'bin${File.separator}idea.properties')\n\n"
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   class AccessExtension : NonProjectFileWritingAccessExtension {
     override fun isWritable(file: VirtualFile): Boolean =
       EditCustomPropertiesAction.file.value?.let { VfsUtilCore.pathEqualsTo(file, it.toString()) } ?: false
@@ -164,6 +169,10 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   override fun charset(): Charset = VMOptions.getFileCharset()
 
   fun isEnabled(): Boolean = file() != null
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
     override fun isWritable(file: VirtualFile): Boolean =

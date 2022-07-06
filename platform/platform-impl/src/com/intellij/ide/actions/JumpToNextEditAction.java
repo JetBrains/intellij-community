@@ -26,4 +26,9 @@ final class JumpToNextEditAction extends AnAction implements DumbAware {
     }
     presentation.setEnabled(IdeDocumentHistory.getInstance(project).isNavigateNextChangeAvailable());
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }
