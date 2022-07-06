@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -88,6 +89,11 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
       }
     }
     return null;
+  }
+
+  @Override
+  public final @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
