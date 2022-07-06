@@ -47,7 +47,7 @@ open class DraggablePane : JPanel() {
   }
 
   private fun getOffset(locationOnScreen: Point): Dimension? {
-    return startPoint?.let{
+    return startPoint?.let {
       val offsetX = locationOnScreen.x - it.x
       val offsetY = locationOnScreen.y - it.y
       Dimension(offsetX, offsetY)
@@ -65,7 +65,6 @@ open class DraggablePane : JPanel() {
         resetCursor()
       }
     }
-
 
 
     override fun mousePressed(e: MouseEvent) {
@@ -112,17 +111,22 @@ open class DraggablePane : JPanel() {
     preferredSize = JBDimension(7, 21)
     minimumSize = JBDimension(7, 21)
 
+
+
     setListener(object : DragListener {
       override fun dragStarted(locationOnScreen: Point) {
-        RunWidgetResizeController.getInstance().dragStarted(locationOnScreen)
+        val controller = RunWidgetResizeController.fromParentIdeFrame(this@DraggablePane)
+        controller?.dragStarted(locationOnScreen)
       }
 
       override fun dragged(locationOnScreen: Point, offset: Dimension) {
-        RunWidgetResizeController.getInstance().dragged(locationOnScreen, offset)
+        val controller = RunWidgetResizeController.fromParentIdeFrame(this@DraggablePane)
+        controller?.dragged(locationOnScreen, offset)
       }
 
       override fun dragStopped(locationOnScreen: Point, offset: Dimension) {
-        RunWidgetResizeController.getInstance().dragStopped(locationOnScreen, offset)
+        val controller = RunWidgetResizeController.fromParentIdeFrame(this@DraggablePane)
+        controller?.dragStopped(locationOnScreen, offset)
       }
     })
   }

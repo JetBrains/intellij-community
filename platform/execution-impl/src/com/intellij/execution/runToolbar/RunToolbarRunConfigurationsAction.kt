@@ -33,20 +33,20 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
- companion object {
-   fun doRightClick(dataContext: DataContext) {
-     ActionManager.getInstance().getAction("RunToolbarSlotContextMenuGroup")?.let {
-       if(it is ActionGroup) {
-         SwingUtilities.invokeLater {
-           val popup = JBPopupFactory.getInstance().createActionGroupPopup(
-             null, it, dataContext, false, false, false, null, 5, null)
+  companion object {
+    fun doRightClick(dataContext: DataContext) {
+      ActionManager.getInstance().getAction("RunToolbarSlotContextMenuGroup")?.let {
+        if (it is ActionGroup) {
+          SwingUtilities.invokeLater {
+            val popup = JBPopupFactory.getInstance().createActionGroupPopup(
+              null, it, dataContext, false, false, false, null, 5, null)
 
-           popup.showInBestPositionFor(dataContext)
-         }
-       }
-     }
-   }
- }
+            popup.showInBestPositionFor(dataContext)
+          }
+        }
+      }
+    }
+  }
 
   open fun trace(e: AnActionEvent, add: String? = null) {
 
@@ -74,7 +74,9 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    if(!e.presentation.isVisible) return
+    if (!e.presentation.isVisible) return
+
+    //project = e.project
 
     e.presentation.isVisible = !e.isActiveProcess()
 
@@ -84,12 +86,13 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
       }
     }
     e.presentation.description = e.runToolbarData()?.let {
-      RunToolbarData.prepareDescription(e.presentation.text, ActionsBundle.message("action.RunToolbarShowHidePopupAction.click.to.open.combo.text"))
+      RunToolbarData.prepareDescription(e.presentation.text,
+                                        ActionsBundle.message("action.RunToolbarShowHidePopupAction.click.to.open.combo.text"))
     }
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return object : SegmentedCustomPanel(presentation) {
+    return object : SegmentedCustomPanel(presentation), ToolbarCustomPrefSizeComponent {
       private val setting = object : TrimmedMiddleLabel() {
         override fun getFont(): Font {
           return UIUtil.getToolbarFont()
@@ -163,9 +166,9 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
         }
       }
 
-      override fun getPreferredSize(): Dimension {
+      override fun getPreferredSize(project: Project): Dimension? {
         val d = super.getPreferredSize()
-        d.width = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_SCALED_WIDTH
+        d.width = RunToolbarSettings.getInstance(project).getRunConfigWidth()
         return d
       }
     }
@@ -193,7 +196,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
       e.project?.let {
         e.runToolbarData()?.clear()
         e.setConfiguration(configuration)
-        e.id()?.let {id ->
+        e.id()?.let { id ->
           RunToolbarSlotManager.getInstance(it).configurationChanged(id, configuration)
         }
 

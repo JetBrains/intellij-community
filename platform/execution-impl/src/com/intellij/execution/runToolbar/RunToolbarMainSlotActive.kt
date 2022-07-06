@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustom
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomPanel
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
@@ -20,14 +21,10 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
 import java.beans.PropertyChangeEvent
-import javax.swing.Icon
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.UIManager
+import javax.swing.*
 
 internal class RunToolbarMainSlotActive : SegmentedCustomAction(),
                                           RTBarAction {
-
   companion object {
     private val LOG = Logger.getInstance(RunToolbarMainSlotActive::class.java)
     val ARROW_DATA = Key<Icon?>("ARROW_DATA")
@@ -42,7 +39,6 @@ internal class RunToolbarMainSlotActive : SegmentedCustomAction(),
 
   override fun update(e: AnActionEvent) {
     RunToolbarProcessStartedAction.updatePresentation(e)
-
     val presentation = e.presentation
     if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
@@ -174,7 +170,11 @@ internal class RunToolbarMainSlotActive : SegmentedCustomAction(),
 
     override fun getPreferredSize(): Dimension {
       val d = super.getPreferredSize()
-      d.width = FixWidthSegmentedActionToolbarComponent.CONFIG_WITH_ARROW_WIDTH
+      (SwingUtilities.getWindowAncestor(this) as? IdeFrame)?.project?.let {
+        val project = it
+        d.width = RunToolbarSettings.getInstance(
+          project).getRunConfigWidth() + FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+      }
       return d
     }
   }

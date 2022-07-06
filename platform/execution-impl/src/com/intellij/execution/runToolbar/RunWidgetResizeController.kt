@@ -1,32 +1,36 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
-import com.intellij.execution.runToolbar.FixWidthSegmentedActionToolbarComponent.Companion.RUN_CONFIG_SCALED_WIDTH
-import com.intellij.execution.runToolbar.FixWidthSegmentedActionToolbarComponent.Companion.RUN_CONFIG_WIDTH_PROP
-import com.intellij.execution.runToolbar.FixWidthSegmentedActionToolbarComponent.Companion.RUN_CONFIG_WIDTH_UNSCALED_MIN
-import com.intellij.ide.util.PropertiesComponent
-import com.intellij.util.ui.JBUI
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.IdeFrame
+import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
+import javax.swing.SwingUtilities
 
-class RunWidgetResizeController private constructor() : DraggablePane.DragListener {
+class RunWidgetResizeController private constructor(val project: Project) : DraggablePane.DragListener {
   companion object {
-    private val controller = RunWidgetResizeController()
-    fun getInstance(): RunWidgetResizeController {
-      return controller
+    @JvmStatic
+    fun getInstance(project: Project) = project.service<RunWidgetResizeController>()
+
+    fun fromParentIdeFrame(component: Component): RunWidgetResizeController? {
+      val ideFrame = SwingUtilities.getWindowAncestor(component) as? IdeFrame ?: return null
+      val project = ideFrame.project ?: return null
+      return getInstance(project)
     }
   }
 
   private var startWidth: Int? = null
 
   override fun dragStarted(locationOnScreen: Point) {
-    startWidth = RUN_CONFIG_SCALED_WIDTH
+    startWidth = RunToolbarSettings.getInstance(project).getRunConfigWidth()
   }
 
   override fun dragged(locationOnScreen: Point, offset: Dimension) {
     startWidth?.let {
-      RUN_CONFIG_SCALED_WIDTH = it - offset.width
-      PropertiesComponent.getInstance().setValue(RUN_CONFIG_WIDTH_PROP, RUN_CONFIG_SCALED_WIDTH, JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MIN))
+      val width = it - offset.width
+      RunToolbarSettings.getInstance(project).setRunConfigWidth(width)
     }
   }
 
