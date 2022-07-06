@@ -40,9 +40,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
-import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalDebugSmartCommandAction;
-import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalExecutorAction;
-import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalRunSmartCommandAction;
 
 import javax.swing.*;
 import java.awt.*;
@@ -314,42 +311,26 @@ public final class TerminalShellCommandHandlerHelper {
     }
   }
 
-  @Nullable
-  static Executor matchedExecutor(@NotNull KeyEvent e) {
-    if (matchedRunAction(e) != null) {
+  static @Nullable Executor matchedExecutor(@NotNull KeyEvent e) {
+    if (matchAction(e, getRunAction())) {
       return DefaultRunExecutor.getRunExecutorInstance();
-    } else if (matchedDebugAction(e) != null) {
-      return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
-    } else {
-      return null;
     }
+    if (matchAction(e, getDebugAction())) {
+      return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+    }
+    return null;
   }
 
-  private static TerminalExecutorAction matchedRunAction(@NotNull KeyEvent e) {
-    final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
-    AnAction action = getRunAction();
-    return action instanceof TerminalRunSmartCommandAction
-           && ContainerUtil.exists(action.getShortcutSet().getShortcuts(), sc -> sc.isKeyboard() && sc.startsWith(eventShortcut))
-           ? ((TerminalRunSmartCommandAction)action)
-           : null;
+  private static boolean matchAction(@NotNull KeyEvent e, @NotNull AnAction action) {
+    KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
+    return ContainerUtil.exists(action.getShortcutSet().getShortcuts(), sc -> sc.isKeyboard() && sc.startsWith(eventShortcut));
   }
 
-  private static TerminalExecutorAction matchedDebugAction(@NotNull KeyEvent e) {
-    final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
-    AnAction action = getDebugAction();
-    return action instanceof TerminalDebugSmartCommandAction
-           && ContainerUtil.exists(action.getShortcutSet().getShortcuts(), sc -> sc.isKeyboard() && sc.startsWith(eventShortcut))
-           ? ((TerminalDebugSmartCommandAction)action)
-           : null;
-  }
-
-  @NotNull
-  private static AnAction getRunAction() {
+  private static @NotNull AnAction getRunAction() {
     return Objects.requireNonNull(ActionManager.getInstance().getAction("Terminal.SmartCommandExecution.Run"));
   }
 
-  @NotNull
-  private static AnAction getDebugAction() {
+  private static @NotNull AnAction getDebugAction() {
     return Objects.requireNonNull(ActionManager.getInstance().getAction("Terminal.SmartCommandExecution.Debug"));
   }
 }
