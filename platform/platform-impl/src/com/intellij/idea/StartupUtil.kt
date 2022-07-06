@@ -198,9 +198,6 @@ fun start(mainClass: String,
     ZipFilePool.POOL = ZipFilePoolImpl()
     PluginManagerCore.scheduleDescriptorLoading()
   }
-  if (!checkJdkVersion()) {
-    exitProcess(Main.JDK_CHECK_FAILED)
-  }
   GlobalScope.launch(CoroutineExceptionHandler { _, error ->
     StartupAbortedException.processException(error)
   }) {
@@ -581,32 +578,6 @@ private fun configureJavaUtilLogging() {
     rootLogger.addHandler(consoleHandler)
   }
   activity.end()
-}
-
-private fun checkJdkVersion(): Boolean {
-  if ("true" != System.getProperty("idea.jre.check")) {
-    return true
-  }
-
-  try {
-    // trying to find a JDK class
-    Class.forName("com.sun.jdi.Field", false, AppStarter::class.java.classLoader)
-  }
-  catch (e: ClassNotFoundException) {
-    val message = BootstrapBundle.message(
-      "bootstrap.error.title.cannot.load.jdk.class.reason.0.please.ensure.you.run.the.ide.on.jdk.rather.than.jre", e.message
-    )
-    Main.showMessage(BootstrapBundle.message("bootstrap.error.title.jdk.required"), message, true)
-    return false
-  }
-  catch (e: LinkageError) {
-    val message = BootstrapBundle.message(
-      "bootstrap.error.title.cannot.load.jdk.class.reason.0.please.ensure.you.run.the.ide.on.jdk.rather.than.jre", e.message
-    )
-    Main.showMessage(BootstrapBundle.message("bootstrap.error.title.jdk.required"), message, true)
-    return false
-  }
-  return true
 }
 
 @VisibleForTesting
