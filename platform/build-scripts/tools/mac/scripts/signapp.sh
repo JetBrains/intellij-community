@@ -21,7 +21,7 @@ BUNDLE_ID=$8
 COMPRESS_INPUT=${9:-false}
 JETSIGN_CLIENT=${10:-null}
 
-if [ "$CODESIGN_STRING" == "" ]; then
+if [ "$JETSIGN_CLIENT" != "null" ] && [ "$CODESIGN_STRING" == "" ]; then
   echo "CertificateID is not specified"
   exit 1
 fi
@@ -161,7 +161,10 @@ if [ "$COMPRESS_INPUT" != "false" ]; then
   log "Zipping $BUILD_NAME to $SIT_FILE ..."
   (
     cd "$EXPLODED"
-    ditto -c -k --zlibCompressionLevel=-1 --sequesterRsrc --keepParent "$BUILD_NAME" "../$SIT_FILE"
+    if ! ditto -c -k --zlibCompressionLevel=-1 --sequesterRsrc --keepParent "$BUILD_NAME" "../$SIT_FILE"; then
+      # for running this script on Linux
+      zip -q -r -o -1 "../$SIT_FILE" "$BUILD_NAME"
+    fi
     log "Finished zipping"
   )
 fi
