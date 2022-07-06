@@ -7,9 +7,7 @@ import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -17,6 +15,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Key
@@ -36,6 +35,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CancellationException
+
 
 private val LOG = logger<PlatformProjectOpenProcessor>()
 private val EP_NAME = ExtensionPointName<DirectoryProjectConfigurator>("com.intellij.directoryProjectConfigurator")
@@ -90,15 +90,17 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
                       line: Int,
                       callback: ProjectOpenedCallback?,
                       options: EnumSet<Option>): Project? {
-      val openProjectOptions = OpenProjectTask(forceOpenInNewFrame = Option.FORCE_NEW_FRAME in options,
-                                               projectToClose = projectToClose,
-                                               callback = callback,
-                                               runConfigurators = callback != null,
-                                               line = line)
+      val openProjectOptions = OpenProjectTask {
+        forceOpenInNewFrame = Option.FORCE_NEW_FRAME in options
+        this.projectToClose = projectToClose
+        this.callback = callback
+        runConfigurators = callback != null
+        this.line = line
+      }
       return doOpenProject(Path.of(virtualFile.path), openProjectOptions)
     }
 
-    internal fun createTempProjectAndOpenFile(file: Path, options: OpenProjectTask): Project? {
+    private fun createTempProjectAndOpenFile(file: Path, options: OpenProjectTask): Project? {
       val dummyProjectName = file.fileName.toString()
       val baseDir = FileUtilRt.createTempDirectory(dummyProjectName, null, true).toPath()
       val copy = options.copy(isNewProject = true, projectName = dummyProjectName, runConfigurators = true, preparedToOpen = { module ->
@@ -118,27 +120,39 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
-    private suspend fun createTempProjectAndOpenFileAsync(file: Path, options: OpenProjectTask): Project? {
+    internal suspend fun createTempProjectAndOpenFileAsync(file: Path, options: OpenProjectTask): Project? {
       val dummyProjectName = file.fileName.toString()
-      val baseDir = FileUtilRt.createTempDirectory(dummyProjectName, null, true).toPath()
+      val baseDir = Files.createTempDirectory(dummyProjectName)
       val copy = options.copy(
         isNewProject = true,
         projectName = dummyProjectName,
         runConfigurators = true,
         preparedToOpen = { module ->
           // adding content root for chosen (single) file
-          ModuleRootModificationUtil.updateModel(module) { model ->
+          val model = readAction { ModuleRootManager.getInstance(module).modifiableModel }
+          try {
             val entries = model.contentEntries
             // remove custom content entry created for temp directory
             if (entries.size == 1) {
-              model.removeContentEntry(entries[0])
+              model.removeContentEntry(entries.first())
             }
             model.addContentEntry(VfsUtilCore.pathToUrl(file.toString()))
+
+            withContext(Dispatchers.EDT) {
+              if (!module.isDisposed) {
+                ApplicationManager.getApplication().runWriteAction(model::commit)
+              }
+            }
+          }
+          finally {
+            if (!model.isDisposed) {
+              model.dispose()
+            }
           }
         }
       )
-      TrustedPaths.getInstance().setProjectPathTrusted(baseDir, true)
-      val project = ProjectManagerEx.getInstanceEx().openProjectAsync(baseDir, copy) ?: return null
+      TrustedPaths.getInstance().setProjectPathTrusted(path = baseDir, value = true)
+      val project = ProjectManagerEx.getInstanceEx().openProjectAsync(projectStoreBaseDir = baseDir, options = copy) ?: return null
       openFileFromCommandLine(project, file, copy.line, copy.column)
       return project
     }
@@ -320,11 +334,14 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @ApiStatus.Internal
     @JvmStatic
     fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
-      return OpenProjectTask(runConfigurators = true,
-                             isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir),
-                             projectToClose = projectToClose,
-                             isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode,  // doesn't make sense to refresh
-                             useDefaultProjectAsTemplate = true)
+      return OpenProjectTask {
+        runConfigurators = true
+        isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir)
+        this.projectToClose = projectToClose
+        // doesn't make sense to refresh
+        isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode
+        useDefaultProjectAsTemplate = true
+      }
     }
 
     @ApiStatus.Internal
@@ -354,10 +371,17 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
   // force open in a new frame if temp project
   override fun openProjectAndFile(file: Path, line: Int, column: Int, tempProject: Boolean): Project? {
     return if (tempProject) {
-      createTempProjectAndOpenFile(file, OpenProjectTask(forceOpenInNewFrame = true, line = line, column = column))
+      createTempProjectAndOpenFile(file, OpenProjectTask {
+        forceOpenInNewFrame = true
+        this.line = line
+        this.column = column
+      })
     }
     else {
-      doOpenProject(file, OpenProjectTask(line = line, column = column))
+      doOpenProject(file, OpenProjectTask {
+        this.line = line
+        this.column = column
+      })
     }
   }
 

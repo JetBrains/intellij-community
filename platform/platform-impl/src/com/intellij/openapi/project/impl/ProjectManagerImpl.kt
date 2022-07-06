@@ -462,7 +462,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   @Suppress("OVERRIDE_DEPRECATION", "removal")
   final override fun createProject(name: String?, path: String): Project? {
-    return newProject(toCanonicalName(path), OpenProjectTask(isNewProject = true, runConfigurators = false, projectName = name))
+    return newProject(toCanonicalName(path), OpenProjectTask {
+      isNewProject = true
+      runConfigurators = false
+      projectName = name
+    })
   }
 
   @Suppress("OVERRIDE_DEPRECATION")

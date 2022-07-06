@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.projectImport.ProjectOpenedCallback
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import java.util.function.Consumer
 import java.util.function.Predicate
 
 data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean,
@@ -18,9 +19,9 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
                                                 val projectName: String?,
                                                 /** Whether to show welcome screen if failed to open project. */
                                                 val showWelcomeScreen: Boolean,
-                                                val callback: ProjectOpenedCallback? = null,
-                                                val line: Int = -1,
-                                                val column: Int = -1,
+                                                val callback: ProjectOpenedCallback?,
+                                                val line: Int,
+                                                val column: Int,
                                                 val isRefreshVfsNeeded: Boolean,
                                                 /**
                                                  *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
@@ -29,19 +30,20 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
                                                  *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
                                                  *  See com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
                                                  */
-                                                val runConfigurators: Boolean = false,
+                                                val runConfigurators: Boolean,
                                                 val runConversionBeforeOpen: Boolean,
-                                                val projectWorkspaceId: String? = null,
-                                                val isProjectCreatedWithWizard: Boolean = false,
+                                                val projectWorkspaceId: String?,
+                                                val isProjectCreatedWithWizard: Boolean,
                                                 @TestOnly
-                                                val preloadServices: Boolean = true,
+                                                val preloadServices: Boolean,
                                                 val beforeInit: ((Project) -> Unit)?,
                                                 /** Ignored if project is explicitly set. */
                                                 val beforeOpen: (suspend (Project) -> Boolean)?,
-                                                val preparedToOpen: ((Module) -> Unit)?,
+                                                val preparedToOpen: (suspend (Module) -> Unit)?,
                                                 val preventIprLookup: Boolean,
                                                 val processorChooser: ((List<Any>) -> Any)?,
-                                                val implOptions: Any? = null) {
+                                                val implOptions: Any?) {
+  @Internal
   constructor(forceOpenInNewFrame: Boolean = false,
               projectToClose: Project? = null,
               isNewProject: Boolean = false,
@@ -52,23 +54,7 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
               projectName: String? = null,
               /** Whether to show welcome screen if failed to open project. */
               showWelcomeScreen: Boolean = true,
-              callback: ProjectOpenedCallback? = null,
-              line: Int = -1,
-              column: Int = -1,
-              isRefreshVfsNeeded: Boolean = true,
-              /**
-               *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
-               *
-               *  **NB**: if project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
-               *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
-               *  See com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
-               */
-              runConfigurators: Boolean = false,
-              runConversionBeforeOpen: Boolean = true,
-              projectWorkspaceId: String? = null,
-              isProjectCreatedWithWizard: Boolean = false,
-              preloadServices: Boolean = true,
-              implOptions: Any? = null) : this(
+              callback: ProjectOpenedCallback? = null) : this(
     forceOpenInNewFrame = forceOpenInNewFrame,
     projectToClose = projectToClose,
     isNewProject = isNewProject,
@@ -79,16 +65,16 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
 
     showWelcomeScreen = showWelcomeScreen,
     callback = callback,
-    line = line,
-    column = column,
-    isRefreshVfsNeeded = isRefreshVfsNeeded,
+    line = -1,
+    column = -1,
+    isRefreshVfsNeeded = true,
 
-    runConfigurators = runConfigurators,
-    runConversionBeforeOpen = runConversionBeforeOpen,
-    projectWorkspaceId = projectWorkspaceId,
-    isProjectCreatedWithWizard = isProjectCreatedWithWizard,
+    runConfigurators = false,
+    runConversionBeforeOpen = true,
+    projectWorkspaceId = null,
+    isProjectCreatedWithWizard = false,
 
-    preloadServices = preloadServices,
+    preloadServices = true,
     beforeInit = null,
 
     beforeOpen = null,
@@ -96,7 +82,7 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
     preparedToOpen = null,
     processorChooser = null,
 
-    implOptions = implOptions,
+    implOptions = null,
   )
 
   companion object {
@@ -128,7 +114,16 @@ class OpenProjectTaskBuilder internal constructor() {
 
   var isNewProject: Boolean = false
   var useDefaultProjectAsTemplate: Boolean = isNewProject
+
+  /**
+   *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
+   *
+   *  **NB**: if project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
+   *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
+   *  See com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
+   */
   var runConfigurators: Boolean = false
+
   var isProjectCreatedWithWizard: Boolean = false
   var runConversionBeforeOpen: Boolean = true
   var preventIprLookup: Boolean = false
@@ -138,10 +133,23 @@ class OpenProjectTaskBuilder internal constructor() {
 
   var beforeOpen: (suspend (Project) -> Boolean)? = null
   var beforeInit: ((Project) -> Unit)? = null
-  var preparedToOpen: ((Module) -> Unit)? = null
+  var preparedToOpen: (suspend (Module) -> Unit)? = null
+  var callback: ProjectOpenedCallback? = null
 
   var showWelcomeScreen: Boolean = true
 
+  var projectWorkspaceId: String? = null
+  var implOptions: Any? = null
+
+  var line: Int = -1
+  var column: Int = -1
+
+  /** Shim for Java clients */
+  fun withPreparedToOpen(callback: Consumer<Module>) {
+    preparedToOpen = { callback.accept(it) }
+  }
+
+  /**  Shim for Java clients  */
   fun withBeforeOpenCallback(callback: Predicate<Project>) {
     beforeOpen = { callback.test(it) }
   }
@@ -158,6 +166,7 @@ class OpenProjectTaskBuilder internal constructor() {
     builder()
     return OpenProjectTask(
       forceOpenInNewFrame = forceOpenInNewFrame,
+      preloadServices = true,
 
       projectToClose = projectToClose,
       isRefreshVfsNeeded = isRefreshVfsNeeded,
@@ -173,15 +182,21 @@ class OpenProjectTaskBuilder internal constructor() {
       beforeOpen = beforeOpen,
       beforeInit = beforeInit,
       preparedToOpen = preparedToOpen,
+      callback = callback,
 
       preventIprLookup = preventIprLookup,
       processorChooser = processorChooser,
 
-      implOptions = null,
+      projectWorkspaceId = projectWorkspaceId,
+      implOptions = implOptions,
+
+      line = line,
+      column = column,
     )
   }
 }
 
+@Internal
 fun OpenProjectTask(buildAction: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
   return OpenProjectTaskBuilder().build(buildAction)
 }

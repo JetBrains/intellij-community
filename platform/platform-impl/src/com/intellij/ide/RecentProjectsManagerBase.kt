@@ -477,12 +477,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
                                    index: Int,
                                    someProjectWasOpened: Boolean): Boolean {
     val (key, value) = openPaths.get(index)
-    val options = OpenProjectTask(
-      forceOpenInNewFrame = true,
-      showWelcomeScreen = false,
-      projectWorkspaceId = value.projectWorkspaceId,
-      implOptions = OpenProjectImplOptions(frameInfo = value.frame),
-    )
+    val options = OpenProjectTask {
+      forceOpenInNewFrame = true
+      showWelcomeScreen = false
+      projectWorkspaceId = value.projectWorkspaceId
+      implOptions = OpenProjectImplOptions(frameInfo = value.frame)
+    }
     val project = openProject(Path.of(key), options)
     val nextIndex = index + 1
     if (nextIndex == openPaths.size) {
@@ -535,12 +535,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
           frameHelper.init()
 
-          val task = Pair(path, OpenProjectTask(
-            forceOpenInNewFrame = true,
-            showWelcomeScreen = false,
-            projectWorkspaceId = info.projectWorkspaceId,
-            implOptions = OpenProjectImplOptions(frameManager = frameManager),
-          ))
+          val task = Pair(path, OpenProjectTask {
+            forceOpenInNewFrame = true
+            showWelcomeScreen = false
+            projectWorkspaceId = info.projectWorkspaceId
+            implOptions = OpenProjectImplOptions(frameManager = frameManager)
+          })
           if (isActive) {
             activeTask = task
           }

@@ -7,13 +7,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask.Companion.build
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.ProjectUtil.openExistingDirSync
+import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.ide.lightEdit.*
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -30,9 +31,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
 import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createTempProjectAndOpenFile
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 
@@ -76,8 +77,10 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible {
           return@chooseFiles
         }
       }
-      for (file in files) {
-        doOpenFile(project, file)
+      runBlockingUnderModalProgress {
+        for (file in files) {
+          doOpenFile(project, file)
+        }
       }
     }
   }
@@ -140,11 +143,10 @@ private class ProjectOrFileChooserDescriptor : OpenProjectFileChooserDescriptor(
   override fun isChooseMultiple() = true
 }
 
-@RequiresEdt
-private fun doOpenFile(project: Project?, file: VirtualFile) {
+private suspend fun doOpenFile(project: Project?, file: VirtualFile) {
   val filePath = file.toNioPath()
   if (Files.isDirectory(filePath)) {
-    openExistingDirSync(filePath, project)
+    ProjectUtil.openExistingDir(filePath, project)
     return
   }
 
@@ -154,11 +156,10 @@ private fun doOpenFile(project: Project?, file: VirtualFile) {
     if (answer == Messages.CANCEL) {
       return
     }
-
     else if (answer == Messages.YES) {
-      val openedProject = ProjectUtil.openOrImport(filePath, build().withProjectToClose(project))
-      if (openedProject != null) {
-        FileChooserUtil.setLastOpenedFile(openedProject, filePath)
+      val openedProject = ProjectUtil.openOrImportAsync(filePath, build().withProjectToClose(project))
+      openedProject?.let {
+        FileChooserUtil.setLastOpenedFile(it, filePath)
       }
       return
     }
@@ -170,16 +171,16 @@ private fun doOpenFile(project: Project?, file: VirtualFile) {
     OpenFileAction.openFile(file, project)
   }
   else {
-    createTempProjectAndOpenFile(filePath, build().withProjectToClose(project))
+    PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(filePath, build().withProjectToClose(project))
   }
 }
 
 @Messages.YesNoCancelResult
-private fun shouldOpenNewProject(project: Project?, file: VirtualFile): Int {
+private suspend fun shouldOpenNewProject(project: Project?, file: VirtualFile): Int {
   if (file.fileType is ProjectFileType) {
     return Messages.YES
   }
 
   val provider = getImportProvider(file) ?: return Messages.CANCEL
-  return provider.askConfirmationForOpeningProject(file, project)
+  return withContext(Dispatchers.EDT) { provider.askConfirmationForOpeningProject(file, project) }
 }

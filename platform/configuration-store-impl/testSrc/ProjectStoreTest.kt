@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -224,7 +224,7 @@ internal class ProjectStoreTest {
     (projectManager.defaultProject as ComponentManager).stateStore.initComponent(testComponent, null, null)
 
     val newProjectPath = tempDirManager.newPath()
-    val newProject = projectManager.openProject(newProjectPath, OpenProjectTask(isNewProject = true, isRefreshVfsNeeded = false))!!
+    val newProject = projectManager.openProject(newProjectPath, OpenProjectTask { isNewProject = true; isRefreshVfsNeeded = false })!!
     newProject.use {
       val miscXml = newProjectPath.resolve(".idea/misc.xml").readChars()
       assertThat(miscXml).contains("AATestComponent")

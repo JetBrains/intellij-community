@@ -825,13 +825,6 @@ object ProjectUtil {
   @JvmStatic
   fun getOpenProjects(): Array<Project> = ProjectUtilCore.getOpenProjects()
 
-  @OptIn(DelicateCoroutinesApi::class)
-  fun openExistingDirSync(file: Path, currentProject: Project?): CompletableFuture<*> {
-    return GlobalScope.launch {
-      openExistingDir(file, currentProject)
-    }.asCompletableFuture()
-  }
-
   @Internal
   @VisibleForTesting
   suspend fun openExistingDir(file: Path, currentProject: Project?): Project? {
