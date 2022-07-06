@@ -1,212 +1,185 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actions;
+package com.intellij.ide.actions
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.lightEdit.*;
-import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileChooser.PathChooserDialog;
-import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
-import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
-import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
-import com.intellij.platform.PlatformProjectOpenProcessor;
-import com.intellij.projectImport.ProjectOpenProcessor;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.icons.AllIcons
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.impl.OpenProjectTask.Companion.build
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.ProjectUtil.openExistingDirSync
+import com.intellij.ide.lightEdit.*
+import com.intellij.ide.util.PsiNavigationSupport
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileChooser.PathChooserDialog
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
+import com.intellij.openapi.fileTypes.ex.FileTypeChooser
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
+import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
+import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createTempProjectAndOpenFile
+import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import java.io.File
+import java.nio.file.Files
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-
-public class OpenFileAction extends AnAction implements DumbAware, LightEditCompatible {
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    boolean showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null;
-    FileChooserDescriptor descriptor = showFiles ? new ProjectOrFileChooserDescriptor() : new ProjectOnlyFileChooserDescriptor();
-
-    VirtualFile toSelect = null;
-    if (StringUtil.isNotEmpty(GeneralSettings.getInstance().getDefaultProjectDirectory())) {
-      toSelect = VfsUtil.findFileByIoFile(new File(GeneralSettings.getInstance().getDefaultProjectDirectory()), true);
+open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible {
+  companion object {
+    @JvmStatic
+    fun openFile(filePath: String, project: Project) {
+      val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+      if (file != null && file.isValid) {
+        openFile(file, project)
+      }
     }
 
-    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, toSelect == null && showFiles);
-
-    FileChooser.chooseFiles(descriptor, project, toSelect != null ? toSelect : getPathToSelect(), files -> {
-      for (VirtualFile file : files) {
-        if (!descriptor.isFileSelectable(file)) {
-          String message = IdeBundle.message("error.dir.contains.no.project", file.getPresentableUrl());
-          Messages.showInfoMessage(project, message, IdeBundle.message("title.cannot.open.project"));
-          return;
-        }
-      }
-      for (VirtualFile file : files) {
-        doOpenFile(project, file);
-      }
-    });
-  }
-
-  public static class OnWelcomeScreen extends OpenFileAction {
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      if (!NewWelcomeScreen.isNewWelcomeScreen(e)) {
-        presentation.setEnabledAndVisible(false);
-        return;
-      }
-      if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
-        presentation.setIcon(AllIcons.Welcome.Open);
-        presentation.setSelectedIcon(AllIcons.Welcome.OpenSelected);
-        presentation.setText(ActionsBundle.message("action.Tabbed.WelcomeScreen.OpenProject.text"));
+    @JvmStatic
+    fun openFile(file: VirtualFile, project: Project) {
+      NonProjectFileWritingAccessProvider.allowWriting(listOf(file))
+      if (LightEdit.owns(project)) {
+        LightEditService.getInstance().openFile(file)
+        LightEditFeatureUsagesUtil.logFileOpen(project, LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction)
       }
       else {
-        presentation.setIcon(AllIcons.Actions.MenuOpen);
+        PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true)
       }
     }
   }
 
-  @Nullable
-  protected VirtualFile getPathToSelect() {
-    return VfsUtil.getUserHomeDir();
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
-      e.getPresentation().setIcon(AllIcons.Actions.MenuOpen);
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project
+    val showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null
+    val descriptor: FileChooserDescriptor = if (showFiles) ProjectOrFileChooserDescriptor() else ProjectOnlyFileChooserDescriptor()
+    var toSelect: VirtualFile? = null
+    if (!GeneralSettings.getInstance().defaultProjectDirectory.isNullOrEmpty()) {
+      toSelect = VfsUtil.findFileByIoFile(File(GeneralSettings.getInstance().defaultProjectDirectory), true)
     }
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @RequiresEdt
-  private static void doOpenFile(@Nullable Project project, @NotNull VirtualFile file) {
-    Path filePath = file.toNioPath();
-    if (Files.isDirectory(filePath)) {
-      ProjectUtil.INSTANCE.openExistingDirSync(filePath, project);
-      return;
-    }
-
-    // try to open as a project - unless the file is an .ipr of the current one
-    if ((project == null || !file.equals(project.getProjectFile())) && OpenProjectFileChooserDescriptor.isProjectFile(file)) {
-      int answer = shouldOpenNewProject(project, file);
-      if (answer == Messages.CANCEL) {
-        return;
-      }
-      else if (answer == Messages.YES) {
-        Project openedProject = ProjectUtil.openOrImport(filePath, OpenProjectTask.build().withProjectToClose(project));
-        if (openedProject != null) {
-          FileChooserUtil.setLastOpenedFile(openedProject, filePath);
+    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, toSelect == null && showFiles)
+    FileChooser.chooseFiles(descriptor, project, toSelect ?: pathToSelect) { files ->
+      for (file in files) {
+        if (!descriptor.isFileSelectable(file)) {
+          val message = IdeBundle.message("error.dir.contains.no.project", file.presentableUrl)
+          Messages.showInfoMessage(project, message, IdeBundle.message("title.cannot.open.project"))
+          return@chooseFiles
         }
-        return;
+      }
+      for (file in files) {
+        doOpenFile(project, file)
       }
     }
-    LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, file);
+  }
 
-    FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
-    if (type == null) {
-      return;
-    }
-
-    if (project != null && !project.isDefault()) {
-      openFile(file, project);
-    }
-    else {
-      PlatformProjectOpenProcessor.Companion
-        .createTempProjectAndOpenFile$intellij_platform_ide_impl(filePath, OpenProjectTask.build().withProjectToClose(project));
+  internal class OnWelcomeScreen : OpenFileAction() {
+    override fun update(e: AnActionEvent) {
+      val presentation = e.presentation
+      if (!NewWelcomeScreen.isNewWelcomeScreen(e)) {
+        presentation.isEnabledAndVisible = false
+        return
+      }
+      if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
+        presentation.icon = AllIcons.Welcome.Open
+        presentation.selectedIcon = AllIcons.Welcome.OpenSelected
+        presentation.text = ActionsBundle.message("action.Tabbed.WelcomeScreen.OpenProject.text")
+      }
+      else {
+        presentation.icon = AllIcons.Actions.MenuOpen
+      }
     }
   }
 
-  @Messages.YesNoCancelResult
-  private static int shouldOpenNewProject(@Nullable Project project, @NotNull VirtualFile file) {
-    if (file.getFileType() instanceof ProjectFileType) {
-      return Messages.YES;
-    }
+  protected val pathToSelect: VirtualFile?
+    get() = VfsUtil.getUserHomeDir()
 
-    ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(file);
-    if (provider == null) {
-      return Messages.CANCEL;
-    }
-
-    return provider.askConfirmationForOpeningProject(file, project);
-  }
-
-  public static void openFile(@NotNull String filePath, @NotNull Project project) {
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
-    if (file != null && file.isValid()) {
-      openFile(file, project);
+  override fun update(e: AnActionEvent) {
+    if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
+      e.presentation.icon = AllIcons.Actions.MenuOpen
     }
   }
 
-  public static void openFile(@NotNull VirtualFile file, @NotNull Project project) {
-    NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
-    if (LightEdit.owns(project)) {
-      LightEditService.getInstance().openFile(file);
-      LightEditFeatureUsagesUtil.logFileOpen(project, LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction);
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+}
+
+private class ProjectOnlyFileChooserDescriptor : OpenProjectFileChooserDescriptor(true) {
+  init {
+    title = IdeBundle.message("title.open.project")
+  }
+}
+
+// vanilla OpenProjectFileChooserDescriptor only accepts project files; this one is overridden to accept any files
+private class ProjectOrFileChooserDescriptor : OpenProjectFileChooserDescriptor(true) {
+  private val myStandardDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withHideIgnored(false)
+
+  init {
+    title = IdeBundle.message("title.open.file.or.project")
+  }
+
+  override fun isFileVisible(file: VirtualFile, showHiddenFiles: Boolean): Boolean {
+    return if (file.isDirectory) super.isFileVisible(file, showHiddenFiles) else myStandardDescriptor.isFileVisible(file, showHiddenFiles)
+  }
+
+  override fun isFileSelectable(file: VirtualFile?): Boolean {
+    if (file == null) {
+      return false
     }
-    else {
-      PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
+    return if (file.isDirectory) super.isFileSelectable(file) else myStandardDescriptor.isFileSelectable(file)
+  }
+
+  override fun isChooseMultiple() = true
+}
+
+@RequiresEdt
+private fun doOpenFile(project: Project?, file: VirtualFile) {
+  val filePath = file.toNioPath()
+  if (Files.isDirectory(filePath)) {
+    openExistingDirSync(filePath, project)
+    return
+  }
+
+  // try to open as a project - unless the file is an .ipr of the current one
+  if ((project == null || file != project.projectFile) && OpenProjectFileChooserDescriptor.isProjectFile(file)) {
+    val answer = shouldOpenNewProject(project, file)
+    if (answer == Messages.CANCEL) {
+      return
+    }
+
+    else if (answer == Messages.YES) {
+      val openedProject = ProjectUtil.openOrImport(filePath, build().withProjectToClose(project))
+      if (openedProject != null) {
+        FileChooserUtil.setLastOpenedFile(openedProject, filePath)
+      }
+      return
     }
   }
 
-  private static class ProjectOnlyFileChooserDescriptor extends OpenProjectFileChooserDescriptor {
-    ProjectOnlyFileChooserDescriptor() {
-      super(true);
-      setTitle(IdeBundle.message("title.open.project"));
-    }
+  LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, file)
+  FileTypeChooser.getKnownFileTypeOrAssociate(file, project) ?: return
+  if (project != null && !project.isDefault) {
+    OpenFileAction.openFile(file, project)
+  }
+  else {
+    createTempProjectAndOpenFile(filePath, build().withProjectToClose(project))
+  }
+}
+
+@Messages.YesNoCancelResult
+private fun shouldOpenNewProject(project: Project?, file: VirtualFile): Int {
+  if (file.fileType is ProjectFileType) {
+    return Messages.YES
   }
 
-  // vanilla OpenProjectFileChooserDescriptor only accepts project files; this one is overridden to accept any files
-  private static class ProjectOrFileChooserDescriptor extends OpenProjectFileChooserDescriptor {
-    private final FileChooserDescriptor myStandardDescriptor =
-      FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withHideIgnored(false);
-
-    ProjectOrFileChooserDescriptor() {
-      super(true);
-      setTitle(IdeBundle.message("title.open.file.or.project"));
-    }
-
-    @Override
-    public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-      return file.isDirectory() ? super.isFileVisible(file, showHiddenFiles) : myStandardDescriptor.isFileVisible(file, showHiddenFiles);
-    }
-
-    @Override
-    public boolean isFileSelectable(@Nullable VirtualFile file) {
-      if (file == null) return false;
-      return file.isDirectory() ? super.isFileSelectable(file) : myStandardDescriptor.isFileSelectable(file);
-    }
-
-    @Override
-    public boolean isChooseMultiple() {
-      return true;
-    }
-  }
+  val provider = getImportProvider(file) ?: return Messages.CANCEL
+  return provider.askConfirmationForOpeningProject(file, project)
 }
