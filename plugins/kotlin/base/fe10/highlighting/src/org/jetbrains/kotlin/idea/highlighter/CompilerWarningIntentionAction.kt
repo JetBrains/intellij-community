@@ -4,15 +4,12 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
-import javax.swing.Icon
 
-class CompilerWarningIntentionAction(private val name: @IntentionFamilyName String): AbstractEmptyIntentionAction(), LowPriorityAction, Iconable {
+class CompilerWarningIntentionAction(private val name: @IntentionFamilyName String): AbstractEmptyIntentionAction(), LowPriorityAction {
     override fun getText(): String = KotlinBaseFe10HighlightingBundle.message("kotlin.compiler.warning.0.options", name)
 
     override fun getFamilyName(): String = name
@@ -27,6 +24,4 @@ class CompilerWarningIntentionAction(private val name: @IntentionFamilyName Stri
     }
 
     override fun hashCode(): Int = name.hashCode()
-
-    override fun getIcon(@Iconable.IconFlags flags: Int): Icon = AllIcons.Actions.RealIntentionBulb
 }

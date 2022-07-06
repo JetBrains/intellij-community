@@ -49,6 +49,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -327,23 +328,22 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
       }
 
-      realPoint = new Point(- (AllIcons.Actions.RealIntentionBulb.getIconWidth() / 2) - 4, - (AllIcons.Actions.RealIntentionBulb
-                                                                                                .getIconHeight() / 2));
+      realPoint = new Point(- (EmptyIcon.ICON_16.getIconWidth() / 2) - 4, - (EmptyIcon.ICON_16.getIconHeight() / 2));
     }
     else {
       Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
       if (position.y < visibleArea.y || position.y >= visibleArea.y + visibleArea.height) return null;
 
       // try to place bulb on the same line
-      int yShift = -(NORMAL_BORDER_SIZE + AllIcons.Actions.RealIntentionBulb.getIconHeight());
+      int yShift = -(NORMAL_BORDER_SIZE + EmptyIcon.ICON_16.getIconHeight());
       if (canPlaceBulbOnTheSameLine(editor)) {
-        yShift = -(NORMAL_BORDER_SIZE + (AllIcons.Actions.RealIntentionBulb.getIconHeight() - editor.getLineHeight()) / 2 + 3);
+        yShift = -(NORMAL_BORDER_SIZE + (EmptyIcon.ICON_16.getIconHeight() - editor.getLineHeight()) / 2 + 3);
       }
       else if (position.y < visibleArea.y + editor.getLineHeight()) {
         yShift = editor.getLineHeight() - NORMAL_BORDER_SIZE;
       }
 
-      int xShift = AllIcons.Actions.RealIntentionBulb.getIconWidth();
+      int xShift = EmptyIcon.ICON_16.getIconWidth();
 
       realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift);
     }
@@ -362,7 +362,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     int firstNonSpaceColumnOnTheLine = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, line);
     if (firstNonSpaceColumnOnTheLine == -1) return false;
     Point point = editor.visualPositionToXY(new VisualPosition(line, firstNonSpaceColumnOnTheLine));
-    return point.x > AllIcons.Actions.RealIntentionBulb.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2;
+    return point.x > EmptyIcon.ICON_16.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2;
   }
 
   private IntentionHintComponent(@NotNull Project project,
