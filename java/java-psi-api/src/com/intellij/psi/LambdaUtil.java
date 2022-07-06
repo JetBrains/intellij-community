@@ -411,7 +411,8 @@ public final class LambdaUtil {
           PsiElement resultElement = resolveResult.getElement();
           LOG.assertTrue(!(MethodCandidateInfo.isOverloadCheck(contextCall.getArgumentList()) &&
                            resultElement instanceof PsiMethod &&
-                           ((PsiMethod)resultElement).hasTypeParameters()));
+                           ((PsiMethod)resultElement).hasTypeParameters() &&
+                           contextCall instanceof PsiCallExpression && ((PsiCallExpression)contextCall).getTypeArguments().length == 0));
           return getSubstitutedType(expression, tryToSubstitute, lambdaIdx, resolveResult);
         }
       }
