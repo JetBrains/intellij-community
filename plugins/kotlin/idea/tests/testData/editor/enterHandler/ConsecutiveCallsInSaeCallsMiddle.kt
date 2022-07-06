@@ -3,7 +3,8 @@ class Some {
 }
 
 public fun bar(): String? = Some()?.some()<caret>
-        ?.some()
-        ?.some()
+    ?.some()
+    ?.some()
 
-// WITHOUT_CUSTOM_LINE_INDENT_PROVIDER
+// IGNORE_FORMATTER
+// SET_FALSE: CONTINUATION_INDENT_FOR_CHAINED_CALLS

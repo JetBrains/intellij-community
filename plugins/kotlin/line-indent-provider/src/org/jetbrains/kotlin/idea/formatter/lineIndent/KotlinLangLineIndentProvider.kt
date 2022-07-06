@@ -112,7 +112,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             after.isAt(RightParenthesis) ->
                 factory.createIndentCalculatorForParenthesis(before, currentPosition, after, offset, settings)?.let { return it }
 
-            after.isAt(Dot) ->
+            after.isAt(Dot) || after.isAt(Quest) && after.after().isAt(Dot) ->
                 factory.createIndentCalculatorForDot(before, settings)?.let { return it }
         }
 
@@ -287,6 +287,10 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             //   .abc|.call()
             if (calleeOrReference.isAt(Dot)) {
                 val before = calleeOrReference.copyAnd(SemanticEditorPosition::moveBefore)
+                if (before.isAt(Quest)) {
+                    before.moveBefore()
+                }
+
                 if (!before.moveBeforeWhileThisIsWhiteSpaceOnSameLineOrBlockComment()) {
                     // case: non-first call in a chain
                     return createIndentCalculator(

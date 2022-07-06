@@ -2501,6 +2501,11 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 runTest("testData/editor/enterHandler/ArgumentListNormalIndent.after.inv.kt");
             }
 
+            @TestMetadata("ConsecutiveCallsInSaeCallsMiddle.after.inv.kt")
+            public void testConsecutiveCallsInSaeCallsMiddle() throws Exception {
+                runTest("testData/editor/enterHandler/ConsecutiveCallsInSaeCallsMiddle.after.inv.kt");
+            }
+
             @TestMetadata("HigherOrderFunction2.after.inv.kt")
             public void testHigherOrderFunction2() throws Exception {
                 runTest("testData/editor/enterHandler/HigherOrderFunction2.after.inv.kt");

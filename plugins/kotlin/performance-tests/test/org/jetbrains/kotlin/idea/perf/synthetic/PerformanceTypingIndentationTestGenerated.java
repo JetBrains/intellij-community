@@ -2501,6 +2501,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/ArgumentListNormalIndent.after.inv.kt");
             }
 
+            @TestMetadata("ConsecutiveCallsInSaeCallsMiddle.after.inv.kt")
+            public void testConsecutiveCallsInSaeCallsMiddle() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/ConsecutiveCallsInSaeCallsMiddle.after.inv.kt");
+            }
+
             @TestMetadata("HigherOrderFunction2.after.inv.kt")
             public void testHigherOrderFunction2() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/HigherOrderFunction2.after.inv.kt");

@@ -3,7 +3,7 @@ class Some {
 }
 
 public fun bar(): String? = Some()?.some()
-    <caret>
+        <caret>
     ?.some()
     ?.some()
 
