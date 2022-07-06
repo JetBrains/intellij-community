@@ -650,26 +650,9 @@ public final class Utils {
             List<AnAction> adjusted = new ArrayList<>(actions);
             actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> rearrangeByPromoters(adjusted, dataContext));
             if (promise.isDone()) return null;
-            boolean oldEdtMode = ContainerUtil.find(adjusted, o -> o.getActionUpdateThread() == ActionUpdateThread.OLD_EDT) != null;
-            Set<String> missedKeys = !oldEdtMode || Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt") ? null : ContainerUtil.newConcurrentSet();
-            // fast-track
-            if (missedKeys != null) {
-              UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
-              ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(fastSession);
-              fastUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(fastSession, adjusted)));
-              if (!ref.isNull()) queue.offer(fastUpdater::applyPresentationChanges);
-              if (!ref.isNull() || promise.isDone()) return null;
-            }
-            // ordinary-track
-            boolean[] missedKeyPresent = {false};
-            if (missedKeys == null ||
-                actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () ->
-                  missedKeyPresent[0] = ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null)) &&
-                missedKeyPresent[0]) {
-              UpdateSession session = actionUpdater.asUpdateSession();
-              actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(session, adjusted)));
-              queue.offer(actionUpdater::applyPresentationChanges);
-            }
+            UpdateSession session = actionUpdater.asUpdateSession();
+            actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(session, adjusted)));
+            queue.offer(actionUpdater::applyPresentationChanges);
             return null;
           };
           ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
