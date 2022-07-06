@@ -21,7 +21,12 @@ class ProjectRefreshAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val project = e.project ?: return
+    val project = e.project
+    if (project == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
     val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
     val systemIds = notificationAware.getSystemIds()
     if (systemIds.isNotEmpty()) {
