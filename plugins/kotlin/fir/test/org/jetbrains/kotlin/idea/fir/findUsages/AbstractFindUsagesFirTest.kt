@@ -13,6 +13,9 @@ import java.nio.file.Paths
 abstract class AbstractFindUsagesFirTest : AbstractFindUsagesTest() {
     override fun isFirPlugin(): Boolean = true
 
+    override val ignoreLog: Boolean
+        get() = true
+
     override fun tearDown() {
         runAll(
             ThrowableRunnable { project.invalidateCaches() },

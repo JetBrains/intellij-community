@@ -12,3 +12,4 @@ fun test() {
     val b = B
     b[4] = "a"
 }
+// FIR_COMPARISON
