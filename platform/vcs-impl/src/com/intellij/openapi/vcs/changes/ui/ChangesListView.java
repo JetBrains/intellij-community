@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.EditedCommitNode;
@@ -33,7 +32,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
@@ -127,10 +127,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
 
   @Nullable
   private static ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    Enumeration<ChangesBrowserNode<?>> children = (Enumeration)root.children();
-    Iterator<ChangesBrowserNode<?>> nodes = ContainerUtil.iterate(children);
-    return ContainerUtil.find(nodes, node -> {
+    return root.iterateNodeChildren().find(node -> {
       if (node instanceof ChangesBrowserChangeListNode) {
         ChangeList list = ((ChangesBrowserChangeListNode)node).getUserObject();
         return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();

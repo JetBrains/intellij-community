@@ -20,7 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.io.File;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public abstract class VcsTreeModelData {
@@ -299,14 +300,10 @@ public abstract class VcsTreeModelData {
     public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       JBTreeTraverser<ChangesBrowserNode<?>> traverser = JBTreeTraverser.from(node -> {
         if (node.shouldExpandByDefault()) {
-          return () -> {
-            //noinspection unchecked
-            Enumeration<ChangesBrowserNode<?>> children = (Enumeration)node.children();
-            return ContainerUtil.iterate(children);
-          };
+          return node.iterateNodeChildren();
         }
         else {
-          return Collections.emptyList();
+          return JBIterable.empty();
         }
       });
       return traverser.withRoot(myNode).preOrderDfsTraversal();
@@ -437,10 +434,7 @@ public abstract class VcsTreeModelData {
   @Nullable
   public static ChangesBrowserNode<?> findTagNode(@NotNull JTree tree, @NotNull Object tag) {
     ChangesBrowserNode<?> root = (ChangesBrowserNode<?>)tree.getModel().getRoot();
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    Enumeration<ChangesBrowserNode<?>> children = (Enumeration)root.children();
-    Iterator<ChangesBrowserNode<?>> iterator = ContainerUtil.iterate(children);
-    return ContainerUtil.find(iterator, node -> tag.equals(node.getUserObject()));
+    return root.iterateNodeChildren().find(node -> tag.equals(node.getUserObject()));
   }
 
   private static boolean underExpandByDefault(@Nullable ChangesBrowserNode<?> node) {
