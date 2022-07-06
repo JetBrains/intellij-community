@@ -56,6 +56,17 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     assertNotNull(expression.getType());
   }
+  
+  public void testMethodApplicability1() {
+    configureByFile(BASE_PATH + "/MethodApplicability.java");
+    PsiFile file = getFile();
+    Editor editor = getEditor();
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+    for (JavaResolveResult result : expression.getMethodExpression().multiResolve(true)) {
+      assertFalse(result.isValidResult());
+    }
+  }
 
   public void testNestedLambdaReturnTypeCheck() {
     configure();
