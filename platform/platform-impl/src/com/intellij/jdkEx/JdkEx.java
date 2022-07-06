@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jdkEx;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
@@ -22,6 +23,8 @@ import java.awt.*;
  */
 @ApiStatus.Internal
 public final class JdkEx {
+  private static final Logger LOG = Logger.getInstance(JdkEx.class);
+
   @SuppressWarnings("unused")
   public static @NotNull InputEventEx getInputEventEx() {
     if (SystemInfo.isJetBrainsJvm) {
@@ -107,17 +110,27 @@ public final class JdkEx {
   private static @Nullable MethodInvocator getTabbingModeInvocator() {
     if (!SystemInfo.isJetBrainsJvm || !SystemInfo.isMacOSBigSur || !Registry.is("ide.mac.bigsur.window.with.tabs.enabled", true) ||
         ExperimentalUI.isNewUI()) {
+      if (SystemInfo.isMac) {
+        LOG.info("=== TabbingMode: disabled (" +
+                 SystemInfo.isJetBrainsJvm + "," +
+                 SystemInfo.isMacOSBigSur + "," +
+                 Registry.is("ide.mac.bigsur.window.with.tabs.enabled", true) + "," +
+                 ExperimentalUI.isNewUI() + ") ===");
+      }
       return null;
     }
     if (mySetTabbingMode == null) {
       try {
         mySetTabbingMode = new MethodInvocator(false, Class.forName("java.awt.Window"), "setTabbingMode");
         if (mySetTabbingMode.isAvailable()) {
+          LOG.info("=== TabbingMode: available ===");
           return mySetTabbingMode;
         }
       }
-      catch (ClassNotFoundException ignore) {
+      catch (ClassNotFoundException e) {
+        LOG.error(e);
       }
+      LOG.info("=== TabbingMode: not available ===");
       return null;
     }
     return mySetTabbingMode.isAvailable() ? mySetTabbingMode : null;
@@ -136,11 +149,14 @@ public final class JdkEx {
           new MethodInvocator(false, Class.forName("java.awt.Window"), "setMoveTabToNewWindowCallback", Runnable.class)
             .invoke(window, moveTabToNewWindowCallback);
         }
-        catch (ClassNotFoundException ignore) {
+        catch (ClassNotFoundException e) {
+          LOG.error(e);
         }
       }
+      LOG.info("=== TabbingMode: on ===");
       return true;
     }
+    LOG.info("=== TabbingMode: off ===");
     return false;
   }
 }
