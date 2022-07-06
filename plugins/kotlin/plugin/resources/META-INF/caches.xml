@@ -53,7 +53,7 @@
     <registryKey
             key="kotlin.caches.fine.grained.entity.validation"
             description="Allow a fine grained cache entity validation"
-            defaultValue="false"/>
+            defaultValue="true"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.project.ModulePlatformCache"/>
   </extensions>
