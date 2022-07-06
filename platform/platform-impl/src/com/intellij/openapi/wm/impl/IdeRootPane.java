@@ -96,17 +96,25 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     });
 
     IdeMenuBar menu = IdeMenuBar.createMenuBar().setFrame(frame);
-    if (!isDecoratedMenu() && !FrameInfoHelper.isFloatingMenuBarSupported()) {
+    boolean isDecoratedMenu = isDecoratedMenu();
+    if (!isDecoratedMenu && !FrameInfoHelper.isFloatingMenuBarSupported()) {
       setJMenuBar(menu);
     }
     else {
-      if (isDecoratedMenu()) {
+      if (isDecoratedMenu) {
         JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, true);
         ToolbarUtil.removeSystemTitleBar(this);
 
         mySelectedEditorFilePath = CustomDecorationPath.Companion.createMainInstance(frame);
         IdeMenuBar ideMenu = IdeMenuBar.createMenuBar().setFrame(frame);
-        myCustomFrameTitlePane = createCustomTitle(frame, ideMenu);
+        if (ExperimentalUI.isNewUI()) {
+          myCustomFrameTitlePane = SystemInfoRt.isMac
+                                   ? new MacToolbarFrameHeader(frame, this, ideMenu)
+                                   : new ToolbarFrameHeader(frame, ideMenu);
+        }
+        else {
+          myCustomFrameTitlePane = new MenuFrameHeader(frame, mySelectedEditorFilePath, ideMenu);
+        }
         getLayeredPane().add(myCustomFrameTitlePane.getComponent(), Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 2));
       }
 
@@ -129,7 +137,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     glassPane.setVisible(false);
     setBorder(UIManager.getBorder("Window.border"));
 
-    if (!isDecoratedMenu()) {
+    if (!isDecoratedMenu) {
       ToolbarUtil.setCustomTitleBar(frame, this, runnable -> {
         Disposer.register(parentDisposable, runnable::run);
       });
@@ -138,15 +146,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateMainMenuVisibility();
 
     myContentPane.add(createCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
-  }
-
-  @NotNull
-  private MainFrameCustomHeader createCustomTitle(@NotNull JFrame frame, IdeMenuBar ideMenu) {
-    if (ExperimentalUI.isNewUI()) {
-      return SystemInfo.isMac ? new MacToolbarFrameHeader(frame, this, ideMenu) : new ToolbarFrameHeader(frame, ideMenu);
-    }
-
-    return new MenuFrameHeader(frame, mySelectedEditorFilePath, ideMenu);
   }
 
   /**
@@ -245,7 +244,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   public final void prepareToolbar() {
-    if (getToolbarHolderDelegate() == null && ExperimentalUI.isNewUI()) {
+    ToolbarHolder delegate = getToolbarHolderDelegate();
+    if (delegate == null && ExperimentalUI.isNewUI()) {
       MainToolbar toolbar = new MainToolbar();
       toolbar.setBorder(JBUI.Borders.empty(0, 10));
 
@@ -257,16 +257,21 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   public final void initOrCreateToolbar(@NotNull Project project) {
-    if (getToolbarHolderDelegate() == null && ExperimentalUI.isNewUI()) {
-      JComponent toolbar = myToolbar;
-      // null if frame is reused (open project in an existing frame)
-      if (toolbar != null) {
-        ((MainToolbar)toolbar).init(project);
-        return;
+    ToolbarHolder delegate = getToolbarHolderDelegate();
+    if (delegate == null) {
+      if (ExperimentalUI.isNewUI()) {
+        JComponent toolbar = myToolbar;
+        // null if frame is reused (open project in an existing frame)
+        if (toolbar != null) {
+          ((MainToolbar)toolbar).init(project);
+          return;
+        }
       }
+      doUpdateToolbarWithoutDelegate();
     }
-
-    updateToolbar();
+    else {
+      delegate.initToolbar();
+    }
   }
 
   final void updateToolbar() {
@@ -318,7 +323,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       Disposer.dispose(d);
     }
   }
-
 
   public void updateNorthComponents() {
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
@@ -620,12 +624,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    */
   @ApiStatus.Internal
   public static boolean isMenuButtonInToolbar() {
-    return SystemInfo.isLinux && ExperimentalUI.isNewUI() && FrameInfoHelper.isFloatingMenuBarSupported();
+    return SystemInfoRt.isLinux && ExperimentalUI.isNewUI() && FrameInfoHelper.isFloatingMenuBarSupported();
   }
 
   private static boolean isDecoratedMenu() {
-    boolean osSupported = SystemInfo.isWindows ||
-      (SystemInfo.isMac && ExperimentalUI.isNewUI() && Registry.is("ide.experimental.ui.title.toolbar.in.macos"));
+    boolean osSupported = SystemInfoRt.isWindows ||
+      (SystemInfoRt.isMac && ExperimentalUI.isNewUI() && Registry.is("ide.experimental.ui.title.toolbar.in.macos"));
     return (IdeFrameDecorator.isCustomDecorationActive() || MainToolbarKt.isToolbarInHeader()) && osSupported;
   }
 }

@@ -2,6 +2,10 @@
 package com.intellij.openapi.wm.impl
 
 internal interface ToolbarHolder {
+  fun initToolbar() {
+    updateToolbar()
+  }
+
   fun updateToolbar()
 
   fun removeToolbar()

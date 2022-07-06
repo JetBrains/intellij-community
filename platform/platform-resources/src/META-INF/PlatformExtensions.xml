@@ -847,7 +847,6 @@
     <applicationService serviceImplementation="com.intellij.ide.ui.TopHitCache"/>
 
     <startupActivity implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
-    <startupActivity implementation="com.intellij.toolWindow.InitToolWindowSetActivity"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.util.TipsOrderUtil$RecommendationsStartupActivity"/>
     <postStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>

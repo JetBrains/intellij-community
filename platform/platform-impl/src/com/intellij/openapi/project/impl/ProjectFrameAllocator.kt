@@ -15,14 +15,17 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.TaskSupport
 import com.intellij.openapi.progress.withModalProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
@@ -126,6 +129,27 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       val frameHelper = deferredProjectFrameHelper.await()
       runActivity("project frame assigning") {
         windowManager.assignFrame(frameHelper, project)
+      }
+
+      // not as a part of a project modal dialog
+      val projectScope = (project as ProjectEx).coroutineScope
+      projectScope.launch {
+        val toolWindowManager = ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl ?: return@launch
+        // OpenFilesActivity inits component
+        val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+        runActivity("tool window pane creation") {
+          toolWindowManager.init(frameHelper, fileEditorManager)
+        }
+      }
+      projectScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val rootPane = frameHelper.rootPane!!
+        runActivity("north components updating") {
+          rootPane.updateNorthComponents()
+        }
+
+        runActivity("toolbar updating") {
+          rootPane.initOrCreateToolbar(project)
+        }
       }
     }
   }

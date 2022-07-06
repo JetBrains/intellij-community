@@ -18,7 +18,9 @@ import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -63,6 +65,8 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.JdkConstants
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -465,18 +469,29 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
   }
 
-  suspend fun init(frameHelper: ProjectFrameHelper) {
+  suspend fun init(frameHelper: ProjectFrameHelper, fileEditorManager: FileEditorManagerEx) {
     // Make sure we haven't already created the root tool window pane. We might have created panes for secondary frames, as they get
     // registered differently, but we shouldn't have the main pane yet
     LOG.assertTrue(!toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID))
-    doInit(frameHelper, project.messageBus.connect(this))
+    doInit(frameHelper, project.messageBus.connect(this), fileEditorManager)
   }
 
   @VisibleForTesting
-  suspend fun doInit(frameHelper: ProjectFrameHelper, connection: MessageBusConnection) {
-    val rootPane = frameHelper.rootPane!!
-
+  suspend fun doInit(frameHelper: ProjectFrameHelper, connection: MessageBusConnection, fileEditorManager: FileEditorManagerEx) {
     connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      frameState = frameHelper
+
+      val toolWindowPane = frameHelper.rootPane!!.toolWindowPane
+      toolWindowPane.setDocumentComponent(fileEditorManager.component)
+
+      // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor. If we're
+      // reopening other frames, their tool window panes will be already added, but we still need to initialise the tool windows themselves.
+      toolWindowPanes.put(toolWindowPane.paneId, toolWindowPane)
+    }
+
+    toolWindowSetInitializer.initUi()
+
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
         ApplicationManager.getApplication().invokeLater({
@@ -488,18 +503,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
                                                         }, project.disposed)
       }
     })
-
-    frameState = frameHelper
-
-    val toolWindowPane = rootPane.toolWindowPane
-    // OpenFilesActivity inits component
-    toolWindowPane.setDocumentComponent(FileEditorManagerEx.getInstanceEx(project).component)
-
-    // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor. If we're
-    // reopening other frames, their tool window panes will be already added, but we still need to initialise the tool windows themselves.
-    toolWindowPanes.put(toolWindowPane.paneId, toolWindowPane)
-
-    toolWindowSetInitializer.initUi()
   }
 
   @Deprecated("Use {{@link #registerToolWindow(RegisterToolWindowTask)}}")

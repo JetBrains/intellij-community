@@ -18,11 +18,9 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.ExperimentalUI
@@ -42,37 +40,6 @@ private inline fun Logger.debug(project: Project, lazyMessage: (project: String)
   if (isDebugEnabled) {
     // project.name must be not used - only projectFilePath is side effect free
     debug(lazyMessage(project.presentableUrl ?: ""))
-  }
-}
-
-internal class InitToolWindowSetActivity : InitProjectActivity {
-  override suspend fun run(project: Project) {
-    val app = ApplicationManager.getApplication()
-    if (app.isHeadlessEnvironment || app.isUnitTestMode) {
-      return
-    }
-
-    LOG.debug(project) { "schedule init (project=$it)" }
-    // not as a part of a project modal dialog
-    (project as ProjectEx).coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      LOG.debug(project) { "init (project=$it)" }
-
-      // frame helper is set as part of `ProjectFrameAllocator.projectLoaded`
-      // - project frame must be presented at the moment of start-up activity executing.
-      val frameHelper = WindowManagerEx.getInstanceEx().getFrameHelper(project)!!
-
-      val rootPane = frameHelper.rootPane!!
-
-      runActivity("north components updating") {
-        rootPane.updateNorthComponents()
-      }
-      runActivity("tool window pane creation") {
-        (ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl)?.init(frameHelper)
-      }
-      runActivity("toolbar updating") {
-        rootPane.initOrCreateToolbar(project)
-      }
-    }
   }
 }
 
@@ -136,7 +103,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       val tasks = ref.get()
       LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
       ref.set(null)
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         createAndLayoutToolWindows(manager, tasks ?: return@withContext)
         while (true) {
           (pendingTasks.poll() ?: break).run()
@@ -156,8 +123,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
   }
 
   // must be executed in EDT
-  private fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl,
-                                         tasks: List<RegisterToolWindowTask>) {
+  private fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl, tasks: List<RegisterToolWindowTask>) {
     @Suppress("TestOnlyProblems")
     manager.setLayoutOnInit(pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout"))
 

@@ -25,13 +25,19 @@ private const val DEFAULT_HEADER_HEIGHT = 40
 internal class MacToolbarFrameHeader(private val frame: JFrame,
                                      private val root: JRootPane,
                                      private val ideMenu: IdeMenuBar) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder {
-
-  private var myToolbar : MainToolbar? = null
+  private var toolbar = MainToolbar()
 
   init {
     layout = BorderLayout()
     root.addPropertyChangeListener(MacMainFrameDecorator.FULL_SCREEN, PropertyChangeListener { updateBorders() })
     add(ideMenu, BorderLayout.NORTH)
+
+    toolbar.isOpaque = false
+    add(toolbar, BorderLayout.CENTER)
+  }
+
+  override fun initToolbar() {
+    toolbar.init((frame as? IdeFrame)?.project)
   }
 
   override fun updateToolbar() {
@@ -40,15 +46,15 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     val toolbar = MainToolbar()
     toolbar.init((frame as? IdeFrame)?.project)
     toolbar.isOpaque = false
-    myToolbar = toolbar
+    this.toolbar = toolbar
 
-    add(myToolbar, BorderLayout.CENTER)
+    add(toolbar, BorderLayout.CENTER)
     revalidate()
     updateCustomDecorationHitTestSpots()
   }
 
   override fun removeToolbar() {
-    myToolbar?.let { remove(it) }
+    remove(toolbar)
     revalidate()
   }
 
@@ -67,12 +73,12 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
 
   override fun createButtonsPane(): CustomFrameTitleButtons = CustomFrameTitleButtons.create(myCloseAction)
 
-  override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
-    return myToolbar
-      ?.components
-      ?.filter { it.isVisible }
-      ?.map { Pair(getElementRect(it), CustomWindowDecoration.MENU_BAR) }
-      ?.toList() ?: emptyList()
+  override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
+    return toolbar
+      .components
+      .asSequence()
+      .filter { it.isVisible }
+      .map { Pair(getElementRect(it), CustomWindowDecoration.MENU_BAR) }
   }
 
   override fun updateMenuActions(forceRebuild: Boolean) = ideMenu.updateMenuActions(forceRebuild)
@@ -95,6 +101,6 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
 
   override fun updateActive() {
     super.updateActive()
-    myToolbar?.background = getHeaderBackground(myActive)
+    toolbar?.background = getHeaderBackground(myActive)
   }
 }
