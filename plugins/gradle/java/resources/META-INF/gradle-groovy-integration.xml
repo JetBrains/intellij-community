@@ -66,6 +66,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleIncorrectDependencyNotationArgumentInspection"/>
 
+    <localInspection language="Groovy" groupPath="Gradle" shortName="IncorrectBuildscriptStructure"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.incorrect.buildscript.structure" groupKey="inspection.validity" groupBundle="messages.GroovyBundle"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleBuildscriptStructureInspection"/>
+
 
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
                               order="last"/>
