@@ -473,23 +473,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       if (language != null && Language.findLanguageByID(language) == null) {
         continue; // filter out at least unknown languages
       }
-      if (myIgnoreSuppressed && isSuppressedForFile(wrapper)) {
+      if (myIgnoreSuppressed && wrapper.getTool().isSuppressedFor(getFile())) {
         continue;
       }
       enabled.add(wrapper);
     }
     return enabled;
-  }
-
-  private boolean isSuppressedForFile(@NotNull LocalInspectionToolWrapper wrapper) {
-    PsiFile file = getFile();
-    if (wrapper.isApplicable(file.getLanguage()) || wrapper.hasCustomSuppressor()) {
-      return wrapper.getTool().isSuppressedFor(file);
-    }
-
-    // language mismatch, we only check suppressors, but do not call isSuppressed of tool
-    // do not trigger class loading and tool instantiation
-    return InspectionProfileEntry.isSuppressedBySuppressors(file, wrapper.getShortName());
   }
 
   protected boolean isAcceptableLocalTool(@NotNull LocalInspectionToolWrapper wrapper) {

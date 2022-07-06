@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -119,11 +118,6 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
    * @see #groupBundle
    */
   @Attribute("groupPathKey") public String groupPathKey;
-
-  /**
-   * Should be set to true for inspections overriding {@link InspectionProfileEntry#isSuppressedFor(PsiElement)}
-   */
-  @Attribute("hasCustomSuppressor") public boolean hasCustomSuppressor;
 
   protected InspectionEP() {
   }
