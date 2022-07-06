@@ -154,6 +154,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return myConfig.getSdk();
   }
 
+  public AbstractPythonRunConfiguration<?> getConfig() {
+    return myConfig;
+  }
+
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
