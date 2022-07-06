@@ -345,44 +345,44 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
 
-            @TestMetadata("memberFunctionWithContextReceiver.after.kt")
+            @TestMetadata("MemberFunctionWithContextReceiver.after.kt")
             public void testMemberFunctionWithContextReceiver() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/memberFunctionWithContextReceiver.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/MemberFunctionWithContextReceiver.after.kt");
             }
 
-            @TestMetadata("memberFunctionWithContextReceiverNoModifiers.after.kt")
+            @TestMetadata("MemberFunctionWithContextReceiverNoModifiers.after.kt")
             public void testMemberFunctionWithContextReceiverNoModifiers() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/memberFunctionWithContextReceiverNoModifiers.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/MemberFunctionWithContextReceiverNoModifiers.after.kt");
             }
 
-            @TestMetadata("memberPropertyWithContextReceiver.after.kt")
+            @TestMetadata("MemberPropertyWithContextReceiver.after.kt")
             public void testMemberPropertyWithContextReceiver() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/memberPropertyWithContextReceiver.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/MemberPropertyWithContextReceiver.after.kt");
             }
 
-            @TestMetadata("memberPropertyWithContextReceiverNoModifiers.after.kt")
+            @TestMetadata("MemberPropertyWithContextReceiverNoModifiers.after.kt")
             public void testMemberPropertyWithContextReceiverNoModifiers() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/memberPropertyWithContextReceiverNoModifiers.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/MemberPropertyWithContextReceiverNoModifiers.after.kt");
             }
 
-            @TestMetadata("topLevelFunctionWithContextReceiver.after.kt")
+            @TestMetadata("TopLevelFunctionWithContextReceiver.after.kt")
             public void testTopLevelFunctionWithContextReceiver() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/topLevelFunctionWithContextReceiver.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/TopLevelFunctionWithContextReceiver.after.kt");
             }
 
-            @TestMetadata("topLevelFunctionWithContextReceiverNoModifiers.after.kt")
+            @TestMetadata("TopLevelFunctionWithContextReceiverNoModifiers.after.kt")
             public void testTopLevelFunctionWithContextReceiverNoModifiers() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/topLevelFunctionWithContextReceiverNoModifiers.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/TopLevelFunctionWithContextReceiverNoModifiers.after.kt");
             }
 
-            @TestMetadata("topLevelPropertyWithContextReceiver.after.kt")
+            @TestMetadata("TopLevelPropertyWithContextReceiver.after.kt")
             public void testTopLevelPropertyWithContextReceiver() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/topLevelPropertyWithContextReceiver.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/TopLevelPropertyWithContextReceiver.after.kt");
             }
 
-            @TestMetadata("topLevelPropertyWithContextReceiverNoModifiers.after.kt")
+            @TestMetadata("TopLevelPropertyWithContextReceiverNoModifiers.after.kt")
             public void testTopLevelPropertyWithContextReceiverNoModifiers() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/topLevelPropertyWithContextReceiverNoModifiers.after.kt");
+                runTest("../idea/tests/testData/editor/enterHandler/contextReceivers/TopLevelPropertyWithContextReceiverNoModifiers.after.kt");
             }
         }
 
