@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.DataManager;
@@ -30,13 +30,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-import static com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory.PRIMARY_BUTTONS_NUM;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.LargeIconWithTextWrapper;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.splitAndWrapActions;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.getApplicationTitle;
 
-class EmptyStateProjectsPanel extends BorderLayoutPanel {
-
+final class EmptyStateProjectsPanel extends BorderLayoutPanel {
   EmptyStateProjectsPanel(@NotNull Disposable parentDisposable) {
     setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
     JPanel mainPanel = new NonOpaquePanel(new VerticalFlowLayout());
@@ -49,7 +47,7 @@ class EmptyStateProjectsPanel extends BorderLayoutPanel {
     Couple<DefaultActionGroup> mainAndMore =
       splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE),
                           action -> ActionGroupPanelWrapper.wrapGroups(action, parentDisposable),
-                          PRIMARY_BUTTONS_NUM);
+                          ProjectsTabFactory.PRIMARY_BUTTONS_NUM);
     ActionGroup main = new DefaultActionGroup(
       ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), LargeIconWithTextWrapper::wrapAsBigIconWithText));
 

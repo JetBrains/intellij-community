@@ -8,7 +8,6 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.*
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.ide.impl.OpenProjectTask.Companion.build
 import com.intellij.ide.impl.OpenResult.Companion.cancel
 import com.intellij.ide.impl.OpenResult.Companion.failure
 import com.intellij.openapi.application.*
@@ -113,7 +112,7 @@ object ProjectUtil {
 
   @JvmStatic
   fun openOrImport(path: Path, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    return openOrImport(path, build().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame))
+    return openOrImport(path, OpenProjectTask().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame))
   }
 
   /**
@@ -126,7 +125,7 @@ object ProjectUtil {
    */
   @JvmStatic
   fun openOrImport(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    return openOrImport(Path.of(path), build().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame))
+    return openOrImport(Path.of(path), OpenProjectTask().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame))
   }
 
   @JvmStatic
@@ -354,7 +353,7 @@ object ProjectUtil {
   }
 
   fun openProject(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    return openProject(Path.of(path), build().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame))
+    return openProject(Path.of(path), OpenProjectTask().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame))
   }
 
   private suspend fun chooseProcessorAndOpenAsync(processors: MutableList<ProjectOpenProcessor>,
@@ -635,8 +634,10 @@ object ProjectUtil {
   fun tryOpenFiles(project: Project?, list: List<Path>, location: String): Project? {
     try {
       for (file in list) {
-        val options = build().withProjectToClose(project).withForceOpenInNewFrame(true)
-        val openResult = tryOpenOrImport(file.toAbsolutePath(), options)
+        val openResult = tryOpenOrImport(file, OpenProjectTask {
+          projectToClose = project
+          forceOpenInNewFrame = true
+        })
         if (openResult is OpenResult.Success) {
           LOG.debug("$location: load project from ", file)
           return openResult.project
@@ -647,10 +648,11 @@ object ProjectUtil {
         }
       }
     }
-    catch (ex: ProcessCanceledException) {
+    catch (e: ProcessCanceledException) {
       LOG.debug("$location: skip project opening")
       return null
     }
+
     var result: Project? = null
     for (file in list) {
       if (!Files.exists(file)) {
@@ -744,7 +746,7 @@ object ProjectUtil {
 
     var projectFile: Path? = null
     if (created) {
-      val options = build().asNewProject().withRunConfigurators().withProjectName(name)
+      val options = OpenProjectTask().asNewProject().withRunConfigurators().withProjectName(name)
       val project = ProjectManagerEx.getInstanceEx().newProject(file, options)
       if (project != null) {
         projectCreatedCallback?.projectCreated(project)
@@ -762,7 +764,7 @@ object ProjectUtil {
       return null
     }
 
-    val options = build().withRunConfigurators().withCreatedByWizard().withoutVfsRefresh()
+    val options = OpenProjectTask().withRunConfigurators().withCreatedByWizard().withoutVfsRefresh()
     return ProjectManagerEx.getInstanceEx().openProject(projectFile, options)
   }
 
@@ -810,7 +812,7 @@ object ProjectUtil {
       ProjectManagerEx.getInstanceEx().openProjectAsync(file, options)
     }
     else {
-      openOrImportAsync(file, build().withProjectToClose(currentProject))
+      openOrImportAsync(file, OpenProjectTask().withProjectToClose(currentProject))
     }
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       FileChooserUtil.setLastOpenedFile(project, file)
