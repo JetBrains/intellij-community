@@ -846,8 +846,8 @@
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
     <applicationService serviceImplementation="com.intellij.ide.ui.TopHitCache"/>
 
-    <startupActivity id="openFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
-    <startupActivity implementation="com.intellij.toolWindow.InitToolWindowSetActivity" order="after openFilesActivity"/>
+    <startupActivity implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
+    <startupActivity implementation="com.intellij.toolWindow.InitToolWindowSetActivity"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.util.TipsOrderUtil$RecommendationsStartupActivity"/>
     <postStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>

@@ -208,7 +208,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     val extensionPoint = (app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<StartupActivity>("com.intellij.startupActivity")
 
     // do not create extension if not allow-listed
-    val extensionPointName = extensionPoint.name
     for (adapter in extensionPoint.sortedAdapters) {
       if (project.isDisposed) {
         break
@@ -216,34 +215,29 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
       val pluginId = adapter.pluginDescriptor.pluginId
       if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin") {
-        LOG.error("Only bundled plugin can define $extensionPointName: ${adapter.pluginDescriptor}")
+        LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
         continue
       }
 
       indicator?.checkCanceled()
-      val activity = adapter.createInstance<StartupActivity>(project) ?: continue
-      if (activity is InitProjectActivity) {
-        indicator?.pushState()
-        val startTime = StartUpMeasurer.getCurrentTime()
-        try {
-          tracer.spanBuilder("run activity")
-            .setAttribute(AttributeKey.stringKey("class"), activity.javaClass.name)
-            .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
-            .useWithScope {
-              if (project !is LightEditCompatible || activity is LightEditCompatible) {
-                activity.run(project)
-              }
+      val activity = adapter.createInstance<InitProjectActivity>(project) ?: continue
+      indicator?.pushState()
+      val startTime = StartUpMeasurer.getCurrentTime()
+      try {
+        tracer.spanBuilder("run activity")
+          .setAttribute(AttributeKey.stringKey("class"), activity.javaClass.name)
+          .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
+          .useWithScope {
+            if (project !is LightEditCompatible || activity is LightEditCompatible) {
+              activity.run(project)
             }
-        }
-        finally {
-          indicator?.popState()
-        }
+          }
+      }
+      finally {
+        indicator?.popState()
+      }
 
-        addCompletedActivity(startTime = startTime, runnableClass = activity.javaClass, pluginId = pluginId)
-      }
-      else {
-        runActivityAndMeasureDuration(activity, pluginId, indicator)
-      }
+      addCompletedActivity(startTime = startTime, runnableClass = activity.javaClass, pluginId = pluginId)
     }
   }
 

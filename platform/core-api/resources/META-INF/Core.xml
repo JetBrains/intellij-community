@@ -11,7 +11,7 @@
     <extensionPoint name="vfs.asyncListener" interface="com.intellij.openapi.vfs.AsyncFileListener" dynamic="true"/>
 
     <!-- only bundled plugin can define startupActivity -->
-    <extensionPoint name="startupActivity" interface="com.intellij.openapi.startup.StartupActivity"/>
+    <extensionPoint name="startupActivity" interface="com.intellij.openapi.startup.InitProjectActivity"/>
     <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" dynamic="true"/>
     <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.StartupActivity$Background" dynamic="true"/>
     <extensionPoint name="requiredForSmartModeStartupActivity" interface="com.intellij.openapi.startup.StartupActivity$RequiredForSmartMode" dynamic="true"/>

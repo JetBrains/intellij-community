@@ -43,3 +43,20 @@ interface ProjectPostStartupActivity : StartupActivity {
   override fun runActivity(project: Project) {
   }
 }
+
+/**
+ * `startupActivity` activity must be defined only by a core and requires approval by core team.
+ */
+@ApiStatus.Internal
+interface InitProjectActivity {
+  suspend fun run(project: Project)
+}
+
+@ApiStatus.Internal
+abstract class InitProjectActivityJavaShim : InitProjectActivity {
+  abstract fun runActivity(project: Project)
+
+  override suspend fun run(project: Project) {
+    runActivity(project)
+  }
+}

@@ -1009,7 +1009,7 @@ private interface ConfigTreeReader<T> {
       }
     }
     return processFiles(fileElements = children,
-                        tabSizeLimit = leaf.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString()).toIntOrNull() ?: -1,
+                        tabSizeLimit = leaf.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString())?.toIntOrNull() ?: -1,
                         context = context)
   }
 
