@@ -196,7 +196,7 @@ private fun readPluginId(pluginJar: Path): String? {
   }
 
   try {
-    FileSystems.newFileSystem(pluginJar, null).use {
+    FileSystems.newFileSystem(pluginJar, null as ClassLoader).use {
       return readXmlAsModel(Files.newInputStream(it.getPath("META-INF/plugin.xml"))).getChild("id")?.content
     }
   }
