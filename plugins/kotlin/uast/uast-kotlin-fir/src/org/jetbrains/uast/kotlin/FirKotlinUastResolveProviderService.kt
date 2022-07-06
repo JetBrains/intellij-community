@@ -176,8 +176,23 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
-        return analyzeForUast(ktElement) {
-            ktElement.resolveCall()?.singleFunctionCallOrNull()?.symbol?.let { toPsiMethod(it, ktElement) }
+        analyzeForUast(ktElement) {
+            val ktCallInfo = ktElement.resolveCall() ?: return null
+            ktCallInfo.singleFunctionCallOrNull()
+                ?.symbol
+                ?.let { return toPsiMethod(it, ktElement) }
+            return when (ktElement) {
+                is KtPrefixExpression,
+                is KtPostfixExpression -> {
+                    ktCallInfo.singleCallOrNull<KtCompoundVariableAccessCall>()
+                        ?.compoundAccess
+                        ?.operationPartiallyAppliedSymbol
+                        ?.signature
+                        ?.symbol
+                        ?.let { toPsiMethod(it, ktElement) }
+                }
+                else -> null
+            }
         }
     }
 
