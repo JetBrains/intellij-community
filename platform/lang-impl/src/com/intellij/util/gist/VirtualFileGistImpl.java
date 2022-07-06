@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -35,8 +34,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 /**
@@ -45,7 +42,6 @@ import java.util.function.Supplier;
 class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
   private static final Logger LOG = Logger.getInstance(VirtualFileGist.class);
   private static final int ourInternalVersion = 2;
-  static final Key<AtomicInteger> GIST_INVALIDATION_COUNT_KEY = Key.create("virtual.file.gist.invalidation.count");
 
   @NotNull private final String myId;
   private final int myVersion;
@@ -84,10 +80,7 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
       }
     }
 
-    AtomicInteger invalidationCount = file.getUserData(GIST_INVALIDATION_COUNT_KEY);
-    int stamp = Objects.hash(file.getModificationCount(),
-                             ((GistManagerImpl)GistManager.getInstance()).getReindexCount(),
-                             invalidationCount != null ? invalidationCount.get() : 0);
+    int stamp = GistManagerImpl.getGistStamp(file);
 
     try (DataInputStream stream = getFileAttribute(project).readFileAttribute(file)) {
       if (stream != null && DataInputOutputUtil.readINT(stream) == stamp) {
