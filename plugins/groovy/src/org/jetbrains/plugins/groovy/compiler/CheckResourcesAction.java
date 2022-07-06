@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -52,7 +53,7 @@ public abstract class CheckResourcesAction extends AnAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
-      e.getPresentation().setEnabledAndVisible(project != null && containsGroovyResources(project));
+      e.getPresentation().setEnabledAndVisible(project != null && !DumbService.isDumb(project) && containsGroovyResources(project));
     }
 
     private static boolean containsGroovyResources(Project project) {
@@ -63,8 +64,8 @@ public abstract class CheckResourcesAction extends AnAction {
 
     private static boolean calcContainsGroovyResources(Project project) {
       return ContainerUtil.exists(ModuleManager.getInstance(project).getModules(), module ->
-        GroovyTargetScopeProvider.containsGroovyResources(JavaResourceRootType.RESOURCE, module) ||
-        GroovyTargetScopeProvider.containsGroovyResources(JavaResourceRootType.TEST_RESOURCE, module));
+        GroovyTargetScopeProvider.containsGroovyResources(JavaResourceRootType.RESOURCE, module, true) ||
+        GroovyTargetScopeProvider.containsGroovyResources(JavaResourceRootType.TEST_RESOURCE, module, true));
     }
   }
 
