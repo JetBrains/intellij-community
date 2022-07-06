@@ -4,8 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.components.serviceIfCreated
@@ -13,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.UnableToSaveProjectNotification
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
-import com.intellij.util.containers.mapSmart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -21,19 +19,19 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 open class ProjectSaveSessionProducerManager(protected val project: Project) : SaveSessionProducerManager() {
   suspend fun saveWithAdditionalSaveSessions(extraSessions: List<SaveSession>): SaveResult {
-    val saveSessions = SmartList<SaveSession>()
+    val saveSessions = mutableListOf<SaveSession>()
     collectSaveSessions(saveSessions)
     if (saveSessions.isEmpty() && extraSessions.isEmpty()) {
       return SaveResult.EMPTY
     }
 
-    val saveResult = withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
-      runWriteAction {
+    val saveResult = withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction(com.intellij.openapi.util.Computable {
         val r = SaveResult()
         saveSessions(extraSessions, r)
         saveSessions(saveSessions, r)
         r
-      }
+      })
     }
     validate(saveResult)
     return saveResult
@@ -48,7 +46,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
     }
 
     if (notifications.isNotEmpty()) {
-      throw UnresolvedReadOnlyFilesException(readonlyFiles.mapSmart { it.file })
+      throw UnresolvedReadOnlyFilesException(readonlyFiles.map { it.file })
     }
 
     val status = ensureFilesWritable(project, getFilesList(readonlyFiles))
@@ -62,18 +60,18 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
     withContext(Dispatchers.EDT) {
-      runWriteAction {
+      ApplicationManager.getApplication().runWriteAction(com.intellij.openapi.util.Computable {
         val r = SaveResult()
         for (entry in oldList) {
           executeSave(entry.session, r)
         }
         r
-      }
+      })
     }.appendTo(saveResult)
 
     if (readonlyFiles.isNotEmpty()) {
       dropUnableToSaveProjectNotification(project, getFilesList(readonlyFiles))
-      saveResult.addError(UnresolvedReadOnlyFilesException(readonlyFiles.mapSmart { it.file }))
+      saveResult.addError(UnresolvedReadOnlyFilesException(readonlyFiles.map { it.file }))
     }
   }
 
@@ -93,4 +91,4 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
   }
 }
 
-private fun getFilesList(readonlyFiles: List<SaveSessionAndFile>) = readonlyFiles.mapSmart { it.file }
+private fun getFilesList(readonlyFiles: List<SaveSessionAndFile>) = readonlyFiles.map { it.file }

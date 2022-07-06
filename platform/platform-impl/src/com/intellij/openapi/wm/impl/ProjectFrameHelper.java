@@ -448,6 +448,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return ClientProperty.isTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
   }
 
+  public @Nullable IdeFrameImpl getFrameOrNull() {
+    return this.frame;
+  }
+
   public @Nullable IdeFrameImpl getFrame() {
     IdeFrameImpl frame = this.frame;
     if (frame == null) {

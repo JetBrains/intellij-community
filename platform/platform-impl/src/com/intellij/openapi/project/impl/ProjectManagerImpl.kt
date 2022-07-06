@@ -58,7 +58,6 @@ import com.intellij.project.ProjectStoreOwner
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ModalityUiUtil
@@ -71,58 +70,15 @@ import io.opentelemetry.context.Context
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.awt.Component
-import java.awt.event.InvocationEvent
 import java.io.IOException
 import java.nio.file.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("OVERRIDE_DEPRECATION")
 @Internal
 open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   companion object {
-    internal suspend fun initProject(file: Path,
-                                     project: ProjectImpl,
-                                     isRefreshVfsNeeded: Boolean,
-                                     preloadServices: Boolean,
-                                     template: Project?,
-                                     indicator: ProgressIndicator?) {
-      LOG.assertTrue(!project.isDefault)
-
-      try {
-        if (indicator != null) {
-          indicator.isIndeterminate = false
-          // getting project name is not cheap and not possible at this moment
-          indicator.text = ProjectBundle.message("project.loading.components")
-        }
-        val activity = StartUpMeasurer.startActivity("project before loaded callbacks")
-        @Suppress("DEPRECATION", "removal")
-        ApplicationManager.getApplication().messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(file, project)
-        activity.end()
-        registerComponents(project)
-        project.componentStore.setPath(file, isRefreshVfsNeeded, template)
-        project.init(preloadServices, indicator)
-      }
-      catch (initThrowable: Throwable) {
-        try {
-          WriteAction.runAndWait<RuntimeException> { Disposer.dispose(project) }
-        }
-        catch (disposeThrowable: Throwable) {
-          initThrowable.addSuppressed(disposeThrowable)
-        }
-        throw initThrowable
-      }
-    }
-
-    fun showCannotConvertMessage(e: CannotConvertException, component: Component?) {
-      AppUIUtil.invokeOnEdt {
-        Messages.showErrorDialog(component, IdeBundle.message("error.cannot.convert.project", e.message),
-                                 IdeBundle.message("title.cannot.convert.project"))
-      }
-    }
-
     @TestOnly
     @JvmStatic
     fun isLight(project: Project): Boolean {
@@ -365,41 +321,40 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return false
     }
 
-    val result = AtomicBoolean()
-    ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread()) {
-      if (project is ComponentManagerImpl) {
-        (project as ComponentManagerImpl).stopServicePreloading()
-      }
-      publisher.projectClosingBeforeSave(project)
-      if (saveProject) {
-        FileDocumentManager.getInstance().saveAllDocuments()
-        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project)
-      }
-      if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
-        return@executeWithStopperThread
-      }
-
-      // somebody can start progress here, do not wrap in write action
-      fireProjectClosing(project)
-      app.runWriteAction {
-        removeFromOpened(project)
-        if (project is ProjectImpl) {
-          // ignore dispose flag (dispose is passed only via deprecated API that used only by some 3d-party plugins)
-          project.disposeEarlyDisposable()
-          if (dispose) {
-            project.startDispose()
-          }
-        }
-        fireProjectClosed(project)
-        ZipHandler.clearFileAccessorCache()
-        LaterInvocator.purgeExpiredItems()
-        if (dispose) {
-          Disposer.dispose(project)
-        }
-      }
-      result.set(true)
+    if (project is ComponentManagerImpl) {
+      (project as ComponentManagerImpl).stopServicePreloading()
     }
-    return result.get()
+    publisher.projectClosingBeforeSave(project)
+    if (saveProject) {
+      FileDocumentManager.getInstance().saveAllDocuments()
+      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project)
+    }
+
+    if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
+      return false
+    }
+
+    // somebody can start progress here, do not wrap in write action
+    fireProjectClosing(project)
+    app.runWriteAction {
+      removeFromOpened(project)
+      if (project is ProjectImpl) {
+        // ignore dispose flag (dispose is passed only via deprecated API that used only by some 3d-party plugins)
+        project.disposeEarlyDisposable()
+        if (dispose) {
+          project.startDispose()
+        }
+      }
+      fireProjectClosed(project)
+      if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
+        ZipHandler.clearFileAccessorCache()
+      }
+      LaterInvocator.purgeExpiredItems()
+      if (dispose) {
+        Disposer.dispose(project)
+      }
+    }
+    return true
   }
 
   override fun closeAndDispose(project: Project): Boolean {
@@ -565,17 +520,25 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
-    val result = try {
+    var module: Module? = null
+    val project = try {
       frameAllocator.run {
         activity.end()
-        val result = if (options.project == null) {
-          prepareProject(options, projectStoreBaseDir) ?: return@run null
-        }
-        else {
-          PrepareProjectResult(options.project as Project, null)
+        var project: Project? = options.project
+        if (project == null) {
+          project = prepareProject(options, projectStoreBaseDir) ?: return@run null
+          if (options.runConfigurators &&
+              (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty()) ||
+              project.isLoadedFromCacheButHasNoModules()) {
+            module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
+              baseDir = projectStoreBaseDir,
+              project = project,
+              newProject = options.isProjectCreatedWithWizard
+            )
+            options.preparedToOpen?.invoke(module!!)
+          }
         }
 
-        val project = result.project
         if (!addToOpened(project)) {
           return@run null
         }
@@ -610,17 +573,17 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             throw e
           }
 
-          result
+          project
         }
       }
     }
     catch (e: CancellationException) {
-      frameAllocator.projectNotLoaded(error = null)
+      frameAllocator.projectNotLoaded(cannotConvertException = null)
       throw e
     }
     catch (e: Throwable) {
       LOG.error(e)
-      frameAllocator.projectNotLoaded(error = e as? CannotConvertException)
+      frameAllocator.projectNotLoaded(cannotConvertException = e as? CannotConvertException)
       if (options.showWelcomeScreen) {
         WelcomeFrame.showIfNoProjectOpened()
       }
@@ -630,16 +593,15 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       disableAutoSaveToken.finish()
     }
 
-    if (result == null) {
-      frameAllocator.projectNotLoaded(error = null)
+    if (project == null) {
+      frameAllocator.projectNotLoaded(cannotConvertException = null)
       if (options.showWelcomeScreen) {
         WelcomeFrame.showIfNoProjectOpened()
       }
       return null
     }
 
-    val project = result.project
-    options.callback?.projectOpened(project, result.module ?: ModuleManager.getInstance(project).modules[0])
+    options.callback?.projectOpened(project, module ?: ModuleManager.getInstance(project).modules[0])
     return project
   }
 
@@ -766,7 +728,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return project
   }
 
-  private suspend fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path): PrepareProjectResult? {
+  private suspend fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path): Project? {
     val project: Project?
     val indicator = ProgressManager.getInstance().progressIndicator
     if (options.isNewProject) {
@@ -815,21 +777,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
 
-    if (options.beforeOpen != null && !options.beforeOpen!!(project)) {
-      return null
-    }
-
-    if (options.runConfigurators &&
-        (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty()) || project.isLoadedFromCacheButHasNoModules()) {
-      val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
-        baseDir = projectStoreBaseDir,
-        project = project,
-        newProject = options.isProjectCreatedWithWizard
-      )
-      options.preparedToOpen?.invoke(module)
-      return PrepareProjectResult(project, module)
-    }
-    return PrepareProjectResult(project, module = null)
+    val beforeOpen = options.beforeOpen
+    return if (beforeOpen == null || beforeOpen(project)) project else null
   }
 
   protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
@@ -1133,8 +1082,6 @@ class UnableToSaveProjectNotification(project: Project, readOnlyFiles: List<Virt
   }
 }
 
-private data class PrepareProjectResult(@JvmField val project: Project, @JvmField val module: Module?)
-
 private fun toCanonicalName(filePath: String): Path {
   val file = Paths.get(filePath)
   try {
@@ -1194,4 +1141,39 @@ private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStor
   }
 
   return confirmOpeningAndSetProjectTrustedStateIfNeeded(projectStoreBaseDir)
+}
+
+private suspend fun initProject(file: Path,
+                                project: ProjectImpl,
+                                isRefreshVfsNeeded: Boolean,
+                                preloadServices: Boolean,
+                                template: Project?,
+                                indicator: ProgressIndicator?) {
+  LOG.assertTrue(!project.isDefault)
+
+  try {
+    if (indicator != null) {
+      indicator.isIndeterminate = false
+      // getting project name is not cheap and not possible at this moment
+      indicator.text = ProjectBundle.message("project.loading.components")
+    }
+    val activity = StartUpMeasurer.startActivity("project before loaded callbacks")
+    @Suppress("DEPRECATION", "removal")
+    ApplicationManager.getApplication().messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(file, project)
+    activity.end()
+    registerComponents(project)
+    project.componentStore.setPath(file, isRefreshVfsNeeded, template)
+    project.init(preloadServices, indicator)
+  }
+  catch (initThrowable: Throwable) {
+    withContext(Dispatchers.EDT) {
+      try {
+        ApplicationManager.getApplication().runWriteAction { Disposer.dispose(project) }
+      }
+      catch (disposeThrowable: Throwable) {
+        initThrowable.addSuppressed(disposeThrowable)
+      }
+    }
+    throw initThrowable
+  }
 }

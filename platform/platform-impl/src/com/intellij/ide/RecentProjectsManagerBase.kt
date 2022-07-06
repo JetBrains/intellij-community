@@ -879,12 +879,10 @@ private class OldRecentDirectoryProjectsManager : PersistentStateComponent<Recen
   override fun getState() = emptyState
 }
 
-private open class MyProjectUiFrameManager(val frame: IdeFrameImpl, override val frameHelper: ProjectFrameHelper) : ProjectUiFrameManager {
+private open class MyProjectUiFrameManager(val frame: IdeFrameImpl, private val frameHelper: ProjectFrameHelper) : ProjectUiFrameManager {
   override fun getWindow() = frame
 
-  override suspend fun init(allocator: ProjectUiFrameAllocator) {
-    // this class is used for pre-initialized frames
-  }
+  override suspend fun init(allocator: ProjectUiFrameAllocator) = frameHelper
 
   fun dispose() {
     frame.dispose()

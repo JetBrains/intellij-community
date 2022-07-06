@@ -87,7 +87,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   : ToolWindowManagerEx(), Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
 
-  private val state: ToolWindowManagerState get() = project.service()
+  private val state: ToolWindowManagerState
+    get() = project.service()
+
   private var layoutState
     get() = state.layout
     set(value) { state.layout = value }
@@ -95,7 +97,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   private val idToEntry = HashMap<String, ToolWindowEntry>()
   private val activeStack = ActiveStack()
   private val sideStack = SideStack()
-  private val toolWindowPanes: MutableMap<String, ToolWindowPane> = mutableMapOf()
+  private val toolWindowPanes = LinkedHashMap<String, ToolWindowPane>()
 
   private var frameState: ProjectFrameHelper?
     get() = state.frame
@@ -106,7 +108,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     set(value) { state.layoutToRestoreLater = value }
   private var currentState = KeyState.WAITING
   private val waiterForSecondPress: SingleAlarm?
-  private val recentToolWindowsState: LinkedList<String> get() = state.recentToolWindows
+  private val recentToolWindowsState: LinkedList<String>
+    get() = state.recentToolWindows
 
   @Suppress("LeakingThis")
   private val toolWindowSetInitializer = ToolWindowSetInitializer(project, this)
@@ -131,6 +134,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       if (state.noStateLoaded) {
         loadDefault()
       }
+      @Suppress("LeakingThis")
       state.scheduledLayout.afterChange(this) { dl ->
         dl?.let { toolWindowSetInitializer.scheduleSetLayout(it) }
       }
@@ -245,7 +249,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         else if (event is WindowEvent && event.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
           process { manager ->
             val frame = event.getSource() as? JFrame
-            if (frame === manager.frameState?.frame) {
+            if (frame === manager.frameState?.frameOrNull) {
               manager.resetHoldState()
             }
           }

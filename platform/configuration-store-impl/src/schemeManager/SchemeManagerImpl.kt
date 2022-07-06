@@ -97,7 +97,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
     get() = ioDirectory.toFile()
 
   override val allSchemeNames: Collection<String>
-    get() = schemes.mapSmart { processor.getSchemeKey(it) }
+    get() = schemes.map { processor.getSchemeKey(it) }
 
   override val allSchemes: List<T>
     get() = Collections.unmodifiableList(schemes)

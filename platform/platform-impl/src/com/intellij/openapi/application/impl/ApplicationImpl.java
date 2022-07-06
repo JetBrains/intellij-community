@@ -235,24 +235,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     Disposer.assertIsEmpty();
   }
 
-  private boolean disposeSelf(boolean checkCanCloseProject) {
-    ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
-    if (manager != null) {
-      try {
-        if (!manager.closeAndDisposeAllProjects(checkCanCloseProject)) {
-          return false;
-        }
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-
-    //noinspection TestOnlyProblems
-    disposeContainer();
-    return true;
-  }
-
   @Override
   public boolean holdsReadLock() {
     return myLock.isReadLockedByThisThread();
@@ -669,6 +651,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
       stopServicePreloading();
 
+      if (BitUtil.isSet(flags, SAVE)) {
+        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this);
+      }
+
       if (isInstantShutdownPossible()) {
         for (Frame frame : Frame.getFrames()) {
           frame.setVisible(false);
@@ -684,11 +670,23 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
       LifecycleUsageTriggerCollector.onIdeClose(restart);
 
-      if (BitUtil.isSet(flags, SAVE)) {
-        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this);
+      boolean success = true;
+      ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
+      if (manager != null) {
+        try {
+          if (!manager.closeAndDisposeAllProjects(!force)) {
+            success = false;
+          }
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+      if (success) {
+        //noinspection TestOnlyProblems
+        disposeContainer();
       }
 
-      boolean success = disposeSelf(!force);
       //noinspection SpellCheckingInspection
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
         //noinspection SpellCheckingInspection

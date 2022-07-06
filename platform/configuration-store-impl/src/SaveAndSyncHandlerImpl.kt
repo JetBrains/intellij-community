@@ -224,11 +224,8 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
         override fun run(indicator: ProgressIndicator) {
           indicator.isIndeterminate = true
 
-          val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
-          runBlocking {
-            withContext(modalityState.asContextElement()) {
-              isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
-            }
+          runBlocking(CoreProgressManager.getCurrentThreadProgressModality().asContextElement()) {
+            isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
           }
 
           if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
@@ -335,9 +332,5 @@ private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask()
 
 @NlsContexts.DialogTitle
 private fun getProgressTitle(componentManager: ComponentManager): String {
-  return when {
-    componentManager is Application -> CommonBundle.message("title.save.app")
-    (componentManager as Project).isDefault -> CommonBundle.message("title.save.default.project")
-    else -> CommonBundle.message("title.save.project")
-  }
+  return if (componentManager is Application) CommonBundle.message("title.save.app") else CommonBundle.message("title.save.project")
 }
