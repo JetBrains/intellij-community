@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen.projectActions;
 
 import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
@@ -20,6 +21,12 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class MoveProjectToGroupActionGroup extends DefaultActionGroup implements DumbAware {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     RecentProjectTreeItem item = RecentProjectsWelcomeScreenActionBase.getSelectedItem(e);
