@@ -98,6 +98,11 @@ public abstract class SplitterAction extends DumbAwareAction {
       }
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     private static FileEditorManagerEx getManager(@NotNull AnActionEvent event) {
       Project project = event.getProject();
       return project == null ? null : FileEditorManagerEx.getInstanceEx(project);

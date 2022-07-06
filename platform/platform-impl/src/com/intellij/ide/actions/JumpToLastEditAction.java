@@ -40,4 +40,9 @@ public class JumpToLastEditAction extends AnAction implements DumbAware {
     }
     presentation.setEnabled(IdeDocumentHistory.getInstance(project).isNavigatePreviousChangeAvailable());
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

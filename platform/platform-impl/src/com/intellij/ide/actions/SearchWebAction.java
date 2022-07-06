@@ -39,4 +39,9 @@ public class SearchWebAction extends AnAction implements DumbAware {
     boolean available = provider != null && provider.isCopyEnabled(dataContext) && provider.isCopyVisible(dataContext);
     presentation.setEnabledAndVisible(available);
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

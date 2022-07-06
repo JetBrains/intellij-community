@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.TreeExpander
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TREE_EXPANDER
@@ -34,5 +35,9 @@ class ExpandAllAction : DumbAwareAction {
     if (ExperimentalUI.isNewUI() && ActionPlaces.isPopupPlace(event.place)) {
       event.presentation.icon = null
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 }
