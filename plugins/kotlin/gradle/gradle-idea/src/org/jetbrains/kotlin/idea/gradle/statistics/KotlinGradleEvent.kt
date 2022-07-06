@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -28,12 +29,21 @@ typealias NumericalMetricConsumer = (MetricsContainer /*current*/, MetricsContai
 typealias BooleanMetricConsumer = (MetricsContainer /*current*/, MetricsContainer? /*previous*/) -> Boolean?
 typealias StringMetricConsumer = (MetricsContainer /*current*/, MetricsContainer? /*previous*/) -> String?
 
-enum class CustomNumericalMetrics(val eventGroup: GradleStatisticsEventGroups, val consumer: NumericalMetricConsumer): ICustomMetric {
+enum class CustomNumericalMetrics(val eventGroup: GradleStatisticsEventGroups, val consumer: NumericalMetricConsumer) : ICustomMetric {
     TIME_BETWEEN_BUILDS(GradleStatisticsEventGroups.UseScenarios, { current, previous ->
         val finishTime = current.getMetric(NumericalMetrics.BUILD_FINISH_TIME)?.getValue()
         val prevFinishTime = previous?.getMetric(NumericalMetrics.BUILD_FINISH_TIME)?.getValue()
         if (finishTime != null && prevFinishTime != null) finishTime - prevFinishTime else null
     })
+}
+
+enum class CustomStringMetrics(val eventGroup: GradleStatisticsEventGroups, val regexp: String, val consumer: StringMetricConsumer) :
+    ICustomMetric {
+    PLUGIN_VERSION(GradleStatisticsEventGroups.ComponentVersions,
+                   "(@snapshot@|(\\d+-)?\\d(\\.\\d)?\\.\\d{1,3}(-(beta\\d?|dev|eap|release|m\\d?|rc\\d?))+-(\\d+-)?(appcode|clion|ij|studio|as)[0-9\\-\\.]+)",
+                   { _, _ ->
+                       org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin.version.toLowerCaseAsciiOnly()
+                   })
 }
 
 class KotlinGradleEvent(group: EventLogGroup, eventName: GradleStatisticsEventGroups, vararg metrics: Any) {
@@ -73,6 +83,12 @@ class KotlinGradleEvent(group: EventLogGroup, eventName: GradleStatisticsEventGr
             if (it.eventGroup == eventName || eventName == GradleStatisticsEventGroups.All) {
                 numericalEventFields[it.name] = EventFields.Long(it.name.lowercase())
                 numericalMetricConsumers[it.name] = it.consumer
+            }
+        }
+        CustomStringMetrics.values().forEach {
+            if (it.eventGroup == eventName || eventName == GradleStatisticsEventGroups.All) {
+                stringEventFields[it.name] = EventFields.StringValidatedByInlineRegexp(it.name.lowercase(), it.regexp)
+                stringMetricConsumers[it.name] = it.consumer
             }
         }
         eventId = group.registerVarargEvent(eventName.name, *allEventFieldsValues().toTypedArray())
@@ -146,7 +162,7 @@ private fun stringMetricRegexp(metric: StringMetrics): String =
         StringMetrics.ANDROID_GRADLE_PLUGIN_VERSION,
         StringMetrics.KOTLIN_LANGUAGE_VERSION,
         StringMetrics.KOTLIN_API_VERSION,
-        StringMetrics.GRADLE_VERSION -> "(\\d+).(\\d+).(\\d+)-?(dev|snapshot|m\\d?|rc\\d?)?"
+        StringMetrics.GRADLE_VERSION -> "(\\d+).(\\d+).(\\d+)-?(dev|snapshot|m\\d?|rc\\d?|beta\\d?)?"
 
         StringMetrics.JS_PROPERTY_LAZY_INITIALIZATION,
         StringMetrics.JS_GENERATE_EXECUTABLE_DEFAULT,
