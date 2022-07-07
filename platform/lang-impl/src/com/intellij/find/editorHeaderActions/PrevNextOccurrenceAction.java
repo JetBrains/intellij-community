@@ -22,7 +22,7 @@ public abstract class PrevNextOccurrenceAction extends DumbAwareAction implement
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return ActionUpdateThread.EDT;
   }
 
   @Override

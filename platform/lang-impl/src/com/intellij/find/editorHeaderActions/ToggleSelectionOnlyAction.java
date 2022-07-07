@@ -23,7 +23,7 @@ public class ToggleSelectionOnlyAction extends ToggleAction implements ContextAw
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return ActionUpdateThread.EDT;
   }
 
   @Override
