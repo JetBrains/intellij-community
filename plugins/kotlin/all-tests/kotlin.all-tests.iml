@@ -7,7 +7,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.core.tests" scope="RUNTIME" />
