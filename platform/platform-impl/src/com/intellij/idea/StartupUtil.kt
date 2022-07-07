@@ -79,13 +79,16 @@ import java.util.function.Function
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
+import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
 
-
-const val IDE_STARTED = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
+internal const val IDE_STARTED = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
 private const val IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"
-var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunction { _, _ -> Main.ACTIVATE_NOT_INITIALIZED }
-var startupStart: Activity? = null
+
+@JvmField
+internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunction { _, _ -> Main.ACTIVATE_NOT_INITIALIZED }
+@JvmField
+internal var startupStart: Activity? = null
 private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app"
 
 // see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
@@ -97,6 +100,10 @@ private var socketLock: SocketLock? = null
 // checked - using Deferred type doesn't lead to loading this class on StartupUtil init
 internal var shellEnvLoadFuture: Deferred<Boolean?>? = null
   private set
+
+@JvmField
+@Volatile
+internal var mainScope: CoroutineScope? = null
 
 /** Called via reflection from [Main.bootstrap].  */
 fun start(mainClass: String,
@@ -174,95 +181,96 @@ fun start(mainClass: String,
   runBlocking(CoroutineExceptionHandler { _, error ->
     StartupAbortedException.processException(error)
   }) {
-    coroutineScope {
-      activity = activity.endAndStart("eua and splash scheduling")
-      val showEuaIfNeededFuture: Deferred<Boolean> = async {
-        val baseLaF = initUiFuture.asDeferred().await()
-        if (euaDocumentFuture == null) {
-          return@async true
-        }
+    mainScope = this
 
-        val result = showEuaIfNeeded(euaDocumentFuture.asDeferred().await(), baseLaF)
-        if (splashTaskFuture != null) {
-          launch {
-            val runnable = splashTaskFuture.await()
-            EventQueue.invokeLater {
-              runnable?.run()
-            }
+    activity = activity.endAndStart("eua and splash scheduling")
+    val showEuaIfNeededFuture: Deferred<Boolean> = async {
+      val baseLaF = initUiFuture.asDeferred().await()
+      if (euaDocumentFuture == null) {
+        return@async true
+      }
+
+      val result = showEuaIfNeeded(euaDocumentFuture.asDeferred().await(), baseLaF)
+      if (splashTaskFuture != null) {
+        launch {
+          val runnable = splashTaskFuture.await()
+          EventQueue.invokeLater {
+            runnable?.run()
           }
         }
-        result
       }
+      result
+    }
 
-      activity = activity.endAndStart("system dirs checking")
-      if (!checkSystemDirs(configPath, systemPath)) {
-        exitProcess(Main.DIR_CHECK_FAILED)
-      }
+    activity = activity.endAndStart("system dirs checking")
+    if (!checkSystemDirs(configPath, systemPath)) {
+      exitProcess(Main.DIR_CHECK_FAILED)
+    }
 
-      activity = activity.endAndStart("file logger configuration")
-      // log initialization should happen only after locking the system directory
-      val log = setupLogger()
-      activity.end()
+    activity = activity.endAndStart("file logger configuration")
+    // log initialization should happen only after locking the system directory
+    val log = setupLogger()
+    activity.end()
 
-      // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
-      Java11Shim.INSTANCE = Java11ShimImpl()
-      if (!configImportNeeded) {
-        ZipFilePool.POOL = ZipFilePoolImpl()
-        PluginManagerCore.scheduleDescriptorLoading()
-      }
+    // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
+    Java11Shim.INSTANCE = Java11ShimImpl()
+    if (!configImportNeeded) {
+      ZipFilePool.POOL = ZipFilePoolImpl()
+      PluginManagerCore.scheduleDescriptorLoading()
+    }
 
-      launch {
-        setupSystemLibraries()
-        loadSystemLibraries(log)
+    launch {
+      setupSystemLibraries()
+      loadSystemLibraries(log)
 
-        // JNA and Swing are used - invoke only after both are loaded
-        if (!isHeadless && SystemInfoRt.isMac) {
-          launch {
-            initUiFuture.asDeferred().join()
+      // JNA and Swing are used - invoke only after both are loaded
+      if (!isHeadless && SystemInfoRt.isMac) {
+        launch {
+          initUiFuture.asDeferred().join()
 
-            val subActivity = StartUpMeasurer.startActivity("mac app init")
-            MacOSApplicationProvider.initApplication(log)
-            subActivity.end()
-          }
+          val subActivity = StartUpMeasurer.startActivity("mac app init")
+          MacOSApplicationProvider.initApplication(log)
+          subActivity.end()
         }
-        logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance(), args)
       }
+      logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance(), args)
+    }
 
-      // don't load EnvironmentUtil class in the main thread
-      shellEnvLoadFuture = async {
-        EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading"))
-      }
+    // don't load EnvironmentUtil class in the main thread
+    shellEnvLoadFuture = async {
+      EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading"))
+    }
 
-      if (!configImportNeeded) {
-        runPreAppClass(log, args)
-      }
+    if (!configImportNeeded) {
+      runPreAppClass(log, args)
+    }
 
-      val mainClassLoadingWaitingActivity = StartUpMeasurer.startActivity("main class loading waiting")
+    val mainClassLoadingWaitingActivity = StartUpMeasurer.startActivity("main class loading waiting")
 
-      @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-      val argsAsList = java.util.List.of(*args)
+    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+    val argsAsList = java.util.List.of(*args)
 
-      val appStarter = appStarterFuture.asDeferred().await()
-      mainClassLoadingWaitingActivity.end()
+    val appStarter = appStarterFuture.asDeferred().await()
+    mainClassLoadingWaitingActivity.end()
 
-      if (!isHeadless && configImportNeeded) {
-        importConfig(args = argsAsList,
-                     log = log,
-                     appStarter = appStarter,
-                     agreementShown = showEuaIfNeededFuture,
-                     initUiFuture = initUiFuture)
-      }
+    if (!isHeadless && configImportNeeded) {
+      importConfig(args = argsAsList,
+                   log = log,
+                   appStarter = appStarter,
+                   agreementShown = showEuaIfNeededFuture,
+                   initUiFuture = initUiFuture)
+    }
 
-      // initApplication uses runBlocking, we cannot change it for non-technical reasons for now
-      withContext(Dispatchers.IO) {
-        appStarter.start(argsAsList, async {
-          showEuaIfNeededFuture.join()
-          initUiFuture.asDeferred().await()
-        })
-      }
+    // initApplication uses runBlocking, we cannot change it for non-technical reasons for now
+    withContext(Dispatchers.IO) {
+      appStarter.start(argsAsList, async {
+        showEuaIfNeededFuture.join()
+        initUiFuture.asDeferred().await()
+      })
+    }
 
-      log
-    }.info("notify that main thread is free")
+    log.info("notify that main thread is free")
+    mainScope = null
   }
 
   AWTAutoShutdown.getInstance().notifyThreadFree(busyThread)
@@ -300,10 +308,6 @@ private fun prepareSplash(args: Array<String>): Runnable? {
   else {
     return null
   }
-}
-
-private fun unwrapError(e: Throwable): Throwable? {
-  return if (e is CompletionException && e.cause != null) e.cause else e
 }
 
 private fun checkGraphics(): Boolean {
@@ -388,7 +392,7 @@ private suspend fun importConfig(args: List<String>,
                                  initUiFuture: CompletableFuture<Any>) {
   var activity = StartUpMeasurer.startActivity("screen reader checking")
   try {
-    executeInEdt { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
+    withContext(SwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
   }
   catch (e: Throwable) {
     log.error(e)
@@ -399,7 +403,7 @@ private suspend fun importConfig(args: List<String>,
   val newConfigDir = PathManager.getConfigDir()
   val veryFirstStartOnThisComputer = agreementShown.await()
   val baseLaf = initUiFuture.asDeferred().await()
-  executeInEdt {
+  withContext(SwingDispatcher) {
     setLafToShowPreAppStartUpDialogIfNeeded(baseLaf)
     ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log)
   }
@@ -542,7 +546,7 @@ private suspend fun showEuaIfNeeded(euaDocument: Any?, baseLaF: Any): Boolean {
   EndUserAgreement.updateCachedContentToLatestBundledVersion()
   val result = if (document != null) {
     val job = CompletableDeferred<Any?>()
-    executeInEdt {
+    withContext(SwingDispatcher) {
       setLafToShowPreAppStartUpDialogIfNeeded(baseLaF)
       showEndUserAndDataSharingAgreements(document)
     }
@@ -550,7 +554,7 @@ private suspend fun showEuaIfNeeded(euaDocument: Any?, baseLaF: Any): Boolean {
     true
   }
   else if (ConsentOptions.needToShowUsageStatsConsent()) {
-    executeInEdt {
+    withContext(SwingDispatcher) {
       setLafToShowPreAppStartUpDialogIfNeeded(baseLaF)
       showDataSharingAgreement()
     }
@@ -563,19 +567,13 @@ private suspend fun showEuaIfNeeded(euaDocument: Any?, baseLaF: Any): Boolean {
   return result
 }
 
-private suspend inline fun executeInEdt(crossinline task: () -> Unit) {
-  val job = CompletableDeferred<Any?>()
-  EventQueue.invokeLater {
-    try {
-      task()
-    }
-    catch (e: Throwable) {
-      job.completeExceptionally(e)
-      return@invokeLater
-    }
-    job.complete(null)
-  }
-  job.join()
+/** Do not use it. For start-up code only. */
+internal object SwingDispatcher : CoroutineDispatcher() {
+  override fun isDispatchNeeded(context: CoroutineContext): Boolean = !EventQueue.isDispatchThread()
+
+  override fun dispatch(context: CoroutineContext, block: Runnable): Unit = EventQueue.invokeLater(block)
+
+  override fun toString() = "Swing"
 }
 
 private fun updateFrameClassAndWindowIcon() {

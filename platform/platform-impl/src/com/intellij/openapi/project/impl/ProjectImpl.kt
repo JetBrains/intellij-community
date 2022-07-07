@@ -88,10 +88,6 @@ open class ProjectImpl(filePath: Path, projectName: String?)
     ApplicationManager.getApplication().getService(ProjectStoreFactory::class.java).createStore(this)
   }
 
-  private val coroutineScope = CoroutineScope(Dispatchers.Default + CoroutineExceptionHandler { _, exception ->
-    LOG.error(exception)
-  })
-
   init {
     storeCreationTrace()
 
@@ -105,8 +101,6 @@ open class ProjectImpl(filePath: Path, projectName: String?)
     // light project may be changed later during test, so we need to remember its initial state
     isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
   }
-
-  override fun getCoroutineScope() = coroutineScope
 
   override fun isInitialized(): Boolean {
     val containerState = containerState.get()
@@ -224,7 +218,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
     var activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("projectComponentCreated event handling",
                                                                                   ActivityCategory.DEFAULT)
     else null
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION", "removal")
     app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this)
 
     activity = activity?.endAndStart("projectComponentCreated")
@@ -304,17 +298,16 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
     if (projectManager.isProjectOpened(this)) {
-      throw IllegalStateException(
-        "Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().")
+      throw IllegalStateException("Must call .dispose() for a closed project only. " +
+                                  "See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().")
     }
 
-    coroutineScope.cancel("Project.dispose is called")
     super.dispose()
 
     componentStoreValue.valueIfInitialized?.release()
 
     if (!app.isDisposed) {
-      @Suppress("DEPRECATION")
+      @Suppress("DEPRECATION", "removal")
       app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this)
     }
     projectManager.updateTheOnlyProjectField()

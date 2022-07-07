@@ -11,6 +11,8 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.messages.MessageBus;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,6 +137,11 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   @Override
   public boolean isInitialized() {
     return false;
+  }
+
+  @Override
+  public CoroutineScope getCoroutineScope() {
+    return GlobalScope.INSTANCE;
   }
 
   @NotNull

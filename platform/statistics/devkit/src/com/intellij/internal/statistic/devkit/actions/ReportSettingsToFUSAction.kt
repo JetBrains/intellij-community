@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions
 
-import com.intellij.idea.createAppCoroutineScope
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -13,8 +12,8 @@ internal class ReportSettingsToFUSAction : DumbAwareAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
-    for (tracker in FeatureUsageStateEventTracker.EP_NAME.extensions) {
-      createAppCoroutineScope(ApplicationManager.getApplication()).first.launch {
+    ApplicationManager.getApplication().coroutineScope.launch {
+      for (tracker in FeatureUsageStateEventTracker.EP_NAME.extensions) {
         tracker.reportNow()
       }
     }

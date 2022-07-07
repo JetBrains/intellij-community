@@ -5,7 +5,10 @@ import com.intellij.CommonBundle
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
-import com.intellij.ide.*
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeCoreBundle
+import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenResult.Companion.cancel
@@ -15,7 +18,8 @@ import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -24,7 +28,9 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -43,11 +49,15 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ComponentUtil
-import com.intellij.util.*
+import com.intellij.util.ModalityUiUtil
+import com.intellij.util.PathUtil
+import com.intellij.util.PlatformUtils
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.basicAttributesIfExists
-import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
@@ -58,7 +68,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 
 private val LOG = Logger.getInstance(ProjectUtil::class.java)
 private var ourProjectsPath: String? = null
@@ -863,16 +872,16 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend () -> T): T {
   }
 
   logger<ProjectOpenProcessor>().warn("Do not execute in EDT")
-  return runBlockingUnderModalProgress(task)
+  return runBlockingUnderModalProgress(task = task)
 }
 
 @Internal
 @RequiresEdt
-fun <T> runBlockingUnderModalProgress(task: suspend () -> T): T {
+fun <T> runBlockingUnderModalProgress(title: String = "", project: Project? = null, task: suspend () -> T): T {
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
     runBlocking(modalityState.asContextElement()) {
       task()
     }
-  }, "", true, null)
+  }, title, true, project)
 }

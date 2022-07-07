@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -12,15 +12,17 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.util.PlatformUtils
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.HttpRequests
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.util.*
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.hours
 
 private val LOG = logger<TipsOrderUtil>()
 private const val EXPERIMENT_RANDOM_SEED = 0L
@@ -47,32 +49,33 @@ private fun randomShuffle(tips: List<TipAndTrickBean>): RecommendationDescriptio
 
 @Service
 internal class TipsOrderUtil {
-  private class RecommendationsStartupActivity : StartupActivity.Background {
-    private val scheduledFuture = AtomicReference<ScheduledFuture<*>>()
+  private class RecommendationsStartupActivity : ProjectPostStartupActivity {
+    private val isScheduled = AtomicBoolean()
 
-    override fun runActivity(project: Project) {
+    override suspend fun execute(project: Project) {
+      if (!isScheduled.compareAndSet(false, true)) {
+        return
+      }
+
       val app = ApplicationManager.getApplication()
       if (!app.isEAP || app.isHeadlessEnvironment || !StatisticsUploadAssistant.isSendAllowed()) {
         return
       }
 
-      scheduledFuture.getAndSet(AppExecutorUtil.getAppScheduledExecutorService().schedule(Runnable {
-        try {
+      ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.IO) {
+        sync()
+        while (isActive) {
+          delay(3.hours)
           sync()
         }
-        finally {
-          scheduledFuture.getAndSet(AppExecutorUtil.getAppScheduledExecutorService().schedule(Runnable(::sync), 3, TimeUnit.HOURS))
-            ?.cancel(false)
-        }
-      }, 5, TimeUnit.MILLISECONDS))
-        ?.cancel(false)
+      }
     }
   }
 
   companion object {
     private fun sync() {
       LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
-      LOG.debug { "Fetching tips order from the server: ${TIPS_SERVER_URL}" }
+      LOG.debug { "Fetching tips order from the server: $TIPS_SERVER_URL" }
       val allTips = TipAndTrickBean.EP_NAME.iterable.map { it.fileName }
       val actionsSummary = service<ActionsLocalSummary>().getActionsStats()
       val startTimestamp = System.currentTimeMillis()

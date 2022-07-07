@@ -18,6 +18,7 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.lastModified
+import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
@@ -111,7 +112,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
     try {
       if (!cacheFile.exists()) return null
 
-      if (invalidateCachesMarkerFile.exists() && cacheFile.lastModified().toMillis() < invalidateCachesMarkerFile.lastModified() ||
+      if (invalidateCachesMarkerFile.exists() && cacheFile.lastModified() < invalidateCachesMarkerFile.lastModified() ||
           invalidateProjectCacheMarkerFile.exists() && cacheFile.lastModified().toMillis() < invalidateProjectCacheMarkerFile.lastModified()) {
         LOG.info("Skipping project model cache since '$invalidateCachesMarkerFile' is present and newer than cache file '$cacheFile'")
         FileUtil.delete(cacheFile)
@@ -197,7 +198,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
     var testCacheFile: File? = null
 
     private val cachesInvalidated = AtomicBoolean(false)
-    internal val invalidateCachesMarkerFile = File(projectsDataDir.toFile(), ".invalidate")
+    internal val invalidateCachesMarkerFile = projectsDataDir.resolve(".invalidate")
 
     fun invalidateCaches() {
       LOG.info("Invalidating caches by creating $invalidateCachesMarkerFile")
@@ -205,8 +206,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
       cachesInvalidated.set(true)
 
       try {
-        FileUtil.createParentDirs(invalidateCachesMarkerFile)
-        FileUtil.writeToFile(invalidateCachesMarkerFile, System.currentTimeMillis().toString())
+        invalidateCachesMarkerFile.write(System.currentTimeMillis().toString())
       }
       catch (t: Throwable) {
         LOG.warn("Cannot update the invalidation marker file", t)

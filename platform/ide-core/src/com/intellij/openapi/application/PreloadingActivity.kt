@@ -2,7 +2,6 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.runUnderIndicator
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -20,13 +19,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 @Internal
 abstract class PreloadingActivity {
-  /** Perform the preloading. */
   open fun preload() {}
 
+  /** Perform the preloading. */
   open suspend fun execute() {
-    runUnderIndicator {
-      preload()
-    }
+    preload()
   }
 
   @Deprecated("Use {@link #preload()}", ReplaceWith("preload()"))

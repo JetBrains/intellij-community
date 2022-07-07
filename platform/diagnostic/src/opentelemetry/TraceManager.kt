@@ -2,8 +2,8 @@
 package com.intellij.diagnostic.opentelemetry
 
 import com.intellij.diagnostic.telemetry.JaegerJsonSpanExporter
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.util.ShutDownTracker
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
@@ -30,7 +30,7 @@ object TraceManager {
 
   fun init() {
     val serviceName = ApplicationNamesInfo.getInstance().fullProductName
-    val appInfo = ApplicationInfo.getInstance()
+    val appInfo = ApplicationInfoImpl.getShadowInstance()
     val serviceVersion = appInfo.build.asStringWithoutProductCode()
     val serviceNamespace = appInfo.build.productCode
 

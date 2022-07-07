@@ -12,25 +12,23 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.fileTypes.FileTypeFactory
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.ui.EditorNotifications
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.ensureActive
+import java.util.concurrent.CancellationException
+import kotlin.coroutines.coroutineContext
 
-internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
-  @RequiresBackgroundThread
-  fun checkSuggestedPlugins(project: Project, includeIgnored: Boolean) {
+internal class PluginsAdvertiserStartupActivity : ProjectPostStartupActivity {
+  suspend fun checkSuggestedPlugins(project: Project, includeIgnored: Boolean) {
     val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode ||
-        application.isHeadlessEnvironment) {
+    if (application.isUnitTestMode || application.isHeadlessEnvironment) {
       return
     }
 
     val customPlugins = loadPluginsFromCustomRepositories()
-    if (project.isDisposed) {
-      return
-    }
+
+    coroutineContext.ensureActive()
 
     val extensionsService = PluginFeatureCacheService.getInstance()
     val extensions = extensionsService.extensions
@@ -40,7 +38,7 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
 
     if (extensions != null && unknownFeatures.isEmpty()) {
       if (includeIgnored) {
-        ProgressManager.checkCanceled()
+        coroutineContext.ensureActive()
         ApplicationManager.getApplication().invokeLater(Runnable {
           notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
             .setDisplayId("advertiser.no.plugins")
@@ -57,9 +55,7 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
         extensionsService.extensions?.update(extensionsMap) ?: run {
           extensionsService.extensions = PluginFeatureMap(extensionsMap)
         }
-        if (project.isDisposed) {
-          return
-        }
+        coroutineContext.ensureActive()
         EditorNotifications.getInstance(project).updateAllNotifications()
       }
 
@@ -69,16 +65,19 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
           extensionsService.dependencies = PluginFeatureMap(dependencyMap)
         }
       }
-      ProgressManager.checkCanceled()
+      coroutineContext.ensureActive()
 
       if (unknownFeatures.isNotEmpty()) {
         PluginAdvertiserService.getInstance().run(
-          project,
-          customPlugins,
-          unknownFeatures,
-          includeIgnored
+          project = project,
+          customPlugins = customPlugins,
+          unknownFeatures = unknownFeatures,
+          includeIgnored = includeIgnored
         )
       }
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
       if (e !is ControlFlowException) {
@@ -87,9 +86,8 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
     }
   }
 
-  @RequiresBackgroundThread
-  override fun runActivity(project: Project) {
-    checkSuggestedPlugins(project, false)
+  override suspend fun execute(project: Project) {
+    checkSuggestedPlugins(project = project, includeIgnored = false)
   }
 }
 

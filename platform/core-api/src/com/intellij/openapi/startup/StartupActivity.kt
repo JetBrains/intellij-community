@@ -36,7 +36,6 @@ interface StartupActivity {
 }
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 interface ProjectPostStartupActivity : StartupActivity {
   suspend fun execute(project: Project)
 

@@ -14,10 +14,10 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-abstract class ClientAwareComponentManager @JvmOverloads constructor(
+abstract class ClientAwareComponentManager constructor(
   internal val parent: ComponentManagerImpl?,
-  setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent, setExtensionsRootArea) {
-
+  setExtensionsRootArea: Boolean = parent == null
+) : ComponentManagerImpl(parent, setExtensionsRootArea) {
   override fun <T : Any> getService(serviceClass: Class<T>): T? {
     return getFromSelfOrCurrentSession(serviceClass, true)
   }
@@ -28,8 +28,9 @@ abstract class ClientAwareComponentManager @JvmOverloads constructor(
 
   override fun <T : Any> getServices(serviceClass: Class<T>, includeLocal: Boolean): List<T> {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
-    return sessionsManager.getSessions(includeLocal)
-      .mapNotNull { (it as? ClientSessionImpl)?.doGetService(serviceClass, true,  false) }
+    return sessionsManager.getSessions(includeLocal).mapNotNull {
+      (it as? ClientSessionImpl)?.doGetService(serviceClass = serviceClass, createIfNeeded = true, fallbackToShared = false)
+    }
   }
 
   private fun <T : Any> getFromSelfOrCurrentSession(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
@@ -40,7 +41,9 @@ abstract class ClientAwareComponentManager @JvmOverloads constructor(
       super.getServiceIfCreated(serviceClass)
     }
 
-    if (fromSelf != null) return fromSelf
+    if (fromSelf != null) {
+      return fromSelf
+    }
 
     val sessionsManager = if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
       if (createIfNeeded) {

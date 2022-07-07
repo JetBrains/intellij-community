@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.messages.MessageBus;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 import org.picocontainer.PicoContainer;
 
@@ -203,6 +204,11 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   }
 
   @Override
+  public CoroutineScope getCoroutineScope() {
+    throw new IllegalStateException("Default project doesn't have coroutineScope");
+  }
+
+  @Override
   @Deprecated
   public BaseComponent getComponent(@NotNull String name) {
     return getDelegate().getComponent(name);
@@ -269,7 +275,7 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   private final Project actualContainerInstance;
 
   DefaultProjectImpl(@NotNull Project actualContainerInstance) {
-    super((ComponentManagerImpl)ApplicationManager.getApplication());
+    super((ComponentManagerImpl)ApplicationManager.getApplication(), false);
 
     this.actualContainerInstance = actualContainerInstance;
   }

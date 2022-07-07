@@ -120,7 +120,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine) {
-    super(null);
+    super(null, true);
 
     registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
     registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
@@ -165,7 +165,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   // this constructor must be called only by ApplicationLoader
   public ApplicationImpl(boolean isInternal, boolean isHeadless, boolean isCommandLine, @NotNull Thread edtThread) {
-    super(null);
+    super(null, true);
 
     registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
     registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
@@ -410,7 +410,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
         preloadServices(modules, "", scope, GlobalScope.INSTANCE, false);
         loadComponents();
 
-        ApplicationLoader.callAppInitialized(this, continuation);
+        ApplicationLoader.callAppInitialized(scope, this);
         return Unit.INSTANCE;
       });
     }

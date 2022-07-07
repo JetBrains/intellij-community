@@ -17,6 +17,10 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -365,16 +369,25 @@ private fun loadDescriptorsFromProperty(result: PluginLoadingResult, context: De
   }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
+internal fun scheduleLoading(): Deferred<PluginSet> {
+  return GlobalScope.async {
+    val activity = StartUpMeasurer.startActivity("plugin descriptor loading", ActivityCategory.DEFAULT)
+    val context = loadDescriptors(PluginManagerCore.isUnitTestMode, PluginManagerCore.isRunningFromSources())
+    activity.end()
+    PluginManagerCore.loadAndInitializePlugins(context, PluginManagerCore::class.java.classLoader)
+  }
+}
+
 /**
  * Think twice before use and get approve from core team.
  *
  * Returns enabled plugins only.
  */
 @Internal
-@JvmOverloads
 fun loadDescriptors(
   isUnitTestMode: Boolean = PluginManagerCore.isUnitTestMode,
-  isRunningFromSources: Boolean = PluginManagerCore.isRunningFromSources(),
+  isRunningFromSources: Boolean,
 ): DescriptorListLoadingContext {
   val result = createPluginLoadingResult(null)
   val context = DescriptorListLoadingContext(

@@ -8,6 +8,7 @@ import com.intellij.ide.SearchTopHitProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider.ApplicationLevelProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider.ProjectLevelProvider
 import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.idea.processExtensions
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PreloadingActivity
@@ -21,6 +22,7 @@ import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.WordPrefixMatcher
 import com.intellij.util.text.Matcher
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.annotations.VisibleForTesting
@@ -108,7 +110,7 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
       }
     }
 
-    override fun preload() {
+    override suspend fun execute() {
       // for application
       cacheAll(null)
     }
@@ -120,25 +122,27 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
   }
 }
 
-private fun cacheAll(project: Project?) {
+private suspend fun cacheAll(project: Project?) {
   val name = if (project == null) "application" else "project"
   val activity = StartUpMeasurer.startActivity("cache options in $name", ActivityCategory.DEFAULT)
-  SearchTopHitProvider.EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
+  SearchTopHitProvider.EP_NAME.processExtensions { provider, pluginDescriptor ->
     if (provider is OptionsSearchTopHitProvider && (project == null || provider !is ApplicationLevelProvider)) {
       val p = provider as OptionsSearchTopHitProvider
       if (p.preloadNeeded() && (project == null || !project.isDisposed)) {
+        yield()
         getCachedOptions(p, project, pluginDescriptor)
       }
     }
   }
+
+  yield()
+
   if (project != null) {
     val cache = ProjectTopHitCache.getInstance(project)
-    OptionsTopHitProvider.PROJECT_LEVEL_EP.processWithPluginDescriptor { provider, pluginDescriptor ->
-      if (project.isDisposed) {
-        return@processWithPluginDescriptor
-      }
+    OptionsTopHitProvider.PROJECT_LEVEL_EP.processExtensions { provider, pluginDescriptor ->
+      yield()
       try {
-        cache.getCachedOptions(provider!!, project, pluginDescriptor)
+        cache.getCachedOptions(provider, project, pluginDescriptor)
       }
       catch (e: CancellationException) {
         throw e

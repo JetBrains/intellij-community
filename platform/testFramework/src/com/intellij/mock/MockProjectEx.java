@@ -6,8 +6,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.project.ex.ProjectEx;
-import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -29,10 +27,5 @@ public class MockProjectEx extends MockProject implements ProjectEx {
   @Override
   public final @NotNull Disposable getEarlyDisposable() {
     return this;
-  }
-
-  @Override
-  public CoroutineScope getCoroutineScope() {
-    return GlobalScope.INSTANCE;
   }
 }

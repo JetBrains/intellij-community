@@ -22,11 +22,7 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.BuildersKt;
-import kotlinx.coroutines.CoroutineStart;
 import kotlinx.coroutines.Deferred;
-import kotlinx.coroutines.GlobalScope;
 import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.*;
 
@@ -601,25 +597,11 @@ public final class PluginManagerCore {
     return applied;
   }
 
-  // separate method to avoid exposing of DescriptorListLoadingContext class
-  public static void scheduleDescriptorLoading() {
-    getOrScheduleLoading();
-  }
-
-  private static synchronized @NotNull Deferred<PluginSet> getOrScheduleLoading() {
-    Deferred<PluginSet> future = initFuture;
-    if (future != null) {
-      return future;
+  @ApiStatus.Internal
+  public static synchronized void scheduleDescriptorLoading() {
+    if (initFuture == null) {
+      initFuture = PluginDescriptorLoader.scheduleLoading();
     }
-
-    future = BuildersKt.async(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
-      Activity activity = StartUpMeasurer.startActivity("plugin descriptor loading", ActivityCategory.DEFAULT);
-      DescriptorListLoadingContext context = PluginDescriptorLoader.loadDescriptors(isUnitTestMode, isRunningFromSources());
-      activity.end();
-      return loadAndInitializePlugins(context, PluginManagerCore.class.getClassLoader());
-    });
-    initFuture = future;
-    return future;
   }
 
   /**
@@ -627,7 +609,8 @@ public final class PluginManagerCore {
    */
   @ApiStatus.Internal
   public static @NotNull CompletableFuture<List<IdeaPluginDescriptorImpl>> getEnabledPluginRawList() {
-    return FutureKt.asCompletableFuture(getOrScheduleLoading()).thenApply(it -> it.enabledPlugins);
+    scheduleDescriptorLoading();
+    return FutureKt.asCompletableFuture(initFuture).thenApply(it -> it.enabledPlugins);
   }
 
   @ApiStatus.Internal
@@ -1048,7 +1031,7 @@ public final class PluginManagerCore {
   }
 
   @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
-  private static synchronized @NotNull PluginSet loadAndInitializePlugins(@NotNull DescriptorListLoadingContext context,
+  static synchronized @NotNull PluginSet loadAndInitializePlugins(@NotNull DescriptorListLoadingContext context,
                                                                           @NotNull ClassLoader coreLoader) {
     if (IdeaPluginDescriptorImpl.disableNonBundledPlugins) {
       getLogger().info("Running with disableThirdPartyPlugins argument, third-party plugins will be disabled");

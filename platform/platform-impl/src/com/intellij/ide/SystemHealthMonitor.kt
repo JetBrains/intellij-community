@@ -9,7 +9,6 @@ import com.intellij.execution.process.UnixProcessManager
 import com.intellij.ide.actions.EditCustomVmOptionsAction
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.idea.createAppCoroutineScope
 import com.intellij.idea.shellEnvLoadFuture
 import com.intellij.jna.JnaLoader
 import com.intellij.notification.Notification
@@ -327,8 +326,7 @@ private fun startDiskSpaceMonitoring() {
     return
   }
 
-  val (scope) = createAppCoroutineScope(ApplicationManager.getApplication())
-  monitorDiskSpace(scope, dir, store, initialDelay = 1)
+  monitorDiskSpace(ApplicationManager.getApplication().coroutineScope, dir, store, initialDelay = 1)
 }
 
 private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore, initialDelay: Long) {

@@ -6,19 +6,18 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.callAppInitialized
 import com.intellij.idea.initConfigurationStore
-import com.intellij.idea.preloadServices
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean.Companion.addKeysFromPlugins
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.util.SystemProperties
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import java.time.Duration
 
+@OptIn(DelicateCoroutinesApi::class)
 internal fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val loadedModuleFuture = PluginManagerCore.getInitPluginFuture()
 
@@ -42,7 +41,12 @@ internal fun loadAppInUnitTestMode(isHeadless: Boolean) {
 
       coroutineScope {
         withTimeout(Duration.ofSeconds(40).toMillis()) {
-          preloadServices(modules = pluginSet.getEnabledModules(), container = app, activityPrefix = "", syncScope = this)
+          app.preloadServices(
+            modules = pluginSet.getEnabledModules(),
+            activityPrefix = "",
+            syncScope = this,
+            asyncScope = GlobalScope + CoroutineExceptionHandler { _, throwable -> logger<TestApplicationManager>().error(throwable) }
+          )
         }
         app.loadComponents()
       }

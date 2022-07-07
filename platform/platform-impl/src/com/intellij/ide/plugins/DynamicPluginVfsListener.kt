@@ -24,7 +24,7 @@ private const val AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY = "idea.auto.reload.plugin
 private var initialRefreshDone = false
 
 internal class DynamicPluginVfsListenerInitializer : PreloadingActivity() {
-  override fun preload() {
+  override suspend fun execute() {
     if (java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) {
       val pluginsPath = PathManager.getPluginsPath()
       LocalFileSystem.getInstance().addRootToWatch(pluginsPath, true)

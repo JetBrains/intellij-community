@@ -54,7 +54,7 @@ private val methodLookup = MethodHandles.lookup()
 private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 
 @ApiStatus.Internal
-abstract class ComponentManagerImpl @JvmOverloads constructor(
+abstract class ComponentManagerImpl(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null
 ) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), PicoContainer, ComponentManagerEx, IComponentStoreOwner {
@@ -140,6 +140,12 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
   @Volatile
   internal var componentContainerIsReadonly: String? = null
+
+  private val coroutineScope = if (parent?.parent == null) CoroutineScope(Dispatchers.Default + CoroutineExceptionHandler { _, exception ->
+    LOG.error(exception)
+  }) else null
+
+  fun getCoroutineScope(): CoroutineScope = coroutineScope ?: throw RuntimeException("Module doesn't have coroutineScope")
 
   override val componentStore: IComponentStore
     get() = getService(IComponentStore::class.java)!!
@@ -1103,6 +1109,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
       throw IllegalStateException("Expected current state is DISPOSE_IN_PROGRESS, but actual state is ${containerState.get()} ($this)")
     }
 
+    coroutineScope?.cancel("ComponentManagerImpl.dispose is called")
+
     // dispose components and services
     Disposer.dispose(serviceParentDisposable)
 
@@ -1111,11 +1119,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     componentAdapters.clear()
     serviceInstanceHotCache.clear()
 
-    val messageBus = messageBus
-    if (messageBus != null) {
+    messageBus?.let {
       // Must be after disposing of serviceParentDisposable, because message bus disposes child buses, so, we must dispose all services first.
       // For example, service ModuleManagerImpl disposes modules; each module, in turn, disposes module's message bus (child bus of application).
-      Disposer.dispose(messageBus)
+      Disposer.dispose(it)
       this.messageBus = null
     }
 

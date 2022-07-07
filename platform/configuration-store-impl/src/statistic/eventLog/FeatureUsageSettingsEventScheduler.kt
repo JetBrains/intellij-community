@@ -4,7 +4,6 @@ package com.intellij.configurationStore.statistic.eventLog
 
 import com.intellij.configurationStore.ComponentInfo
 import com.intellij.configurationStore.ComponentStoreImpl
-import com.intellij.idea.createAppCoroutineScope
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.openapi.application.ApplicationManager
@@ -27,8 +26,7 @@ internal class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracke
       return
     }
 
-    val (scope) = createAppCoroutineScope(ApplicationManager.getApplication())
-    scope.launch {
+    ApplicationManager.getApplication().coroutineScope.launch {
       delay(PERIOD_DELAY)
       while (true) {
         logConfigStateEvents()
