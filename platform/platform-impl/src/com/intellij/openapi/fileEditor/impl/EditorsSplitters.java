@@ -41,7 +41,6 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.Alarm;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
@@ -445,13 +444,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   public void trimToSize() {
     for (EditorWindow window : myWindows) {
       window.trimToSize(window.getSelectedFile(), true);
-    }
-  }
-
-  void updateTabsLayout(@NotNull TabsLayoutInfo newTabsLayoutInfo) {
-    EditorWindow[] windows = getWindows();
-    for (int i = 0; i != windows.length; ++ i) {
-      windows[i].updateTabsLayout(newTabsLayoutInfo);
     }
   }
 

@@ -36,7 +36,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -362,10 +361,6 @@ public final class EditorWindow {
 
   void setTabsPlacement(int tabPlacement) {
     myTabbedPane.setTabPlacement(tabPlacement);
-  }
-
-  void updateTabsLayout(@NotNull TabsLayoutInfo newTabsLayoutInfo) {
-    myTabbedPane.updateTabsLayout(newTabsLayoutInfo);
   }
 
   public void setAsCurrentWindow(boolean requestFocus) {

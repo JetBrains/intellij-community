@@ -48,8 +48,6 @@ import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -136,11 +134,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     });
 
     setTabPlacement(UISettings.getInstance().getEditorTabPlacement());
-
-    if (JBTabsImpl.NEW_TABS) {
-      TabsLayoutInfo tabsLayoutInfo = TabsLayoutSettingsManager.getInstance().getSelectedTabsLayoutInfo();
-      myTabs.updateTabsLayout(tabsLayoutInfo);
-    }
   }
 
   public int getTabCount() {
@@ -254,10 +247,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       default:
         throw new IllegalArgumentException("Unknown tab placement code=" + tabPlacement);
     }
-  }
-
-  void updateTabsLayout(@NotNull TabsLayoutInfo newTabsLayoutInfo) {
-    myTabs.updateTabsLayout(newTabsLayoutInfo);
   }
 
   /**

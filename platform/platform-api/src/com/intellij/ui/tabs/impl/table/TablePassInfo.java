@@ -38,7 +38,6 @@ public class TablePassInfo extends LayoutPassInfo {
     return index != -1 && index == table.size() - 1;
   }
 
-  @Deprecated
   @Override
   public int getRowCount() {
     return table.size();

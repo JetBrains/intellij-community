@@ -15,7 +15,6 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.toNullableProperty
 import org.jetbrains.annotations.Nls
-import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 import javax.swing.SwingConstants.*
 
@@ -25,11 +24,9 @@ internal val TAB_PLACEMENT = ApplicationBundle.message("combobox.editor.tab.plac
 
 internal val tabPlacementsOptionDescriptors = TAB_PLACEMENTS.map { i -> asOptionDescriptor(i) }
 
-internal fun Row.tabPlacementComboBox() = tabPlacementComboBox(DefaultComboBoxModel(TAB_PLACEMENTS))
-
-internal fun Row.tabPlacementComboBox(model: ComboBoxModel<Int>): Cell<ComboBox<Int>> {
+internal fun Row.tabPlacementComboBox(): Cell<ComboBox<Int>> {
   val ui = UISettings.getInstance().state
-  return comboBox(model,
+  return comboBox(DefaultComboBoxModel(TAB_PLACEMENTS),
                   renderer = SimpleListCellRenderer.create { label, value, _ ->
                     label.text = value.asTabPlacement()
                   }).bindItem(ui::editorTabPlacement.toNullableProperty())
