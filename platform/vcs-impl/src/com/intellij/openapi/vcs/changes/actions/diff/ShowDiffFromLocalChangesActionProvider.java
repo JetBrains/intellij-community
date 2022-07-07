@@ -7,12 +7,10 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Producer;
@@ -32,6 +30,11 @@ import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListD
 
 public class ShowDiffFromLocalChangesActionProvider implements AnActionExtensionProvider {
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(ChangesListView.DATA_KEY) != null;
   }
@@ -43,14 +46,13 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
   public static void updateAvailability(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    ChangesListView view = e.getData(ChangesListView.DATA_KEY);
-    if (view == null) {
+    if (e.getData(ChangesListView.DATA_KEY) == null) {
       e.getPresentation().setEnabled(false);
       return;
     }
 
-    JBIterable<Change> changes = view.getSelectedChanges();
-    JBIterable<FilePath> unversionedFiles = view.getSelectedUnversionedFiles();
+    JBIterable<Change> changes = JBIterable.from(e.getData(VcsDataKeys.CHANGES));
+    JBIterable<FilePath> unversionedFiles = JBIterable.from(e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY));
 
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
       e.getPresentation().setEnabled(project != null && (changes.isNotEmpty() || unversionedFiles.isNotEmpty()));
