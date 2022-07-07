@@ -131,5 +131,16 @@
                      language="kotlin"
                      key="inspection.convert.try.finally.to.use.call.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.CopyWithoutNamedArgumentsInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.copy.without.named.arguments.display.name" bundle="messages.KotlinBundle"/>
+
+
+
   </extensions>
 </idea-plugin>

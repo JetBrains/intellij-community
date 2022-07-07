@@ -246,6 +246,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/inspectionsLocal/collections/convertCallChainIntoSequence", pattern = pattern)
             model("testData/inspectionsLocal/convertNaNEquality", pattern = pattern)
             model("testData/inspectionsLocal/convertPairConstructorToToFunction", pattern = pattern)
+            model("testData/inspectionsLocal/copyWithoutNamedArguments", pattern = pattern)
         }
     }
 
