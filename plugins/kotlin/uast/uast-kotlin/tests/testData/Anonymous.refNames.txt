@@ -12,7 +12,7 @@ Runnable -> USimpleNameReferenceExpression (identifier = Runnable) from KtNameRe
 run -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtDotQualifiedExpression
 runnable -> USimpleNameReferenceExpression (identifier = runnable) from KtNameReferenceExpression
 run -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression
-Runnable -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
+Runnable -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
 println -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression
 run -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtDotQualifiedExpression
 runnable2 -> USimpleNameReferenceExpression (identifier = runnable2) from KtNameReferenceExpression
