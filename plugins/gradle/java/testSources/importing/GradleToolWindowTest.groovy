@@ -13,6 +13,7 @@ import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
@@ -32,11 +33,13 @@ class GradleToolWindowTest extends GradleImportingTestCase {
   @Override
   void setUp() throws Exception {
     super.setUp()
+    isPreview = false
     toolWindow = new ToolWindowHeadlessManagerImpl.MockToolWindow(myProject)
     view = new ExternalProjectsViewImpl(myProject, toolWindow, getExternalSystemId())
-    ExternalProjectsManagerImpl.getInstance(myProject).registerView(view)
-    view.initStructure()
-    isPreview = false
+    EdtTestUtil.runInEdtAndWait {
+      ExternalProjectsManagerImpl.getInstance(myProject).registerView(view)
+      view.initStructure()
+    }
   }
 
   @Test
