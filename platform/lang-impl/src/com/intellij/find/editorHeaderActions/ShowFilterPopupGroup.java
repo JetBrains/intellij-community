@@ -29,7 +29,7 @@ public class ShowFilterPopupGroup extends DefaultActionGroup implements Shortcut
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return ActionUpdateThread.EDT;
   }
 
   @Override

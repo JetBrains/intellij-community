@@ -17,7 +17,6 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.FindModel;
 import com.intellij.find.SearchSession;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,11 +27,6 @@ public class EditorHeaderSetSearchContextAction extends EditorHeaderToggleAction
     super(text);
 
     myContext = context;
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
   }
 
   @Override
