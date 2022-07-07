@@ -20,4 +20,8 @@ private class ResetLearningProgressAction : AnAction(AllIcons.Actions.Restart) {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null
+  }
 }

@@ -22,4 +22,8 @@ private class OpenLearnPanel : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null
+  }
 }
