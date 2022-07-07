@@ -1152,6 +1152,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin/kotlin.plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin/kotlin.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin-fir/kotlin.plugin-fir.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin-fir/kotlin.plugin-fir.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin-updater/kotlin.plugin-updater.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin-updater/kotlin.plugin-updater.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin/common/kotlin.plugin.common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin/common/kotlin.plugin.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin/k1/kotlin.plugin.k1.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin/k1/kotlin.plugin.k1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin/k2/kotlin.plugin.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin/k2/kotlin.plugin.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/preferences/kotlin.preferences.iml" filepath="$PROJECT_DIR$/plugins/kotlin/preferences/kotlin.preferences.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-configuration/kotlin.project-configuration.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-configuration/kotlin.project-configuration.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-tests/project-tests-base/kotlin.project-tests.project-tests-base.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-tests/project-tests-base/kotlin.project-tests.project-tests-base.iml" />
