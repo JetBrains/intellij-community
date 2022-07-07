@@ -13,6 +13,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -72,7 +75,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import static com.intellij.openapi.fileEditor.impl.TextAttributesUtilsKt.getTextAttributesForFile;
+import static com.intellij.openapi.fileEditor.impl.TabColorUtilKt.getForegroundColorForFile;
 import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
 @DirtyUI
@@ -428,16 +431,22 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return;
     }
 
+    EditorColorsScheme colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
     for (EditorWindow window : windows) {
       EditorComposite composite = window.getComposite(file);
       LOG.assertTrue(composite != null);
       int index = window.findCompositeIndex(composite);
       LOG.assertTrue(index != -1);
-      TextAttributes resultAttributes = getTextAttributesForFile(getManager().getProject(), file);
+      FileEditorManagerImpl manager = getManager();
+      window.setForegroundAt(index, manager.getFileColor(file));
+      var resultAttributes = new TextAttributes();
+      resultAttributes.setForegroundColor(getForegroundColorForFile(manager.getProject(), file));
+      TextAttributes attributes = manager.isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null;
       if (composite.isPreview()) {
         var italic = new TextAttributes(null, null, null, null, Font.ITALIC);
-        resultAttributes = TextAttributes.merge(italic, resultAttributes);
+        attributes = (attributes == null) ? italic : TextAttributes.merge(italic, attributes);
       }
+      resultAttributes = TextAttributes.merge(resultAttributes, attributes);
       window.setTextAttributes(index, resultAttributes);
     }
   }

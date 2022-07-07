@@ -2,11 +2,6 @@
 
 package com.intellij.ui.tabs;
 
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorTabColorProvider;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -32,18 +27,11 @@ public class EditorTabColorProviderImpl implements EditorTabColorProvider, DumbA
   }
 
   @Override
-  public @Nullable TextAttributes getEditorTabTextAttributes(@NotNull Project project, @NotNull VirtualFile file) {
+  public @Nullable Color getEditorTabForegroundColor(@NotNull Project project, @NotNull VirtualFile file) {
     FileEditorManager manger = FileEditorManager.getInstance(project);
     if (!(manger instanceof FileEditorManagerImpl)) return null;
     FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-    TextAttributes attributes = new TextAttributes(null, null, null, EffectType.BOXED, Font.PLAIN);
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
-    TextAttributes errorAttributes = fileEditorManager.isProblem(file) ? scheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null;
-    if (errorAttributes != null) {
-      attributes.copyFrom(errorAttributes);
-    }
-    attributes.setForegroundColor(fileEditorManager.getFileColor(file));
-    return attributes;
+    return fileEditorManager.getFileColor(file);
   }
 
   @Nullable
