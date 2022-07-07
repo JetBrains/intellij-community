@@ -49,6 +49,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
   private val textColor: Color = if (panelMode) UISettings.getInstance().defaultTextColor else UISettings.getInstance().tooltipTextColor
   private val codeForegroundColor: Color = if (panelMode) UISettings.getInstance().codeForegroundColor else UISettings.getInstance().tooltipTextColor
+  private val shortcutTextColor = if (panelMode) UISettings.getInstance().shortcutTextColor else UISettings.getInstance().tooltipShortcutTextColor
 
   enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
 
@@ -188,7 +189,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
     StyleConstants.setForeground(REGULAR, textColor)
     StyleConstants.setForeground(BOLD, textColor)
-    StyleConstants.setForeground(SHORTCUT, UISettings.getInstance().shortcutTextColor)
+    StyleConstants.setForeground(SHORTCUT, shortcutTextColor)
     StyleConstants.setForeground(LINK, UISettings.getInstance().lessonLinkColor)
     StyleConstants.setForeground(CODE, codeForegroundColor)
   }
@@ -544,7 +545,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       for (myMessage in myMessages) {
         when (myMessage.type) {
           MessagePart.MessageType.SHORTCUT -> {
-            val bg = UISettings.getInstance().shortcutBackgroundColor
+            val bg = if (panelMode) UISettings.getInstance().shortcutBackgroundColor else UISettings.getInstance().tooltipShortcutBackgroundColor
             val needColor = if (lessonMessage.state == MessageState.INACTIVE) Color(bg.red, bg.green, bg.blue, 255 * 3 / 10) else bg
 
             for (part in myMessage.splitMe()) {
