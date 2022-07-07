@@ -399,10 +399,10 @@ fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
 }
 
-fun LessonContext.highlightRunToolbar() {
+fun LessonContext.highlightRunToolbar(usePulsation: Boolean = true) {
   task {
     val stopAction = getActionById("Stop")
-    triggerAndFullHighlight { usePulsation = true }.componentPart { ui: ActionToolbarImpl ->
+    triggerAndFullHighlight { this.usePulsation = usePulsation }.componentPart { ui: ActionToolbarImpl ->
       ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
         val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
         val stop = ui.components.find { it is ActionButton && it.action == stopAction }
