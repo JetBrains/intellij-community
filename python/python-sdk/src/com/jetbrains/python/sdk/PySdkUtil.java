@@ -8,11 +8,17 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -232,5 +238,31 @@ public final class PySdkUtil {
   @NonNls
   public static String getBuiltinsFileName(@NotNull Sdk sdk) {
     return PyBuiltinCache.getBuiltinsFileName(getLanguageLevelForSdk(sdk));
+  }
+
+  /**
+   * Finds sdk for provided directory. Takes into account not project and module SDK
+   */
+  public static @Nullable Sdk findSdkForDirectory(@NotNull Project project, String workingDirectory) {
+    Sdk firstSdk = null;
+    for (Module m : ModuleManager.getInstance(project).getModules()) {
+      Sdk sdk = PythonSdkUtil.findPythonSdk(m);
+      if (sdk != null && !PythonSdkUtil.isRemote(sdk)) {
+        if (workingDirectory == null) {
+          return sdk;
+        }
+        if (firstSdk == null) {
+          firstSdk = sdk;
+        }
+        VirtualFile moduleDir = ProjectUtil.guessModuleDir(m);
+        if (moduleDir != null) {
+          if (VfsUtilCore.isEqualOrAncestor(moduleDir.getPath(), workingDirectory)) {
+            return sdk;
+          }
+        }
+      }
+    }
+
+    return firstSdk;
   }
 }

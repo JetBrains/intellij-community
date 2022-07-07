@@ -5,7 +5,6 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -65,9 +64,10 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   }
 
   override fun customizeCommandAndEnvironment(project: Project,
+                                              workingDirectory: String?,
                                               command: Array<out String>,
                                               envs: MutableMap<String, String>): Array<out String> {
-    val sdk: Sdk? = findSdk(project)
+    val sdk: Sdk? = PySdkUtil.findSdkForDirectory(project, workingDirectory)
 
     if (sdk != null &&
         (PythonSdkUtil.isVirtualEnv(sdk) || PythonSdkUtil.isConda(sdk)) &&
@@ -107,17 +107,6 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
       return shellName == "bash" || (SystemInfo.isMac && shellName == "sh") || shellName == "zsh" || shellName == "fish"
     }
     return false
-  }
-
-  private fun findSdk(project: Project): Sdk? {
-    for (m in ModuleManager.getInstance(project).modules) {
-      val sdk: Sdk? = PythonSdkUtil.findPythonSdk(m)
-      if (sdk != null && !PythonSdkUtil.isRemote(sdk)) {
-        return sdk
-      }
-    }
-
-    return null
   }
 
   override fun getConfigurable(project: Project): UnnamedConfigurable = object : UnnamedConfigurable {
@@ -166,6 +155,5 @@ class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
       return project.getService(PyVirtualEnvTerminalSettings::class.java)
     }
   }
-
 }
 
