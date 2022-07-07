@@ -21,7 +21,7 @@ public class PyBoolLiteralExpressionImpl extends PyElementImpl implements PyBool
 
   @Override
   public boolean getValue() {
-    return "True".equals(getText());
+    return "True".equals(getText()) || "__debug__".equals(getText());
   }
 
   @Override
