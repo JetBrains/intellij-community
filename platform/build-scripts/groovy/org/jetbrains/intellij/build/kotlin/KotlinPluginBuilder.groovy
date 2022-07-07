@@ -204,12 +204,11 @@ final class KotlinPluginBuilder {
   static PluginLayout kotlinPlugin(KotlinUltimateSources ultimateSources) {
     return kotlinPlugin(
       KotlinPluginKind.valueOf(System.getProperty("kotlin.plugin.kind", "IJ")),
-      KotlinPluginType.valueOf(System.getProperty("kotlin.plugin.type", KotlinPluginType.FE10.name())),
       ultimateSources,
     )
   }
 
-  static PluginLayout kotlinPlugin(KotlinPluginKind kind, KotlinPluginType type, KotlinUltimateSources ultimateSources) {
+  static PluginLayout kotlinPlugin(KotlinPluginKind kind, KotlinUltimateSources ultimateSources) {
     return PluginLayoutGroovy.plugin(MAIN_KOTLIN_PLUGIN_MODULE) {
       switch (kind) {
         default:
@@ -217,10 +216,10 @@ final class KotlinPluginBuilder {
           mainJarName = "kotlin-plugin.jar"
       }
 
-      for (String moduleName : MODULES + type.additionalModules) {
+      for (String moduleName : MODULES) {
         withModule(moduleName)
       }
-      for (String library : LIBRARIES + type.additionalLibraries) {
+      for (String library : LIBRARIES) {
         withProjectLibraryUnpackedIntoJar(library, mainJarName)
       }
       for (String library : COMPILER_PLUGINS) {
@@ -258,23 +257,6 @@ final class KotlinPluginBuilder {
           })
         }
       })
-
-      if (type == KotlinPluginType.FIR) {
-        withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
-          @Override
-          void accept(ModuleOutputPatcher patcher, BuildContext context) {
-            def firResourcesDir = context.findModule("kotlin.plugin-fir").sourceRoots
-              .findAll { it.rootType instanceof JavaResourceRootType }[0]
-              .file.toPath()
-
-            Files.walk(firResourcesDir)
-              .filter { Files.isRegularFile(it) }
-              .forEach { resource ->
-                patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, "META-INF/" + resource.fileName.toString(), resource.toFile().text, true)
-              }
-          }
-        })
-      }
 
       withProjectLibrary("kotlinc.kotlin-compiler-fe10")
       withProjectLibrary("kotlinc.kotlin-compiler-ir")
@@ -400,19 +382,6 @@ final class KotlinPluginBuilder {
   def build() {
     BuildContext buildContext = BuildContextImpl.createContext(communityHome, home, properties)
     BuildTasks.create(buildContext).buildNonBundledPlugins([MAIN_KOTLIN_PLUGIN_MODULE])
-  }
-
-  enum KotlinPluginType {
-    FIR(List.<String>of(), List.<String>of()),
-    FE10(List.<String>of(), List.<String>of())
-
-    List< String> additionalModules
-    List< String> additionalLibraries
-
-    KotlinPluginType(List<String> additionalModules, List<String> additionalLibraries) {
-      this.additionalModules = additionalModules
-      this.additionalLibraries = additionalLibraries
-    }
   }
 
   enum KotlinUltimateSources {
