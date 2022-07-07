@@ -46,15 +46,16 @@ import java.util.Collections;
  */
 @ApiStatus.OverrideOnly
 public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V, FileContent> {
-
   public static final ExtensionPointName<FileBasedIndexExtension<?, ?>> EXTENSION_POINT_NAME =
-    ExtensionPointName.create("com.intellij.fileBasedIndex");
+    new ExtensionPointName<>("com.intellij.fileBasedIndex");
+
+  // Use VFS-based implementation for FilenameIndex
+  public static final boolean USE_VFS_FOR_FILENAME_INDEX = Boolean.parseBoolean(System.getProperty("indexing.filename.over.vfs", "true"));
 
   private static final int DEFAULT_CACHE_SIZE = 1024;
 
-  @NotNull
   @Override
-  public abstract ID<K, V> getName();
+  public abstract @NotNull ID<K, V> getName();
 
   /**
    * Filter for files which are supposed to be indexed by the {@link IndexExtension#getIndexer()}.
@@ -63,8 +64,7 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
    * Note that checking only file's extension is usually error-prone way and it is preferred to check {@link VirtualFile#getFileType()}:
    * for example user can enforce language file as plain text one.
    */
-  @NotNull
-  public abstract FileBasedIndex.InputFilter getInputFilter();
+  public abstract @NotNull FileBasedIndex.InputFilter getInputFilter();
 
   public abstract boolean dependsOnFileContent();
 
@@ -87,8 +87,7 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
    * <p>
    * Use carefully, because indexing large files may influence index update speed dramatically.
    */
-  @NotNull
-  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
+  public @NotNull Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
     return Collections.emptyList();
   }
 

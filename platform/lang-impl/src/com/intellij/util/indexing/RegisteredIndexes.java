@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.editor.Document;
@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +116,7 @@ public final class RegisteredIndexes {
       myUnsavedDataUpdateTasks.put(name, new DocumentUpdateTask(name));
     }
 
-    if (extension.getName() == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
+    if (extension.getName() == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
       return;
     }
 

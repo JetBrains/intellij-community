@@ -69,6 +69,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   private static final boolean useConservativeThreadCountPolicy =
     SystemProperties.getBooleanProperty("idea.indexing.use.conservative.thread.count.policy", false);
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
+  // Allows to specify number of indexing threads. -1 means the default value (currently, 4).
+  private static final int INDEXER_THREAD_COUNT = SystemProperties.getIntProperty("caches.indexerThreadsCount", -1);
 
   public enum TestMode {
     PUSHING, PUSHING_AND_SCANNING
@@ -656,7 +658,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
    * It may change during execution of the IDE depending on other activities' load.
    */
   public static int getNumberOfIndexingThreads() {
-    int threadCount = Registry.intValue("caches.indexerThreadsCount");
+    int threadCount = INDEXER_THREAD_COUNT;
     if (threadCount <= 0) {
       threadCount =
         Math.max(1, Math.min(useConservativeThreadCountPolicy
@@ -670,7 +672,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
    */
   public static int getMaxNumberOfIndexingThreads() {
     // Change of the registry option requires IDE restart.
-    int threadCount = Registry.intValue("caches.indexerThreadsCount");
+    int threadCount = INDEXER_THREAD_COUNT;
     return threadCount <= 0 ? getMaxBackgroundThreadCount() : threadCount;
   }
 

@@ -30,7 +30,6 @@ import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
@@ -564,7 +563,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static <K, V> UpdatableIndex<K, V, FileContent, ?> createIndex(@NotNull FileBasedIndexExtension<K, V> extension,
                                                                          @NotNull VfsAwareIndexStorageLayout<K, V> layout)
     throws StorageException, IOException {
-    if (extension.getName() == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
+    if (FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX && extension.getName() == FilenameIndex.NAME) {
       return new EmptyIndex<>(extension);
     }
     else if (extension instanceof CustomImplementationFileBasedIndexExtension) {
@@ -2129,11 +2128,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   static void setupWritingIndexValuesSeparatedFromCounting() {
-    ourWritingIndexValuesSeparatedFromCounting = Registry.is("indexing.separate.applying.values.from.counting");
+    ourWritingIndexValuesSeparatedFromCounting = SystemProperties.getBooleanProperty("indexing.separate.applying.values.from.counting", true);
   }
 
   static void setupWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes() {
-    ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes = Registry.is("indexing.separate.applying.values.from.counting.for.content.independent.indexes");
+    ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes =
+      SystemProperties.getBooleanProperty("indexing.separate.applying.values.from.counting.for.content.independent.indexes", true);
   }
 
   private static volatile boolean ourWritingIndexValuesSeparatedFromCounting;

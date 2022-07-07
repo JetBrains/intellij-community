@@ -227,7 +227,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       }
     }
 
-    boolean dropFilenameIndex = Registry.is("indexing.filename.over.vfs") && indicesToDrop.contains(FilenameIndex.NAME.getName());
+    boolean dropFilenameIndex = FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX &&
+                                indicesToDrop.contains(FilenameIndex.NAME.getName());
     if (!exceptionThrown) {
       for (ID<?, ?> key : ids) {
         if (dropFilenameIndex && key == FilenameIndex.NAME) continue;
