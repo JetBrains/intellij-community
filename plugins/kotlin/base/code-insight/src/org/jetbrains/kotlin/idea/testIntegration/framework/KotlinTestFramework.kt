@@ -49,9 +49,9 @@ interface KotlinTestFramework {
 
     fun isTestClass(declaration: KtClassOrObject): Boolean
 
-    fun isTestMethod(function: KtNamedFunction): Boolean
+    fun isTestMethod(declaration: KtNamedFunction): Boolean
 
-    fun isIgnoredMethod(function: KtNamedFunction): Boolean
+    fun isIgnoredMethod(declaration: KtNamedFunction): Boolean
 
     fun qualifiedName(declaration: KtNamedDeclaration): String?
 }

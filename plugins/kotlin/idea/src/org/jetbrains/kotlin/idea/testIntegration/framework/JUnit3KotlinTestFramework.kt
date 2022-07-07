@@ -2,43 +2,56 @@
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.execution.junit.JUnitUtil
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.cached
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.isResolvable
-import org.jetbrains.kotlin.psi.*
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-open class JUnit3KotlinTestFramework : AbstractKotlinTestFramework() {
+class JUnit3KotlinTestFramework : AbstractKotlinTestFramework() {
+    private companion object {
+        private val CLASS_ANNOTATION_FQN = setOf(JUnitUtil.TEST_CASE_CLASS)
+    }
 
-    override val markerClassFqn: String = JUnitUtil.TEST_CASE_CLASS
-    override val disabledTestAnnotation: String = "org.junit.Ignore"
+    override val markerClassFqn: String
+        get() = JUnitUtil.TEST_CASE_CLASS
+
+    override val disabledTestAnnotation: String
+        get() = "org.junit.Ignore"
 
     override fun isTestClass(declaration: KtClassOrObject): Boolean {
-        if (!super.isTestClass(declaration)) return false
-        return cached(declaration) { isJUnit3TestClass(it) } ?: false
+        return super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {
+            CachedValueProvider.Result.create(isJUnit3TestClass(declaration), PsiModificationTracker.MODIFICATION_COUNT)
+        }
     }
 
-    override fun isTestMethod(function: KtNamedFunction): Boolean {
-        if (!super.isTestMethod(function)) return false
-        return function.name?.startsWith("test") == true && isInTestClass(function)
+    override fun isTestMethod(declaration: KtNamedFunction): Boolean {
+        if (!super.isTestMethod(declaration)) return false
+        return declaration.name?.startsWith("test") == true && isInTestClass(declaration)
     }
 
-    private fun isInTestClass(function: KtNamedFunction): Boolean {
-        val classOrObject = function.getParentOfType<KtClassOrObject>(true) ?: return false
+    private fun isInTestClass(declaration: KtNamedFunction): Boolean {
+        val classOrObject = declaration.getParentOfType<KtClassOrObject>(true) ?: return false
         return isTestClass(classOrObject)
     }
 
     private fun isJUnit3TestClass(declaration: KtClassOrObject): Boolean {
-        if (declaration.safeAs<KtClass>()?.isInner() == true)
+        if (declaration is KtClass && declaration.isInner()) {
             return false
+        }
 
-        val superTypeListEntries = declaration.superTypeListEntries
-            .filterIsInstance<KtSuperTypeCallEntry>().firstOrNull()
-            ?: return false
-        return superTypeListEntries.valueArgumentList?.arguments?.isEmpty() == true &&
-                declaration.containingKtFile.isResolvable(
-                    JUnitUtil.TEST_CASE_CLASS,
-                    superTypeListEntries.calleeExpression.text
-                )
+        for (superTypeEntry in declaration.superTypeListEntries) {
+            if (superTypeEntry is KtSuperTypeCallEntry && superTypeEntry.valueArguments.isEmpty()) {
+                val containingFile = declaration.containingKtFile
+                if (checkNameMatch(containingFile, CLASS_ANNOTATION_FQN, superTypeEntry.calleeExpression.text)) {
+                    return true
+                }
+            }
+        }
+
+        return false
     }
 }

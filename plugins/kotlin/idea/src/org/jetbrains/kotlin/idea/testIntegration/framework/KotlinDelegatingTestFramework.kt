@@ -33,15 +33,15 @@ class KotlinDelegatingTestFramework : KotlinTestFramework {
         return framework.isTestClass(lightClass)
     }
 
-    override fun isTestMethod(function: KtNamedFunction): Boolean {
-        val framework = detectFramework(function) ?: return false
-        val lightMethod = function.toLightMethods().firstOrNull() ?: return false
+    override fun isTestMethod(declaration: KtNamedFunction): Boolean {
+        val framework = detectFramework(declaration) ?: return false
+        val lightMethod = declaration.toLightMethods().firstOrNull() ?: return false
         return framework.isTestMethod(lightMethod, false)
     }
 
-    override fun isIgnoredMethod(function: KtNamedFunction): Boolean {
-        val framework = detectFramework(function) ?: return false
-        val lightMethod = function.toLightMethods().firstOrNull() ?: return false
+    override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean {
+        val framework = detectFramework(declaration) ?: return false
+        val lightMethod = declaration.toLightMethods().firstOrNull() ?: return false
         return framework.isIgnoredMethod(lightMethod)
     }
 

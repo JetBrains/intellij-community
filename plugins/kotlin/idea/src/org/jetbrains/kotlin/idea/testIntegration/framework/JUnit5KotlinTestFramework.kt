@@ -2,52 +2,55 @@
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.execution.junit.JUnitUtil
-import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework.Companion.KOTLIN_TEST_TEST
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.cached
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.getTopmostClass
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.isAnnotated
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class JUnit5KotlinTestFramework : AbstractKotlinTestFramework() {
+    private companion object {
+        private val METHOD_ANNOTATION_FQN = setOf(
+            JUnitUtil.TEST5_ANNOTATION,
+            KOTLIN_TEST_TEST,
+            "org.junit.jupiter.params.ParameterizedTest",
+            "org.junit.jupiter.api.RepeatedTest",
+            "org.junit.jupiter.api.TestFactory",
+            "org.junit.jupiter.api.TestTemplate"
+        )
+    }
 
     override val markerClassFqn: String = JUnitUtil.TEST5_ANNOTATION
     override val disabledTestAnnotation: String = "org.junit.jupiter.api.Disabled"
 
     override fun isTestClass(declaration: KtClassOrObject): Boolean {
-        if (!super.isTestClass(declaration)) return false
-        return cached(declaration) { isJUnit5TestClass(declaration) } ?: return false
+        return super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {
+            CachedValueProvider.Result.create(isJUnit5TestClass(declaration), PsiModificationTracker.MODIFICATION_COUNT)
+        }
     }
 
-    override fun isTestMethod(function: KtNamedFunction): Boolean {
-        if (!super.isTestMethod(function)) return false
-        if (function.annotationEntries.isEmpty()) return false
-        return isJUnit5TestMethod(function)
+    override fun isTestMethod(declaration: KtNamedFunction): Boolean {
+        if (!super.isTestMethod(declaration)) return false
+        if (declaration.annotationEntries.isEmpty()) return false
+        return isJUnit5TestMethod(declaration)
     }
 
-    private fun isJUnit5TestClass(ktClassOrObject: KtClassOrObject): Boolean {
-        if (ktClassOrObject.safeAs<KtClass>()?.isInner() == true && !ktClassOrObject.isAnnotated("org.junit.jupiter.api.Nested"))
+    private fun isJUnit5TestClass(declaration: KtClassOrObject): Boolean {
+        if (declaration is KtClass && declaration.isInner() && !isAnnotated(declaration, "org.junit.jupiter.api.Nested")) {
             return false
-
-        val topmostClass = getTopmostClass(ktClassOrObject)
-        if (topmostClass == ktClassOrObject && ktClassOrObject.isAnnotated("org.junit.jupiter.api.extension.ExtendWith"))
+        } else if (declaration.isTopLevel() && isAnnotated(declaration, "org.junit.jupiter.api.extension.ExtendWith")) {
             return true
+        }
 
-        return ktClassOrObject.declarations.asSequence()
+        return declaration.declarations
+            .asSequence()
             .filterIsInstance<KtNamedFunction>()
             .any { isJUnit5TestMethod(it) }
     }
 
     private fun isJUnit5TestMethod(method: KtNamedFunction): Boolean {
-        return with(method) {
-            isAnnotated(JUnitUtil.TEST5_ANNOTATION)
-                    || isAnnotated(KOTLIN_TEST_TEST)
-                    || isAnnotated("org.junit.jupiter.params.ParameterizedTest")
-                    || isAnnotated("org.junit.jupiter.api.RepeatedTest")
-                    || isAnnotated("org.junit.jupiter.api.TestFactory")
-                    || isAnnotated("org.junit.jupiter.api.TestTemplate")
-        }
+        return isAnnotated(method, METHOD_ANNOTATION_FQN)
     }
 }

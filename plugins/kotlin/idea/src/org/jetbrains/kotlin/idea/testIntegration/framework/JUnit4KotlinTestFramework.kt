@@ -2,43 +2,47 @@
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.execution.junit.JUnitUtil
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework.Companion.KOTLIN_TEST_TEST
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.cached
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.getTopmostClass
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.isAnnotated
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JUnit4KotlinTestFramework : AbstractKotlinTestFramework() {
-
     override val markerClassFqn: String = JUnitUtil.TEST_ANNOTATION
     override val disabledTestAnnotation: String = "org.junit.Ignore"
 
     override fun isTestClass(declaration: KtClassOrObject): Boolean {
-        if (!super.isTestClass(declaration)) return false
-        return cached(declaration) { isJUnit4TestClass(declaration) } ?: false
+        return super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {
+            CachedValueProvider.Result.create(isJUnit4TestClass(declaration), PsiModificationTracker.MODIFICATION_COUNT)
+        }
     }
 
-    override fun isTestMethod(function: KtNamedFunction): Boolean {
-        if (!super.isTestMethod(function)) return false
-        if (function.annotationEntries.isEmpty()) return false
-        return isJUnit4TestMethod(function)
+    override fun isTestMethod(declaration: KtNamedFunction): Boolean {
+        return when {
+            !super.isTestMethod(declaration) -> false
+            declaration.annotationEntries.isEmpty() -> false
+            else -> isJUnit4TestMethod(declaration)
+        }
     }
 
-    private fun isJUnit4TestMethod(method: KtNamedFunction): Boolean {
-        return method.isAnnotated(JUnitCommonClassNames.ORG_JUNIT_TEST) || method.isAnnotated(KOTLIN_TEST_TEST)
+    private fun isJUnit4TestMethod(declaration: KtNamedFunction): Boolean {
+        return isAnnotated(declaration, setOf(JUnitCommonClassNames.ORG_JUNIT_TEST, KOTLIN_TEST_TEST))
     }
 
-    private fun isJUnit4TestClass(ktClassOrObject: KtClassOrObject): Boolean {
-        if (ktClassOrObject.safeAs<KtClass>()?.isInner() == true)
+    private fun isJUnit4TestClass(declaration: KtClassOrObject): Boolean {
+        if (declaration.safeAs<KtClass>()?.isInner() == true) {
             return false
-        val topmostClass = getTopmostClass(ktClassOrObject)
-        if (topmostClass == ktClassOrObject && ktClassOrObject.isAnnotated(JUnitUtil.RUN_WITH)) return true
+        } else if (declaration.isTopLevel() && isAnnotated(declaration, JUnitUtil.RUN_WITH)) {
+            return true
+        }
 
-        return ktClassOrObject.declarations.asSequence()
+        return declaration.declarations
+            .asSequence()
             .filterIsInstance<KtNamedFunction>()
             .any { isJUnit4TestMethod(it) }
     }
