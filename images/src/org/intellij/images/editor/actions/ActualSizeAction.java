@@ -15,6 +15,7 @@
  */
 package org.intellij.images.editor.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -49,5 +50,10 @@ public final class ActualSizeAction extends AnAction implements DumbAware {
             ImageZoomModel zoomModel = decorator.getZoomModel();
             e.getPresentation().setEnabled(zoomModel.getZoomFactor() != 1.0d);
         }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 }
