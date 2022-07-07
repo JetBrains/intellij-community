@@ -324,6 +324,10 @@ interface Row {
                                 project: Project? = null,
                                 fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
                                 fileChosen: ((chosenFile: VirtualFile) -> String)? = null): Cell<TextFieldWithBrowseButton>
+  /**
+   * Creates password field with [columns] set to [COLUMNS_SHORT]
+   */
+  fun passwordField(): Cell<JBPasswordField>
 
   /**
    * Creates expandable text field with [columns] set to [COLUMNS_SHORT]

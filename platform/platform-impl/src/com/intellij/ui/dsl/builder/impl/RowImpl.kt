@@ -346,6 +346,12 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
+  override fun passwordField(): CellImpl<JBPasswordField> {
+    val result = cell(JBPasswordField())
+    result.columns(COLUMNS_SHORT)
+    return result
+  }
+
   override fun expandableTextField(parser: Function<in String, out MutableList<String>>,
                                    joiner: Function<in MutableList<String>, String>): Cell<ExpandableTextField> {
     val result = cell(ExpandableTextField(parser, joiner))

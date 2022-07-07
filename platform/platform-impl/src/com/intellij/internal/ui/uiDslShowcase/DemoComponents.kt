@@ -92,6 +92,10 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
       textField()
     }
 
+    row("passwordField:") {
+      passwordField().applyToComponent { text = "password" }
+    }
+
     row("textFieldWithBrowseButton:") {
       textFieldWithBrowseButton()
     }
