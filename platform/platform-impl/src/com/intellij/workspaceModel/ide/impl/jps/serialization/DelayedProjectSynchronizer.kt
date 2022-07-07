@@ -10,10 +10,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.CompletableFuture
 import kotlin.system.measureTimeMillis
 
 /**
@@ -55,8 +53,7 @@ class DelayedProjectSynchronizer : StartupActivity.Background {
     suspend fun backgroundPostStartupProjectLoading(project: Project) {
       // Due to making [DelayedProjectSynchronizer] as backgroundPostStartupActivity we should have this hack because
       // background activity doesn't start in the tests
-      val allActivitiesPassedFuture = StartupManager.getInstance(project).allActivitiesPassedFuture as CompletableFuture<*>
-      allActivitiesPassedFuture.asDeferred().join()
+      StartupManager.getInstance(project).allActivitiesPassedFuture.join()
       doSync(project)
     }
   }

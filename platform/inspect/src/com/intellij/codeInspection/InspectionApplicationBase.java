@@ -58,6 +58,7 @@ import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import kotlinx.coroutines.future.FutureKt;
 import one.util.streamex.StreamEx;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -378,7 +379,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     LOG.info("Waiting for startup activities");
     int timeout = Registry.intValue("batch.inspections.startup.activities.timeout", 180);
     try {
-      StartupManager.getInstance(project).getAllActivitiesPassedFuture().get(timeout, TimeUnit.MINUTES);
+      FutureKt.asCompletableFuture(StartupManager.getInstance(project).getAllActivitiesPassedFuture()).get(timeout, TimeUnit.MINUTES);
       LOG.info("Startup activities finished");
     }
     catch (TimeoutException e) {

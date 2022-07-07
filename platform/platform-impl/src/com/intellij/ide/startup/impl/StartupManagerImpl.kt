@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("OVERRIDE_DEPRECATION")
+
 package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
@@ -46,7 +48,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.awt.event.InvocationEvent
 import java.util.*
 import java.util.concurrent.CancellationException
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -103,7 +104,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   @MagicConstant(intValues = [0, DUMB_AWARE_PASSED.toLong(), ALL_PASSED.toLong()])
   @Volatile
   private var postStartupActivitiesPassed = 0
-  private val allActivitiesPassed = CompletableFuture<Any?>()
+  private val allActivitiesPassed = CompletableDeferred<Any?>()
 
   @Volatile
   private var isStartupActivitiesPassed = false
@@ -126,17 +127,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     @Suppress("SSBasedInspection")
     if (runnable is DumbAware) {
       runAfterOpened(runnable)
-      return
     }
-
-    checkNonDefaultProject()
-    checkThatPostActivitiesNotPassed()
-    LOG.error("Activities registered via registerPostStartupActivity must be dumb-aware: $runnable")
-    synchronized(lock) {
-      checkThatPostActivitiesNotPassed()
-      postStartupActivities.add(DumbAwareRunnable {
-        DumbService.getInstance(project).unsafeRunWhenSmart(runnable)
-      })
+    else {
+      LOG.error("Activities registered via registerPostStartupActivity must be dumb-aware: $runnable")
     }
   }
 
@@ -209,7 +202,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   }
 
   private suspend fun runStartUpActivities(indicator: ProgressIndicator?, app: Application) {
-    runActivities(startupActivities) { coroutineContext.ensureActive() }
+    runActivities(startupActivities)
     val extensionPoint = (app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<StartupActivity>("com.intellij.startupActivity")
 
     // do not create extension if not allow-listed
@@ -296,8 +289,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
       dumbUnawarePostActivitiesPassed(edtActivity, counter.get())
 
-      coroutineContext.ensureActive()
-
       runPostStartupActivitiesRegisteredDynamically()
       dumbAwareActivity.end()
       snapshot.logResponsivenessSinceCreation("Post-startup activities under progress")
@@ -371,52 +362,15 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
   private suspend fun runPostStartupActivitiesRegisteredDynamically() {
     tracer.spanBuilder("run post-startup dynamically registered activities").useWithScope {
-      runActivities(postStartupActivities, activityName = "project post-startup") { coroutineContext.ensureActive() }
+      runActivities(postStartupActivities, activityName = "project post-startup")
     }
 
     postStartupActivitiesPassed = DUMB_AWARE_PASSED
-    if (LightEdit.owns(project)) {
-      postStartupActivitiesPassed = ALL_PASSED
-      allActivitiesPassed.complete(null)
-      return
-    }
-
-    coroutineContext.ensureActive()
-
-    // object runnable is used because we pass it as instance to unsafeRunWhenSmart again if needed
-    DumbService.getInstance(project).unsafeRunWhenSmart(object : Runnable {
-      private val parentContext = Context.current()
-
-      override fun run() {
-        // here setParent(parentContext) must be not use to save on one call of makeCurrent
-        // because we do pass this runnable further to unsafeRunWhenSmart
-        parentContext.makeCurrent()
-        tracer.spanBuilder("run post-startup dynamically registered dumb-unaware activities").useWithScope { span ->
-          synchronized(lock) {
-            span.setAttribute(AttributeKey.longKey("count"), postStartupActivities.size.toLong())
-            if (postStartupActivities.isEmpty()) {
-              postStartupActivitiesPassed = ALL_PASSED
-              allActivitiesPassed.complete(null)
-              return
-            }
-          }
-
-          runActivities(postStartupActivities) {}
-          val dumbService = DumbService.getInstance(project)
-          if (dumbService.isDumb) {
-            // return here later to process newly submitted activities (if any) and set postStartupActivitiesPassed
-            dumbService.unsafeRunWhenSmart(this)
-          }
-          else {
-            postStartupActivitiesPassed = ALL_PASSED
-            allActivitiesPassed.complete(null)
-          }
-        }
-      }
-    })
+    postStartupActivitiesPassed = ALL_PASSED
+    allActivitiesPassed.complete(value = null)
   }
 
-  private inline fun runActivities(activities: Deque<Runnable>, activityName: String? = null, checkCancelled: () -> Unit) {
+  private suspend fun runActivities(activities: Deque<Runnable>, activityName: String? = null) {
     synchronized(lock) {
       if (activities.isEmpty()) {
         return
@@ -427,12 +381,10 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       StartUpMeasurer.startActivity(it)
     }
     while (true) {
-      checkCancelled()
+      coroutineContext.ensureActive()
 
       val runnable = synchronized(lock, activities::pollFirst) ?: break
-
       val startTime = StartUpMeasurer.getCurrentTime()
-
       val runnableClass = runnable.javaClass
       val pluginId = (runnableClass.classLoader as? PluginAwareClassLoader)?.pluginId ?: PluginManagerCore.CORE_ID
       try {
@@ -594,7 +546,7 @@ private suspend fun waitAndProcessInvocationEventsInIdeEventQueue(startupManager
   }
   else {
     // make sure eventQueue.nextEvent will unblock
-    startupManager.registerPostStartupActivity(DumbAwareRunnable { ApplicationManager.getApplication().invokeLater { } })
+    startupManager.runAfterOpened(DumbAwareRunnable { ApplicationManager.getApplication().invokeLater { } })
   }
 
   while (true) {

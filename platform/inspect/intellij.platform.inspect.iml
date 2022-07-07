@@ -22,5 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="library" name="cli-parser" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
 </module>

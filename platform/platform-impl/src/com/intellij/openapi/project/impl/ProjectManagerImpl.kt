@@ -576,7 +576,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             tracer.spanBuilder("open project")
               .setAttribute(AttributeKey.stringKey("project"), project.name)
               .useWithScope {
-                doOpenProject(project, indicator, isRunStartUpActivitiesEnabled(project), waitEdtActivity)
+                runStartupActivities(project, indicator, isRunStartUpActivitiesEnabled(project), waitEdtActivity)
               }
           }
           catch (e: CancellationException) {
@@ -915,10 +915,10 @@ private fun openProjectSync(project: Project, indicator: ProgressIndicator?, run
   LifecycleUsageTriggerCollector.onProjectOpened(project)
 }
 
-private suspend fun doOpenProject(project: Project,
-                                  indicator: ProgressIndicator?,
-                                  runStartUpActivities: Boolean,
-                                  waitEdtActivity: Activity) {
+private suspend fun runStartupActivities(project: Project,
+                                         indicator: ProgressIndicator?,
+                                         runStartUpActivities: Boolean,
+                                         waitEdtActivity: Activity) {
   val traceContext = Context.current()
   withContext(Dispatchers.EDT) {
     waitEdtActivity.end()
