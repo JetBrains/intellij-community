@@ -327,6 +327,13 @@ Includes the following features:</p>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
 
+    <localInspection language="Markdown"
+                     shortName="MarkdownOutdatedTableOfContents"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.outdated.table.of.contents.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     implementationClass="org.intellij.plugins.markdown.editor.toc.OutdatedTableOfContentsInspection"/>
 
     <notificationGroup id="Markdown" displayType="BALLOON" bundle="messages.MarkdownBundle" key="notification.group.markdown"/>
 
