@@ -210,11 +210,6 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     }
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (e.getPresentation().isVisible()) {
@@ -226,11 +221,15 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return EMPTY_ARRAY;
+      return Utils.getOrCreateUpdateSession(e)
+        .compute("OptionsGroup#getChildren", ActionUpdateThread.EDT, this::getChildrenImpl);
+    }
+
+    private AnAction @NotNull [] getChildrenImpl() {
       ContentManager contentManager = myToolWindow.getContentManagerIfCreated();
       Content selectedContent = contentManager == null ? null : contentManager.getSelectedContent();
       JComponent contentComponent = selectedContent == null ? null : selectedContent.getComponent();
       if (contentComponent == null) return EMPTY_ARRAY;
-      UpdateSession session = Utils.getOrCreateUpdateSession(e);
       List<AnAction> result = new SmartList<>();
       for (final ActionToolbar toolbar : iterateToolbars(Collections.singletonList(contentComponent))) {
         JComponent c = toolbar.getComponent();
@@ -241,7 +240,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
         List<AnAction> actions = toolbar.getActions();
         for (AnAction action : actions) {
-          if (action instanceof ToggleAction && !result.contains(action) && session.presentation(action).isVisible()) {
+          if (action instanceof ToggleAction && !result.contains(action)) {
             result.add(action);
           }
           else if (action instanceof Separator) {
