@@ -9,7 +9,6 @@
     <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.plugin-fir" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir.fir-fe10-binding" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="RUNTIME" />

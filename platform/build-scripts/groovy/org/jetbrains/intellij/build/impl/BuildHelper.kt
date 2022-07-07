@@ -210,14 +210,6 @@ private fun disableCompatibleIgnoredPlugins(context: BuildContext,
                                             explicitlyEnabledPlugins: Set<String?>) {
   val toDisable = LinkedHashSet<String>()
   for (moduleName in context.productProperties.productLayout.compatiblePluginsToIgnore) {
-    // TODO: It is temporary solution to avoid exclude Kotlin from searchable options build because Kotlin team
-    // need to use the same id in fir plugin.
-    // Remove it when "kotlin.plugin-fir" will removed from compatiblePluginsToIgnore
-    // see: org/jetbrains/intellij/build/BaseIdeaProperties.groovy:179
-    if (moduleName == "kotlin.plugin-fir") {
-      continue
-    }
-
     val pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")!!
     val child = readXmlAsModel(Files.newInputStream(pluginXml)).getChild("id")
     val pluginId = child?.content ?: continue

@@ -180,7 +180,6 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
 
     productLayout.compatiblePluginsToIgnore = java.util.List.of(
       "intellij.java.plugin",
-      "kotlin.plugin-fir",
     )
     additionalModulesToCompile = java.util.List.of("intellij.tools.jps.build.standalone")
     modulesToCompileTests = java.util.List.of("intellij.platform.jps.build")

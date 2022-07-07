@@ -262,7 +262,6 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.keymap.eclipse"),
     simplePlugin("intellij.keymap.visualStudio"),
     simplePlugin("intellij.keymap.netbeans"),
-    simplePlugin("kotlin.plugin-fir"),
     plugin("intellij.platform.testFramework.ui") {
       withModuleLibrary("intellij.remoterobot.ide.launcher", mainModule, "")
       withModuleLibrary("intellij.remoterobot.remote.fixtures", mainModule, "")
