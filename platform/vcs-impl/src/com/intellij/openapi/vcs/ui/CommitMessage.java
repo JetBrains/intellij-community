@@ -174,6 +174,11 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     if (VcsDataKeys.COMMIT_MESSAGE_CONTROL.is(dataId)) {
       return this;
     }
+    if (VcsDataKeys.COMMIT_MESSAGE_DOCUMENT.is(dataId)) {
+      Editor editor = myEditorField.getEditor();
+      if (editor == null) return null;
+      return editor.getDocument();
+    }
     return null;
   }
 
