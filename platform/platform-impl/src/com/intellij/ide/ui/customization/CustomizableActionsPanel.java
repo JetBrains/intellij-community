@@ -4,6 +4,7 @@ package com.intellij.ide.ui.customization;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -469,7 +470,65 @@ public class CustomizableActionsPanel {
 
   static ComboBox<IconInfo> createBrowseIconsComboBox() {
     List<IconInfo> icons = getAllIcons();
-    ComboBox<IconInfo> comboBox = new ComboBox<>(icons.toArray(new IconInfo[0]));
+    // Overriding of selecting items required to prohibit selecting of SEPARATOR items
+    ComboBox<IconInfo> comboBox = new ComboBox<>(icons.toArray(new IconInfo[0])) {
+      @Override
+      public void setSelectedIndex(int anIndex) {
+        if (anIndex == -1) {
+          setSelectedItem(null);
+        }
+        else if (anIndex < -1 || anIndex >= dataModel.getSize()) {
+          throw new IllegalArgumentException("setSelectedIndex: " + anIndex + " out of bounds");
+        }
+        else {
+          Object item = dataModel.getElementAt(anIndex);
+          if (item != SEPARATOR) {
+            setSelectedItem(item);
+          }
+        }
+      }
+
+      @Override
+      public void updateUI() {
+        setUI(new DarculaComboBoxUI() {
+          @Override
+          protected void selectNextPossibleValue() {
+            int curInd = comboBox.isPopupVisible() ? listBox.getSelectedIndex() : comboBox.getSelectedIndex();
+            selectPossibleValue(curInd, true);
+          }
+
+          @Override
+          protected void selectPreviousPossibleValue() {
+            int curInd = comboBox.isPopupVisible() ? listBox.getSelectedIndex() : comboBox.getSelectedIndex();
+            selectPossibleValue(curInd, false);
+          }
+
+          private void selectPossibleValue(int curInd, boolean next) {
+            if (next && curInd < comboBox.getModel().getSize() - 1) {
+              trySelectValue(curInd + 1, true);
+            }
+            else if (!next && curInd > 0) {
+              trySelectValue(curInd - 1, false);
+            }
+          }
+
+          private void trySelectValue(int ind, boolean next) {
+            Object item = comboBox.getItemAt(ind);
+            if (item != SEPARATOR) {
+              listBox.setSelectedIndex(ind);
+              listBox.ensureIndexIsVisible(ind);
+              if (comboBox.isPopupVisible()) {
+                comboBox.setSelectedIndex(ind);
+              }
+              comboBox.repaint();
+            }
+            else {
+              selectPossibleValue(ind, next);
+            }
+          }
+        });
+      }
+    };
     comboBox.setSwingPopup(false); // in this case speed search will filter the list of items
     comboBox.setEditable(true);
 
