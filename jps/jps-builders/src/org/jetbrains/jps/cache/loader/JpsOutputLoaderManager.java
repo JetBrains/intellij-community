@@ -97,7 +97,8 @@ public class JpsOutputLoaderManager {
         myMetadataLoader.dropCurrentProjectMetadata();
         File outDir = new File(myBuildOutDir);
         if (outDir.exists()) {
-          myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.clean.output.directories"));
+          LOG.info("Start removing old caches before downloading");
+          myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.removing.old.caches"));
           FileUtil.delete(outDir);
         }
         LOG.info("Compilation output folder empty");
