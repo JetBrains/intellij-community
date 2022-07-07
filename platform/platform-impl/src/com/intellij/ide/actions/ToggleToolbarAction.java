@@ -222,7 +222,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return EMPTY_ARRAY;
       return Utils.getOrCreateUpdateSession(e)
-        .compute("OptionsGroup#getChildren", ActionUpdateThread.EDT, this::getChildrenImpl);
+        .compute(this, "getChildrenImpl", ActionUpdateThread.EDT, this::getChildrenImpl);
     }
 
     private AnAction @NotNull [] getChildrenImpl() {

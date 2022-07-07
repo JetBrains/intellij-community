@@ -35,7 +35,7 @@ public class ExtendableAction extends AnAction {
         provider.update(e);
       }
       else {
-        Utils.getOrCreateUpdateSession(e).compute("ExtendableAction#update for " + provider, thread, () -> {
+        Utils.getOrCreateUpdateSession(e).compute(provider, "update", thread, () -> {
           provider.update(e);
           return true;
         });
