@@ -51,6 +51,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.reference.SoftReference;
@@ -109,7 +110,7 @@ import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
+public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, DataProvider {
   private static final KeyStroke ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
   private static final KeyStroke ENTER_WITH_MODIFIERS = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
                                                                                                   ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK);
@@ -841,6 +842,22 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
       Touchbar.setButtonActions(bottomPanel, null, principalButtons, myOKButton, new DefaultActionGroup(myCaseSensitiveAction, myWholeWordsAction, myRegexAction));
     }
+  }
+
+  @Override
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      Map<Integer, Usage> usages = getSelectedUsages();
+      if (usages == null) return null;
+
+      return usages.values().stream()
+        .filter(usage -> usage instanceof UsageInfoAdapter)
+        .flatMap(usage -> Arrays.stream(((UsageInfoAdapter)usage).getMergedInfos()))
+        .map(info -> info.getElement())
+        .toArray(PsiElement[]::new );
+    }
+
+    return null;
   }
 
   @Contract("_,!null,_->!null")
