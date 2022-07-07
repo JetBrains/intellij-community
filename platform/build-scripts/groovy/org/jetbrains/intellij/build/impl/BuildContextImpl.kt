@@ -49,6 +49,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
   private var builtinModulesData: BuiltinModulesFileData? = null
 
   init {
+    @Suppress("DEPRECATION")
     if (productProperties.productCode == null) {
       productProperties.productCode = applicationInfo.productCode
     }
@@ -240,8 +241,9 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
       proprietaryBuildTools = proprietaryBuildTools,
       distFiles = ConcurrentLinkedQueue()
     )
-    copy.paths.artifactDir = paths.artifactDir.resolve(productProperties.productCode!!)
-    copy.paths.artifacts = "${paths.artifacts}/${productProperties.productCode}"
+    @Suppress("DEPRECATION") val productCode = productProperties.productCode
+    copy.paths.artifactDir = paths.artifactDir.resolve(productCode!!)
+    copy.paths.artifacts = "${paths.artifacts}/$productCode"
     copy.compilationContext.prepareForBuild()
     return copy
   }

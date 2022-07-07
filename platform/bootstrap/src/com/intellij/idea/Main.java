@@ -51,11 +51,12 @@ public final class Main {
   private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.idea.StartupUtil";
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
+  @SuppressWarnings("SpellCheckingInspection")
   private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme","inspectopedia-generator",
-    "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "appcodeClangModulesDiff", "appcodeClangModulesPrinter",
-    "exit");
+    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme",
+    "inspectopedia-generator", "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler",
+    "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit");
   private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
@@ -122,11 +123,11 @@ public final class Main {
   @SuppressWarnings("HardCodedStringLiteral")
   private static void installPluginUpdates() {
     try {
-      // referencing StartupActionScriptManager.ACTION_SCRIPT_FILE is ok - string constant will be inlined
+      // referencing `StartupActionScriptManager` is ok - a string constant will be inlined
       Path scriptFile = Path.of(PathManager.getPluginTempPath(), StartupActionScriptManager.ACTION_SCRIPT_FILE);
       if (Files.isRegularFile(scriptFile)) {
         // load StartupActionScriptManager and all others related class (ObjectInputStream and so on loaded as part of class define)
-        // only if there is action script to execute
+        // only if there is an action script to execute
         StartupActionScriptManager.executeActionScript();
       }
     }
