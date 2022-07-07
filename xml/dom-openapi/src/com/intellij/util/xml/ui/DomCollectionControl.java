@@ -440,7 +440,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
   }
 
