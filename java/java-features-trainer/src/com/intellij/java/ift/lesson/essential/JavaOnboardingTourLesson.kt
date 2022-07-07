@@ -504,7 +504,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     }
 
     fun isDemoFilePath(path: TreePath) =
-      path.pathCount >= 4 && path.getPathComponent(3).isToStringContains(demoFileName)
+      path.pathCount >= 4 && path.getPathComponent(3).isToStringContains(demoConfigurationName)
 
     task {
       text(JavaLessonsBundle.message("java.onboarding.balloon.source.directory", strong(demoFileDirectory)),
