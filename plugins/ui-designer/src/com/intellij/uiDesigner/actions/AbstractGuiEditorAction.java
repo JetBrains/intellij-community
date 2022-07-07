@@ -61,7 +61,7 @@ public abstract class AbstractGuiEditorAction extends AnAction implements DumbAw
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return ActionUpdateThread.EDT;
   }
 
   @Override

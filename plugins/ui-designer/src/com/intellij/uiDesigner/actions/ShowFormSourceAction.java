@@ -15,11 +15,9 @@
  */
 package com.intellij.uiDesigner.actions;
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -27,11 +25,6 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ShowFormSourceAction extends AbstractGuiEditorAction {
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
-  }
 
   @Override
   protected void actionPerformed(GuiEditor editor, List<? extends RadComponent> selection, AnActionEvent e) {
