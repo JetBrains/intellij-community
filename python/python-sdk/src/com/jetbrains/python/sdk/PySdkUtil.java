@@ -275,4 +275,38 @@ public final class PySdkUtil {
     }
     return null;
   }
+
+  /**
+   * Finds sdk for provided directory. Takes into account both project and module SDK
+   */
+  public static @Nullable Sdk findSdkForDirectory(@NotNull Project project, String workingDirectory) {
+    VirtualFile workingDirectoryVirtualFile = LocalFileSystem.getInstance().findFileByPath(workingDirectory);
+    if (workingDirectoryVirtualFile != null) {
+      Sdk sdk = getLocalSdkForFile(project, workingDirectoryVirtualFile);
+      if (sdk != null) {
+        return sdk;
+      }
+    }
+
+    for (Module m : ModuleManager.getInstance(project).getModules()) {
+      Sdk sdk = PythonSdkUtil.findPythonSdk(m);
+      if (sdk != null && !PythonSdkUtil.isRemote(sdk)) {
+        return sdk;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Sdk getLocalSdkForFile(@NotNull Project project, @NotNull VirtualFile workingDirectoryVirtualFile) {
+    Module module = ModuleUtilCore.findModuleForFile(workingDirectoryVirtualFile, project);
+    if (module != null) {
+      Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+      if (sdk != null && !PythonSdkUtil.isRemote(sdk)) {
+        return sdk;
+      }
+    }
+    return null;
+  }
 }
