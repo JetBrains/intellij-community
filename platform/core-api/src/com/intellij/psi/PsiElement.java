@@ -69,7 +69,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the array of child elements.
    */
   @Contract(pure=true)
-  PsiElement @NotNull [] getChildren();
+  @NotNull PsiElement @NotNull [] getChildren();
 
   /**
    * Returns the parent of the PSI element.
