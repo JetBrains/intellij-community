@@ -41,6 +41,8 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
   protected abstract fun template(): String
   protected open fun charset(): Charset = StandardCharsets.UTF_8
 
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = (e.project != null || WelcomeFrame.getInstance() != null) && file() != null
   }
@@ -148,10 +150,6 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
   override fun template(): String =
     "# custom ${ApplicationNamesInfo.getInstance().fullProductName} properties (expand/override 'bin${File.separator}idea.properties')\n\n"
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
-
   class AccessExtension : NonProjectFileWritingAccessExtension {
     override fun isWritable(file: VirtualFile): Boolean =
       EditCustomPropertiesAction.file.value?.let { VfsUtilCore.pathEqualsTo(file, it.toString()) } ?: false
@@ -169,10 +167,6 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   override fun charset(): Charset = VMOptions.getFileCharset()
 
   fun isEnabled(): Boolean = file() != null
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
     override fun isWritable(file: VirtualFile): Boolean =
