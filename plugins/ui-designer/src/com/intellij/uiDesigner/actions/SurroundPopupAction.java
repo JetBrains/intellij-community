@@ -2,7 +2,6 @@
 
 package com.intellij.uiDesigner.actions;
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -36,11 +35,6 @@ public class SurroundPopupAction extends AbstractGuiEditorAction {
       RadComponent selComponent = selection.get(0);
       FormEditingUtil.showPopupUnderComponent(groupPopup, selComponent);
     }
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
   }
 
   @Override
