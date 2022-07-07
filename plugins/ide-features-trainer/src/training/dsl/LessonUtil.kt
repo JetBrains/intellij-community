@@ -419,22 +419,25 @@ fun LessonContext.highlightRunToolbar(usePulsation: Boolean = true) {
   }
 }
 
-fun LessonContext.highlightDebugActionsToolbar() {
+fun LessonContext.highlightDebugActionsToolbar(usePulsation: Boolean = true) {
   task {
-    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume")
+    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", usePulsation)
   }
 
   task {
     if (!UIExperiment.isNewDebuggerUIEnabled()) {
-      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint", clearPreviousHighlights = false)
+      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint", usePulsation, clearPreviousHighlights = false)
     }
   }
 }
 
-private fun TaskContext.highlightToolbarWithAction(place: String, actionId: String, clearPreviousHighlights: Boolean = true) {
+private fun TaskContext.highlightToolbarWithAction(place: String,
+                                                   actionId: String,
+                                                   usePulsation: Boolean,
+                                                   clearPreviousHighlights: Boolean = true) {
   val needAction = getActionById(actionId)
   triggerAndFullHighlight {
-    usePulsation = true
+    this.usePulsation = usePulsation
     this.clearPreviousHighlights = clearPreviousHighlights
   }.component { ui: ActionToolbarImpl ->
     if (ui.size.let { it.width > 0 && it.height > 0 } && ui.place == place) {

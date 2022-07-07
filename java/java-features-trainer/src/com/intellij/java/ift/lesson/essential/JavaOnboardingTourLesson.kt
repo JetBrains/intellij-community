@@ -336,15 +336,15 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       JavaLessonsBundle.message("java.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
-    highlightDebugActionsToolbar()
+    highlightDebugActionsToolbar(usePulsation = false)
 
     task {
       rehighlightPreviousUi = true
-      text(JavaLessonsBundle.message("java.onboarding.balloon.about.debug.panel",
-                                     strong(UIBundle.message("tool.window.name.debug")),
-                                     if (UIExperiment.isNewDebuggerUIEnabled()) 0 else 1,
-                                     strong(LessonsBundle.message("debug.workflow.lesson.name"))))
-      proceedLink()
+      gotItStep(Balloon.Position.above, 400,
+                JavaLessonsBundle.message("java.onboarding.balloon.about.debug.panel",
+                                          strong(UIBundle.message("tool.window.name.debug")),
+                                          if (UIExperiment.isNewDebuggerUIEnabled()) 0 else 1,
+                                          strong(LessonsBundle.message("debug.workflow.lesson.name"))))
       restoreIfModified(sample)
     }
 
