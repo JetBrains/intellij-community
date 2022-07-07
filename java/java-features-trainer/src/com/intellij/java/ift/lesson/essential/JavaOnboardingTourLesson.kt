@@ -14,9 +14,11 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.java.ift.JavaProjectUtil
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
@@ -383,7 +385,13 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   }
 
   private fun LessonContext.runTasks() {
-    highlightRunToolbar()
+    highlightRunToolbar(usePulsation = false)
+
+    task {
+      triggerUI {
+        clearPreviousHighlights = false
+      }.component { ui: ActionButton -> ActionManager.getInstance().getId(ui.action) == "Run" }
+    }
 
     task {
       val runOptionsText = if (PlatformUtils.isIdeaUltimate()) {
@@ -401,6 +409,8 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       }
       text(JavaLessonsBundle.message("java.onboarding.temporary.configuration.description") + " $runOptionsText")
       text(JavaLessonsBundle.message("java.onboarding.run.sample", icon(AllIcons.Actions.Execute), action("Run")))
+      text(JavaLessonsBundle.message("java.onboarding.run.sample.balloon", icon(AllIcons.Actions.Execute), action("Run")),
+           LearningBalloonConfig(Balloon.Position.below, 0))
       checkToolWindowState("Run", true)
       restoreIfModified(sample)
     }
