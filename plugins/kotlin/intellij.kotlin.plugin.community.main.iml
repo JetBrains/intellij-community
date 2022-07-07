@@ -116,7 +116,7 @@
     <orderEntry type="module" module-name="kotlin.inspections-fe10" exported="" />
     <orderEntry type="module" module-name="kotlin.features-trainer" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
-    <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.jvm" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.maven" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-common" level="project" />

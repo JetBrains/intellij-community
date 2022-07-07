@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="kotlin.inspections" />
     <orderEntry type="module" module-name="kotlin.formatter" />
     <orderEntry type="module" module-name="kotlin.repl" />
-    <orderEntry type="module" module-name="kotlin.jvm-run-configurations" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.jvm" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />

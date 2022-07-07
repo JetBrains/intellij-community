@@ -58,7 +58,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" exported="" />
     <orderEntry type="module" module-name="kotlin.grazie" exported="" />
-    <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.jvm" exported="" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />
     <orderEntry type="module" module-name="kotlin.properties" exported="" />
     <orderEntry type="module" module-name="kotlin.plugin-updater" exported="" />

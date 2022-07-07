@@ -84,7 +84,7 @@
     <orderEntry type="module" module-name="kotlin.j2k.new" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.old" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.services" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.jvm-run-configurations" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit-fe10" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm" scope="RUNTIME" />

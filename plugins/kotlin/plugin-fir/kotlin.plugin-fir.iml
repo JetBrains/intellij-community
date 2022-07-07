@@ -55,7 +55,7 @@
     <orderEntry type="module" module-name="kotlin.plugin-updater" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.preferences" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.project-configuration" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.jvm-run-configurations" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.scripting" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.spellchecker" scope="PROVIDED" />

@@ -51,7 +51,7 @@
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.base.statistics" />
-    <orderEntry type="module" module-name="kotlin.jvm-run-configurations" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.jvm" />
     <orderEntry type="module" module-name="kotlin.formatter" />
     <orderEntry type="module" module-name="kotlin.preferences" />
     <orderEntry type="module" module-name="kotlin.native" />
