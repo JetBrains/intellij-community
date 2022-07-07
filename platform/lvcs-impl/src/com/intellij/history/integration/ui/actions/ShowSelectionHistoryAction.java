@@ -7,6 +7,7 @@ import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsSelection;
@@ -31,18 +32,14 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
-    VcsSelection selection = VcsSelectionUtil.getSelection(e);
+    VcsSelection selection = Utils.getOrCreateUpdateSession(e)
+      .compute(this, "getSelection", ActionUpdateThread.EDT, () -> VcsSelectionUtil.getSelection(e));
     if (selection == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else if (!e.getPlace().equals(ActionPlaces.ACTION_SEARCH)) {
       e.getPresentation().setText(selection.getActionName());
     }
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.OLD_EDT;
   }
 
   @Override
