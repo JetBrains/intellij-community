@@ -16,6 +16,7 @@ import com.intellij.diff.fragments.LineFragment
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.DumbProgressIndicator
@@ -58,10 +59,7 @@ internal class IntentionPreviewComputable(private val project: Project,
 
   private fun tryCreateDiffContent(): IntentionPreviewInfo? {
     try {
-      return generatePreview()
-    }
-    catch (e: IntentionPreviewUnsupportedOperationException) {
-      return null
+      return SideEffectGuard.computeWithoutSideEffects<IntentionPreviewInfo?, Exception> { generatePreview() }
     }
     catch (e: ProcessCanceledException) {
       throw e
