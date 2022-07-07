@@ -33,8 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,7 +60,16 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   private static final Map<String, String> additionalIdToName = new ConcurrentHashMap<>();
 
+  /**
+   * Contain action id binding to some icon reference. It can be one of the following:
+   * <ul>
+   *   <li>id of the other action that uses some icon</li>
+   *   <li>path to the SVG or PNG file of the icon</li>
+   *   <li>URL of the SVG or PNG icon</li>
+   * </ul>
+   */
   private final Map<String, String> iconCustomizations = new HashMap<>();
+
   private final Map<String, @Nls String> idToName = new LinkedHashMap<>();
   private final Map<String, ActionGroup> idToActionGroup = new HashMap<>();
   private final Set<String> extGroupIds = new HashSet<>();
@@ -437,15 +446,16 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     Icon icon = null;
     String iconPath = iconCustomizations.get(actionId);
     if (iconPath != null) {
-      File f;
       AnAction reuseFrom = actionManager.getAction(iconPath);
       if (reuseFrom != null) {
         icon = reuseFrom.getTemplatePresentation().getIcon();
       }
-      else if ((f = new File(FileUtil.toSystemDependentName(iconPath))).exists()) {
+      else {
         Image image = null;
         try {
-          image = ImageLoader.loadCustomIcon(f);
+          String urlString = iconPath.contains(":") ? iconPath : "file:" + iconPath;
+          URL url = new URL(null, urlString);
+          image = ImageLoader.loadCustomIcon(url);
         }
         catch (IOException e) {
           LOG.info(e.getMessage());

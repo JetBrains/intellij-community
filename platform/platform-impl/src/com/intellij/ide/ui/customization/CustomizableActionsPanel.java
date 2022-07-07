@@ -389,7 +389,9 @@ public class CustomizableActionsPanel {
 
   private static @Nullable Icon loadCustomIcon(@NotNull String path) throws IOException {
     String independentPath = path.replace(File.separatorChar, '/');
-    Image image = ImageLoader.loadCustomIcon(new File(independentPath));
+    String urlString = independentPath.contains(":") ? independentPath : "file:" + independentPath;
+    URL url = new URL(null, urlString);
+    Image image = ImageLoader.loadCustomIcon(url);
     return image != null ? new JBImageIcon(image) : null;
   }
 
