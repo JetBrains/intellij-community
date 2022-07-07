@@ -88,7 +88,7 @@ abstract class ToolWindowHeader internal constructor(
     add(westPanel)
     ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true, true)
     val commonActionsGroup = DefaultActionGroup(DockToolWindowAction(), ShowOptionsAction(), HideAction())
-    toolbar = ActionManager.getInstance().createActionToolbar(
+    toolbar = object : ActionToolbarImpl(
       ActionPlaces.TOOLWINDOW_TITLE,
       object : ActionGroup(), DumbAware {
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -107,7 +107,14 @@ abstract class ToolWindowHeader internal constructor(
         }
       },
       true
-    )
+    ) {
+      override fun getDataContext(): DataContext {
+        val content = toolWindow.contentManager.selectedContent
+        val target = content?.preferredFocusableComponent ?: content?.component ?: this
+        if (targetComponent != target) targetComponent = target
+        return super.getDataContext()
+      }
+    }
 
     toolbar.targetComponent = toolbar.component
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
@@ -390,7 +397,7 @@ abstract class ToolWindowHeader internal constructor(
     init {
       ActionUtil.copyFrom(this, InternalDecoratorImpl.HIDE_ACTIVE_WINDOW_ACTION_ID)
       templatePresentation.icon = AllIcons.General.HideToolWindow
-      templatePresentation.setText { UIBundle.message("tool.window.hide.action.name") }
+      templatePresentation.setText(UIBundle.messagePointer("tool.window.hide.action.name"))
     }
   }
 }
