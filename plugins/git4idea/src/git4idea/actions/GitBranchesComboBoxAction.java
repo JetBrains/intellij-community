@@ -2,11 +2,9 @@
 package git4idea.actions;
 
 import com.intellij.dvcs.branch.DvcsBranchUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -27,6 +25,11 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
 
   public GitBranchesComboBoxAction() {
     KeymapManager.getInstance().bindShortcuts("Git.Branches", "Git.ShowBranches");
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
