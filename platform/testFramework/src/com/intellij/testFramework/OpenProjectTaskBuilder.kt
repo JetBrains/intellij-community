@@ -59,7 +59,7 @@ class OpenProjectTaskBuilder {
 fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true, beforeOpen: Predicate<Project>? = null): OpenProjectTask {
   // In tests, it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times).
   // Also, cleanPersistedContents is called on start test application.
-  var task = OpenProjectTask {
+  return OpenProjectTask {
     forceOpenInNewFrame = true
 
     isRefreshVfsNeeded = false
@@ -72,11 +72,11 @@ fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true, befor
         beforeOpen.test(it)
       }
     }
+
+    if (!runPostStartUpActivities) {
+      beforeInit = {
+        it.putUserData(ProjectImpl.RUN_START_UP_ACTIVITIES, false)
+      }
+    }
   }
-  if (!runPostStartUpActivities) {
-    task = task.copy(beforeInit = {
-      it.putUserData(ProjectImpl.RUN_START_UP_ACTIVITIES, false)
-    })
-  }
-  return task
 }

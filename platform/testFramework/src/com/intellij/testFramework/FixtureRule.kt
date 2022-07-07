@@ -4,11 +4,7 @@ package com.intellij.testFramework
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
-import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
@@ -34,6 +30,7 @@ import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.throwIfNotEmpty
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -338,13 +335,14 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-inline fun <T> Project.use(task: (Project) -> T): T =
-  try {
+inline fun <T> Project.use(task: (Project) -> T): T {
+  return try {
     task(this)
   }
   finally {
     PlatformTestUtil.forceCloseProjectWithoutSaving(this)
   }
+}
 
 class DisposeNonLightProjectsRule : ExternalResource() {
   override fun after() {
@@ -437,7 +435,7 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
   }
   else {
     val dir = tempDirManager.createVirtualDir()
-    withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
+    withContext(Dispatchers.EDT) {
       runNonUndoableWriteAction(dir) {
         projectCreator(dir)
       }
@@ -460,8 +458,8 @@ private suspend fun createOrLoadProject(projectPath: Path,
     options = options.copy(beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) })
   }
 
-  val project = ProjectManagerEx.getInstanceEx().openProject(projectPath, options)!!
-  project.use {
+  val project = ProjectManagerEx.getInstanceEx().openProjectAsync(projectPath, options)!!
+  try {
     if (loadComponentState) {
       project.runInLoadComponentStateMode {
         task(project)
@@ -471,10 +469,17 @@ private suspend fun createOrLoadProject(projectPath: Path,
       task(project)
     }
   }
+  finally {
+    ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project)
+  }
 }
 
 suspend fun loadProject(projectPath: Path, task: suspend (Project) -> Unit) {
-  createOrLoadProject(projectPath, false, false, true, task)
+  createOrLoadProject(projectPath = projectPath,
+                      useDefaultProjectSettings = false,
+                      isNewProject = false,
+                      loadComponentState = true,
+                      task = task)
 }
 
 /**
