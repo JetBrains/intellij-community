@@ -2,6 +2,7 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -36,6 +37,11 @@ import static org.zmlx.hg4idea.HgNotificationIdsHolder.REPO_CREATION_ERROR;
 public class HgInit extends DumbAwareAction {
 
   private Project myProject;
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
