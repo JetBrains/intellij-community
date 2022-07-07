@@ -1,7 +1,7 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features.statistician
 
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.PsiItemWithPresentation
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.statistics.StatisticsInfo
@@ -24,8 +24,9 @@ internal class SearchEverywhereSymbolStatistician : SearchEverywhereStatistician
     if (element is PsiItemWithPresentation) return element.presentation.containerText
     if (element !is PsiElement) return null
 
-    return ReadAction.compute<String?, Nothing> {
-      (element.context as? PsiNamedElement)?.name
+    return runReadAction {
+      if (!element.isValid) null
+      else (element.context as? PsiNamedElement)?.name
     }
   }
 
@@ -33,6 +34,9 @@ internal class SearchEverywhereSymbolStatistician : SearchEverywhereStatistician
     if (element is PsiItemWithPresentation) return element.presentation.presentableText
     if (element !is PsiNamedElement) return null
 
-    return ReadAction.compute<String?, Nothing> { element.name }
+    return runReadAction {
+      if (!element.isValid) null
+      else element.name
+    }
   }
 }
