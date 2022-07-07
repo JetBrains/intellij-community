@@ -223,6 +223,34 @@ public abstract class HLLocalInspectionTestGenerated extends AbstractHLLocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/doubleNegation")
+    public static class DoubleNegation extends AbstractHLLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/doubleNegation/function.kt");
+        }
+
+        @TestMetadata("invalid.kt")
+        public void testInvalid() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/doubleNegation/invalid.kt");
+        }
+
+        @TestMetadata("parenthesized.kt")
+        public void testParenthesized() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/doubleNegation/parenthesized.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/doubleNegation/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractHLLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

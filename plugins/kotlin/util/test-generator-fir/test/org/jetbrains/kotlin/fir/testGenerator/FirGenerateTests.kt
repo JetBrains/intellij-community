@@ -156,6 +156,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("idea/tests/testData/inspectionsLocal/unusedVariable", pattern = pattern)
             model("idea/tests/testData/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
             model("idea/tests/testData/inspectionsLocal/implicitThis")
+            model("idea/tests/testData/inspectionsLocal/doubleNegation")
             model("fir/testData/inspectionsLocal", pattern = pattern)
         }
     }
