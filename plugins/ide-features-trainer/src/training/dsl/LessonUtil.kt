@@ -6,6 +6,7 @@ import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -453,6 +454,21 @@ fun TaskContext.proceedLink(additionalAbove: Int = 0) {
   addStep(gotIt)
   test {
     clickLessonMessagePaneLink("Click to proceed")
+  }
+}
+
+fun TaskContext.gotItStep(position: Balloon.Position,
+                          width: Int,
+                          @Nls text: String,
+                          cornerToPointerDistance: Int = -1,
+                          duplicateMessage: Boolean = true) {
+  val gotIt = CompletableFuture<Boolean>()
+  text(text, LearningBalloonConfig(position, width, duplicateMessage, cornerToPointerDistance = cornerToPointerDistance) {
+    gotIt.complete(true)
+  })
+  addStep(gotIt)
+  test(waitEditorToBeReady = false) {
+    ideFrame { button(IdeBundle.message("got.it.button.name")).click() }
   }
 }
 
