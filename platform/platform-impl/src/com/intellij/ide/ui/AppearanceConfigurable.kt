@@ -414,8 +414,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 }
 
 private fun getDefaultFont(): Font {
-  val lafManager = LafManager.getInstance() as LafManagerImpl
-  return lafManager.defaultFont
+  val lafManager = LafManager.getInstance() as? LafManagerImpl
+  return lafManager?.defaultFont ?: JBFont.label()
 }
 
 private fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue: Int): Cell<ComboBox<String>> {
