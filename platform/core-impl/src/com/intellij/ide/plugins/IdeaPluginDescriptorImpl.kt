@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
+import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.annotations.*
 import java.io.File
 import java.io.IOException
@@ -137,7 +138,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   @JvmField val content: PluginContentDescriptor = raw.contentModules?.let { PluginContentDescriptor(it) } ?: PluginContentDescriptor.EMPTY
   @JvmField val dependencies = raw.dependencies
-  @JvmField val modules: List<PluginId> = raw.modules ?: Collections.emptyList()
+  @JvmField var modules: List<PluginId> = raw.modules ?: Collections.emptyList()
 
   private val descriptionChildText = raw.description
 
@@ -224,6 +225,18 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
 
     if (!isSub) {
+      if (id == PluginManagerCore.CORE_ID) {
+        modules = modules + listOfNotNull(
+          "com.intellij.platform.windows".takeIf { SystemInfoRt.isWindows },
+          "com.intellij.platform.mac".takeIf { SystemInfoRt.isMac },
+          "com.intellij.platform.linux".takeIf { SystemInfoRt.isLinux },
+          "com.intellij.platform.freebsd".takeIf { SystemInfoRt.isFreeBSD },
+          "com.intellij.platform.solaris".takeIf { SystemInfoRt.isSolaris },
+          "com.intellij.platform.unix".takeIf { SystemInfoRt.isUnix },
+          "com.intellij.platform.xwindow".takeIf { SystemInfoRt.isXWindow },
+        ).map(PluginId::getId)
+      }
+
       if (context.isPluginDisabled(id)) {
         markAsIncomplete(disabledDependency = null, shortMessage = null)
       }
