@@ -350,8 +350,8 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
     highlightButtonById("Stop")
     task {
-      showBalloonOnHighlightingComponent(
-        JavaLessonsBundle.message("java.onboarding.balloon.stop.debugging")) { list -> list.minByOrNull { it.locationOnScreen.y } }
+      showBalloonOnHighlightingComponent(JavaLessonsBundle.message("java.onboarding.balloon.stop.debugging"),
+                                         Balloon.Position.atRight) { list -> list.maxByOrNull { it.locationOnScreen.y } }
       text(JavaLessonsBundle.message("java.onboarding.stop.debugging", icon(AllIcons.Actions.Suspend)))
       restoreIfModified(sample)
       stateCheck {
