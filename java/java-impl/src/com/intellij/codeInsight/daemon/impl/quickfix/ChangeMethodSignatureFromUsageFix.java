@@ -145,6 +145,14 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       if (!expression.isValid()) return false;
     }
     if (!mySubstitutor.isValid()) return false;
+    if (myTargetMethod.isConstructor()) {
+      PsiCallExpression call = PsiTreeUtil.getParentOfType(myContext, PsiCallExpression.class);
+      if (call instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)call).getMethodExpression().textMatches("this") &&
+          PsiTreeUtil.isAncestor(myTargetMethod, call, true)) {
+        // Avoid creating recursive constructor call
+        return false;
+      }
+    }
 
     final StringBuilder buf = new StringBuilder();
     final HashSet<ParameterInfoImpl> newParams = new HashSet<>();

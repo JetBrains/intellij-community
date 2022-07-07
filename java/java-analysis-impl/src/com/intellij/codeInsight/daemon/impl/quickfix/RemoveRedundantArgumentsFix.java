@@ -126,10 +126,15 @@ public final class RemoveRedundantArgumentsFix implements IntentionAction {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
-    if (method != null && BaseIntentionAction.canModify(arguments)) {
-      QuickFixAction
-        .registerQuickFixAction(highlightInfo, fixRange, new RemoveRedundantArgumentsFix(method, arguments.getExpressions(), substitutor));
+    if (method == null || !BaseIntentionAction.canModify(arguments)) return;
+    if (method.isConstructor() && arguments.getParent() instanceof PsiMethodCallExpression &&
+        ((PsiMethodCallExpression)arguments.getParent()).getMethodExpression().textMatches("this") &&
+        PsiTreeUtil.isAncestor(method, arguments, true)) {
+      // Avoid creating recursive constructor call
+      return;
     }
+    QuickFixAction
+      .registerQuickFixAction(highlightInfo, fixRange, new RemoveRedundantArgumentsFix(method, arguments.getExpressions(), substitutor));
   }
 
   @Override
