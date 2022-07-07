@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle.messagePointer
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions.ActionText
@@ -19,6 +20,9 @@ internal abstract class GHPRViewedStateAction(
   dynamicText: Supplier<@ActionText String>,
   private val isViewed: Boolean
 ) : DumbAwareAction(dynamicText) {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
