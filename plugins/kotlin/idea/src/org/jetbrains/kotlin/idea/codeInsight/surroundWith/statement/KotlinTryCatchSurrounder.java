@@ -11,7 +11,7 @@ public class KotlinTryCatchSurrounder extends KotlinTrySurrounderBase {
 
     @Override
     protected String getCodeTemplate() {
-        return "try { \n} catch(e: Exception) {\n}";
+        return "try { \n} catch(e: Exception) {\nTODO()\n}";
     }
 
     @NotNull
