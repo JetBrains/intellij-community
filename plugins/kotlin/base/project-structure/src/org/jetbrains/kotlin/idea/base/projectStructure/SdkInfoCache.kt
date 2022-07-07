@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.ProjectTopics
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -153,11 +152,11 @@ internal class SdkInfoCacheImpl(project: Project) :
                 val dependencies = run deps@{
                     if (last is LibraryInfo) {
                         // use a special case for LibraryInfo to reuse values from a library dependencies cache
-                        val (libraries, sdks) = libraryDependenciesCache.getLibrariesAndSdksUsedWith(last)
-                        sdks.firstOrNull()?.let {
+                        val libraryDependencies = libraryDependenciesCache.getLibraryDependencies(last)
+                        libraryDependencies.sdk.firstOrNull()?.let {
                             return@run graph to SdkDependency(it)
                         }
-                        libraries
+                        libraryDependencies.libraries
                     } else {
                         last.dependencies()
                             .also { dependencies ->

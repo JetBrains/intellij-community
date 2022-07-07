@@ -194,7 +194,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             // SDK could be changed (esp in tests) out of message bus subscription
             val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
             invalidateEntries(
-                { _, value -> value.sdk.any { it.sdk !in jdks } },
+                //{ _, value -> value.sdk.any { it.sdk !in jdks } },
+                // TODO: temporary hack/workaround
+                { _, _ -> true },
                 // unable to check entities properly: an event could be not the last
                 validityCondition = null
             )
