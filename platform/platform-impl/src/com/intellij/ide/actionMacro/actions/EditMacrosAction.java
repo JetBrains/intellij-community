@@ -14,13 +14,14 @@ import org.jetbrains.annotations.NotNull;
 final class EditMacrosAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ShowSettingsUtil.getInstance()
-      .editConfigurable(e.getProject(), "#com.intellij.ide.actionMacro.EditMacrosDialog", new ActionMacroConfigurable());
+    ShowSettingsUtil.getInstance().editConfigurable(e.getProject(),
+                                                    "#com.intellij.ide.actionMacro.EditMacrosDialog",
+                                                    new ActionMacroConfigurable());
   }
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return ActionUpdateThread.EDT;
   }
 
   @Override
