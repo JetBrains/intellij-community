@@ -39,25 +39,10 @@ final class KotlinPluginBuilder {
   private final ProductProperties properties
 
   @SuppressWarnings('SpellCheckingInspection')
-  public static final List<String> FIR_IDE_MODULES = List.of(
-    "kotlin.base.fir.analysis-api-providers",
-    "kotlin.base.fir.code-insight",
-    "kotlin.fir",
-    "kotlin.uast.uast-kotlin-fir",
-    "kotlin.uast.uast-kotlin-idea-fir",
-    "kotlin.fir.fir-low-level-api-ide-impl",
-  )
-
-  @SuppressWarnings('SpellCheckingInspection')
-  public static final List<String> FIR_IDE_LIBRARIES = List.of(
-    "kotlinc.high-level-api-fir",
-    "kotlinc.kotlin-compiler-fir",
-    "kotlinc.low-level-api-fir",
-    "kotlinc.symbol-light-classes",
-  )
-
-  @SuppressWarnings('SpellCheckingInspection')
   public static final List<String> MODULES = List.of(
+    "kotlin.plugin.common",
+    "kotlin.plugin.k1",
+    "kotlin.plugin.k2",
     "kotlin.base.util",
     "kotlin.base.indices",
     "kotlin.base.compiler-configuration",
@@ -170,7 +155,13 @@ final class KotlinPluginBuilder {
     "kotlin.migration",
     "kotlin.inspections",
     "kotlin.inspections-fe10",
-    "kotlin.features-trainer"
+    "kotlin.features-trainer",
+    "kotlin.base.fir.analysis-api-providers",
+    "kotlin.base.fir.code-insight",
+    "kotlin.fir",
+    "kotlin.uast.uast-kotlin-fir",
+    "kotlin.uast.uast-kotlin-idea-fir",
+    "kotlin.fir.fir-low-level-api-ide-impl",
   )
 
   @SuppressWarnings('SpellCheckingInspection')
@@ -187,7 +178,11 @@ final class KotlinPluginBuilder {
     "kotlinc.kotlin-gradle-statistics",
     "kotlin-gradle-plugin-idea",
     "kotlin-gradle-plugin-idea-proto",
-    "kotlin-tooling-core"
+    "kotlin-tooling-core",
+    "kotlinc.high-level-api-fir",
+    "kotlinc.kotlin-compiler-fir",
+    "kotlinc.low-level-api-fir",
+    "kotlinc.symbol-light-classes",
   )
 
   private static final List<String> COMPILER_PLUGINS = List.of(
@@ -408,7 +403,7 @@ final class KotlinPluginBuilder {
   }
 
   enum KotlinPluginType {
-    FIR(FIR_IDE_MODULES, FIR_IDE_LIBRARIES),
+    FIR(List.<String>of(), List.<String>of()),
     FE10(List.<String>of(), List.<String>of())
 
     List< String> additionalModules

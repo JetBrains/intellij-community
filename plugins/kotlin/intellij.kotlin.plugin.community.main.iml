@@ -5,6 +5,9 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlin.plugin" exported="" />
+    <orderEntry type="module" module-name="kotlin.plugin.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.plugin.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.plugin.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.base.util" exported="" />
     <orderEntry type="module" module-name="kotlin.base.plugin" exported="" />
     <orderEntry type="module" module-name="kotlin.base.indices" exported="" />
@@ -37,6 +40,8 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.highlighting" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.obsolete-compat" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fir.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" exported="" />
@@ -59,6 +64,10 @@
     <orderEntry type="module" module-name="kotlin.core" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" exported="" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
+    <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" exported="" />
+    <orderEntry type="module" module-name="kotlin.fir" exported="" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" exported="" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-fir" exported="" />
     <orderEntry type="module" module-name="kotlin.formatter" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" exported="" />
@@ -130,6 +139,8 @@
     <orderEntry type="library" exported="" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.high-level-api-impl-base" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.high-level-api-fe10" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.high-level-api-fir" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-fir" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.allopen-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.noarg-compiler-plugin" level="project" />

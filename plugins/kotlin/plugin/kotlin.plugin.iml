@@ -124,5 +124,11 @@
     <orderEntry type="module" module-name="kotlin.plugin.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.plugin.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.fir" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.fir.code-insight" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-fir" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" scope="RUNTIME" />
   </component>
 </module>
