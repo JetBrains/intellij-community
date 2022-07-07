@@ -30,15 +30,17 @@ import java.math.BigDecimal
  * It does not try to detect rounding errors or otherwise check computation results.
  */
 class FloatingPointLiteralPrecisionInspection : AbstractKotlinInspection() {
-    private val FLOAT_LITERAL = KtConstantExpressionElementType.kindToConstantElementType(ConstantValueKind.FLOAT_CONSTANT)
-    private val FORMATTING_CHARACTERS_REGEX = Regex("[_fF]")
+    private object Holder {
+        val FLOAT_LITERAL: KtConstantExpressionElementType = KtConstantExpressionElementType.kindToConstantElementType(ConstantValueKind.FLOAT_CONSTANT)
+        val FORMATTING_CHARACTERS_REGEX: Regex = Regex("[_fF]")
+    }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return expressionVisitor {
-            if ((it is KtConstantExpression) && (it.elementType == FLOAT_LITERAL)) {
+            if ((it is KtConstantExpression) && (it.elementType == Holder.FLOAT_LITERAL)) {
                 val isFloat = it.getKotlinType()?.isFloat() ?: false
                 val uppercaseSuffix = isFloat && it.text?.endsWith('F') ?: false
-                val literal = it.text?.replace(FORMATTING_CHARACTERS_REGEX, "") ?: return@expressionVisitor
+                val literal = it.text?.replace(Holder.FORMATTING_CHARACTERS_REGEX, "") ?: return@expressionVisitor
 
                 try {
                     val parseResult = if (isFloat)
