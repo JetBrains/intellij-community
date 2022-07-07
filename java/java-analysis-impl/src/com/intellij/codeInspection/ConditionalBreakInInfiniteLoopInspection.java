@@ -87,6 +87,13 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     };
   }
 
+  public static void tryTransform(@NotNull PsiWhileStatement whileStatement) {
+    Context context = Context.from(whileStatement, true);
+    if (context != null) {
+      context.simplify(whileStatement);
+    }
+  }
+
   private static class Context {
     final @NotNull PsiLoopStatement myLoopStatement;
     final @NotNull PsiStatement myLoopBody;
@@ -194,6 +201,31 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
         .collect(Collectors.toSet());
       return !Collections.disjoint(variablesCreatedInBranch, otherVariablesUsedInLoop);
     }
+
+    private void simplify(@NotNull PsiConditionalLoopStatement loop) {
+      CommentTracker ct = new CommentTracker();
+      String loopText;
+      if (ControlFlowUtils.isEndlessLoop(loop)) {
+        String conditionForWhile = this.myConditionInThen ? BoolUtils.getNegatedExpressionText(this.myCondition, ct) : ct.text(
+          this.myCondition);
+        LoopTransformationFix.pullDownStatements(this.myConditionStatement, this.myConditionInThen ? this.myConditionStatement.getElseBranch() : this.myConditionStatement.getThenBranch());
+        ct.delete(this.myConditionStatement);
+        loopText = this.myConditionInTheBeginning
+                   ? "while(" + conditionForWhile + ")" + ct.text(this.myLoopBody)
+                   : "do" + ct.text(this.myLoopBody) + "while(" + conditionForWhile + ");";
+      } else {
+        String conditionForWhile = this.myConditionInThen ? BoolUtils.getNegatedExpressionText(this.myCondition, ParenthesesUtils.AND_PRECEDENCE, ct) : ct.text(
+          this.myCondition, ParenthesesUtils.AND_PRECEDENCE);
+        ct.delete(this.myConditionStatement);
+        PsiExpression loopCondition = loop.getCondition();
+        assert loopCondition != null;
+        loopText = this.myConditionInTheBeginning
+                   ? "while(" + ct.text(loopCondition, ParenthesesUtils.AND_PRECEDENCE) + " && " + conditionForWhile + ")" + ct.text(
+          this.myLoopBody)
+                   : "do" + ct.text(this.myLoopBody) + "while(" + conditionForWhile + " && " + ct.text(loopCondition, ParenthesesUtils.AND_PRECEDENCE) + ");";
+      }
+      ct.replaceAndRestoreComments(this.myLoopStatement, loopText);
+    }
   }
 
   private static class LoopTransformationFix implements LocalQuickFix {
@@ -216,25 +248,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
       if (loop == null) return;
       Context context = Context.from(loop, noConversionToDoWhile);
       if (context == null) return;
-      CommentTracker ct = new CommentTracker();
-      String loopText;
-      if (ControlFlowUtils.isEndlessLoop(loop)) {
-        String conditionForWhile = context.myConditionInThen ? BoolUtils.getNegatedExpressionText(context.myCondition, ct) : ct.text(context.myCondition);
-        pullDownStatements(context.myConditionStatement, context.myConditionInThen ? context.myConditionStatement.getElseBranch() : context.myConditionStatement.getThenBranch());
-        ct.delete(context.myConditionStatement);
-        loopText = context.myConditionInTheBeginning
-                   ? "while(" + conditionForWhile + ")" + ct.text(context.myLoopBody)
-                   : "do" + ct.text(context.myLoopBody) + "while(" + conditionForWhile + ");";
-      } else {
-        String conditionForWhile = context.myConditionInThen ? BoolUtils.getNegatedExpressionText(context.myCondition, ParenthesesUtils.AND_PRECEDENCE, ct) : ct.text(context.myCondition, ParenthesesUtils.AND_PRECEDENCE);
-        ct.delete(context.myConditionStatement);
-        PsiExpression loopCondition = loop.getCondition();
-        assert loopCondition != null;
-        loopText = context.myConditionInTheBeginning
-                   ? "while(" + ct.text(loopCondition, ParenthesesUtils.AND_PRECEDENCE) + " && " + conditionForWhile + ")" + ct.text(context.myLoopBody)
-                   : "do" + ct.text(context.myLoopBody) + "while(" + conditionForWhile + " && " + ct.text(loopCondition, ParenthesesUtils.AND_PRECEDENCE) + ");";
-      }
-      ct.replaceAndRestoreComments(context.myLoopStatement, loopText);
+      context.simplify(loop);
     }
 
     private static void pullDownStatements(@NotNull PsiIfStatement conditionStatement, @Nullable PsiStatement branch) {

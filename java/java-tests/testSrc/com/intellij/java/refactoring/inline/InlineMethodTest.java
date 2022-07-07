@@ -16,6 +16,8 @@ import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class InlineMethodTest extends LightRefactoringTestCase {
   @NotNull
   @Override
@@ -553,6 +555,13 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testAnonymousCall() { doTest(); }
   public void testInSwitchExpression() { doTest(); }
   public void testInSwitchExpressionYield() { doTest(); }
+
+  public void testAndChain() { doTest(); }
+  public void testAndChainLambda() { doTest(); }
+  public void testAndChainLambdaSingleLine() { doTest(); }
+
+  public void testTernaryBranch() { doTest(); }
+  public void testTernaryBranchCollapsible() { doTest(); }
 
   @Override
   protected Sdk getProjectJDK() {

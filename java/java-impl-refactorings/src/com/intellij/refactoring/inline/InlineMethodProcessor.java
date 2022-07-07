@@ -26,7 +26,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -41,7 +40,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
-import com.intellij.refactoring.rename.RenameJavaMemberProcessor;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -54,7 +52,7 @@ import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
-import org.jetbrains.annotations.NonNls;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,14 +74,11 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private final boolean myDeleteTheDeclaration;
   private final Function<PsiReference, InlineTransformer> myTransformerChooser;
 
-  private final PsiManager myManager;
   private final PsiElementFactory myFactory;
-  private final CodeStyleManager myCodeStyleManager;
   private final JavaCodeStyleManager myJavaCodeStyle;
 
-  private PsiCodeBlock[] myAddedBraces;
   private final String myDescriptiveName;
-  private Map<PsiField, PsiClassInitializer> myAddedClassInitializers;
+  private List<CodeBlockSurrounder.SurroundResult> mySurroundResults;
   private PsiMethod myMethodCopy;
   @SuppressWarnings("LeakableMapKey") //short living refactoring
   private Map<Language, InlineHandler.Inliner> myInliners;
@@ -124,9 +119,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     mySearchForTextOccurrences = searchForTextOccurrences;
     myDeleteTheDeclaration = isDeleteTheDeclaration;
 
-    myManager = PsiManager.getInstance(myProject);
-    myFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
-    myCodeStyleManager = CodeStyleManager.getInstance(myProject);
+    PsiManager manager = PsiManager.getInstance(myProject);
+    myFactory = JavaPsiFacade.getElementFactory(manager.getProject());
     myJavaCodeStyle = JavaCodeStyleManager.getInstance(myProject);
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myMethod);
   }
@@ -187,9 +181,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean shouldDeleteOverrideAttribute(PsiMethod method) {
-    return method.getHierarchicalMethodSignature()
-      .getSuperSignatures().stream()
-      .allMatch(signature -> {
+    return ContainerUtil.and(method.getHierarchicalMethodSignature().getSuperSignatures(), signature -> {
         PsiMethod superMethod = signature.getMethod();
         if (superMethod == myMethod) {
           return true;
@@ -461,7 +453,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           }
         }
         else {
-          myReference = addBracesWhenNeeded(new PsiReferenceExpression[]{(PsiReferenceExpression)myReference})[0];
+          myReference = surroundWithCodeBlock(new PsiReferenceExpression[]{(PsiReferenceExpression)myReference})[0];
           if (myReference instanceof PsiMethodReferenceExpression) {
             inlineMethodReference((PsiMethodReferenceExpression)myReference);
           }
@@ -523,7 +515,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             }
           }
           PsiReferenceExpression[] refs = refExprList.toArray(new PsiReferenceExpression[0]);
-          refs = addBracesWhenNeeded(refs);
+          refs = surroundWithCodeBlock(refs);
           for (PsiReferenceExpression ref : refs) {
             if (ref instanceof PsiMethodReferenceExpression) {
               inlineMethodReference((PsiMethodReferenceExpression)ref);
@@ -545,7 +537,11 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           tracker.deleteAndRestoreComments(myMethod);
         }
       }
-      removeAddedBracesWhenPossible();
+      if (mySurroundResults != null) {
+        for (CodeBlockSurrounder.SurroundResult result : mySurroundResults) {
+          result.collapse();
+        }
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -662,31 +658,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     
     PsiElement anchor = CommonJavaRefactoringUtil.getParentStatement(methodCall, true);
     if (anchor == null) {
-      PsiEnumConstant enumConstant = PsiTreeUtil.getParentOfType(methodCall, PsiEnumConstant.class);
-      if (enumConstant != null) {
-        PsiExpression returnExpr = getSimpleReturnedExpression(myMethod);
-        if (returnExpr != null) {
-          ChangeContextUtil.encodeContextInfo(returnExpr, true);
-          PsiElement copy = returnExpr.copy();
-          ChangeContextUtil.clearContextInfo(returnExpr);
-          if (copy instanceof PsiReferenceExpression && ((PsiReferenceExpression)copy).getQualifierExpression() == null) {
-            copy = inlineParameterReference((PsiReferenceExpression)copy, blockData);
-          } else {
-            copy.accept(new JavaRecursiveElementVisitor() {
-              @Override
-              public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-                super.visitReferenceExpression(expression);
-                inlineParameterReference(expression, blockData);
-              }
-            });
-          }
-          PsiElement replace = methodCall.replace(copy);
-          if (blockData.thisVar != null) {
-            ChangeContextUtil.decodeContextInfo(replace, myMethod.getContainingClass(), blockData.thisVar.getInitializer());
-          }
-        }
-      }
-      return;
+      throw new IllegalStateException("Cannot inline: parent statement should be available after CodeBlockSurround");
     }
     PsiElement anchorParent = anchor.getParent();
     PsiLocalVariable thisVar = null;
@@ -930,145 +902,44 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static final Key<String> MARK_KEY = Key.create("");
+  private static final Key<PsiReferenceExpression> MARK_KEY = Key.create("MarkForSurround");
 
-  private PsiReferenceExpression[] addBracesWhenNeeded(PsiReferenceExpression[] refs) throws IncorrectOperationException {
-    ArrayList<PsiReferenceExpression> refsVector = new ArrayList<>();
-    ArrayList<PsiCodeBlock> addedBracesVector = new ArrayList<>();
-    myAddedClassInitializers = new HashMap<>();
+  private PsiReferenceExpression[] surroundWithCodeBlock(PsiReferenceExpression[] refs) throws IncorrectOperationException {
+    mySurroundResults = new ArrayList<>();
 
     for (PsiReferenceExpression ref : refs) {
       if (ref instanceof PsiMethodReferenceExpression) continue;
-      ref.putCopyableUserData(MARK_KEY, "");
+      ref.putCopyableUserData(MARK_KEY, ref);
     }
+    var visitor = new PsiRecursiveElementWalkingVisitor() {
+      final Map<PsiReferenceExpression, PsiReferenceExpression> mapping = new HashMap<>();
 
-    RefLoop:
-    for (PsiReferenceExpression ref : refs) {
-      if (!ref.isValid()) continue;
-      if (ref instanceof PsiMethodReferenceExpression) {
-        refsVector.add(ref);
-        continue;
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (element instanceof PsiReferenceExpression) {
+          PsiReferenceExpression orig = element.getCopyableUserData(MARK_KEY);
+          if (orig != null) {
+            mapping.put(orig, (PsiReferenceExpression)element);
+          }
+        }
+        super.visitElement(element);
       }
-
-      PsiElement parentStatement = CommonJavaRefactoringUtil.getParentStatement(ref, true);
-      if (parentStatement != null) {
-        PsiElement parent = ref.getParent();
-        while (!parent.equals(parentStatement)) {
-          if (parent instanceof PsiExpressionStatement || parent instanceof PsiReturnStatement) {
-            String text = "{\n}";
-            PsiBlockStatement blockStatement = (PsiBlockStatement)myFactory.createStatementFromText(text, null);
-            blockStatement = (PsiBlockStatement)myCodeStyleManager.reformat(blockStatement);
-            blockStatement.getCodeBlock().add(parent);
-            blockStatement = (PsiBlockStatement)parent.replace(blockStatement);
-
-            PsiElement newStatement = blockStatement.getCodeBlock().getStatements()[0];
-            addMarkedElements(refsVector, newStatement);
-            addedBracesVector.add(blockStatement.getCodeBlock());
-            continue RefLoop;
-          }
-          parent = parent.getParent();
-        }
-        final PsiElement lambdaExpr = parentStatement.getParent();
-        if (lambdaExpr instanceof PsiLambdaExpression) {
-          final PsiLambdaExpression newLambdaExpr = (PsiLambdaExpression)myFactory.createExpressionFromText(
-            ((PsiLambdaExpression)lambdaExpr).getParameterList().getText() + " -> " + "{\n}", lambdaExpr);
-          final PsiStatement statementFromText;
-          if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)lambdaExpr))) {
-            statementFromText = myFactory.createStatementFromText("a;", lambdaExpr);
-            ((PsiExpressionStatement)statementFromText).getExpression().replace(parentStatement);
-          } else {
-            statementFromText = myFactory.createStatementFromText("return a;", lambdaExpr);
-            ((PsiReturnStatement)statementFromText).getReturnValue().replace(parentStatement);
-          }
-
-          newLambdaExpr.getBody().add(statementFromText);
-
-          final PsiCodeBlock body = (PsiCodeBlock)((PsiLambdaExpression)lambdaExpr.replace(newLambdaExpr)).getBody();
-          PsiElement newStatement = body.getStatements()[0];
-          addMarkedElements(refsVector, newStatement);
-          addedBracesVector.add(body);
-          continue;
-        }
-        else if (lambdaExpr instanceof PsiSwitchLabeledRuleStatement && parentStatement instanceof PsiExpressionStatement) {
-          CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(ref);
-          if (surrounder != null) {
-            CodeBlockSurrounder.SurroundResult surround = surrounder.surround();
-            PsiExpression expression = surround.getExpression();
-            addMarkedElements(refsVector, expression);
-            ContainerUtil.addIfNotNull(addedBracesVector, PsiTreeUtil.getParentOfType(surround.getAnchor(), PsiCodeBlock.class));
-            continue;
-          }
-        }
-      }
-      else {
-        final PsiField field = PsiTreeUtil.getParentOfType(ref, PsiField.class);
-        if (field != null) {
-          if (field instanceof PsiEnumConstant) {
-            inlineEnumConstantParameter(refsVector, ref);
-            continue;
-          }
-          if (myAddedClassInitializers.containsKey(field)) {
-            continue;
-          }
-          field.normalizeDeclaration();
-          final PsiExpression initializer = field.getInitializer();
-          LOG.assertTrue(initializer != null);
-          PsiClassInitializer classInitializer = myFactory.createClassInitializer();
-          final PsiClass containingClass = field.getContainingClass();
-          classInitializer = (PsiClassInitializer)containingClass.addAfter(classInitializer, field);
-          containingClass.addAfter(CodeEditUtil.createLineFeed(field.getManager()), field);
-          final PsiCodeBlock body = classInitializer.getBody();
-          PsiExpressionStatement statement = (PsiExpressionStatement)myFactory.createStatementFromText(field.getName() + " = 0;", body);
-          statement = (PsiExpressionStatement)body.add(statement);
-          final PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
-          assignment.getLExpression().replace(RenameJavaMemberProcessor.createMemberReference(field, assignment));
-          assignment.getRExpression().replace(initializer);
-          addMarkedElements(refsVector, statement);
-          if (field.hasModifierProperty(PsiModifier.STATIC)) {
-            PsiUtil.setModifierProperty(classInitializer, PsiModifier.STATIC, true);
-          }
-          myAddedClassInitializers.put(field, classInitializer);
-          continue;
-        }
-      }
-
-      refsVector.add(ref);
-    }
+    };
 
     for (PsiReferenceExpression ref : refs) {
-      ref.putCopyableUserData(MARK_KEY, null);
-    }
+      if (!ref.isValid() || ref instanceof PsiMethodReferenceExpression) continue;
 
-    myAddedBraces = addedBracesVector.toArray(PsiCodeBlock.EMPTY_ARRAY);
-    return refsVector.toArray(new PsiReferenceExpression[0]);
-  }
-
-  private void inlineEnumConstantParameter(final List<? super PsiReferenceExpression> refsVector,
-                                           final PsiReferenceExpression ref) throws IncorrectOperationException {
-    PsiExpression expr = getSimpleReturnedExpression(myMethod);
-    if (expr != null) {
-      refsVector.add(ref);
-    }
-    else {
-      PsiCall call = PsiTreeUtil.getParentOfType(ref, PsiCall.class);
-      @NonNls String text = "new Object() { " + myMethod.getReturnTypeElement().getText() + " evaluate() { return " + call.getText() + ";}}.evaluate";
-      PsiExpression callExpr = JavaPsiFacade.getInstance(myProject).getParserFacade().createExpressionFromText(text, call);
-      PsiReferenceExpression classExpr = (PsiReferenceExpression)ref.replace(callExpr);
-      PsiNewExpression newObject = (PsiNewExpression)Objects.requireNonNull(classExpr.getQualifierExpression());
-      PsiMethod evaluateMethod = Objects.requireNonNull(newObject.getAnonymousClass()).getMethods()[0];
-      PsiExpression retVal = ((PsiReturnStatement)Objects.requireNonNull(evaluateMethod.getBody())
-        .getStatements()[0]).getReturnValue();
-      if (retVal instanceof PsiMethodCallExpression) {
-        refsVector.add(((PsiMethodCallExpression) retVal).getMethodExpression());
-      }
-      if (classExpr.getParent() instanceof PsiMethodCallExpression) {
-        PsiExpressionList args = ((PsiMethodCallExpression)classExpr.getParent()).getArgumentList();
-        PsiExpression[] argExpressions = args.getExpressions();
-        if (argExpressions.length > 0) {
-          args.deleteChildRange(argExpressions [0], argExpressions [argExpressions.length-1]);
-        }
+      CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(ref);
+      if (surrounder != null) {
+        CodeBlockSurrounder.SurroundResult surround = surrounder.surround();
+        surround.getAnchor().accept(visitor);
+        mySurroundResults.add(surround);
       }
     }
+
+    return StreamEx.of(refs).map(ref -> visitor.mapping.getOrDefault(ref, ref))
+      .peek(ref -> ref.putCopyableUserData(MARK_KEY, null))
+      .toArray(new PsiReferenceExpression[0]);
   }
 
   @Nullable
@@ -1080,91 +951,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiStatement statement = psiStatements[0];
     if (!(statement instanceof PsiReturnStatement)) return null;
     return ((PsiReturnStatement) statement).getReturnValue();
-  }
-
-  private static void addMarkedElements(final List<? super PsiReferenceExpression> array, PsiElement scope) {
-    scope.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override public void visitElement(@NotNull PsiElement element) {
-        if (element.getCopyableUserData(MARK_KEY) != null) {
-          array.add((PsiReferenceExpression)element);
-          element.putCopyableUserData(MARK_KEY, null);
-        }
-        super.visitElement(element);
-      }
-    });
-  }
-
-  private void removeAddedBracesWhenPossible() throws IncorrectOperationException {
-    if (myAddedBraces == null) return;
-
-    for (PsiCodeBlock codeBlock : myAddedBraces) {
-      PsiStatement[] statements = codeBlock.getStatements();
-      if (statements.length == 1) {
-        final PsiElement codeBlockParent = codeBlock.getParent();
-        PsiStatement statement = statements[0];
-        if (codeBlockParent instanceof PsiLambdaExpression) {
-          if (statement instanceof PsiReturnStatement) {
-            final PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
-            if (returnValue != null) {
-              codeBlock.replace(returnValue);
-            }
-          } else if (statement instanceof PsiExpressionStatement){
-            codeBlock.replace(((PsiExpressionStatement)statement).getExpression());
-          }
-        }
-        else if (codeBlockParent instanceof PsiBlockStatement) {
-          if (statement instanceof PsiYieldStatement) {
-            PsiExpression expression = ((PsiYieldStatement)statement).getExpression();
-            if (expression != null) {
-              PsiExpressionStatement statementFromText = (PsiExpressionStatement)myFactory.createStatementFromText("a;", expression);
-              statementFromText.getExpression().replace(expression);
-              codeBlockParent.replace(statementFromText);
-            }
-          } else if (!(ifStatementWithAppendableElseBranch(statement) &&
-                codeBlockParent.getParent() instanceof PsiIfStatement &&
-                ((PsiIfStatement)codeBlockParent.getParent()).getElseBranch() != null)) {
-            codeBlockParent.replace(statement);
-          }
-        }
-        else {
-          codeBlock.replace(statement);
-        }
-      }
-    }
-
-    myAddedClassInitializers.forEach((psiField, classInitializer) -> {
-      PsiExpression newInitializer = getSimpleFieldInitializer(psiField, classInitializer);
-      PsiExpression fieldInitializer = Objects.requireNonNull(psiField.getInitializer());
-      if (newInitializer != null) {
-        fieldInitializer.replace(newInitializer);
-        classInitializer.delete();
-      }
-      else {
-        fieldInitializer.delete();
-      }
-    });
-  }
-
-  private static boolean ifStatementWithAppendableElseBranch(PsiStatement statement) {
-    if (statement instanceof PsiIfStatement) {
-      PsiStatement elseBranch = ((PsiIfStatement)statement).getElseBranch();
-      return elseBranch == null || elseBranch instanceof PsiIfStatement;
-    }
-    return false;
-  }
-
-  @Nullable
-  private PsiExpression getSimpleFieldInitializer(PsiField field, PsiClassInitializer initializer) {
-    final PsiStatement[] statements = initializer.getBody().getStatements();
-    if (statements.length != 1) return null;
-    if (!(statements[0] instanceof PsiExpressionStatement)) return null;
-    final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-    if (!(expression instanceof PsiAssignmentExpression)) return null;
-    final PsiExpression lExpression = ((PsiAssignmentExpression)expression).getLExpression();
-    if (!(lExpression instanceof PsiReferenceExpression)) return null;
-    final PsiElement resolved = ((PsiReferenceExpression)lExpression).resolve();
-    if (!myManager.areElementsEquivalent(field, resolved)) return null;
-    return ((PsiAssignmentExpression)expression).getRExpression();
   }
 
   public static @NlsContexts.DialogMessage String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, final PsiElement element) {
