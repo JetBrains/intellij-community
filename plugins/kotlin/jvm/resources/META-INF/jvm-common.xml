@@ -223,10 +223,7 @@
         <completionInformationProvider implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldCompletionInformationProvider" />
         <kotlinIndicesHelperExtension implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldKotlinIndicesHelperExtension"/>
 
-        <kotlinTestFramework id="junit5PsiFramework" order="before junit4PsiFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.JUnit5KotlinTestFramework"/>
-        <kotlinTestFramework id="junit4PsiFramework" order="before junit3PsiFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.JUnit4KotlinTestFramework"/>
-        <kotlinTestFramework id="junit3PsiFramework" order="before delegateTestFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.JUnit3KotlinTestFramework"/>
-        <kotlinTestFramework id="delegateTestFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinDelegatingTestFramework"/>
+        <kotlinTestFramework id="delegateTestFramework"  order="last" implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinDelegatingTestFramework"/>
     </extensions>
 
     <resource-bundle>messages.KotlinBundle</resource-bundle>
