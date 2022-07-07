@@ -217,10 +217,6 @@ public final class StartupUtil {
       PluginManagerCore.scheduleDescriptorLoading();
     }
 
-    if (!checkJdkVersion()) {
-      System.exit(Main.JDK_CHECK_FAILED);
-    }
-
     forkJoinPool.execute(() -> {
       setupSystemLibraries();
       loadSystemLibraries(log);
@@ -643,23 +639,6 @@ public final class StartupUtil {
       rootLogger.addHandler(consoleHandler);
     }
     activity.end();
-  }
-
-  private static boolean checkJdkVersion() {
-    if ("true".equals(System.getProperty("idea.jre.check"))) {
-      try {
-        Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());  // trying to find a JDK class
-      }
-      catch (ClassNotFoundException | LinkageError e) {
-        String message = BootstrapBundle.message(
-          "bootstrap.error.title.cannot.load.jdk.class.reason.0.please.ensure.you.run.the.ide.on.jdk.rather.than.jre", e.getMessage()
-        );
-        Main.showMessage(BootstrapBundle.message("bootstrap.error.title.jdk.required"), message, true);
-        return false;
-      }
-    }
-
-    return true;
   }
 
   @TestOnly

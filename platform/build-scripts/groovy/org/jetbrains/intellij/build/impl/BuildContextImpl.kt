@@ -271,9 +271,6 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
     }
     jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
-    if (productProperties.toolsJarRequired) {
-      jvmArgs.add("-Didea.jre.check=true")
-    }
     if (productProperties.useSplash) {
       @Suppress("SpellCheckingInspection")
       jvmArgs.add("-Dsplash=true")
