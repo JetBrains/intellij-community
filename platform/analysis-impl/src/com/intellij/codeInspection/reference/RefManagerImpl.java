@@ -8,6 +8,7 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -817,7 +818,8 @@ public class RefManagerImpl extends RefManager {
       if (!extension.belongsToScope(psiElement)) return false;
     }
     final Boolean inProject = ReadAction.compute(() -> psiElement.getManager().isInProject(psiElement));
-    return inProject.booleanValue() && (ignoreScope || getScope() == null || getScope().contains(psiElement));
+    return (inProject.booleanValue() || ScratchUtil.isScratch(containingFile.getVirtualFile())) &&
+           (ignoreScope || getScope() == null || getScope().contains(psiElement));
   }
 
   @Override
