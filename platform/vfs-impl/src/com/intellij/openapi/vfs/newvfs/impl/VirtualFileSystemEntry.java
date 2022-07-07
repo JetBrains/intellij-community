@@ -50,7 +50,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     /**
      * @see com.intellij.util.indexing.UnindexedFilesFinder
      * @see com.intellij.util.indexing.FileBasedIndexImpl
-     * @deprecated vacant & unused, replaced with {@link VirtualFileSystemEntry#myIndexingStamp}
+     * @deprecated vacant & unused, replaced with {@link VfsData#ourIndexingStamp}.
      */
     @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated
     private static final int INDEXED_FLAG = 0x0400_0000;
