@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 
-open class ShowEditorDiffPreviewActionProvider : AnActionExtensionProvider {
+class ShowEditorDiffPreviewActionProvider : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean {
     val project = e.project
 
@@ -26,5 +26,5 @@ open class ShowEditorDiffPreviewActionProvider : AnActionExtensionProvider {
     diffPreview.performDiffAction()
   }
 
-  open fun getDiffPreview(e: AnActionEvent) = e.getData(EDITOR_TAB_DIFF_PREVIEW)
+  private fun getDiffPreview(e: AnActionEvent) = e.getData(EDITOR_TAB_DIFF_PREVIEW)
 }
