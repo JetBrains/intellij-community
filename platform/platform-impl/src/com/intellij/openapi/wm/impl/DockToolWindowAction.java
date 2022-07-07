@@ -24,7 +24,7 @@ public class DockToolWindowAction extends DumbAwareAction /*implements FusAwareA
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return ActionUpdateThread.EDT;
   }
 
   @Override
