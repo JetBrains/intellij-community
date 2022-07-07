@@ -12,7 +12,7 @@ class InterfaceTraverserTest {
   fun `test boolean`() {
     val type = createType()
 
-    Field(type, 1, "myName", TBoolean)
+    Field(type, "myName", TBoolean)
 
     val collector = StringBuilder()
     InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
@@ -23,7 +23,7 @@ class InterfaceTraverserTest {
   fun `test int`() {
     val type = createType()
 
-    Field(type, 1, "myName", TInt)
+    Field(type, "myName", TInt)
 
     val collector = StringBuilder()
     InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
@@ -34,7 +34,7 @@ class InterfaceTraverserTest {
   fun `test string`() {
     val type = createType()
 
-    Field(type, 1, "myName", TString)
+    Field(type, "myName", TString)
 
     val collector = StringBuilder()
     InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
@@ -45,7 +45,7 @@ class InterfaceTraverserTest {
   fun `test list`() {
     val type = createType()
 
-    Field(type, 1, "myName", TList(TString))
+    Field(type, "myName", TList(TString))
 
     val collector = StringBuilder()
     InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
@@ -61,7 +61,7 @@ class InterfaceTraverserTest {
   fun `test map`() {
     val type = createType()
 
-    Field(type, 1, "myName", TMap(TString, TInt))
+    Field(type, "myName", TMap(TString, TInt))
 
     val collector = StringBuilder()
     InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
@@ -78,7 +78,7 @@ class InterfaceTraverserTest {
   fun `test optional`() {
     val type = createType()
 
-    Field(type, 1, "myName", TOptional(TInt))
+    Field(type, "myName", TOptional(TInt))
 
     val collector = StringBuilder()
     InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
@@ -94,7 +94,7 @@ class InterfaceTraverserTest {
   fun `test blob`() {
     val type = createType()
 
-    Field(type, 1, "myName", TBlob<Any>("my.class"))
+    Field(type, "myName", TBlob<Any>("my.class"))
 
     val collector = StringBuilder()
     InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))

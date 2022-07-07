@@ -51,7 +51,7 @@ class DefField(
     }
 
     val valueType = type.build(scope, diagnostics, annotations, keepUnknownFields) ?: return
-    val field = Field(owner, id, name, valueType)
+    val field = Field(owner, name, valueType)
     configure(field)
   }
 
@@ -82,7 +82,7 @@ class DefField(
     val receiverObjType = resolvedReceiver.targetObjType
 
     val valueType = type.build(scope, diagnostics, annotations, keepUnknownFields = module.keepUnknownFields) ?: return
-    val field = ExtField(ExtFieldId(id), receiverObjType, name, valueType)
+    val field = ExtField(receiverObjType, name, valueType)
     module.extFields.add(field)
     configure(field)
   }

@@ -1,12 +1,8 @@
 package com.intellij.workspaceModel.codegen.deft
 
-import org.jetbrains.deft.*
-import com.intellij.workspaceModel.codegen.deft.ObjType
-import com.intellij.workspaceModel.codegen.deft.ValueType
-import kotlin.reflect.KProperty
+import org.jetbrains.deft.Obj
 
 class ExtField<P : Obj, V>(
-  val id: ExtFieldId,
   owner: ObjType<P, *>,
   name: String,
   type: ValueType<V>
