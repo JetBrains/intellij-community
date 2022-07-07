@@ -224,6 +224,11 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 runTest("testData/editor/enterHandler/beforeDot/FirstPositionOnNewLineInsideCall.after.kt");
             }
 
+            @TestMetadata("InsideCall.after.kt")
+            public void testInsideCall() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/InsideCall.after.kt");
+            }
+
             @TestMetadata("MultilineCallWithLambdaInFirstPosition.after.kt")
             public void testMultilineCallWithLambdaInFirstPosition() throws Exception {
                 runTest("testData/editor/enterHandler/beforeDot/MultilineCallWithLambdaInFirstPosition.after.kt");

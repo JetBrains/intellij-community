@@ -224,6 +224,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/beforeDot/FirstPositionOnNewLineInsideCall.after.kt");
             }
 
+            @TestMetadata("InsideCall.after.kt")
+            public void testInsideCall() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/beforeDot/InsideCall.after.kt");
+            }
+
             @TestMetadata("MultilineCallWithLambdaInFirstPosition.after.kt")
             public void testMultilineCallWithLambdaInFirstPosition() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/beforeDot/MultilineCallWithLambdaInFirstPosition.after.kt");

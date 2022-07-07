@@ -313,7 +313,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                 settings.alignMultilineParametersInCalls && calleeOrReference.isAt(LeftParenthesis) ->
                     createIndentCalculatorWithCustomBaseIndent(
                         settings.indentForChainedCalls,
-                        " ".repeat(calculateLineOffset(copyOfCalleeOrReference) - 1),
+                        " ".repeat(copyOfCalleeOrReference.startOffset - calculateLineOffset(copyOfCalleeOrReference)),
                     )
 
                 else -> createIndentCalculator(settings.indentForChainedCalls, calleeOrReference.startOffset)
@@ -659,13 +659,13 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
         }
 
         private fun createAlignMultilineIndent(position: SemanticEditorPosition): Indent {
-            val beforeLineStart = calculateLineOffset(position) + 1
+            val beforeLineStart = calculateLineOffset(position)
             val beforeLineWithoutIndentStart = CharArrayUtil.shiftForward(position.chars, beforeLineStart, " \t")
             return Indent.getSpaceIndent(position.startOffset - beforeLineWithoutIndentStart)
         }
 
         private fun calculateLineOffset(position: SemanticEditorPosition): Int {
-            return CharArrayUtil.shiftBackwardUntil(position.chars, position.startOffset, "\n")
+            return CharArrayUtil.shiftBackwardUntil(position.chars, position.startOffset, "\n") + 1
         }
 
         private fun SemanticEditorPosition.isWhileInsideDoWhile(): Boolean {
