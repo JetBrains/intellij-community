@@ -49,15 +49,14 @@ interface ExternalSystemSetupProjectTestCase {
   suspend fun waitForImport(action: suspend () -> Project): Project
 
   fun openPlatformProjectFrom(projectDirectory: VirtualFile): Project {
-    return ProjectManagerEx.getInstanceEx()
-      .openProject(
-        projectDirectory.toNioPath(),
-        OpenProjectTask(
-          forceOpenInNewFrame = true,
-          useDefaultProjectAsTemplate = false,
-          isRefreshVfsNeeded = false
-        )
-      )!!
+    return ProjectManagerEx.getInstanceEx().openProject(
+      projectStoreBaseDir = projectDirectory.toNioPath(),
+      options = OpenProjectTask {
+        forceOpenInNewFrame = true
+        useDefaultProjectAsTemplate = false
+        isRefreshVfsNeeded = false
+      }
+    )!!
   }
 
   suspend fun openProjectFrom(virtualFile: VirtualFile) = ProjectUtil.openOrImportAsync(virtualFile.toNioPath())!!

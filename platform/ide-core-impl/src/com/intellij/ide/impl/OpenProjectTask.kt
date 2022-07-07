@@ -15,7 +15,7 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
                                                 /** Ignored if [isNewProject] is set to false. */
                                                 val useDefaultProjectAsTemplate: Boolean = isNewProject,
                                                 /** When you just need to open an already created and prepared project; used e.g. by the "new project" action. */
-                                                val project: Project? = null,
+                                                val project: Project?,
                                                 val projectName: String?,
                                                 /** Whether to show welcome screen if failed to open project. */
                                                 val showWelcomeScreen: Boolean,
@@ -53,8 +53,7 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
               project: Project? = null,
               projectName: String? = null,
               /** Whether to show welcome screen if failed to open project. */
-              showWelcomeScreen: Boolean = true,
-              callback: ProjectOpenedCallback? = null) : this(
+              showWelcomeScreen: Boolean = true) : this(
     forceOpenInNewFrame = forceOpenInNewFrame,
     projectToClose = projectToClose,
     isNewProject = isNewProject,
@@ -64,7 +63,7 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
     projectName = projectName,
 
     showWelcomeScreen = showWelcomeScreen,
-    callback = callback,
+    callback = null,
     line = -1,
     column = -1,
     isRefreshVfsNeeded = true,
@@ -123,6 +122,7 @@ class OpenProjectTaskBuilder internal constructor() {
    *  See com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
    */
   var runConfigurators: Boolean = false
+  var preloadServices: Boolean = true
 
   var isProjectCreatedWithWizard: Boolean = false
   var runConversionBeforeOpen: Boolean = true
@@ -166,7 +166,7 @@ class OpenProjectTaskBuilder internal constructor() {
     builder()
     return OpenProjectTask(
       forceOpenInNewFrame = forceOpenInNewFrame,
-      preloadServices = true,
+      preloadServices = preloadServices,
 
       projectToClose = projectToClose,
       isRefreshVfsNeeded = isRefreshVfsNeeded,
@@ -192,6 +192,8 @@ class OpenProjectTaskBuilder internal constructor() {
 
       line = line,
       column = column,
+
+      project = null,
     )
   }
 }
