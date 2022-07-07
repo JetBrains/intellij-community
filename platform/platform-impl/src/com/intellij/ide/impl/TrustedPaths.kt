@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.ide.impl
 
 import com.intellij.openapi.components.*
@@ -20,14 +22,15 @@ class TrustedPaths : SimplePersistentStateComponent<TrustedPaths.State>(State())
 
   class State : BaseState() {
     @get:OptionTag("TRUSTED_PROJECT_PATHS")
-    var trustedPaths by map<String, Boolean>()
+    val trustedPaths by map<String, Boolean>()
   }
 
   @ApiStatus.Internal
   fun getProjectPathTrustedState(path: Path): ThreeState {
-    val ancestors = state.trustedPaths.keys.map { path.fileSystem.getPath(it) }.filter { it.isAncestor(path) }
+    val trustedPaths = state.trustedPaths
+    val ancestors = trustedPaths.keys.asSequence().map { path.fileSystem.getPath(it) }.filter { it.isAncestor(path) }
     val closestAncestor = ancestors.maxByOrNull { it.nameCount } ?: return ThreeState.UNSURE
-    return when (state.trustedPaths[closestAncestor.pathString]) {
+    return when (trustedPaths[closestAncestor.pathString]) {
       true -> ThreeState.YES
       false -> ThreeState.NO
       null -> ThreeState.UNSURE
@@ -36,6 +39,9 @@ class TrustedPaths : SimplePersistentStateComponent<TrustedPaths.State>(State())
 
   @ApiStatus.Internal
   fun setProjectPathTrusted(path: Path, value: Boolean) {
-    state.trustedPaths[path.pathString] = value
+    val newState = State()
+    newState.trustedPaths.putAll(state.trustedPaths)
+    newState.trustedPaths.put(path.pathString, value)
+    loadState(newState)
   }
 }

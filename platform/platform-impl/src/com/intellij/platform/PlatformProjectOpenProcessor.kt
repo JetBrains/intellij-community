@@ -168,12 +168,9 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       var options = originalOptions
-      if (LightEditService.getInstance() != null) {
-        if (LightEditService.getInstance().isForceOpenInLightEditMode) {
-          val lightEditProject = LightEditService.getInstance().openFile(file, false)
-          if (lightEditProject != null) {
-            return lightEditProject
-          }
+      if (LightEditService.getInstance() != null && LightEditService.getInstance().isForceOpenInLightEditMode) {
+        LightEditService.getInstance().openFile(file, false)?.let {
+          return it
         }
       }
 
@@ -227,12 +224,9 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       var options = originalOptions
-      if (LightEditService.getInstance() != null) {
-        if (LightEditService.getInstance().isForceOpenInLightEditMode) {
-          val lightEditProject = LightEditService.getInstance().openFile(file, false)
-          if (lightEditProject != null) {
-            return lightEditProject
-          }
+      if (LightEditService.getInstance() != null && LightEditService.getInstance().isForceOpenInLightEditMode) {
+        LightEditService.getInstance().openFile(file, false)?.let {
+          return it
         }
       }
 
@@ -319,7 +313,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
     @JvmStatic
     fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
-      return ProjectAttachProcessor.EP_NAME.findFirstSafe { processor -> processor.attachToProject(project, projectDir, callback) } != null
+      return ProjectAttachProcessor.EP_NAME.findFirstSafe { it.attachToProject(project, projectDir, callback) } != null
     }
 
     /**
