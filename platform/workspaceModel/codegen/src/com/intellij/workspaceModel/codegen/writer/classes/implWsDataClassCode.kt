@@ -85,7 +85,7 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
       }
 
       if (isEntityWithPersistentId) {
-        val persistentIdField = structure.allFields.first { it.name == "persistentId" }
+        val persistentIdField = structure.declaredFields.first { it.name == "persistentId" }
         assert(persistentIdField.hasDefault == Field.Default.plain)
         val methodBody = persistentIdField.defaultValue!!
         if (methodBody.contains("return")) {
