@@ -9,6 +9,8 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -36,7 +38,6 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo
 import com.intellij.util.Alarm
 import com.intellij.util.IconUtil
 import com.intellij.util.ObjectUtils
@@ -66,6 +67,7 @@ import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 import javax.swing.*
 import kotlin.Pair
+
 
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
@@ -439,16 +441,22 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
       return
     }
 
+    val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
     for (window in windows) {
       val composite = window!!.getComposite(file)
       LOG.assertTrue(composite != null)
       val index = window.findCompositeIndex(composite!!)
       LOG.assertTrue(index != -1)
-      var resultAttributes = getTextAttributesForFile(project = manager.project, file = file)
+      val manager = manager
+      window.setForegroundAt(index, manager.getFileColor(file))
+      var resultAttributes = TextAttributes()
+      resultAttributes.foregroundColor = getForegroundColorForFile(manager.project, file)
+      var attributes = if (manager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
       if (composite.isPreview) {
         val italic = TextAttributes(null, null, null, null, Font.ITALIC)
-        resultAttributes = TextAttributes.merge(italic, resultAttributes)
+        attributes = if (attributes == null) italic else TextAttributes.merge(italic, attributes)
       }
+      resultAttributes = TextAttributes.merge(resultAttributes, attributes)
       window.setTextAttributes(index, resultAttributes)
     }
   }
@@ -456,13 +464,6 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
   fun trimToSize() {
     for (window in myWindows) {
       window.trimToSize(window.selectedFile, true)
-    }
-  }
-
-  fun updateTabsLayout(newTabsLayoutInfo: TabsLayoutInfo) {
-    val windows = windows
-    for (i in windows.indices) {
-      windows[i].updateTabsLayout(newTabsLayoutInfo)
     }
   }
 
