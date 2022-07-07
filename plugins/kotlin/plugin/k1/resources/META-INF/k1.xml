@@ -35,13 +35,6 @@
   <xi:include href="jvm.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="parcelize.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <dependencies>
-    <!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->
-    <plugin id="com.intellij.java"/>
-  </dependencies>
-
-  <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
-
   <content>
     <module name="kotlin.base.analysis-api-providers"/>
     <module name="kotlin.base.fe10.plugin"/>

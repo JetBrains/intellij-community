@@ -182,4 +182,11 @@ The plugin suports Kotlin 1.7 and lower.
     ]]>
   </change-notes>
 
+  <dependencies>
+    <!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->
+    <plugin id="com.intellij.java"/>
+  </dependencies>
+
+  <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
+
 </idea-plugin>
