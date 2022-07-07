@@ -760,10 +760,12 @@ final class ActionUpdater {
     }
 
     @Override
-    public <T> @NotNull T compute(@NotNull String operationName,
-                                  @NotNull ActionUpdateThread updateThread,
-                                  @NotNull Supplier<? extends T> supplier) {
-      return updater.callAction(operationName, updateThread, supplier);
+    public <T> T compute(@NotNull Object action,
+                         @NotNull String operationName,
+                         @NotNull ActionUpdateThread updateThread,
+                         @NotNull Supplier<? extends T> supplier) {
+      String operationNameFull = Utils.operationName(action, operationName, updater.myPlace);
+      return updater.callAction(operationNameFull, updateThread, supplier);
     }
   }
 
