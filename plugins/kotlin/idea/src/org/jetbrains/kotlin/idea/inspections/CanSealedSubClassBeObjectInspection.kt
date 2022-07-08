@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.isEffectivelyActual
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Holder.matchesCanBeObjectCriteria
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
@@ -51,12 +53,12 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
         }
     }
 
-    companion object {
-        private val EQUALS = OperatorNameConventions.EQUALS.asString()
+    private object Holder {
+        val EQUALS: String = OperatorNameConventions.EQUALS.asString()
 
-        private const val HASH_CODE = "hashCode"
+        const val HASH_CODE: String = "hashCode"
 
-        private val CLASS_MODIFIERS = listOf(
+        val CLASS_MODIFIERS: List<KtModifierKeywordToken> = listOf(
             KtTokens.ANNOTATION_KEYWORD,
             KtTokens.DATA_KEYWORD,
             KtTokens.ENUM_KEYWORD,
@@ -64,7 +66,7 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
             KtTokens.SEALED_KEYWORD,
         )
 
-        private fun KtClass.matchesCanBeObjectCriteria(): Boolean {
+        fun KtClass.matchesCanBeObjectCriteria(): Boolean {
             return isSubclassOfStatelessSealed()
                     && withEmptyConstructors()
                     && hasNoClassModifiers()
@@ -75,24 +77,24 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
                     && hasNoStateOrEquals()
         }
 
-        private fun KtClass.isSubclassOfStatelessSealed(): Boolean {
+        fun KtClass.isSubclassOfStatelessSealed(): Boolean {
             fun KtSuperTypeListEntry.asKtClass(): KtClass? = typeAsUserType?.referenceExpression?.mainReference?.resolve() as? KtClass
             return superTypeListEntries.asSequence().mapNotNull { it.asKtClass() }.any {
                 it.isSealed() && it.hasNoStateOrEquals() && it.baseClassHasNoStateOrEquals()
             }
         }
 
-        private fun KtClass.withEmptyConstructors(): Boolean =
+        fun KtClass.withEmptyConstructors(): Boolean =
             primaryConstructorParameters.isEmpty() && secondaryConstructors.all { it.valueParameters.isEmpty() }
 
-        private fun KtClass.hasNoClassModifiers(): Boolean {
+        fun KtClass.hasNoClassModifiers(): Boolean {
             val modifierList = modifierList ?: return true
             return CLASS_MODIFIERS.none { modifierList.hasModifier(it) }
         }
 
-        private fun KtClass.isFinal(): Boolean = getModalityFromDescriptor() == KtTokens.FINAL_KEYWORD
+        fun KtClass.isFinal(): Boolean = getModalityFromDescriptor() == KtTokens.FINAL_KEYWORD
 
-        private tailrec fun KtClass.baseClassHasNoStateOrEquals(): Boolean {
+        tailrec fun KtClass.baseClassHasNoStateOrEquals(): Boolean {
             val descriptor = resolveToDescriptorIfAny() ?: return false
             val superDescriptor = descriptor.getSuperClassNotAny() ?: return true // No super class -- no state
             val superClass = DescriptorToSourceUtils.descriptorToDeclaration(superDescriptor) as? KtClass ?: return false
@@ -100,7 +102,7 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
             return superClass.baseClassHasNoStateOrEquals()
         }
 
-        private fun KtClass.hasNoStateOrEquals(): Boolean {
+        fun KtClass.hasNoStateOrEquals(): Boolean {
             if (primaryConstructor?.valueParameters?.isNotEmpty() == true) return false
             val body = body
             return body == null || run {
@@ -123,7 +125,7 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
             }
         }
 
-        private fun KtClass.hasNoInnerClass(): Boolean {
+        fun KtClass.hasNoInnerClass(): Boolean {
             val internalClasses = body
                 ?.declarations
                 ?.filterIsInstance<KtClass>() ?: return true

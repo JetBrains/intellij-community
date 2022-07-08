@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -101,28 +102,30 @@ class KotlinCleanupInspection : LocalInspectionTool(), CleanupLocalInspectionToo
         }
     }
 
-    private fun Diagnostic.isCleanup() = factory in cleanupDiagnosticsFactories || isObsoleteLabel()
+    private fun Diagnostic.isCleanup() = factory in Holder.cleanupDiagnosticsFactories || isObsoleteLabel()
 
-    private val cleanupDiagnosticsFactories = setOf(
-        Errors.MISSING_CONSTRUCTOR_KEYWORD,
-        Errors.UNNECESSARY_NOT_NULL_ASSERTION,
-        Errors.UNNECESSARY_SAFE_CALL,
-        Errors.USELESS_CAST,
-        Errors.USELESS_ELVIS,
-        ErrorsJvm.POSITIONED_VALUE_ARGUMENT_FOR_JAVA_ANNOTATION,
-        Errors.DEPRECATION,
-        Errors.DEPRECATION_ERROR,
-        Errors.NON_CONST_VAL_USED_IN_CONSTANT_EXPRESSION,
-        Errors.OPERATOR_MODIFIER_REQUIRED,
-        Errors.INFIX_MODIFIER_REQUIRED,
-        Errors.DEPRECATED_TYPE_PARAMETER_SYNTAX,
-        Errors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS,
-        Errors.COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT,
-        ErrorsJs.WRONG_EXTERNAL_DECLARATION,
-        Errors.YIELD_IS_RESERVED,
-        Errors.DEPRECATED_MODIFIER_FOR_TARGET,
-        Errors.DEPRECATED_MODIFIER
-    )
+    private object Holder {
+        val cleanupDiagnosticsFactories: Collection<DiagnosticFactory<*>> = setOf(
+            Errors.MISSING_CONSTRUCTOR_KEYWORD,
+            Errors.UNNECESSARY_NOT_NULL_ASSERTION,
+            Errors.UNNECESSARY_SAFE_CALL,
+            Errors.USELESS_CAST,
+            Errors.USELESS_ELVIS,
+            ErrorsJvm.POSITIONED_VALUE_ARGUMENT_FOR_JAVA_ANNOTATION,
+            Errors.DEPRECATION,
+            Errors.DEPRECATION_ERROR,
+            Errors.NON_CONST_VAL_USED_IN_CONSTANT_EXPRESSION,
+            Errors.OPERATOR_MODIFIER_REQUIRED,
+            Errors.INFIX_MODIFIER_REQUIRED,
+            Errors.DEPRECATED_TYPE_PARAMETER_SYNTAX,
+            Errors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS,
+            Errors.COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT,
+            ErrorsJs.WRONG_EXTERNAL_DECLARATION,
+            Errors.YIELD_IS_RESERVED,
+            Errors.DEPRECATED_MODIFIER_FOR_TARGET,
+            Errors.DEPRECATED_MODIFIER
+        )
+    }
 
     private fun Diagnostic.isObsoleteLabel(): Boolean {
         val annotationEntry = psiElement.getNonStrictParentOfType<KtAnnotationEntry>() ?: return false

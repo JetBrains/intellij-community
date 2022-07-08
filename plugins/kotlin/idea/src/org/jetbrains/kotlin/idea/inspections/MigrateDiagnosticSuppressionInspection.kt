@@ -30,7 +30,7 @@ class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection(), Clean
                 val expression = argument.getArgumentExpression() as? KtStringTemplateExpression ?: continue
                 val text = expression.text
                 if (text.firstOrNull() != '\"' || text.lastOrNull() != '\"') continue
-                val newDiagnosticFactory = MIGRATION_MAP[StringUtil.unquoteString(text)] ?: continue
+                val newDiagnosticFactory = Holder.MIGRATION_MAP[StringUtil.unquoteString(text)] ?: continue
 
                 holder.registerProblem(
                     expression,
@@ -54,12 +54,10 @@ class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection(), Clean
             val psiFactory = KtPsiFactory(expression)
             expression.replace(psiFactory.createExpression("\"${diagnosticFactory.name}\""))
         }
-
     }
 
-    companion object {
-
-        private val MIGRATION_MAP = mapOf(
+    private object Holder {
+        val MIGRATION_MAP = mapOf(
             "HEADER_DECLARATION_WITH_BODY" to EXPECTED_DECLARATION_WITH_BODY,
             "HEADER_CLASS_CONSTRUCTOR_DELEGATION_CALL" to EXPECTED_CLASS_CONSTRUCTOR_DELEGATION_CALL,
             "HEADER_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER" to EXPECTED_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER,

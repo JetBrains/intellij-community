@@ -2,15 +2,18 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.quickfix.ChangeToMutableCollectionFix
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -30,9 +33,6 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.SimpleType
 
 class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
-
-    private val targetOperations: List<KtSingleValueToken> = listOf(KtTokens.PLUSEQ, KtTokens.MINUSEQ)
-
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         binaryExpressionVisitor(fun(binaryExpression) {
             if (binaryExpression.right == null) return
@@ -185,6 +185,8 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
         }
     }
 }
+
+private val targetOperations: List<KtSingleValueToken> = listOf(KtTokens.PLUSEQ, KtTokens.MINUSEQ)
 
 private fun KotlinType.classDescriptor() = constructor.declarationDescriptor as? ClassDescriptor
 

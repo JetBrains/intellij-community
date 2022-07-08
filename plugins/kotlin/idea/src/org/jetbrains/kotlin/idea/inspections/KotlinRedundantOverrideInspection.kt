@@ -32,7 +32,7 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
             val funKeyword = function.funKeyword ?: return
             val modifierList = function.modifierList ?: return
             if (!modifierList.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
-            if (MODIFIER_EXCLUDE_OVERRIDE.any { modifierList.hasModifier(it) }) return
+            if (Holder.MODIFIER_EXCLUDE_OVERRIDE.any { modifierList.hasModifier(it) }) return
             if (KotlinPsiHeuristics.hasNonSuppressAnnotations(function)) return
             if (function.containingClass()?.isData() == true) return
 
@@ -72,7 +72,7 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
             val overriddenDescriptors = functionDescriptor.original.overriddenDescriptors
             if (overriddenDescriptors.any { it is JavaMethodDescriptor && it.visibility == JavaDescriptorVisibilities.PACKAGE_VISIBILITY }) return
             if (overriddenDescriptors.any { it.modality == Modality.ABSTRACT }) {
-                if (superCallDescriptor.fqNameSafe in METHODS_OF_ANY) return
+                if (superCallDescriptor.fqNameSafe in Holder.METHODS_OF_ANY) return
                 if (superCallDescriptor.isOverridingMethodOfAny() && !superCallDescriptor.isImplementedInContainingClass()) return
             }
             if (function.isAmbiguouslyDerived(overriddenDescriptors, context)) return
@@ -103,7 +103,7 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
     }
 
     private fun CallableDescriptor.isOverridingMethodOfAny() =
-        (this as? CallableMemberDescriptor)?.getDeepestSuperDeclarations().orEmpty().any { it.fqNameSafe in METHODS_OF_ANY }
+        (this as? CallableMemberDescriptor)?.getDeepestSuperDeclarations().orEmpty().any { it.fqNameSafe in Holder.METHODS_OF_ANY }
 
     private fun CallableDescriptor.isImplementedInContainingClass() =
         (containingDeclaration as? LazyClassDescriptor)?.declaredCallableMembers.orEmpty().any { it == this }
@@ -136,9 +136,9 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
         }
     }
 
-    companion object {
-        private val MODIFIER_EXCLUDE_OVERRIDE = KtTokens.MODIFIER_KEYWORDS_ARRAY.asList() - KtTokens.OVERRIDE_KEYWORD
-        private val METHODS_OF_ANY = listOf("equals", "hashCode", "toString").map { FqName("kotlin.Any.$it") }
+    private object Holder {
+        val MODIFIER_EXCLUDE_OVERRIDE = KtTokens.MODIFIER_KEYWORDS_ARRAY.asList() - KtTokens.OVERRIDE_KEYWORD
+        val METHODS_OF_ANY = listOf("equals", "hashCode", "toString").map { FqName("kotlin.Any.$it") }
     }
 }
 
