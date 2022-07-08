@@ -138,7 +138,7 @@ final class KotlinPluginBuilder {
     "kotlin.project-wizard.idea",
     "kotlin.project-wizard.maven",
     "kotlin.project-wizard.gradle",
-    "kotlin.project-wizard-compose",
+    "kotlin.project-wizard.compose",
     "kotlin.jvm-debugger.base.util",
     "kotlin.jvm-debugger.util",
     "kotlin.jvm-debugger.core",

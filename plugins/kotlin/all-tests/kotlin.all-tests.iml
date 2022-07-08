@@ -32,7 +32,7 @@
     <orderEntry type="module" module-name="kotlin.features-trainer.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.project-wizard-compose" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.scripting-support" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.tests" scope="RUNTIME" />

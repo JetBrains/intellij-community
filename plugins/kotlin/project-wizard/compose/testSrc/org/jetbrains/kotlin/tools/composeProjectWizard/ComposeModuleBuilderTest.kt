@@ -15,7 +15,7 @@ class ComposeModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
     @Test
     fun testDesktopProject() {
         init(ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM, ComposePWInitialStep.ComposePlatform.DESKTOP)
-        fixture.testDataPath += "/plugins/kotlin/project-wizard-compose/testData/etalons/desktop/"
+        fixture.testDataPath += "/plugins/kotlin/project-wizard/compose/testData/etalons/desktop/"
 
         fixture.checkResultEx("src/jvmMain/kotlin/Main.kt")
     }
@@ -23,7 +23,7 @@ class ComposeModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
     @Test
     fun testWebProject() {
         init(ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM, ComposePWInitialStep.ComposePlatform.WEB)
-        fixture.testDataPath += "/plugins/kotlin/project-wizard-compose/testData/etalons/web/"
+        fixture.testDataPath += "/plugins/kotlin/project-wizard/compose/testData/etalons/web/"
 
         fixture.checkResultEx("src/jsMain/kotlin/Main.kt")
         fixture.checkResultEx("src/jsMain/resources/index.html")
@@ -32,7 +32,7 @@ class ComposeModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
     @Test
     fun testMppProject() {
         init(ComposePWInitialStep.ComposeConfigurationType.MULTI_PLATFORM, ComposePWInitialStep.ComposePlatform.DESKTOP)
-        fixture.testDataPath += "/plugins/kotlin/project-wizard-compose/testData/etalons/mpp/"
+        fixture.testDataPath += "/plugins/kotlin/project-wizard/compose/testData/etalons/mpp/"
 
         listOf("android/build.gradle.kts",
                "android/src/main/AndroidManifest.xml",
