@@ -112,7 +112,7 @@ class OpenProjectTaskBuilder internal constructor() {
   var forceOpenInNewFrame: Boolean = false
 
   var isNewProject: Boolean = false
-  var useDefaultProjectAsTemplate: Boolean = isNewProject
+  var useDefaultProjectAsTemplate: Boolean? = null
 
   /**
    *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
@@ -157,11 +157,6 @@ class OpenProjectTaskBuilder internal constructor() {
   @Internal
   var processorChooser: ((List<Any>) -> Any)? = null
 
-  fun asNewProject() {
-    isNewProject = true
-    useDefaultProjectAsTemplate = true
-  }
-
   internal inline fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
     builder()
     return OpenProjectTask(
@@ -173,7 +168,7 @@ class OpenProjectTaskBuilder internal constructor() {
 
       projectName = projectName,
       isNewProject = isNewProject,
-      useDefaultProjectAsTemplate = useDefaultProjectAsTemplate,
+      useDefaultProjectAsTemplate = useDefaultProjectAsTemplate ?: isNewProject,
       runConfigurators = runConfigurators,
       isProjectCreatedWithWizard = isProjectCreatedWithWizard,
       runConversionBeforeOpen = runConversionBeforeOpen,

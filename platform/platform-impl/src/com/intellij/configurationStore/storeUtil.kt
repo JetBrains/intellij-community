@@ -176,7 +176,7 @@ fun getDefaultStoragePathSpec(state: State): String? {
 }
 
 private fun getStoragePathSpec(storage: Storage): String {
-  @Suppress("DEPRECATION")
+  @Suppress("DEPRECATION", "removal")
   val pathSpec = storage.value.ifEmpty { storage.file }
   return if (storage.roamingType == RoamingType.PER_OS) getOsDependentStorage(pathSpec) else pathSpec
 }

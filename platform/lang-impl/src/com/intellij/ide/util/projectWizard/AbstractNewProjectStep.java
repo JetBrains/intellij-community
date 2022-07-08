@@ -192,7 +192,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
                                               @NotNull T settings) {
     OpenProjectTask options = OpenProjectTaskKt.OpenProjectTask(builder -> {
       builder.setProjectToClose(projectToClose);
-      builder.asNewProject();
+      builder.setNewProject(true);
       builder.setRunConfigurators(true);
       builder.setProjectCreatedWithWizard(true);
       builder.setRefreshVfsNeeded(false);

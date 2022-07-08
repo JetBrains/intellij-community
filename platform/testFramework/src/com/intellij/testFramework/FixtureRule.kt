@@ -108,10 +108,10 @@ class ProjectTrackingRule : TestRule {
 class ProjectObject(private val runPostStartUpActivities: Boolean = false,
                     private val preloadServices: Boolean = false,
                     private val projectDescriptor: LightProjectDescriptor? = null) {
-  internal var sharedProject: ProjectEx? = null
+  private var sharedProject: ProjectEx? = null
   internal var testClassName: String? = null
-  var virtualFilePointerTracker: VirtualFilePointerTracker? = null
-  var libraryTracker: LibraryTableTracker? = null
+  private var virtualFilePointerTracker: VirtualFilePointerTracker? = null
+  private var libraryTracker: LibraryTableTracker? = null
   var projectTracker: AccessToken? = null
 
   internal fun createProject(): ProjectEx {
@@ -240,8 +240,6 @@ class ProjectExtension(runPostStartUpActivities: Boolean = false,
     projectObject.catchAndRethrow(l)
   }
 
-  val projectIfOpened: ProjectEx?
-    get() = projectObject.sharedProject
   val project: ProjectEx
     get() = projectObject.project
   val module: Module
@@ -344,6 +342,15 @@ inline fun <T> Project.use(task: (Project) -> T): T {
   }
 }
 
+suspend inline fun <T> Project.useAsync(task: (Project) -> T): T {
+  return try {
+    task(this)
+  }
+  finally {
+    ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this)
+  }
+}
+
 class DisposeNonLightProjectsRule : ExternalResource() {
   override fun after() {
     val projectManager = ProjectManagerEx.getInstanceExIfCreated() ?: return
@@ -367,22 +374,6 @@ class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResourc
           moduleManager.disposeModule(it)
         }
       }
-    }
-  }
-}
-
-/**
- * Only and only if "before" logic in case of exception doesn't require "after" logic - must be no side effects if "before" finished abnormally.
- * So, should be one task per rule.
- */
-class WrapRule(private val before: () -> () -> Unit) : TestRule {
-  override fun apply(base: Statement, description: Description): Statement = statement {
-    val after = before()
-    try {
-      base.evaluate()
-    }
-    finally {
-      after()
     }
   }
 }
@@ -458,8 +449,7 @@ private suspend fun createOrLoadProject(projectPath: Path,
     options = options.copy(beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) })
   }
 
-  val project = ProjectManagerEx.getInstanceEx().openProjectAsync(projectPath, options)!!
-  try {
+  ProjectManagerEx.getInstanceEx().openProjectAsync(projectPath, options)!!.useAsync { project ->
     if (loadComponentState) {
       project.runInLoadComponentStateMode {
         task(project)
@@ -468,9 +458,6 @@ private suspend fun createOrLoadProject(projectPath: Path,
     else {
       task(project)
     }
-  }
-  finally {
-    ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project)
   }
 }
 
