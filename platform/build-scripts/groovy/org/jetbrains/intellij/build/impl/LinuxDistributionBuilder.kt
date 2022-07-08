@@ -211,7 +211,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
         moveFile(iconPngPath, snapDir.resolve("$snapName.png"))
         val snapcraftTemplate = context.paths.communityHomeDir.communityRoot.resolve(
           "platform/build-scripts/resources/linux/snap/snapcraft-template.yaml")
-        val versionSuffix = appInfo.versionSuffix!!.replace(' ', '-')
+        val versionSuffix = appInfo.versionSuffix?.replace(' ', '-') ?: ""
         val version = "${appInfo.majorVersion}.${appInfo.minorVersion}${if (versionSuffix.isEmpty()) "" else "-${versionSuffix}"}"
         substituteTemplatePlaceholders(
           inputFile = snapcraftTemplate,
