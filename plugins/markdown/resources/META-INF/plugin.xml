@@ -212,9 +212,8 @@ Includes the following features:</p>
 
     <lang.foldingBuilder language="Markdown" implementationClass="org.intellij.plugins.markdown.folding.MarkdownFoldingBuilder"/>
 
-
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderTextIndex"/>
-    <stubElementTypeHolder class="org.intellij.plugins.markdown.lang.MarkdownElementTypes"/>
+    <stubElementTypeHolder class="org.intellij.plugins.markdown.lang.MarkdownStubElementTypes"/>
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex"/>
 
     <typedHandler implementation="org.intellij.plugins.markdown.model.HeaderAnchorCompletionPopupTypedHandler"/>

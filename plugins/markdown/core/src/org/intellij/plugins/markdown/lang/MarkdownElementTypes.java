@@ -4,11 +4,11 @@ package org.intellij.plugins.markdown.lang;
 import com.intellij.psi.templateLanguages.TemplateDataElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.OuterLanguageElementType;
 import org.intellij.markdown.flavours.gfm.GFMElementTypes;
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes;
 import org.intellij.plugins.markdown.lang.parser.DefinitionListMarkerProvider;
+import org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition;
 import org.intellij.plugins.markdown.lang.parser.frontmatter.FrontMatterHeaderMarkerProvider;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -16,7 +16,7 @@ import static org.intellij.plugins.markdown.lang.MarkdownElementType.platformTyp
 import static org.intellij.plugins.markdown.lang.MarkdownTokenTypes.HTML_BLOCK_CONTENT;
 
 public interface MarkdownElementTypes {
-  IFileElementType MARKDOWN_FILE_ELEMENT_TYPE = new IStubFileElementType("Markdown file", MarkdownLanguage.INSTANCE);
+  IFileElementType MARKDOWN_FILE_ELEMENT_TYPE = MarkdownParserDefinition.MARKDOWN_FILE_ELEMENT_TYPE;
 
   IElementType MARKDOWN_FILE = platformType(org.intellij.markdown.MarkdownElementTypes.MARKDOWN_FILE);
 
@@ -79,15 +79,15 @@ public interface MarkdownElementTypes {
   IElementType TABLE_HEADER = platformType(GFMElementTypes.HEADER);
   IElementType TABLE_CELL = platformType(GFMTokenTypes.CELL);
 
-  IElementType SETEXT_1 = platformType(org.intellij.markdown.MarkdownElementTypes.SETEXT_1);
-  IElementType SETEXT_2 = platformType(org.intellij.markdown.MarkdownElementTypes.SETEXT_2);
+  IElementType SETEXT_1 = MarkdownStubElementTypes.SETEXT_1;
+  IElementType SETEXT_2 = MarkdownStubElementTypes.SETEXT_2;
 
-  IElementType ATX_1 = platformType(org.intellij.markdown.MarkdownElementTypes.ATX_1);
-  IElementType ATX_2 = platformType(org.intellij.markdown.MarkdownElementTypes.ATX_2);
-  IElementType ATX_3 = platformType(org.intellij.markdown.MarkdownElementTypes.ATX_3);
-  IElementType ATX_4 = platformType(org.intellij.markdown.MarkdownElementTypes.ATX_4);
-  IElementType ATX_5 = platformType(org.intellij.markdown.MarkdownElementTypes.ATX_5);
-  IElementType ATX_6 = platformType(org.intellij.markdown.MarkdownElementTypes.ATX_6);
+  IElementType ATX_1 = MarkdownStubElementTypes.ATX_1;
+  IElementType ATX_2 = MarkdownStubElementTypes.ATX_2;
+  IElementType ATX_3 = MarkdownStubElementTypes.ATX_3;
+  IElementType ATX_4 = MarkdownStubElementTypes.ATX_4;
+  IElementType ATX_5 = MarkdownStubElementTypes.ATX_5;
+  IElementType ATX_6 = MarkdownStubElementTypes.ATX_6;
 
   org.intellij.markdown.MarkdownElementType COMMENT = new org.intellij.markdown.MarkdownElementType("COMMENT", true);
 
