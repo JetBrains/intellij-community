@@ -79,11 +79,6 @@ class ProductModulesLayout {
     }
 
   /**
-   * Fail when plugin should be build, but its definition is missing from [org.jetbrains.intellij.build.ProductModulesLayout.pluginLayouts]
-   */
-  var failOnUnspecifiedPluginLayout: Boolean = false
-
-  /**
    * Names of the project libraries which JARs' contents should be extracted into {@link #mainJarName} JAR.
    */
   var projectLibrariesToUnpackIntoMainJar: PersistentList<String> = persistentListOf()

@@ -931,16 +931,10 @@ private fun checkPluginModules(
     pluginLayoutList.none { it.mainModule == mainModuleName }
   }
   if (!unspecifiedLayoutPluginModules.isEmpty()) {
-    if (context.productProperties.productLayout.failOnUnspecifiedPluginLayout) {
-      context.messages.error("No plugin layout specified in productProperties.productLayout.pluginLayouts for " +
-                             "following plugin main modules (referenced from $fieldName): ${unspecifiedLayoutPluginModules.joinToString()}")
-
-    }
-    else {
-      context.messages.info("No plugin layout specified in productProperties.productLayout.pluginLayouts for " +
-                            "following plugin main modules (referenced from $fieldName). Assuming simple layout. " +
-                            "Modules list: ${unspecifiedLayoutPluginModules.joinToString()}")
-    }
+    context.messages.error("No plugin layout specified in productProperties.productLayout.pluginLayouts for " +
+                           "following plugin main modules (referenced from $fieldName): ${unspecifiedLayoutPluginModules.joinToString(separator = "\n") {
+                             "simplePlugin(\"$it\"),"
+                           }}")
   }
 
   val unknownBundledPluginModules = pluginModules.filter { context.findFileInModuleSources(it, "META-INF/plugin.xml") == null }

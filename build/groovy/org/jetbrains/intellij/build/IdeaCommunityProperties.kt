@@ -30,7 +30,6 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
     useSplash = true
     buildCrossPlatformDistribution = true
 
-    productLayout.failOnUnspecifiedPluginLayout = true
     productLayout.productImplementationModules = listOf("intellij.platform.main")
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")
     productLayout.bundledPluginModules.addAll(BUNDLED_PLUGIN_MODULES)
