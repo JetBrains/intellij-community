@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.actions.internal.benchmark
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.command.CommandProcessor
@@ -96,6 +97,8 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
             return textField
         }
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isApplicationInternalMode()

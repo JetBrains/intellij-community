@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
@@ -27,9 +28,11 @@ class ToggleKotlinVariablesState {
 class ToggleKotlinVariablesView : ToggleAction() {
     private val kotlinVariableViewService = ToggleKotlinVariablesState.getService()
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
         super.update(e)
-        val session = XDebugSession.DATA_KEY.getData(e.dataContext)
+        val session = e.getData(XDebugSession.DATA_KEY)
         e.presentation.isEnabledAndVisible = session != null && session.isInKotlinFile()
     }
 
