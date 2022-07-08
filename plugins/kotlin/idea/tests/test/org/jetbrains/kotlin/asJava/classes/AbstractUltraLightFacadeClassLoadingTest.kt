@@ -35,7 +35,7 @@ abstract class AbstractUltraLightFacadeClassTest15 : KotlinLightCodeInsightFixtu
 
     protected open fun checkLightFacades(testDataPath: String, facades: Collection<String>, scope: GlobalSearchScope) {
         for (facadeName in facades) {
-            val ultraLightClass = KtLightClassForFacadeImpl.createForFacadeNoCache(FqName(facadeName), scope, project)
+            val ultraLightClass = KotlinK1LightClassFactory.createFacadeNoCache(FqName(facadeName), scope, project)
             if (ultraLightClass != null) {
                 UltraLightChecker.checkDescriptorsLeak(ultraLightClass)
             }
