@@ -44,10 +44,9 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.containers.ArrayListSet
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jdom.Element
@@ -58,7 +57,6 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.event.ContainerEvent
 import java.awt.event.FocusEvent
-import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.lang.ref.Reference
 import java.nio.file.InvalidPathException
@@ -82,7 +80,7 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
   var lastFocusGainedTime = 0L
     private set
 
-  private val myWindows = CopyOnWriteArraySet<EditorWindow>()
+  private val windows = CopyOnWriteArraySet<EditorWindow>()
   val manager: FileEditorManagerImpl
 
   // temporarily used during initialization
@@ -161,12 +159,12 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
   }
 
   fun clear() {
-    for (window in myWindows) {
+    for (window in windows) {
       window.dispose()
     }
 
     removeAll()
-    myWindows.clear()
+    windows.clear()
     currentWindow = null
     // revalidate doesn't repaint correctly after "Close All"
     repaint()
@@ -270,7 +268,7 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
   }
 
   fun addSelectedEditorsTo(result: MutableCollection<in FileEditor?>) {
-    for (window in myWindows) {
+    for (window in windows) {
       val composite = window.selectedComposite
       if (composite != null) {
         val editor = composite.selectedEditor
@@ -280,7 +278,7 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
       }
     }
     val currentWindow = currentWindow
-    if (currentWindow != null && !myWindows.contains(currentWindow)) {
+    if (currentWindow != null && !windows.contains(currentWindow)) {
       val composite = currentWindow.selectedComposite
       if (composite != null) {
         val editor = composite.selectedEditor
@@ -292,7 +290,7 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
   }
 
   fun closeAllFiles() {
-    val windows = ArrayList(myWindows)
+    val windows = ArrayList(windows)
     clear()
     for (window in windows) {
       for (file in window.files) {
@@ -314,7 +312,7 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
     }
 
     // clear empty splitters
-    for (window in windows) {
+    for (window in getWindows()) {
       if (window.tabCount == 0) {
         window.removeFromSplitter()
       }
@@ -327,8 +325,8 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
 
   val openFileList: List<VirtualFile>
     get() {
-      val files: MutableList<VirtualFile> = ArrayList()
-      for (myWindow in myWindows) {
+      val files = ArrayList<VirtualFile>()
+      for (myWindow in windows) {
         for (composite in myWindow.allComposites) {
           val file = composite.file
           if (!files.contains(file)) {
@@ -347,7 +345,7 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
   val selectedFiles: Array<VirtualFile>
     get() {
       val files = ArrayListSet<VirtualFile>()
-      for (window in myWindows) {
+      for (window in windows) {
         window.selectedFile?.let {
           files.add(it)
         }
@@ -367,7 +365,7 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
     }
 
   fun getSelectedEditors(): Array<FileEditor> {
-    val windows = HashSet(myWindows)
+    val windows = HashSet(windows)
     currentWindow?.let {
       windows.add(it)
     }
@@ -390,7 +388,7 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
 
   init {
     background = JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor())
-    val l = PropertyChangeListener { e: PropertyChangeEvent ->
+    val l = PropertyChangeListener { e ->
       val propName = e.propertyName
       if ("Editor.background" == propName || "Editor.foreground" == propName || "Editor.shortcutForeground" == propName) {
         repaint()
@@ -431,21 +429,20 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
       .coalesceBy(this, "icon", file)
       .expireWith(this)
       .expireWhen { !file.isValid }
-      .finishOnUiThread(ModalityState.any()) { icon: Icon -> updateFileIconImmediately(file, icon) }
+      .finishOnUiThread(ModalityState.any()) { updateFileIconImmediately(file, it) }
       .submit(NonUrgentExecutor.getInstance())
   }
 
   fun updateFileColor(file: VirtualFile) {
-    val windows: Collection<EditorWindow?> = findWindows(file)
+    val windows = findWindows(file)
     if (windows.isEmpty()) {
       return
     }
 
     val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
     for (window in windows) {
-      val composite = window!!.getComposite(file)
-      LOG.assertTrue(composite != null)
-      val index = window.findCompositeIndex(composite!!)
+      val composite = window.getComposite(file)!!
+      val index = window.findCompositeIndex(composite)
       LOG.assertTrue(index != -1)
       val manager = manager
       window.setForegroundAt(index, manager.getFileColor(file))
@@ -462,27 +459,27 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
   }
 
   fun trimToSize() {
-    for (window in myWindows) {
+    for (window in windows) {
       window.trimToSize(window.selectedFile, true)
     }
   }
 
   fun setTabsPlacement(tabPlacement: Int) {
-    val windows = windows
+    val windows = getWindows()
     for (i in windows.indices) {
       windows[i].setTabsPlacement(tabPlacement)
     }
   }
 
   fun setTabLayoutPolicy(scrollTabLayout: Int) {
-    val windows = windows
+    val windows = getWindows()
     for (i in windows.indices) {
       windows[i].setTabLayoutPolicy(scrollTabLayout)
     }
   }
 
   fun updateFileName(updatedFile: VirtualFile?) {
-    for (window in windows) {
+    for (window in getWindows()) {
       for (file in window.files) {
         if (updatedFile == null || file.name == updatedFile.name) {
           window.updateFileName(file, window)
@@ -521,7 +518,7 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
     get() = insideChange > 0
 
   fun updateFileBackgroundColor(file: VirtualFile) {
-    val windows = windows
+    val windows = getWindows()
     for (i in windows.indices) {
       windows[i].updateFileBackgroundColor(file)
     }
@@ -554,7 +551,7 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
 
   val isEmptyVisible: Boolean
     get() {
-      val windows = windows
+      val windows = getWindows()
       for (each in windows) {
         if (!each.isEmptyVisible) {
           return false
@@ -564,7 +561,7 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
     }
 
   private fun findNextFile(file: VirtualFile): VirtualFile? {
-    val windows = windows // TODO: use current file as base
+    val windows = getWindows() // TODO: use current file as base
     for (i in windows.indices) {
       val files = windows[i].files
       for (fileAt in files) {
@@ -582,20 +579,20 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
     if (windows.isEmpty()) {
       return
     }
+
     val nextFile = findNextFile(file)
     for (window in windows) {
-      LOG.assertTrue(window!!.selectedComposite != null)
+      LOG.assertTrue(window.selectedComposite != null)
       window.closeFile(file, false, moveFocus)
       if (window.tabCount == 0 && nextFile != null && isProjectOpen && !FileEditorManagerImpl.forbidSplitFor(nextFile)) {
-        val newComposite = manager.newEditorComposite(nextFile)
-        if (newComposite != null) {
-          window.setComposite(newComposite, moveFocus)
+        manager.newEditorComposite(nextFile)?.let {
+          window.setComposite(it, moveFocus)
         }
       }
     }
     // cleanup windows with no tabs
     for (window in windows) {
-      if (!isProjectOpen || window!!.isDisposed) {
+      if (!isProjectOpen || window.isDisposed) {
         // call to window.unsplit() which might make its sibling disposed
         continue
       }
@@ -606,12 +603,13 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    for (window in myWindows) {
+    for (window in windows) {
       window.updateTabsVisibility(uiSettings)
     }
     if (!manager.project.isOpen) {
       return
     }
+
     for (file in openFileList) {
       updateFileBackgroundColor(file)
       updateFileIcon(file)
@@ -643,14 +641,14 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
 
   var currentWindow: EditorWindow? = null
     private set(currentWindow) {
-      require(!(currentWindow != null && !myWindows.contains(currentWindow))) { "$currentWindow is not a member of this container" }
+      require(!(currentWindow != null && !windows.contains(currentWindow))) { "$currentWindow is not a member of this container" }
       field = currentWindow
     }
 
   fun getOrCreateCurrentWindow(file: VirtualFile): EditorWindow {
     val windows = findWindows(file)
     if (currentWindow == null) {
-      val iterator: Iterator<EditorWindow> = myWindows.iterator()
+      val iterator = this.windows.iterator()
       if (!windows.isEmpty()) {
         setCurrentWindow(windows[0], false)
       }
@@ -703,89 +701,75 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
   }
 
   fun addWindow(window: EditorWindow) {
-    myWindows.add(window)
+    windows.add(window)
   }
 
   fun removeWindow(window: EditorWindow) {
-    myWindows.remove(window)
+    windows.remove(window)
     if (currentWindow == window) {
       currentWindow = null
     }
   }
 
-  fun containsWindow(window: EditorWindow): Boolean {
-    return myWindows.contains(window)
-  }
+  fun containsWindow(window: EditorWindow): Boolean = windows.contains(window)
 
   @Suppress("DEPRECATION")
   @Deprecated("Use {@link #getAllComposites()}")
   fun getEditorComposites(): List<EditorWithProviderComposite> {
-    return myWindows.asSequence().flatMap { it.allComposites }.filterIsInstance(EditorWithProviderComposite::class.java).toList()
+    return windows.asSequence().flatMap { it.allComposites }.filterIsInstance(EditorWithProviderComposite::class.java).toList()
   }
 
-  fun getAllComposites(): List<EditorComposite> = myWindows.flatMap { it.allComposites }
+  fun getAllComposites(): List<EditorComposite> = windows.flatMap { it.allComposites }
   //---------------------------------------------------------
 
   @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
   @Deprecated("Use {@link #getAllComposites(VirtualFile)}")
   fun findEditorComposites(file: VirtualFile): List<EditorWithProviderComposite> {
-    return ContainerUtil.filterIsInstance(getAllComposites(file), EditorWithProviderComposite::class.java)
+    return getAllComposites(file).filterIsInstance(EditorWithProviderComposite::class.java)
   }
 
-  fun getAllComposites(file: VirtualFile): List<EditorComposite?> {
-    return ContainerUtil.mapNotNull(myWindows) { it: EditorWindow -> it.getComposite(file) }
-  }
+  fun getAllComposites(file: VirtualFile): List<EditorComposite> = windows.mapNotNull { it.getComposite(file) }
 
-  private fun findWindows(file: VirtualFile): List<EditorWindow?> {
-    val result: MutableList<EditorWindow?> = ArrayList(myWindows.size)
-    for (window in myWindows) {
-      if (window.getComposite(file) != null) {
-        result.add(window)
-      }
-    }
-    return result
-  }
+  private fun findWindows(file: VirtualFile): List<EditorWindow> = windows.filter { it.getComposite(file) != null }
 
-  val windows: Array<EditorWindow>
-    get() = myWindows.toTypedArray()
+  fun getWindows(): Array<EditorWindow> = windows.toTypedArray()
   // Collector for windows in tree ordering:
 
   // get root component and traverse splitters tree:
-  val orderedWindows: List<EditorWindow>
-    get() {
-      val result = ArrayList<EditorWindow>()
+  fun getOrderedWindows(): List<EditorWindow> {
+    val result = ArrayList<EditorWindow>()
 
-      // Collector for windows in tree ordering:
-      class WindowCollector {
-        fun collect(panel: JPanel) {
-          val component = panel.getComponent(0)
-          if (component is Splitter) {
-            collect(component.firstComponent as JPanel)
-            collect(component.secondComponent as JPanel)
-          }
-          else if (component is JPanel || component is JBTabs) {
-            findWindowWith(component)?.let {
-              result.add(it)
-            }
+    // Collector for windows in tree ordering:
+    class WindowCollector {
+      fun collect(panel: JPanel) {
+        val component = panel.getComponent(0)
+        if (component is Splitter) {
+          collect(component.firstComponent as JPanel)
+          collect(component.secondComponent as JPanel)
+        }
+        else if (component is JPanel || component is JBTabs) {
+          findWindowWith(component)?.let {
+            result.add(it)
           }
         }
       }
-
-      // get root component and traverse splitters tree:
-      if (componentCount != 0) {
-        val comp = getComponent(0)
-        LOG.assertTrue(comp is JPanel)
-        val panel = comp as JPanel
-        if (panel.componentCount != 0) {
-          WindowCollector().collect(panel)
-        }
-      }
-      LOG.assertTrue(result.size == myWindows.size)
-      return result
     }
 
+    // get root component and traverse splitters tree:
+    if (componentCount != 0) {
+      val comp = getComponent(0)
+      LOG.assertTrue(comp is JPanel)
+      val panel = comp as JPanel
+      if (panel.componentCount != 0) {
+        WindowCollector().collect(panel)
+      }
+    }
+    LOG.assertTrue(result.size == windows.size)
+    return result
+  }
+
   internal fun findWindowWith(component: Component): EditorWindow? {
-    return myWindows.firstOrNull { SwingUtilities.isDescendingFrom(component, it.panel) }
+    return windows.firstOrNull { SwingUtilities.isDescendingFrom(component, it.panel) }
   }
 
   open val isFloating: Boolean
@@ -933,7 +917,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeRea
     }
     else {
       fileEditorManager.addSelectionRecord(focusedFile, window)
-      EdtInvocationManager.invokeLaterIfNeeded {
+      fileEditorManager.project.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         window.getComposite(focusedFile)?.let {
           window.setComposite(it, true)
         }
@@ -942,10 +926,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeRea
     return window.panel
   }
 
-  override suspend fun processSplitter(element: Element,
-                               firstChild: Element?,
-                               secondChild: Element?,
-                               context: JPanel?): JPanel {
+  override suspend fun processSplitter(element: Element, firstChild: Element?, secondChild: Element?, context: JPanel?): JPanel {
     if (context == null) {
       val orientation = "vertical" == element.getAttributeValue("split-orientation")
       val proportion = element.getAttributeValue("split-proportion").toFloat()
