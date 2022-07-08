@@ -159,6 +159,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         it.withModule("intellij.c.testing", it.mainJarName)
         it.withModule("intellij.cidr.modulemap.language", it.mainJarName)
       },
+      PluginLayout.simplePlugin("intellij.c.clangd"),
+      PluginLayout.simplePlugin("intellij.c.clangdBridge"),
     ])
   }
 
