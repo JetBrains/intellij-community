@@ -18,7 +18,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -27,8 +26,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.UnmodifiableTextAttributes;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -90,19 +87,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     // initial guess
     setProgressLimit(300 * 2);
-  }
-
-  @NotNull
-  private static String getShortcutText() {
-    String myShortcutText;
-    KeymapManager keymapManager = KeymapManager.getInstance();
-    if (keymapManager == null) {
-      myShortcutText = "";
-    }
-    else {
-      myShortcutText = "(" + KeymapUtil.getShortcutsText(keymapManager.getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)) + ")";
-    }
-    return myShortcutText;
   }
 
   private @NotNull PsiFile getFile() {
@@ -323,7 +307,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     @NlsSafe String tooltip = null;
     if (descriptor.showTooltip()) {
       String rendered = presentation.getTooltip();
-      tooltip = tooltips.intern(DaemonTooltipsUtil.getWrappedTooltip(rendered, shortName, getShortcutText(), showToolDescription(toolWrapper)));
+      tooltip = tooltips.intern(DaemonTooltipsUtil.getWrappedTooltip(rendered, shortName,
+                                                                     showToolDescription(toolWrapper)));
     }
     List<IntentionAction> fixes = getQuickFixes(key, descriptor, emptyActionRegistered);
     HighlightInfo info = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip, element, fixes, key, getColorsScheme(), severityRegistrar);
