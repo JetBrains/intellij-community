@@ -231,4 +231,6 @@ public interface TokenSets {
   );
 
   TokenSet METHOD_IDENTIFIERS = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(mIDENT));
+
+  TokenSet INVALID_INSIDE_REFERENCE = TokenSet.create(mSEMI, mLCURLY, mRCURLY);
 }
