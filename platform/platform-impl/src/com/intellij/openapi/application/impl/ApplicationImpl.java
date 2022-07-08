@@ -399,7 +399,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public final void load() {
-    PluginManagerCore.scheduleDescriptorLoading();
+    PluginManagerCore.scheduleDescriptorLoading(GlobalScope.INSTANCE);
     Sequence<IdeaPluginDescriptorImpl> modules = FutureKt.asCompletableFuture(PluginManagerCore.getInitPluginFuture())
       .join().getEnabledModules();
 

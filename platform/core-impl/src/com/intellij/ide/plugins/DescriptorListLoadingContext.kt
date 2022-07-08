@@ -12,8 +12,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Supplier
 
-private val unitTestWithBundledPlugins = java.lang.Boolean.getBoolean("idea.run.tests.with.bundled.plugins")
-
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
@@ -25,9 +23,7 @@ class DescriptorListLoadingContext constructor(
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,
   @JvmField val transient: Boolean = false
-) : AutoCloseable,
-    ReadModuleContext {
-
+) : AutoCloseable, ReadModuleContext {
   private val toDispose = ConcurrentLinkedQueue<Array<MyXmlInterner?>>()
   // synchronization will ruin parallel loading, so, string pool is local for thread
   private val threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {

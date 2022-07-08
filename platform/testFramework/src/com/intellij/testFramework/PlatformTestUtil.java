@@ -78,6 +78,7 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -157,7 +158,7 @@ public final class PlatformTestUtil {
     return uppercaseChars >= 3;
   }
 
-  static void loadApp(@NotNull Runnable setupEventQueue) throws Throwable {
+  static void loadApp(@NotNull Runnable setupEventQueue) {
     var isHeadless = true;
     if ("false".equals(System.getProperty("java.awt.headless"))) {
       isHeadless = false;
@@ -170,7 +171,7 @@ public final class PlatformTestUtil {
     PluginManagerCore.isUnitTestMode = true;
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
 
-    PluginManagerCore.scheduleDescriptorLoading();
+    PluginManagerCore.scheduleDescriptorLoading(GlobalScope.INSTANCE);
     setupEventQueue.run();
 
     loadAppInUnitTestMode(isHeadless);

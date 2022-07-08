@@ -216,7 +216,7 @@ fun start(mainClass: String,
     Java11Shim.INSTANCE = Java11ShimImpl()
     if (!configImportNeeded) {
       ZipFilePool.POOL = ZipFilePoolImpl()
-      PluginManagerCore.scheduleDescriptorLoading()
+      PluginManagerCore.scheduleDescriptorLoading(this)
     }
 
     launch {
@@ -410,7 +410,7 @@ private suspend fun importConfig(args: List<String>,
   appStarter.importFinished(newConfigDir)
   activity.end()
   if (!PlatformUtils.isRider() || ConfigImportHelper.isConfigImported()) {
-    PluginManagerCore.scheduleDescriptorLoading()
+    PluginManagerCore.scheduleDescriptorLoading(mainScope!!)
   }
 }
 
@@ -879,7 +879,7 @@ fun runStartupWizard() {
     return
   }
   PluginManagerCore.invalidatePlugins()
-  PluginManagerCore.scheduleDescriptorLoading()
+  PluginManagerCore.scheduleDescriptorLoading(mainScope!!)
 }
 
 // the method must be called on EDT

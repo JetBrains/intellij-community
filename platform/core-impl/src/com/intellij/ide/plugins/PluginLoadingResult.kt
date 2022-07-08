@@ -38,7 +38,7 @@ class PluginLoadingResult(
   private val globalErrors = CopyOnWriteArrayList<Supplier<String>>()
 
   @VisibleForTesting
-  @JvmField val shadowedBundledIds = HashSet<PluginId>()
+  @JvmField val shadowedBundledIds: MutableSet<PluginId> = Collections.newSetFromMap(ConcurrentHashMap())
 
   @get:TestOnly
   val hasPluginErrors: Boolean
