@@ -11,4 +11,5 @@ public class F: implements B {
 
     }
 }
+// CRI_IGNORE
 // FIR_COMPARISON
