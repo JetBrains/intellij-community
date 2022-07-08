@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -28,7 +27,7 @@ class ConvertToIsArrayOfCallFix(
     element: KtIsExpression,
     lhsType: KotlinType,
     arrayArgumentType: KotlinType,
-) : KotlinQuickFixAction<KtIsExpression>(element), HighPriorityAction {
+) : KotlinQuickFixAction<KtIsExpression>(element) {
     private val lhsIsNonNullableArray = !lhsType.isNullable() && lhsType.isArrayOrNullableArray()
 
     private val arrayArgumentTypeText = IdeDescriptorRenderers.SOURCE_CODE_TYPES.renderType(arrayArgumentType)

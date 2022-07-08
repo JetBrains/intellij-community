@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.isArrayOrNullableArray
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 
 class ChangeToStarProjectionFix(element: KtTypeElement) : KotlinQuickFixAction<KtTypeElement>(element) {
@@ -43,6 +45,7 @@ class ChangeToStarProjectionFix(element: KtTypeElement) : KotlinQuickFixAction<K
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+            if (diagnostic.isArrayInstanceCheck()) return null
             val binaryExpr = diagnostic.psiElement.getNonStrictParentOfType<KtBinaryExpressionWithTypeRHS>()
             val typeReference = binaryExpr?.right ?: diagnostic.psiElement.getNonStrictParentOfType<KtTypeReference>()
             val typeElement = typeReference?.typeElement ?: return null
@@ -81,6 +84,9 @@ class ChangeToStarProjectionFix(element: KtTypeElement) : KotlinQuickFixAction<K
             }
             return null
         }
+
+        private fun Diagnostic.isArrayInstanceCheck(): Boolean =
+            factory == Errors.CANNOT_CHECK_FOR_ERASED && Errors.CANNOT_CHECK_FOR_ERASED.cast(this).a.isArrayOrNullableArray()
 
         private fun KtSimpleNameExpression.isAsKeyword(): Boolean {
             val elementType = getReferencedNameElementType()
