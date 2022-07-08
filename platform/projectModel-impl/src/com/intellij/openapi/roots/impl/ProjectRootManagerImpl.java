@@ -414,6 +414,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
+  @Deprecated
   @Override
   public void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents) {
     if (myProject.isDisposed()) {
