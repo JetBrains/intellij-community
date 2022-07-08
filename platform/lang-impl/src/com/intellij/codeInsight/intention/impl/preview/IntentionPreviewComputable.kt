@@ -65,7 +65,7 @@ internal class IntentionPreviewComputable(private val project: Project,
       throw e
     }
     catch (e: Exception) {
-      logger<IntentionPreviewComputable>().debug("There are exceptions on invocation the intention: '${action.text}' on a copy of the file.", e)
+      logger<IntentionPreviewComputable>().error("There are exceptions on invocation the intention: '${action.text}' on a copy of the file.", e)
       return null
     }
   }
