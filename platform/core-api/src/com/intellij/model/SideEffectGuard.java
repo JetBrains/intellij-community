@@ -15,8 +15,12 @@ import java.util.EnumSet;
 @ApiStatus.Internal
 public interface SideEffectGuard {
   static <T, E extends Throwable> T computeWithoutSideEffects(ThrowableComputable<T, E> supplier) throws E {
+    return computeWithAllowedSideEffects(SideEffectGuardImpl.NO_EFFECTS, supplier);
+  }
+
+  static <T, E extends Throwable> T computeWithAllowedSideEffects(EnumSet<EffectType> effects, ThrowableComputable<T, E> supplier) throws E {
     EnumSet<EffectType> previous = SideEffectGuardImpl.ourSideEffects.get();
-    SideEffectGuardImpl.ourSideEffects.set(SideEffectGuardImpl.NO_EFFECTS);
+    SideEffectGuardImpl.ourSideEffects.set(effects.clone());
     try {
       return supplier.compute();
     }
