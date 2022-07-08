@@ -1586,6 +1586,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("array.kt")
+            public void testArray() throws Exception {
+                runTest("testData/quickfix/addStarProjections/checkType/array.kt");
+            }
+
             @TestMetadata("changeToStarProjectionMultipleParameters.kt")
             public void testChangeToStarProjectionMultipleParameters() throws Exception {
                 runTest("testData/quickfix/addStarProjections/checkType/changeToStarProjectionMultipleParameters.kt");
@@ -3520,6 +3525,49 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("unit.kt")
         public void testUnit() throws Exception {
             runTest("testData/quickfix/convertToAnonymousObject/unit.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/convertToIsArrayOfCall")
+    public static class ConvertToIsArrayOfCall extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("arrayLhs.kt")
+        public void testArrayLhs() throws Exception {
+            runTest("testData/quickfix/convertToIsArrayOfCall/arrayLhs.kt");
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("testData/quickfix/convertToIsArrayOfCall/basic.kt");
+        }
+
+        @TestMetadata("list.kt")
+        public void testList() throws Exception {
+            runTest("testData/quickfix/convertToIsArrayOfCall/list.kt");
+        }
+
+        @TestMetadata("negatedArrayLhs.kt")
+        public void testNegatedArrayLhs() throws Exception {
+            runTest("testData/quickfix/convertToIsArrayOfCall/negatedArrayLhs.kt");
+        }
+
+        @TestMetadata("negatedBasic.kt")
+        public void testNegatedBasic() throws Exception {
+            runTest("testData/quickfix/convertToIsArrayOfCall/negatedBasic.kt");
+        }
+
+        @TestMetadata("negatedNullableArrayLhs.kt")
+        public void testNegatedNullableArrayLhs() throws Exception {
+            runTest("testData/quickfix/convertToIsArrayOfCall/negatedNullableArrayLhs.kt");
+        }
+
+        @TestMetadata("nullableArrayLhs.kt")
+        public void testNullableArrayLhs() throws Exception {
+            runTest("testData/quickfix/convertToIsArrayOfCall/nullableArrayLhs.kt");
         }
     }
 
