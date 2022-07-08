@@ -21,8 +21,6 @@ import java.lang.ref.Reference;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class LanguageLevelUtil {
   /**
@@ -119,22 +117,25 @@ public class LanguageLevelUtil {
     PsiClass containingClass = member.getContainingClass();
     if (containingClass instanceof PsiAnonymousClass) return null;
     if (member instanceof PsiClass && !(member.getParent() instanceof PsiClass || member.getParent() instanceof PsiFile)) return null;
-    if (member instanceof PsiMethod) {
-      List<LanguageLevel> latestIncompatible = Stream.concat(Stream.of((PsiMethod)member), Stream.of(((PsiMethod)member).findSuperMethods()))
-        .map(method -> {
-          String signature = getSignature(method);
-          if (signature == null) return null;
-          return getLastIncompatibleLanguageLevelForSignature(signature, languageLevel);
-        }).collect(Collectors.toList());
-      if (latestIncompatible.contains(null)) return null;
-      return latestIncompatible.stream().min(Comparator.comparing(LanguageLevel::toJavaVersion)).orElse(null);
-    } else {
-      String signature = getSignature(member);
-      if (signature == null) return null;
-      LanguageLevel lastIncompatibleLanguageLevel = getLastIncompatibleLanguageLevelForSignature(signature, languageLevel);
-      if (lastIncompatibleLanguageLevel != null) return lastIncompatibleLanguageLevel;
-      return null;
+    String signature = getSignature(member);
+    if (signature == null) return null;
+    LanguageLevel lastLanguageLevel = getLastIncompatibleLanguageLevelForSignature(signature, languageLevel);
+    if (lastLanguageLevel != null) {
+      if (member instanceof PsiMethod && !((PsiMethod)member).isConstructor()) {
+        LanguageLevel lowestSuperLanguageLevel = lastLanguageLevel;
+        for (PsiMethod method : ((PsiMethod)member).findSuperMethods()) {
+          String superSignature = getSignature(method);
+          if (superSignature == null) return null;
+          LanguageLevel lastSuperLanguageLevel = getLastIncompatibleLanguageLevelForSignature(superSignature, languageLevel);
+          if (lastSuperLanguageLevel == null) return null;
+          if (lastSuperLanguageLevel.isLessThan(lowestSuperLanguageLevel)) {
+            lowestSuperLanguageLevel = lastSuperLanguageLevel;
+          }
+        }
+        return lowestSuperLanguageLevel;
+      }
     }
+    return lastLanguageLevel;
   }
 
   private static LanguageLevel getLastIncompatibleLanguageLevelForSignature(@NotNull String signature, @NotNull LanguageLevel languageLevel) {
