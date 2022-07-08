@@ -55,7 +55,7 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
                 .except<CancellationException, _>()
                 .onFailure { failures.add(OperationFailure(OperationType.ADD, dependency, it)) }
                 .getOrNull()
-                ?: catchingReadAction { modifierService.addDependency(operationMetadata.module.nativeModule, dependency) }
+                ?: catchingWriteAction { modifierService.addDependency(operationMetadata.module.nativeModule, dependency) }
                     .onFailure { failures.add(OperationFailure(OperationType.ADD, dependency, it)) }
 
             return failures
@@ -75,7 +75,7 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
             val failures = mutableListOf<OperationFailure<out OperationItem>>()
             val modifierService = DependencyModifierService.getInstance(module.nativeModule.project)
 
-            catchingReadAction { modifierService.removeDependency(operationMetadata.module.nativeModule, dependency) }
+            catchingWriteAction { modifierService.removeDependency(operationMetadata.module.nativeModule, dependency) }
                 .onFailure { failures.add(OperationFailure(OperationType.REMOVE, dependency, it)) }
 
             return failures
@@ -101,7 +101,7 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
             val failures = mutableListOf<OperationFailure<out OperationItem>>()
             val modifierService = DependencyModifierService.getInstance(module.nativeModule.project)
 
-            catchingReadAction { modifierService.updateDependency(operationMetadata.module.nativeModule, oldDependency, newDependency) }
+            catchingWriteAction { modifierService.updateDependency(operationMetadata.module.nativeModule, oldDependency, newDependency) }
                 .onFailure { failures.add(OperationFailure(OperationType.REMOVE, oldDependency, it)) }
 
             return failures
@@ -120,7 +120,7 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
             val failures = mutableListOf<OperationFailure<out OperationItem>>()
             val modifierService = DependencyModifierService.getInstance(module.nativeModule.project)
 
-            catchingReadAction { modifierService.addRepository(module.nativeModule, repository) }
+            catchingWriteAction { modifierService.addRepository(module.nativeModule, repository) }
                 .onFailure { failures.add(OperationFailure(OperationType.ADD, repository, it)) }
 
             return failures
@@ -132,7 +132,7 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
         ): List<OperationFailure<out OperationItem>> {
             val failures = mutableListOf<OperationFailure<out OperationItem>>()
             val modifierService = DependencyModifierService.getInstance(module.nativeModule.project)
-            catchingReadAction { modifierService.deleteRepository(module.nativeModule, repository) }
+            catchingWriteAction { modifierService.deleteRepository(module.nativeModule, repository) }
                 .onFailure { failures.add(OperationFailure(OperationType.ADD, repository, it)) }
             return failures
         }
@@ -183,3 +183,5 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
 private inline fun <reified T : Throwable, R> Result<R>.except(): Result<R> = onFailure { if (it is T) throw it }
 
 private suspend fun <T> catchingReadAction(action: () -> T) = readAction { runCatching { action() } }
+
+private suspend fun <T> catchingWriteAction(action: () -> T) = writeAction { runCatching { action() } }
