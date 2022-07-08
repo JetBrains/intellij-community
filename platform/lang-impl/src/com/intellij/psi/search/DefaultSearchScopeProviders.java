@@ -31,48 +31,6 @@ import java.util.List;
 public final class DefaultSearchScopeProviders {
   private DefaultSearchScopeProviders() {}
 
-  public static class Favorites implements SearchScopeProvider {
-    @Override
-    public String getDisplayName() {
-      return LangBundle.message("default.search.scope.favourites.display.name");
-    }
-
-    @NotNull
-    @Override
-    public List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
-      FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
-      if (favoritesManager == null) return Collections.emptyList();
-      List<SearchScope> result = new ArrayList<>();
-      for (String favorite : favoritesManager.getAvailableFavoritesListNames()) {
-        Collection<TreeItem<Pair<AbstractUrl, String>>> rootUrls = favoritesManager.getFavoritesListRootUrls(favorite);
-        if (rootUrls.isEmpty()) continue;  // ignore unused root
-        result.add(new GlobalSearchScope(project) {
-          @NotNull
-          @Override
-          public String getDisplayName() {
-            return LangBundle.message("default.search.scope.favourite.display.name", favorite);
-          }
-
-          @Override
-          public boolean contains(@NotNull VirtualFile file) {
-            return ReadAction.compute(() -> favoritesManager.contains(favorite, file));
-          }
-
-          @Override
-          public boolean isSearchInModuleContent(@NotNull Module aModule) {
-            return true;
-          }
-
-          @Override
-          public boolean isSearchInLibraries() {
-            return true;
-          }
-        });
-      }
-      return result;
-    }
-  }
-
   public static class CustomNamed implements SearchScopeProvider {
     @Override
     public String getDisplayName() {

@@ -1059,9 +1059,6 @@
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
-  <action id="AddToFavoritesPopup">
-    <keyboard-shortcut first-keystroke="alt shift F"/>
-  </action>
   <action id="CodeInspection.OnEditor">
     <keyboard-shortcut first-keystroke="alt shift I"/>
   </action>

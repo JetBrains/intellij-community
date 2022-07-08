@@ -20,7 +20,6 @@
     <action id="ActivateVersionControlToolWindow">
         <keyboard-shortcut first-keystroke="shift ctrl g" />
     </action>
-    <action id="AddToFavoritesPopup" />
     <action id="Arrangement.Alias.Rule.Edit" />
     <action id="Arrangement.Alias.Rule.Match.Condition.Move.Up" />
     <action id="Arrangement.Alias.Rule.Remove">

@@ -1,11 +1,6 @@
 <idea-plugin>
   <actions>
     <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
-    <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesPopupAction"/>
-    <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesActionGroup" popup="true"/>
-    <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddAllToFavoritesActionGroup" popup="true"/>
-    <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.AddNewFavoritesListAction"/>
-    <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
 
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
     <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" icon="AllIcons.Actions.Execute"/>
@@ -88,10 +83,6 @@
 
     <group id="NewProjectOrModuleGroup">
     </group>
-
-    <reference ref="AddToFavorites">
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="PrintExportGroup"/>
-    </reference>
 
     <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction">
       <add-to-group group-id="FileMenu" anchor="after" relative-to-action="FileOtherSettingsGroup"/>
@@ -845,8 +836,6 @@
       <separator/>
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuRunGroup"/>
@@ -872,9 +861,6 @@
       <separator/>
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
-      <action id="EditFavorites" class="com.intellij.ide.favoritesTreeView.actions.EditFavoritesAction"/>
-      <reference ref="AddToFavorites"/>
-      <reference ref="SendToFavoritesGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
@@ -960,8 +946,6 @@
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
@@ -1009,8 +993,6 @@
       <reference ref="Scratch.ChangeLanguage"/>
       <reference ref="AssociateWithFileType"/>
       <reference ref="MarkFileAs"/>
-      <reference ref="AddToFavorites"/>
-      <reference ref="AddAllToFavorites"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
@@ -1035,8 +1017,6 @@
       <action id="UsageView.Remove" class="com.intellij.usages.actions.RemoveUsageAction" use-shortcut-of="$Cut"/>
       <separator/>
       <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" use-shortcut-of="ShowSearchHistory"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
       <separator/>
       <reference ref="RunContextGroup"/>
       <separator/>
@@ -1083,8 +1063,6 @@
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
@@ -1555,7 +1533,7 @@
     </reference>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
-      <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
+      <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
     </action>
     <action id="UpdateRunningApplication" class="com.intellij.execution.update.UpdateRunningApplicationAction">
       <keyboard-shortcut first-keystroke="control F10" keymap="$default"/>

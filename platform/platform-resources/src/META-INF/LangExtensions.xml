@@ -575,7 +575,6 @@
     <customScopesProvider implementation="com.intellij.packageDependencies.DefaultScopesProvider" id="default" order="first"/>
     <customScopesProvider implementation="com.intellij.openapi.fileEditor.impl.OpenFilesScope$Provider" order="last"/>
 
-    <searchScopesProvider implementation="com.intellij.psi.search.DefaultSearchScopeProviders$Favorites"/>
     <searchScopesProvider implementation="com.intellij.psi.search.DefaultSearchScopeProviders$CustomNamed" order="last"/>
 
     <refactoring.elementListenerProvider implementation="com.intellij.packageDependencies.ui.RefactoringScopeElementListenerProvider"/>
@@ -948,8 +947,6 @@
 
     <toolWindow id="Structure" anchor="left" icon="AllIcons.Toolwindows.ToolWindowStructure" secondary="true"
                 factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
-    <toolWindow id="Favorites" anchor="left" icon="AllIcons.Toolwindows.ToolWindowFavorites" secondary="true"
-                factoryClass="com.intellij.ide.projectView.impl.FavoritesViewToolWindowFactory" order="after Structure"/>
     <toolWindow id="Bookmarks" anchor="left" icon="AllIcons.Toolwindows.ToolWindowBookmarks" secondary="true"
                 factoryClass="com.intellij.ide.bookmark.ui.BookmarksViewFactory" order="after Structure"/>
     <toolWindowExtractorMode id="Bookmarks" mode="mirror"/>

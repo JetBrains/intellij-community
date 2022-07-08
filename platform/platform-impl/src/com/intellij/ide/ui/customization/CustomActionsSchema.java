@@ -82,7 +82,6 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     idToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.getEditorTabPopup());
     idToName.put(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.getProjectViewPopup());
     idToName.put(IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionsTreeUtil.getScopeViewPopupMenu());
-    idToName.put(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.getFavoritesPopup());
     idToName.put(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.getCommanderPopup());
     idToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.getJ2EEPopup());
     idToName.put(IdeActions.GROUP_NAVBAR_POPUP, ActionsTreeUtil.getNavigationBarPopupMenu());

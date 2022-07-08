@@ -229,8 +229,6 @@
       <reference ref="ShowPackageDepsGroup"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>

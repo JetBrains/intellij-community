@@ -773,10 +773,6 @@ public final class ActionsTreeUtil {
     return KeyMapBundle.message("editor.tab.popup.menu.title");
   }
 
-  @Nls
-  public static String getFavoritesPopup() {
-    return KeyMapBundle.message("favorites.popup.title");
-  }
 
   @Nls
   public static String getProjectViewPopup() {
