@@ -12,7 +12,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
@@ -21,6 +20,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemP
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.*
+import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
 import java.util.*
 
@@ -104,7 +104,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
 fun Panel.kmpWizardLink(context: WizardContext) {
     this.row {
-        text(KotlinBundle.message("project.wizard.new.project.kotlin.comment"),
+        text(KotlinNewProjectWizardUIBundle.message("project.wizard.new.project.kotlin.comment"),
              action = HyperlinkEventAction {
                  context.requestSwitchTo(NewProjectWizardModuleBuilder.MODULE_BUILDER_ID) { }
              })
