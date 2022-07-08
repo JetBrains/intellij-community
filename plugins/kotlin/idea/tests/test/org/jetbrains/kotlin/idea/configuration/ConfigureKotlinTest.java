@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -140,7 +141,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
 
         // Emulate project root change, as after changing Kotlin language settings in the preferences
         WriteAction.runAndWait(() -> {
-            ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
+            ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(EmptyRunnable.INSTANCE, RootsChangeRescanningInfo.NO_RESCAN_NEEDED);
         });
 
         assertEquals(LanguageVersion.KOTLIN_1_6, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(getModule()).getLanguageVersion());
