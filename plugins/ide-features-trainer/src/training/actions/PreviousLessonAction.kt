@@ -2,6 +2,7 @@
 package training.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import training.learn.CourseManager
@@ -19,6 +20,8 @@ private class PreviousLessonAction : AnAction(AllIcons.Actions.Back) {
     StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.OPEN_NEXT_OR_PREV_LESSON)
     CourseManager.instance.openLesson(project, previousLesson, LessonStartingWay.PREV_BUTTON)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val project = e.project
