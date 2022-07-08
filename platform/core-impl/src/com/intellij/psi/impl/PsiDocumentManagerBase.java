@@ -671,7 +671,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (app.isDispatchThread()) {
       runActionsWhenAllCommitted();
     }
-    else {
+    else if (isEventSystemEnabled(document)) {
       app.invokeLater(() -> runActionsWhenAllCommitted(), myProject.getDisposed());
     }
   }
