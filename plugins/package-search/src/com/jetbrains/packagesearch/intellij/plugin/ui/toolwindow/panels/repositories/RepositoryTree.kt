@@ -99,7 +99,7 @@ internal class RepositoryTree(
     private fun openFile(repositoryModuleItem: RepositoryTreeItem.Module, focusEditor: Boolean = false) {
         if (!PackageSearchGeneralConfiguration.getInstance(project).autoScrollToSource) return
 
-        val file = repositoryModuleItem.usageInfo.projectModule.buildFile
+        val file = repositoryModuleItem.usageInfo.projectModule.buildFile ?: return
         FileEditorManager.getInstance(project).openFile(file, focusEditor, true)
     }
 

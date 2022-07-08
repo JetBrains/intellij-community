@@ -59,6 +59,7 @@ internal class MavenModuleTransformer : CoroutineModuleTransformer {
             nativeModule = nativeModule,
             parent = null,
             buildFile = buildFile,
+            projectDir = mavenProject.directoryFile,
             buildSystemType = BuildSystemType.MAVEN,
             moduleType = MavenProjectModuleType,
             availableScopes = PackageSearchMavenConfiguration.getInstance(project).getMavenScopes(),

@@ -122,7 +122,7 @@ internal suspend fun fetchProjectDependencies(
 }
 
 internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, json: Json) = coroutineScope {
-    val fileHashCode = buildFile.hashCode()
+    val fileHashCode = buildFile?.hashCode() ?: return@coroutineScope emptyList()
 
     val cacheFile = File(cacheDirectory.absolutePathString(), "$fileHashCode.json")
 

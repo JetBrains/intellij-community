@@ -99,7 +99,7 @@ internal val Project.trustedProjectFlow: Flow<Boolean>
         }
     }.distinctUntilChanged()
 
-internal val Project.nativeModulesChangesFlow
+internal val Project.nativeModulesFlow
     get() = messageBusFlow(ProjectTopics.MODULES, { getNativeModules() }) {
         object : ModuleListener {
             override fun moduleAdded(project: Project, module: Module) {

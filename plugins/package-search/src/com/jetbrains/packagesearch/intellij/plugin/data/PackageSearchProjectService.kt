@@ -43,7 +43,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.mapLatestTimedWithLoadin
 import com.jetbrains.packagesearch.intellij.plugin.util.modifiedBy
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleTransformers
-import com.jetbrains.packagesearch.intellij.plugin.util.nativeModulesChangesFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.nativeModulesFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCachesService
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
@@ -122,7 +122,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, false)
 
     private val projectModulesSharedFlow = project.trustedProjectFlow.flatMapLatest { isProjectTrusted ->
-        if (isProjectTrusted) project.nativeModulesChangesFlow else flowOf(emptyList())
+        if (isProjectTrusted) project.nativeModulesFlow else flowOf(emptyList())
     }
         .replayOnSignals(
             retryFromErrorChannel.receiveAsFlow().throttle(10.seconds),
@@ -281,7 +281,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         // when the data is finally available or changes for PackageUpdateInspection
         // or when a build file changes
         packageUpgradesStateFlow.throttle(5.seconds)
-            .map { projectModulesStateFlow.value.map { it.buildFile.path }.toSet() }
+            .map { projectModulesStateFlow.value.mapNotNull { it.buildFile?.path }.toSet() }
             .filter { it.isNotEmpty() }
             .flatMapLatest { knownBuildFiles ->
                 FileEditorManager.getInstance(project).openFiles

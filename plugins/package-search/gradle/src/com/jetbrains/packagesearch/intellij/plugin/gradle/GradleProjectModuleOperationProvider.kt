@@ -147,7 +147,7 @@ internal open class GradleProjectModuleOperationProvider : AbstractCoroutineProj
                 taskName = taskName,
                 project = module.nativeModule.project,
                 executionName = GradleBundle.message("gradle.dependency.analyzer.loading"),
-                projectPath = module.buildFile.parent.path,
+                projectPath = module.projectDir.path,
                 gradlePath = gradlePath
             )
         }

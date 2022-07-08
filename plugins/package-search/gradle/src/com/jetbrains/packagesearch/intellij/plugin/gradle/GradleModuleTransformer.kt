@@ -19,7 +19,6 @@ package com.jetbrains.packagesearch.intellij.plugin.gradle
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -37,6 +36,7 @@ import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.io.File
 
 internal class GradleModuleTransformer : CoroutineModuleTransformer {
 
@@ -81,34 +81,68 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
         }
     }
 
-    override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
-        nativeModules.filter { it.isNotGradleSourceSetModule() }
-            .mapNotNull { nativeModule ->
-                val externalProject = findExternalProjectOrNull(project, nativeModule, recursiveSearch = false)
-                    ?: return@mapNotNull null
-                val buildFile = externalProject.buildFile ?: return@mapNotNull null
-                val buildVirtualFile = LocalFileSystem.getInstance().findFileByPath(buildFile.absolutePath) ?: return@mapNotNull null
-                val buildSystemType = if (isKotlinDsl(project, buildVirtualFile)) {
-                    BuildSystemType.GRADLE_KOTLIN
-                } else {
-                    BuildSystemType.GRADLE_GROOVY
-                }
-                val scopes: List<String> = GradleExtensionsSettings.getInstance(project)
-                    .getExtensionsFor(nativeModule)?.configurations?.keys?.toList() ?: emptyList()
+    override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> {
+        val nativeModulesByExternalProjectId = mutableMapOf<String, Module>()
 
-                ProjectModule(
-                    name = externalProject.name,
-                    nativeModule = nativeModule,
-                    parent = null,
-                    buildFile = buildVirtualFile,
-                    buildSystemType = buildSystemType,
-                    moduleType = GradleProjectModuleType,
-                    availableScopes = scopes,
-                    dependencyDeclarationCallback = getDependencyDeclarationCallback(project, buildVirtualFile)
-                )
+        val rootProjects = nativeModules
+            .filter { it.isNotGradleSourceSetModule() }
+            .onEach { module ->
+                val externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module)
+                if (externalProjectId != null) nativeModulesByExternalProjectId[externalProjectId] = module
             }
-            .flatMap { getAllSubmodules(project, it) }
-            .distinctBy { it.buildFile }
+            .mapNotNull { findRootExternalProjectOrNull(project, it) }
+            .distinctBy { it.buildDir }
+
+        val projectModulesByProjectDir = mutableMapOf<File, ProjectModule>()
+        rootProjects.forEach { it.buildProjectModulesRecursively(projectModulesByProjectDir, nativeModulesByExternalProjectId, project) }
+
+        return projectModulesByProjectDir.values.toList()
+    }
+
+    private suspend fun ExternalProject.buildProjectModulesRecursively(
+        projectModulesByProjectDir: MutableMap<File, ProjectModule>,
+        nativeModulesByExternalProjectId: Map<String, Module>,
+        project: Project,
+        parent: ProjectModule? = null
+    ) {
+        val nativeModule = checkNotNull(nativeModulesByExternalProjectId[id]) { "Couldn't find native module for '$id'" }
+
+        val buildVirtualFile = buildFile?.absolutePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+        val projectVirtualDir = checkNotNull(LocalFileSystem.getInstance().findFileByPath(projectDir.absolutePath)) {
+            "Couldn't find virtual file for build directory $projectDir in module $name"
+        }
+
+        val buildSystemType = when {
+            buildVirtualFile == null -> BuildSystemType.GRADLE_CONTAINER
+            isKotlinDsl(project, buildVirtualFile) -> BuildSystemType.GRADLE_KOTLIN
+            else -> BuildSystemType.GRADLE_GROOVY
+        }
+        val scopes: List<String> = GradleExtensionsSettings.getInstance(project)
+            .getExtensionsFor(nativeModule)?.configurations?.keys?.toList() ?: emptyList()
+
+        val projectModule = ProjectModule(
+            name = name,
+            nativeModule = nativeModule,
+            parent = parent,
+            buildFile = buildVirtualFile,
+            projectDir = projectVirtualDir,
+            buildSystemType = buildSystemType,
+            moduleType = GradleProjectModuleType,
+            availableScopes = scopes,
+            dependencyDeclarationCallback = getDependencyDeclarationCallback(project, buildVirtualFile)
+        )
+
+        for (childExternalProject in childProjects.values) {
+            childExternalProject.buildProjectModulesRecursively(
+                projectModulesByProjectDir,
+                nativeModulesByExternalProjectId,
+                project,
+                parent = projectModule
+            )
+        }
+
+        projectModulesByProjectDir[projectDir] = projectModule
+    }
 
     private suspend fun isKotlinDsl(
         project: Project,
@@ -124,32 +158,7 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
         return ExternalSystemApiUtil.getExternalModuleType(this) != GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY
     }
 
-    private suspend fun getAllSubmodules(project: Project, rootModule: ProjectModule): List<ProjectModule> {
-        val externalRootProject = findExternalProjectOrNull(project, rootModule.nativeModule)
-            ?: return emptyList()
-
-        val modules = mutableListOf(rootModule)
-        externalRootProject.addChildrenToListRecursive(modules, rootModule, project)
-        return modules
-    }
-
-    private fun findExternalProjectOrNull(
-        project: Project,
-        module: Module,
-        recursiveSearch: Boolean = true
-    ): ExternalProject? {
-        if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
-            return null
-        }
-
-        val externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module)
-        if (externalProjectId == null) {
-            logDebug(this::class.qualifiedName) {
-                "Module has no external project ID, project=${project.projectFilePath}, module=${module.moduleFilePath}"
-            }
-            return null
-        }
-
+    private fun findRootExternalProjectOrNull(project: Project, module: Module): ExternalProject? {
         val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
         if (rootProjectPath == null) {
             logDebug(this::class.qualifiedName) {
@@ -159,72 +168,17 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
         }
 
         val externalProjectDataCache = ExternalProjectDataCache.getInstance(project)
-        val externalProject = externalProjectDataCache.getRootExternalProject(rootProjectPath)
-        if (externalProject == null) {
-            logDebug(this::class.qualifiedName) {
-                "External project is not yet cached, project=${project.projectFilePath}, module=${module.moduleFilePath}"
-            }
-            return null
-        }
-        return externalProject.findProjectWithId(externalProjectId, recursiveSearch)
-    }
-
-    private fun ExternalProject.findProjectWithId(
-        externalProjectId: String,
-        recursiveSearch: Boolean
-    ): ExternalProject? {
-        if (externalProjectId == this.id) return this
-
-        if (!recursiveSearch) return null
-
-        val childExternalProjects = childProjects.values
-        if (childExternalProjects.isEmpty()) return null
-
-        for (childExternalProject in childExternalProjects) {
-            if (childExternalProject.id == externalProjectId) return childExternalProject
-            val recursiveExternalProject = childExternalProject.findProjectWithId(externalProjectId, recursiveSearch)
-            if (recursiveExternalProject != null) return recursiveExternalProject
-        }
-        return null
-    }
-
-    private suspend fun ExternalProject.addChildrenToListRecursive(
-        modules: MutableList<ProjectModule>,
-        currentModule: ProjectModule,
-        project: Project
-    ) {
-        val localFileSystem = LocalFileSystem.getInstance()
-
-        for (externalProject in childProjects.values) {
-            val projectBuildFile = externalProject.buildFile?.absolutePath?.let { localFileSystem.findFileByPath(it) }
-                ?: continue
-            val nativeModule = readAction { ModuleUtilCore.findModuleForFile(projectBuildFile, project) }
-                ?: continue
-
-            val projectModule = ProjectModule(
-                name = externalProject.name,
-                nativeModule = nativeModule,
-                parent = currentModule,
-                buildFile = projectBuildFile,
-                buildSystemType = BuildSystemType.GRADLE_GROOVY,
-                moduleType = GradleProjectModuleType,
-                availableScopes = emptyList(),
-                dependencyDeclarationCallback = getDependencyDeclarationCallback(project, projectBuildFile)
-            )
-
-            modules += projectModule
-            externalProject.addChildrenToListRecursive(modules, projectModule, project)
-        }
+        return externalProjectDataCache.getRootExternalProject(rootProjectPath)
     }
 
     private fun getDependencyDeclarationCallback(
         project: Project,
-        buildVirtualFile: VirtualFile
+        buildVirtualFile: VirtualFile?
     ): DependencyDeclarationCallback = { dependency ->
         project.lifecycleScope.future {
             readAction {
-                PsiManager.getInstance(project)
-                    .findFile(buildVirtualFile)
+                buildVirtualFile ?: return@readAction null
+                PsiManager.getInstance(project).findFile(buildVirtualFile)
                     ?.let { findDependencyElementIndex(it, dependency) }
             }
         }

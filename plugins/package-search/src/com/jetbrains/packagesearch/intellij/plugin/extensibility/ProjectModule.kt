@@ -25,6 +25,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -32,9 +33,11 @@ import java.util.concurrent.CompletableFuture
  *
  * @param name the name of the module.
  * @param nativeModule the native [Module] it refers to.
- * @param parent the parent [Module] of this object.
+ * @param parent the parent [ProjectModule] of this object.
  * @param buildFile The build file used by this module (e.g. `pom.xml` for Maven, `build.gradle` for Gradle).
- * @param moduleType The additional Package Searcxh related data such as project icons, additional localizations and so on.
+ * @param projectDir The corresponding directory in the virtual filesystem for this module.
+ * @param buildSystemType The type of the build system file used in this module (e.g., 'gradle-kotlin', 'gradle-groovy', etc.)
+ * @param moduleType The additional Package Search related data such as project icons, additional localizations and so on.
  * listed in the Dependency Analyzer tool. At the moment the DA only supports Gradle and Maven.
  * @param availableScopes Scopes available for the build system of this module (e.g. `implementation`, `api` for Gradle;
  * `test`, `compile` for Maven).
@@ -45,7 +48,8 @@ data class ProjectModule @JvmOverloads constructor(
     @NlsSafe val name: String,
     val nativeModule: Module,
     val parent: ProjectModule?,
-    val buildFile: VirtualFile,
+    val buildFile: VirtualFile?,
+    val projectDir: VirtualFile,
     val buildSystemType: BuildSystemType,
     val moduleType: ProjectModuleType,
     val availableScopes: List<String> = emptyList(),
@@ -55,8 +59,9 @@ data class ProjectModule @JvmOverloads constructor(
     @Suppress("UNUSED_PARAMETER")
     @Deprecated(
         "Use main constructor",
-        ReplaceWith("ProjectModule(name, nativeModule, parent, buildFile, buildSystemType, moduleType)")
+        ReplaceWith("ProjectModule(name, nativeModule, parent, buildFile, projectDir, buildSystemType, moduleType)")
     )
+    @ScheduledForRemoval
     constructor(
         name: String,
         nativeModule: Module,
@@ -65,13 +70,14 @@ data class ProjectModule @JvmOverloads constructor(
         buildSystemType: BuildSystemType,
         moduleType: ProjectModuleType,
         navigatableDependency: (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable?
-    ) : this(name, nativeModule, parent, buildFile, buildSystemType, moduleType)
+    ) : this(name, nativeModule, parent, buildFile, buildFile.parent, buildSystemType, moduleType)
 
     @Suppress("UNUSED_PARAMETER")
     @Deprecated(
         "Use main constructor",
-        ReplaceWith("ProjectModule(name, nativeModule, parent, buildFile, buildSystemType, moduleType)")
+        ReplaceWith("ProjectModule(name, nativeModule, parent, buildFile, projectDir, buildSystemType, moduleType)")
     )
+    @ScheduledForRemoval
     constructor(
         name: String,
         nativeModule: Module,
@@ -81,11 +87,13 @@ data class ProjectModule @JvmOverloads constructor(
         moduleType: ProjectModuleType,
         navigatableDependency: (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable?,
         availableScopes: List<String>
-    ) : this(name, nativeModule, parent, buildFile, buildSystemType, moduleType, availableScopes)
+    ) : this(name, nativeModule, parent, buildFile, buildFile.parent, buildSystemType, moduleType, availableScopes)
 
     fun getBuildFileNavigatableAtOffset(offset: Int): Navigatable? =
-        PsiManager.getInstance(nativeModule.project).findFile(buildFile)?.let { psiFile ->
-            PsiUtil.getElementAtOffset(psiFile, offset).takeIf { it != buildFile } as? Navigatable
+        buildFile?.let {
+            PsiManager.getInstance(nativeModule.project).findFile(it)?.let { psiFile ->
+                PsiUtil.getElementAtOffset(psiFile, offset).takeIf { it != buildFile } as? Navigatable
+            }
         }
 
     @NlsSafe
@@ -99,7 +107,8 @@ data class ProjectModule @JvmOverloads constructor(
         if (name != other.name) return false
         if (!nativeModule.isTheSameAs(other.nativeModule)) return false // This can't be automated
         if (parent != other.parent) return false
-        if (buildFile.path != other.buildFile.path) return false
+        if (buildFile?.path != other.buildFile?.path) return false
+        if (projectDir.path != other.projectDir.path) return false
         if (buildSystemType != other.buildSystemType) return false
         if (moduleType != other.moduleType) return false
         // if (navigatableDependency != other.navigatableDependency) return false // Intentionally excluded
@@ -112,7 +121,8 @@ data class ProjectModule @JvmOverloads constructor(
         var result = name.hashCode()
         result = 31 * result + nativeModule.hashCodeOrZero()
         result = 31 * result + (parent?.hashCode() ?: 0)
-        result = 31 * result + buildFile.path.hashCode()
+        result = 31 * result + (buildFile?.path?.hashCode() ?: 0)
+        result = 31 * result + projectDir.path.hashCode()
         result = 31 * result + buildSystemType.hashCode()
         result = 31 * result + moduleType.hashCode()
         // result = 31 * result + navigatableDependency.hashCode() // Intentionally excluded

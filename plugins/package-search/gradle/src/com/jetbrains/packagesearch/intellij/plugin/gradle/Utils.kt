@@ -36,5 +36,13 @@ val BuildSystemType.Companion.GRADLE_KOTLIN
         name = "GRADLE", language = "kotlin", dependencyAnalyzerKey = GradleConstants.SYSTEM_ID,
         statisticsKey = "gradle-kts"
     )
+
+// for gradle modules which only contain another gradle modules (in other words,for modules without its own build file)
+val BuildSystemType.Companion.GRADLE_CONTAINER
+    get() = BuildSystemType(
+        name = "GRADLE", language = "any", dependencyAnalyzerKey = GradleConstants.SYSTEM_ID,
+        statisticsKey = "gradle"
+    )
+
 internal val Project.lifecycleScope: CoroutineScope
     get() = service<PackageSearchGradleLifecycleScope>()
