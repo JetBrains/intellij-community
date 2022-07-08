@@ -153,7 +153,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
     @RequiresBackgroundThread
     @Throws(VcsException::class)
     @JvmStatic
-    private fun <T : VcsShortCommitDetails> AbstractDataGetter<T>.getCommitDetails(commits: List<Int>): List<T> {
+    fun <T : VcsShortCommitDetails> AbstractDataGetter<T>.getCommitDetails(commits: List<Int>): List<T> {
       val commitToDetailsMap = Int2ObjectOpenHashMap<T>()
       loadCommitsDataSynchronously(commits, ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()) { details ->
         commitToDetailsMap[storage.getCommitIndex(details.id, details.root)] = details
