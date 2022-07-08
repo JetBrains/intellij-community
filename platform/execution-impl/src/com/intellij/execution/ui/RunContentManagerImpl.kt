@@ -272,7 +272,6 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     content.setPreferredFocusedComponent(descriptor.preferredFocusComputable)
     content.putUserData(RunContentDescriptor.DESCRIPTOR_KEY, descriptor)
     content.putUserData(EXECUTOR_KEY, executor)
-    content.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true)
     content.displayName = descriptor.displayName
     descriptor.setAttachedContent(content)
     val toolWindow = getToolWindowManager().getToolWindow(toolWindowId)
