@@ -1,4 +1,4 @@
-// "Change type arguments to <*, *>" "false"
+// "Change type arguments to <*>" "false"
 // ACTION: Add full qualifier
 // ACTION: Convert to 'isArrayOf' call
 // ACTION: Expand boolean expression to 'if else'
