@@ -613,6 +613,12 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
         return true;
       }
     }.installOn(myResultsPreviewTable);
+
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionGroup copyGroup = (ActionGroup)actionManager.getAction("FindInFiles.Results.ContextMenu");
+    ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.POPUP, copyGroup);
+    myResultsPreviewTable.setComponentPopupMenu(popupMenu.getComponent());
+
     myResultsPreviewTable.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
