@@ -39,13 +39,7 @@ abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value : A
         val changes = event.getChanges(entityClass).ifEmpty { return }
 
         val outdatedEntities: List<Value> = changes.asSequence()
-            .mapNotNull { change ->
-                when (change) {
-                    is EntityChange.Added -> null
-                    is EntityChange.Removed -> change.entity
-                    is EntityChange.Replaced -> change.oldEntity
-                }
-            }
+            .mapNotNull { it.oldEntity }
             .mapNotNull { map(storageBefore, it) }
             .toList()
 

@@ -18,11 +18,7 @@ class GroovyMacroModuleListener : WorkspaceModelChangeListener {
       return
     }
     for (moduleEntity in moduleChanges) {
-      val entityToFlush = when (moduleEntity) {
-        is EntityChange.Added -> continue
-        is EntityChange.Removed -> moduleEntity.entity
-        is EntityChange.Replaced -> moduleEntity.oldEntity
-      }
+      val entityToFlush = moduleEntity.oldEntity ?: continue
       val bridge = event.storageBefore.moduleMap.getDataByEntity(entityToFlush) ?: continue
       bridge.project.service<GroovyMacroRegistryService>().castSafelyTo<GroovyMacroRegistryServiceImpl>()?.refreshModule(bridge)
     }

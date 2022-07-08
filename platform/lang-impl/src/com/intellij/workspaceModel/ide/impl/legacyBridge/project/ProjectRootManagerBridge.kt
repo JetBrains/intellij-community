@@ -53,14 +53,8 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
           // Roots changed event should be fired for the global libraries linked with module
           val moduleChanges = event.getChanges(ModuleEntity::class.java)
           for (change in moduleChanges) {
-            when (change) {
-              is EntityChange.Added -> addTrackedLibraryAndJdkFromEntity(change.entity)
-              is EntityChange.Removed -> removeTrackedLibrariesAndJdkFromEntity(change.entity)
-              is EntityChange.Replaced -> {
-                removeTrackedLibrariesAndJdkFromEntity(change.oldEntity)
-                addTrackedLibraryAndJdkFromEntity(change.newEntity)
-              }
-            }
+            change.oldEntity?.let { removeTrackedLibrariesAndJdkFromEntity(it) }
+            change.newEntity?.let { addTrackedLibraryAndJdkFromEntity(it) }
           }
         }
       })

@@ -167,15 +167,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         LOG.debug("Marking changed entities for save")
-        event.getAllChanges().forEach {
-          when (it) {
-            is EntityChange.Added -> sourcesToSave.add(it.entity.entitySource)
-            is EntityChange.Removed -> sourcesToSave.add(it.entity.entitySource)
-            is EntityChange.Replaced -> {
-              sourcesToSave.add(it.oldEntity.entitySource)
-              sourcesToSave.add(it.newEntity.entitySource)
-            }
-          }
+        event.getAllChanges().forEach { change ->
+          change.oldEntity?.entitySource?.let { sourcesToSave.add(it) }
+          change.newEntity?.entitySource?.let { sourcesToSave.add(it) }
         }
       }
     })

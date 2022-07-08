@@ -17,7 +17,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -38,8 +38,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
@@ -58,13 +56,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public final class PyInterpreterInspection extends PyInspection {
 
@@ -335,20 +335,10 @@ public final class PyInterpreterInspection extends PyInspection {
        */
       @Override
       public void beforeChanged(@NotNull VersionedStorageChange event) {
-        var iterator = event.getAllChanges().iterator();
-        while (iterator.hasNext()) {
-          EntityChange<?> change = iterator.next();
-
-          @Nullable WorkspaceEntity entity = null;
-          if (change instanceof EntityChange.Replaced) {
-            entity = ((EntityChange.Replaced<?>)change).getOldEntity();
-          }
-          else if (change instanceof EntityChange.Removed) {
-            entity = ((EntityChange.Removed<?>)change).getEntity();
-          }
-
-          if (entity instanceof ModuleEntity) {
-            var module = ModuleEntityUtils.findModule((ModuleEntity)entity, event.getStorageBefore());
+        for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
+          ModuleEntity entity = change.getOldEntity();
+          if (entity != null) {
+            var module = ModuleEntityUtils.findModule(entity, event.getStorageBefore());
             if (module != null) {
               DETECTED_ASSOCIATED_ENVS_CACHE.synchronous().invalidate(module);
             }

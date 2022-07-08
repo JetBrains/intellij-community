@@ -18,11 +18,11 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.Alarm
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -133,19 +133,11 @@ internal class ModuleVcsDetector(private val project: Project) {
 
       val changes = event.getChanges(ContentRootEntity::class.java)
       for (change in changes) {
-        when (change) {
-          is EntityChange.Removed<ContentRootEntity> -> {
-            removedUrls.add(change.entity.url)
-          }
-          is EntityChange.Added<ContentRootEntity> -> {
-            addedUrls.add(change.entity.url)
-          }
-          is EntityChange.Replaced<ContentRootEntity> -> {
-            if (change.oldEntity.url != change.newEntity.url) {
-              removedUrls.add(change.oldEntity.url)
-              addedUrls.add(change.newEntity.url)
-            }
-          }
+        val removedUrl = change.oldEntity?.url
+        val addedUrl = change.newEntity?.url
+        if (removedUrl != addedUrl) {
+          ContainerUtil.addIfNotNull(removedUrls, removedUrl)
+          ContainerUtil.addIfNotNull(addedUrls, addedUrl)
         }
       }
 

@@ -259,7 +259,27 @@ fun EntityStorage.toBuilder(): MutableEntityStorage {
 }
 
 sealed class EntityChange<T : WorkspaceEntity> {
-  data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>()
-  data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>()
-  data class Replaced<T : WorkspaceEntity>(val oldEntity: T, val newEntity: T) : EntityChange<T>()
+  /**
+   * Returns the entity which was removed or replaced in the change.
+   */
+  abstract val oldEntity: T?
+
+  /**
+   * Returns the entity which was added or used as a replacement in the change.
+   */
+  abstract val newEntity: T?
+  
+  data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
+    override val oldEntity: T?
+      get() = null
+    override val newEntity: T
+      get() = entity
+  }
+  data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
+    override val oldEntity: T
+      get() = entity
+    override val newEntity: T?
+      get() = null
+  }
+  data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>()
 }
