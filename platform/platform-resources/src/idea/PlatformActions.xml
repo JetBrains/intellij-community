@@ -630,6 +630,11 @@
           </group>
         </group>
 
+        <group id="MainToolbarPopupActions" searchable="false">
+          <reference id="ViewToolBar"/>
+          <action class="com.intellij.ide.actions.CustomizeUIAction" id="CustomizeUI"/>
+        </group>
+
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
         <action id="OpenInRightSplit" class="com.intellij.ide.actions.OpenInRightSplitAction" icon="AllIcons.Actions.SplitVertically" />
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
