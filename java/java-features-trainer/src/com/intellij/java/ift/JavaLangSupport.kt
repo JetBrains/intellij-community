@@ -41,7 +41,7 @@ internal class JavaLangSupport : JavaBasedLangSupport() {
 
     task {
       if (isSdkConfigured(project)) return@task
-      triggerAndFullHighlight { usePulsation = true }.component { ui: HyperlinkLabel ->
+      triggerAndBorderHighlight().component { ui: HyperlinkLabel ->
         ui.text == setupSdkText
       }
     }
