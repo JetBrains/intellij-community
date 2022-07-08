@@ -688,6 +688,24 @@ class KtSymbolBasedPropertyDescriptor(
         get() = ktSymbol.setter?.let { KtSymbolBasedPropertySetterDescriptor(it, this) }
 }
 
+class KtSymbolBasedLocalVariableDescriptor(
+    override val ktSymbol: KtLocalVariableSymbol,
+    context: Fe10WrapperContext
+) : AbstractKtSymbolBasedPropertyDescriptor(context), VariableDescriptorWithAccessors {
+
+    override fun getVisibility(): DescriptorVisibility = DescriptorVisibilities.LOCAL
+
+    override fun getCompileTimeInitializer(): ConstantValue<*>? = context.incorrectImplementation { null }
+
+    override fun isConst(): Boolean = false
+
+    override val getter: PropertyGetterDescriptor?
+        get() = context.incorrectImplementation { null } // todo: add implementation for delegates
+
+    override val setter: PropertySetterDescriptor?
+        get() = context.incorrectImplementation { null } // todo: add implementation for delegates
+}
+
 abstract class KtSymbolBasedVariableAccessorDescriptor(
     val propertyDescriptor: KtSymbolBasedPropertyDescriptor
 ) : KtSymbolBasedDeclarationDescriptor(propertyDescriptor.context), VariableAccessorDescriptor {

@@ -87,6 +87,7 @@ fun KtVariableLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): K
         is KtValueParameterSymbol -> toDeclarationDescriptor(context)
         is KtPropertySymbol -> KtSymbolBasedPropertyDescriptor(this, context)
         is KtJavaFieldSymbol -> KtSymbolBasedJavaPropertyDescriptor(this, context)
+        is KtLocalVariableSymbol ->  KtSymbolBasedLocalVariableDescriptor(this, context)
         else -> context.implementationPlanned(this::class.toString())
     }
 
