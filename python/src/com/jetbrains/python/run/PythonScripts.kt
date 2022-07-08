@@ -231,6 +231,7 @@ fun TargetEnvironmentRequest.ensureProjectAndModuleDirsAreOnTarget(project: Proj
         addPathToVolume(it.toNioPath())
       }
       catch (_: UnsupportedOperationException) {
+        // VirtualFile.toNioPath throws UOE if VirtualFile has no associated path which is common case for JupyterRemoteVirtualFile
       }
     }
   }
