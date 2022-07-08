@@ -445,7 +445,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     // Order is important here. Create the dock window, then create the editor window. That way, any listeners can check to see if the
     // parent window is floating.
     DockWindow window = createWindowFor(getWindowDimensionKey(file), null, container, REOPEN_WINDOW.get(file, true));
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
       window.show(true);
     }
 
