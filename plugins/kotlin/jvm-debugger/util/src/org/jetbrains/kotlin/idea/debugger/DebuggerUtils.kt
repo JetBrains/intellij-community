@@ -8,6 +8,7 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl.getLocalVariableBorders
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.sun.jdi.LocalVariable
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils.findFilesW
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
+import org.jetbrains.kotlin.idea.debugger.base.util.FileApplicabilityChecker
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -37,7 +39,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.*
 
 object DebuggerUtils {
-    @get:TestOnly
+    @set:TestOnly
     var forceRanking = false
 
     private val IR_BACKEND_LAMBDA_REGEX = ".+\\\$lambda[$-]\\d+".toRegex()
@@ -93,10 +95,18 @@ object DebuggerUtils {
                 return singleFile
             }
 
-            return FileRankingCalculatorForIde.findMostAppropriateSource(files, location)
+            return chooseApplicableFile(files, location)
         }
 
         return null
+    }
+
+    fun chooseApplicableFile(files: List<KtFile>, location: Location): KtFile {
+        return if (Registry.`is`("kotlin.debugger.analysis.api.file.applicability.checker")) {
+            FileApplicabilityChecker.findApplicable(files, location)
+        } else {
+            FileRankingCalculatorForIde.findMostAppropriateSource(files, location)
+        }
     }
 
     private fun findFilesByNameInPackage(

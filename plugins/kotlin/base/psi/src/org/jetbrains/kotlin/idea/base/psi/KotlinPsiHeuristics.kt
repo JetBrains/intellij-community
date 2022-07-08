@@ -208,6 +208,13 @@ object KotlinPsiHeuristics {
         return hasAnnotation(declaration, JVM_STATIC_ANNOTATION_FQ_NAME)
     }
 
+    private val PUBLISHED_API_FQN = FqName("kotlin.PublishedApi")
+
+    @JvmStatic
+    fun hasPublishedApiAnnotation(declaration: KtAnnotated): Boolean {
+        return hasAnnotation(declaration, PUBLISHED_API_FQN)
+    }
+
     @JvmStatic
     fun getStringValue(argument: ValueArgument): String? {
         return argument.getArgumentExpression()

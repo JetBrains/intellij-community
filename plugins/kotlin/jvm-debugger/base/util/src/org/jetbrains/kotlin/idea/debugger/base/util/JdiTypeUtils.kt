@@ -38,3 +38,17 @@ fun Type.isSubtype(type: AsmType): Boolean {
 
     return false
 }
+
+fun ClassType.hasSuperClass(jdiName: String): Boolean {
+    var current = this
+    while (true) {
+        if (current.name() == jdiName) {
+            return true
+        }
+        current = current.superclass() ?: return false
+    }
+}
+
+fun ClassType.hasInterface(jdiName: String): Boolean {
+    return allInterfaces().any { it.name() == jdiName }
+}

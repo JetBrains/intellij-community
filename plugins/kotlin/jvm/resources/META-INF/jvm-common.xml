@@ -187,6 +187,10 @@
                    description="Patch evaluated expression so it uses reflection for calls in order to call private members"
                    defaultValue="true"
                    restartRequired="false"/>
+      <registryKey key="kotlin.debugger.analysis.api.file.applicability.checker"
+                   description="Use Analysis API-based implementation for file applicability checker"
+                   defaultValue="false"
+                   restartRequired="false"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.uast">
