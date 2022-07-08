@@ -74,16 +74,32 @@ public interface IntentionPreviewInfo {
     private final @NotNull FileType myFileType;
     private final @NotNull String myOrigText;
     private final @NotNull String myModifiedText;
+    private final @Nullable String myFileName;
 
     /**
-     * @param type file type, used for highlighting
-     * @param origText original file text
+     * @param type         file type, used for highlighting
+     * @param origText     original file text
      * @param modifiedText changed file text
      */
     public CustomDiff(@NotNull FileType type, @NotNull String origText, @NotNull String modifiedText) {
+      this(type, null, origText, modifiedText);
+    }
+
+    /**
+     * @param type         file type, used for highlighting
+     * @param name         file name, can be displayed to user if specified
+     * @param origText     original file text
+     * @param modifiedText changed file text
+     */
+    public CustomDiff(@NotNull FileType type, @Nullable String name, @NotNull String origText, @NotNull String modifiedText) {
       myFileType = type;
+      myFileName = name;
       myOrigText = origText;
       myModifiedText = modifiedText;
+    }
+
+    public @Nullable String fileName() {
+      return myFileName;
     }
 
     public @NotNull FileType fileType() {

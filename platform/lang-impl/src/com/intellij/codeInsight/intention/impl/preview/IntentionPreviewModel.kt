@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl.preview
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.fragments.LineFragmentImpl
+import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -57,7 +58,8 @@ internal class IntentionPreviewModel {
       }
 
       val fileText = psiFileCopy.text
-      val origText = result.origFile.text
+      val origFile = result.origFile
+      val origText = origFile.text
       val diff = squash(ComparisonManager.getInstance().compareLines(
         origText, fileText, result.policy, DumbProgressIndicator.INSTANCE))
       var diffs = diff.mapNotNull { fragment ->
@@ -112,9 +114,31 @@ internal class IntentionPreviewModel {
       if (diffs.isNotEmpty()) {
         val last = diffs.last()
         val maxLine = if (result.fakeDiff) last.startLine + last.length else -1
-        return diffs.map { it.createEditor(project, result.origFile.fileType, maxLine) }
+        val fileName = result.fileName
+        val editors = diffs.map { it.createEditor(project, origFile.fileType, maxLine) }
+        val fileNameEditor = createFileNamePresentation(fileName, origFile, project)
+        return listOfNotNull(fileNameEditor) + editors
       }
       return emptyList()
+    }
+
+    private fun createFileNamePresentation(fileName: String?, origFile: PsiFile, project: Project): EditorEx? {
+      fileName ?: return null
+      val commenter = LanguageCommenters.INSTANCE.forLanguage(origFile.language) ?: return null
+      var comment: String? = null
+      val linePrefix = commenter.lineCommentPrefix
+      if (linePrefix != null) {
+        comment = "$linePrefix $fileName"
+      }
+      else {
+        val prefix = commenter.blockCommentPrefix
+        val suffix = commenter.blockCommentSuffix
+        if (prefix != null && suffix != null) {
+          comment = "$prefix $fileName $suffix"
+        }
+      }
+      comment ?: return null
+      return DiffInfo(comment, 0, comment.length).createEditor(project, origFile.fileType, -1)
     }
 
     private enum class HighlightingType { ADDED, UPDATED, DELETED }

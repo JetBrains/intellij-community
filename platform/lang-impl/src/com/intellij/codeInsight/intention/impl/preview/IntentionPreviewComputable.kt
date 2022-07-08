@@ -131,6 +131,7 @@ internal class IntentionPreviewComputable(private val project: Project,
             ComparisonManager.getInstance()
               .compareLines(result.originalText(), result.modifiedText(),
                             ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE),
+            fileName = result.fileName(),
             fakeDiff = false,
             policy = ComparisonPolicy.TRIM_WHITESPACES)
         }
@@ -185,4 +186,5 @@ internal data class IntentionPreviewDiffResult(val psiFile: PsiFile,
                                                val origFile: PsiFile,
                                                val lineFragments: List<LineFragment>,
                                                val fakeDiff: Boolean = true,
+                                               val fileName: String? = null,
                                                val policy: ComparisonPolicy): IntentionPreviewInfo
