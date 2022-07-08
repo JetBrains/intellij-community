@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
-import org.jetbrains.kotlin.idea.util.numberOfArguments
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
@@ -206,7 +205,7 @@ private fun KtFunction.asCompilerRefsWithJvmOverloads(
     nameId: Int,
     isDefaultImplsMember: Boolean = false,
 ): List<CompilerRef.CompilerMember> {
-    val numberOfArguments = numberOfArguments(countReceiver = true) + (1.takeIf { isDefaultImplsMember } ?: 0)
+    val numberOfArguments = getJvmArgumentCount(countReceiver = true) + (1.takeIf { isDefaultImplsMember } ?: 0)
     if (!KotlinPsiHeuristics.hasJvmOverloadsAnnotation(this)) {
         val mainMethodRef = owner.createMethod(nameId, numberOfArguments)
         return if (this is KtPrimaryConstructor && valueParameters.all(KtParameter::hasDefaultValue)) {
@@ -283,7 +282,7 @@ private fun <T> T.asPropertyOrParameterCompilerRefs(
         null
     }
 
-    val numberOfArguments = numberOfArguments(countReceiver = true) + (1.takeIf { isDefaultImplsMember } ?: 0)
+    val numberOfArguments = getJvmArgumentCount(countReceiver = true) + (1.takeIf { isDefaultImplsMember } ?: 0)
     val jvmGetterName = KotlinPsiHeuristics.findJvmGetterName(this) ?: JvmAbi.getterName(name)
     val getter = owner.createMethod(names.tryEnumerate(jvmGetterName), numberOfArguments)
 
@@ -295,4 +294,8 @@ private fun <T> T.asPropertyOrParameterCompilerRefs(
     }
 
     return listOfNotNull(field, getter, setter)
+}
+
+private fun KtCallableDeclaration.getJvmArgumentCount(countReceiver: Boolean = false): Int {
+    return valueParameters.size + (if (countReceiver && receiverTypeReference != null) 1 else 0)
 }
