@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.deft.api.annotations.Default
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
@@ -13,9 +14,9 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 interface DefaultValueEntity: WorkspaceEntity {
   val name: String
   val isGenerated: Boolean
-    get() = true
+    @Default get() = true
   val anotherName: String
-    get() = "Another Text"
+    @Default get() = "Another Text"
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(1)

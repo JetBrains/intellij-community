@@ -5,6 +5,10 @@ import com.intellij.workspaceModel.deft.api.annotations.Default
 import com.intellij.workspaceModel.storage.*
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 interface FinalFieldsEntity: WorkspaceEntity {
   val descriptor: AnotherDataClass
@@ -29,20 +33,20 @@ interface FinalFieldsEntity: WorkspaceEntity {
   //@formatter:off
   @GeneratedCodeApiVersion(1)
   interface Builder: FinalFieldsEntity, ModifiableWorkspaceEntity<FinalFieldsEntity>, ObjBuilder<FinalFieldsEntity> {
-    override var descriptor: AnotherDataClass
-    override var entitySource: EntitySource
-    override var description: String
-    override var anotherVersion: Int
+      override var descriptor: AnotherDataClass
+      override var entitySource: EntitySource
+      override var description: String
+      override var anotherVersion: Int
   }
-
+  
   companion object: Type<FinalFieldsEntity, Builder>() {
-    operator fun invoke(descriptor: AnotherDataClass, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FinalFieldsEntity {
-      val builder = builder()
-      builder.descriptor = descriptor
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+      operator fun invoke(descriptor: AnotherDataClass, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FinalFieldsEntity {
+          val builder = builder()
+          builder.descriptor = descriptor
+          builder.entitySource = entitySource
+          init?.invoke(builder)
+          return builder
+      }
   }
   //@formatter:on
   //endregion
