@@ -21,9 +21,9 @@ public class LocalQuickFixesWrapper extends QuickFixAction {
   public LocalQuickFixesWrapper(@NlsActions.ActionText String name,
                                 @NotNull List<QuickFix<?>> fixes,
                                 @NotNull InspectionToolWrapper toolWrapper) {
-    super(name, fixes.get(0) instanceof Iconable ? ((Iconable)fixes.get(0)).getIcon(0) : null, null, toolWrapper);
+    super(StringUtil.escapeMnemonics(name),
+          fixes.get(0) instanceof Iconable ? ((Iconable)fixes.get(0)).getIcon(0) : null, null, toolWrapper);
     fixes.forEach(f -> addFixAction(f, toolWrapper));
-    setText(StringUtil.escapeMnemonics(name));
   }
 
   public void setText(@NotNull @NlsActions.ActionText String text) {
