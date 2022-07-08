@@ -325,7 +325,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       text(JavaLessonsBundle.message("java.onboarding.toggle.breakpoint.2"))
     }
 
-    highlightButtonById("Debug")
+    highlightButtonById("Debug", highlightInside = false, usePulsation = false)
 
     actionTask("Debug") {
       showBalloonOnHighlightingComponent(JavaLessonsBundle.message("java.onboarding.balloon.start.debugging"))
@@ -336,7 +336,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       JavaLessonsBundle.message("java.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
-    highlightDebugActionsToolbar(usePulsation = false)
+    highlightDebugActionsToolbar(highlightInside = false, usePulsation = false)
 
     task {
       rehighlightPreviousUi = true
@@ -348,7 +348,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       restoreIfModified(sample)
     }
 
-    highlightButtonById("Stop")
+    highlightButtonById("Stop", highlightInside = false, usePulsation = false)
     task {
       showBalloonOnHighlightingComponent(JavaLessonsBundle.message("java.onboarding.balloon.stop.debugging"),
                                          Balloon.Position.atRight) { list -> list.maxByOrNull { it.locationOnScreen.y } }
@@ -385,7 +385,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   }
 
   private fun LessonContext.runTasks() {
-    highlightRunToolbar(usePulsation = false)
+    highlightRunToolbar(highlightInside = false, usePulsation = false)
 
     task {
       triggerUI {
@@ -418,7 +418,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
   private fun LessonContext.openLearnToolwindow() {
     task {
-      triggerAndFullHighlight { usePulsation = true }.component { stripe: StripeButton ->
+      triggerAndBorderHighlight().component { stripe: StripeButton ->
         stripe.windowInfo.id == "Learn"
       }
     }
@@ -471,7 +471,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     }
 
     task {
-      triggerAndFullHighlight { usePulsation = true }.component { stripe: StripeButton ->
+      triggerAndBorderHighlight().component { stripe: StripeButton ->
         stripe.windowInfo.id == "Project"
       }
     }
