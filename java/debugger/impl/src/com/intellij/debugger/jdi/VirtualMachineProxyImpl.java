@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
+import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
@@ -169,7 +170,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       myAllThreadsDirty = false;
 
       for (ThreadReference threadReference : myVirtualMachine.allThreads()) {
-        getThreadReferenceProxy(threadReference); // add a proxy
+        getThreadReferenceProxy(threadReference, true); // add a proxy
       }
     }
 
@@ -181,7 +182,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     if (myAllThreadsDirty) {
       return DebuggerUtilsAsync.allThreads(myVirtualMachine).thenApply(threads -> {
         DebuggerManagerThreadImpl.assertIsManagerThread();
-        threads.forEach(this::getThreadReferenceProxy); // add proxies
+        threads.forEach(thread -> getThreadReferenceProxy(thread, true)); // add proxies
         myAllThreadsDirty = false;
         return new ArrayList<>(myAllThreads.values());
       });
@@ -192,7 +193,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public void threadStarted(ThreadReference thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    getThreadReferenceProxy(thread); // add a proxy
+    getThreadReferenceProxy(thread, true); // add a proxy
   }
 
   public void threadStopped(ThreadReference thread) {
@@ -591,12 +592,25 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   @Nullable
   @Contract("null -> null; !null -> !null")
   public ThreadReferenceProxyImpl getThreadReferenceProxy(@Nullable ThreadReference thread) {
+    return getThreadReferenceProxy(thread, false);
+  }
+
+  private ThreadReferenceProxyImpl getThreadReferenceProxy(@Nullable ThreadReference thread, boolean forceCache) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (thread == null) {
       return null;
     }
-
-    return myAllThreads.computeIfAbsent(thread, t -> new ThreadReferenceProxyImpl(this, t));
+    ThreadReferenceProxyImpl proxy = myAllThreads.computeIfAbsent(thread, t -> {
+      // do not cache virtual threads
+      if (!forceCache && thread instanceof ThreadReferenceImpl && ((ThreadReferenceImpl)thread).isVirtual()) {
+        return null;
+      }
+      return new ThreadReferenceProxyImpl(this, t);
+    });
+    if (proxy == null) { // not cached
+      proxy = new ThreadReferenceProxyImpl(this, thread);
+    }
+    return proxy;
   }
 
   public ThreadGroupReferenceProxyImpl getThreadGroupReferenceProxy(ThreadGroupReference group) {
