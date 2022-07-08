@@ -151,7 +151,13 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     AtomicReference<Thread> edtThread = new AtomicReference<>();
     EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
-      preventAwtAutoShutdown(this);
+      // Instantiate `AppDelayQueue` which starts "periodic tasks thread" which we'll mark busy to prevent this EDT from dying.
+      // That thread was chosen because we know for sure it's running.
+      Thread thread = AppScheduledExecutorService.getPeriodicTasksThread();
+      AWTAutoShutdown.getInstance().notifyThreadBusy(thread); // needed for EDT not to exit suddenly
+      Disposer.register(this, () -> {
+        AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
+      });
       edtThread.set(Thread.currentThread());
     });
     myLock = new ReadMostlyRWLock(edtThread.get());
@@ -191,18 +197,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
-
-    preventAwtAutoShutdown(this);
-  }
-
-  private static void preventAwtAutoShutdown(@NotNull Disposable parentDisposable) {
-    // Instantiate `AppDelayQueue` which starts "periodic tasks thread" which we'll mark busy to prevent this EDT from dying.
-    // That thread was chosen because we know for sure it's running.
-    Thread thread = AppScheduledExecutorService.getPeriodicTasksThread();
-    AWTAutoShutdown.getInstance().notifyThreadBusy(thread); // needed for EDT not to exit suddenly
-    Disposer.register(parentDisposable, () -> {
-      AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
-    });
   }
 
   /**

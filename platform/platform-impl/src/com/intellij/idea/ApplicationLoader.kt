@@ -64,50 +64,48 @@ private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 // for non-technical reasons this method cannot return CompletableFuture
 fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
-  val initAppActivity = startupStart!!.endAndStart(Activities.INIT_APP)
-
-  val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
-  val mainScope = mainScope!!
-  if (isInternal) {
-    mainScope.launch {
-      initAppActivity.runChild("assert on missed keys enabling") {
-        BundleBase.assertOnMissedKeys(true)
-      }
-    }
-  }
-  mainScope.launch {
-    initAppActivity.runChild("disposer debug mode enabling if needed") {
-      if (isInternal || Disposer.isDebugDisposerOn()) {
-        Disposer.setDebugMode(true)
-      }
-    }
-  }
-  if (!Main.isHeadless()) {
-    mainScope.launch(SwingDispatcher) {
-      WeakFocusStackManager.getInstance()
-    }
-  }
-  mainScope.launch {
-    initAppActivity.runChild("opentelemetry configuration") {
-      TraceManager.init()
-    }
-  }
-
-  val args = processProgramArguments(rawArgs)
-
-  // event queue is replaced as part of "prepareUiFuture" task - application must be created only after that
-  val prepareUiFutureWaitActivity = initAppActivity.startChild("prepare ui waiting")
   runBlocking {
+    val initAppActivity = startupStart!!.endAndStart(Activities.INIT_APP)
+
+    // event queue is replaced as part of "prepareUiFuture" task - application must be created only after that
+    val prepareUiFutureWaitActivity = initAppActivity.startChild("prepare ui waiting")
+
+    val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
+    if (isInternal) {
+      launch {
+        initAppActivity.runChild("assert on missed keys enabling") {
+          BundleBase.assertOnMissedKeys(true)
+        }
+      }
+    }
+    launch {
+      initAppActivity.runChild("disposer debug mode enabling if needed") {
+        if (isInternal || Disposer.isDebugDisposerOn()) {
+          Disposer.setDebugMode(true)
+        }
+      }
+    }
+    if (!Main.isHeadless()) {
+      launch(SwingDispatcher) {
+        WeakFocusStackManager.getInstance()
+      }
+    }
+    launch {
+      initAppActivity.runChild("opentelemetry configuration") {
+        TraceManager.init()
+      }
+    }
+
     val baseLaf = prepareUiFuture.await()
     prepareUiFutureWaitActivity.end()
 
-    val setBaseLafFuture = mainScope.launch {
+    val setBaseLafFuture = launch {
       initAppActivity.runChild("base laf passing") {
         DarculaLaf.setPreInitializedBaseLaf(baseLaf as LookAndFeel)
       }
     }
     if (!Main.isHeadless()) {
-      mainScope.launch(SwingDispatcher) {
+      launch(SwingDispatcher) {
         val patchingActivity = StartUpMeasurer.startActivity("html style patching")
         // patch html styles
         val uiDefaults = UIManager.getDefaults()
@@ -138,7 +136,7 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
     // but it is OK, because registry is not and should not be used.
     initConfigurationStore(app)
 
-    mainScope.launch {
+    launch {
       // ensure that base laf is set before initialization of LafManagerImpl
       runActivity("base laf waiting") {
         setBaseLafFuture.join()
@@ -151,50 +149,62 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: Deferred<Any>) {
       }
     }
 
-    val deferredStarter = mainScope.async {
+    val args = processProgramArguments(rawArgs)
+
+    val deferredStarter = async {
       initAppActivity.runChild("app starter creation") {
         findAppStarter(args)
       }
     }
 
-    prepareStart(app, initAppActivity, pluginSet, mainScope)
+    prepareStart(app = app, initAppActivity = initAppActivity, pluginSet = pluginSet, mainScope = this)
 
     initAppActivity.end()
 
-    // not as a part of blocking initApplication
-    mainScope.launch {
-      coroutineScope {
-        launch {
-          addActivateAndWindowsCliListeners()
-        }
+    launch {
+      addActivateAndWindowsCliListeners()
+    }
 
-        val starter = deferredStarter.await()
-        if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
-          if (starter is IdeStarter) {
-            try {
-              starter.start(args)
-            }
-            catch (e: Exception) {
-              throw e
-            }
-          }
-          else {
-            // todo run "IDEA - generate project shared index" to check why wrapping is required
-            CompletableFuture.runAsync {
-              starter.main(args)
-            }.asDeferred().join()
-          }
-          // no need to use pool once plugins are loaded
-          ZipFilePool.POOL = null
+    val starter = deferredStarter.await()
+
+    if (starter.requiredModality != ApplicationStarter.NOT_IN_EDT) {
+      ApplicationManager.getApplication().invokeLater {
+        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+          starter.main(args)
+        }
+      }
+      ZipFilePool.POOL = null
+      return@runBlocking
+    }
+
+    // not as a part of blocking initApplication
+    Main.mainScope!!.launch {
+      if (starter is ModernApplicationStarter) {
+        val timeout = starter.timeout
+        if (timeout == null) {
+          starter.start(args)
         }
         else {
-          ApplicationManager.getApplication().invokeLater {
-            (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-              starter.main(args)
+          try {
+            withTimeout(timeout) {
+              starter.start(args)
             }
+          }
+          catch (e: TimeoutCancellationException) {
+            println("Cannot execute $starter in $timeout")
+            println(ThreadDumper.dumpThreadsToString())
+            exitProcess(1)
           }
         }
       }
+      else {
+        // todo run "IDEA - generate project shared index" to check why wrapping is required
+        CompletableFuture.runAsync {
+          starter.main(args)
+        }.asDeferred().join()
+      }
+      // no need to use pool once plugins are loaded
+      ZipFilePool.POOL = null
     }
   }
 }

@@ -12,7 +12,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.startup.StartupManagerEx
-import com.intellij.idea.mainScope
 import com.intellij.idea.processExtensions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -28,12 +27,12 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.isCorePlugin
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.TimeoutUtil
 import io.opentelemetry.api.common.AttributeKey
@@ -60,7 +59,7 @@ private val tracer by lazy { TraceManager.getTracer("startupManager") }
 /**
  * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5 seconds delay after project opening.
  */
-private val BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName<StartupActivity.Background>("com.intellij.backgroundPostStartupActivity")
+private val BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName<StartupActivity>("com.intellij.backgroundPostStartupActivity")
 private val EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100)
 private const val DUMB_AWARE_PASSED = 1
 private const val ALL_PASSED = 2
@@ -155,7 +154,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
   override fun getAllActivitiesPassedFuture() = allActivitiesPassed
 
-  @OptIn(DelicateCoroutinesApi::class)
   suspend fun projectOpened(indicator: ProgressIndicator?) {
     val app = ApplicationManager.getApplication()
     // see https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity
@@ -179,19 +177,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     }
     else {
       // doesn't block project opening
-      (mainScope ?: GlobalScope).launch(CoroutineExceptionHandler { _, error ->
-        if (error is ProcessCanceledException || error is CancellationException) {
-          // ignored
-        }
-        else {
-          LOG.error(error)
-        }
-      }) {
-        if (!project.isDisposed) {
-          (project as ProjectEx).coroutineScope.launch {
-            runPostStartupActivities()
-          }
-        }
+      project.coroutineScope.launch {
+        runPostStartupActivities()
       }
       if (app.isUnitTestMode) {
         LOG.assertTrue(app.isDispatchThread)
@@ -313,12 +300,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     }
   }
 
-  private fun runActivityAndMeasureDuration(
-    activity: StartupActivity,
-    pluginId: PluginId,
-    indicator: ProgressIndicator? = ProgressIndicatorProvider.getGlobalProgressIndicator(),
-  ): Long {
-    indicator?.pushState()
+  private fun runActivityAndMeasureDuration(activity: StartupActivity, pluginId: PluginId): Long {
     val startTime = StartUpMeasurer.getCurrentTime()
     try {
       tracer.spanBuilder("run activity")
@@ -335,9 +317,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         throw e
       }
       LOG.error(e)
-    }
-    finally {
-      indicator?.popState()
     }
 
     return addCompletedActivity(startTime = startTime, runnableClass = activity.javaClass, pluginId = pluginId)
@@ -418,8 +397,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       // read action - dynamic plugin loading executed as a write action
       val activities = readAction {
         BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(
-          object : ExtensionPointListener<StartupActivity.Background?> {
-            override fun extensionAdded(extension: StartupActivity.Background, pluginDescriptor: PluginDescriptor) {
+          object : ExtensionPointListener<StartupActivity> {
+            override fun extensionAdded(extension: StartupActivity, pluginDescriptor: PluginDescriptor) {
               project.coroutineScope.launch {
                 runBackgroundPostStartupActivities(listOf(extension))
               }
@@ -455,6 +434,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       }
       catch (e: CancellationException) {
         throw e
+      }
+      catch (e: AlreadyDisposedException) {
+        coroutineContext.ensureActive()
       }
       catch (e: Throwable) {
         if (e is ControlFlowException) {

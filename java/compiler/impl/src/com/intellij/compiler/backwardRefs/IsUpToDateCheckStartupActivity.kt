@@ -4,20 +4,25 @@ package com.intellij.compiler.backwardRefs
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
+import kotlinx.coroutines.ensureActive
+import kotlin.coroutines.coroutineContext
 
 /**
  * Call [IsUpToDateCheckConsumer.isUpToDate] if [CompilerManager.isUpToDate] returns 'true'.
  *
  * @see IsUpToDateCheckConsumer
  */
-internal class IsUpToDateCheckStartupActivity : StartupActivity.Background {
-  override fun runActivity(project: Project) {
+internal class IsUpToDateCheckStartupActivity : ProjectPostStartupActivity {
+  init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      return
+      throw ExtensionNotApplicableException.create()
     }
+  }
 
+  override suspend fun execute(project: Project) {
     val logger = thisLogger()
 
     val isUpToDateConsumers = IsUpToDateCheckConsumer.EP_NAME.extensionList.filter { it.isApplicable(project) }
@@ -34,6 +39,7 @@ internal class IsUpToDateCheckStartupActivity : StartupActivity.Background {
     logger.info("isUpToDate = $isUpToDate")
     for (consumer in isUpToDateConsumers) {
       consumer.isUpToDate(project, isUpToDate)
+      coroutineContext.ensureActive()
     }
   }
 }

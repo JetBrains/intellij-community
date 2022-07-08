@@ -44,7 +44,7 @@ import java.util.*
 import java.util.concurrent.ForkJoinPool
 import javax.swing.JOptionPane
 
-open class IdeStarter : ApplicationStarter {
+open class IdeStarter : ModernApplicationStarter() {
   companion object {
     private var filesToLoad: List<Path> = Collections.emptyList()
     private var uriToOpen: String? = null
@@ -66,14 +66,7 @@ open class IdeStarter : ApplicationStarter {
   override val commandName: String?
     get() = null
 
-  override val requiredModality: Int
-    get() = ApplicationStarter.NOT_IN_EDT
-
-  override fun main(args: List<String>) {
-    throw UnsupportedOperationException("Use start(args)")
-  }
-
-  suspend fun start(args: List<String>) {
+  override suspend fun start(args: List<String>) {
     val app = ApplicationManagerEx.getApplicationEx()
     assert(!app.isDispatchThread)
 

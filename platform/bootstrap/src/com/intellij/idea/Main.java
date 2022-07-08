@@ -8,6 +8,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.lang.PathClassLoader;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -47,6 +48,9 @@ public final class Main {
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String CWM_HOST_COMMAND = "cwmHost";
   public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
+
+  @SuppressWarnings("StaticNonFinalField")
+  public volatile static CoroutineScope mainScope;
 
   private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.idea.StartupUtil";
   private static final String AWT_HEADLESS = "java.awt.headless";

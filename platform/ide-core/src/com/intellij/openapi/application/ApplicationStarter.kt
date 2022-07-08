@@ -4,7 +4,26 @@ package com.intellij.openapi.application
 import com.intellij.ide.CliResult
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.Future
+import kotlin.time.Duration
+
+@Internal
+@Experimental
+abstract class ModernApplicationStarter : ApplicationStarter {
+  open val timeout: Duration?
+    get() = null
+
+  final override val requiredModality: Int
+    get() = ApplicationStarter.NOT_IN_EDT
+
+  final override fun main(args: List<String>) {
+    throw UnsupportedOperationException("Use start(args)")
+  }
+
+  abstract suspend fun start(args: List<String>)
+}
 
 /**
  * This extension point allows running a custom [command-line] application based on the IntelliJ platform.

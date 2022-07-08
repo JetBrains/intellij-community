@@ -141,10 +141,13 @@ abstract class ComponentManagerImpl(
   @Volatile
   internal var componentContainerIsReadonly: String? = null
 
-  private val coroutineScope = if (parent?.parent == null) CoroutineScope(Dispatchers.Default + CoroutineExceptionHandler { _, exception ->
-    LOG.error(exception)
-  }) else null
+  private val coroutineScope: CoroutineScope? = when {
+    parent == null -> Main.mainScope?.let(::createCoroutineScope) ?: CoroutineScope(SupervisorJob())
+    parent.parent == null -> createCoroutineScope(parent.coroutineScope!!)
+    else -> null
+  }
 
+  @Suppress("MemberVisibilityCanBePrivate")
   fun getCoroutineScope(): CoroutineScope = coroutineScope ?: throw RuntimeException("Module doesn't have coroutineScope")
 
   override val componentStore: IComponentStore
@@ -996,40 +999,20 @@ abstract class ComponentManagerImpl(
                            onlyIfAwait: Boolean = false) {
     for (plugin in modules) {
       serviceLoop@ for (service in getContainerDescriptor(plugin).services) {
-        if (!isServiceSuitable(service) || service.os != null && !isSuitableForOs(service.os)) {
+        if (!isServiceSuitable(service) || (service.os != null && !isSuitableForOs(service.os))) {
           continue@serviceLoop
         }
-        val scope: CoroutineScope = when (service.preload) {
-          PreloadMode.TRUE -> {
-            if (onlyIfAwait) {
-              continue@serviceLoop
-            }
-            else {
-              asyncScope
-            }
-          }
-          PreloadMode.NOT_HEADLESS -> {
-            if (onlyIfAwait || getApplication()!!.isHeadlessEnvironment) {
-              continue@serviceLoop
-            }
-            else {
-              asyncScope
-            }
-          }
-          PreloadMode.NOT_LIGHT_EDIT -> {
-            if (onlyIfAwait || Main.isLightEdit()) {
-              continue@serviceLoop
-            }
-            else {
-              asyncScope
-            }
-          }
+
+        val scope: CoroutineScope? = when (service.preload) {
+          PreloadMode.TRUE -> if (onlyIfAwait) null else asyncScope
+          PreloadMode.NOT_HEADLESS -> if (onlyIfAwait || getApplication()!!.isHeadlessEnvironment) null else asyncScope
+          PreloadMode.NOT_LIGHT_EDIT -> if (onlyIfAwait || Main.isLightEdit()) null else asyncScope
           PreloadMode.AWAIT -> syncScope
-          PreloadMode.FALSE -> continue@serviceLoop
+          PreloadMode.FALSE -> null
           else -> throw IllegalStateException("Unknown preload mode ${service.preload}")
         }
 
-        scope.launch {
+        scope?.launch {
           if (isServicePreloadingCancelled || isDisposed) {
             return@launch
           }
@@ -1479,4 +1462,9 @@ private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescripto
                                        crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
   task(mainPluginDescriptor)
   executeRegisterTaskForOldContent(mainPluginDescriptor, task)
+}
+
+private fun createCoroutineScope(parentScope: CoroutineScope): CoroutineScope {
+  val parentContext = parentScope.coroutineContext
+  return CoroutineScope(parentContext + SupervisorJob(parent = parentContext.job))
 }

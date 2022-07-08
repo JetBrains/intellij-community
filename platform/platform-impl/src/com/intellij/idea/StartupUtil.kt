@@ -9,10 +9,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.ide.AssertiveRepaintManager
-import com.intellij.ide.BootstrapBundle
-import com.intellij.ide.CliResult
-import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.EndUserAgreement
@@ -101,10 +98,6 @@ private var socketLock: SocketLock? = null
 internal var shellEnvLoadFuture: Deferred<Boolean?>? = null
   private set
 
-@JvmField
-@Volatile
-internal var mainScope: CoroutineScope? = null
-
 /** Called via reflection from [Main.bootstrap].  */
 fun start(mainClass: String,
           isHeadless: Boolean,
@@ -181,7 +174,7 @@ fun start(mainClass: String,
   runBlocking(CoroutineExceptionHandler { _, error ->
     StartupAbortedException.processException(error)
   }) {
-    mainScope = this
+    Main.mainScope = this
 
     activity = activity.endAndStart("eua and splash scheduling")
     val showEuaIfNeededFuture: Deferred<Boolean> = async {
@@ -269,11 +262,8 @@ fun start(mainClass: String,
       })
     }
 
-    log.info("notify that main thread is free")
-    mainScope = null
+    awaitCancellation()
   }
-
-  AWTAutoShutdown.getInstance().notifyThreadFree(busyThread)
 }
 
 // executed not in EDT
@@ -410,7 +400,7 @@ private suspend fun importConfig(args: List<String>,
   appStarter.importFinished(newConfigDir)
   activity.end()
   if (!PlatformUtils.isRider() || ConfigImportHelper.isConfigImported()) {
-    PluginManagerCore.scheduleDescriptorLoading(mainScope!!)
+    PluginManagerCore.scheduleDescriptorLoading(Main.mainScope!!)
   }
 }
 
@@ -879,7 +869,7 @@ fun runStartupWizard() {
     return
   }
   PluginManagerCore.invalidatePlugins()
-  PluginManagerCore.scheduleDescriptorLoading(mainScope!!)
+  PluginManagerCore.scheduleDescriptorLoading(Main.mainScope!!)
 }
 
 // the method must be called on EDT

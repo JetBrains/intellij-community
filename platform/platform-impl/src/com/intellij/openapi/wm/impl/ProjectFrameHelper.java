@@ -201,7 +201,9 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
     IdeMenuBar.installAppMenuIfNeeded(frame);
     // in production (not from sources) makes sense only on Linux
-    AppUIUtil.updateWindowIcon(frame);
+    if (!SystemInfoRt.isMac) {
+      AppUIUtil.updateWindowIcon(frame);
+    }
 
     MouseGestureManager.getInstance().add(this);
 
