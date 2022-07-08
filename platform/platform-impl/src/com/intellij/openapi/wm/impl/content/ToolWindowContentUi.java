@@ -115,6 +115,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
          */
         @Override
         public void propertyChange(PropertyChangeEvent event) {
+          if (Content.PROP_COMPONENT.equals(event.getPropertyName())) {
+            ensureSelectedContentVisible();
+          }
           update();
         }
       };

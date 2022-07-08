@@ -651,11 +651,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   @Override
   public void propertyChange(@NotNull PropertyChangeEvent event) {
     if (Content.PROP_COMPONENT.equals(event.getPropertyName())) {
-      Content content = (Content)event.getSource();
-      myContentWithChangedComponent.add(content);
-      if (content == getSelectedContent()) {
-        fireSelectionChanged(content, ContentManagerEvent.ContentOperation.add);
-      }
+      myContentWithChangedComponent.add((Content)event.getSource());
     }
   }
 
