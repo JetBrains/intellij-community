@@ -20,6 +20,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.RawCommandLineEditor;
@@ -197,7 +198,7 @@ public final class CommonJavaFragments {
                                      configuration.setAlternativeJrePath(editor.getJrePathOrName());
                                      configuration.setAlternativeJrePathEnabled(editor.isAlternativeJreSelected());
                                    },
-                                   configuration -> true);
+                                   Predicates.alwaysTrue());
     jrePath.setRemovable(false);
     jrePath.setHint(ExecutionBundle.message("run.configuration.jre.hint"));
     jrePath.setValidation(configuration -> new SmartList<>(RuntimeConfigurationException.validate(comboBox, () -> {

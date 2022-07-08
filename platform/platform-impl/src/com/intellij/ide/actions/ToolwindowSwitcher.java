@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.wm.ToolWindow;
@@ -57,7 +58,7 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
                                  @Nullable Predicate<? super ToolWindow> filter,
                                  @Nullable RelativePoint point) {
     if (filter == null) {
-      filter = window -> true;
+      filter = Predicates.alwaysTrue();
     }
 
     if (popup != null) {

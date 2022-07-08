@@ -6,6 +6,7 @@ import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -154,7 +155,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
         return qualifiedName != null && matcher.matches(qualifiedName);
       };
     }
-    return __ -> true;
+    return Predicates.alwaysTrue();
   }
 
   public static class JavadocSeparatorContributor implements ChooseByNameContributorEx, GotoClassContributor {

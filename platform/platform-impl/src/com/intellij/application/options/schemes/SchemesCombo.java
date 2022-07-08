@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.SimpleTextAttributes;
@@ -39,7 +40,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
       addItems(schemes, scheme -> !isProjectScheme(scheme));
     }
     else {
-      addItems(schemes, scheme -> true);
+      addItems(schemes, Predicates.alwaysTrue());
     }
   }
 

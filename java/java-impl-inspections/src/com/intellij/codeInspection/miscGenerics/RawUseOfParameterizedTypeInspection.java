@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
@@ -178,7 +179,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
             continue;
           }
           PsiType parameterType = parameter.getType();
-          if (PsiTypesUtil.mentionsTypeParameters(parameterType, tp -> true)) return false;
+          if (PsiTypesUtil.mentionsTypeParameters(parameterType, Predicates.alwaysTrue())) return false;
         }
         return true;
       }
