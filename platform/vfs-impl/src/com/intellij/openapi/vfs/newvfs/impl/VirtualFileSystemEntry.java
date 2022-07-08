@@ -117,7 +117,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @NotNull
   public VfsData getVfsData() {
     VfsData data = getSegment().vfsData;
-    if (!UNIT_TEST_MODE && !((PersistentFSImpl)ourPersistence).isOwnData(data)) {
+    if (!((PersistentFSImpl)ourPersistence).isOwnData(data)) {
       throw new AssertionError("Alien file!");
     }
     return data;
