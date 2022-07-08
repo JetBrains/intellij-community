@@ -269,9 +269,13 @@ object KotlinCliCompilerFacade {
             KotlinArtifacts.kotlinReflect,
             KotlinArtifacts.kotlinCompiler,
             KotlinArtifacts.kotlinScriptRuntime,
+            KotlinArtifacts.kotlinScriptingCommon,
+            KotlinArtifacts.kotlinScriptingCompiler,
+            KotlinArtifacts.kotlinScriptingCompilerImpl,
+            KotlinArtifacts.kotlinScriptingJvm,
             KotlinArtifacts.trove4j,
             KotlinArtifacts.kotlinDaemon,
-            KotlinArtifacts.jetbrainsAnnotations
+            KotlinArtifacts.jetbrainsAnnotations,
         )
 
         val urls = artifacts.map { it.toURI().toURL() }.toTypedArray()
