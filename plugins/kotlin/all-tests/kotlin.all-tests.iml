@@ -19,7 +19,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.refIndex.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.coverage.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.old.tests" scope="RUNTIME" />

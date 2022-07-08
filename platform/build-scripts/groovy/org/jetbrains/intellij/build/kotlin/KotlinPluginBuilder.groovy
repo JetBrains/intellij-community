@@ -80,7 +80,7 @@ final class KotlinPluginBuilder {
     "kotlin.fir.frontend-independent",
     "kotlin.line-indent-provider",
     "kotlin.jvm",
-    "kotlin.refIndex",
+    "kotlin.compiler-reference-index",
     "kotlin.compiler-plugins.parcelize.common",
     "kotlin.compiler-plugins.parcelize.gradle",
     "kotlin.compiler-plugins.allopen.common",

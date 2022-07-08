@@ -21,7 +21,7 @@
   <xi:include href="statistics.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="refIndex.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="compiler-reference-index.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlinx-serialization.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="native-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="native.xml" xpointer="xpointer(/idea-plugin/*)"/>

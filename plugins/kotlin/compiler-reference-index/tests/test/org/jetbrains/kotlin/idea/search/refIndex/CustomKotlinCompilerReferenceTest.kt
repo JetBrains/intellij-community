@@ -32,7 +32,7 @@ import kotlin.reflect.full.declaredMemberFunctions
 @SkipSlowTestLocally
 class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase() {
     override fun getTestDataPath(): String = KotlinRoot.DIR
-        .resolve("refIndex/tests/testData/")
+        .resolve("compiler-reference-index/tests/testData/")
         .resolve("customCompilerIndexData")
         .path + "/"
 
