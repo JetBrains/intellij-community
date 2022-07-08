@@ -66,11 +66,11 @@ public final class ColorSettingsUtil {
     final ArrayList<Pair<TextAttributesKey, @Nls String>> attributes = new ArrayList<>(
       List.of(
        new Pair<>(CodeInsightColors.ERRORS_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.error")),
+       new Pair<>(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.unknown.symbol")),
        new Pair<>(CodeInsightColors.WARNINGS_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.warning")),
        new Pair<>(CodeInsightColors.WEAK_WARNING_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.weak.warning")),
-       new Pair<>(CodeInsightColors.DEPRECATED_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.unknown.symbol")),
        new Pair<>(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.unused.symbol")),
-       new Pair<>(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.deprecated.symbol")),
+       new Pair<>(CodeInsightColors.DEPRECATED_ATTRIBUTES,OptionsBundle.message("options.java.attribute.descriptor.deprecated.symbol") ),
        new Pair<>(CodeInsightColors.MARKED_FOR_REMOVAL_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.marked.for.removal.symbol")),
        new Pair<>(CodeInsightColors.DUPLICATE_FROM_SERVER, OptionsBundle.message("options.java.attribute.descriptor.server.duplicate")),
        new Pair<>(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING, OptionsBundle.message("options.java.attribute.descriptor.server.problems")),
