@@ -399,10 +399,13 @@ fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
 }
 
-fun LessonContext.highlightRunToolbar(usePulsation: Boolean = true) {
+fun LessonContext.highlightRunToolbar(highlightInside: Boolean = true, usePulsation: Boolean = true) {
   task {
     val stopAction = getActionById("Stop")
-    triggerAndFullHighlight { this.usePulsation = usePulsation }.componentPart { ui: ActionToolbarImpl ->
+    triggerAndBorderHighlight {
+      this.highlightInside = highlightInside
+      this.usePulsation = usePulsation
+    }.componentPart { ui: ActionToolbarImpl ->
       ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
         val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
         val stop = ui.components.find { it is ActionButton && it.action == stopAction }
@@ -419,24 +422,27 @@ fun LessonContext.highlightRunToolbar(usePulsation: Boolean = true) {
   }
 }
 
-fun LessonContext.highlightDebugActionsToolbar(usePulsation: Boolean = true) {
+fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = true, usePulsation: Boolean = true) {
   task {
-    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", usePulsation)
+    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", highlightInside, usePulsation)
   }
 
   task {
     if (!UIExperiment.isNewDebuggerUIEnabled()) {
-      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint", usePulsation, clearPreviousHighlights = false)
+      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint",
+                                 highlightInside, usePulsation, clearPreviousHighlights = false)
     }
   }
 }
 
 private fun TaskContext.highlightToolbarWithAction(place: String,
                                                    actionId: String,
+                                                   highlightInside: Boolean,
                                                    usePulsation: Boolean,
                                                    clearPreviousHighlights: Boolean = true) {
   val needAction = getActionById(actionId)
-  triggerAndFullHighlight {
+  triggerAndBorderHighlight {
+    this.highlightInside = highlightInside
     this.usePulsation = usePulsation
     this.clearPreviousHighlights = clearPreviousHighlights
   }.component { ui: ActionToolbarImpl ->
@@ -605,7 +611,10 @@ fun LessonContext.restoreChangedSettingsInformer(restoreSettings: () -> Unit) {
   }
 }
 
-fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean = true) {
+fun LessonContext.highlightButtonById(actionId: String,
+                                      highlightInside: Boolean = true,
+                                      usePulsation: Boolean = true,
+                                      clearHighlights: Boolean = true) {
   val needToFindButton = getActionById(actionId)
 
   task {
@@ -629,7 +638,9 @@ fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean
         taskInvokeLater {
           feature.complete(result.isNotEmpty())
           for (button in result) {
-            val options = LearningUiHighlightingManager.HighlightingOptions(usePulsation = true, clearPreviousHighlights = false)
+            val options = LearningUiHighlightingManager.HighlightingOptions(highlightInside = highlightInside,
+                                                                            usePulsation = usePulsation,
+                                                                            clearPreviousHighlights = false)
             LearningUiHighlightingManager.highlightComponent(button, options)
           }
         }
