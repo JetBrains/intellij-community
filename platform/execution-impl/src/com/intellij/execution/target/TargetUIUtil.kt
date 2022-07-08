@@ -37,10 +37,10 @@ fun textFieldWithBrowseTargetButton(row: Row,
 }
 
 fun com.intellij.ui.dsl.builder.Row.textFieldWithBrowseTargetButton(targetType: BrowsableTargetEnvironmentType,
-                                                                    targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
-                                                                    project: Project,
-                                                                    @NlsContexts.DialogTitle title: String,
-                                                                    property: MutableProperty<String>): Cell<TextFieldWithBrowseButton> {
+                                        targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
+                                        project: Project,
+                                        @NlsContexts.DialogTitle title: String,
+                                        property: MutableProperty<String>): Cell<TextFieldWithBrowseButton> {
   val textFieldWithBrowseButton = TextFieldWithBrowseButton()
   val browser = targetType.createBrowser(project,
                                          title,
@@ -58,6 +58,7 @@ fun com.intellij.ui.dsl.builder.Row.textFieldWithBrowseTargetButton(targetType: 
  *
  * @receiver the panel where Kotlin UI DSL elements are placed
  */
+@Deprecated("Not needed for Kotlin UI DSL 2, should be removed")
 fun <T : JComponent> T.fixHighlightingOfUiDslComponents(): T = apply {
   border = IdeBorderFactory.createEmptyBorder(JBInsets(4, 0, 3, 3))
 }
