@@ -10,11 +10,10 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.platform.PlatformProjectOpenProcessor
 import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator
+import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
-import training.project.ProjectUtils
 import java.nio.file.Path
 
 class KotlinLangSupport : JavaBasedLangSupport() {
@@ -23,9 +22,7 @@ class KotlinLangSupport : JavaBasedLangSupport() {
     override val primaryLanguage: String = "kotlin"
     override val scratchFileName: String = "Learning.kt"
 
-    private val sourcesDirectoryName = "src"
-
-    override val sampleFilePath: String = "$sourcesDirectoryName/Sample.kt"
+    override val sampleFilePath: String = "$sourcesDirectoryPath/Sample.kt"
 
     override fun installAndOpenLearningProject(
         contentRoot: Path,
@@ -64,6 +61,5 @@ class KotlinLangSupport : JavaBasedLangSupport() {
     override fun applyToProjectAfterConfigure(): (Project) -> Unit = { project ->
         super.applyToProjectAfterConfigure().invoke(project)
         ProjectCodeStyleImporter.apply(project, KotlinStyleGuideCodeStyle.INSTANCE)
-        invokeLater { ProjectUtils.markDirectoryAsSourcesRoot(project, sourcesDirectoryName) }
     }
 }
