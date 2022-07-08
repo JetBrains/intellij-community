@@ -17,6 +17,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import java.util.*
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -56,6 +57,10 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
     @JvmField var _nullableData: String? = null
     override val nullableData: String?
         get() = _nullableData
+                        
+    @JvmField var _randomUUID: UUID? = null
+    override val randomUUID: UUID?
+        get() = _randomUUID
     
     override fun connectionIdList(): List<ConnectionId> {
         return connections
@@ -217,6 +222,15 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
                 getEntityData().nullableData = value
                 changedProperty.add("nullableData")
             }
+            
+        override var randomUUID: UUID?
+            get() = getEntityData().randomUUID
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().randomUUID = value
+                changedProperty.add("randomUUID")
+                
+            }
         
         override fun getEntityData(): SampleEntityData = result ?: super.getEntityData() as SampleEntityData
         override fun getEntityClass(): Class<SampleEntity> = SampleEntity::class.java
@@ -230,6 +244,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     lateinit var stringMapProperty: Map<String, String>
     lateinit var fileProperty: VirtualFileUrl
     var nullableData: String? = null
+    var randomUUID: UUID? = null
 
     
     fun isStringPropertyInitialized(): Boolean = ::stringProperty.isInitialized
@@ -257,6 +272,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         entity._stringMapProperty = stringMapProperty
         entity._fileProperty = fileProperty
         entity._nullableData = nullableData
+        entity._randomUUID = randomUUID
         entity.entitySource = entitySource
         entity.snapshot = snapshot
         entity.id = createEntityId()
@@ -286,6 +302,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         if (this.stringMapProperty != other.stringMapProperty) return false
         if (this.fileProperty != other.fileProperty) return false
         if (this.nullableData != other.nullableData) return false
+        if (this.randomUUID != other.randomUUID) return false
         return true
     }
 
@@ -301,6 +318,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         if (this.stringMapProperty != other.stringMapProperty) return false
         if (this.fileProperty != other.fileProperty) return false
         if (this.nullableData != other.nullableData) return false
+        if (this.randomUUID != other.randomUUID) return false
         return true
     }
 
@@ -312,6 +330,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         result = 31 * result + stringMapProperty.hashCode()
         result = 31 * result + fileProperty.hashCode()
         result = 31 * result + nullableData.hashCode()
+        result = 31 * result + randomUUID.hashCode()
         return result
     }
 }

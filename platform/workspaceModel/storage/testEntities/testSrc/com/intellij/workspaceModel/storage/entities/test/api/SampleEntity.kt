@@ -9,8 +9,7 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-
-
+import java.util.*
 
 
 interface SampleEntity : WorkspaceEntity {
@@ -21,6 +20,7 @@ interface SampleEntity : WorkspaceEntity {
   val fileProperty: VirtualFileUrl
   val children: List<@Child ChildSampleEntity>
   val nullableData: String?
+  val randomUUID: UUID?
 
   //region generated code
   //@formatter:off
@@ -34,6 +34,7 @@ interface SampleEntity : WorkspaceEntity {
       override var fileProperty: VirtualFileUrl
       override var children: List<ChildSampleEntity>
       override var nullableData: String?
+      override var randomUUID: UUID?
   }
   
   companion object: Type<SampleEntity, Builder>() {

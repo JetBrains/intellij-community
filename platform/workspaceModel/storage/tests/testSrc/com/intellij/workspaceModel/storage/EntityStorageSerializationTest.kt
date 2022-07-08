@@ -15,6 +15,7 @@ import junit.framework.Assert.*
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.util.UUID
 
 class EntityStorageSerializationTest {
   @Test
@@ -51,7 +52,20 @@ class EntityStorageSerializationTest {
                               stringMapProperty, virtualFileManager.fromUrl("file:///tmp"))
     builder.addEntity(entity)
 
-    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), virtualFileManager)
+  }
+
+  @Test
+  fun `entity uuid serialization`() {
+    val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl()
+    val builder = createEmptyBuilder()
+    val entity = SampleEntity(false, SampleEntitySource("test"), "MyEntity", emptyList(),
+                              emptyMap(), virtualFileManager.fromUrl("file:///tmp")) {
+      randomUUID = UUID.fromString("58e0a7d7-eebc-11d8-9669-0800200c9a66")
+    }
+    builder.addEntity(entity)
+
+    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), virtualFileManager)
   }
 
   @Test
@@ -194,4 +208,5 @@ private val expectedKryoRegistration = """
   [66, kotlin.collections.EmptyList]
   [67, kotlin.collections.EmptySet]
   [68, Object[]]
+  [69, java.util.UUID]
 """.trimIndent()

@@ -44,7 +44,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v34"
+    const val SERIALIZER_VERSION = "v35"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
@@ -153,6 +153,7 @@ class EntityStorageSerializerImpl(
     registerSingletonSerializer(kryo) { emptySet<Any>() }
     registerSingletonSerializer(kryo) { emptyArray<Any>() }
 
+    kryo.register(UUID::class.java)
     return kryo to classesCache
   }
 
