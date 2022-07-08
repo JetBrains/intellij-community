@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType
 class BundledGroovyClassFinder(project: Project) : NonClasspathClassFinder(project, GroovyFileType.DEFAULT_EXTENSION) {
 
   override fun calcClassRoots(): List<VirtualFile> {
-    val root = bundledGroovyJarRoot ?: return emptyList()
+    val root = bundledGroovyJarRoot.value.get() ?: return emptyList()
     return listOf(root)
   }
 }
