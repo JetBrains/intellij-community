@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.QuickListsManager
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Pair
 import com.intellij.ui.dsl.builder.EMPTY_LABEL
@@ -17,6 +18,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -43,27 +45,32 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
     init()
   }
 
-  override fun createCenterPanel() = panel {
-    row {
-      cell(CustomizableActionsPanel.setupFilterComponent(actionsTree))
-        .horizontalAlign(HorizontalAlign.FILL)
+  override fun createCenterPanel(): JComponent {
+    val filterComponent = CustomizableActionsPanel.setupFilterComponent(actionsTree)
+    val panel: DialogPanel = panel {
+      row {
+        cell(filterComponent)
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row {
+        scrollCell(actionsTree)
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row(IdeBundle.message("label.icon.path")) {
+        cell(browseComboBox)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .customize(Gaps.EMPTY)
+      }
+      row(EMPTY_LABEL) {
+        label(IdeBundle.message("browse.custom.icon.hint"))
+          .applyToComponent {
+            font = JBUI.Fonts.smallFont()
+            foreground = UIUtil.getLabelInfoForeground()
+          }.customize(Gaps.EMPTY)
+      }
     }
-    row {
-      scrollCell(actionsTree)
-        .horizontalAlign(HorizontalAlign.FILL)
-    }
-    row(IdeBundle.message("label.icon.path")) {
-      cell(browseComboBox)
-        .horizontalAlign(HorizontalAlign.FILL)
-        .customize(Gaps.EMPTY)
-    }
-    row(EMPTY_LABEL) {
-      label(IdeBundle.message("browse.custom.icon.hint"))
-        .applyToComponent {
-          font = JBUI.Fonts.smallFont()
-          foreground = UIUtil.getLabelInfoForeground()
-        }.customize(Gaps.EMPTY)
-    }
+    panel.preferredFocusedComponent = filterComponent.textEditor
+    return panel
   }
 
   override fun doOKAction() {
