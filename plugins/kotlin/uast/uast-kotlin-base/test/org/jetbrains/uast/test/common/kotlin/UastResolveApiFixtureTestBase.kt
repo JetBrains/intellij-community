@@ -916,6 +916,48 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals(UastCallKind.CONSTRUCTOR_CALL, uCallExpression.kind)
     }
 
+    fun checkArrayAccessOverloads(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+            public class SparseArray<E> {
+              private Map<Long, E> map = new HashMap<Long, E>();
+              public void set(int key, E value) { map.put(key, value); }
+              public void set(long key, E value) { map.put(key, value); }
+              public E get(int key) { return map.get(key); }
+              public E get(long key) { return map.get(key); }
+            }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                fun foo(array: SparseArray<String>) {
+                  array[42L] = "forty two"
+                  val y = array[42]
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+
+        val set = uFile.findElementByTextFromPsi<UArrayAccessExpression>("array[42L]", strict = false)
+            .orFail("cant convert to UArrayAccessExpression")
+        val setResolved = (set.resolve() as? PsiMethod)
+            .orFail("cant resolve from $set")
+        TestCase.assertEquals("set", setResolved.name)
+        TestCase.assertEquals(2, setResolved.parameters.size)
+        TestCase.assertEquals("PsiType:long", setResolved.parameters[0].type.toString())
+        TestCase.assertEquals("PsiType:E", setResolved.parameters[1].type.toString())
+        TestCase.assertEquals("PsiType:void", setResolved.returnType?.toString())
+
+        val get = uFile.findElementByTextFromPsi<UArrayAccessExpression>("array[42]", strict = false)
+            .orFail("cant convert to UArrayAccessExpression")
+        val getResolved = (get.resolve() as? PsiMethod)
+            .orFail("cant resolve from $get")
+        TestCase.assertEquals("get", getResolved.name)
+        TestCase.assertEquals(1, getResolved.parameters.size)
+        TestCase.assertEquals("PsiType:int", getResolved.parameters[0].type.toString())
+        TestCase.assertEquals("PsiType:E", getResolved.returnType?.toString())
+    }
+
     fun checkOperatorOverloads(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """

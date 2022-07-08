@@ -135,6 +135,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkCallKindOfSamConstructor(myFixture)
     }
 
+    fun testArrayAccessOverloads() {
+        checkArrayAccessOverloads(myFixture)
+    }
+
     fun testOperatorOverloads() {
         checkOperatorOverloads(myFixture)
     }

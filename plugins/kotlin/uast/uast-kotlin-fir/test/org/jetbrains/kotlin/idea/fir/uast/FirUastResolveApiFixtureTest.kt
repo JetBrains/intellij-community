@@ -190,6 +190,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("CallKindOfSamConstructor", ::checkCallKindOfSamConstructor)
     }
 
+    fun testArrayAccessOverloads() {
+        doCheck("ArrayAccessOverloads", ::checkArrayAccessOverloads)
+    }
+
     fun testOperatorOverloads() {
         doCheck("OperatorOverloads", ::checkOperatorOverloads)
     }
