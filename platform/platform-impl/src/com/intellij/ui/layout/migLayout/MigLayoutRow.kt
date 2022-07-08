@@ -577,6 +577,7 @@ private class CellBuilderImpl<T : JComponent>(
     return this
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun commentComponent(component: JComponent, forComponent: Boolean): CellBuilder<T> {
     row.addCommentRow(component, forComponent, viewComponent)
     return this
