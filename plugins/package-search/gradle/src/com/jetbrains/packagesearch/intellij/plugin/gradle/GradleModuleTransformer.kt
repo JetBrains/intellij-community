@@ -124,7 +124,7 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
         return ExternalSystemApiUtil.getExternalModuleType(this) != GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY
     }
 
-    private fun getAllSubmodules(project: Project, rootModule: ProjectModule): List<ProjectModule> {
+    private suspend fun getAllSubmodules(project: Project, rootModule: ProjectModule): List<ProjectModule> {
         val externalRootProject = findExternalProjectOrNull(project, rootModule.nativeModule)
             ?: return emptyList()
 
@@ -188,7 +188,7 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
         return null
     }
 
-    private fun ExternalProject.addChildrenToListRecursive(
+    private suspend fun ExternalProject.addChildrenToListRecursive(
         modules: MutableList<ProjectModule>,
         currentModule: ProjectModule,
         project: Project
@@ -196,9 +196,9 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
         val localFileSystem = LocalFileSystem.getInstance()
 
         for (externalProject in childProjects.values) {
-            val projectBuildFile = externalProject.buildFile?.absolutePath?.let(localFileSystem::findFileByPath)
+            val projectBuildFile = externalProject.buildFile?.absolutePath?.let { localFileSystem.findFileByPath(it) }
                 ?: continue
-            val nativeModule = ModuleUtilCore.findModuleForFile(projectBuildFile, project)
+            val nativeModule = readAction { ModuleUtilCore.findModuleForFile(projectBuildFile, project) }
                 ?: continue
 
             val projectModule = ProjectModule(
@@ -230,4 +230,3 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
         }
     }
 }
-
