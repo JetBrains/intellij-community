@@ -277,10 +277,8 @@ object ProjectUtils {
     } ?: error("Failed to find content entry for file: ${sourcesRoot.name}")
 
     contentEntry.addSourceFolder(sourcesRoot, false)
-    runWriteAction {
-      rootsModel.commit()
-      project.save()
-    }
+    runWriteAction(rootsModel::commit)
+    project.save()
   }
 
   fun closeAllEditorsInProject(project: Project) {

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.configurationStore.StateStorageManagerKt;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -271,7 +271,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           if (!ApplicationManager.getApplication().isHeadlessEnvironment() && syncType == SyncType.RE_IMPORT) {
             try {
               // we need to save module configuration before dispose, to get the up-to-date content of the unlinked module iml
-              StateStorageManagerKt.saveComponentManager(module);
+              StoreUtil.saveSettings(module);
               VirtualFile moduleFile = module.getModuleFile();
               if (moduleFile != null) {
                 Path orphanModulePath = unlinkedModulesDir.resolve(String.valueOf(path.hashCode()));

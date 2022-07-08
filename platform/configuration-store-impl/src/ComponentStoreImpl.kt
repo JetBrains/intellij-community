@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
 import com.intellij.diagnostic.PluginException
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -26,7 +27,6 @@ import com.intellij.util.containers.toArray
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -269,7 +269,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val absolutePath = storageManager.expandMacro(findNonDeprecated(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)).path).toString()
     Disposer.newDisposable().use {
       VfsRootAccess.allowRootAccess(it, absolutePath)
-      runBlocking {
+      runUnderModalProgressIfIsEdt {
         val saveResult = saveManager.save()
         saveResult.throwIfErrored()
 

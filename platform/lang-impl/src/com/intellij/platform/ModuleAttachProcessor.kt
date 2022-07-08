@@ -2,7 +2,8 @@
 package com.intellij.platform
 
 import com.intellij.CommonBundle
-import com.intellij.configurationStore.StoreUtil
+import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.configurationStore.saveSettings
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
@@ -84,8 +85,10 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
         PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir = projectDir,
                                                                       project = newProject,
                                                                       newProject = true)
+        runInAutoSaveDisabledMode {
+          saveSettings(newProject)
+        }
       }
-      StoreUtil.saveSettings(newProject)
       runWriteAction { Disposer.dispose(newProject) }
     }
 

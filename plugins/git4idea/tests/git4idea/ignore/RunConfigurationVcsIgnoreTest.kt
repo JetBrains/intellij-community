@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
-import com.intellij.configurationStore.saveComponentManager
+import com.intellij.configurationStore.saveSettings
+import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -19,8 +20,11 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
 
   override fun setUpProject() {
     super.setUpProject()
-    // create .idea directory
-    ApplicationManager.getApplication().invokeAndWait { saveComponentManager(project) }
+    // will create .idea directory
+    // setUpProject is executed in EDT
+    runBlockingUnderModalProgress {
+      saveSettings(project)
+    }
   }
 
   override fun setUpModule() {

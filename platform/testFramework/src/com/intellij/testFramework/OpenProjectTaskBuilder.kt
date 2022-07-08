@@ -1,12 +1,23 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.util.ThreeState
 import java.util.function.Predicate
+
+// todo rewrite PlatfomTestUtil to kotlin
+internal fun saveProject(project: Project, forceSavingAllSettings: Boolean = false) {
+  StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
+  runUnderModalProgressIfIsEdt {
+    project.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
+  }
+}
 
 /**
  * Do not use in Kotlin, for Java only.

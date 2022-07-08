@@ -6,6 +6,7 @@ import com.intellij.configurationStore.saveSettings
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupManagerEx
@@ -346,7 +347,8 @@ open class ProjectImpl(filePath: Path, projectName: String?)
   }
 
   override fun save() {
-    if (!ApplicationManagerEx.getApplicationEx().isSaveAllowed) {
+    val app = ApplicationManagerEx.getApplicationEx()
+    if (!app.isSaveAllowed) {
       // no need to save
       return
     }
@@ -358,10 +360,9 @@ open class ProjectImpl(filePath: Path, projectName: String?)
       return
     }
 
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
     runInAutoSaveDisabledMode {
-      runBlocking {
-        saveSettings(componentManager = this@ProjectImpl, forceSavingAllSettings = false)
+      runUnderModalProgressIfIsEdt {
+        saveSettings(componentManager = this@ProjectImpl)
       }
     }
   }

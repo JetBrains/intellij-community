@@ -8,6 +8,7 @@ import com.intellij.compiler.progress.CompilerMessagesService;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -431,13 +432,15 @@ public final class CompileDriver {
     );
 
     StatusBar.Info.set("", myProject, "Compiler");
-    // ensure the project model seen by build process is up-to-date
-    myProject.save();
-    if (!isUnitTestMode) {
-      ApplicationManager.getApplication().saveSettings();
-    }
+
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
+
+    // ensure the project model seen by build process is up-to-date
+    StoreUtil.saveSettings(myProject);
+    if (!isUnitTestMode) {
+      StoreUtil.saveSettings(ApplicationManager.getApplication());
+    }
 
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, compileTask, scope, !isRebuild && !forceCompile, isRebuild);
     span.complete();

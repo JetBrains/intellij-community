@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ProjectTopics
-import com.intellij.configurationStore.saveComponentManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -234,11 +233,12 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     }
 
     unloadedModules.keys.removeAll { it !in unloadedModuleNamesSet }
-    runWriteAction {
-      if (modulesToUnload.isNotEmpty()) { // we need to save module configurations before unloading, otherwise their settings will be lost
-        saveComponentManager(project)
-      }
 
+    // we need to save module configurations before unloading, otherwise their settings will be lost
+    if (modulesToUnload.isNotEmpty()) {
+      project.save()
+    }
+    runWriteAction {
       ProjectRootManagerEx.getInstanceEx(project).makeRootsChange({
         for ((moduleEntity, module) in modulesToUnload) {
           fireBeforeModuleRemoved(module)

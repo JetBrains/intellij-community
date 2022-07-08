@@ -2,8 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.configurationStore.StateStorageManagerKt;
-import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -700,12 +698,11 @@ public final class PlatformTestUtil {
   }
 
   public static void saveProject(@NotNull Project project) {
-    saveProject(project, false);
+    OpenProjectTaskBuilderKt.saveProject(project, false);
   }
 
   public static void saveProject(@NotNull Project project, boolean isForceSavingAllSettings) {
-    StoreReloadManager.getInstance().flushChangedProjectFileAlarm();
-    StateStorageManagerKt.saveComponentManager(project, isForceSavingAllSettings);
+    OpenProjectTaskBuilderKt.saveProject(project, isForceSavingAllSettings);
   }
 
   static void waitForAllBackgroundActivityToCalmDown() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
@@ -71,10 +71,8 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   }
 
   static void commitModel(@NotNull Module module, ModifiableRootModel model) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      model.commit();
-      module.getProject().save();
-    });
+    ApplicationManager.getApplication().runWriteAction(model::commit);
+    module.getProject().save();
   }
 
   protected abstract void modifyRoots(VirtualFile file, ContentEntry entry);

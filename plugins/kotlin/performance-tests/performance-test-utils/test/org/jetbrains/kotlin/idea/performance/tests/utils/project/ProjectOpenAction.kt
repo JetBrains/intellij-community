@@ -204,9 +204,7 @@ enum class ProjectOpenAction {
 
             logMessage { "project ${openProject.projectName} is ${if (project.isInitialized) "initialized" else "not initialized"}" }
 
-            with(ChangeListManager.getInstance(project) as ChangeListManagerImpl) {
-                waitUntilRefreshed()
-            }
+            (ChangeListManager.getInstance(project) as ChangeListManagerImpl).waitUntilRefreshed()
             project.save()
             return project
         }
