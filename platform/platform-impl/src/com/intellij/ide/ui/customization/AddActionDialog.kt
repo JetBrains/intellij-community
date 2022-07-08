@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.QuickListsManager
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Pair
@@ -33,7 +34,7 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
     cellRenderer = CustomizableActionsPanel.createDefaultRenderer()
   }
 
-  private val browseComboBox: ComboBox<IconInfo> = CustomizableActionsPanel.createBrowseIconsComboBox()
+  private val browseComboBox: ComboBox<IconInfo> = CustomizableActionsPanel.createBrowseIconsComboBox(disposable)
 
   private val selectedIcon: IconInfo?
     get() = browseComboBox.selectedItem as? IconInfo
@@ -74,6 +75,16 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
   }
 
   override fun doOKAction() {
+    val validatorOpt = ComponentValidator.getInstance(browseComboBox)
+    if (validatorOpt.isPresent) {
+      val validator = validatorOpt.get()
+      validator.revalidate()
+      if (validator.validationInfo != null) {
+        browseComboBox.requestFocusInWindow()
+        return
+      }
+    }
+
     val iconInfo = selectedIcon
     val selectedNode = selectedTreePath?.lastPathComponent as? DefaultMutableTreeNode
     if (iconInfo != null && selectedNode != null) {

@@ -6,6 +6,7 @@ import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -17,10 +18,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -52,10 +50,14 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.NoSuchFileException;
 import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
@@ -468,7 +470,7 @@ public class CustomizableActionsPanel {
     return icons;
   }
 
-  static ComboBox<IconInfo> createBrowseIconsComboBox() {
+  static ComboBox<IconInfo> createBrowseIconsComboBox(@NotNull Disposable parentDisposable) {
     List<IconInfo> icons = getAllIcons();
     // Overriding of selecting items required to prohibit selecting of SEPARATOR items
     ComboBox<IconInfo> comboBox = new ComboBox<>(icons.toArray(new IconInfo[0])) {
@@ -630,6 +632,32 @@ public class CustomizableActionsPanel {
     });
 
     ComboboxSpeedSearch.installSpeedSearch(comboBox, actionInfo -> actionInfo.text);
+
+    new ComponentValidator(parentDisposable).withValidator(() -> {
+      IconInfo selected = (IconInfo)comboBox.getSelectedItem();
+      if (selected == null) return null;
+      String path = selected.iconPath;
+      if (path == null) return null;
+      try {
+        loadCustomIcon(path);
+      }
+      catch (FileNotFoundException | NoSuchFileException ex) {
+        return new ValidationInfo(IdeBundle.message("icon.validation.message.not.found"), comboBox);
+      }
+      catch (IOException ex) {
+        return new ValidationInfo(IdeBundle.message("icon.validation.message.format"), comboBox);
+      }
+      return null;
+    }).installOn(comboBox);
+
+    comboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        // reset validation info if some item selected
+        ComponentValidator.getInstance(comboBox).ifPresent(validator -> validator.updateInfo(null));
+      }
+    });
+
     return comboBox;
   }
 
