@@ -81,7 +81,7 @@ fun DefType.generatedApiCode(indent: String = "    ", isEmptyGenBlock: Boolean):
 }
 
 fun DefType.generatedExtensionCode(indent: String = "    "): String {
-  val extFields = ktModule.extFields.filter { it.owner is DefType &&
+  val extFields = module.extFields.filter { it.owner is DefType &&
                                               (this === it.owner || (it.owner.def.formExternalModule &&  it.referencedField.owner === this)) }
   if (extFields.isEmpty() && abstract) return ""
   return lines(indent) {
