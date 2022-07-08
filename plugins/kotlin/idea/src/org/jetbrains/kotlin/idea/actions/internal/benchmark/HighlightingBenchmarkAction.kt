@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
@@ -204,6 +205,8 @@ class HighlightingBenchmarkAction : AnAction() {
         }
         AbstractCompletionBenchmarkAction.showPopup(project, KotlinBundle.message("text.done"))
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isApplicationInternalMode()

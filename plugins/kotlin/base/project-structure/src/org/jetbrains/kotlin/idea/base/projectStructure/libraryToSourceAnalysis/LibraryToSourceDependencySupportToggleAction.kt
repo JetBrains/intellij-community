@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
@@ -19,4 +20,5 @@ internal class LibraryToSourceDependencySupportToggleAction : ToggleAction(
         project.useLibraryToSourceAnalysis = state
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
