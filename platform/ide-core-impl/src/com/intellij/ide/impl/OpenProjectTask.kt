@@ -48,21 +48,16 @@ data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean
               projectToClose: Project? = null,
               isNewProject: Boolean = false,
               /** Ignored if [isNewProject] is set to false. */
-              useDefaultProjectAsTemplate: Boolean = isNewProject,
-              /** When you just need to open an already created and prepared project; used e.g. by the "new project" action. */
-              project: Project? = null,
-              projectName: String? = null,
-              /** Whether to show welcome screen if failed to open project. */
-              showWelcomeScreen: Boolean = true) : this(
+              useDefaultProjectAsTemplate: Boolean = isNewProject) : this(
     forceOpenInNewFrame = forceOpenInNewFrame,
     projectToClose = projectToClose,
     isNewProject = isNewProject,
     useDefaultProjectAsTemplate = useDefaultProjectAsTemplate,
 
-    project = project,
-    projectName = projectName,
+    project = null,
+    projectName = null,
 
-    showWelcomeScreen = showWelcomeScreen,
+    showWelcomeScreen = true,
     callback = null,
     line = -1,
     column = -1,
@@ -157,6 +152,8 @@ class OpenProjectTaskBuilder internal constructor() {
   @Internal
   var processorChooser: ((List<Any>) -> Any)? = null
 
+  var project: Project? = null
+
   internal inline fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
     builder()
     return OpenProjectTask(
@@ -188,7 +185,7 @@ class OpenProjectTaskBuilder internal constructor() {
       line = line,
       column = column,
 
-      project = null,
+      project = project,
     )
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.performance.tests.utils
 
@@ -73,8 +73,9 @@ fun dispatchAllInvocationEvents() {
     }
 }
 
-fun loadProjectWithName(path: String, name: String): Project? =
-    ProjectManagerEx.getInstanceEx().openProject(Paths.get(path), OpenProjectTask(projectName = name))
+fun loadProjectWithName(path: String, name: String): Project? {
+    return ProjectManagerEx.getInstanceEx().openProject(Paths.get(path), OpenProjectTask { this.projectName = name })
+}
 
 fun TestApplicationManager.closeProject(project: Project) {
     val name = project.name

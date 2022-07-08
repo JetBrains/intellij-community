@@ -471,9 +471,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   @Suppress("OVERRIDE_DEPRECATION")
   final override fun newProject(projectName: String?, filePath: String, useDefaultProjectSettings: Boolean, isDummy: Boolean): Project? {
-    return newProject(toCanonicalName(filePath), OpenProjectTask(isNewProject = true,
-                                                                 useDefaultProjectAsTemplate = useDefaultProjectSettings,
-                                                                 projectName = projectName))
+    return newProject(toCanonicalName(filePath), OpenProjectTask {
+      isNewProject = true
+      this.useDefaultProjectAsTemplate = useDefaultProjectSettings
+      this.projectName = projectName
+    })
   }
 
   final override fun loadAndOpenProject(originalFilePath: String): Project? {

@@ -155,7 +155,11 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
         }
       }
 
-      var options = OpenProjectTask(projectToClose = projectToClose, forceOpenInNewFrame = forceOpenInNewFrame, projectName = wizardContext.projectName)
+      var options = OpenProjectTask {
+        this.projectToClose = projectToClose
+        this.forceOpenInNewFrame = forceOpenInNewFrame
+        this.projectName = wizardContext.projectName
+      }
       if (!shouldOpenExisting) {
         options = options.copy(isNewProject = true)
       }

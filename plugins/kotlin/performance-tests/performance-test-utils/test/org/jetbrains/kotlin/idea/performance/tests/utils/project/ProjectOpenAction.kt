@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.performance.tests.utils.runAndMeasure
 import org.jetbrains.kotlin.idea.project.ResolveElementCache
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.test.assertTrue
 
@@ -74,13 +75,13 @@ enum class ProjectOpenAction {
             projectName: String,
             jdk: Sdk
         ): Project {
-            val projectManagerEx = ProjectManagerEx.getInstanceEx()
+            val projectManager = ProjectManagerEx.getInstanceEx()
 
             val project =
-                ProjectManagerEx.getInstanceEx()
+                projectManager
                     .openProject(
-                        Paths.get(projectPath),
-                        OpenProjectTask(projectName = projectName, showWelcomeScreen = false)
+                        Path.of(projectPath),
+                        OpenProjectTask { this.projectName = projectName; showWelcomeScreen = false }
                     )
                 ?: error("project $projectName at $projectPath is not loaded")
 
@@ -90,7 +91,7 @@ enum class ProjectOpenAction {
                     setupJdk(jdk)
                 }
 
-                assertTrue(projectManagerEx.isProjectOpened(project), "project $projectName at $projectPath is not opened")
+                assertTrue(projectManager.isProjectOpened(project), "project $projectName at $projectPath is not opened")
             }
         }
     },
