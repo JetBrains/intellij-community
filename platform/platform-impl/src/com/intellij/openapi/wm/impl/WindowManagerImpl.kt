@@ -379,15 +379,10 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
   }
 
-  fun <T> runWithFrameReuseEnabled(task: () -> T): T {
-    val savedValue = frameReuseEnabled
+  fun withFrameReuseEnabled(): AutoCloseable {
+    val oldValue = frameReuseEnabled
     frameReuseEnabled = true
-    try {
-      return task()
-    }
-    finally {
-      frameReuseEnabled = savedValue
-    }
+    return AutoCloseable { frameReuseEnabled = oldValue }
   }
 
   override fun getMostRecentFocusedWindow() = windowWatcher.focusedWindow

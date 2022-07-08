@@ -254,7 +254,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override fun forceCloseProject(project: Project, save: Boolean): Boolean {
-    return closeProject(project = project, saveProject = save, dispose = true, checkCanClose = false)
+    return closeProject(project = project, saveProject = save, checkCanClose = false)
   }
 
   override suspend fun forceCloseProjectAsync(project: Project, save: Boolean): Boolean {
@@ -268,7 +268,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       if (project.isDisposed) {
         return@withContext false
       }
-      closeProject(project = project, saveProject = save, dispose = true, checkCanClose = false)
+      closeProject(project = project, saveProject = save, checkCanClose = false)
     }
   }
 
@@ -279,14 +279,14 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       projects += it
     }
     for (project in projects) {
-      if (!closeProject(project = project, saveProject = true, dispose = true, checkCanClose = checkCanClose)) {
+      if (!closeProject(project = project, checkCanClose = checkCanClose)) {
         return false
       }
     }
     return true
   }
 
-  protected open fun closeProject(project: Project, saveProject: Boolean, dispose: Boolean, checkCanClose: Boolean): Boolean {
+  protected open fun closeProject(project: Project, saveProject: Boolean = true, dispose: Boolean = true, checkCanClose: Boolean): Boolean {
     val app = ApplicationManager.getApplication()
     check(!app.isWriteAccessAllowed) {
       "Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful"
@@ -364,9 +364,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return true
   }
 
-  override fun closeAndDispose(project: Project): Boolean {
-    return closeProject(project, saveProject = true, dispose = true, checkCanClose = true)
-  }
+  override fun closeAndDispose(project: Project) = closeProject(project, checkCanClose = true)
 
   override fun addProjectManagerListener(listener: ProjectManagerListener) {
     listeners.add(listener)
@@ -842,8 +840,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return false
   }
 
-  private fun closeAndDisposeKeepingFrame(project: Project): Boolean {
-    return (WindowManager.getInstance() as WindowManagerImpl).runWithFrameReuseEnabled { closeAndDispose(project) }
+  private suspend fun closeAndDisposeKeepingFrame(project: Project): Boolean {
+    return withContext(Dispatchers.EDT) {
+      (WindowManager.getInstance() as WindowManagerImpl).withFrameReuseEnabled().use {
+        closeProject(project, checkCanClose = true)
+      }
+    }
   }
 }
 
