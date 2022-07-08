@@ -4,7 +4,7 @@ fun foo() {
         a = "aaa"
         "aaa"
     } catch (e: <selection>Exception</selection>) {
-        TODO()
+        TODO("Not yet implemented")
     }
 
     a.charAt(1)
