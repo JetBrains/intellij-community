@@ -55,7 +55,9 @@ private fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesB
     Note: This includes sourceSet dependencies as transformed by the 'DependencyAdjuster' where the source set
     is mentioned as the configuration of the project dependency!
     */
-    val projectDependencies = getDependencies(sourceSet).filterIsInstance<ExternalProjectDependency>().toSet()
+    val projectDependencies = sourceSet.additionalVisibleSourceSets.mapNotNull { mppModel.sourceSetsByName[it] }.plus(sourceSet)
+        .flatMap { sourceSet -> getDependencies(sourceSet) }
+        .filterIsInstance<ExternalProjectDependency>().toSet()
 
     val preprocessedDependencies = dependenciesPreprocessor(propagatedDependencies + projectDependencies)
     buildDependencies(resolverCtx, sourceSetMap, artifactsMap, sourceSetDataNode, preprocessedDependencies, ideProject)
