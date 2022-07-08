@@ -168,15 +168,25 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     private inner class LibraryDependenciesInnerCache :
         SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, cleanOnLowMemory = true),
         OutdatedLibraryInfoListener,
-        ModuleRootListener {
+        ModuleRootListener,
+        ProjectJdkTable.Listener {
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
             connection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
+            connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
         }
 
         override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
             invalidateEntries({ k, v -> k in libraryInfos || v.libraries.any { it in libraryInfos } })
+        }
+
+        override fun jdkRemoved(jdk: Sdk) {
+            invalidateEntries({ _, v -> v.sdk.any { it.sdk == jdk } })
+        }
+
+        override fun jdkNameChanged(jdk: Sdk, previousName: String) {
+            jdkRemoved(jdk)
         }
 
         override fun calculate(key: LibraryInfo): LibraryDependencies =
@@ -194,9 +204,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             // SDK could be changed (esp in tests) out of message bus subscription
             val jdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
             invalidateEntries(
-                //{ _, value -> value.sdk.any { it.sdk !in jdks } },
-                // TODO: temporary hack/workaround
-                { _, _ -> true },
+                { _, value -> value.sdk.any { it.sdk !in jdks } },
                 // unable to check entities properly: an event could be not the last
                 validityCondition = null
             )
