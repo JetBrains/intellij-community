@@ -871,7 +871,7 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend () -> T): T {
     return runBlocking { task() }
   }
 
-  logger<ProjectOpenProcessor>().warn("Do not execute in EDT")
+  logger<ProjectUtil>().warn("Do not execute in EDT")
   return runBlockingUnderModalProgress(task = task)
 }
 

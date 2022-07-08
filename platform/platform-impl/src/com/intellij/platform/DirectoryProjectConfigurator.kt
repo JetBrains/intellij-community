@@ -37,6 +37,7 @@ interface DirectoryProjectConfigurator {
                                         baseDir: VirtualFile,
                                         moduleRef: Ref<Module>,
                                         isProjectCreatedWithWizard: Boolean) {
+      throw IllegalStateException("Call configure instead.")
     }
 
     abstract suspend fun configure(
