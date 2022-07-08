@@ -58,6 +58,7 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.preferences" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-configuration" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.properties" scope="RUNTIME" />

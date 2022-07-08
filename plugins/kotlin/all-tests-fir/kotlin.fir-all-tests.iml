@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.testsFromCompiler" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.util.test-generator" scope="RUNTIME" />
