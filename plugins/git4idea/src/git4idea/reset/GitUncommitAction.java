@@ -117,7 +117,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
           changeListManager.invokeAfterUpdateWithModal(true,
                                                        GitBundle.message("git.undo.action.refreshing.changes.process"), () -> {
               Collection<Change> changes = GitUtil.findCorrespondentLocalChanges(changeListManager, changesInCommit);
-              changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[0]));
+              changeListManager.moveChangesTo(targetChangeList, changes.toArray(Change.EMPTY_CHANGE_ARRAY));
             }
           );
         }

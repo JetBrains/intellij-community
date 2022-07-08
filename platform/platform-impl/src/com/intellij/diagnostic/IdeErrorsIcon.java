@@ -13,7 +13,7 @@ import java.awt.*;
 import static com.intellij.util.ui.EmptyIcon.ICON_16;
 
 final class IdeErrorsIcon extends JLabel {
-  private final int ICON_BLINKING_TIMEOUT_MILLIS = 5_000;
+  private static final int ICON_BLINKING_TIMEOUT_MILLIS = 5_000;
   private final boolean myEnableBlink;
 
   private final MergingUpdateQueue myIconBlinkingTimeoutQueue = new MergingUpdateQueue(

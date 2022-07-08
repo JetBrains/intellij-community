@@ -29,6 +29,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
+
 public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   private static final String TEMP_DIR_NAME = "dir";
   private PsiDirectory myWorkingDirectory;
@@ -333,11 +335,11 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   private void assertFormattedRangesEqualsTo(@NotNull PsiFile file, ChangedLines... expected) {
     ChangedLines[] formatted = myMockCodeStyleManager.getFormattedLinesFor(file);
 
-    Comparator<ChangedLines> cmp = (o1, o2) -> o1.from < o2.from ? -1 : 1;
+    Comparator<ChangedLines> cmp = Comparator.comparingInt(o -> o.from);
     Arrays.sort(expected, cmp);
     Arrays.sort(formatted, cmp);
 
-    assertTrue(getErrorMessage(expected, formatted), Arrays.equals(expected, formatted));
+    assertArrayEquals(getErrorMessage(expected, formatted), expected, formatted);
   }
 
   private boolean isImportsOptimized(@NotNull PsiFile file) {
@@ -391,7 +393,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     }
 
     private void injectChanges(@NotNull List<Change> changes) {
-      Change[] arr = changes.toArray(new Change[0]);
+      Change[] arr = changes.toArray(Change.EMPTY_CHANGE_ARRAY);
       myMockChangeListManager.addChanges(arr);
     }
 
