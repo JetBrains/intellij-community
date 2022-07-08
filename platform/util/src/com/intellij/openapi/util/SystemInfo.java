@@ -171,8 +171,12 @@ public final class SystemInfo {
     return new int[]{toInt(parts.get(0)), toInt(parts.get(1)), toInt(parts.get(2))};
   }
 
+  public static String getOsName() {
+    return isMac ? "macOS" : OS_NAME;
+  }
+
   public static String getOsNameAndVersion() {
-    return (isMac ? "macOS" : OS_NAME) + ' ' + OS_VERSION;
+    return getOsName() + ' ' + OS_VERSION;
   }
 
   private static int normalize(int number) {

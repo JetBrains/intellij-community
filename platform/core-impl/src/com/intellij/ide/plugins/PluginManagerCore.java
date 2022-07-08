@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -657,8 +658,25 @@ public final class PluginManagerCore {
                                          buildNumber != null ? buildNumber : getBuildNumber()) != null;
   }
 
+  @NotNull
+  public static Optional<IdeaPluginPlatform> getIncompatiblePlatform(@NotNull IdeaPluginDescriptor descriptor) {
+    return descriptor.getDependencies().stream()
+      .map(d -> IdeaPluginPlatform.fromModuleId(d.getPluginId()))
+      .filter(p -> p != null && !p.isHostPlatform())
+      .findFirst();
+  }
+
   public static @Nullable PluginLoadingError checkBuildNumberCompatibility(@NotNull IdeaPluginDescriptor descriptor,
                                                                            @NotNull BuildNumber ideBuildNumber) {
+    Optional<IdeaPluginPlatform> incompatiblePlatform = getIncompatiblePlatform(descriptor);
+    if (incompatiblePlatform.isPresent()) {
+      IdeaPluginPlatform requiredPlatform = incompatiblePlatform.get();
+      return new PluginLoadingError(descriptor,
+                                    message("plugin.loading.error.long.incompatible.with.platform", descriptor.getName(),
+                                            descriptor.getVersion(), requiredPlatform, SystemInfo.getOsName()),
+                                    message("plugin.loading.error.short.incompatible.with.platform", requiredPlatform));
+    }
+
     if (IGNORE_COMPATIBILITY) {
       return null;
     }

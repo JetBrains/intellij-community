@@ -11,6 +11,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -50,7 +52,7 @@ public final class ListPluginComponent extends JPanel {
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
-  private final boolean myIsAllowed;
+  private final boolean myIsAvailable;
   private @NotNull IdeaPluginDescriptor myPlugin;
   private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
@@ -88,7 +90,10 @@ public final class ListPluginComponent extends JPanel {
     myPluginModel = pluginModel;
     mySearchListener = searchListener;
     myMarketplace = marketplace;
-    myIsAllowed = PluginManagerFilters.getInstance().isPluginAllowed(!marketplace, plugin);
+    boolean compatible = plugin instanceof PluginNode // FIXME: dependencies not available here, hard coded for now
+                         ? !"com.intellij.kmm".equals(plugin.getPluginId().getIdString()) || SystemInfoRt.isMac
+                         : PluginManagerCore.getIncompatiblePlatform(plugin).isEmpty();
+    myIsAvailable = (compatible || isInstalledAndEnabled()) && PluginManagerFilters.getInstance().isPluginAllowed(!marketplace, plugin);
     pluginModel.addComponent(this);
 
     setOpaque(true);
@@ -104,16 +109,16 @@ public final class ListPluginComponent extends JPanel {
 
     createTag();
 
-    if (myIsAllowed) {
+    if (myIsAvailable) {
       createButtons();
       createMetricsPanel();
       createLicensePanel();
     } else {
-      createNotAllowedMarker();
+      createNotAvailableMarker(compatible);
     }
 
     if (marketplace) {
-      updateIcon(false, !myIsAllowed);
+      updateIcon(false, !myIsAvailable);
     }
     else {
       updateErrors();
@@ -170,10 +175,21 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  private void createNotAllowedMarker() {
+  private void createNotAvailableMarker(boolean compatible) {
     myInstallButton = new InstallButton(false);
-    setupNotAllowedMarkerButton();
+    if (!compatible) {
+      setupNotCompatibleMarkerButton();
+    }
+    else {
+      setupNotAllowedMarkerButton();
+    }
     myLayout.addButtonComponent(myInstallButton);
+  }
+
+  private void setupNotCompatibleMarkerButton() {
+    myInstallButton.setButtonColors(false);
+    myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.unavailable.for.platform"));
+    myInstallButton.setToolTipText(IdeBundle.message("plugins.configurable.plugin.unavailable.for.platform", SystemInfo.getOsName()));
   }
 
   private void setupNotAllowedMarkerButton() {
@@ -511,7 +527,7 @@ public final class ListPluginComponent extends JPanel {
       }
     }
 
-    if (calcColor && !myIsAllowed) {
+    if (calcColor && !myIsAvailable) {
       calcColor = false;
       nameForeground = otherForeground = DisabledColor;
     }
@@ -546,7 +562,7 @@ public final class ListPluginComponent extends JPanel {
                                        List.of() :
                                        myPluginModel.getErrors(myPlugin);
     boolean hasErrors = !errors.isEmpty();
-    updateIcon(hasErrors, myPluginModel.isUninstalled(myPlugin) || !isEnabledState() || !myIsAllowed);
+    updateIcon(hasErrors, myPluginModel.isUninstalled(myPlugin) || !isEnabledState() || !myIsAvailable);
 
     if (myAlignButton != null) {
       myAlignButton.setVisible(myRestartButton != null);
@@ -647,7 +663,7 @@ public final class ListPluginComponent extends JPanel {
       myLayout.removeButtonComponent(myEnableDisableButton);
       myEnableDisableButton = null;
     }
-    if (myIsAllowed && showRestart && myRestartButton == null) {
+    if (myIsAvailable && showRestart && myRestartButton == null) {
       myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel), 0);
     }
     if (myAlignButton != null) {
@@ -713,7 +729,7 @@ public final class ListPluginComponent extends JPanel {
 
   public void createPopupMenu(@NotNull DefaultActionGroup group,
                               @NotNull List<? extends ListPluginComponent> selection) {
-    if (!myIsAllowed) {
+    if (!myIsAvailable) {
       return;
     }
 
@@ -1250,5 +1266,9 @@ public final class ListPluginComponent extends JPanel {
         }
       }
     }
+  }
+
+  private boolean isInstalledAndEnabled() {
+    return PluginManagerCore.getPlugin(myPlugin.getPluginId()) != null && !myPluginModel.getState(myPlugin).isDisabled();
   }
 }
