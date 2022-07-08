@@ -64,10 +64,47 @@ public final class GitRepositoryUtil {
     return ContainerUtil.map(processOutput.toString().split("\n"), commit -> commit.substring(1, commit.length() - 1));
   }
 
+  private static @NotNull String getCurrentBranchName(@NotNull Project project) {
+    String projectBasePath = project.getBasePath();
+    if (projectBasePath == null) return "";
+    GeneralCommandLine commandLine = new GeneralCommandLine()
+      .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
+      .withWorkDirectory(projectBasePath)
+      .withExePath("git")
+      .withParameters("rev-parse")
+      .withParameters("--abbrev-ref")
+      .withParameters("HEAD");
+
+    StringBuilder processOutput = new StringBuilder();
+    try {
+      OSProcessHandler handler = new OSProcessHandler(commandLine.withCharset(StandardCharsets.UTF_8));
+      handler.addProcessListener(new CapturingProcessAdapter() {
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          if (event.getExitCode() != 0) {
+            LOG.warn("Couldn't fetch current branch name: " + getOutput().getStderr());
+          } else {
+            processOutput.append(getOutput().getStdout());
+          }
+        }
+      });
+      handler.startNotify();
+      handler.waitFor();
+    }
+    catch (ExecutionException e) {
+      LOG.warn("Couldn't execute command for getting current branch name", e);
+    }
+    String branch = processOutput.toString();
+    LOG.debug("Git current branch name: " + branch);
+    return branch.lines().findFirst().orElse("");
+  }
+
   private static @NotNull String getNearestRemoteMasterBranchCommit(@NotNull Project project) {
     String projectBasePath = project.getBasePath();
     if (projectBasePath == null) return "";
-    String remoteName = getRemoteName(project);
+    String branchName = getCurrentBranchName(project);
+    if (branchName.isEmpty()) return "";
+    String remoteName = getRemoteName(project, branchName);
     Optional<String> optionalRemoteName = remoteName.lines().findFirst();
     if (optionalRemoteName.isEmpty()) return "";
 
@@ -77,7 +114,7 @@ public final class GitRepositoryUtil {
       .withExePath("git")
       .withParameters("merge-base")
       .withParameters("HEAD")
-      .withParameters(optionalRemoteName.get() + "/master");
+      .withParameters(optionalRemoteName.get() + "/" + branchName);
 
     StringBuilder processOutput = new StringBuilder();
     try {
@@ -101,15 +138,17 @@ public final class GitRepositoryUtil {
     return processOutput.toString().lines().findFirst().orElse("");
   }
 
-  private static @NotNull String getRemoteName(@NotNull Project project) {
+  private static @NotNull String getRemoteName(@NotNull Project project, @NotNull String branchName) {
     String projectBasePath = project.getBasePath();
     if (projectBasePath == null) return "";
+    String gitParam = "branch." + branchName + ".remote";
     GeneralCommandLine commandLine = new GeneralCommandLine()
       .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
       .withWorkDirectory(projectBasePath)
       .withExePath("git")
-      .withParameters("remote")
-      .withParameters("show");
+      .withParameters("config")
+      .withParameters("--get")
+      .withParameters(gitParam);
 
     StringBuilder processOutput = new StringBuilder();
     try {
@@ -130,7 +169,9 @@ public final class GitRepositoryUtil {
     catch (ExecutionException e) {
       LOG.warn("Couldn't execute command for getting remote name", e);
     }
-    return processOutput.toString();
+    String remote = processOutput.toString();
+    LOG.debug("Git remote name for master: " + remote);
+    return remote;
   }
 
   public static boolean isAutoCrlfSetRight(@NotNull Project project) {
