@@ -1071,7 +1071,7 @@ fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context
     OsFamily.LINUX -> LinuxDistributionBuilder(context = context,
                                                customizer = context.linuxDistributionCustomizer ?: return null,
                                                ideaProperties = ideaProperties)
-    OsFamily.MACOS -> MacDistributionBuilder(context, context.macDistributionCustomizer!!, ideaProperties)
+    OsFamily.MACOS -> MacDistributionBuilder(context, context.macDistributionCustomizer ?: return null, ideaProperties)
   }
 }
 

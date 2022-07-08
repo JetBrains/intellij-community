@@ -36,10 +36,15 @@ class BuildArtifactsReproducibilityTest {
     diffDirectory = System.getProperty("intellij.build.test.artifacts.reproducibility.diffDir")?.let { Path.of(it) }
                     ?: context1.paths.artifactDir.resolve(".diff")
     val errors = OsFamily.ALL.asSequence().flatMap { os ->
-      val artifacts1 = getOsDistributionBuilder(os, context = context1)!!.getArtifactNames(context1)
-      val artifacts2 = getOsDistributionBuilder(os, context = context2)!!.getArtifactNames(context2)
+      val artifacts1 = getOsDistributionBuilder(os, context = context1)?.getArtifactNames(context1)
+      val artifacts2 = getOsDistributionBuilder(os, context = context2)?.getArtifactNames(context2)
       assert(artifacts1 == artifacts2)
-      artifacts1.map { "artifacts/$it" } + "dist.${os.distSuffix}" + JvmArchitecture.ALL.map { "dist.${os.distSuffix}.$it" }
+      if (artifacts1 != null) {
+        artifacts1.map { "artifacts/$it" } +
+        "dist.${os.distSuffix}" +
+        JvmArchitecture.ALL.map { "dist.${os.distSuffix}.$it" }
+      }
+      else emptyList()
     }.plus("dist.all").plus("dist").mapNotNull {
       val path1 = context1.paths.buildOutputDir.resolve(it)
       val path2 = context2.paths.buildOutputDir.resolve(it)
