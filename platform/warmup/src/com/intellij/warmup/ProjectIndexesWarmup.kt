@@ -17,9 +17,11 @@ import kotlin.math.max
 import kotlin.system.exitProcess
 
 internal class ProjectIndexesWarmup : ApplicationStarter {
-  override fun getCommandName(): String {
-    return "warmup"
-  }
+  override val commandName: String
+    get() = "warmup"
+
+  override val requiredModality: Int
+    get() = ApplicationStarter.NOT_IN_EDT
 
   override fun premain(args: List<String>) {
     if (System.getProperty("caches.indexerThreadsCount") == null) {
@@ -94,13 +96,9 @@ internal class ProjectIndexesWarmup : ApplicationStarter {
       ApplicationManager.getApplication().exit(false, true, false)
     }
   }
-
-  override fun getRequiredModality(): Int {
-    return ApplicationStarter.NOT_IN_EDT
-  }
 }
 
-fun waitForCachesSupports(project: Project) {
+private fun waitForCachesSupports(project: Project) {
   val projectIndexesWarmupSupports = ProjectIndexesWarmupSupport.EP_NAME.getExtensions(project)
   ConsoleLog.info("Waiting for all ProjectIndexesWarmupSupport[${projectIndexesWarmupSupports.size}]...")
   val futures = projectIndexesWarmupSupports.mapNotNull { support ->
@@ -123,7 +121,7 @@ fun waitForCachesSupports(project: Project) {
   ConsoleLog.info("All ProjectIndexesWarmupSupport.waitForCaches completed")
 }
 
-fun waitForBuilders(project: Project, rebuild: Boolean, builders: Set<String>?) {
+private fun waitForBuilders(project: Project, rebuild: Boolean, builders: Set<String>?) {
   fun isBuilderEnabled(id: String): Boolean {
     if (builders.isNullOrEmpty())
       return true
@@ -155,7 +153,7 @@ fun waitForBuilders(project: Project, rebuild: Boolean, builders: Set<String>?) 
   ConsoleLog.info("All warmup builders completed")
 }
 
-fun waitForRefreshQueue() {
+private fun waitForRefreshQueue() {
   runBlocking {
     runTaskAndLogTime("RefreshQueue") {
       while (RefreshQueueImpl.isRefreshInProgress()) {

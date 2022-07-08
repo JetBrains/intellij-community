@@ -111,7 +111,7 @@ public class InspectionMain implements ApplicationStarter {
   }
 
   @Override
-  public void main(String @NotNull [] args) {
+  public void main(@NotNull List<String> args) {
     myApplication.startup();
   }
 

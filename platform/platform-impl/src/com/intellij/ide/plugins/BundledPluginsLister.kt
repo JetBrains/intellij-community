@@ -17,9 +17,11 @@ import java.nio.file.Path
 import kotlin.system.exitProcess
 
 internal class BundledPluginsLister : ApplicationStarter {
-  override fun getCommandName() = "listBundledPlugins"
+  override val commandName: String
+    get() = "listBundledPlugins"
 
-  override fun getRequiredModality() = ApplicationStarter.NOT_IN_EDT
+  override val requiredModality: Int
+    get() = ApplicationStarter.NOT_IN_EDT
 
   // not premain because FileTypeManager is used to report extensions
   override fun main(args: List<String>) {

@@ -258,7 +258,7 @@ public final class CommandLineProcessor {
 
   private static @Nullable CommandLineProcessorResult processApplicationStarters(List<String> args, @Nullable String currentDirectory) {
     String command = args.get(0);
-    return ApplicationStarter.EP_NAME.computeSafeIfAny(starter -> {
+    return ApplicationStarter.Companion.getEP_NAME().computeSafeIfAny(starter -> {
       if (!command.equals(starter.getCommandName())) {
         return null;
       }

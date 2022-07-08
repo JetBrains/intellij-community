@@ -60,11 +60,14 @@ open class IdeStarter : ApplicationStarter {
     }
   }
 
-  override fun isHeadless() = false
+  override val isHeadless: Boolean
+    get() = false
 
-  override fun getCommandName(): String? = null
+  override val commandName: String?
+    get() = null
 
-  final override fun getRequiredModality() = ApplicationStarter.NOT_IN_EDT
+  override val requiredModality: Int
+    get() = ApplicationStarter.NOT_IN_EDT
 
   override fun main(args: List<String>) {
     throw UnsupportedOperationException("Use start(args)")
