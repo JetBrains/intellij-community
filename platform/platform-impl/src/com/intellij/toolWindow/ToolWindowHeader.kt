@@ -20,7 +20,6 @@ import com.intellij.openapi.wm.impl.DockToolWindowAction
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.*
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.layout.migLayout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.popup.PopupState
@@ -39,7 +38,6 @@ import java.beans.PropertyChangeListener
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
@@ -119,27 +117,14 @@ abstract class ToolWindowHeader internal constructor(
     toolbar.targetComponent = toolbar.component
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     toolbar.setReservePlaceAutoPopupIcon(false)
-    val component = toolbar.component
-    component.border = JBUI.Borders.empty(2, 0)
+    toolbar.component.border = JBUI.Borders.empty(2, 0)
+    toolbar.component.isOpaque = false
     if (toolWindow.toolWindowManager.isNewUi) {
-      component.border = JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerToolbarLeftRightInsets())
+      toolbar.component.border = JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerToolbarLeftRightInsets())
     }
-    component.isOpaque = false
-
-    val toolbarPanel = JPanel(HorizontalLayout(0, SwingConstants.CENTER))
-    toolbarPanel.isOpaque = false
-    toolbarPanel.add(component)
-
     @Suppress("LeakingThis")
-    add(toolbarPanel, BorderLayout.EAST)
+    add(toolbar.component, BorderLayout.EAST)
 
-    //westPanel.addMouseListener(
-    //  object : PopupHandler() {
-    //    override fun invokePopup(comp: Component, x: Int, y: Int) {
-    //      contentUi.showContextMenu(comp, x, y, toolWindow.popupGroup, contentUi.contentManager.selectedContent)
-    //    }
-    //  }
-    //)
     westPanel.addMouseListener(
       object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
