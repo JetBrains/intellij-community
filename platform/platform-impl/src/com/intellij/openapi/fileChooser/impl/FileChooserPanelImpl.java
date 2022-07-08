@@ -463,6 +463,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       try {
         @SuppressWarnings("resource") var fs = myOpenFileSystems.computeIfAbsent(path, k -> {
           try {
+            //noinspection RedundantCast -- Java 17 compatibility
             return FileSystems.newFileSystem(path, (ClassLoader)null);
           }
           catch (IOException e) {
@@ -664,6 +665,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       if (archive != null && myRegistry.getFileTypeByFileName(archive.getFileName().toString()) == ArchiveFileType.INSTANCE) {
         @SuppressWarnings("resource") var fs = myOpenFileSystems.computeIfAbsent(archive, k -> {
           try {
+            //noinspection RedundantCast -- Java 17 compatibility
             return FileSystems.newFileSystem(archive, (ClassLoader)null);
           }
           catch (IOException e) {

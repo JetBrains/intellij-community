@@ -384,8 +384,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   public final @NotNull JBIterable<@NotNull E> filterNotNull() {
-    //noinspection unchecked
-    return (JBIterable<@NotNull E>)filter(Objects::nonNull);
+    return filter(Objects::nonNull);
   }
 
   public final @NotNull JBIterable<E> take(int count) {
