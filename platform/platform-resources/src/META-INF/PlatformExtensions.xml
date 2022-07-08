@@ -80,6 +80,7 @@
     <!-- requested by FileBasedIndexImpl, so, to make start-up more flat, also preload -->
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.FileDocumentManager" preload="true"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl"/>
+    <persistentFsConnectionListener implementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl$MyPersistentFsConnectionListener"/>
     <projectCloseHandler implementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl$MyProjectCloseHandler"/>
     <vfs.asyncListener implementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl$MyAsyncFileListener"/>
 

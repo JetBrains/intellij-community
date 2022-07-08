@@ -164,6 +164,11 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return myDocumentCache.get(file);
   }
 
+  @ApiStatus.Internal
+  protected void clearDocumentCache() {
+    myDocumentCache.clear();
+  }
+
   protected abstract void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document);
 
   protected abstract @NotNull DocumentListener getDocumentListener();
