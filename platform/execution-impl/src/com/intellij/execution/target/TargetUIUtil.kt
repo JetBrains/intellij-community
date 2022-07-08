@@ -8,12 +8,15 @@ import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBInsets
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@Deprecated("Use overloaded method with Kotlin UI DSL 2 API")
 fun textFieldWithBrowseTargetButton(row: Row,
                                     targetType: BrowsableTargetEnvironmentType,
                                     targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
@@ -31,6 +34,22 @@ fun textFieldWithBrowseTargetButton(row: Row,
   return row.component(textFieldWithBrowseButton).withBinding(TextFieldWithBrowseButton::getText,
                                                               TextFieldWithBrowseButton::setText,
                                                               property)
+}
+
+fun com.intellij.ui.dsl.builder.Row.textFieldWithBrowseTargetButton(targetType: BrowsableTargetEnvironmentType,
+                                                                    targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
+                                                                    project: Project,
+                                                                    @NlsContexts.DialogTitle title: String,
+                                                                    property: MutableProperty<String>): Cell<TextFieldWithBrowseButton> {
+  val textFieldWithBrowseButton = TextFieldWithBrowseButton()
+  val browser = targetType.createBrowser(project,
+                                         title,
+                                         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+                                         textFieldWithBrowseButton.textField,
+                                         targetSupplier)
+  textFieldWithBrowseButton.addActionListener(browser)
+  return cell(textFieldWithBrowseButton)
+    .bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, property)
 }
 
 /**

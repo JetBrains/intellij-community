@@ -58,6 +58,10 @@ fun <T : JTextComponent> Cell<T>.bindText(getter: () -> String, setter: (String)
   return bindText(MutableProperty(getter, setter))
 }
 
+fun <T : JTextComponent> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T> {
+  return bind(JTextComponent::getText, JTextComponent::setText, prop)
+}
+
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
 fun <T : JTextComponent> Cell<T>.bindIntText(property: GraphProperty<Int>): Cell<T> = bindIntText(property)
@@ -123,10 +127,6 @@ private fun JTextComponent.bind(property: ObservableMutableProperty<String>) {
       }
     }
   }
-}
-
-private fun <T : JTextComponent> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T> {
-  return bind(JTextComponent::getText, JTextComponent::setText, prop)
 }
 
 private fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>): Cell<T> {
