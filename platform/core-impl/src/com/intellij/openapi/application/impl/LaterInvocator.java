@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,6 +77,7 @@ public final class LaterInvocator {
   static void invokeLater(@NotNull ModalityState modalityState,
                           @NotNull Condition<?> expired,
                           @NotNull Runnable runnable) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.INVOKE_LATER);
     if (expired.value(null)) {
       return;
     }
