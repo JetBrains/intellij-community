@@ -50,9 +50,5 @@ public interface SideEffectGuard {
      * Execute external process
      */
     EXEC,
-    /**
-     * Spawn an action in UI thread
-     */
-    INVOKE_LATER,
   }
 }
