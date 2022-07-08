@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -159,7 +159,13 @@ public final class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public VcsCommitMetadata getCommitMetadata(int row) {
-    return myLogData.getMiniDetailsGetter().getCommitData(getIdAtRow(row), getCommitsToPreload(row));
+    return getCommitMetadata(row, false);
+  }
+
+  @NotNull
+  public VcsCommitMetadata getCommitMetadata(int row, boolean load) {
+    Iterable<Integer> commitsToLoad = load ? getCommitsToLoad(row) : ContainerUtil.emptyList();
+    return myLogData.getMiniDetailsGetter().getCommitData(getIdAtRow(row), commitsToLoad);
   }
 
   @Nullable
@@ -188,7 +194,7 @@ public final class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  private Iterable<Integer> getCommitsToPreload(int row) {
+  private Iterable<Integer> getCommitsToLoad(int row) {
     int maxRows = getRowCount();
     return () -> new Iterator<>() {
       private int myRowIndex = Math.max(0, row - UP_PRELOAD_COUNT);
