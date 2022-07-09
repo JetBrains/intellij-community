@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
 abstract class AbstractHighLevelMultiFileJvmBasicCompletionTest : KotlinFixtureCompletionBaseTestCase() {
+    override fun isFirPlugin(): Boolean = true
 
     override val testDataDirectory: File
         get() = super.testDataDirectory.resolve(getTestName(false))

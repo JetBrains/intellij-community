@@ -10,6 +10,8 @@ import java.io.File
 abstract class AbstractHighLevelJvmBasicCompletionTest : AbstractJvmBasicCompletionTest() {
     override val captureExceptions: Boolean = false
 
+    override fun isFirPlugin(): Boolean = true
+
     override val ignoreProperties: Collection<String> =
         listOf(ExpectedCompletionUtils.CompletionProposal.PRESENTATION_TEXT_ATTRIBUTES)
 

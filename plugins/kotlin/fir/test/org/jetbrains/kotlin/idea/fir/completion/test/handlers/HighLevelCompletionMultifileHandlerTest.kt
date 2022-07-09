@@ -11,6 +11,7 @@ import java.nio.file.Paths
 
 @RunWith(JUnit38ClassRunner::class)
 class HighLevelCompletionMultifileHandlerTest : CompletionMultiFileHandlerTest22() {
+    override fun isFirPlugin(): Boolean = true
 
     /**
      * This is a temporary solution! This test should be rewritten to be generated!

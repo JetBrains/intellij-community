@@ -10,6 +10,8 @@ import java.io.File
 abstract class AbstractHighLevelBasicCompletionHandlerTest : AbstractBasicCompletionHandlerTest() {
     override val captureExceptions: Boolean = false
 
+    override fun isFirPlugin(): Boolean = true
+
     override fun handleTestPath(path: String): File =
         IgnoreTests.getFirTestFileIfFirPassing(File(path), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after")
 

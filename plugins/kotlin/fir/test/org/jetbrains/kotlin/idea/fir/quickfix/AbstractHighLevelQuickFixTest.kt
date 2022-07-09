@@ -13,6 +13,7 @@ import java.io.File
 import java.nio.file.Paths
 
 abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
+    override fun isFirPlugin(): Boolean = true
     override fun tearDown() {
         runAll(
             ThrowableRunnable { project.invalidateCaches() },

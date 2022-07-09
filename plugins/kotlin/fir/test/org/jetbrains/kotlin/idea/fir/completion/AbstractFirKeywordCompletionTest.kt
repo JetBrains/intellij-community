@@ -9,6 +9,8 @@ import java.io.File
 abstract class AbstractFirKeywordCompletionTest : AbstractKeywordCompletionTest() {
     override val captureExceptions: Boolean = false
 
+    override fun isFirPlugin(): Boolean = true
+
     override fun handleTestPath(path: String): File =
         IgnoreTests.getFirTestFileIfFirPassing(File(path), IgnoreTests.DIRECTIVES.FIR_COMPARISON)
 

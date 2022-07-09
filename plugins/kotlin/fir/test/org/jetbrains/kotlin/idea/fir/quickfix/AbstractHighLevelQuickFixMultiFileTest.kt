@@ -13,6 +13,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 abstract class AbstractHighLevelQuickFixMultiFileTest : AbstractQuickFixMultiFileTest() {
+    override fun isFirPlugin(): Boolean = true
+
     override fun doTestWithExtraFile(beforeFileName: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             Paths.get(beforeFileName),
