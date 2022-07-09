@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.editor.EditorFactory;
@@ -18,11 +18,11 @@ public class EditorsContextTest extends FileEditorManagerTestCase {
   public void testDockableContainer() {
     DockManager dockManager = DockManager.getInstance(getProject());
     VirtualFile file = getFile("/foo.txt");
-    myManager.openFile(file, /* focusEditor = */ false);
+    manager.openFile(file, /* focusEditor = */ false);
     assertThat(dockManager.getContainers()).hasSize(myInitialContainers + 1);
-    myManager.initDockableContentFactory();
+    manager.initDockableContentFactory();
 
-    myManager.openFileInNewWindow(file);
+    manager.openFileInNewWindow(file);
     assertThat(dockManager.getContainers()).hasSize(myInitialContainers + 2);
 
     Element context = new Element("context");

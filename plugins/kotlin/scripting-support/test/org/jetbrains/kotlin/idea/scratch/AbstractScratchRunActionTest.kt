@@ -202,7 +202,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
     }
 
     private fun getPreviewTextWithFoldings(): String {
-        val scratchFileEditor = getScratchEditorForSelectedFile(myManager, myFixture.file.virtualFile)
+        val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
             ?: error("Couldn't find scratch panel")
 
         val previewEditor = scratchFileEditor.previewEditor as TextEditor
@@ -230,7 +230,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
 
-        val scratchFileEditor = getScratchEditorForSelectedFile(myManager, myFixture.file.virtualFile)
+        val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
             ?: error("Couldn't find scratch file")
 
         configureOptions(scratchFileEditor, text, myFixture.module)
@@ -243,7 +243,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
 
-        val scratchFileEditor = getScratchEditorForSelectedFile(myManager, myFixture.file.virtualFile)
+        val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
             ?: error("Couldn't find scratch panel")
 
         // We want to check that correct module is selected automatically,
@@ -287,7 +287,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
     protected fun stopReplProcess() {
         if (myFixture.file != null) {
-            val scratchFile = getScratchEditorForSelectedFile(myManager, myFixture.file.virtualFile)?.scratchFile
+            val scratchFile = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)?.scratchFile
                 ?: error("Couldn't find scratch panel")
             scratchFile.replScratchExecutor?.stopAndWait()
         }

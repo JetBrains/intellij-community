@@ -1,721 +1,514 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.fileEditor.impl;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-import com.intellij.codeWithMe.ClientId;
-import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.lang.Language;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.client.ClientProjectSession;
-import com.intellij.openapi.client.ClientSessionsManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
+package com.intellij.openapi.fileEditor.impl
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
-import java.util.*;
+import com.intellij.codeWithMe.ClientId.Companion.current
+import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
+import com.intellij.codeWithMe.ClientId.Companion.isLocal
+import com.intellij.ide.highlighter.HighlighterFactory
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientSessionsManager.Companion.getProjectSession
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.IncorrectOperationException
+import org.jdom.Element
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
+import java.awt.Component
+import java.util.*
+import javax.swing.JComponent
+import javax.swing.JLabel
 
-final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposable {
-  private static final Logger LOG = Logger.getInstance(TestEditorManagerImpl.class);
+internal class TestEditorManagerImpl(private val project: Project) : FileEditorManagerEx(), Disposable {
+  companion object {
+    private val LOG = Logger.getInstance(TestEditorManagerImpl::class.java)
+    private val LIGHT_VIRTUAL_FILE = MyLightVirtualFile()
+    private val provider: FileEditorProvider
+      get() = object : FileEditorProvider {
+        override fun accept(project: Project, file: VirtualFile) = false
 
-  private final TestEditorSplitter myTestEditorSplitter = new TestEditorSplitter();
+        override fun createEditor(project: Project, file: VirtualFile): FileEditor = throw IncorrectOperationException()
 
-  private final Project myProject;
-  private int counter;
+        override fun disposeEditor(editor: FileEditor) {}
+        override fun readState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState {
+          throw IncorrectOperationException()
+        }
 
-  private final Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<>();
-  private VirtualFile myActiveFile;
-  private static final MyLightVirtualFile LIGHT_VIRTUAL_FILE = new MyLightVirtualFile();
-  private static class MyLightVirtualFile extends LightVirtualFile {
-    MyLightVirtualFile() {super("Dummy.java");}
-    void clearUserDataOnDispose() {
-      clearUserData();
+        override fun getEditorTypeId() = ""
+
+        override fun getPolicy(): FileEditorPolicy = throw IncorrectOperationException()
+      }
+  }
+
+  private val testEditorSplitter = TestEditorSplitter()
+  private var counter = 0
+  private val virtualFileToEditor = HashMap<VirtualFile, Editor?>()
+  private var activeFile: VirtualFile? = null
+
+  private class MyLightVirtualFile() : LightVirtualFile("Dummy.java") {
+    fun clearUserDataOnDispose() {
+      clearUserData()
     }
   }
 
-  TestEditorManagerImpl(@NotNull Project project) {
-    myProject = project;
-    registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
-
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectClosed(@NotNull Project project) {
-        if (project == myProject) {
-          closeAllFiles();
+  init {
+    registerExtraEditorDataProvider(TextEditorPsiDataProvider(), null)
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectClosed(project: Project) {
+        if (this@TestEditorManagerImpl.project === project) {
+          closeAllFiles()
         }
       }
-    });
-    project.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
-        for (VFileEvent event : events) {
-          if (event instanceof VFileDeleteEvent) {
-            for (VirtualFile file : getOpenFiles()) {
-              if (VfsUtilCore.isAncestor(((VFileDeleteEvent)event).getFile(), file, false)) {
-                closeFile(file);
+    })
+    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun before(events: List<VFileEvent>) {
+        for (event in events) {
+          if (event is VFileDeleteEvent) {
+            for (file in openFiles) {
+              if (VfsUtilCore.isAncestor(event.file, file, false)) {
+                closeFile(file)
               }
             }
           }
         }
       }
-    });
+    })
   }
 
-  @Override
-  @NotNull
-  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
-                                                                        final boolean focusEditor,
-                                                                        boolean searchForSplitter) {
-    return openFileInCommand(new OpenFileDescriptor(myProject, file));
+  override fun openFileWithProviders(file: VirtualFile,
+                                     focusEditor: Boolean,
+                                     searchForSplitter: Boolean): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+    return openFileInCommand(OpenFileDescriptor(project, file))
   }
 
-  @NotNull
-  private Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(@NotNull FileEditorNavigatable openFileDescriptor) {
-    VirtualFile file = openFileDescriptor.getFile();
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      ClientFileEditorManager clientManager = getClientFileEditorManager();
-      if (clientManager == null) {
-        return Pair.createNonNull(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
-      }
-
-      List<FileEditorWithProvider> result = clientManager.openFile(file, false);
-      FileEditor[] fileEditors = result.stream().map(FileEditorWithProvider::getFileEditor).toArray(FileEditor[]::new);
-      FileEditorProvider[] providers = result.stream().map(FileEditorWithProvider::getProvider).toArray(FileEditorProvider[]::new);
-      return Pair.createNonNull(fileEditors, providers);
+  private fun openFileImpl3(openFileDescriptor: FileEditorNavigatable): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+    val file = openFileDescriptor.file
+    if (!isCurrentlyUnderLocalId) {
+      val clientManager = clientFileEditorManager
+                          ?: return Pair.createNonNull(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
+      val result = clientManager.openFile(file, false)
+      val fileEditors = result.map { it.fileEditor }.toTypedArray()
+      val providers = result.map { it.provider }.toTypedArray()
+      return Pair.createNonNull(fileEditors, providers)
     }
-    boolean isNewEditor = !myVirtualFile2Editor.containsKey(file);
+    val isNewEditor = !virtualFileToEditor.containsKey(file)
 
     // for non-text editors. uml, etc
-    FileEditorProvider provider = file.getUserData(FileEditorProvider.KEY);
-    Pair<FileEditor[], FileEditorProvider[]> result;
-    final FileEditor fileEditor;
-    final Editor editor;
-    if (provider != null && provider.accept(getProject(), file)) {
-      fileEditor = provider.createEditor(getProject(), file);
-      if (fileEditor instanceof TextEditor) {
-        editor = ((TextEditor)fileEditor).getEditor();
-        TextEditorProvider.putTextEditor(editor, (TextEditor)fileEditor);
+    var provider = file.getUserData(FileEditorProvider.KEY)
+    val result: Pair<Array<FileEditor>, Array<FileEditorProvider>>
+    val fileEditor: FileEditor
+    val editor: Editor?
+    if (provider != null && provider.accept(project, file)) {
+      fileEditor = provider.createEditor(project, file)
+      if (fileEditor is TextEditor) {
+        editor = fileEditor.editor
+        TextEditorProvider.putTextEditor(editor, fileEditor)
       }
       else {
-        editor = null;
+        editor = null
       }
     }
     else {
       //text editor
-      editor = doOpenTextEditor(openFileDescriptor);
-      fileEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-      provider = getProvider();
+      editor = doOpenTextEditor(openFileDescriptor)
+      fileEditor = TextEditorProvider.getInstance().getTextEditor(editor)
+      provider = Companion.provider
     }
-    result = Pair.create(new FileEditor[]{fileEditor}, new FileEditorProvider[]{provider});
-
-    myVirtualFile2Editor.put(file, editor);
-    myActiveFile = file;
-
+    result = Pair.create(arrayOf(fileEditor), arrayOf(provider))
+    virtualFileToEditor.put(file, editor)
+    activeFile = file
     if (editor != null) {
-      editor.getSelectionModel().removeSelection();
-      if (openFileDescriptor instanceof OpenFileDescriptor) {
-        ((OpenFileDescriptor)openFileDescriptor).navigateIn(editor);
+      editor.selectionModel.removeSelection()
+      if (openFileDescriptor is OpenFileDescriptor) {
+        openFileDescriptor.navigateIn(editor)
       }
     }
-
-    modifyTabWell(() -> {
-      myTestEditorSplitter.openAndFocusTab(file, result.first[0], result.second[0]);
+    modifyTabWell {
+      testEditorSplitter.openAndFocusTab(file, result.first[0], result.second[0])
       if (isNewEditor) {
-        eventPublisher().fileOpened(this, file);
+        eventPublisher().fileOpened(this, file)
       }
-    });
-
-    return result;
-  }
-
-  private void modifyTabWell(@NotNull Runnable tabWellModification) {
-    if (myProject.isDisposed()) return;
-
-    FileEditor lastFocusedEditor = myTestEditorSplitter.getFocusedFileEditor();
-    VirtualFile lastFocusedFile  = myTestEditorSplitter.getFocusedFile();
-    FileEditorProvider oldProvider = myTestEditorSplitter.getProviderFromFocused();
-
-    tabWellModification.run();
-
-    FileEditor currentlyFocusedEditor = myTestEditorSplitter.getFocusedFileEditor();
-    VirtualFile currentlyFocusedFile = myTestEditorSplitter.getFocusedFile();
-    FileEditorProvider newProvider = myTestEditorSplitter.getProviderFromFocused();
-
-    final FileEditorManagerEvent event =
-        new FileEditorManagerEvent(this, lastFocusedFile, lastFocusedEditor, oldProvider, currentlyFocusedFile, currentlyFocusedEditor, newProvider);
-
-    eventPublisher().selectionChanged(event);
-  }
-
-  @NotNull
-  private FileEditorManagerListener eventPublisher() {
-    return getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
-  }
-
-  @NotNull
-  @Override
-  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                        boolean focusEditor,
-                                                                        @NotNull EditorWindow window) {
-    return openFileWithProviders(file, focusEditor, false);
-  }
-
-  @Override
-  public boolean isInsideChange() {
-    return false;
-  }
-
-  @NotNull
-  @Override
-  public ActionCallback notifyPublisher(@NotNull Runnable runnable) {
-    runnable.run();
-    return ActionCallback.DONE;
-  }
-
-  @Override
-  public EditorsSplitters getSplittersFor(Component c) {
-    return null;
-  }
-
-  @Override
-  public void createSplitter(int orientation, EditorWindow window) {
-    String containerName = createNewTabbedContainerName();
-    myTestEditorSplitter.setActiveTabGroup(containerName);
-  }
-
-  private String createNewTabbedContainerName() {
-    counter++;
-    return "SplitTabContainer" + counter;
-  }
-
-
-  @Override
-  public void changeSplitterOrientation() {
-
-  }
-
-  @Override
-  public boolean isInSplitter() {
-    return false;
-  }
-
-  @Override
-  public boolean hasOpenedFile() {
-    return false;
-  }
-
-  @Override
-  public VirtualFile getCurrentFile() {
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      ClientFileEditorManager clientManager = getClientFileEditorManager();
-      if (clientManager == null) {
-        return null;
-      }
-      return clientManager.getSelectedFile();
     }
-    return myActiveFile;
+    return result
   }
 
-  @Nullable
-  private ClientFileEditorManager getClientFileEditorManager() {
-    ClientId clientId = ClientId.getCurrent();
-    LOG.assertTrue(!ClientId.isLocal(clientId), "Trying to get ClientFileEditorManager for local ClientId");
-    ClientProjectSession session = ClientSessionsManager.getProjectSession(myProject, clientId);
-    return session == null ? null : session.getService(ClientFileEditorManager.class);
+  private fun modifyTabWell(tabWellModification: Runnable) {
+    if (project.isDisposed) {
+      return
+    }
+
+    val lastFocusedEditor = testEditorSplitter.focusedFileEditor
+    val lastFocusedFile = testEditorSplitter.focusedFile
+    val oldProvider = testEditorSplitter.providerFromFocused
+    tabWellModification.run()
+    val currentlyFocusedEditor = testEditorSplitter.focusedFileEditor
+    val currentlyFocusedFile = testEditorSplitter.focusedFile
+    val newProvider = testEditorSplitter.providerFromFocused
+    val event = FileEditorManagerEvent(this, lastFocusedFile, lastFocusedEditor, oldProvider, currentlyFocusedFile, currentlyFocusedEditor,
+                                       newProvider)
+    eventPublisher().selectionChanged(event)
   }
 
-  @Override
-  public FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file) {
-    final Editor editor = getEditor(file);
+  private fun eventPublisher(): FileEditorManagerListener {
+    return project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+  }
+
+  override fun openFileWithProviders(file: VirtualFile,
+                                     focusEditor: Boolean,
+                                     window: EditorWindow): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+    return openFileWithProviders(file, focusEditor, false)
+  }
+
+  override fun isInsideChange() = false
+
+  override fun notifyPublisher(runnable: Runnable): ActionCallback {
+    runnable.run()
+    return ActionCallback.DONE
+  }
+
+  override fun getSplittersFor(c: Component): EditorsSplitters? = null
+
+  override fun createSplitter(orientation: Int, window: EditorWindow?) {
+    val containerName = createNewTabbedContainerName()
+    testEditorSplitter.setActiveTabGroup(containerName)
+  }
+
+  private fun createNewTabbedContainerName(): String {
+    counter++
+    return "SplitTabContainer$counter"
+  }
+
+  override fun changeSplitterOrientation() {}
+
+  override fun isInSplitter() = false
+
+  override fun hasOpenedFile() = false
+
+  override fun getCurrentFile(): VirtualFile? {
+    if (!isCurrentlyUnderLocalId) {
+      val clientManager = clientFileEditorManager ?: return null
+      return clientManager.getSelectedFile()
+    }
+    return activeFile
+  }
+
+  private val clientFileEditorManager: ClientFileEditorManager?
+    get() {
+      val clientId = current
+      LOG.assertTrue(!clientId.isLocal, "Trying to get ClientFileEditorManager for local ClientId")
+      val session = getProjectSession(project, clientId)
+      return session?.getService(ClientFileEditorManager::class.java)
+    }
+
+  override fun getSelectedEditorWithProvider(file: VirtualFile): FileEditorWithProvider? {
+    val editor = getEditor(file)
     if (editor != null) {
-      final TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
-      final FileEditorProvider provider = Optional.ofNullable(editor.getUserData(FileEditorProvider.KEY)).orElse(textEditorProvider);
-      final TextEditor fileEditor = textEditorProvider.getTextEditor(editor);
-      return new FileEditorWithProvider(fileEditor, provider);
+      val textEditorProvider = TextEditorProvider.getInstance()
+      val provider = Optional.ofNullable(editor.getUserData(FileEditorProvider.KEY)).orElse(textEditorProvider)
+      val fileEditor = textEditorProvider.getTextEditor(editor)
+      return FileEditorWithProvider(fileEditor, provider)
     }
-    return null;
+    return null
   }
 
-  @Override
-  public boolean isChanged(@NotNull EditorComposite editor) {
-    return false;
-  }
+  override fun isChanged(editor: EditorComposite) = false
 
-  @Override
-  public EditorWindow getNextWindow(@NotNull EditorWindow window) {
-    return null;
-  }
+  override fun getNextWindow(window: EditorWindow): EditorWindow? = null
 
-  @Override
-  public EditorWindow getPrevWindow(@NotNull EditorWindow window) {
-    return null;
-  }
+  override fun getPrevWindow(window: EditorWindow): EditorWindow? = null
 
-  @Override
-  public void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
-  }
+  override fun addTopComponent(editor: FileEditor, component: JComponent) {}
+  override fun removeTopComponent(editor: FileEditor, component: JComponent) {}
+  override fun addBottomComponent(editor: FileEditor, component: JComponent) {}
+  override fun removeBottomComponent(editor: FileEditor, component: JComponent) {}
 
-  @Override
-  public void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
-  }
-
-  @Override
-  public void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
-  }
-
-  @Override
-  public void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
-  }
-
-  @Override
-  public void closeAllFiles() {
-    for (VirtualFile file : getOpenFiles()) {
-      closeFile(file);
+  override fun closeAllFiles() {
+    for (file in openFiles) {
+      closeFile(file)
     }
   }
 
-  private static FileEditorProvider getProvider() {
-    return new FileEditorProvider() {
-      @Override
-      public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-        return false;
-      }
+  override fun getCurrentWindow(): EditorWindow? = null
 
-      @Override
-      @NotNull
-      public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-        throw new IncorrectOperationException();
-      }
+  override fun getActiveWindow(): Promise<EditorWindow> = resolvedPromise()
 
-      @Override
-      public void disposeEditor(@NotNull FileEditor editor) {
-      }
+  override fun setCurrentWindow(window: EditorWindow) {}
 
-      @Override
-      @NotNull
-      public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
-        throw new IncorrectOperationException();
-      }
+  @Suppress("removal", "OVERRIDE_DEPRECATION")
+  override fun getFile(editor: FileEditor): VirtualFile = LIGHT_VIRTUAL_FILE
 
-      @Override
-      @NotNull
-      public String getEditorTypeId() {
-        return "";
-      }
+  override fun unsplitWindow() {}
 
-      @Override
-      @NotNull
-      public FileEditorPolicy getPolicy() {
-        throw new IncorrectOperationException();
-      }
-    };
-  }
+  override fun unsplitAllWindow() {}
 
-  @Override
-  public EditorWindow getCurrentWindow() {
-    return null;
-  }
+  override fun getWindows(): Array<EditorWindow> = emptyArray()
 
-  @NotNull
-  @Override
-  public Promise<EditorWindow> getActiveWindow() {
-    return Promises.resolvedPromise();
-  }
-
-  @Override
-  public void setCurrentWindow(EditorWindow window) {
-  }
-
-  @Override
-  public VirtualFile getFile(@NotNull FileEditor editor) {
-    return LIGHT_VIRTUAL_FILE;
-  }
-
-  @Override
-  public void unsplitWindow() {
-
-  }
-
-  @Override
-  public void unsplitAllWindow() {
-
-  }
-
-  @Override
-  public EditorWindow @NotNull [] getWindows() {
-    return new EditorWindow[0];
-  }
-
-  @Override
-  public FileEditor getSelectedEditor(@NotNull VirtualFile file) {
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      ClientFileEditorManager clientManager = getClientFileEditorManager();
-      return clientManager == null ? null : clientManager.getSelectedEditor();
-    }
-    final Editor editor = getEditor(file);
-    if (editor != null) {
-      return TextEditorProvider.getInstance().getTextEditor(editor);
+  override fun getSelectedEditor(file: VirtualFile): FileEditor? {
+    if (!isCurrentlyUnderLocalId) {
+      val clientManager = clientFileEditorManager
+      return clientManager?.getSelectedEditor()
     }
 
-    Pair<FileEditor, FileEditorProvider> editorAndProvider = myTestEditorSplitter.getEditorAndProvider(file);
-    if (editorAndProvider != null) {
-      return editorAndProvider.first;
-    }
-
-    return null;
+    getEditor(file)?.let { return TextEditorProvider.getInstance().getTextEditor(it) }
+    return testEditorSplitter.getEditorAndProvider(file)?.first
   }
 
-  @Override
-  public FileEditor @NotNull [] getSelectedEditorWithRemotes() {
-    List<FileEditor> result = new ArrayList<>();
-    Collections.addAll(result, getSelectedEditors());
-    for (ClientFileEditorManager m : getAllClientFileEditorManagers()) {
-      result.addAll(m.getSelectedEditors());
+  override fun getSelectedEditorWithRemotes(): Array<FileEditor> {
+    val result: MutableList<FileEditor> = ArrayList()
+    Collections.addAll(result, *selectedEditors)
+    for (m in allClientFileEditorManagers) {
+      result.addAll(m.getSelectedEditors())
     }
-    return result.toArray(FileEditor.EMPTY_ARRAY);
+    return result.toTypedArray()
   }
 
-  @Override
-  public boolean isFileOpen(@NotNull VirtualFile file) {
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      ClientFileEditorManager clientManager = getClientFileEditorManager();
-      if (clientManager == null) return false;
-      return clientManager.isFileOpen(file);
+  override fun isFileOpen(file: VirtualFile): Boolean {
+    if (!isCurrentlyUnderLocalId) {
+      val clientManager = clientFileEditorManager ?: return false
+      return clientManager.isFileOpen(file)
     }
-    return getEditor(file) != null;
+    return getEditor(file) != null
   }
 
-  @Override
-  public boolean isFileOpenWithRemotes(@NotNull VirtualFile file) {
+  override fun isFileOpenWithRemotes(file: VirtualFile): Boolean {
     if (isFileOpen(file)) {
-      return true;
+      return true
     }
-    for (ClientFileEditorManager m: getAllClientFileEditorManagers()) {
-      if (m.isFileOpen(file)) {
-        return true;
+    return allClientFileEditorManagers.any { it.isFileOpen(file) }
+  }
+
+  override fun getEditors(file: VirtualFile): Array<FileEditor> {
+    return arrayOf(getSelectedEditor(file) ?: return FileEditor.EMPTY_ARRAY)
+  }
+
+  override fun getAllEditors(file: VirtualFile): Array<FileEditor> {
+    val result = ArrayList<FileEditor>()
+    result.addAll(getEditors(file))
+    for (clientManager in allClientFileEditorManagers) {
+      result.addAll(clientManager.getEditors(file))
+    }
+    return result.toArray(FileEditor.EMPTY_ARRAY)
+  }
+
+  override fun getOpenFilesWithRemotes(): Array<VirtualFile> {
+    val result = ArrayList<VirtualFile>()
+    result.addAll(openFiles)
+    for (m in allClientFileEditorManagers) {
+      result.addAll(m.getAllFiles())
+    }
+    return result.toTypedArray()
+  }
+
+  @Throws(UnsupportedOperationException::class)
+  override fun getSiblings(file: VirtualFile): Array<VirtualFile> = throw UnsupportedOperationException()
+
+  override fun dispose() {
+    closeAllFiles()
+    LIGHT_VIRTUAL_FILE.clearUserDataOnDispose()
+  }
+
+  override fun closeFile(file: VirtualFile) {
+    val editor = virtualFileToEditor.remove(file)
+    if (editor != null) {
+      val editorProvider = TextEditorProvider.getInstance()
+      editorProvider.disposeEditor(editorProvider.getTextEditor(editor))
+      if (!editor.isDisposed) {
+        EditorFactory.getInstance().releaseEditor(editor)
+      }
+      if (!project.isDisposed) {
+        eventPublisher().fileClosed(this, file)
       }
     }
-    return false;
-  }
-
-  @Override
-  public FileEditor @NotNull [] getEditors(@NotNull VirtualFile file) {
-    FileEditor e = getSelectedEditor(file);
-    if (e == null) return FileEditor.EMPTY_ARRAY;
-    return new FileEditor[] {e};
-  }
-
-  @Override
-  public FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file) {
-    List<FileEditor> result = new ArrayList<>();
-    ContainerUtil.addAll(result, getEditors(file));
-    for (ClientFileEditorManager clientManager : getAllClientFileEditorManagers()) {
-      result.addAll(clientManager.getEditors(file));
+    if (file == activeFile) {
+      activeFile = null
     }
-
-    return result.toArray(FileEditor.EMPTY_ARRAY);
+    modifyTabWell { testEditorSplitter.closeFile(file) }
   }
 
-  @Override
-  public VirtualFile @NotNull [] getOpenFilesWithRemotes() {
-    List<VirtualFile> result = new ArrayList<>();
-    Collections.addAll(result, getOpenFiles());
-    for (ClientFileEditorManager m : getAllClientFileEditorManagers()) {
-      result.addAll(m.getAllFiles());
+  override fun closeFile(file: VirtualFile, window: EditorWindow) {
+    closeFile(file)
+  }
+
+  override fun getSelectedFiles(): Array<VirtualFile> {
+    if (!isCurrentlyUnderLocalId) {
+      val clientManager = clientFileEditorManager ?: return VirtualFile.EMPTY_ARRAY
+      return clientManager.getSelectedFiles().toTypedArray()
     }
-    return result.toArray(VirtualFile.EMPTY_ARRAY);
+    return if (activeFile == null) VirtualFile.EMPTY_ARRAY else arrayOf(activeFile!!)
   }
 
-  @Override
-  public VirtualFile @NotNull [] getSiblings(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException();
+  override fun getSelectedEditors(): Array<FileEditor> {
+    if (!isCurrentlyUnderLocalId) {
+      return (clientFileEditorManager ?: return FileEditor.EMPTY_ARRAY).getSelectedEditors().toTypedArray()
+    }
+    return if (activeFile == null) FileEditor.EMPTY_ARRAY else getEditors(activeFile!!)
   }
 
-  @Override
-  public void dispose() {
-    closeAllFiles();
-    LIGHT_VIRTUAL_FILE.clearUserDataOnDispose();
+  override fun getSelectedTextEditor(): Editor? {
+    if (!isCurrentlyUnderLocalId) {
+      val clientManager = clientFileEditorManager ?: return null
+      val selectedEditor = clientManager.getSelectedEditor()
+      return if (selectedEditor is TextEditor) selectedEditor.editor else null
+    }
+    return getEditor(activeFile ?: return  null)
   }
 
-  @Override
-  public void closeFile(@NotNull final VirtualFile file) {
-    Editor editor = myVirtualFile2Editor.remove(file);
-    if (editor != null){
-      TextEditorProvider editorProvider = TextEditorProvider.getInstance();
-      editorProvider.disposeEditor(editorProvider.getTextEditor(editor));
-      if (!editor.isDisposed()) {
-        EditorFactory.getInstance().releaseEditor(editor);
-      }
-      if (!myProject.isDisposed()) {
-        eventPublisher().fileClosed(this, file);
+  override fun getSelectedTextEditorWithRemotes(): Array<Editor> {
+    val result = ArrayList<Editor>()
+    for (e in selectedEditorWithRemotes) {
+      if (e is TextEditor) {
+        result.add(e.editor)
       }
     }
-    if (Comparing.equal(file, myActiveFile)) {
-      myActiveFile = null;
+    return result.toTypedArray()
+  }
+
+  override fun getComponent(): JComponent = JLabel()
+
+  override fun getOpenFiles(): Array<VirtualFile> {
+    if (!isCurrentlyUnderLocalId) {
+      return (clientFileEditorManager ?: return VirtualFile.EMPTY_ARRAY).getAllFiles().toTypedArray()
     }
-
-    modifyTabWell(() -> myTestEditorSplitter.closeFile(file));
+    return VfsUtilCore.toVirtualFileArray(virtualFileToEditor.keys)
   }
 
-  @Override
-  public void closeFile(@NotNull VirtualFile file, @NotNull EditorWindow window) {
-    closeFile(file);
-  }
+  fun getEditor(file: VirtualFile): Editor? = virtualFileToEditor.get(file)
 
-  @Override
-  public VirtualFile @NotNull [] getSelectedFiles() {
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      ClientFileEditorManager clientManager = getClientFileEditorManager();
-      if (clientManager == null) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-      return clientManager.getSelectedFiles().toArray(VirtualFile.EMPTY_ARRAY);
+  override fun getAllEditors(): Array<FileEditor> {
+    val result = ArrayList<FileEditor>()
+    for ((_, value) in virtualFileToEditor) {
+      result.add(TextEditorProvider.getInstance().getTextEditor(value!!))
     }
-    return myActiveFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[]{myActiveFile};
-  }
-
-  @Override
-  public FileEditor @NotNull [] getSelectedEditors() {
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      ClientFileEditorManager clientManager = getClientFileEditorManager();
-      return clientManager == null ? FileEditor.EMPTY_ARRAY : clientManager.getSelectedEditors().toArray(FileEditor.EMPTY_ARRAY);
+    for (clientManager in allClientFileEditorManagers) {
+      result.addAll(clientManager.getAllEditors())
     }
-    return myActiveFile == null ? FileEditor.EMPTY_ARRAY : getEditors(myActiveFile);
+    return result.toTypedArray()
   }
 
-  @Override
-  public Editor getSelectedTextEditor() {
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      ClientFileEditorManager clientManager = getClientFileEditorManager();
-      if (clientManager == null) {
-        return null;
-      }
-      FileEditor selectedEditor = clientManager.getSelectedEditor();
-      return selectedEditor instanceof TextEditor ? ((TextEditor)selectedEditor).getEditor() : null;
-    }
-    return myActiveFile != null ? getEditor(myActiveFile) : null;
-  }
+  private val allClientFileEditorManagers: List<ClientFileEditorManager>
+    get() = project.getServices(ClientFileEditorManager::class.java, false)
 
-  @Override
-  public Editor @NotNull [] getSelectedTextEditorWithRemotes() {
-    List<Editor> result = new ArrayList<>();
-    for(FileEditor e: getSelectedEditorWithRemotes()) {
-      if (e instanceof TextEditor) {
-        result.add(((TextEditor)e).getEditor());
+  override fun openTextEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Editor? {
+    val pair = openFileInCommand(descriptor)
+    for (editor in pair.first) {
+      if (editor is TextEditor) {
+        return editor.editor
       }
     }
-    return result.toArray(Editor.EMPTY_ARRAY);
+    return null
   }
 
-  @Override
-  public JComponent getComponent() {
-    return new JLabel();
-  }
-
-  @Override
-  public VirtualFile @NotNull [] getOpenFiles() {
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      ClientFileEditorManager clientManager = getClientFileEditorManager();
-      if (clientManager == null) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-      return clientManager.getAllFiles().toArray(VirtualFile.EMPTY_ARRAY);
-    }
-    return VfsUtilCore.toVirtualFileArray(myVirtualFile2Editor.keySet());
-  }
-
-  public Editor getEditor(VirtualFile file) {
-    return myVirtualFile2Editor.get(file);
-  }
-
-  @Override
-  public FileEditor @NotNull [] getAllEditors() {
-    List<FileEditor> result = new ArrayList<>();
-    for (Map.Entry<VirtualFile, Editor> entry : myVirtualFile2Editor.entrySet()) {
-      TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(entry.getValue());
-      result.add(textEditor);
-    }
-    for (ClientFileEditorManager clientManager : getAllClientFileEditorManagers()) {
-      result.addAll(clientManager.getAllEditors());
-    }
-    return result.toArray(FileEditor.EMPTY_ARRAY);
-  }
-
-  private List<ClientFileEditorManager> getAllClientFileEditorManagers() {
-    return myProject.getServices(ClientFileEditorManager.class, false);
-  }
-
-
-  @Override
-  public Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    Pair<FileEditor[], FileEditorProvider[]> pair = openFileInCommand(descriptor);
-
-    for (FileEditor editor : pair.first) {
-      if (editor instanceof TextEditor) {
-        return ((TextEditor)editor).getEditor();
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  private Pair<FileEditor[], FileEditorProvider[]> openFileInCommand(@NotNull FileEditorNavigatable descriptor) {
-    Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
-    CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      Pair<FileEditor[], FileEditorProvider[]> editWithProvider = openFileImpl3(descriptor);
-      FileEditor[] editors = editWithProvider.first;
-      for (int i = 0; i < editors.length; i++) {
-        FileEditor editor = editors[i];
-        if (editor instanceof NavigatableFileEditor && descriptor.getFile().equals(editor.getFile())) {
-          NavigatableFileEditor navEditor = (NavigatableFileEditor)editor;
-          if (navEditor.canNavigateTo(descriptor)) {
-            setSelectedEditor(descriptor.getFile(), editWithProvider.second[i].getEditorTypeId());
-            navEditor.navigateTo(descriptor);
+  private fun openFileInCommand(descriptor: FileEditorNavigatable): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+    var result: Pair<Array<FileEditor>, Array<FileEditorProvider>>? = null
+    CommandProcessor.getInstance().executeCommand(project, {
+      val editWithProvider = openFileImpl3(descriptor)
+      val editors = editWithProvider.first
+      for (i in editors.indices) {
+        val editor = editors[i]
+        if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
+          if (editor.canNavigateTo(descriptor)) {
+            setSelectedEditor(descriptor.file, editWithProvider.second[i].editorTypeId)
+            editor.navigateTo(descriptor)
           }
-          break;
+          break
         }
       }
-      result.set(editWithProvider);
-    }, "", null);
-    return result.get();
+      result = editWithProvider
+    }, "", null)
+    return result!!
   }
 
-  @NotNull
-  private Editor doOpenTextEditor(@NotNull FileEditorNavigatable descriptor) {
-    VirtualFile file = descriptor.getFile();
-    Editor editor = myVirtualFile2Editor.get(file);
+  private fun doOpenTextEditor(descriptor: FileEditorNavigatable): Editor {
+    val file = descriptor.file
+    virtualFileToEditor.get(file)?.let { return it }
+    val document = FileDocumentManager.getInstance().getDocument(file)
+    LOG.assertTrue(document != null, file)
+    val editorFactory = EditorFactory.getInstance()
+    val editor = editorFactory.createEditor(document!!, project)
+    try {
+      val highlighter = HighlighterFactory.createHighlighter(project, file)
+      val language = TextEditorImpl.getDocumentLanguage(editor)
+      editor.settings.setLanguageSupplier { language }
+      val editorEx = editor as EditorEx?
+      editorEx!!.highlighter = highlighter
+      editorEx.setFile(file)
+    }
+    catch (e: Throwable) {
+      editorFactory.releaseEditor(editor)
+      throw e
+    }
+    return editor!!
+  }
 
-    if (editor == null) {
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      LOG.assertTrue(document != null, file);
-      EditorFactory editorFactory = EditorFactory.getInstance();
-      editor = editorFactory.createEditor(document, myProject);
-      try {
-        EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, file);
-        Language language = TextEditorImpl.getDocumentLanguage(editor);
-        editor.getSettings().setLanguageSupplier(() -> language);
-        EditorEx editorEx = (EditorEx)editor;
-        editorEx.setHighlighter(highlighter);
-        editorEx.setFile(file);
-      }
-      catch (Throwable e) {
-        editorFactory.releaseEditor(editor);
-        throw e;
-      }
+  override fun openFileEditor(descriptor: FileEditorNavigatable, focusEditor: Boolean): List<FileEditor> {
+    val pair = openFileInCommand(descriptor)
+    return pair.first.asList()
+  }
+
+  override fun getProject() = project
+
+  override fun getPreferredFocusedComponent(): JComponent = throw UnsupportedOperationException()
+
+  override fun getEditorsWithProviders(file: VirtualFile): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+    if (!isCurrentlyUnderLocalId) {
+      val clientManager = clientFileEditorManager
+                          ?: return Pair(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
+      return EditorComposite.retrofit(clientManager.getComposite(file))
     }
 
-    return editor;
-  }
-
-  @Override
-  @NotNull
-  public List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
-    Pair<FileEditor[], FileEditorProvider[]> pair = openFileInCommand(descriptor);
-    return Arrays.asList(pair.first);
-  }
-
-  @Override
-  @NotNull
-  public Project getProject() {
-    return myProject;
-  }
-
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  @NotNull
-  public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      ClientFileEditorManager clientManager = getClientFileEditorManager();
-      if (clientManager == null) {
-        return Pair.create(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
-      }
-      return EditorComposite.retrofit(clientManager.getComposite(file));
-    }
-    Pair<FileEditor, FileEditorProvider> editorAndProvider = myTestEditorSplitter.getEditorAndProvider(file);
-
-    FileEditor[] fileEditor = FileEditor.EMPTY_ARRAY;
-    FileEditorProvider[] fileEditorProvider= FileEditorProvider.EMPTY_ARRAY;
+    val editorAndProvider = testEditorSplitter.getEditorAndProvider(file)
+    var fileEditor = FileEditor.EMPTY_ARRAY
+    var fileEditorProvider = FileEditorProvider.EMPTY_ARRAY
     if (editorAndProvider != null) {
-      fileEditor = new FileEditor[] {editorAndProvider.first};
-      fileEditorProvider = new FileEditorProvider[]{editorAndProvider.second};
+      fileEditor = arrayOf(editorAndProvider.first)
+      fileEditorProvider = arrayOf(editorAndProvider.second)
+    }
+    return Pair(fileEditor, fileEditorProvider)
+  }
+
+  override fun getWindowSplitCount() = 0
+
+  override fun hasSplitOrUndockedWindows() = false
+
+  override fun getSplitters(): EditorsSplitters = throw IncorrectOperationException()
+
+  override fun getReady(requestor: Any) = ActionCallback.DONE
+
+  override fun setSelectedEditor(file: VirtualFile, fileEditorProviderId: String) {
+    if (!isCurrentlyUnderLocalId) {
+      val clientManager = clientFileEditorManager
+      clientManager?.setSelectedEditor(file, fileEditorProviderId)
+      return
     }
 
-    return Pair.create(fileEditor, fileEditorProvider);
-  }
-
-  @Override
-  public int getWindowSplitCount() {
-    return 0;
-  }
-
-  @Override
-  public boolean hasSplitOrUndockedWindows() {
-    return false;
-  }
-
-  @NotNull
-  @Override
-  public EditorsSplitters getSplitters() {
-    throw new IncorrectOperationException();
-  }
-
-  @NotNull
-  @Override
-  public ActionCallback getReady(@NotNull Object requestor) {
-    return ActionCallback.DONE;
-  }
-
-  @Override
-  public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      ClientFileEditorManager clientManager = getClientFileEditorManager();
-      if(clientManager != null) {
-        clientManager.setSelectedEditor(file, fileEditorProviderId);
+    if (virtualFileToEditor.containsKey(file)) {
+      modifyTabWell {
+        activeFile = file
+        testEditorSplitter.focusedFile = file
       }
-      return;
-    }
-    if (myVirtualFile2Editor.containsKey(file)) {
-      modifyTabWell(() -> {
-        myActiveFile = file;
-        myTestEditorSplitter.setFocusedFile(file);
-      });
     }
   }
 }

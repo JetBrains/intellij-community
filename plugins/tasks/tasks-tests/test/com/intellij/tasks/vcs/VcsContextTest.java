@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.vcs;
 
 import com.intellij.dvcs.repo.Repository;
@@ -37,12 +37,12 @@ public class VcsContextTest extends FileEditorManagerTestCase {
 
   @Override
   protected void tearDown() {
-    new RunAll(
+    RunAll.runAll(
       () -> ChangeListManagerImpl.getInstanceImpl(getProject()).forceStopInTestMode(),
       () -> ChangeListManagerImpl.getInstanceImpl(getProject()).waitEverythingDoneInTestMode(),
       () -> ProjectLevelVcsManager.getInstance(getProject()).setDirectoryMappings(Collections.emptyList()),
       () -> super.tearDown()
-    ).run();
+    );
   }
 
   public void testBranchWorkspace() throws IOException {

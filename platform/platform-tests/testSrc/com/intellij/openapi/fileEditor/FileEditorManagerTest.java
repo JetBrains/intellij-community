@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
@@ -43,7 +43,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
     assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
 
-    myManager.closeAllFiles();
+    manager.closeAllFiles();
     openFiles(STRING);
     assertOpenFiles("foo.xml", "1.txt", "2.txt", "3.txt");
   }
@@ -73,11 +73,11 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testTabLimitWithJupyterNotebooks() {
-    myManager.openFile(getFile("/src/test.ipynb"), true);
-    myManager.closeAllFiles();
-    myManager.openFile(getFile("/src/1.txt"), true);
+    manager.openFile(getFile("/src/test.ipynb"), true);
+    manager.closeAllFiles();
+    manager.openFile(getFile("/src/1.txt"), true);
     UISettings.getInstance().getState().setEditorTabLimit(1);
-    myManager.openFile(getFile("/src/test.ipynb"), true);
+    manager.openFile(getFile("/src/test.ipynb"), true);
     assertOpenFiles("test.ipynb");
   }
 
@@ -86,18 +86,18 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
     assertOpenFiles("3.txt");
 
-    myManager.closeAllFiles();
+    manager.closeAllFiles();
 
     openFiles(STRING);
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml");
-    myManager.openFile(getFile("/src/3.txt"), true);
+    manager.openFile(getFile("/src/3.txt"), true);
     assertOpenFiles("foo.xml", "3.txt");//limit is still 1 but pinned prevent closing tab and actual tab number may exceed the limit
 
-    myManager.closeAllFiles();
+    manager.closeAllFiles();
 
-    myManager.openFile(getFile("/src/3.txt"), true);
-    myManager.openFile(getFile("/src/foo.xml"), true);
+    manager.openFile(getFile("/src/3.txt"), true);
+    manager.openFile(getFile("/src/foo.xml"), true);
     assertOpenFiles("foo.xml");
     callTrimToSize();
     assertOpenFiles("foo.xml");
@@ -108,25 +108,25 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     uiSettings.setEditorTabLimit(2);
     uiSettings.setReuseNotModifiedTabs(false);
 
-    myManager.openFile(getFile("/src/3.txt"), true);
-    myManager.openFile(getFile("/src/foo.xml"), true);
+    manager.openFile(getFile("/src/3.txt"), true);
+    manager.openFile(getFile("/src/foo.xml"), true);
     assertOpenFiles("3.txt", "foo.xml");
     uiSettings.setEditorTabLimit(1);
     callTrimToSize();
     assertOpenFiles("foo.xml");
     uiSettings.setEditorTabLimit(2);
 
-    myManager.closeAllFiles();
+    manager.closeAllFiles();
 
     uiSettings.setReuseNotModifiedTabs(true);
-    myManager.openFile(getFile("/src/3.txt"), true);
+    manager.openFile(getFile("/src/3.txt"), true);
     assertOpenFiles("3.txt");
-    myManager.openFile(getFile("/src/foo.xml"), true);
+    manager.openFile(getFile("/src/foo.xml"), true);
     assertOpenFiles("foo.xml");
   }
 
   private void callTrimToSize() {
-    for (EditorsSplitters each : myManager.getAllSplitters()) {
+    for (EditorsSplitters each : manager.getAllSplitters()) {
       each.trimToSize();
     }
   }
@@ -148,7 +148,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
               "      </file>\n" +
               "    </leaf>\n" +
               "  </component>\n");
-    FileEditor[] selectedEditors = myManager.getSelectedEditors();
+    FileEditor[] selectedEditors = manager.getSelectedEditors();
     assertEquals(1, selectedEditors.length);
     assertEquals(MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, selectedEditors[0].getName());
   }
@@ -157,45 +157,45 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyFileEditorProvider(), myFixture.getTestRootDisposable());
     VirtualFile file = getFile("/src/1.txt");
     assertNotNull(file);
-    FileEditor[] editors = myManager.openFile(file, true);
+    FileEditor[] editors = manager.openFile(file, true);
     assertEquals(2, editors.length);
-    assertEquals("Text", myManager.getSelectedEditor(file).getName());
-    myManager.setSelectedEditor(file, "mock");
-    assertEquals(MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, myManager.getSelectedEditor(file).getName());
+    assertEquals("Text", manager.getSelectedEditor(file).getName());
+    manager.setSelectedEditor(file, "mock");
+    assertEquals(MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, manager.getSelectedEditor(file).getName());
 
     VirtualFile file1 = getFile("/src/2.txt");
-    myManager.openFile(file1, true);
-    assertEquals(MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, myManager.getSelectedEditor(file).getName());
+    manager.openFile(file1, true);
+    assertEquals(MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, manager.getSelectedEditor(file).getName());
   }
 
   public void testWindowClosingRetainsOtherWindows() {
     VirtualFile file = getFile("/src/1.txt");
     assertNotNull(file);
-    myManager.openFile(file, false);
-    EditorWindow primaryWindow = myManager.getCurrentWindow();
+    manager.openFile(file, false);
+    EditorWindow primaryWindow = manager.getCurrentWindow();
     assertNotNull(primaryWindow);
-    myManager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
-    EditorWindow secondaryWindow = myManager.getNextWindow(primaryWindow);
+    manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
+    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
     assertNotNull(secondaryWindow);
-    myManager.createSplitter(SwingConstants.VERTICAL, secondaryWindow);
-    myManager.closeFile(file, primaryWindow);
-    assertEquals(2, myManager.getWindows().length);
+    manager.createSplitter(SwingConstants.VERTICAL, secondaryWindow);
+    manager.closeFile(file, primaryWindow);
+    assertEquals(2, manager.getWindows().length);
   }
 
   public void testOpenFileInTablessSplitter() {
     VirtualFile file1 = getFile("/src/1.txt");
     assertNotNull(file1);
-    myManager.openFile(file1, false);
+    manager.openFile(file1, false);
     VirtualFile file2 = getFile("/src/2.txt");
     assertNotNull(file2);
-    myManager.openFile(file2, true);
-    EditorWindow primaryWindow = myManager.getCurrentWindow();//1.txt and selected 2.txt
+    manager.openFile(file2, true);
+    EditorWindow primaryWindow = manager.getCurrentWindow();//1.txt and selected 2.txt
     assertNotNull(primaryWindow);
-    myManager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
-    EditorWindow secondaryWindow = myManager.getNextWindow(primaryWindow);//2.txt only, selected and focused
+    manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
+    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);//2.txt only, selected and focused
     assertNotNull(secondaryWindow);
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
-    myManager.openFileWithProviders(file1, true, true);//Here we have to ignore 'searchForSplitter'
+    manager.openFileWithProviders(file1, true, true);//Here we have to ignore 'searchForSplitter'
     assertEquals(2, primaryWindow.getTabCount());
     assertEquals(2, secondaryWindow.getTabCount());
     assertOrderedEquals(primaryWindow.getFiles(), file1, file2);
@@ -207,7 +207,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     VirtualFile file = getFile("/src/Test.java");
     assertNotNull(file);
     Assume.assumeTrue("JAVA".equals(file.getFileType().getName())); // otherwise, the folding'd be incorrect
-    FileEditor[] editors = myManager.openFile(file, false);
+    FileEditor[] editors = manager.openFile(file, false);
     assertEquals(1, editors.length);
     assertTrue(editors[0] instanceof TextEditor);
     Editor editor = ((TextEditor)editors[0]).getEditor();
@@ -223,9 +223,9 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     editor.getCaretModel().moveToOffset(textLength);
     editor.getSelectionModel().setSelection(textLength - 1, textLength);
 
-    myManager.openFile(getFile("/src/1.txt"), false);
-    assertEquals(1, myManager.getEditors(file).length);
-    editors = myManager.openFile(file, false);
+    manager.openFile(getFile("/src/1.txt"), false);
+    assertEquals(1, manager.getEditors(file).length);
+    editors = manager.openFile(file, false);
 
     assertEquals(1, editors.length);
     assertTrue(editors[0] instanceof TextEditor);
@@ -242,11 +242,11 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     try {
       DumbServiceImpl.getInstance(getProject()).setDumb(true);
       VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
-      FileEditor[] editors = myManager.openFile(file, false);
+      FileEditor[] editors = manager.openFile(file, false);
       assertEquals(ContainerUtil.map(editors, ed-> ed + " of " + ed.getClass()).toString(), 1, editors.length);
       DumbServiceImpl.getInstance(getProject()).setDumb(false);
       UIUtil.dispatchAllInvocationEvents();
-      assertEquals(2, myManager.getAllEditors(file).length);
+      assertEquals(2, manager.getAllEditors(file).length);
     }
     finally {
       DumbServiceImpl.getInstance(getProject()).setDumb(false);
@@ -260,10 +260,10 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       .registerExtension(new MyTextEditorProvider("two", 2), myFixture.getTestRootDisposable());
     Project project = getProject();
     VirtualFile file = getFile("/src/Test.java");
-    myManager.openTextEditor(new OpenFileDescriptor(project, file, 1), true);
-    assertEquals("one", myManager.getSelectedEditor(file).getName());
-    myManager.openTextEditor(new OpenFileDescriptor(project, file, 2), true);
-    assertEquals("two", myManager.getSelectedEditor(file).getName());
+    manager.openTextEditor(new OpenFileDescriptor(project, file, 1), true);
+    assertEquals("one", manager.getSelectedEditor(file).getName());
+    manager.openTextEditor(new OpenFileDescriptor(project, file, 2), true);
+    assertEquals("two", manager.getSelectedEditor(file).getName());
   }
 
   public void testHideDefaultEditor() {
@@ -272,30 +272,30 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDefaultEditorProvider(
       "t_default", "default"), myFixture.getTestRootDisposable());
 
-    myManager.openFile(file, false);
+    manager.openFile(file, false);
     assertOpenedFileEditorsNames(file, "default");
-    myManager.closeAllFiles();
+    manager.closeAllFiles();
 
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
       "t_hide_def_1", "hide_def_1", FileEditorPolicy.HIDE_DEFAULT_EDITOR), myFixture.getTestRootDisposable());
 
-    myManager.openFile(file, false);
+    manager.openFile(file, false);
     assertOpenedFileEditorsNames(file, "hide_def_1");
-    myManager.closeAllFiles();
+    manager.closeAllFiles();
 
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
       "t_hide_def_2", "hide_def_2", FileEditorPolicy.HIDE_DEFAULT_EDITOR), myFixture.getTestRootDisposable());
 
-    myManager.openFile(file, false);
+    manager.openFile(file, false);
     assertOpenedFileEditorsNames(file, "hide_def_1", "hide_def_2");
-    myManager.closeAllFiles();
+    manager.closeAllFiles();
 
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
       "t_passive", "passive", FileEditorPolicy.NONE), myFixture.getTestRootDisposable());
 
-    myManager.openFile(file, false);
+    manager.openFile(file, false);
     assertOpenedFileEditorsNames(file, "hide_def_1", "hide_def_2", "passive");
-    assertEquals(3, myManager.getAllEditors(file).length);
+    assertEquals(3, manager.getAllEditors(file).length);
   }
 
   public void testHideOtherEditors() {
@@ -310,29 +310,29 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
       "t_hide_others_1", "hide_others_1", FileEditorPolicy.HIDE_OTHER_EDITORS), myFixture.getTestRootDisposable());
 
-    myManager.openFile(file, false);
+    manager.openFile(file, false);
     assertOpenedFileEditorsNames(file, "hide_others_1");
-    myManager.closeAllFiles();
+    manager.closeAllFiles();
 
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
       "t_hide_others_2", "hide_others_2", FileEditorPolicy.HIDE_OTHER_EDITORS), myFixture.getTestRootDisposable());
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(
       "t_hide_others_3", "hide_others_3", FileEditorPolicy.HIDE_OTHER_EDITORS), myFixture.getTestRootDisposable());
 
-    myManager.openFile(file, false);
+    manager.openFile(file, false);
     assertOpenedFileEditorsNames(file, "hide_others_1", "hide_others_2", "hide_others_3");
   }
 
   public void testDontOpenInActiveSplitter() {
     VirtualFile file = getFile("/src/1.txt");
     VirtualFile file2 = getFile("/src/2.txt");
-    myManager.openFile(file, false);
-    EditorWindow primaryWindow = myManager.getCurrentWindow();
+    manager.openFile(file, false);
+    EditorWindow primaryWindow = manager.getCurrentWindow();
     assertNotNull(primaryWindow);
-    myManager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
-    EditorWindow secondaryWindow = myManager.getNextWindow(primaryWindow);
-    myManager.openFileImpl2(secondaryWindow, file2, true);
-    myManager.closeFile(file, secondaryWindow, true);
+    manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
+    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
+    manager.openFileImpl2(secondaryWindow, file2, true);
+    manager.closeFile(file, secondaryWindow, true);
 
     // default behavior is to reuse the existing splitter
     new OpenFileDescriptor(getProject(), file).navigate(true);
@@ -344,13 +344,13 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     VirtualFile file = getFile("/src/1.txt");
     VirtualFile file2 = getFile("/src/2.txt");
-    myManager.openFile(file, false);
-    EditorWindow primaryWindow = myManager.getCurrentWindow();
+    manager.openFile(file, false);
+    EditorWindow primaryWindow = manager.getCurrentWindow();
     assertNotNull(primaryWindow);
-    myManager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
-    EditorWindow secondaryWindow = myManager.getNextWindow(primaryWindow);
-    myManager.openFileImpl2(secondaryWindow, file2, true);
-    myManager.closeFile(file, secondaryWindow, true);
+    manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
+    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
+    manager.openFileImpl2(secondaryWindow, file2, true);
+    manager.closeFile(file, secondaryWindow, true);
 
     // with the changed setting, we want to open the file in the current splitter (
     new OpenFileDescriptor(getProject(), file).navigate(true);
@@ -362,13 +362,13 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     VirtualFile file = getFile("/src/1.txt");
     VirtualFile file2 = getFile("/src/2.txt");
-    myManager.openFile(file, false);
-    EditorWindow primaryWindow = myManager.getCurrentWindow();
+    manager.openFile(file, false);
+    EditorWindow primaryWindow = manager.getCurrentWindow();
     assertNotNull(primaryWindow);
-    myManager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
-    EditorWindow secondaryWindow = myManager.getNextWindow(primaryWindow);
-    myManager.openFileImpl2(secondaryWindow, file2, true);
-    myManager.closeFile(file, secondaryWindow, true);
+    manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
+    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
+    manager.openFileImpl2(secondaryWindow, file2, true);
+    manager.closeFile(file, secondaryWindow, true);
 
     // with the changed setting, we want to open the file in the current splitter (
     new OpenFileDescriptor(getProject(), file).setUseCurrentWindow(true).navigate(true);
@@ -414,16 +414,16 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
                                        "  </component>\n";
 
   private void assertOpenFiles(String... fileNames) {
-    List<String> names = ContainerUtil.map(myManager.getSplitters().getEditorComposites(), composite -> composite.getFile().getName());
+    List<String> names = ContainerUtil.map(manager.getSplitters().getEditorComposites(), composite -> composite.getFile().getName());
     assertEquals(Arrays.asList(fileNames), names);
   }
 
   private void assertOpenedFileEditorsNames(VirtualFile file, String... allNames) {
-    FileEditor[] editors = myManager.getEditors(file);
+    FileEditor[] editors = manager.getEditors(file);
     assertEquals(allNames.length, editors.length);
 
     List<String> expectedNames = Arrays.asList(allNames);
-    List<String> actualNames = ContainerUtil.map(editors, e -> e.getName());
+    List<String> actualNames = ContainerUtil.map(editors, FileEditor::getName);
     if (!actualNames.containsAll(expectedNames)) {
       fail("Expected file editors names:\n"+expectedNames+ "\nActual names:\n"+actualNames);
     }

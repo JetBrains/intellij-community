@@ -25,7 +25,6 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.*
-import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
@@ -66,7 +65,6 @@ import java.util.concurrent.CopyOnWriteArraySet
 import javax.swing.*
 import kotlin.Pair
 
-
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
 private const val PINNED: @NonNls String = "pinned"
@@ -75,13 +73,12 @@ private val OPENED_IN_BULK = Key.create<Boolean>("EditorSplitters.opened.in.bulk
 
 @Suppress("LeakingThis")
 @DirtyUI
-open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl) : IdePanePanel(BorderLayout()),
-                                                                                   UISettingsListener, Disposable {
+open class EditorsSplitters internal constructor(val manager: FileEditorManagerImpl) : IdePanePanel(BorderLayout()),
+                                                                                       UISettingsListener, Disposable {
   var lastFocusGainedTime = 0L
     private set
 
   private val windows = CopyOnWriteArraySet<EditorWindow>()
-  val manager: FileEditorManagerImpl
 
   // temporarily used during initialization
   private var splittersElement: Element? = null
@@ -396,14 +393,12 @@ open class EditorsSplitters internal constructor(manager: FileEditorManagerImpl)
     }
     UIManager.getDefaults().addPropertyChangeListener(l)
     Disposer.register(this) { UIManager.getDefaults().removePropertyChangeListener(l) }
-    this.manager = manager
     focusWatcher = MyFocusWatcher()
     Disposer.register(this) { focusWatcher.deinstall(this) }
     focusTraversalPolicy = MyFocusTraversalPolicy()
     transferHandler = MyTransferHandler(this)
     clear()
-    val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
-    busConnection.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
       override fun activeKeymapChanged(keymap: Keymap?) {
         invalidate()
         repaint()
@@ -837,14 +832,6 @@ private class MyTransferHandler(private val splitters: EditorsSplitters) : Trans
   override fun canImport(comp: JComponent, transferFlavors: Array<DataFlavor>) = fileDropHandler.canHandleDrop(transferFlavors)
 }
 
-@Internal
-interface AsyncFileEditorOpener {
-  suspend fun openFileImpl5(window: EditorWindow,
-                            virtualFile: VirtualFile,
-                            entry: HistoryEntry?,
-                            options: FileEditorOpenOptions): Pair<List<FileEditor>, List<FileEditorProvider>>
-}
-
 private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeReader<JPanel> {
   override suspend fun processFiles(fileElements: List<Element>, tabSizeLimit: Int, context: JPanel?): JPanel {
     val window = withContext(Dispatchers.EDT) {
@@ -908,7 +895,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeRea
     }
 
     if (focusedFile == null) {
-      val manager = getInstance(splitters.manager.project)
+      val manager = ToolWindowManager.getInstance(splitters.manager.project)
       manager.invokeLater {
         if (manager.activeToolWindowId == null) {
           manager.getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
