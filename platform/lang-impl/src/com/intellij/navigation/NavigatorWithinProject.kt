@@ -37,11 +37,8 @@ import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.containers.ComparatorUtil.max
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.future.asDeferred
 import java.io.File
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import java.util.regex.Pattern
 
 const val NAVIGATE_COMMAND = "navigate"
@@ -50,45 +47,40 @@ const val PROJECT_NAME_KEY = "project"
 const val ORIGIN_URL_KEY = "origin"
 const val SELECTION = "selection"
 
-@OptIn(DelicateCoroutinesApi::class)
-fun openProject(parameters: Map<String, String>): CompletableFuture<Project?> {
+suspend fun openProject(parameters: Map<String, String>): Project? {
   val projectName = parameters.get(PROJECT_NAME_KEY)?.nullize(nullizeSpaces = true)
   val originUrl = parameters.get(ORIGIN_URL_KEY)?.nullize(nullizeSpaces = true)
   if (projectName == null && originUrl == null) {
-    return CompletableFuture.failedFuture(IllegalArgumentException(IdeBundle.message("jb.protocol.navigate.missing.parameters")))
+    throw IllegalArgumentException(IdeBundle.message("jb.protocol.navigate.missing.parameters"))
   }
 
-  val openProject = ProjectUtil.getOpenProjects().find {
+  ProjectUtil.getOpenProjects().find {
     projectName != null && it.name == projectName ||
     originUrl != null && areOriginsEqual(originUrl, getProjectOriginUrl(it.guessProjectDir()?.toNioPath()))
-  }
-  if (openProject != null) {
-    return CompletableFuture.completedFuture(openProject)
-  }
+  }?.let { return it }
 
   val recentProjectAction = RecentProjectListActionProvider.getInstance().getActions().asSequence()
                               .filterIsInstance(ReopenProjectAction::class.java)
                               .find {
                                 projectName != null && it.projectName == projectName ||
                                 originUrl != null && areOriginsEqual(originUrl, getProjectOriginUrl(Path.of(it.projectPath)))
-                              } ?: return CompletableFuture.completedFuture(null)
+                              } ?: return null
 
-  return GlobalScope.async {
-    val project = RecentProjectsManagerBase.getInstanceEx()
-                    .openProject(Path.of(recentProjectAction.projectPath), OpenProjectTask()) ?: return@async null
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
-      if (project.isDisposed) {
-        null
-      }
-      else {
-        val future = CompletableFuture<Project>()
-        StartupManager.getInstance(project).runAfterOpened {
-          future.complete(project)
-        }
-        future.asDeferred().await()
-      }
+  val project = RecentProjectsManagerBase.getInstanceEx().openProject(Path.of(recentProjectAction.projectPath), OpenProjectTask())
+                ?: return null
+  return withContext(Dispatchers.EDT) {
+    if (project.isDisposed) {
+      null
     }
-  }.asCompletableFuture()
+    else {
+      val future = CompletableDeferred<Project>()
+      StartupManager.getInstance(project).runAfterOpened {
+        future.complete(project)
+      }
+      future.join()
+      project
+    }
+  }
 }
 
 data class LocationInFile(val line: Int, val column: Int)
