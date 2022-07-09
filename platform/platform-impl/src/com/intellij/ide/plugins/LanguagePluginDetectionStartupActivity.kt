@@ -61,29 +61,36 @@ private var PropertiesComponent.ignoreLanguageDetector: Boolean
   set(value) = setValue(IGNORE_LANGUAGE_DETECTOR_PROPERTY_NAME, value)
 
 @RequiresBackgroundThread
-private fun findLanguagePluginToInstall(): PluginId? = try {
-  val requests = MarketplaceRequests.getInstance()
+private fun findLanguagePluginToInstall(): PluginId? {
+  try {
+    val locale = Locale.getDefault()
+    if (locale == Locale.ENGLISH || locale == Locale.UK || locale == Locale.US) {
+      // no need to visit Marketplace for them
+      return null
+    }
 
-  fun getLanguagePlugins(implementationName: String) = requests.getFeatures(
-    featureType = "com.intellij.locale",
-    implementationName = implementationName,
-  )
+    val requests = MarketplaceRequests.getInstance()
 
-  val locale = Locale.getDefault()
-  val matchedLanguagePlugins = getLanguagePlugins(locale.toLanguageTag())
+    fun getLanguagePlugins(implementationName: String) = requests.getFeatures(
+      featureType = "com.intellij.locale",
+      implementationName = implementationName,
+    )
 
-  requests.searchPlugins(
-    query = "tags=Language%20Pack",
-    count = 10,
-  ).map {
-    it.pluginId
-  }.firstOrNull { pluginId ->
-    matchedLanguagePlugins.any { it.pluginId == pluginId.idString }
-    && !PluginManagerCore.isPluginInstalled(pluginId)
+    val matchedLanguagePlugins = getLanguagePlugins(locale.toLanguageTag())
+
+    return requests.searchPlugins(
+      query = "tags=Language%20Pack",
+      count = 10,
+    ).map {
+      it.pluginId
+    }.firstOrNull { pluginId ->
+      matchedLanguagePlugins.any { it.pluginId == pluginId.idString }
+      && !PluginManagerCore.isPluginInstalled(pluginId)
+    }
   }
-}
-catch (e: IOException) {
-  logger<LanguagePluginDetectionStartupActivity>()
-    .info("Failed to detect recommended language plugin: ${e.message}")
-  null
+  catch (e: IOException) {
+    logger<LanguagePluginDetectionStartupActivity>()
+      .info("Failed to detect recommended language plugin: ${e.message}")
+    return null
+  }
 }
