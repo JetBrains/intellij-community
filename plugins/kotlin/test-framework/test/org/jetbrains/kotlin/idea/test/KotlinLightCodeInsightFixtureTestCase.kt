@@ -109,9 +109,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 
         EditorTracker.getInstance(project)
 
-        if (!isFirPlugin) {
-            invalidateLibraryCache(project)
-        }
+        invalidateLibraryCache(project)
     }
 
     override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
