@@ -1,26 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.JBProtocolCommand
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ProjectTemplate
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
-class OpenNewProjectWizardProtocolCommand : JBProtocolCommand(COMMAND_NAME) {
-    override fun perform(target: String?, parameters: MutableMap<String, String>, fragment: String?): Future<String?> =
-        if (target != NEW_PROJECT_TARGET) CompletableFuture.completedFuture(IdeBundle.message("jb.protocol.unknown.target", target))
-        else {
-            showCreateNewProjectWizard(parameters)
-            CompletableFuture.completedFuture(null)
+internal class OpenNewProjectWizardProtocolCommand : JBProtocolCommand(COMMAND_NAME) {
+    override suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): String? {
+        if (target != NEW_PROJECT_TARGET) {
+            return IdeBundle.message("jb.protocol.unknown.target", target)
+        } else {
+            val template = parameters.get(NEW_PROJECT_TARGET_TEMPLATE_PARAMETER)?.let(ProjectTemplate.Companion::byId)
+            withContext(Dispatchers.EDT) {
+                NewWizardOpener.open(template)
+            }
+            return null
         }
-
-    private fun showCreateNewProjectWizard(parameters: Map<String, String?>) {
-        val template = parameters[NEW_PROJECT_TARGET_TEMPLATE_PARAMETER]
-            ?.let(ProjectTemplate.Companion::byId)
-
-        NewWizardOpener.open(template)
     }
 
     companion object {

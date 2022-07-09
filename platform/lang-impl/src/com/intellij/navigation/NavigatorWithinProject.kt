@@ -1,6 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.navigation
 
 import com.intellij.ide.IdeBundle
@@ -47,7 +46,7 @@ const val PROJECT_NAME_KEY = "project"
 const val ORIGIN_URL_KEY = "origin"
 const val SELECTION = "selection"
 
-suspend fun openProject(parameters: Map<String, String>): Project? {
+suspend fun openProject(parameters: Map<String, String?>): Project? {
   val projectName = parameters.get(PROJECT_NAME_KEY)?.nullize(nullizeSpaces = true)
   val originUrl = parameters.get(ORIGIN_URL_KEY)?.nullize(nullizeSpaces = true)
   if (projectName == null && originUrl == null) {
@@ -133,7 +132,7 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
 
   fun navigate(keysPrefixesToNavigate: List<NavigationKeyPrefix>) {
     keysPrefixesToNavigate.forEach { keyPrefix ->
-      parameters.filterKeys { it.startsWith(keyPrefix.prefix) }.values.forEach { navigatorByKeyPrefix[keyPrefix]?.invoke(it) }
+      parameters.filterKeys { it.startsWith(keyPrefix.prefix) }.values.forEach { navigatorByKeyPrefix.get(keyPrefix)?.invoke(it) }
     }
   }
 

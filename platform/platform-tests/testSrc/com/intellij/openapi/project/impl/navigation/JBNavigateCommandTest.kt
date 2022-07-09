@@ -14,13 +14,11 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
 import com.intellij.testFramework.use
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.junit.ClassRule
 import org.junit.Test
-import java.util.concurrent.CompletableFuture
 
 class JBNavigateCommandTest : NavigationTestBase() {
   companion object {
@@ -134,6 +132,6 @@ class JBNavigateCommandTest : NavigationTestBase() {
 
   private suspend fun navigate(parameters: Map<String, String>): String? {
     val query = parameters.asSequence().fold("project=${projectName}") { acc, e -> acc + "&${e.key}=${e.value}" }
-    return (JBProtocolCommand.execute("idea/navigate/reference?${query}") as CompletableFuture).asDeferred().await()
+    return JBProtocolCommand.execute("idea/navigate/reference?${query}")
   }
 }
