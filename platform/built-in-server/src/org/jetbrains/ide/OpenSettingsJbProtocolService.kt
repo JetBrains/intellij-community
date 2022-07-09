@@ -8,7 +8,6 @@ import com.intellij.openapi.options.newEditor.SettingsDialog
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 import com.intellij.openapi.project.ProjectManager
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private const val SERVICE_NAME = "settings"
 
@@ -22,8 +21,9 @@ fun doOpenSettings(name: String): Boolean {
 }
 
 internal class OpenSettingsJbProtocolService : JBProtocolCommand(SERVICE_NAME) {
-  override fun perform(target: String?, parameters: Map<String, String>, fragment: String?): Future<String?> =
-    parameter(parameters, "name").let { name ->
+  override fun perform(target: String?, parameters: Map<String, String>, fragment: String?): CompletableFuture<String?> {
+    return parameter(parameters, "name").let { name ->
       CompletableFuture.completedFuture(if (doOpenSettings(name)) null else IdeBundle.message("jb.protocol.settings.no.configurable", name))
     }
+  }
 }

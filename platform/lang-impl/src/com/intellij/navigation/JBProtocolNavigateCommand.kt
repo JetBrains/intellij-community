@@ -25,7 +25,7 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
    *     (?<line1>[\\d]+):(?<column1>[\\d]+)
    *    -(?<line2>[\\d]+):(?<column2>[\\d]+))*
    */
-  override fun perform(target: String?, parameters: MutableMap<String, String>, fragment: String?): Future<String?> {
+  override fun perform(target: String?, parameters: MutableMap<String, String>, fragment: String?): CompletableFuture<String?> {
     if (target != REFERENCE_TARGET) {
       return CompletableFuture.completedFuture(IdeBundle.message("jb.protocol.navigate.target", target))
     }

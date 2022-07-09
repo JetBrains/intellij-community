@@ -343,8 +343,8 @@ inline fun <T> Project.use(task: (Project) -> T): T {
 }
 
 suspend inline fun <T> Project.useAsync(task: (Project) -> T): T {
-  return try {
-    task(this)
+  try {
+    return task(this)
   }
   finally {
     ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this)

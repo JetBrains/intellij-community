@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.PluginException;
@@ -32,7 +32,9 @@ public abstract class JBProtocolCommand {
     myCommand = command;
   }
 
-  /** @deprecated please implement {@link #perform(String, Map, String)} instead */
+  /**
+   * @deprecated please implement {@link #perform(String, Map, String)} instead
+   */
   @Deprecated(forRemoval = true)
   @SuppressWarnings("unused")
   public void perform(String target, @NotNull Map<String, String> parameters) {
@@ -45,7 +47,9 @@ public abstract class JBProtocolCommand {
    *
    * @see #parameter(Map, String)
    */
-  public @NotNull Future<@Nullable @NotificationContent String> perform(@Nullable String target, @NotNull Map<String, String> parameters, @Nullable String fragment) {
+  public @NotNull Future<@Nullable @NotificationContent String> perform(@Nullable String target,
+                                                                        @NotNull Map<String, String> parameters,
+                                                                        @Nullable String fragment) {
     Map<String, String> simpleParameters = new LinkedHashMap<>(parameters);
     simpleParameters.put(FRAGMENT_PARAM_NAME, fragment);
     perform(target, simpleParameters);
@@ -54,7 +58,9 @@ public abstract class JBProtocolCommand {
 
   protected @NotNull String parameter(@NotNull Map<String, String> parameters, @NotNull String name) {
     String value = parameters.get(name);
-    if (value == null || value.isBlank()) throw new IllegalArgumentException(IdeBundle.message("jb.protocol.parameter.missing", name));
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException(IdeBundle.message("jb.protocol.parameter.missing", name));
+    }
     return value;
   }
 
@@ -62,26 +68,29 @@ public abstract class JBProtocolCommand {
   public static @NotNull Future<@Nullable @NotificationContent String> execute(@NotNull String query) {
     QueryStringDecoder decoder = new QueryStringDecoder(query);
     String[] parts = decoder.path().split("/");
-    if (parts.length < 2) throw new IllegalArgumentException(query);  // expected: at least a platform prefix and a command name
+    if (parts.length < 2) {
+      // expected: at least a platform prefix and a command name
+      throw new IllegalArgumentException(query);
+    }
 
     String commandName = parts[1];
     for (JBProtocolCommand command : EP_NAME.getIterable()) {
-      if (command.myCommand.equals(commandName)) {
-        String target = parts.length > 2 ? parts[2] : null;
-
-        Map<String, String> parameters = new LinkedHashMap<>();
-        for (Map.Entry<String, List<String>> entry : decoder.parameters().entrySet()) {
-          List<String> list = entry.getValue();
-          parameters.put(entry.getKey(), list.isEmpty() ? "" : list.get(list.size() - 1));
-        }
-
-        int fragmentStart = query.lastIndexOf('#');
-        String fragment = fragmentStart > 0 ? query.substring(fragmentStart + 1) : null;
-
-        return command.perform(target, Collections.unmodifiableMap(parameters), fragment);
+      if (!command.myCommand.equals(commandName)) {
+        continue;
       }
-    }
 
+      String target = parts.length > 2 ? parts[2] : null;
+
+      Map<String, String> parameters = new LinkedHashMap<>();
+      for (Map.Entry<String, List<String>> entry : decoder.parameters().entrySet()) {
+        List<String> list = entry.getValue();
+        parameters.put(entry.getKey(), list.isEmpty() ? "" : list.get(list.size() - 1));
+      }
+
+      int fragmentStart = query.lastIndexOf('#');
+      String fragment = fragmentStart > 0 ? query.substring(fragmentStart + 1) : null;
+      return command.perform(target, Collections.unmodifiableMap(parameters), fragment);
+    }
     return CompletableFuture.completedFuture(IdeBundle.message("jb.protocol.unknown.command", commandName));
   }
 }
