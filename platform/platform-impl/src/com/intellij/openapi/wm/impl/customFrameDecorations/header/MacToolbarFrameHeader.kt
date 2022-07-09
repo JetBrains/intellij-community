@@ -25,35 +25,47 @@ private const val DEFAULT_HEADER_HEIGHT = 40
 internal class MacToolbarFrameHeader(private val frame: JFrame,
                                      private val root: JRootPane,
                                      private val ideMenu: IdeMenuBar) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder {
-  private var toolbar = MainToolbar()
+  private var toolbar: MainToolbar?
 
   init {
     layout = BorderLayout()
     root.addPropertyChangeListener(MacMainFrameDecorator.FULL_SCREEN, PropertyChangeListener { updateBorders() })
     add(ideMenu, BorderLayout.NORTH)
 
+    val toolbar = createToolBar()
+    this.toolbar = toolbar
+  }
+
+  private fun createToolBar(): MainToolbar {
+    val toolbar = MainToolbar()
     toolbar.isOpaque = false
     add(toolbar, BorderLayout.CENTER)
+    return toolbar
   }
 
   override fun initToolbar() {
+    var toolbar = toolbar
+    if (toolbar == null) {
+      toolbar = createToolBar()
+      this.toolbar = toolbar
+    }
     toolbar.init((frame as? IdeFrame)?.project)
   }
 
   override fun updateToolbar() {
     removeToolbar()
 
-    val toolbar = MainToolbar()
-    toolbar.init((frame as? IdeFrame)?.project)
-    toolbar.isOpaque = false
+    val toolbar = createToolBar()
     this.toolbar = toolbar
+    toolbar.init((frame as? IdeFrame)?.project)
 
-    add(toolbar, BorderLayout.CENTER)
     revalidate()
     updateCustomDecorationHitTestSpots()
   }
 
   override fun removeToolbar() {
+    val toolbar = toolbar ?: return
+    this.toolbar = null
     remove(toolbar)
     revalidate()
   }
@@ -74,7 +86,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   override fun createButtonsPane(): CustomFrameTitleButtons = CustomFrameTitleButtons.create(myCloseAction)
 
   override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
-    return toolbar
+    return (toolbar ?: return emptySequence())
       .components
       .asSequence()
       .filter { it.isVisible }
