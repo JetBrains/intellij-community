@@ -4,10 +4,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -141,7 +138,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       queueTasks(delayedTasks, "Push on VFS changes");
     }
     if (pushingSomethingSynchronously) {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> scheduleDumbModeReindexingIfNeeded());
+      Application app = ApplicationManager.getApplication();
+      if (app.isDispatchThread()) {
+        scheduleDumbModeReindexingIfNeeded();
+      }
+      else {
+        app.invokeLater(this::scheduleDumbModeReindexingIfNeeded, myProject.getDisposed());
+      }
     }
   }
 
