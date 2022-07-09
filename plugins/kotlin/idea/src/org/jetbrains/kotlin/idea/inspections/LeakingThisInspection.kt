@@ -94,14 +94,12 @@ class LeakingThisInspection : AbstractKotlinInspection() {
         })
     }
 
-    companion object {
-        private fun createMakeFinalFix(declaration: KtDeclaration?): IntentionWrapper? {
-            declaration ?: return null
-            val useScope = declaration.useScope
-            if (DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null) return null
-            if ((declaration.containingClassOrObject as? KtClass)?.isInterface() == true) return null
-            return IntentionWrapper(AddModifierFixFE10(declaration, KtTokens.FINAL_KEYWORD))
-        }
+    private fun createMakeFinalFix(declaration: KtDeclaration?): IntentionWrapper? {
+        declaration ?: return null
+        val useScope = declaration.useScope
+        if (DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null) return null
+        if ((declaration.containingClassOrObject as? KtClass)?.isInterface() == true) return null
+        return IntentionWrapper(AddModifierFixFE10(declaration, KtTokens.FINAL_KEYWORD))
     }
 }
 
