@@ -340,7 +340,10 @@ class PluginModelValidator(sourceModules: List<Module>) {
             continue
           }
         }
-        _errors.add(PluginValidationError("Module not found: $moduleName", getErrorInfo()))
+        if (!moduleName.startsWith("kotlin.")) {
+           // kotlin modules are loaded via conditional includes and the test cannot detect them
+          _errors.add(PluginValidationError("Module not found: $moduleName", getErrorInfo()))
+        }
         continue
       }
 
