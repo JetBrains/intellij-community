@@ -22,9 +22,7 @@ class OsRegistryConfigProvider(private val configName: String) {
     require(!configName.contains(' ')) { "'$configName' should not contains spaces" }
   }
 
-  class OsRegistrySystemSetting<T>(val value: T, val osOriginLocation: String?) {
-    val isSetFromOs = osOriginLocation != null
-  }
+  class OsRegistrySystemSetting<T>(val value: T, val osOriginLocation: String?)
 
   private val keyRegex = Regex("^\\w+$")
   fun get(key: String): OsRegistrySystemSetting<String>? {
@@ -38,7 +36,9 @@ class OsRegistryConfigProvider(private val configName: String) {
     }
 
     if (systemValue != null) {
-      logger.info("OS provided value for $key=${systemValue.value} in $configName config, origin=${systemValue.osOriginLocation}")
+      logger.info("OS provided value for '$key' is '${systemValue.value}' in config '$configName', origin=${systemValue.osOriginLocation}")
+    } else {
+      logger.info("OS provided value for '$key' is not found")
     }
     return systemValue
   }
@@ -48,7 +48,7 @@ class OsRegistryConfigProvider(private val configName: String) {
   private fun getFromRegistry(regValue: String): OsRegistrySystemSetting<String>? {
     val regKey = "SOFTWARE\\JetBrains\\$configName"
 
-    logger.debug("Looking for $regValue in registry $regKey, is32Bit=${CpuArch.isIntel32()}")
+    logger.debug("Looking for '$regValue' in registry '$regKey', is32Bit=${CpuArch.isIntel32()}")
 
     // these WOW64 keys are ignored by 32-bit Windows, see https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry-key-security-and-access-rights
     val uris = listOf(
@@ -61,26 +61,28 @@ class OsRegistryConfigProvider(private val configName: String) {
 
     fun Pair<String, () -> String>.readable() = "${this.first}\\$regKey\\$regValue"
 
+    logger.info("Looking for '$regValue' value in ${uris.map { it.readable() }}")
+
     return uris.mapNotNull {
       val uri = try {
-        logger.debug("Searching for ${it.readable()} in registry")
+        logger.debug("Searching for '${it.readable()}' in registry")
         it.second()
       }
       catch (t: Throwable) {
         when (t) {
           is Win32Exception -> {
             if (t.errorCode == WinError.ERROR_FILE_NOT_FOUND) logger.debug("registry entry not found at ${it.readable()}")
-            else logger.warn("Failed to get registry entry at ${it.readable()}, HRESULT=${t.hr.toInt()}", t)
+            else logger.warn("Failed to get registry entry at '${it.readable()}', HRESULT=${t.hr.toInt()}", t)
           }
           else -> {
-            logger.warn("Failed to get registry entry at ${it.readable()}", t)
+            logger.warn("Failed to get registry entry at '${it.readable()}'", t)
           }
         }
         null
       }
 
       if (uri != null) {
-        logger.info("Found registry entry at ${it.readable()}, value=$uri")
+        logger.info("Found registry entry at '${it.readable()}', value='$uri'")
         OsRegistrySystemSetting(uri, it.readable())
       }
       else {
@@ -98,63 +100,72 @@ class OsRegistryConfigProvider(private val configName: String) {
 
     // non-user writable location first, even if that's wrong according to spec as that's what we want
     val configLookupDirs = listOf(etcXdgPath, env["XDG_CONFIG_HOME"] ?: "$home/.config/").toMutableList()
-    logger.info("Looking for $key in xdg config dirs: $configLookupDirs")
 
     // we already set /etc/xdg as the first one, so no need to default to it
     val xdgConfigDirs = (env["XDG_CONFIG_DIRS"] ?: "").split(":").filter { it.isNotEmpty() }
     configLookupDirs.addAll(xdgConfigDirs)
 
+    logger.debug("Looking for $key in xdg config dirs: $configLookupDirs")
+
     return getFromDirectories(key, configLookupDirs.map { File(it) }, configDirectoryPath)
   }
 
-  private fun getFromDirectories(key: String, dirs: List<File>, configDirectoryPath: String): OsRegistrySystemSetting<String>? =
-    dirs.mapNotNull {
+  private fun getFromDirectories(key: String, dirs: List<File>, configDirectoryPath: String): OsRegistrySystemSetting<String>? {
+    val allPossibleLocations = dirs.map { it.resolve(configDirectoryPath) }.flatMap { listOf(it.resolve(key), it.resolve(configJsonFilename)) }
+    logger.info("Looking for '$key' value in $allPossibleLocations")
+
+    for (dir in dirs) {
       // get from file with name $key
-      val valueFromKeyFile = getFromKeyFile(it, configDirectoryPath, key)
+      val valueFromKeyFile = getFromKeyFile(dir, configDirectoryPath, key)
       if (valueFromKeyFile != null)
-        return@mapNotNull valueFromKeyFile
+        return valueFromKeyFile
 
       // fallback to config.json
-      val configJsonFile = File(File(it, configDirectoryPath), configJsonFilename)
-      return@mapNotNull getFromJsonFile(key, configJsonFile)
-    }.firstOrNull()
+      val configJsonFile = File(File(dir, configDirectoryPath), configJsonFilename)
+      val valueFromJsonFile = getFromJsonFile(key, configJsonFile)
+      if (valueFromJsonFile != null)
+        return valueFromJsonFile
+    }
+
+    return null
+  }
 
   private fun getFromKeyFile(it: File, configDirectoryPath: String, key: String): OsRegistrySystemSetting<String>? {
     val keyFile = File(File(it, configDirectoryPath), key)
-    logger.debug("Trying to get $key from file=${keyFile.canonicalPath}")
+    logger.debug("Trying to get '$key' from file '${keyFile.canonicalPath}'")
     if (!keyFile.exists()) {
-      logger.debug("File=${keyFile.canonicalPath} does not exist.")
+      logger.debug("File '${keyFile.canonicalPath}' does not exist.")
       return null
     }
     try {
       // todo: think about it: should we trim the value?
       val keyFileContents = keyFile.readText().trim()
-      logger.info("Found $key in file=${keyFile.canonicalPath}, value=$keyFileContents")
+      logger.info("Found '${keyFile.canonicalPath}' from file '${keyFile.canonicalPath}'. value='$keyFileContents'")
       return OsRegistrySystemSetting(keyFileContents, keyFile.canonicalPath)
     } catch (e: Throwable) {
-      logger.warn("Failed to read setting $key from ${keyFile.canonicalPath}")
+      logger.warn("Failed to read setting '$key' from '${keyFile.canonicalPath}'", e)
       return null
     }
   }
 
   private fun getFromJsonFile(key: String, file: File): OsRegistrySystemSetting<String>? {
-    logger.debug("Trying to get $key from file=${file.canonicalPath}")
+    logger.debug("Trying to get key '$key' from file '${file.canonicalPath}'")
 
     if (!file.exists()) {
-      logger.debug("File=${file.canonicalPath} does not exist.")
+      logger.debug("File '${file.canonicalPath}' does not exist.")
       return null
     }
     return try {
       val root = Json.Default.parseToJsonElement(file.readText()) as? JsonObject
       val resultValue = (root?.get(key) as? JsonPrimitive)?.content
       if (resultValue != null) {
-        logger.info("Found $key in file=${file.canonicalPath}, value=$resultValue")
+        logger.info("Found '$key' in file '${file.canonicalPath}'. Value='$resultValue'")
         OsRegistrySystemSetting(resultValue, file.canonicalPath)
       }
       else null
     }
     catch (t: Throwable) {
-      logger.warn("Failed to read json for $key at location $file", t)
+      logger.warn("Failed to read json for '$key' at location '$file'", t)
       null
     }
   }
