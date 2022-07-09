@@ -22,6 +22,7 @@ import com.intellij.util.text.CharSequenceIterator;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.font.CharToGlyphMapper;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -138,7 +139,8 @@ public class FontFallbackIterator {
     myFontInfo = myNextFontInfo;
     int end;
     while ((end = myIterator.next()) != BreakIterator.DONE) {
-      myNextFontInfo = getFontAbleToDisplay(myEnd, end);
+      if (isFormatChar(myEnd, end) && myFontInfo != null) myNextFontInfo = myFontInfo;
+      else myNextFontInfo = getFontAbleToDisplay(myEnd, end);
       if (myFontInfo == null) myFontInfo = myNextFontInfo;
       if (myNextFontInfo.equals(myFontInfo)) {
         myEnd = end;
@@ -147,6 +149,25 @@ public class FontFallbackIterator {
         return;
       }
     }
+  }
+
+  /**
+   * We make format chars stick to the last font
+   * See JBR FontRunIterator#isSameRun
+   */
+  private boolean isFormatChar(int start, int end) {
+    if (end - start == 1) {
+      int charCode = myTextAsCharSequence == null ? myTextAsArray[start] : myTextAsCharSequence.charAt(start);
+      // From CMap#getFormatCharGlyph
+      if (charCode >= 0x200c) {
+        if ((charCode <= 0x200f) ||
+            (charCode >= 0x2028 && charCode <= 0x202e) ||
+            (charCode >= 0x206a && charCode <= 0x206f)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private FontInfo getFontAbleToDisplay(int start, int end) {
