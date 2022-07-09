@@ -3550,6 +3550,21 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/convertToIsArrayOfCall/list.kt");
         }
 
+        @TestMetadata("negatedArrayLhs.kt")
+        public void testNegatedArrayLhs() throws Exception {
+            runTest("testData/quickfix/convertToIsArrayOfCall/negatedArrayLhs.kt");
+        }
+
+        @TestMetadata("negatedBasic.kt")
+        public void testNegatedBasic() throws Exception {
+            runTest("testData/quickfix/convertToIsArrayOfCall/negatedBasic.kt");
+        }
+
+        @TestMetadata("negatedNullableArrayLhs.kt")
+        public void testNegatedNullableArrayLhs() throws Exception {
+            runTest("testData/quickfix/convertToIsArrayOfCall/negatedNullableArrayLhs.kt");
+        }
+
         @TestMetadata("nullableArrayLhs.kt")
         public void testNullableArrayLhs() throws Exception {
             runTest("testData/quickfix/convertToIsArrayOfCall/nullableArrayLhs.kt");

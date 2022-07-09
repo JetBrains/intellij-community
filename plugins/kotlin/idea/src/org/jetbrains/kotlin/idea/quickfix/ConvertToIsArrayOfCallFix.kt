@@ -28,7 +28,9 @@ class ConvertToIsArrayOfCallFix(
     lhsType: KotlinType,
     arrayArgumentType: KotlinType,
 ) : KotlinQuickFixAction<KtIsExpression>(element) {
-    private val lhsIsNonNullableArray = !lhsType.isNullable() && lhsType.isArrayOrNullableArray()
+    private val lhsIsNonNullable = lhsType.isNullable()
+
+    private val lhsIsArray = lhsType.isArrayOrNullableArray()
 
     private val arrayArgumentTypeText = IdeDescriptorRenderers.SOURCE_CODE_TYPES.renderType(arrayArgumentType)
 
@@ -39,12 +41,21 @@ class ConvertToIsArrayOfCallFix(
     public override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val isExpression = element ?: return
         val lhs = isExpression.leftHandSide
+        val isNegated = isExpression.isNegated
+
         val psiFactory = KtPsiFactory(isExpression)
-        val newExpression = if (lhsIsNonNullableArray) {
-            psiFactory.createExpressionByPattern("$0.isArrayOf<$arrayArgumentTypeText>()", lhs)
-        } else {
-            psiFactory.createExpressionByPattern("$0 is Array<*> && $1.isArrayOf<$arrayArgumentTypeText>()", lhs, lhs)
+        val isArrayOfCall = "isArrayOf<$arrayArgumentTypeText>()"
+        val newExpression = when {
+            lhsIsArray && !lhsIsNonNullable ->
+                psiFactory.createExpressionByPattern(if (!isNegated) "$0.$isArrayOfCall" else "!$0.$isArrayOfCall", lhs)
+            lhsIsArray && lhsIsNonNullable ->
+                psiFactory.createExpressionByPattern(if (!isNegated) "$0?.$isArrayOfCall == true" else "$0?.$isArrayOfCall != true", lhs)
+            else ->
+                psiFactory.createExpressionByPattern(
+                    if (!isNegated) "$0 is Array<*> && $1.$isArrayOfCall" else "$0 !is Array<*> || !$1.$isArrayOfCall", lhs, lhs
+                )
         }
+
         val replaced = isExpression.replaced(newExpression)
         ShortenReferences.DEFAULT.process(replaced)
     }
