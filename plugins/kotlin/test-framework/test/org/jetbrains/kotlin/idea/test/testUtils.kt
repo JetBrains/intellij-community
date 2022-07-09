@@ -17,6 +17,8 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
@@ -108,4 +110,12 @@ fun Document.extractMultipleMarkerOffsets(project: Project, caretMarker: String 
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(this)
 
     return offsets
+}
+
+internal fun checkPluginIsCorrect(isFirPlugin: Boolean){
+    if (isFirPlugin) {
+        checkKotlinPluginKind(KotlinPluginKind.FIR_PLUGIN)
+    } else {
+        checkKotlinPluginKind(KotlinPluginKind.FE10_PLUGIN)
+    }
 }
