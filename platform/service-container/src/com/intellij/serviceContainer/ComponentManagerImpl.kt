@@ -142,8 +142,8 @@ abstract class ComponentManagerImpl(
   internal var componentContainerIsReadonly: String? = null
 
   private val coroutineScope: CoroutineScope? = when {
-    parent == null -> Main.mainScope?.let(::createCoroutineScope) ?: CoroutineScope(SupervisorJob())
-    parent.parent == null -> createCoroutineScope(parent.coroutineScope!!)
+    parent == null -> Main.mainScope?.let(::createSupervisorCoroutineScope) ?: CoroutineScope(SupervisorJob())
+    parent.parent == null -> createSupervisorCoroutineScope(parent.coroutineScope!!)
     else -> null
   }
 
@@ -1464,7 +1464,7 @@ private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescripto
   executeRegisterTaskForOldContent(mainPluginDescriptor, task)
 }
 
-private fun createCoroutineScope(parentScope: CoroutineScope): CoroutineScope {
+private fun createSupervisorCoroutineScope(parentScope: CoroutineScope): CoroutineScope {
   val parentContext = parentScope.coroutineContext
   return CoroutineScope(parentContext + SupervisorJob(parent = parentContext.job))
 }

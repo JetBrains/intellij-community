@@ -75,6 +75,7 @@ import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
 import java.util.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
@@ -547,17 +548,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   private fun getDefaultToolWindowPaneIfInitialized(): ToolWindowPane {
-    return toolWindowPanes[WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID]
+    return toolWindowPanes.get(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
            ?: throw IllegalStateException("You must not register toolwindow programmatically so early. " +
                                           "Rework code or use ToolWindowManager.invokeLater")
   }
 
   fun projectClosed() {
-    if (frameState == null) {
-      return
-    }
-
-    frameState!!.releaseFrame()
+    (frameState ?: return).releaseFrame()
 
     toolWindowPanes.values.forEach { it.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, null) }
 
@@ -565,6 +562,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     for (entry in idToEntry.values) {
       try {
         removeDecoratorWithoutUpdatingState(entry, layoutState.getInfo(entry.id) ?: continue, dirtyMode = true)
+      }
+      catch (e: CancellationException) {
+        throw e
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -577,7 +577,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       }
     }
 
-    toolWindowPanes.values.forEach { it.reset() }
+    toolWindowPanes.values.forEach(ToolWindowPane::reset)
 
     frameState = null
   }
