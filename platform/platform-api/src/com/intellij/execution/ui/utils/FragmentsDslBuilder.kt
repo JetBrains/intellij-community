@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui.utils
 
-import com.intellij.execution.ui.FragmentedSettings
-import com.intellij.execution.ui.NestedGroupFragment
-import com.intellij.execution.ui.SettingsEditorFragment
-import com.intellij.execution.ui.TagButton
+import com.intellij.execution.ui.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -81,6 +78,52 @@ class Group<Settings : FragmentedSettings>(
     }.also {
       it.actionHint = actionHint
       it.actionDescription = actionDescription
+    }
+  }
+}
+
+@ApiStatus.Experimental
+@FragmentsDsl
+class VariantableTag<Settings : FragmentedSettings, V : Any>(
+  val id: String,
+  @Nls val name: String,
+) : AbstractFragmentBuilder<Settings>() {
+  private data class Variant<S, V>(
+    val key: V,
+    @Nls val name: String,
+    @Nls val hint: String?,
+    @Nls val description: String?,
+    val getter: (S) -> Boolean,
+    val setter: (S) -> Unit
+  )
+
+  private val myVariants = mutableMapOf<V, Variant<Settings, V>>()
+
+  var visible: (Settings) -> Boolean = { false }
+
+  fun variant(
+    key: V,
+    @Nls name: String,
+    @Nls hint: String? = null,
+    @Nls description: String? = null,
+    getter: (Settings) -> Boolean = { false },
+    setter: (Settings) -> Unit = {}
+  ) {
+    myVariants[key] = Variant(key, name, hint, description, getter, setter)
+  }
+
+  override fun build(): SettingsEditorFragment<Settings, *> {
+    val getter: (Settings) -> V = { s -> myVariants.values.first { it.getter(s) }.key }
+    val setter: (Settings, V) -> Unit = { s, v -> myVariants[v]?.setter?.invoke(s) }
+    val array = Array<Any>(myVariants.size) { myVariants.keys.elementAt(it) }
+
+    return VariantTagFragment.createFragment(id, name, group, {
+      @Suppress("UNCHECKED_CAST")
+      array as Array<V>
+    }, getter, setter, visible).also {
+      it.setVariantNameProvider { v -> myVariants[v]?.name }
+      it.setVariantHintProvider { v -> myVariants[v]?.hint }
+      it.setVariantDescriptionProvider { v -> myVariants[v]?.description }
     }
   }
 }
@@ -248,6 +291,10 @@ class FragmentsBuilder<Settings : FragmentedSettings>(
 
   fun tag(id: String, @Nls name: String, setup: Tag<Settings>.() -> Unit): SettingsEditorFragment<Settings, TagButton> {
     return Tag<Settings>(id, name).also(setup).let { it.build().apply { fragments += this } }
+  }
+
+  fun <V : Any> variantableTag(id: String, @Nls name: String, setup: VariantableTag<Settings, V>.() -> Unit) {
+    return VariantableTag<Settings, V>(id, name).also(setup).let { it.build().apply { fragments += this } }
   }
 
   fun group(id: String, @Nls name: String, setup: Group<Settings>.() -> Unit): NestedGroupFragment<Settings> {
