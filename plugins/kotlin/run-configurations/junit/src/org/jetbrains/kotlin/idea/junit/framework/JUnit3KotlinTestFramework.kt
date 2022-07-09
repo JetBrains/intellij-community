@@ -31,28 +31,27 @@ class JUnit3KotlinTestFramework : AbstractKotlinTestFramework() {
 
     override fun isTestMethod(declaration: KtNamedFunction): Boolean {
         if (!super.isTestMethod(declaration)) return false
-        return declaration.name?.startsWith("test") == true && isInTestClass(declaration)
-    }
-
-    private fun isInTestClass(declaration: KtNamedFunction): Boolean {
+        if (declaration.name?.startsWith("test") != true) return false
         val classOrObject = declaration.getParentOfType<KtClassOrObject>(true) ?: return false
+        if (classOrObject is KtClass && classOrObject.isInner()) return false
+
         return isTestClass(classOrObject)
     }
 
     private fun isJUnit3TestClass(declaration: KtClassOrObject): Boolean {
-        if (declaration is KtClass && declaration.isInner()) {
-            return false
-        }
-
         for (superTypeEntry in declaration.superTypeListEntries) {
             if (superTypeEntry is KtSuperTypeCallEntry && superTypeEntry.valueArguments.isEmpty()) {
                 val containingFile = declaration.containingKtFile
-                if (checkNameMatch(containingFile, CLASS_ANNOTATION_FQN, superTypeEntry.calleeExpression.text)) {
+                val superShortName = superTypeEntry.calleeExpression.text
+                if (checkNameMatch(containingFile, CLASS_ANNOTATION_FQN, superShortName)) {
                     return true
+                }
+
+                containingFile.declarations.firstOrNull { it is KtClassOrObject && it.name == superShortName }?.let {
+                    return isJUnit3TestClass(it as KtClassOrObject)
                 }
             }
         }
-
         return false
     }
 }
