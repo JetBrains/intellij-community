@@ -50,6 +50,7 @@ public final class JUnitCommonClassNames {
                    ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_AND_EMPTY_SOURCE);
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS = "org.junit.jupiter.params.provider.Arguments";
   public static final String ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH = "org.junit.jupiter.params.converter.ConvertWith";
+  public static final String ORG_JUNIT_JUPITER_API_DISABLED = "org.junit.jupiter.api.Disabled";
   public static final String ORG_JUNIT_JUPITER_API_TEST = "org.junit.jupiter.api.Test";
   public static final String ORG_JUNIT_JUPITER_API_TEST_FACTORY = "org.junit.jupiter.api.TestFactory";
   public static final String ORG_JUNIT_JUPITER_API_NESTED = "org.junit.jupiter.api.Nested";

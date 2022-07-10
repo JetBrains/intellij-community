@@ -1355,9 +1355,6 @@
                      groupKey="group.names.test.frameworks.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.testFrameworks.ConstantAssertArgumentInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.ConstantAssertArgumentMerger"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="IgnoredJUnitTest" bundle="messages.InspectionGadgetsBundle" key="ignored.junit.test.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.IgnoredJUnitTestInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="JUnit3StyleTestMethodInJUnit4Class" bundle="messages.InspectionGadgetsBundle"
                      key="junit3.style.test.method.in.junit4.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
