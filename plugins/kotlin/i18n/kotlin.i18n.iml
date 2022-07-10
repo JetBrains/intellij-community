@@ -18,6 +18,6 @@
     <orderEntry type="module" module-name="intellij.java.i18n" />
     <orderEntry type="module" module-name="intellij.properties.psi.impl" />
     <orderEntry type="module" module-name="kotlin.idea" />
-    <orderEntry type="module" module-name="kotlin.code-insight.code-insight-api" />
+    <orderEntry type="module" module-name="kotlin.code-insight.api" />
   </component>
 </module>

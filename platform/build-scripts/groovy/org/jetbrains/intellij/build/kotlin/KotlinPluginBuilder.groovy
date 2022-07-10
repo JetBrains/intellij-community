@@ -159,7 +159,7 @@ final class KotlinPluginBuilder {
     "kotlin.features-trainer",
     "kotlin.base.fir.analysis-api-providers",
     "kotlin.base.fir.code-insight",
-    "kotlin.code-insight.code-insight-api",
+    "kotlin.code-insight.api",
     "kotlin.fir",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",

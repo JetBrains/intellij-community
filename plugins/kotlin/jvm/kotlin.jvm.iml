@@ -61,6 +61,6 @@
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
-    <orderEntry type="module" module-name="kotlin.code-insight.code-insight-api" />
+    <orderEntry type="module" module-name="kotlin.code-insight.api" />
   </component>
 </module>

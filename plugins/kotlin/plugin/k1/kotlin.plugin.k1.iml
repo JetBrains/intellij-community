@@ -124,6 +124,6 @@
     <orderEntry type="module" module-name="kotlin.features-trainer" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.maven" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.code-insight-api" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.api" scope="RUNTIME" />
   </component>
 </module>

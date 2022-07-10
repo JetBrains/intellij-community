@@ -65,6 +65,6 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-fir" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.code-insight-api" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.api" scope="RUNTIME" />
   </component>
 </module>
