@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.codeinsight.api
 import com.intellij.psi.PsiElement
 
 /**
- * Data which [HLApplicator] is needed to perform the fix
+ * Data which [KotlinApplicator] is needed to perform the fix
  *
- * Created by [HLApplicatorInputProvider] or via [org.jetbrains.kotlin.idea.fir.api.fixes.HLDiagnosticFixFactory]
+ * Created by [KotlinApplicatorInputProvider] or via [org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinDiagnosticFixFactory]
  *
  * Should not store inside
  * - Everything that came from [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] like :
@@ -18,8 +18,8 @@ import com.intellij.psi.PsiElement
  * - [PsiElement] consider using [com.intellij.psi.SmartPsiElementPointer] instead
  *
  */
-interface HLApplicatorInput {
+interface KotlinApplicatorInput{
     fun isValidFor(psi: PsiElement): Boolean = true
 
-    companion object Empty : HLApplicatorInput
+    companion object Empty : KotlinApplicatorInput
 }

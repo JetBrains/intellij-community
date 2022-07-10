@@ -10,10 +10,10 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames.arrayClassFqNameToPrimitiveType
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.HLApplicatorTargetWithInput
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.fixes.withInput
 import org.jetbrains.kotlin.psi.*
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
 
-    class Input(val fullyQualifiedArrayOfCall: String, val shortArrayOfCall: String) : HLApplicatorInput
+    class Input(val fullyQualifiedArrayOfCall: String, val shortArrayOfCall: String) : KotlinApplicatorInput
 
     val applicator = applicator<KtExpression, Input> {
         familyName(KotlinBundle.getMessage("surround.with.array.of"))
@@ -57,7 +57,7 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
         }
 
     @Suppress("unused")
-    private fun KtAnalysisSession.createFix(expectedArrayType: KtType, psi: KtExpression): List<HLApplicatorTargetWithInput<KtExpression, Input>> {
+    private fun KtAnalysisSession.createFix(expectedArrayType: KtType, psi: KtExpression): List<KotlinApplicatorTargetWithInput<KtExpression, Input>> {
         val arrayClassId = (expectedArrayType as? KtUsualClassType)?.classId
         val primitiveType = arrayClassFqNameToPrimitiveType[arrayClassId?.asSingleFqName()?.toUnsafe()]
         val arrayOfCallName = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[primitiveType] ?: ArrayFqNames.ARRAY_OF_FUNCTION

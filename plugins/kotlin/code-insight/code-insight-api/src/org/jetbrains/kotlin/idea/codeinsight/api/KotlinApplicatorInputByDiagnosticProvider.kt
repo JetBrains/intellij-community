@@ -6,18 +6,18 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 
-sealed class HLInputByDiagnosticProvider<PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<PSI>, INPUT : HLApplicatorInput> {
+sealed class KotlinApplicatorInputByDiagnosticProvider<PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<PSI>, INPUT : KotlinApplicatorInput> {
     abstract fun KtAnalysisSession.createInfo(diagnostic: DIAGNOSTIC): INPUT?
 }
 
-private class HLInputByDiagnosticProviderImpl<PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<PSI>, INPUT : HLApplicatorInput>(
+private class KotlinApplicatorInputByDiagnosticProviderImpl<PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<PSI>, INPUT : KotlinApplicatorInput>(
     private val createInfo: KtAnalysisSession.(DIAGNOSTIC) -> INPUT?
-) : HLInputByDiagnosticProvider<PSI, DIAGNOSTIC, INPUT>() {
+) : KotlinApplicatorInputByDiagnosticProvider<PSI, DIAGNOSTIC, INPUT>() {
     override fun KtAnalysisSession.createInfo(diagnostic: DIAGNOSTIC): INPUT? =
         createInfo.invoke(this, diagnostic)
 }
 
-fun <PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<PSI>, INPUT : HLApplicatorInput> inputByDiagnosticProvider(
+fun <PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<PSI>, INPUT : KotlinApplicatorInput> inputByDiagnosticProvider(
     createInfo: KtAnalysisSession.(DIAGNOSTIC) -> INPUT?
-): HLInputByDiagnosticProvider<PSI, DIAGNOSTIC, INPUT> =
-    HLInputByDiagnosticProviderImpl(createInfo)
+): KotlinApplicatorInputByDiagnosticProvider<PSI, DIAGNOSTIC, INPUT> =
+    KotlinApplicatorInputByDiagnosticProviderImpl(createInfo)

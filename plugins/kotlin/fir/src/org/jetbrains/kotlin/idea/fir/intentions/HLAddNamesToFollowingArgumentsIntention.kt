@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
@@ -19,10 +19,10 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators.MultipleArgumentsInput as Input
 import org.jetbrains.kotlin.idea.fir.intentions.HLAddNameToArgumentIntention.Companion.getArgumentNameIfCanBeUsedForCalls
 class HLAddNamesToFollowingArgumentsIntention :
-    AbstractHLIntention<KtValueArgument, Input>(KtValueArgument::class, applicator), LowPriorityAction {
+    AbstractKotlinApplicatorBasedIntention<KtValueArgument, Input>(KtValueArgument::class, applicator), LowPriorityAction {
     override val applicabilityRange = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
 
-    override val inputProvider: HLApplicatorInputProvider<KtValueArgument, Input> = inputProvider { element ->
+    override val inputProvider: KotlinApplicatorInputProvider<KtValueArgument, Input> = inputProvider { element ->
         val argumentList = element.parent as? KtValueArgumentList ?: return@inputProvider null
 
         val callElement = argumentList.parent as? KtCallElement ?: return@inputProvider null

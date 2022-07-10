@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.fir.intentions
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
@@ -16,8 +16,8 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators.MultipleArgumentsInput as Input
 import org.jetbrains.kotlin.idea.fir.intentions.HLAddNameToArgumentIntention.Companion.getArgumentNameIfCanBeUsedForCalls
 class HLAddNamesToCallArgumentsIntention :
-    AbstractHLIntention<KtCallElement, Input>(KtCallElement::class, AddArgumentNamesApplicators.multipleArgumentsApplicator) {
-    override val applicabilityRange: HLApplicabilityRange<KtCallElement> = applicabilityRanges { element ->
+    AbstractKotlinApplicatorBasedIntention<KtCallElement, Input>(KtCallElement::class, AddArgumentNamesApplicators.multipleArgumentsApplicator) {
+    override val applicabilityRange: KotlinApplicabilityRange<KtCallElement> = applicabilityRanges { element ->
         // Note: Applicability range matches FE 1.0 (see AddNamesToCallArgumentsIntention).
         val calleeExpression = element.calleeExpression ?: return@applicabilityRanges emptyList()
         val calleeExpressionTextRange = calleeExpression.textRangeIn(element)
@@ -31,7 +31,7 @@ class HLAddNamesToCallArgumentsIntention :
         }
     }
 
-    override val inputProvider: HLApplicatorInputProvider<KtCallElement, Input> = inputProvider { element ->
+    override val inputProvider: KotlinApplicatorInputProvider<KtCallElement, Input> = inputProvider { element ->
         val resolvedCall = element.resolveCall().singleFunctionCallOrNull() ?: return@inputProvider null
 
         if (!resolvedCall.symbol.hasStableParameterNames) {

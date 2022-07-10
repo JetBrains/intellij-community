@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
@@ -22,11 +22,11 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators.SingleArgumentInput as Input
 
 class HLAddNameToArgumentIntention :
-    AbstractHLIntention<KtValueArgument, Input>(KtValueArgument::class, AddArgumentNamesApplicators.singleArgumentApplicator),
+    AbstractKotlinApplicatorBasedIntention<KtValueArgument, Input>(KtValueArgument::class, AddArgumentNamesApplicators.singleArgumentApplicator),
     LowPriorityAction {
     override val applicabilityRange = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
 
-    override val inputProvider: HLApplicatorInputProvider<KtValueArgument, Input> = inputProvider { element ->
+    override val inputProvider: KotlinApplicatorInputProvider<KtValueArgument, Input> = inputProvider { element ->
         val argumentList = element.parent as? KtValueArgumentList ?: return@inputProvider null
         val shouldBeLastUnnamed = !element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
         if (shouldBeLastUnnamed && element != argumentList.arguments.last { !it.isNamed() }) return@inputProvider null

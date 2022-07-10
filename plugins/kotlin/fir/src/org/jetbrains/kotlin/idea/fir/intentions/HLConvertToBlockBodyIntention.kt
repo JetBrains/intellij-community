@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.fir.intentions
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class HLConvertToBlockBodyIntention :
-    AbstractHLIntention<KtDeclarationWithBody, HLConvertToBlockBodyIntention.Input>(KtDeclarationWithBody::class, applicator) {
+    AbstractKotlinApplicatorBasedIntention<KtDeclarationWithBody, HLConvertToBlockBodyIntention.Input>(KtDeclarationWithBody::class, applicator) {
 
     class Input(
         val returnTypeIsUnit: Boolean,
@@ -31,14 +31,14 @@ class HLConvertToBlockBodyIntention :
         val bodyTypeIsUnit: Boolean,
         val bodyTypeIsNothing: Boolean,
         val reformat: Boolean,
-    ) : HLApplicatorInput
+    ) : KotlinApplicatorInput
 
     override fun skipProcessingFurtherElementsAfter(element: PsiElement) =
         element is KtDeclaration || super.skipProcessingFurtherElementsAfter(element)
 
-    override val applicabilityRange: HLApplicabilityRange<KtDeclarationWithBody> get() = ApplicabilityRanges.SELF
+    override val applicabilityRange: KotlinApplicabilityRange<KtDeclarationWithBody> get() = ApplicabilityRanges.SELF
 
-    override val inputProvider: HLApplicatorInputProvider<KtDeclarationWithBody, Input>
+    override val inputProvider: KotlinApplicatorInputProvider<KtDeclarationWithBody, Input>
         get() = inputProvider { psi ->
             if (psi is KtNamedFunction) {
                 val returnType = psi.getReturnKtType()

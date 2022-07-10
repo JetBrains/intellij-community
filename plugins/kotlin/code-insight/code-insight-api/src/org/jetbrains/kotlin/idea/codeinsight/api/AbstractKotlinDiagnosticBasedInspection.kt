@@ -7,13 +7,13 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
-abstract class AbstractHLDiagnosticBasedInspection<PSI : KtElement, DIAGNOSTIC : KtDiagnosticWithPsi<PSI>, INPUT : HLApplicatorInput>(
+abstract class AbstractKotlinDiagnosticBasedInspection<PSI : KtElement, DIAGNOSTIC : KtDiagnosticWithPsi<PSI>, INPUT : KotlinApplicatorInput>(
     elementType: KClass<PSI>,
     private val diagnosticType: KClass<DIAGNOSTIC>,
-) : AbstractHLInspection<PSI, INPUT>(elementType) {
-    abstract val inputByDiagnosticProvider: HLInputByDiagnosticProvider<PSI, DIAGNOSTIC, INPUT>
+) : AbstractKotlinApplicatorBasedInspection<PSI, INPUT>(elementType) {
+    abstract val inputByDiagnosticProvider: KotlinApplicatorInputByDiagnosticProvider<PSI, DIAGNOSTIC, INPUT>
 
-    final override val inputProvider: HLApplicatorInputProvider<PSI, INPUT> = inputProvider { psi ->
+    final override val inputProvider: KotlinApplicatorInputProvider<PSI, INPUT> = inputProvider { psi ->
         val diagnostics = psi.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
         val suitableDiagnostics = diagnostics.filterIsInstance(diagnosticType.java)
         val diagnostic = suitableDiagnostics.firstOrNull() ?: return@inputProvider null

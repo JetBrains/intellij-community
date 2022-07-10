@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.fir.intentions
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -23,12 +23,12 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
-class HLImportMemberIntention : AbstractHLIntention<KtNameReferenceExpression, HLImportMemberIntention.Input>(
+class HLImportMemberIntention : AbstractKotlinApplicatorBasedIntention<KtNameReferenceExpression, HLImportMemberIntention.Input>(
     KtNameReferenceExpression::class, Companion.applicator
 ), HighPriorityAction {
-    override val applicabilityRange: HLApplicabilityRange<KtNameReferenceExpression> get() = ApplicabilityRanges.SELF
+    override val applicabilityRange: KotlinApplicabilityRange<KtNameReferenceExpression> get() = ApplicabilityRanges.SELF
 
-    override val inputProvider: HLApplicatorInputProvider<KtNameReferenceExpression, Input> = inputProvider { psi ->
+    override val inputProvider: KotlinApplicatorInputProvider<KtNameReferenceExpression, Input> = inputProvider { psi ->
         val symbol = psi.mainReference.resolveToSymbol() ?: return@inputProvider null
         computeInput(psi, symbol)
     }
@@ -79,7 +79,7 @@ class HLImportMemberIntention : AbstractHLIntention<KtNameReferenceExpression, H
         }
     }
 
-    class Input(val fqName: FqName, val shortenCommand: ShortenCommand) : HLApplicatorInput
+    class Input(val fqName: FqName, val shortenCommand: ShortenCommand) : KotlinApplicatorInput
 
     companion object {
         val applicator = applicator<KtNameReferenceExpression, Input> {

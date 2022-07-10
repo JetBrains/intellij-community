@@ -12,11 +12,11 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -28,10 +28,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
 class HLImportAllMembersIntention :
-    AbstractHLIntention<KtExpression, HLImportAllMembersIntention.Input>(KtExpression::class, Companion.applicator), HighPriorityAction {
-    override val applicabilityRange: HLApplicabilityRange<KtExpression> get() = ApplicabilityRanges.SELF
+    AbstractKotlinApplicatorBasedIntention<KtExpression, HLImportAllMembersIntention.Input>(KtExpression::class, Companion.applicator), HighPriorityAction {
+    override val applicabilityRange: KotlinApplicabilityRange<KtExpression> get() = ApplicabilityRanges.SELF
 
-    override val inputProvider: HLApplicatorInputProvider<KtExpression, Input> = inputProvider { psi ->
+    override val inputProvider: KotlinApplicatorInputProvider<KtExpression, Input> = inputProvider { psi ->
         val target = psi.actualReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol ?: return@inputProvider null
         val classId = target.classIdIfNonLocal ?: return@inputProvider null
         if (target.origin != KtSymbolOrigin.JAVA &&
@@ -71,7 +71,7 @@ class HLImportAllMembersIntention :
     private fun ClassId.isNestedClassIn(classId: ClassId) =
         packageFqName == classId.packageFqName && relativeClassName.parent() == classId.relativeClassName
 
-    class Input(val fqName: FqName, val shortenCommand: ShortenCommand) : HLApplicatorInput
+    class Input(val fqName: FqName, val shortenCommand: ShortenCommand) : KotlinApplicatorInput
 
     companion object {
         val applicator = applicator<KtExpression, Input> {

@@ -11,9 +11,9 @@ import org.jetbrains.kotlin.idea.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
-abstract class AbstractHLIntention<PSI : KtElement, INPUT : HLApplicatorInput>(
+abstract class AbstractKotlinApplicatorBasedIntention<PSI : KtElement, INPUT : KotlinApplicatorInput>(
     elementType: KClass<PSI>,
-    val applicator: HLApplicator<PSI, INPUT>
+    val applicator: KotlinApplicator<PSI, INPUT>
 ) : SelfTargetingIntention<PSI>(elementType.java, applicator::getFamilyName) {
     final override fun isApplicableTo(element: PSI, caretOffset: Int): Boolean {
         val project = element.project// TODO expensive operation, may require traversing the tree up to containing PsiFile
@@ -21,7 +21,7 @@ abstract class AbstractHLIntention<PSI : KtElement, INPUT : HLApplicatorInput>(
         val ranges = applicabilityRange.getApplicabilityRanges(element)
         if (ranges.isEmpty()) return false
 
-        // An HLApplicabilityRange should be relative to the element, while `caretOffset` is absolute
+        // An KotlinApplicabilityRange should be relative to the element, while `caretOffset` is absolute
         val relativeCaretOffset = caretOffset - element.textRange.startOffset
         if (ranges.none { it.containsOffset(relativeCaretOffset) }) return false
 
@@ -56,6 +56,6 @@ abstract class AbstractHLIntention<PSI : KtElement, INPUT : HLApplicatorInput>(
         }
     }
 
-    abstract val applicabilityRange: HLApplicabilityRange<PSI>
-    abstract val inputProvider: HLApplicatorInputProvider<PSI, INPUT>
+    abstract val applicabilityRange: KotlinApplicabilityRange<PSI>
+    abstract val inputProvider: KotlinApplicatorInputProvider<PSI, INPUT>
 }

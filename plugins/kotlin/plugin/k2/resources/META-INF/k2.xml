@@ -173,8 +173,7 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
                     serviceImplementation="org.jetbrains.kotlin.idea.util.FirPluginOracleServiceFirImpl"/>
 
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixService"/>
-
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinQuickFixService"/>
 
     <lang.importOptimizer language="kotlin" implementationClass="org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer"/>
 

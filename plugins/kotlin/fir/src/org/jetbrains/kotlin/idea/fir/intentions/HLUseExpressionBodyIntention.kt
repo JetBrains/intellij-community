@@ -6,12 +6,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -20,13 +20,13 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class HLUseExpressionBodyIntention : AbstractHLIntention<KtDeclarationWithBody, HLUseExpressionBodyIntention.Input>(
+class HLUseExpressionBodyIntention : AbstractKotlinApplicatorBasedIntention<KtDeclarationWithBody, HLUseExpressionBodyIntention.Input>(
     KtDeclarationWithBody::class, applicator
 ) {
 
-    class Input : HLApplicatorInput
+    class Input : KotlinApplicatorInput
 
-    override val applicabilityRange: HLApplicabilityRange<KtDeclarationWithBody> =
+    override val applicabilityRange: KotlinApplicabilityRange<KtDeclarationWithBody> =
         applicabilityRanges { declaration: KtDeclarationWithBody ->
             val returnExpression = declaration.singleReturnExpressionOrNull ?: return@applicabilityRanges emptyList()
             val resultTextRanges = mutableListOf(TextRange(0, returnExpression.returnKeyword.endOffset - declaration.startOffset))
@@ -39,7 +39,7 @@ class HLUseExpressionBodyIntention : AbstractHLIntention<KtDeclarationWithBody, 
         }
 
 
-    override val inputProvider: HLApplicatorInputProvider<KtDeclarationWithBody, Input> = inputProvider { Input() }
+    override val inputProvider: KotlinApplicatorInputProvider<KtDeclarationWithBody, Input> = inputProvider { Input() }
 
     override fun skipProcessingFurtherElementsAfter(element: PsiElement) = false
 

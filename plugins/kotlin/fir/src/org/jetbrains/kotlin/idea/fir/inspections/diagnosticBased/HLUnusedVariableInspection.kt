@@ -6,13 +6,13 @@ import org.jetbrains.kotlin.idea.quickfix.RemovePsiElementSimpleFix
 import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLDiagnosticBasedInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.HLInputByDiagnosticProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.HLPresentation
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinDiagnosticBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputByDiagnosticProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorPresentation
 import org.jetbrains.kotlin.idea.codeinsight.api.presentation
 import org.jetbrains.kotlin.idea.codeinsight.api.inputByDiagnosticProvider
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
@@ -21,23 +21,23 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 
 class HLUnusedVariableInspection :
-    AbstractHLDiagnosticBasedInspection<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable, HLApplicatorInput.Empty>(
+    AbstractKotlinDiagnosticBasedInspection<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable, KotlinApplicatorInput.Empty>(
         elementType = KtNamedDeclaration::class,
         diagnosticType = KtFirDiagnostic.UnusedVariable::class,
     ) {
-    override val inputByDiagnosticProvider: HLInputByDiagnosticProvider<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable, HLApplicatorInput.Empty>
+    override val inputByDiagnosticProvider: KotlinApplicatorInputByDiagnosticProvider<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable, KotlinApplicatorInput.Empty>
         get() = inputByDiagnosticProvider { diagnostic ->
             val ktProperty = diagnostic.psi as? KtProperty ?: return@inputByDiagnosticProvider null
             if (ktProperty.isExplicitTypeReferenceNeededForTypeInference()) return@inputByDiagnosticProvider null
-            HLApplicatorInput.Empty
+            KotlinApplicatorInput.Empty
         }
-    override val presentation: HLPresentation<KtNamedDeclaration>
+    override val presentation: KotlinApplicatorPresentation<KtNamedDeclaration>
         get() = presentation {
             highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
         }
-    override val applicabilityRange: HLApplicabilityRange<KtNamedDeclaration>
+    override val applicabilityRange: KotlinApplicabilityRange<KtNamedDeclaration>
         get() = ApplicabilityRanges.DECLARATION_NAME
-    override val applicator: HLApplicator<KtNamedDeclaration, HLApplicatorInput.Empty>
+    override val applicator: KotlinApplicator<KtNamedDeclaration, KotlinApplicatorInput.Empty>
         get() = applicator {
             familyName(KotlinBundle.message("remove.element"))
             actionName { psi, _ ->

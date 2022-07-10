@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.HLQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinApplicatorBasedQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactories
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.psi.KtClass
@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 object InitializePropertyQuickFixFactories {
 
-    data class AddInitializerInput(val initializerText: String?) : HLApplicatorInput
+    data class AddInitializerInput(val initializerText: String?) : KotlinApplicatorInput
 
-    private val addInitializerApplicator: HLApplicator<KtProperty, AddInitializerInput> = applicator {
+    private val addInitializerApplicator: KotlinApplicator<KtProperty, AddInitializerInput> = applicator {
         familyAndActionName(KotlinBundle.lazyMessage("add.initializer"))
 
         applyToWithEditorRequired { property, input, project, editor ->
@@ -46,7 +46,7 @@ object InitializePropertyQuickFixFactories {
 
             buildList {
                 add(
-                    HLQuickFix(
+                    KotlinApplicatorBasedQuickFix(
                         property,
                         AddInitializerInput(property.getReturnKtType().defaultInitializer),
                         addInitializerApplicator

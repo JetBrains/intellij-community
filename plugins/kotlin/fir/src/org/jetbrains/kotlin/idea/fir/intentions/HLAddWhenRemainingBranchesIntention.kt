@@ -3,21 +3,21 @@
 package org.jetbrains.kotlin.idea.fir.intentions
 
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInputProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.quickfix.fixes.AddWhenRemainingBranchFixFactories
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
-class HLAddWhenRemainingBranchesIntention : AbstractHLIntention<KtWhenExpression, AddWhenRemainingBranchFixFactories.Input>(
+class HLAddWhenRemainingBranchesIntention : AbstractKotlinApplicatorBasedIntention<KtWhenExpression, AddWhenRemainingBranchFixFactories.Input>(
     KtWhenExpression::class,
     AddWhenRemainingBranchFixFactories.applicator
 ) {
-    override val applicabilityRange: HLApplicabilityRange<KtWhenExpression> get() = ApplicabilityRanges.SELF
+    override val applicabilityRange: KotlinApplicabilityRange<KtWhenExpression> get() = ApplicabilityRanges.SELF
 
-    override val inputProvider: HLApplicatorInputProvider<KtWhenExpression, AddWhenRemainingBranchFixFactories.Input>
+    override val inputProvider: KotlinApplicatorInputProvider<KtWhenExpression, AddWhenRemainingBranchFixFactories.Input>
         get() = inputProvider { element ->
             val whenMissingCases = element.getMissingCases().takeIf {
                 it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown

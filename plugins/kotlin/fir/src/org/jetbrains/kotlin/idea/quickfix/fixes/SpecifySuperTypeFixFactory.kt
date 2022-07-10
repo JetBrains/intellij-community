@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactory
@@ -27,7 +27,7 @@ object SpecifySuperTypeFixFactory {
 
     class TypeStringWithoutArgs(val longTypeRepresentation: String, val shortTypeRepresentation: String)
 
-    class Input(val superTypes: List<TypeStringWithoutArgs>) : HLApplicatorInput
+    class Input(val superTypes: List<TypeStringWithoutArgs>) : KotlinApplicatorInput
 
     val applicator = applicator<KtSuperExpression, Input> {
         familyAndActionName(KotlinBundle.lazyMessage("intention.name.specify.supertype"))

@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.HLQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinApplicatorBasedQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
@@ -20,10 +20,10 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
 object AddWhenRemainingBranchFixFactories {
-    class Input(val whenMissingCases: List<WhenMissingCase>, val enumToStarImport: ClassId?) : HLApplicatorInput
+    class Input(val whenMissingCases: List<WhenMissingCase>, val enumToStarImport: ClassId?) : KotlinApplicatorInput
 
-    val applicator: HLApplicator<KtWhenExpression, Input> = getApplicator(false)
-    val applicatorUsingStarImport: HLApplicator<KtWhenExpression, Input> = getApplicator(true)
+    val applicator: KotlinApplicator<KtWhenExpression, Input> = getApplicator(false)
+    val applicatorUsingStarImport: KotlinApplicator<KtWhenExpression, Input> = getApplicator(true)
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     private fun getApplicator(useStarImport: Boolean = false) = applicator<KtWhenExpression, Input> {
@@ -62,11 +62,11 @@ object AddWhenRemainingBranchFixFactories {
                 it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
             } ?: return@buildList
 
-            add(HLQuickFix(whenExpression, Input(missingCases, null), applicator))
+            add(KotlinApplicatorBasedQuickFix(whenExpression, Input(missingCases, null), applicator))
             val baseClassSymbol = subjectExpression.getKtType()?.expandedClassSymbol ?: return@buildList
             val enumToStarImport = baseClassSymbol.classIdIfNonLocal
             if (baseClassSymbol.classKind == KtClassKind.ENUM_CLASS && enumToStarImport != null) {
-                add(HLQuickFix(whenExpression, Input(missingCases, enumToStarImport), applicatorUsingStarImport))
+                add(KotlinApplicatorBasedQuickFix(whenExpression, Input(missingCases, enumToStarImport), applicatorUsingStarImport))
             }
         }
     }

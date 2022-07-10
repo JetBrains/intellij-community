@@ -7,25 +7,25 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
 
 /**
- * Provides a presentation to display an message in the editor which may be latter fixed by [HLApplicator]
+ * Provides a presentation to display an message in the editor which may be latter fixed by [KotlinApplicator]
  */
-sealed class HLPresentation<PSI : PsiElement> {
-    fun getHighlightType(element: PSI): ProblemHighlightType = KtAnalysisAllowanceManager.forbidAnalysisInside("HLPresentation.getHighlightType") {
+sealed class KotlinApplicatorPresentation<PSI : PsiElement> {
+    fun getHighlightType(element: PSI): ProblemHighlightType = KtAnalysisAllowanceManager.forbidAnalysisInside("KotlinApplicatorPresentation.getHighlightType") {
         getHighlightTypeImpl(element)
     }
 
     abstract fun getHighlightTypeImpl(element: PSI): ProblemHighlightType
 }
 
-private class HLPresentationImpl<PSI : PsiElement>(
+private class KotlinApplicatorPresentationImpl<PSI : PsiElement>(
     private val getHighlightType: (element: PSI) -> ProblemHighlightType,
-) : HLPresentation<PSI>() {
+) : KotlinApplicatorPresentation<PSI>() {
     override fun getHighlightTypeImpl(element: PSI): ProblemHighlightType =
         getHighlightType.invoke(element)
 }
 
 
-class HLInspectionPresentationProviderBuilder<PSI : PsiElement> internal constructor() {
+class KotlinApplicatorPresentationProviderBuilder<PSI : PsiElement> internal constructor() {
     private var getHighlightType: ((element: PSI) -> ProblemHighlightType)? = null
 
     fun highlightType(getType: (element: PSI) -> ProblemHighlightType) {
@@ -36,16 +36,16 @@ class HLInspectionPresentationProviderBuilder<PSI : PsiElement> internal constru
         getHighlightType = { type }
     }
 
-    internal fun build(): HLPresentation<PSI> {
+    internal fun build(): KotlinApplicatorPresentation<PSI> {
         val getHighlightType = getHighlightType
             ?: error("Please, provide highlightType")
-        return HLPresentationImpl(getHighlightType)
+        return KotlinApplicatorPresentationImpl(getHighlightType)
     }
 }
 
 fun <PSI : PsiElement> presentation(
-    init: HLInspectionPresentationProviderBuilder<PSI>.() -> Unit
-): HLPresentation<PSI> =
-    HLInspectionPresentationProviderBuilder<PSI>().apply(init).build()
+    init: KotlinApplicatorPresentationProviderBuilder<PSI>.() -> Unit
+): KotlinApplicatorPresentation<PSI> =
+    KotlinApplicatorPresentationProviderBuilder<PSI>().apply(init).build()
 
 

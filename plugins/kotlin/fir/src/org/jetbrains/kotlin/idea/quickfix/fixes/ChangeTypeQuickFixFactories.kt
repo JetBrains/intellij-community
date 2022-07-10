@@ -15,9 +15,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.HLApplicatorTargetWithInput
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.fixes.withInput
 import org.jetbrains.kotlin.idea.fir.applicators.CallableReturnTypeUpdaterApplicator
@@ -95,7 +95,7 @@ object ChangeTypeQuickFixFactories {
     data class Input(
         val targetType: TargetType,
         val typeInfo: CallableReturnTypeUpdaterApplicator.TypeInfo
-    ) : HLApplicatorInput {
+    ) : KotlinApplicatorInput {
         override fun isValidFor(psi: PsiElement): Boolean = typeInfo.isValidFor(psi)
     }
 
@@ -129,7 +129,7 @@ object ChangeTypeQuickFixFactories {
                     diagnostic.psi
                 )
                     ?: return@diagnosticFixFactory emptyList()
-            buildList<HLApplicatorTargetWithInput<KtCallableDeclaration, Input>> {
+            buildList<KotlinApplicatorTargetWithInput<KtCallableDeclaration, Input>> {
                 add(entryWithWrongType withInput Input(TargetType.VARIABLE, createTypeInfo(diagnostic.destructingType)))
                 val classSymbol = (diagnostic.psi.getKtType() as? KtNonErrorClassType)?.classSymbol as? KtSymbolWithMembers ?: return@buildList
                 val componentFunction = classSymbol.getMemberScope()
@@ -154,7 +154,7 @@ object ChangeTypeQuickFixFactories {
     private fun <PSI : KtCallableDeclaration> KtAnalysisSession.createChangeCurrentDeclarationQuickFix(
         callable: KtCallableSymbol,
         declaration: PSI
-    ): HLApplicatorTargetWithInput<PSI, Input>? {
+    ): KotlinApplicatorTargetWithInput<PSI, Input>? {
         val lowerSuperType = findLowerBoundOfOverriddenCallablesReturnTypes(callable) ?: return null
         val changeToTypeInfo = createTypeInfo(lowerSuperType)
         return declaration withInput Input(TargetType.CURRENT_DECLARATION, changeToTypeInfo)
@@ -162,7 +162,7 @@ object ChangeTypeQuickFixFactories {
 
     private fun KtAnalysisSession.createChangeOverriddenFunctionQuickFix(
         callable: KtCallableSymbol
-    ): HLApplicatorTargetWithInput<KtCallableDeclaration, Input>? {
+    ): KotlinApplicatorTargetWithInput<KtCallableDeclaration, Input>? {
         val type = callable.returnType
         val singleNonMatchingOverriddenFunction = findSingleNonMatchingOverriddenFunction(callable, type) ?: return null
         val singleMatchingOverriddenFunctionPsi = singleNonMatchingOverriddenFunction.psiSafe<KtCallableDeclaration>() ?: return null

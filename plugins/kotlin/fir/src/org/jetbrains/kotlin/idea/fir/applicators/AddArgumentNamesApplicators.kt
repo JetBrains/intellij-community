@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.applicators
 
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
 import org.jetbrains.kotlin.idea.intentions.AddNameToArgumentIntention
 import org.jetbrains.kotlin.name.Name
@@ -11,9 +11,9 @@ import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtValueArgument
 
 object AddArgumentNamesApplicators {
-    class SingleArgumentInput(val name: Name) : HLApplicatorInput
+    class SingleArgumentInput(val name: Name) : KotlinApplicatorInput
 
-    class MultipleArgumentsInput(val argumentNames: Map<KtValueArgument, Name>) : HLApplicatorInput
+    class MultipleArgumentsInput(val argumentNames: Map<KtValueArgument, Name>) : KotlinApplicatorInput
 
     val singleArgumentApplicator = applicator<KtValueArgument, SingleArgumentInput> {
         familyName(KotlinBundle.lazyMessage("add.name.to.argument"))

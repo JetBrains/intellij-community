@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.fir.applicators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -31,7 +31,7 @@ object ModifierApplicators {
         }
     }
 
-    class Modifier(val modifier: KtModifierKeywordToken) : HLApplicatorInput {
+    class Modifier(val modifier: KtModifierKeywordToken) : KotlinApplicatorInput {
         override fun isValidFor(psi: PsiElement): Boolean {
             if (psi !is KtModifierListOwner) return false
             return psi.hasModifier(modifier)

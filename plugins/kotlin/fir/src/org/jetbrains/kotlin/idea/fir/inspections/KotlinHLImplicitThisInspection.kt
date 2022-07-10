@@ -10,10 +10,10 @@ import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.*
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -21,18 +21,18 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
-class KotlinHLImplicitThisInspection : AbstractHLInspection<KtExpression, KotlinHLImplicitThisInspection.ImplicitReceiverInfo>(
+class KotlinHLImplicitThisInspection : AbstractKotlinApplicatorBasedInspection<KtExpression, KotlinHLImplicitThisInspection.ImplicitReceiverInfo>(
     KtExpression::class
 ) {
 
     data class ImplicitReceiverInfo(
         val receiverLabel: Name?,
         val isUnambiguousLabel: Boolean
-    ) : HLApplicatorInput
+    ) : KotlinApplicatorInput
 
-    override val applicabilityRange: HLApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
+    override val applicabilityRange: KotlinApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
 
-    override val inputProvider: HLApplicatorInputProvider<KtExpression, ImplicitReceiverInfo> = inputProvider { expression ->
+    override val inputProvider: KotlinApplicatorInputProvider<KtExpression, ImplicitReceiverInfo> = inputProvider { expression ->
         val reference = if (expression is KtCallableReferenceExpression) expression.callableReference else expression
         val declarationSymbol = reference.mainReference?.resolveToSymbol() ?: return@inputProvider null
 
@@ -99,9 +99,9 @@ class KotlinHLImplicitThisInspection : AbstractHLInspection<KtExpression, Kotlin
         return Pair(associatedClass, associatedTag)
     }
 
-    override val presentation: HLPresentation<KtExpression> = presentation { highlightType(ProblemHighlightType.INFORMATION) }
+    override val presentation: KotlinApplicatorPresentation<KtExpression> = presentation { highlightType(ProblemHighlightType.INFORMATION) }
 
-    override val applicator: HLApplicator<KtExpression, ImplicitReceiverInfo> = KotlinHLImplicitThisInspection.applicator
+    override val applicator: KotlinApplicator<KtExpression, ImplicitReceiverInfo> = KotlinHLImplicitThisInspection.applicator
 
     companion object {
 

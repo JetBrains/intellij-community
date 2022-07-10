@@ -11,10 +11,10 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.HLApplicatorTargetWithInput
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.fixes.withInput
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
 object CastExpressionFixFactories {
-    class Input(val typePresentation: String, val typeSourceCode: String) : HLApplicatorInput
+    class Input(val typePresentation: String, val typeSourceCode: String) : KotlinApplicatorInput
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     val applicator = applicator<PsiElement, Input> {
@@ -75,7 +75,7 @@ object CastExpressionFixFactories {
         actualType: KtType,
         expectedType: KtType,
         psi: PsiElement,
-    ): List<HLApplicatorTargetWithInput<PsiElement, Input>> {
+    ): List<KotlinApplicatorTargetWithInput<PsiElement, Input>> {
         // `null` related issue should not be handled by a cast fix.
         if (isDueToNullability || expectedType is KtClassErrorType) return emptyList()
 

@@ -17,13 +17,13 @@ import kotlin.reflect.KClass
  *
  * Uses some additional information from [INPUT] to apply the element
  */
-sealed class HLApplicator<in PSI : PsiElement, in INPUT : HLApplicatorInput> {
+sealed class KotlinApplicator<in PSI : PsiElement, in INPUT : KotlinApplicatorInput> {
 
     /**
      * Applies some fix to given [psi], can not use resolve, so all needed data should be precalculated and stored in [input]
      *
      * @param psi a [PsiElement] to apply fix to
-     * @param input additional data needed to apply the fix, the [input] can be collected by [HLApplicatorInputProvider
+     * @param input additional data needed to apply the fix, the [input] can be collected by [KotlinApplicatorInputProvider]
      */
     fun applyTo(psi: PSI, input: INPUT, project: Project, editor: Editor?) {
         applyToImpl(psi, input, project, editor)
@@ -33,7 +33,7 @@ sealed class HLApplicator<in PSI : PsiElement, in INPUT : HLApplicatorInput> {
      * Checks if applicator is applicable to specific element, can not use resolve inside
      */
     fun isApplicableByPsi(psi: PSI, project: Project): Boolean =
-        KtAnalysisAllowanceManager.forbidAnalysisInside("HLApplicator.isApplicableByPsi") {
+        KtAnalysisAllowanceManager.forbidAnalysisInside("KotlinApplicator.isApplicableByPsi") {
             isApplicableByPsiImpl(psi)
         }
 
@@ -62,13 +62,13 @@ sealed class HLApplicator<in PSI : PsiElement, in INPUT : HLApplicatorInput> {
 /**
  * Create a copy of an applicator with some components replaced
  */
-fun <PSI : PsiElement, NEW_PSI : PSI, INPUT : HLApplicatorInput> HLApplicator<PSI, INPUT>.with(
-    init: HLApplicatorBuilder<NEW_PSI, INPUT>.(olApplicator: HLApplicator<PSI, INPUT>) -> Unit
-): HLApplicator<NEW_PSI, INPUT> = when (this@with) {
-    is HLApplicatorImpl -> {
-        val builder = HLApplicatorBuilder(applyTo, isApplicableByPsi, getActionName, getFamilyName)
+fun <PSI : PsiElement, NEW_PSI : PSI, INPUT : KotlinApplicatorInput> KotlinApplicator<PSI, INPUT>.with(
+    init: KotlinApplicatorBuilder<NEW_PSI, INPUT>.(olApplicator: KotlinApplicator<PSI, INPUT>) -> Unit
+): KotlinApplicator<NEW_PSI, INPUT> = when (this@with) {
+    is KotlinApplicatorImpl -> {
+        val builder = KotlinApplicatorBuilder(applyTo, isApplicableByPsi, getActionName, getFamilyName)
         @Suppress("UNCHECKED_CAST")
-        init(builder as HLApplicatorBuilder<NEW_PSI, INPUT>, this)
+        init(builder as KotlinApplicatorBuilder<NEW_PSI, INPUT>, this)
         builder.build()
     }
 }
@@ -77,25 +77,25 @@ fun <PSI : PsiElement, NEW_PSI : PSI, INPUT : HLApplicatorInput> HLApplicator<PS
  * Create a copy of an applicator with some components replaced
  * The PSI type of a new applicator will be a class passed in [newPsiTypeTag]
  */
-fun <PSI : PsiElement, NEW_PSI : PSI, INPUT : HLApplicatorInput> HLApplicator<PSI, INPUT>.with(
+fun <PSI : PsiElement, NEW_PSI : PSI, INPUT : KotlinApplicatorInput> KotlinApplicator<PSI, INPUT>.with(
     @Suppress("UNUSED_PARAMETER") newPsiTypeTag: KClass<NEW_PSI>,
-    init: HLApplicatorBuilder<NEW_PSI, INPUT>.(olApplicator: HLApplicator<PSI, INPUT>) -> Unit
-): HLApplicator<NEW_PSI, INPUT> = when (this@with) {
-    is HLApplicatorImpl -> {
-        val builder = HLApplicatorBuilder(applyTo, isApplicableByPsi, getActionName, getFamilyName)
+    init: KotlinApplicatorBuilder<NEW_PSI, INPUT>.(olApplicator: KotlinApplicator<PSI, INPUT>) -> Unit
+): KotlinApplicator<NEW_PSI, INPUT> = when (this@with) {
+    is KotlinApplicatorImpl -> {
+        val builder = KotlinApplicatorBuilder(applyTo, isApplicableByPsi, getActionName, getFamilyName)
         @Suppress("UNCHECKED_CAST")
-        init(builder as HLApplicatorBuilder<NEW_PSI, INPUT>, this)
+        init(builder as KotlinApplicatorBuilder<NEW_PSI, INPUT>, this)
         builder.build()
     }
 }
 
 
-internal class HLApplicatorImpl<PSI : PsiElement, INPUT : HLApplicatorInput>(
+internal class KotlinApplicatorImpl<PSI : PsiElement, INPUT : KotlinApplicatorInput>(
     val applyTo: (PSI, INPUT, Project, Editor?) -> Unit,
     val isApplicableByPsi: (PSI) -> Boolean,
     val getActionName: (PSI, INPUT) -> String,
     val getFamilyName: () -> String,
-) : HLApplicator<PSI, INPUT>() {
+) : KotlinApplicator<PSI, INPUT>() {
     override fun applyToImpl(psi: PSI, input: INPUT, project: Project, editor: Editor?) {
         applyTo.invoke(psi, input, project, editor)
     }
@@ -111,7 +111,7 @@ internal class HLApplicatorImpl<PSI : PsiElement, INPUT : HLApplicatorInput>(
 }
 
 
-class HLApplicatorBuilder<PSI : PsiElement, INPUT : HLApplicatorInput> internal constructor(
+class KotlinApplicatorBuilder<PSI : PsiElement, INPUT : KotlinApplicatorInput> internal constructor(
     @property:PrivateForInline
     var applyTo: ((PSI, INPUT, Project, Editor?) -> Unit)? = null,
     private var isApplicableByPsi: ((PSI) -> Boolean)? = null,
@@ -166,7 +166,7 @@ class HLApplicatorBuilder<PSI : PsiElement, INPUT : HLApplicatorInput> internal 
 
 
     @OptIn(PrivateForInline::class)
-    fun build(): HLApplicator<PSI, INPUT> {
+    fun build(): KotlinApplicator<PSI, INPUT> {
         val applyTo = applyTo
             ?: error("Please, specify applyTo")
         val getActionName = getActionName
@@ -174,7 +174,7 @@ class HLApplicatorBuilder<PSI : PsiElement, INPUT : HLApplicatorInput> internal 
         val isApplicableByPsi = isApplicableByPsi ?: { true }
         val getFamilyName = getFamilyName
             ?: error("Please, specify or familyName via either of: familyName, familyAndActionName")
-        return HLApplicatorImpl(
+        return KotlinApplicatorImpl(
             applyTo = applyTo,
             isApplicableByPsi = isApplicableByPsi,
             getActionName = getActionName,
@@ -185,27 +185,27 @@ class HLApplicatorBuilder<PSI : PsiElement, INPUT : HLApplicatorInput> internal 
 
 
 /**
- * Builds a new applicator with HLApplicatorBuilder
+ * Builds a new applicator with [KotlinApplicatorBuilder]
  *
  *  Should specify at least applyTo and familyAndActionName
  *
- *  @see HLApplicatorBuilder
+ *  @see KotlinApplicatorBuilder
  */
-fun <PSI : PsiElement, INPUT : HLApplicatorInput> applicator(
-    init: HLApplicatorBuilder<PSI, INPUT>.() -> Unit,
-): HLApplicator<PSI, INPUT> =
-    HLApplicatorBuilder<PSI, INPUT>().apply(init).build()
+fun <PSI : PsiElement, INPUT : KotlinApplicatorInput> applicator(
+    init: KotlinApplicatorBuilder<PSI, INPUT>.() -> Unit,
+): KotlinApplicator<PSI, INPUT> =
+    KotlinApplicatorBuilder<PSI, INPUT>().apply(init).build()
 
 /**
  * Builds a new applicator that uses a [KotlinPsiOnlyQuickFixAction] to apply the fix to the PSI
  *
- * @see HLApplicator
+ * @see KotlinApplicator
  */
-fun <PSI : PsiElement, INPUT : HLApplicatorInput, QUICK_FIX : KotlinPsiOnlyQuickFixAction<PSI>> applicatorByQuickFix(
+fun <PSI : PsiElement, INPUT : KotlinApplicatorInput, QUICK_FIX : KotlinPsiOnlyQuickFixAction<PSI>> applicatorByQuickFix(
     getFamilyName: () -> String,
     isApplicableByPsi: (PSI) -> Boolean = { true },
     quickFixByInput: (PSI, INPUT) -> QUICK_FIX,
-): HLApplicator<PSI, INPUT> = HLApplicatorImpl(
+): KotlinApplicator<PSI, INPUT> = KotlinApplicatorImpl(
     applyTo = { psi, input, project, editor -> quickFixByInput(psi, input).invoke(project, editor, psi.containingFile) },
     isApplicableByPsi = isApplicableByPsi,
     getActionName = { psi, input -> quickFixByInput(psi, input).text },

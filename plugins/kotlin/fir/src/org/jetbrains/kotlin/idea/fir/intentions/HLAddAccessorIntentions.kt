@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.fir.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import org.jetbrains.kotlin.analysis.api.annotations.containsAnnotation
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
@@ -23,22 +23,22 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 
 abstract class HLAddAccessorIntention(private val addGetter: Boolean, private val addSetter: Boolean) :
-    AbstractHLIntention<KtProperty, HLApplicatorInput.Empty>(KtProperty::class, applicator(addGetter, addSetter)) {
-    override val applicabilityRange: HLApplicabilityRange<KtProperty> = applicabilityTarget { ktProperty ->
+    AbstractKotlinApplicatorBasedIntention<KtProperty, KotlinApplicatorInput.Empty>(KtProperty::class, applicator(addGetter, addSetter)) {
+    override val applicabilityRange: KotlinApplicabilityRange<KtProperty> = applicabilityTarget { ktProperty ->
         if (ktProperty.hasInitializer()) ktProperty.nameIdentifier else ktProperty
     }
 
-    override val inputProvider: HLApplicatorInputProvider<KtProperty, HLApplicatorInput.Empty> = inputProvider { ktProperty ->
+    override val inputProvider: KotlinApplicatorInputProvider<KtProperty, KotlinApplicatorInput.Empty> = inputProvider { ktProperty ->
         val symbol = ktProperty.getVariableSymbol() as? KtPropertySymbol ?: return@inputProvider null
         if (symbol.containsAnnotation(JVM_FIELD_CLASS_ID)) return@inputProvider null
 
-        HLApplicatorInput
+        KotlinApplicatorInput
     }
 
     companion object {
         private val JVM_FIELD_CLASS_ID = ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
 
-        private fun applicator(addGetter: Boolean, addSetter: Boolean): HLApplicator<KtProperty, HLApplicatorInput.Empty> = applicator {
+        private fun applicator(addGetter: Boolean, addSetter: Boolean): KotlinApplicator<KtProperty, KotlinApplicatorInput.Empty> = applicator {
             familyAndActionName(AbstractAddAccessorsIntention.createFamilyName(addGetter, addSetter))
 
             isApplicableByPsi { ktProperty ->

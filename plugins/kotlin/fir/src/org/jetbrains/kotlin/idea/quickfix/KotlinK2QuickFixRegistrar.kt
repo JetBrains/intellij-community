@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuickfixFactories
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KtQuickFixRegistrar
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KtQuickFixesList
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinQuickFixRegistrar
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.idea.quickfix.fixes.*
 
-class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
+class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val keywords = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(KtFirDiagnostic.RedundantModifier::class, RemoveModifierFixBase.removeRedundantModifier)
         registerPsiQuickFixes(KtFirDiagnostic.IncompatibleModifiers::class, RemoveModifierFixBase.removeNonRedundantModifier)
@@ -204,7 +204,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerApplicator(ChangeVisibilityFixFactories.noExplicitVisibilityInApiModeWarning)
     }
 
-    override val list: KtQuickFixesList = KtQuickFixesList.createCombined(
+    override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
         keywords,
         propertyInitialization,
         overrides,

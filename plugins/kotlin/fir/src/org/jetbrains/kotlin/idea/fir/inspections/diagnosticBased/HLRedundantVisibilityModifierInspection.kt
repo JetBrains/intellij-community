@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.fir.inspections.diagnosticBased
 
 import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.with
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLDiagnosticBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinDiagnosticBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.*
 import org.jetbrains.kotlin.idea.codeinsight.api.inputByDiagnosticProvider
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 class HLRedundantVisibilityModifierInspection :
-    AbstractHLDiagnosticBasedInspection<KtModifierListOwner, KtFirDiagnostic.RedundantVisibilityModifier, ModifierApplicators.Modifier>(
+    AbstractKotlinDiagnosticBasedInspection<KtModifierListOwner, KtFirDiagnostic.RedundantVisibilityModifier, ModifierApplicators.Modifier>(
         elementType = KtModifierListOwner::class,
         diagnosticType = KtFirDiagnostic.RedundantVisibilityModifier::class
     ) {
@@ -28,13 +28,13 @@ class HLRedundantVisibilityModifierInspection :
             ModifierApplicators.Modifier(modifier)
         }
 
-    override val presentation: HLPresentation<KtModifierListOwner> = presentation {
+    override val presentation: KotlinApplicatorPresentation<KtModifierListOwner> = presentation {
         highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
     }
 
-    override val applicabilityRange: HLApplicabilityRange<KtModifierListOwner> = ApplicabilityRanges.VISIBILITY_MODIFIER
+    override val applicabilityRange: KotlinApplicabilityRange<KtModifierListOwner> = ApplicabilityRanges.VISIBILITY_MODIFIER
 
-    override val applicator: HLApplicator<KtModifierListOwner, ModifierApplicators.Modifier> =
+    override val applicator: KotlinApplicator<KtModifierListOwner, ModifierApplicators.Modifier> =
         ModifierApplicators.removeModifierApplicator(
             KtTokens.VISIBILITY_MODIFIERS,
             KotlinBundle.lazyMessage("redundant.visibility.modifier")

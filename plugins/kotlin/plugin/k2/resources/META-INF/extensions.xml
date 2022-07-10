@@ -1,8 +1,8 @@
 <idea-plugin>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.ktQuickFixRegistrar"
-                    interface="org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixRegistrar"
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.codeinsight.quickfix.registrar"
+                    interface="org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinQuickFixRegistrar"
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.newProjectWizard.buildSystem.kotlin"
@@ -10,7 +10,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <ktQuickFixRegistrar implementation="org.jetbrains.kotlin.idea.quickfix.MainKtQuickFixRegistrar"/>
+    <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.quickfix.KotlinK2QuickFixRegistrar"/>
   </extensions>
 
 </idea-plugin>

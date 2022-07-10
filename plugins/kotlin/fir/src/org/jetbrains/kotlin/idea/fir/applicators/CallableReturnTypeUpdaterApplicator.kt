@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.intentions.ChooseValueExpression
@@ -108,7 +108,7 @@ object CallableReturnTypeUpdaterApplicator {
         val defaultType: Type,
         val otherTypes: List<Type> = emptyList(),
         val useTemplate: Boolean = false,
-    ) : HLApplicatorInput {
+    ) : KotlinApplicatorInput {
         class Type(val isUnit: Boolean, val longTypeRepresentation: String, val shortTypeRepresentation: String)
 
         override fun isValidFor(psi: PsiElement): Boolean = true

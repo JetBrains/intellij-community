@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.fixes
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 
-class HLApplicatorTargetWithInput<PSI : PsiElement, INPUT : HLApplicatorInput>(
+class KotlinApplicatorTargetWithInput<PSI : PsiElement, INPUT : KotlinApplicatorInput>(
     val target: PSI,
     val input: INPUT,
 ) {
@@ -14,5 +14,5 @@ class HLApplicatorTargetWithInput<PSI : PsiElement, INPUT : HLApplicatorInput>(
 }
 
 @Suppress("NOTHING_TO_INLINE")
-inline infix fun <PSI : PsiElement, INPUT : HLApplicatorInput> PSI.withInput(input: INPUT) =
-    HLApplicatorTargetWithInput(this, input)
+inline infix fun <PSI : PsiElement, INPUT : KotlinApplicatorInput> PSI.withInput(input: INPUT) =
+    KotlinApplicatorTargetWithInput(this, input)

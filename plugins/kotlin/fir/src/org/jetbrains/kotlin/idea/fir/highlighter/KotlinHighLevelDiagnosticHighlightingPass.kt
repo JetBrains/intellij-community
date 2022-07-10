@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KtQuickFixService
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinHighLevelDiagnosticHighlightingPass(
@@ -53,7 +53,7 @@ class KotlinHighLevelDiagnosticHighlightingPass(
     }
 
     private fun KtAnalysisSession.addDiagnostic(diagnostic: KtDiagnosticWithPsi<*>) {
-        val fixes = with(service<KtQuickFixService>()) { getQuickFixesFor(diagnostic as KtFirDiagnostic) }
+        val fixes = with(service<KotlinQuickFixService>()) { getQuickFixesFor(diagnostic as KtFirDiagnostic) }
         annotationHolder.runAnnotatorWithContext(diagnostic.psi) { _, _ ->
             diagnostic.textRanges.forEach { range ->
                 annotationHolder.newAnnotation(diagnostic.getHighlightSeverity(), diagnostic.getMessageToRender())

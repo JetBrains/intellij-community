@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.with
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.fir.applicators.CallableReturnTypeUpdaterApplicator
@@ -23,8 +23,8 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.util.bfs
 
 class HLSpecifyExplicitTypeForCallableDeclarationIntention :
-    AbstractHLIntention<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo>(KtCallableDeclaration::class, applicator) {
-    override val applicabilityRange: HLApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
+    AbstractKotlinApplicatorBasedIntention<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo>(KtCallableDeclaration::class, applicator) {
+    override val applicabilityRange: KotlinApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
 
     override val inputProvider = inputProvider<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo> { declaration ->
         val diagnostics = declaration.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).map { it::class }.toSet()

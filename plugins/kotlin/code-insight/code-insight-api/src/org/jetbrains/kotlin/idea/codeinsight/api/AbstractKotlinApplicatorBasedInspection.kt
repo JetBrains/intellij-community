@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import kotlin.reflect.KClass
 
-abstract class AbstractHLInspection<PSI : KtElement, INPUT : HLApplicatorInput>(
+abstract class AbstractKotlinApplicatorBasedInspection<PSI : KtElement, INPUT : KotlinApplicatorInput>(
     val elementType: KClass<PSI>
 ) : AbstractKotlinInspection() {
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
@@ -82,13 +82,13 @@ abstract class AbstractHLInspection<PSI : KtElement, INPUT : HLApplicatorInput>(
     }
 
 
-    abstract val presentation: HLPresentation<PSI>
-    abstract val applicabilityRange: HLApplicabilityRange<PSI>
-    abstract val inputProvider: HLApplicatorInputProvider<PSI, INPUT>
-    abstract val applicator: HLApplicator<PSI, INPUT>
+    abstract val presentation: KotlinApplicatorPresentation<PSI>
+    abstract val applicabilityRange: KotlinApplicabilityRange<PSI>
+    abstract val inputProvider: KotlinApplicatorInputProvider<PSI, INPUT>
+    abstract val applicator: KotlinApplicator<PSI, INPUT>
 }
 
-private fun <PSI : PsiElement, INPUT : HLApplicatorInput> HLApplicator<PSI, INPUT>.asLocalQuickFix(
+private fun <PSI : PsiElement, INPUT : KotlinApplicatorInput> KotlinApplicator<PSI, INPUT>.asLocalQuickFix(
     input: INPUT,
     actionName: String,
 ): LocalQuickFix = object : LocalQuickFix {

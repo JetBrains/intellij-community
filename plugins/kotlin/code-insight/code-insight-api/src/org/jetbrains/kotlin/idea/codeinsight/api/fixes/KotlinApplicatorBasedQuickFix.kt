@@ -5,15 +5,15 @@ package org.jetbrains.kotlin.idea.codeinsight.api.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtFile
 
-class HLQuickFix<PSI : PsiElement, in INPUT : HLApplicatorInput>(
+class KotlinApplicatorBasedQuickFix<PSI : PsiElement, in INPUT : KotlinApplicatorInput>(
     target: PSI,
     private val input: INPUT,
-    val applicator: HLApplicator<PSI, INPUT>,
+    val applicator: KotlinApplicator<PSI, INPUT>,
 ) : KotlinQuickFixAction<PSI>(target) {
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return

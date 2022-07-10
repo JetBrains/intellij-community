@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.idea.quickfix.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.miniStdLib.annotations.PrivateForInline
 import kotlin.reflect.KClass
 
-class KtQuickFixesList @ForKtQuickFixesListBuilder @OptIn(PrivateForInline::class) constructor(
-    private val quickFixes: Map<KClass<out KtDiagnosticWithPsi<*>>, List<HLQuickFixFactory>>
+class KotlinQuickFixesList @ForKtQuickFixesListBuilder @OptIn(PrivateForInline::class) constructor(
+    private val quickFixes: Map<KClass<out KtDiagnosticWithPsi<*>>, List<KotlinQuickFixFactory>>
 ) {
     @OptIn(PrivateForInline::class)
     fun KtAnalysisSession.getQuickFixesFor(diagnostic: KtDiagnosticWithPsi<*>): List<IntentionAction> {
@@ -21,27 +21,27 @@ class KtQuickFixesList @ForKtQuickFixesListBuilder @OptIn(PrivateForInline::clas
 
     @OptIn(PrivateForInline::class)
     private fun KtAnalysisSession.createQuickFixes(
-      quickFixFactory: HLQuickFixFactory,
-      diagnostic: KtDiagnosticWithPsi<*>
+        quickFixFactory: KotlinQuickFixFactory,
+        diagnostic: KtDiagnosticWithPsi<*>
     ): List<IntentionAction> = when (quickFixFactory) {
-        is HLQuickFixFactory.HLApplicatorBasedFactory -> {
+        is KotlinQuickFixFactory.KotlinApplicatorBasedFactory -> {
             @Suppress("UNCHECKED_CAST")
             val factory = quickFixFactory.applicatorFactory
-                    as HLDiagnosticFixFactory<KtDiagnosticWithPsi<PsiElement>>
+                    as KotlinDiagnosticFixFactory<KtDiagnosticWithPsi<PsiElement>>
             createPlatformQuickFixes(diagnostic, factory)
         }
-        is HLQuickFixFactory.HLQuickFixesPsiBasedFactory -> quickFixFactory.psiFactory.createQuickFix(diagnostic.psi)
+        is KotlinQuickFixFactory.KotlinQuickFixesPsiBasedFactory -> quickFixFactory.psiFactory.createQuickFix(diagnostic.psi)
     }
 
 
     companion object {
         @OptIn(ForKtQuickFixesListBuilder::class, PrivateForInline::class)
-        fun createCombined(registrars: List<KtQuickFixesList>): KtQuickFixesList {
+        fun createCombined(registrars: List<KotlinQuickFixesList>): KotlinQuickFixesList {
             val allQuickFixes = registrars.map { it.quickFixes }.merge()
-            return KtQuickFixesList(allQuickFixes)
+            return KotlinQuickFixesList(allQuickFixes)
         }
 
-        fun createCombined(vararg registrars: KtQuickFixesList): KtQuickFixesList {
+        fun createCombined(vararg registrars: KotlinQuickFixesList): KotlinQuickFixesList {
             return createCombined(registrars.toList())
         }
     }
@@ -50,7 +50,7 @@ class KtQuickFixesList @ForKtQuickFixesListBuilder @OptIn(PrivateForInline::clas
 
 class KtQuickFixesListBuilder private constructor() {
     @OptIn(PrivateForInline::class)
-    private val quickFixes = mutableMapOf<KClass<out KtDiagnosticWithPsi<*>>, MutableList<HLQuickFixFactory>>()
+    private val quickFixes = mutableMapOf<KClass<out KtDiagnosticWithPsi<*>>, MutableList<KotlinQuickFixFactory>>()
 
     @OptIn(PrivateForInline::class)
     fun <DIAGNOSTIC_PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<DIAGNOSTIC_PSI>> registerPsiQuickFixes(
@@ -67,26 +67,26 @@ class KtQuickFixesListBuilder private constructor() {
         diagnosticClass: KClass<DIAGNOSTIC>,
         quickFixFactory: QuickFixesPsiBasedFactory<in DIAGNOSTIC_PSI>
     ) {
-        quickFixes.getOrPut(diagnosticClass) { mutableListOf() }.add(HLQuickFixFactory.HLQuickFixesPsiBasedFactory(quickFixFactory))
+        quickFixes.getOrPut(diagnosticClass) { mutableListOf() }.add(KotlinQuickFixFactory.KotlinQuickFixesPsiBasedFactory(quickFixFactory))
     }
 
     @OptIn(PrivateForInline::class)
     fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerApplicators(
-        quickFixFactories: Collection<HLDiagnosticFixFactory<out DIAGNOSTIC>>
+        quickFixFactories: Collection<KotlinDiagnosticFixFactory<out DIAGNOSTIC>>
     ) {
         quickFixFactories.forEach(::registerApplicator)
     }
 
     @OptIn(PrivateForInline::class)
     fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerApplicator(
-        quickFixFactory: HLDiagnosticFixFactory<out DIAGNOSTIC>
+        quickFixFactory: KotlinDiagnosticFixFactory<out DIAGNOSTIC>
     ) {
         quickFixes.getOrPut(quickFixFactory.diagnosticClass) { mutableListOf() }
-            .add(HLQuickFixFactory.HLApplicatorBasedFactory(quickFixFactory))
+            .add(KotlinQuickFixFactory.KotlinApplicatorBasedFactory(quickFixFactory))
     }
 
     @OptIn(ForKtQuickFixesListBuilder::class, PrivateForInline::class)
-    private fun build() = KtQuickFixesList(quickFixes)
+    private fun build() = KotlinQuickFixesList(quickFixes)
 
     companion object {
         fun registerPsiQuickFix(init: KtQuickFixesListBuilder.() -> Unit) = KtQuickFixesListBuilder().apply(init).build()
@@ -94,14 +94,14 @@ class KtQuickFixesListBuilder private constructor() {
 }
 
 @PrivateForInline
-sealed class HLQuickFixFactory {
-    class HLQuickFixesPsiBasedFactory(
+sealed class KotlinQuickFixFactory {
+    class KotlinQuickFixesPsiBasedFactory(
         val psiFactory: QuickFixesPsiBasedFactory<*>
-    ) : HLQuickFixFactory()
+    ) : KotlinQuickFixFactory()
 
-    class HLApplicatorBasedFactory(
-        val applicatorFactory: HLDiagnosticFixFactory<*>
-    ) : HLQuickFixFactory()
+    class KotlinApplicatorBasedFactory(
+        val applicatorFactory: KotlinDiagnosticFixFactory<*>
+    ) : KotlinQuickFixFactory()
 }
 
 

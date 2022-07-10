@@ -7,19 +7,19 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 
-class KtQuickFixService {
-    private val list = KtQuickFixesList.Companion.createCombined(KtQuickFixRegistrar.allQuickFixesList())
+class KotlinQuickFixService {
+    private val list = KotlinQuickFixesList.createCombined(KotlinQuickFixRegistrar.allQuickFixesList())
 
     fun KtAnalysisSession.getQuickFixesFor(diagnostic: KtDiagnosticWithPsi<*>): List<IntentionAction> =
         with(list) { getQuickFixesFor(diagnostic) }
 }
 
-abstract class KtQuickFixRegistrar {
-    protected abstract val list: KtQuickFixesList
+abstract class KotlinQuickFixRegistrar {
+    protected abstract val list: KotlinQuickFixesList
 
     companion object {
-        private val EP_NAME: ExtensionPointName<KtQuickFixRegistrar> =
-            ExtensionPointName.create("org.jetbrains.kotlin.ktQuickFixRegistrar")
+        private val EP_NAME: ExtensionPointName<KotlinQuickFixRegistrar> =
+            ExtensionPointName.create("org.jetbrains.kotlin.codeinsight.quickfix.registrar")
 
         fun allQuickFixesList() = EP_NAME.extensionList.map { it.list }
     }

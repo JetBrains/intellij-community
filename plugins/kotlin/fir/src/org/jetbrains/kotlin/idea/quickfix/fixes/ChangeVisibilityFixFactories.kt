@@ -6,9 +6,9 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.HLApplicatorTargetWithInput
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.fixes.withInput
 import org.jetbrains.kotlin.idea.util.isRedundantSetter
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 object ChangeVisibilityFixFactories {
 
-    class Input(val elementName: String) : HLApplicatorInput
+    class Input(val elementName: String) : KotlinApplicatorInput
 
     private fun getApplicator(visibilityModifier: KtModifierKeywordToken, forceUsingExplicitModifier: Boolean) =
         applicator<KtModifierListOwner, Input> {
@@ -58,7 +58,7 @@ object ChangeVisibilityFixFactories {
             createFixForNoExplicitVisibilityInApiMode(diagnostic.psi)
         }
 
-    private fun createFixForNoExplicitVisibilityInApiMode(declaration: KtDeclaration): List<HLApplicatorTargetWithInput<KtDeclaration, Input>> {
+    private fun createFixForNoExplicitVisibilityInApiMode(declaration: KtDeclaration): List<KotlinApplicatorTargetWithInput<KtDeclaration, Input>> {
         val name = when (declaration) {
             is KtConstructor<*> -> SpecialNames.INIT.asString()
             is KtNamedDeclaration -> declaration.name ?: return emptyList()

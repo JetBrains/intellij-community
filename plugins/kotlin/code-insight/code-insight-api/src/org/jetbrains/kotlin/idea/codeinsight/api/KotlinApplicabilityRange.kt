@@ -9,19 +9,19 @@ import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
- * Provide list of ranges on which [HLApplicator] is available
+ * Provide list of ranges on which [KotlinApplicator] is available
  *
- * It should not do some additional checks to verify that  [HLApplicator] is applicable
- * as it is responsibility of [HLApplicator.isApplicableByPsi]
+ * It should not do some additional checks to verify that  [KotlinApplicator] is applicable
+ * as it is responsibility of [KotlinApplicator.isApplicableByPsi]
  *
  * No resolve operations should be called inside [getApplicabilityRanges]
  * I.e no [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] or [PsiElement] resolve can be used inside
  *
  * [getApplicabilityRanges] is guarantied to be called inside read action
  */
-sealed class HLApplicabilityRange<in ELEMENT : PsiElement> {
+sealed class KotlinApplicabilityRange<in ELEMENT : PsiElement> {
     /**
-     * Return the list of ranges on which [HLApplicator] is available
+     * Return the list of ranges on which [KotlinApplicator] is available
      *
      * The ranges are relative to [element]
      *  i.e. if range covers the whole element when it should return `[0, element.length)`
@@ -33,15 +33,15 @@ sealed class HLApplicabilityRange<in ELEMENT : PsiElement> {
     protected abstract fun getApplicabilityRangesImpl(element: ELEMENT): List<TextRange>
 }
 
-private class HLApplicabilityRangeImpl<ELEMENT : PsiElement>(
+private class KotlinApplicabilityRangeImpl<ELEMENT : PsiElement>(
     private val getApplicabilityRanges: (ELEMENT) -> List<TextRange>,
-) : HLApplicabilityRange<ELEMENT>() {
+) : KotlinApplicabilityRange<ELEMENT>() {
     override fun getApplicabilityRangesImpl(element: ELEMENT): List<TextRange> =
         getApplicabilityRanges.invoke(element)
 }
 
 /**
- * Create [HLApplicabilityRange] by list of possible ranges
+ * Create [KotlinApplicabilityRange] by list of possible ranges
  * [getRanges] should return `empty list if no applicability ranges found
 
  * [getRanges] should return ranges relative to passed [ELEMENT]
@@ -57,11 +57,11 @@ private class HLApplicabilityRangeImpl<ELEMENT : PsiElement>(
  */
 fun <ELEMENT : KtElement> applicabilityRanges(
     getRanges: (ELEMENT) -> List<TextRange>
-): HLApplicabilityRange<ELEMENT> =
-    HLApplicabilityRangeImpl(getRanges)
+): KotlinApplicabilityRange<ELEMENT> =
+    KotlinApplicabilityRangeImpl(getRanges)
 
 /**
- * Create [HLApplicabilityRange] with a single applicability range
+ * Create [KotlinApplicabilityRange] with a single applicability range
  * [getRange] should return `null` if no applicability ranges found
  *
  * No resolve operations should be called inside [getRanges]
@@ -77,11 +77,11 @@ fun <ELEMENT : KtElement> applicabilityRanges(
  */
 fun <ELEMENT : KtElement> applicabilityRange(
     getRange: (ELEMENT) -> TextRange?
-): HLApplicabilityRange<ELEMENT> =
-    HLApplicabilityRangeImpl { listOfNotNull(getRange(it)) }
+): KotlinApplicabilityRange<ELEMENT> =
+    KotlinApplicabilityRangeImpl { listOfNotNull(getRange(it)) }
 
 /**
- * Create [HLApplicabilityRange] with a single applicability range represented by [PsiElement]
+ * Create [KotlinApplicabilityRange] with a single applicability range represented by [PsiElement]
  * [getTarget] should return [PsiElement] which range will be used or `null` if no applicability ranges found
  *
  * No resolve operations should be called inside [getTarget]
@@ -96,8 +96,8 @@ fun <ELEMENT : KtElement> applicabilityRange(
  */
 fun <ELEMENT : PsiElement> applicabilityTarget(
     getTarget: (ELEMENT) -> PsiElement?
-): HLApplicabilityRange<ELEMENT> =
-    HLApplicabilityRangeImpl { element ->
+): KotlinApplicabilityRange<ELEMENT> =
+    KotlinApplicabilityRangeImpl { element ->
         when (val target = getTarget(element)) {
             null -> emptyList()
             element -> listOf(TextRange(0, element.textLength))
