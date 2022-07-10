@@ -77,7 +77,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="intellij.remoterobot.remote.robot" type="repository">
         <properties maven-id="com.intellij.remoterobot:remote-robot:0.11.14" />
         <CLASSES>
@@ -109,7 +109,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="intellij.remoterobot.remote.fixtures" type="repository">
         <properties include-transitive-deps="false" maven-id="com.intellij.remoterobot:remote-fixtures:0.11.14" />
         <CLASSES>
@@ -140,8 +140,5 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.ide.starter.extended" />
-    <orderEntry type="module" module-name="intellij.ide.starter" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
   </component>
 </module>

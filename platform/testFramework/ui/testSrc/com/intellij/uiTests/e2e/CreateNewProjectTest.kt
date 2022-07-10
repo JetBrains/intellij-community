@@ -1,31 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiTests.e2e
 
-import com.intellij.ide.starter.extended.engine.DevBuildServerParams
-import com.intellij.ide.starter.extended.engine.UseDevBuildServer
-import com.intellij.ide.starter.extended.engine.junit5.JUnit5StarterAssistant
-import com.intellij.ide.starter.ide.IdeProductProvider
 import com.intellij.remoterobot.fixtures.CommonContainerFixture
 import com.intellij.remoterobot.fixtures.ContainerFixture
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.stepsProcessing.step
 import com.intellij.remoterobot.utils.waitFor
 import com.intellij.uiTests.e2e.fixtures.idea
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.Test
 import java.time.Duration
 import java.time.Duration.ofSeconds
 
-@ExtendWith(JUnit5StarterAssistant::class)
-@UseDevBuildServer
 internal class CreateNewProjectTest : UITest() {
-
-  companion object {
-    init {
-      DevBuildServerParams.setPlatformPrefixForBuildOnDevBuildServer(IdeProductProvider.IU)
-      DevBuildServerParams.setAdditionalModulesForBuildOnDevBuildServer(listOf("intellij.platform.testFramework.ui"))
-    }
-  }
 
   @Test
   fun createNewProject() {
