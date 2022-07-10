@@ -46,7 +46,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Compressor;
 import com.intellij.util.io.PathKt;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -165,11 +165,13 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
       }
     }
     catch (ProcessCanceledException ignored) { }
-    catch (Exception ex) {
-      LOG.error(ex);
-      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(project,
-                                                                LangBundle.message("dialog.message.can.t.save.project.as.template"),
-                                                                LangBundle.message("dialog.message.internal.error")));
+    catch (Exception e) {
+      LOG.error(e);
+      EdtInvocationManager.invokeLaterIfNeeded(() -> {
+        Messages.showErrorDialog(project,
+                                 LangBundle.message("dialog.message.can.t.save.project.as.template"),
+                                 LangBundle.message("dialog.message.internal.error"));
+      });
     }
   }
 

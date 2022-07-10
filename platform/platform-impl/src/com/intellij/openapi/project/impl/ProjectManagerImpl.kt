@@ -39,6 +39,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -168,8 +169,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override fun loadProject(path: Path): Project {
+    check(!ApplicationManager.getApplication().isDispatchThread)
+
     val project = ProjectImpl(filePath = path, projectName = null)
-    runBlocking {
+    val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
+    runBlocking(modalityState.asContextElement()) {
       initProject(
         file = path,
         project = project,

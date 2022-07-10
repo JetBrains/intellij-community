@@ -42,6 +42,7 @@ abstract class ProjectManagerEx : ProjectManager() {
 
   abstract suspend fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask): Project?
 
+  @Internal
   abstract fun loadProject(path: Path): Project
 
   @get:TestOnly

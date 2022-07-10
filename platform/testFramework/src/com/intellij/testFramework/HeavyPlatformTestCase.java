@@ -272,7 +272,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
                                         ApplicationManager.getApplication() == null ||
                                         ApplicationManager.getApplication() instanceof MockApplication);
 
-    myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(() -> CodeStyle.getDefaultSettings()) : null;
+    myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(CodeStyle::getDefaultSettings) : null;
     ourTestCase = this;
     if (myProject != null) {
       CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
@@ -280,7 +280,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
     }
 
-    EdtInvocationManager.dispatchAllInvocationEvents();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      EdtInvocationManager.dispatchAllInvocationEvents();
+    }
     myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     myLibraryTableTracker = new LibraryTableTracker();
   }
@@ -300,7 +302,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   protected void setUpProject() throws Exception {
     myProject = doCreateAndOpenProject();
 
-    WriteAction.run(() ->
+    WriteAction.runAndWait(() ->
       ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
         setUpModule();
         setUpJdk();
