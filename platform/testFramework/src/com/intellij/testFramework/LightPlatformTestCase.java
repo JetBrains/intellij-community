@@ -57,6 +57,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.project.TestProjectManager;
 import com.intellij.project.TestProjectManagerKt;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -90,7 +91,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
   private static Project ourProject;
   private static Module ourModule;
@@ -105,6 +105,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   static {
     PlatformTestUtil.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
   }
+
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private LibraryTableTracker myLibraryTableTracker;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
@@ -281,7 +282,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     Project project = ourProject;
     ((ProjectImpl)project).setLightProjectName(name);
     try {
-      PlatformTestUtil.openProject(project);
+      if (!((TestProjectManager)ProjectManagerEx.getInstanceEx()).openProject(project)) {
+        throw new IllegalStateException("openProject returned false");
+      }
+
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      }
     }
     catch (Throwable e) {
       setProject(null);

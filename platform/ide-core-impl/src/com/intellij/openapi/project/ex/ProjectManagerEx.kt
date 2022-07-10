@@ -44,8 +44,6 @@ abstract class ProjectManagerEx : ProjectManager() {
 
   abstract fun loadProject(path: Path): Project
 
-  abstract fun openProject(project: Project): Boolean
-
   @get:TestOnly
   abstract val isDefaultProjectInitialized: Boolean
 

@@ -53,6 +53,7 @@ import java.lang.Runnable
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.coroutineContext
 
 @Internal
 open class ProjectImpl(filePath: Path, projectName: String?)
@@ -215,6 +216,8 @@ open class ProjectImpl(filePath: Path, projectName: String?)
       }
       createComponents(indicator)
     }
+
+    coroutineContext.ensureActive()
 
     var activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("projectComponentCreated event handling",
                                                                                   ActivityCategory.DEFAULT)

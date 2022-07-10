@@ -5,12 +5,9 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -21,7 +18,7 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.use
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
@@ -33,54 +30,54 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
   @Rule @JvmField val tempDir = TempDirectory()
 
   @Test fun cancelOnRunPostStartUpActivities() {
-    class MyStartupActivity : StartupActivity.DumbAware {
+    var job: Job? = null
+    class MyStartupActivity : InitProjectActivity {
       val passed = AtomicBoolean()
 
-      override fun runActivity(project: Project) {
+      override suspend fun run(project: Project) {
         passed.set(true)
-        ProgressManager.getInstance().progressIndicator!!.cancel()
+        job!!.cancel("test")
       }
     }
 
     val activity = MyStartupActivity()
-    val ep = ExtensionPointName<StartupActivity.DumbAware>("com.intellij.startupActivity")
+    val ep = ExtensionPointName<InitProjectActivity>("com.intellij.startupActivity")
     ExtensionTestUtil.maskExtensions(ep, listOf(activity), testRootDisposable, fireEvents = false)
-    val isCancelled = doOpenProject()
+    runBlocking {
+      job = launch {
+        assertThat(doOpenProject()).isNull()
+      }
+    }
     // 1 on maskExtensions call, second call our call
     assertThat(activity.passed.get()).isTrue()
-    assertThat(isCancelled).isTrue()
   }
 
   @Test fun cancelOnLoadingModules() {
-    ApplicationManager.getApplication().messageBus.connect(testRootDisposable).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
-      @Suppress("OVERRIDE_DEPRECATION")
-      override fun projectComponentsInitialized(project: Project) {
-        val indicator = ProgressManager.getInstance().progressIndicator
-        assertThat(indicator).isNotNull()
-        indicator!!.cancel()
-        indicator.checkCanceled()
+    var job: Job? = null
+    ApplicationManager.getApplication().messageBus.connect(testRootDisposable).subscribe(
+      ProjectLifecycleListener.TOPIC,
+      object : ProjectLifecycleListener {
+        @Suppress("OVERRIDE_DEPRECATION", "removal")
+        override fun projectComponentsInitialized(project: Project) {
+          job!!.cancel("test")
+          job!!
+        }
       }
-    })
+    )
 
-    assertThat(doOpenProject()).isTrue()
+    runBlocking {
+      job = launch {
+        assertThat(doOpenProject()).isNull()
+      }
+    }
   }
 
-  private fun doOpenProject(): Boolean {
-    var cancelled = false
-    ProgressManager.getInstance().run(object : Task.Modal(null, "", true) {
-      override fun run(indicator: ProgressIndicator) {
-        val project = ProjectManagerEx.getInstanceEx().openProject(inMemoryFs.fs.getPath("/p"), createTestOpenProjectOptions())
-        if (project != null) {
-          PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-        }
-        assertThat(project).isNull()
-      }
-
-      override fun onCancel() {
-        cancelled = true
-      }
-    })
-    return cancelled
+  private suspend fun doOpenProject() {
+    val project = ProjectManagerEx.getInstanceEx().openProjectAsync(inMemoryFs.fs.getPath("/p"), createTestOpenProjectOptions())
+    if (project != null) {
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+    }
+    assertThat(project).isNull()
   }
 
   @Test fun isSameProjectForDirectoryBasedProject() {

@@ -1241,16 +1241,6 @@ public final class PlatformTestUtil {
     return project;
   }
 
-  public static void openProject(@NotNull Project project) {
-    if (!ProjectManagerEx.getInstanceEx().openProject(project)) {
-      throw new IllegalStateException("openProject returned false");
-    }
-
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      dispatchAllInvocationEventsInIdeEventQueue();
-    }
-  }
-
   @SuppressWarnings("deprecation")
   public static boolean isUnderCommunityClassPath() {
     // StdFileTypes.JSPX is assigned to PLAIN_TEXT in IDEA Community

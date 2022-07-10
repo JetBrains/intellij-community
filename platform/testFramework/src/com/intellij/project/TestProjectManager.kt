@@ -3,19 +3,29 @@
 
 package com.intellij.project
 
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.project.impl.runStartupActivities
 import com.intellij.project.TestProjectManager.Companion.getCreationPlace
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
 import org.jetbrains.annotations.ApiStatus
@@ -62,7 +72,7 @@ open class TestProjectManager : ProjectManagerImpl() {
     throw t
   }
 
-  override fun openProject(project: Project): Boolean {
+  fun openProject(project: Project): Boolean {
     if (project is ProjectImpl && project.isLight) {
       project.setTemporarilyDisposed(false)
       val isInitialized = StartupManagerEx.getInstanceEx(project).startupActivityPassed()
@@ -72,7 +82,38 @@ open class TestProjectManager : ProjectManagerImpl() {
         return true
       }
     }
-    return super.openProject(project)
+
+    val store = if (project is ProjectStoreOwner) (project as ProjectStoreOwner).componentStore else null
+    if (store != null) {
+      val projectFilePath = if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.directoryStorePath!! else store.projectFilePath
+      for (p in openProjects) {
+        if (ProjectUtil.isSameProject(projectFilePath, p)) {
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL) { ProjectUtil.focusProjectWindow(p, false) }
+          return false
+        }
+      }
+    }
+
+    if (!addToOpened(project)) {
+      return false
+    }
+
+    val app = ApplicationManager.getApplication()
+
+    try {
+      runUnderModalProgressIfIsEdt {
+        runStartupActivities(project = project,
+                             indicator = ProgressManager.getInstance().progressIndicator,
+                             runStartUpActivities = isRunStartUpActivitiesEnabled(project),
+                             waitEdtActivity = null)
+      }
+    }
+    catch (e: ProcessCanceledException) {
+      app.invokeAndWait { closeProject(project, saveProject = false, checkCanClose = false) }
+      app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
+      return false
+    }
+    return true
   }
 
   // method is not used and will be deprecated soon but still have to ensure that every created Project instance is tracked

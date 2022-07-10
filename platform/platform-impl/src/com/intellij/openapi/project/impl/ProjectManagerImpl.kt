@@ -30,7 +30,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -55,13 +54,11 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
-import com.intellij.project.ProjectStoreOwner
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
-import com.intellij.util.ModalityUiUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
@@ -71,6 +68,7 @@ import io.opentelemetry.context.Context
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.*
 import java.util.concurrent.CancellationException
@@ -656,42 +654,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return confirmOpeningAndSetProjectTrustedStateIfNeeded(projectStoreBaseDir)
   }
 
-  override fun openProject(project: Project): Boolean {
-    val store = if (project is ProjectStoreOwner) (project as ProjectStoreOwner).componentStore else null
-    if (store != null) {
-      val projectFilePath = if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.directoryStorePath!! else store.projectFilePath
-      for (p in openProjects) {
-        if (ProjectUtil.isSameProject(projectFilePath, p)) {
-          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL
-          ) { ProjectUtil.focusProjectWindow(p, false) }
-          return false
-        }
-      }
-    }
-
-    if (!addToOpened(project)) {
-      return false
-    }
-
-    val app = ApplicationManager.getApplication()
-    if (!app.isUnitTestMode && app.isDispatchThread) {
-      LOG.warn("Do not open project in EDT")
-    }
-
-    try {
-      openProjectSync(project, ProgressManager.getInstance().progressIndicator, isRunStartUpActivitiesEnabled(project))
-    }
-    catch (e: ProcessCanceledException) {
-      app.invokeAndWait { closeProject(project, saveProject = false, dispose = true, checkCanClose = false) }
-      app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
-      if (!app.isUnitTestMode) {
-        WelcomeFrame.showIfNoProjectOpened()
-      }
-      return false
-    }
-    return true
-  }
-
   override fun newProject(file: Path, options: OpenProjectTask): Project? {
     removeProjectConfigurationAndCaches(file)
 
@@ -880,52 +842,15 @@ private inline fun executeInEdtWithProgress(indicator: ProgressIndicator?, cross
   pce?.let { throw it }
 }
 
-private fun openProjectSync(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean) {
-  val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
-  if (indicator != null) {
-    indicator.text = ProjectBundle.message("project.preparing.workspace")
-    indicator.isIndeterminate = true
-  }
-
-  // invokeLater cannot be used for now
-  executeInEdtWithProgress(indicator) {
-    waitEdtActivity.end()
-
-    indicator?.checkCanceled()
-
-    LOG.debug("projectOpened")
-
-    val activity = StartUpMeasurer.startActivity("project opened callbacks")
-
-    runActivity("projectOpened event executing") {
-      @Suppress("DEPRECATION")
-      ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-    }
-
-    callOldProjectOpened(project, indicator)
-
-    activity.end()
-  }
-
-  ProjectImpl.ourClassesAreLoaded = true
-
-  if (runStartUpActivities) {
-    tracer.spanBuilder("StartupManager.projectOpened").useWithScope {
-      val startupManager = StartupManager.getInstance(project) as StartupManagerImpl
-      runBlocking { startupManager.projectOpened(indicator) }
-    }
-  }
-
-  LifecycleUsageTriggerCollector.onProjectOpened(project)
-}
-
-private suspend fun runStartupActivities(project: Project,
-                                         indicator: ProgressIndicator?,
-                                         runStartUpActivities: Boolean,
-                                         waitEdtActivity: Activity) {
+@Internal
+@VisibleForTesting
+suspend fun runStartupActivities(project: Project,
+                                 indicator: ProgressIndicator?,
+                                 runStartUpActivities: Boolean,
+                                 waitEdtActivity: Activity?) {
   val traceContext = Context.current()
   withContext(Dispatchers.EDT) {
-    waitEdtActivity.end()
+    waitEdtActivity?.end()
 
     if (indicator != null && ApplicationManager.getApplication().isInternal) {
       indicator.text = "Running project opened tasks..."  // NON-NLS (internal mode)
