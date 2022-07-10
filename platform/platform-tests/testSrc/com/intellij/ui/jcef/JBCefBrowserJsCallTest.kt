@@ -72,9 +72,12 @@ class JBCefBrowserJsCallTest {
   // IDEA-288813
   @Test
   fun `obtain a string decoded from base64`() {
+    // NOTE: non-latin symbols in JS.atob should be handled in special way, see:
+    // https://stackoverflow.com/questions/3626183/javascript-base64-encoding-utf8-string-fails-in-webkit-safari
+    // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     doTest(javaScript = """
           let decoded_string = atob("U29tZSB0ZXh0INC4INC60LDQutC+0Lkt0YLQviDRgtC10LrRgdGC");
-          return decoded_string;
+          return decodeURIComponent(escape(decoded_string))
         """.trimIndent(), expectedResult = """Some text и какой-то текст""")
   }
 
