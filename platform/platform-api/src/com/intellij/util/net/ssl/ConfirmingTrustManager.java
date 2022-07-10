@@ -31,6 +31,8 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -46,8 +48,8 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
   private static final Logger LOG = Logger.getInstance(ConfirmingTrustManager.class);
   private static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
 
-  public final ThreadLocal<UntrustedCertificateStrategy> myUntrustedCertificateStrategy =
-    ThreadLocal.withInitial(() -> UntrustedCertificateStrategy.ASK_USER);
+  public final ThreadLocal<@Nullable UntrustedCertificateStrategy> myUntrustedCertificateStrategy =
+    ThreadLocal.withInitial(() -> null);
 
   public static ConfirmingTrustManager createForStorage(@NotNull String path, @NotNull String password) {
     return new ConfirmingTrustManager(getSystemTrustManagers(), new MutableTrustManager(path, password));
@@ -174,8 +176,20 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
 
   @Override
   public void checkServerTrusted(final X509Certificate[] chain, String authType) throws CertificateException {
-    boolean askUser = myUntrustedCertificateStrategy.get() == UntrustedCertificateStrategy.ASK_USER;
-    checkServerTrusted(chain, authType, new CertificateConfirmationParameters(askUser, true, null, null));
+    withCalculatedCertificateStrategy(strategy -> {
+      boolean askUser = strategy == UntrustedCertificateStrategy.ASK_USER;
+      checkServerTrusted(chain, authType, new CertificateConfirmationParameters(askUser, true, null, null));
+    });
+  }
+
+  private void withCalculatedCertificateStrategy(ThrowingCallable<UntrustedCertificateStrategy, CertificateException> block) throws CertificateException {
+    UntrustedCertificateStrategy initialStrategy = myUntrustedCertificateStrategy.get();
+    if (initialStrategy != null) {
+      block.call(initialStrategy);
+    } else {
+      UntrustedCertificateStrategy strategy = ApplicationManager.getApplication().getService(InitialUntrustedCertificateStrategyProvider.class).getStrategy();
+      block.call(strategy);
+    }
   }
 
   /**
@@ -640,5 +654,10 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     public int hashCode() {
       return Objects.hash(myAskUser, myAddToKeyStore, myCertificateDetails, myOnUserAcceptCallback);
     }
+  }
+
+  @FunctionalInterface
+  private interface ThrowingCallable<V, X extends Throwable> {
+    void call(V value) throws X;
   }
 }
