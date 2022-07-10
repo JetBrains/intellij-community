@@ -221,5 +221,9 @@
     <module name="kotlin.gradle.code-insight-common"/>
     <module name="kotlin.gradle.code-insight-groovy"/>
     <module name="kotlin.gradle.gradle-java"/>
+
+    <module name="kotlin.project-wizard.idea"/>
+    <module name="kotlin.project-wizard.gradle"/>
+    <module name="kotlin.project-wizard.maven"/>
   </content>
 </idea-plugin>
