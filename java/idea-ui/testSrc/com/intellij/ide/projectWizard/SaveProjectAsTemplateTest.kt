@@ -1,177 +1,153 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.projectWizard;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.projectWizard
 
-import com.intellij.configurationStore.StoreUtilKt;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
-import com.intellij.mock.MockProgressIndicator;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.module.BasePackageParameterFactory;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.ProjectTemplatesFactory;
-import com.intellij.platform.templates.ArchivedTemplatesFactory;
-import com.intellij.platform.templates.LocalArchivedTemplate;
-import com.intellij.platform.templates.SaveProjectAsTemplateAction;
-import com.intellij.project.ProjectKt;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.testFramework.OpenProjectTaskBuilder;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.io.PathKt;
-import com.intellij.util.text.DateFormatUtil;
-import kotlin.Unit;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.configurationStore.runInAllowSaveMode
+import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory
+import com.intellij.ide.wizard.Step
+import com.intellij.mock.MockProgressIndicator
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.Experiments
+import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.module.BasePackageParameterFactory
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.ProjectTemplatesFactory
+import com.intellij.platform.templates.ArchivedTemplatesFactory
+import com.intellij.platform.templates.LocalArchivedTemplate
+import com.intellij.platform.templates.SaveProjectAsTemplateAction
+import com.intellij.project.stateStore
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.OpenProjectTaskBuilder
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.util.SystemProperties
+import com.intellij.util.io.createFile
+import com.intellij.util.text.DateFormatUtil
+import org.assertj.core.api.Assertions.assertThat
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Date;
+private const val FOO_BAR_JAVA = "foo/Bar.java"
+private val TEST_DATE = Date(0)
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
-  private static final String FOO_BAR_JAVA = "foo/Bar.java";
-
-  private static final Date TEST_DATE = new Date(0);
-
-  public void testSaveProject() throws Exception {
-    doTest(true, true, "/** No comments */\n" +
-                       "\n" +
-                       "/**\n" +
-                       " * Created by Dmitry.Avdeev on 1/22/13.\n" +
-                       " */\n" +
-                       "package foo;\n" +
-                       "public class Bar {\n" +
-                       "}", "/** No comments */\n" +
-                            "\n" +
-                            "/**\n" +
-                            " * Created by " + SystemProperties.getUserName() + " on " + DateFormatUtil.formatDate(TEST_DATE) + ".\n" +
-                            " */\n" +
-                            "\n" +
-                            "package foo;\n" +
-                            "public class Bar {\n" +
-                            "}");
+class SaveProjectAsTemplateTest : NewProjectWizardTestCase() {
+  fun testSaveProject() {
+    doTest(shouldEscape = true, replaceParameters = true, initialText = """/** No comments */
+    
+    /**
+     * Created by Dmitry.Avdeev on 1/22/13.
+     */
+    package foo;
+    public class Bar {
+    }""", expected = """/** No comments */
+    
+    /**
+     * Created by ${SystemProperties.getUserName()} on ${DateFormatUtil.formatDate(TEST_DATE)}.
+     */
+    
+    package foo;
+    public class Bar {
+    }""")
   }
 
-  public void testSaveProjectUnescaped() throws Exception {
-    doTest(false, false, "/** No comments */\n" +
-                         "\n" +
-                         "/**\n" +
-                         " * Created by Dmitry.Avdeev on 1/22/13.\n" +
-                         " */\n" +
-                         "package foo;\n" +
-                         "public class Bar {\n" +
-                         "}", "/** No comments */\n" +
-                              "\n" +
-                              "/**\n" +
-                              " * Created by " + SystemProperties.getUserName() + " on " + DateFormatUtil.formatDate(TEST_DATE) + ".\n" +
-                              " */\n" +
-                              "\n" +
-                              "package foo;\n" +
-                              "public class Bar {\n" +
-                              "}");
+  fun testSaveProjectUnescaped() {
+    doTest(false, false, """/** No comments */
+
+/**
+ * Created by Dmitry.Avdeev on 1/22/13.
+ */
+package foo;
+public class Bar {
+}""", """/** No comments */
+
+/**
+ * Created by ${SystemProperties.getUserName()} on ${DateFormatUtil.formatDate(TEST_DATE)}.
+ */
+
+package foo;
+public class Bar {
+}""")
   }
 
-  private void doTest(boolean shouldEscape, boolean replaceParameters, @SuppressWarnings("SameParameterValue") String initialText, String expected) throws IOException {
-    assertThat(ProjectKt.getStateStore(getProject()).getStorageScheme()).isEqualTo(StorageScheme.DIRECTORY_BASED);
-    VirtualFile root = ProjectRootManager.getInstance(getProject()).getContentRoots()[0];
-    Path rootFile = root.toNioPath().resolve(FOO_BAR_JAVA);
-    PathKt.createFile(rootFile);
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(rootFile);
-    assertNotNull(file);
-    setFileText(file, initialText);
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    String basePackage = new BasePackageParameterFactory().detectParameterValue(getProject());
-    assertEquals("foo", basePackage);
-
-    Path zipFile = ArchivedTemplatesFactory.getTemplateFile("foo");
-    StoreUtilKt.runInAllowSaveMode(true, () -> {
-      SaveProjectAsTemplateAction.saveProject(getProject(), zipFile, null, "bar", replaceParameters, new MockProgressIndicator(), shouldEscape);
-      return Unit.INSTANCE;
-    });
-    assertThat(zipFile.getFileName().toString()).isEqualTo("foo.zip");
-    assertThat(Files.size(zipFile)).isGreaterThan(0);
-
-    Project fromTemplate = Experiments.getInstance().isFeatureEnabled("new.project.wizard") ? createProject(step -> {
-      if (step instanceof ProjectTypeStep) {
-        assertTrue(((ProjectTypeStep)step).setSelectedTemplate("foo", null));
-      }
-    }) : createProjectFromTemplate(ProjectTemplatesFactory.CUSTOM_GROUP, "foo", null);
-
-    VirtualFile descriptionFile = SaveProjectAsTemplateAction.getDescriptionFile(fromTemplate, LocalArchivedTemplate.DESCRIPTION_PATH);
-    assertNotNull(descriptionFile);
-    assertEquals("bar", VfsUtilCore.loadText(descriptionFile));
-
-    VirtualFile[] roots = ProjectRootManager.getInstance(fromTemplate).getContentRoots();
-    VirtualFile child = roots[0].findFileByRelativePath(FOO_BAR_JAVA);
-    assertNotNull(Arrays.asList(roots[0].getChildren()).toString(), child);
-    assertEquals(expected, StringUtil.convertLineSeparators(VfsUtilCore.loadText(child)));
-
-    assertThat(Paths.get(fromTemplate.getBasePath(), ".idea/workspace.xml")).isRegularFile();
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ((FileTemplateManagerImpl)FileTemplateManager.getDefaultInstance()).setTestDate(TEST_DATE);
-    PropertiesComponent.getInstance().unsetValue(ProjectTemplateParameterFactory.IJ_BASE_PACKAGE);
-    PlatformTestUtil.setLongMeaninglessFileIncludeTemplateTemporarilyFor(getProject(), getProject());
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      ((FileTemplateManagerImpl)FileTemplateManager.getDefaultInstance()).setTestDate(null);
-      PropertiesComponent.getInstance().unsetValue(ProjectTemplateParameterFactory.IJ_BASE_PACKAGE);
+  private fun doTest(shouldEscape: Boolean, replaceParameters: Boolean, initialText: String, expected: String) {
+    assertThat(project.stateStore.storageScheme).isEqualTo(StorageScheme.DIRECTORY_BASED)
+    val root = ProjectRootManager.getInstance(project).contentRoots[0]
+    val rootFile = root.toNioPath().resolve(FOO_BAR_JAVA)
+    rootFile.createFile()
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(rootFile)
+    assertNotNull(file)
+    HeavyPlatformTestCase.setFileText(file!!, initialText)
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    val basePackage = BasePackageParameterFactory().detectParameterValue(project)
+    assertEquals("foo", basePackage)
+    val zipFile = ArchivedTemplatesFactory.getTemplateFile("foo")
+    runInAllowSaveMode(true) {
+      SaveProjectAsTemplateAction.saveProject(project, zipFile, null, "bar", replaceParameters, MockProgressIndicator(), shouldEscape)
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
+    assertThat(zipFile.fileName.toString()).isEqualTo("foo.zip")
+    assertThat(Files.size(zipFile)).isGreaterThan(0)
+    val fromTemplate = if (Experiments.getInstance().isFeatureEnabled("new.project.wizard")) createProject { step: Step? ->
+      if (step is ProjectTypeStep) {
+        assertTrue(step.setSelectedTemplate("foo", null))
+      }
+    }
+    else createProjectFromTemplate(ProjectTemplatesFactory.CUSTOM_GROUP, "foo", null)
+    val descriptionFile = SaveProjectAsTemplateAction.getDescriptionFile(fromTemplate, LocalArchivedTemplate.DESCRIPTION_PATH)
+    assertNotNull(descriptionFile)
+    assertEquals("bar", VfsUtilCore.loadText(descriptionFile))
+    val roots = ProjectRootManager.getInstance(fromTemplate).contentRoots
+    val child = roots[0].findFileByRelativePath(FOO_BAR_JAVA)
+    assertNotNull(Arrays.asList(*roots[0].children).toString(), child)
+    assertEquals(expected, StringUtil.convertLineSeparators(VfsUtilCore.loadText(
+      child!!)))
+    assertThat(Path.of(fromTemplate.basePath, ".idea/workspace.xml")).isRegularFile
+  }
+
+  override fun setUp() {
+    super.setUp()
+    (FileTemplateManager.getDefaultInstance() as FileTemplateManagerImpl).setTestDate(TEST_DATE)
+    PropertiesComponent.getInstance().unsetValue(ProjectTemplateParameterFactory.IJ_BASE_PACKAGE)
+    PlatformTestUtil.setLongMeaninglessFileIncludeTemplateTemporarilyFor(project, project)
+  }
+
+  override fun tearDown() {
+    try {
+      (FileTemplateManager.getDefaultInstance() as FileTemplateManagerImpl).setTestDate(null)
+      PropertiesComponent.getInstance().unsetValue(ProjectTemplateParameterFactory.IJ_BASE_PACKAGE)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
-      super.tearDown();
+      super.tearDown()
     }
   }
 
-  @NotNull
-  @Override
-  protected Project doCreateAndOpenProject() {
-    Path projectFile = getProjectDirOrFile(true);
-    try {
-      Files.createDirectories(projectFile.getParent().resolve(Project.DIRECTORY_STORE_FOLDER));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return ProjectManagerEx.getInstanceEx().openProject(projectFile.getParent(), new OpenProjectTaskBuilder().build());
+  override fun doCreateAndOpenProject(): Project {
+    val projectFile = getProjectDirOrFile(true)
+    Files.createDirectories(projectFile.parent.resolve(Project.DIRECTORY_STORE_FOLDER))
+    return ProjectManagerEx.getInstanceEx().openProject(projectFile.parent, OpenProjectTaskBuilder().build())!!
   }
 
-  @NotNull
-  @Override
-  protected Module createMainModule() throws IOException {
-    final Module module = super.createMainModule();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-      VirtualFile baseDir = PlatformTestUtil.getOrCreateProjectBaseDir(module.getProject());
-      ContentEntry entry = model.addContentEntry(baseDir);
-      entry.addSourceFolder(baseDir, false);
-      model.commit();
-    });
-    return module;
+  override fun createMainModule(): Module {
+    val module = super.createMainModule()
+    ApplicationManager.getApplication().runWriteAction {
+      val model = ModuleRootManager.getInstance(module).modifiableModel
+      val baseDir = PlatformTestUtil.getOrCreateProjectBaseDir(module.project)
+      val entry = model.addContentEntry(baseDir)
+      entry.addSourceFolder(baseDir, false)
+      model.commit()
+    }
+    return module
   }
 }
