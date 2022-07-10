@@ -84,9 +84,6 @@
                           implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinHighLevelExpressionTypeProvider"/>
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.fir.highlighter.KotlinDiagnosticHighlightingPassFactory"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.fir.api.impl.ResolveAllowanceServiceFirImpl"
-                    serviceInterface="org.jetbrains.kotlin.idea.api.ResolveAllowanceService"/>
-
     <codeInsight.implementMethod language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler"/>
     <codeInsight.overrideMethod language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler"/>
 

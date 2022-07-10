@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.fir.intentions
 
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
-import org.jetbrains.kotlin.idea.fir.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicabilityRange
-import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
-import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.quickfix.fixes.AddWhenRemainingBranchFixFactories
 import org.jetbrains.kotlin.psi.KtWhenExpression

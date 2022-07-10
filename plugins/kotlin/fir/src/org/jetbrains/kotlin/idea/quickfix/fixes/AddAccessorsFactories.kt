@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactoriesFromIntentionActions
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactoriesFromIntentionActions
 import org.jetbrains.kotlin.idea.fir.intentions.HLAddGetterAndSetterIntention
 import org.jetbrains.kotlin.idea.fir.intentions.HLAddGetterIntention
 import org.jetbrains.kotlin.idea.fir.intentions.HLAddSetterIntention

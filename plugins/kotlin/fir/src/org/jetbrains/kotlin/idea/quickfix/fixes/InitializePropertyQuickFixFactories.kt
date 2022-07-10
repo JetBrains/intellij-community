@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicator
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
-import org.jetbrains.kotlin.idea.api.applicator.applicator
-import org.jetbrains.kotlin.idea.fir.api.fixes.HLQuickFix
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactories
+import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicator
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.HLQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactories
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtProperty

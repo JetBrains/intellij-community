@@ -4,14 +4,14 @@ package org.jetbrains.kotlin.idea.fir.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import org.jetbrains.kotlin.analysis.api.annotations.containsAnnotation
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicator
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
-import org.jetbrains.kotlin.idea.api.applicator.applicator
-import org.jetbrains.kotlin.idea.fir.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicabilityRange
-import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
-import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityTarget
-import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicator
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicabilityTarget
+import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.idea.intentions.AbstractAddAccessorsIntention
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -32,7 +32,7 @@ abstract class HLAddAccessorIntention(private val addGetter: Boolean, private va
         val symbol = ktProperty.getVariableSymbol() as? KtPropertySymbol ?: return@inputProvider null
         if (symbol.containsAnnotation(JVM_FIELD_CLASS_ID)) return@inputProvider null
 
-        HLApplicatorInput.Empty
+        HLApplicatorInput
     }
 
     companion object {

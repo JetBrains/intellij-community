@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.idea.fir.inspections.declarations
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.api.applicator.with
-import org.jetbrains.kotlin.idea.fir.api.AbstractHLInspection
-import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
-import org.jetbrains.kotlin.idea.fir.api.applicator.presentation
+import org.jetbrains.kotlin.idea.codeinsight.api.with
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.presentation
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.fir.applicators.CallableReturnTypeUpdaterApplicator
 import org.jetbrains.kotlin.psi.KtNamedFunction

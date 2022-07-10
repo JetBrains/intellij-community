@@ -2,9 +2,4 @@
 
 package org.jetbrains.kotlin.miniStdLib.annotations
 
-/**
- * This annotation should be used when the declaration is semantically inline
- * but cannot be marked as such because it should be used in some inline function
- */
-@RequiresOptIn
-annotation class PrivateForInline
+

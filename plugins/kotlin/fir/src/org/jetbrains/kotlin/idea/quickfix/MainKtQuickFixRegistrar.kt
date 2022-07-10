@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuickfixFactories
-import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixRegistrar
-import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesList
-import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesListBuilder
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KtQuickFixRegistrar
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KtQuickFixesList
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.idea.quickfix.fixes.*
 
 class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {

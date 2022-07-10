@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.fir.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
-import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.AbstractHLIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.HLApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.name.Name

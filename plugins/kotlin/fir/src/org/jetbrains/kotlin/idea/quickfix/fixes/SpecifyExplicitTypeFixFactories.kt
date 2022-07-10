@@ -5,8 +5,8 @@
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.fir.api.fixes.withInput
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.fixes.withInput
 import org.jetbrains.kotlin.idea.fir.intentions.declarations.HLSpecifyExplicitTypeForCallableDeclarationIntention
 import org.jetbrains.kotlin.idea.fir.intentions.declarations.HLSpecifyExplicitTypeForCallableDeclarationIntention.Companion.getTypeInfo
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
