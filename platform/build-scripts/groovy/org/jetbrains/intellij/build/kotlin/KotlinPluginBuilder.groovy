@@ -61,7 +61,6 @@ final class KotlinPluginBuilder {
     "kotlin.base.highlighting",
     "kotlin.base.line-markers",
     "kotlin.base.code-insight",
-    "kotlin.base.inspections",
     "kotlin.base.jps",
     "kotlin.base.analysis-api.utils",
     "kotlin.base.compiler-configuration-ui",

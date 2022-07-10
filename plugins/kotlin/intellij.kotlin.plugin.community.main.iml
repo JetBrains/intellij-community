@@ -27,7 +27,6 @@
     <orderEntry type="module" module-name="kotlin.base.highlighting" exported="" />
     <orderEntry type="module" module-name="kotlin.base.line-markers" exported="" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" exported="" />
-    <orderEntry type="module" module-name="kotlin.base.inspections" exported="" />
     <orderEntry type="module" module-name="kotlin.base.jps" exported="" />
     <orderEntry type="module" module-name="kotlin.base.external-build-system" exported="" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" exported="" />

@@ -29,7 +29,6 @@
     <orderEntry type="module" module-name="kotlin.base.highlighting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.line-markers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.inspections" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.external-build-system" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.resources" scope="RUNTIME" />
