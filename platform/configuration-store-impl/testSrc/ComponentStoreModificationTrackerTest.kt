@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -7,31 +9,32 @@ import com.intellij.openapi.components.PersistentStateComponentWithModificationT
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.testFramework.EdtRule
-import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.ExceptionUtil
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.properties.Delegates
 
-@RunsInEdt
 internal class ComponentStoreModificationTrackerTest {
+  companion object {
+    @JvmField
+    @ClassRule
+    val projectRule = ApplicationRule()
+  }
+
   private var testAppConfig: Path by Delegates.notNull()
   private var componentStore: MyComponentStore by Delegates.notNull()
 
   @JvmField
   @Rule
   val fsRule = InMemoryFsRule()
-
-  @JvmField
-  @Rule
-  val edtRule = EdtRule()
 
   @Before
   fun setUp() {

@@ -3,7 +3,6 @@ package com.intellij.java.psi;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -47,8 +46,8 @@ public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
       WriteCommandAction.runWriteCommandAction(null, () -> {
         PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        ApplicationManager.getApplication().saveAll();
       });
+      FileDocumentManager.getInstance().saveAllDocuments();
       String text1After = VfsUtilCore.loadText(root.findFileByRelativePath("p/X1.java"));
       assertTrue(text1After, text1After.contains("import java.util.ArrayList;"));
       String text2After = VfsUtilCore.loadText(root.findFileByRelativePath("p/X2.java"));
@@ -58,6 +57,7 @@ public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = importsOnTheFly;
     }
   }
+
   public void testOptimizeImportsMustNotAddUnambiguousImportsIfTheCorrespondingSettingIsOff() throws Exception {
     boolean importsOnTheFly = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
@@ -70,8 +70,8 @@ public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
       WriteCommandAction.runWriteCommandAction(null, () -> {
         PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        ApplicationManager.getApplication().saveAll();
       });
+      FileDocumentManager.getInstance().saveAllDocuments();
       String text1After = VfsUtilCore.loadText(root.findFileByRelativePath("p/X1.java"));
       assertFalse(text1After, text1After.contains("import java.util.ArrayList;"));
       String text2After = VfsUtilCore.loadText(root.findFileByRelativePath("p/X2.java"));

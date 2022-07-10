@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
@@ -22,10 +20,10 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.Function
-import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.ClassRule
@@ -50,7 +48,7 @@ internal class ModuleStoreRenameTest {
   var dependentModule: Module by Delegates.notNull()
 
   // we test fireModuleRenamedByVfsEvent
-  private val oldModuleNames = SmartList<String>()
+  private val oldModuleNames = mutableListOf<String>()
 
   private val tempDirManager = TemporaryDirectory()
 
@@ -61,7 +59,7 @@ internal class ModuleStoreRenameTest {
     ActiveStoreRule(projectRule),
     object : ExternalResource() {
       override fun before() {
-        ApplicationManager.getApplication().invokeAndWait {
+        runBlocking {
           val moduleFileParent = tempDirManager.newPath()
           module = projectRule.createModule(moduleFileParent.resolve("m.iml"))
           dependentModule = projectRule.createModule(moduleFileParent.resolve("dependent-module.iml"))
@@ -101,8 +99,10 @@ internal class ModuleStoreRenameTest {
     val oldName = module.name
     val newName = "foo"
 
-    withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
-      projectRule.project.modifyModules { renameModule(module, newName) }
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
+        projectRule.project.modifyModules { renameModule(module, newName) }
+      }
     }
     assertModuleFileRenamed(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
@@ -122,8 +122,8 @@ internal class ModuleStoreRenameTest {
 
     val oldName = module.name
     val newName = "foo.dot"
-    withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
-      runWriteAction {
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
         LocalFileSystem.getInstance().refreshAndFindFileByPath(oldFile.systemIndependentPath)!!
           .rename(null, "$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
       }
@@ -158,8 +158,8 @@ internal class ModuleStoreRenameTest {
     val storage = module.storage
     val oldFile = storage.file
     val parentVirtualDir = storage.getVirtualFile(StateStorageOperation.WRITE)!!.parent
-    withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
-      runWriteAction {
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
         parentVirtualDir.rename(null, Ksuid.generate())
       }
     }
@@ -173,13 +173,13 @@ internal class ModuleStoreRenameTest {
   }
 
   @Test
-  fun `rename module source root`() = runBlocking<Unit>(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+  fun `rename module source root`() = runBlocking<Unit>(Dispatchers.EDT) {
     saveProjectState()
     val storage = module.storage
     val parentVirtualDir = storage.getVirtualFile(StateStorageOperation.WRITE)!!.parent
     val src = VfsTestUtil.createDir(parentVirtualDir, "foo")
-    withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
-      runWriteAction {
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
         PsiTestUtil.addSourceContentToRoots(module, src, false)
       }
     }
@@ -188,8 +188,8 @@ internal class ModuleStoreRenameTest {
     val rootManager = module.rootManager as ModuleRootManagerEx
     val stateModificationCount = rootManager.modificationCountForTests
 
-    withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
-      runWriteAction {
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
         src.rename(null, "bar.dot")
       }
     }
