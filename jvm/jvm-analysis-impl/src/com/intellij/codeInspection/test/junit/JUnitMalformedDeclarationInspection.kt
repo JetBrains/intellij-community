@@ -41,7 +41,7 @@ import kotlin.streams.toList
 
 class JUnitMalformedDeclarationInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
-  val ignorableAnnotations: List<String> = ArrayList(listOf("mockit.Mocked", "org.junit.jupiter.api.io.TempDir"))
+  val ignorableAnnotations = mutableListOf("mockit.Mocked", "org.junit.jupiter.api.io.TempDir")
 
   override fun createOptionsPanel(): JComponent = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
     ignorableAnnotations, JvmAnalysisBundle.message("jvm.inspections.junit.malformed.option.ignore.test.parameter.if.annotated.by")
@@ -737,8 +737,8 @@ private class JUnitMalformedSignatureVisitor(
     ): List<@NlsSafe String> {
       val problems = mutableListOf<String>()
       if (shouldBeInTestInstancePerClass) { if (!isStatic && !isInstancePerClass) problems.add("static") }
-      else if (shouldBeStatic) { if (!isStatic) problems.add("static") }
-      else if (!shouldBeStatic) { if (isStatic) problems.add("non-static") }
+      else if (shouldBeStatic && !isStatic) problems.add("static")
+      else if (!shouldBeStatic && isStatic) problems.add("non-static")
       if (validVisibility != null && validVisibility != decVisibility) problems.add(validVisibility.text)
       return problems
     }
