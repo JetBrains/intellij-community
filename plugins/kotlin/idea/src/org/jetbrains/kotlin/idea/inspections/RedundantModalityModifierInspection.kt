@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
 import org.jetbrains.kotlin.psi.declarationVisitor
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifier
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class RedundantModalityModifierInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return declarationVisitor { declaration ->

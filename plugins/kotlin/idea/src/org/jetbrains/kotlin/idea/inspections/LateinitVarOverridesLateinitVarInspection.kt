@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.classOrObjectRecursiveVisitor
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class LateinitVarOverridesLateinitVarInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = classOrObjectRecursiveVisitor(fun(klass) {
         for (declaration in klass.declarations) {

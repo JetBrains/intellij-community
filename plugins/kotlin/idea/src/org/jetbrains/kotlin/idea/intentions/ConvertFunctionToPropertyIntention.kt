@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -38,8 +39,8 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 class ConvertFunctionToPropertyIntention :
-    SelfTargetingIntention<KtNamedFunction>(KtNamedFunction::class.java, KotlinBundle.lazyMessage("convert.function.to.property")),
-    LowPriorityAction {
+  SelfTargetingIntention<KtNamedFunction>(KtNamedFunction::class.java, KotlinBundle.lazyMessage("convert.function.to.property")),
+  LowPriorityAction {
     private inner class Converter(
         project: Project,
         private val file: KtFile,

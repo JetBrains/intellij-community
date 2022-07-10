@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.completion.ArgumentThatCanBeUsedWithoutName
 import org.jetbrains.kotlin.idea.completion.collectAllArgumentsThatCanBeUsedWithoutName
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 

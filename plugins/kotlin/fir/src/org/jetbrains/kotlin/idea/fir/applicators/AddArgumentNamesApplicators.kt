@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.fir.applicators
 
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.intentions.AddNameToArgumentIntention
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement

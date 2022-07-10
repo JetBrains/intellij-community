@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.actions.internal.refactoringTesting.cases.*
 import org.jetbrains.kotlin.idea.refactoring.move.getTargetPackageFqName
 import org.jetbrains.kotlin.idea.refactoring.move.guessNewFileName
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsHandler
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsHandlerActions
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinAwareMoveFilesOrDirectoriesModel

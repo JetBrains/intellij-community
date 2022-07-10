@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -28,7 +29,7 @@ internal fun KotlinType.isJClass(): Boolean {
 }
 
 class ConvertClassToKClassFix(element: KtDotQualifiedExpression, type: KotlinType) :
-    KotlinQuickFixAction<KtDotQualifiedExpression>(element) {
+  KotlinQuickFixAction<KtDotQualifiedExpression>(element) {
     private val isApplicable: Boolean = run {
         val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
         val expressionType = bindingContext.getType(element) ?: return@run false

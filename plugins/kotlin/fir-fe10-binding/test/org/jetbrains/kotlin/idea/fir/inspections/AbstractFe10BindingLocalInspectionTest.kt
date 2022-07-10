@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.highlighter.KotlinHighLevelDiagnosticHighlightingPass
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
-import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests

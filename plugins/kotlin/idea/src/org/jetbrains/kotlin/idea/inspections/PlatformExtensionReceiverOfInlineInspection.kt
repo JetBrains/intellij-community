@@ -31,6 +31,8 @@ import java.awt.BorderLayout
 import java.util.regex.PatternSyntaxException
 import javax.swing.JPanel
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
 
     private var nameRegex: Regex? = defaultNamePattern.toRegex()

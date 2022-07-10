@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.psi.*
  * @see `org.jetbrains.kotlin.idea.intentions.ConvertArgumentToSetIntention` for detailed description
  * and implementation details.
  */
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class ConvertArgumentToSetInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return expressionVisitor { expression ->

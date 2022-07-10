@@ -11,12 +11,12 @@ import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinApplicatorBasedQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*

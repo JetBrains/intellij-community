@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.types.KotlinType
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
 
     private companion object {

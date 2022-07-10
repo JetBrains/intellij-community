@@ -5,10 +5,10 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtCallElement

@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticWithParameters3
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.intentions.SamConversionToAnonymousObjectIntention
 import org.jetbrains.kotlin.idea.intentions.SamConversionToAnonymousObjectIntention.Companion.typeParameters
 import org.jetbrains.kotlin.psi.KtCallExpression

@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.findExistingEditor
 import org.jetbrains.kotlin.idea.core.util.getLineCount
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.BranchedFoldingUtils
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf

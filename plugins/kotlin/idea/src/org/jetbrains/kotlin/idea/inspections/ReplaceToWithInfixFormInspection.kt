@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class ReplaceToWithInfixFormInspection : AbstractKotlinInspection() {
     private val compatibleNames = setOf("to")
 

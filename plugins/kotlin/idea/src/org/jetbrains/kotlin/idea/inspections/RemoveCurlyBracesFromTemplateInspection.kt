@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.canDropCurlyBrackets
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 
 class RemoveCurlyBracesFromTemplateInspection(@JvmField var reportWithoutWhitespace: Boolean = false) :

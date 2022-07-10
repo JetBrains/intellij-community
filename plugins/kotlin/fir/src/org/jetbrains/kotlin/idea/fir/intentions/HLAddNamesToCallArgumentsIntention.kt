@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.fir.intentions
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.applicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.KtCallElement

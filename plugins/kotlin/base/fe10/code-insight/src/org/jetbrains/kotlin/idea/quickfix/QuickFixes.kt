@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.Extensions
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixFactory
 
 class QuickFixes {
     private val factories: Multimap<DiagnosticFactory<*>, KotlinIntentionActionsFactory> =

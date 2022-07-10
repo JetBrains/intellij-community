@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections.substring
 
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.evaluatesTo
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isStableSimpleExpression
 import org.jetbrains.kotlin.idea.intentions.callExpression

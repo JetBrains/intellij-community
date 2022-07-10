@@ -4,14 +4,10 @@ package org.jetbrains.kotlin.idea.fir.inspections.diagnosticBased
 
 import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.with
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinDiagnosticBasedInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.*
-import org.jetbrains.kotlin.idea.codeinsight.api.inputByDiagnosticProvider
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.fir.applicators.ModifierApplicators
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType

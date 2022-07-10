@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryForDeprecation
 import org.jetbrains.kotlin.diagnostics.Errors.*
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixFactory
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementAsConstructorParameter
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 import org.jetbrains.kotlin.idea.inspections.AddModifierFixFactory

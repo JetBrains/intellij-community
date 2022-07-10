@@ -28,6 +28,8 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
     companion object {
         private val associateFunctionNames = listOf("associate", "associateTo")

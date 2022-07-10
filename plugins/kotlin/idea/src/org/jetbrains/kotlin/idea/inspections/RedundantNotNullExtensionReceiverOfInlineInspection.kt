@@ -21,6 +21,8 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.isNullable
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class RedundantNotNullExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
 
     private fun ReceiverValue?.isThisExpressionReceiver(): Boolean =

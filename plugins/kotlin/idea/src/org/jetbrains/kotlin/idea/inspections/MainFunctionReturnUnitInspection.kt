@@ -21,6 +21,8 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.namedFunctionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class MainFunctionReturnUnitInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return namedFunctionVisitor(fun(function: KtNamedFunction) {

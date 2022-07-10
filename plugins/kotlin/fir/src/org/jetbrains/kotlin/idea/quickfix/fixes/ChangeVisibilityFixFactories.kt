@@ -6,11 +6,11 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinApplicatorTargetWithInput
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.withInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.idea.util.isRedundantSetter
 import org.jetbrains.kotlin.idea.util.removeRedundantSetter
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken

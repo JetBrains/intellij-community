@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import javax.swing.JComponent
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class KotlinCatchMayIgnoreExceptionInspection : AbstractKotlinInspection() {
     var ignoreCatchBlocksWithComments: Boolean = true
 

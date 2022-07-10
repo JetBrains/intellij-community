@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage
 
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtElement
 
 abstract class CreateFromUsageFixBase<T : KtElement>(element: T) : KotlinQuickFixAction<T>(element) {

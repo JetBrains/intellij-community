@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -24,7 +25,7 @@ import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.isArray
 import org.jetbrains.kotlin.types.isNullable
 
 class ConvertToIsArrayOfCallFix(element: KtIsExpression, lhsType: KotlinType, arrayArgumentType: KotlinType) :
-    KotlinQuickFixAction<KtIsExpression>(element) {
+  KotlinQuickFixAction<KtIsExpression>(element) {
 
     private val lhsIsNullable = lhsType.isNullable()
 

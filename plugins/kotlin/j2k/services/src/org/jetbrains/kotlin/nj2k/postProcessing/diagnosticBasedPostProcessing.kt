@@ -8,7 +8,7 @@ import com.intellij.refactoring.suggested.range
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
-import org.jetbrains.kotlin.idea.quickfix.QuickFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.asKotlinIntentionActionsFactory
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.runReadAction

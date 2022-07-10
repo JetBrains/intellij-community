@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.intentions.declarations.ConvertMemberToExtensionIntention
 import org.jetbrains.kotlin.idea.project.builtIns
-import org.jetbrains.kotlin.idea.quickfix.CleanupFix
-import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.js.PredefinedAnnotation

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.inspections.branchedTransformations
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.getSubjectToIntroduce
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.introduceSubject
 import org.jetbrains.kotlin.idea.util.textRangeIn

@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.idea.intentions.replaceFirstReceiver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class WrapUnaryOperatorInspection : AbstractKotlinInspection() {
 
     private object Holder {

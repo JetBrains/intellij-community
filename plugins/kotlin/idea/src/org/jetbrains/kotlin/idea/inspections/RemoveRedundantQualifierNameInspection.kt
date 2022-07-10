@@ -37,6 +37,8 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findFirstClassifierWithDeprecat
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.JComponent
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     /**
      * In order to detect that `foo()` and `GrandBase.foo()` point to the same method,

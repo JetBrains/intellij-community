@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.inspections.IncompleteDestructuringQuickfix
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 

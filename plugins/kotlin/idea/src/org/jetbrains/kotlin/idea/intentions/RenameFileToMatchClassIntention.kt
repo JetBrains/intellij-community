@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.refactoring.RefactoringSettings
 import com.intellij.refactoring.rename.RenameProcessor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 class RenameFileToMatchClassIntention : SelfTargetingRangeIntention<KtClassOrObject>(

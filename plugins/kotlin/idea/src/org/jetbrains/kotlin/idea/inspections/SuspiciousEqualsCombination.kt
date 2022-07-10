@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isNullExpres
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class SuspiciousEqualsCombination : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         binaryExpressionVisitor(fun(expression) {

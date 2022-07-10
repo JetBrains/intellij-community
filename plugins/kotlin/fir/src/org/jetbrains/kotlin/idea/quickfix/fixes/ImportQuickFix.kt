@@ -27,8 +27,8 @@ import org.jetbrains.kotlin.analysis.project.structure.getKtModuleOfTypeSafe
 import org.jetbrains.kotlin.analysis.project.structure.moduleScopeProvider
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
-import org.jetbrains.kotlin.idea.codeinsight.api.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.quickfix.QuickFixActionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name

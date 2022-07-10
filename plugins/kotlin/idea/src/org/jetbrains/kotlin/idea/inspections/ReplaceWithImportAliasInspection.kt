@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class ReplaceWithImportAliasInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = simpleNameExpressionVisitor(fun(expression) {
         if (expression !is KtNameReferenceExpression || expression.getIdentifier() == null || expression.isInImportDirective()) return

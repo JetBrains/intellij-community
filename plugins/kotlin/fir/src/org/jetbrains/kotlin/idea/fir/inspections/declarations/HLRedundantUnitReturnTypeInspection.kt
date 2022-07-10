@@ -5,16 +5,16 @@ package org.jetbrains.kotlin.idea.fir.inspections.declarations
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.with
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.presentation
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.with
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.presentation
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.fir.applicators.CallableReturnTypeUpdaterApplicator
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 internal class HLRedundantUnitReturnTypeInspection :
-  AbstractKotlinApplicatorBasedInspection<KtNamedFunction, CallableReturnTypeUpdaterApplicator.TypeInfo>(
+    AbstractKotlinApplicatorBasedInspection<KtNamedFunction, CallableReturnTypeUpdaterApplicator.TypeInfo>(
         KtNamedFunction::class
     ), CleanupLocalInspectionTool {
 

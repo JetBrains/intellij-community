@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.whenExpressionVisitor
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class WhenWithOnlyElseInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return whenExpressionVisitor { expression ->

@@ -14,7 +14,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
-import org.jetbrains.kotlin.idea.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName

@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.chooseApplicableComponentFunctions
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.suggestNamesForComponent
@@ -33,7 +34,7 @@ class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
     KotlinBundle.lazyMessage("iterate.over.collection")
 ),
-    HighPriorityAction {
+                                   HighPriorityAction {
     override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean {
         if (element.parent !is KtBlockExpression) return false
         val range = element.textRange

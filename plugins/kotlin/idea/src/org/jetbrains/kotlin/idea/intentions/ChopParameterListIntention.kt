@@ -10,6 +10,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.intentions.AddBracesToAllBranchesIntention.Companion.allBranchExpressions
 import org.jetbrains.kotlin.idea.intentions.AddBracesToAllBranchesIntention.Companion.targetIfOrWhenExpression
 import org.jetbrains.kotlin.psi.*

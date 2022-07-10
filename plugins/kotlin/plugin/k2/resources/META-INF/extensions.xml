@@ -2,7 +2,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.kotlin.codeinsight.quickfix.registrar"
-                    interface="org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinQuickFixRegistrar"
+                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar"
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.newProjectWizard.buildSystem.kotlin"

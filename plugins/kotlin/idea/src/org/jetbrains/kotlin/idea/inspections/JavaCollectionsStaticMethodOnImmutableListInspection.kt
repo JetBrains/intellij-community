@@ -8,6 +8,8 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class JavaCollectionsStaticMethodOnImmutableListInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return dotQualifiedExpressionVisitor(fun(expression) {

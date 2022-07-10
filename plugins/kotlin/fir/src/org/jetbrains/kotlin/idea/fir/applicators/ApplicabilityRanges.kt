@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.fir.applicators
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
-import org.jetbrains.kotlin.idea.codeinsight.api.applicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsight.api.applicabilityTarget
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 

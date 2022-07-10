@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.quickfix.AddMemberToSupertypeFix.MemberData
@@ -40,7 +41,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.Icon
 
 abstract class AddMemberToSupertypeFix(element: KtCallableDeclaration, private val candidateMembers: List<MemberData>) :
-    KotlinQuickFixAction<KtCallableDeclaration>(element), LowPriorityAction {
+  KotlinQuickFixAction<KtCallableDeclaration>(element), LowPriorityAction {
 
     class MemberData(val signaturePreview: String, val sourceCode: String, val targetClass: KtClass)
 

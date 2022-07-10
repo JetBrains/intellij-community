@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 
 abstract class KotlinSingleIntentionActionFactory : KotlinIntentionActionsFactory() {
     protected abstract fun createAction(diagnostic: Diagnostic): IntentionAction?

@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_MARKER_WITH_WRONG_TARGET
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtValueArgument
@@ -21,7 +22,7 @@ object RemoveWrongOptInAnnotationTargetFactory : KotlinIntentionActionsFactory()
     }
 
     private class RemoveAllForbiddenOptInTargetsFix(annotationEntry: KtAnnotationEntry) :
-        KotlinQuickFixAction<KtAnnotationEntry>(annotationEntry) {
+      KotlinQuickFixAction<KtAnnotationEntry>(annotationEntry) {
 
         override fun getText(): String {
             return KotlinBundle.message("fix.opt_in.remove.all.forbidden.targets")

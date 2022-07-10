@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 
 class ConvertToRawStringTemplateIntention : ConvertToStringTemplateIntention() {
     init {
-        text = KotlinBundle.message("convert.concatenation.to.raw.string")
+        setTextGetter(KotlinBundle.lazyMessage("convert.concatenation.to.raw.string"))
     }
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {

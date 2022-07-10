@@ -44,6 +44,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.ImportPath
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class KotlinUnusedImportInspection : AbstractKotlinInspection() {
     class ImportData(val unusedImports: List<KtImportDirective>, val optimizerData: OptimizedImportsBuilder.InputData)
 

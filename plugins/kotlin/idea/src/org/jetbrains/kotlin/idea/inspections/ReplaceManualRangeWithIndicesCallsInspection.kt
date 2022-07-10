@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class ReplaceManualRangeWithIndicesCallsInspection : AbstractKotlinInspection() {
     companion object {
         private val rangeFunctionNames = setOf("until", "rangeTo", "..")

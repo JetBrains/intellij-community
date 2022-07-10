@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.core.findExistingNonGeneratedKotlinSourceRootFi
 import org.jetbrains.kotlin.idea.core.getFqNameByDirectory
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
-import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.refactoring.isInjectedFragment
 import org.jetbrains.kotlin.idea.roots.getSuitableDestinationSourceRoots
@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPackageDirective
 import org.jetbrains.kotlin.psi.packageDirectiveVisitor
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-
 class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = packageDirectiveVisitor(fun(directive: KtPackageDirective) {
         val file = directive.containingKtFile

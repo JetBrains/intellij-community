@@ -29,6 +29,8 @@ import java.math.BigDecimal
  * requires more precision than the floating point type can provide.
  * It does not try to detect rounding errors or otherwise check computation results.
  */
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class FloatingPointLiteralPrecisionInspection : AbstractKotlinInspection() {
     private object Holder {
         val FLOAT_LITERAL: KtConstantExpressionElementType = KtConstantExpressionElementType.kindToConstantElementType(ConstantValueKind.FLOAT_CONSTANT)

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.*
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.util.getType
 
 class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineWithPrompt: Boolean = true) :
-    AbstractApplicabilityBasedInspection<KtIfExpression>(KtIfExpression::class.java) {
+  AbstractApplicabilityBasedInspection<KtIfExpression>(KtIfExpression::class.java) {
 
     override fun isApplicable(element: KtIfExpression): Boolean = isApplicableTo(element, expressionShouldBeStable = true)
 

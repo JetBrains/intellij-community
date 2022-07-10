@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class ReplaceReadLineWithReadlnInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     companion object {
         private val readLineFqName = FqName("kotlin.io.readLine")

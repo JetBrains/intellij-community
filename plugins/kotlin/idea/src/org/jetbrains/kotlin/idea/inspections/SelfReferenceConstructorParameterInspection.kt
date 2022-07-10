@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class SelfReferenceConstructorParameterInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = primaryConstructorVisitor(fun(constructor) {
         val parameter = constructor.valueParameterList?.selfReferenceParameter() ?: return

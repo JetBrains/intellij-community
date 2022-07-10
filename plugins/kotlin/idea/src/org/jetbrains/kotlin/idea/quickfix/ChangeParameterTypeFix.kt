@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureConfiguration
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinTypeInfo

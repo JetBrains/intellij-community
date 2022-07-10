@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.fir.intentions
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.KotlinApplicatorInputProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.inputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession

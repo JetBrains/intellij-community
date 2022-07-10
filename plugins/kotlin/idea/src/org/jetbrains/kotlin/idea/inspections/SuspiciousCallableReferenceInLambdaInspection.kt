@@ -33,6 +33,8 @@ import org.jetbrains.kotlin.resolve.calls.util.getParentCall
 import org.jetbrains.kotlin.resolve.calls.util.getParentResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
         lambdaExpressionVisitor(fun(lambdaExpression) {
