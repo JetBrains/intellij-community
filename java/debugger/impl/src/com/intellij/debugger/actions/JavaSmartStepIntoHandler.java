@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -103,6 +103,13 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   protected List<SmartStepTarget> findStepTargets(final SourcePosition position,
+                                                  @Nullable SuspendContextImpl suspendContext,
+                                                  @NotNull DebuggerContextImpl debuggerContext,
+                                                  boolean smart) {
+    return reorderWithSteppingFilters(findStepTargetsInt(position, suspendContext, debuggerContext, smart));
+  }
+
+  private List<SmartStepTarget> findStepTargetsInt(final SourcePosition position,
                                                   @Nullable SuspendContextImpl suspendContext,
                                                   @NotNull DebuggerContextImpl debuggerContext,
                                                   boolean smart) {
