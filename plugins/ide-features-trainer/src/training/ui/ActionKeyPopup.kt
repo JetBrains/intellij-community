@@ -36,7 +36,7 @@ internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, ac
   val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts(actionId)
   for (shortcut in shortcuts) {
     if (shortcut is KeyboardShortcut) {
-      @NonNls val keyStrokeText = KeymapUtil.getKeyStrokeData(shortcut.firstKeyStroke).first
+      @NonNls val keyStrokeText = KeymapUtil.getKeyboardShortcutData(shortcut).first
       val shortcutLabel = JLabel(keyStrokeText).also {
         it.font = it.font.deriveFont((it.font.size - 1).toFloat())
         it.foreground = JBUI.CurrentTheme.Tooltip.shortcutForeground()
