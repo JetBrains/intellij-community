@@ -30,12 +30,12 @@
     <version>1.10.12</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <url>https://ant.apache.org/</url>  
+  <url>https://ant.apache.org/</url>
   <groupId>org.apache.ant</groupId>
-  <artifactId>ant-swing</artifactId>
+  <artifactId>ant-imageio</artifactId>
   <version>1.10.12</version>
-  <name>Apache Ant + Swing</name>
-  <description>a listener and a splash task based on Swing</description>
+  <name>Apache Ant + ImageIO</name>
+  <description>imageio task and corresponding types.</description>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
@@ -51,8 +51,12 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <includes>
-            <include>org/apache/tools/ant/taskdefs/optional/splash/*</include>
+            <include>org/apache/tools/ant/taskdefs/optional/image/ImageIOTask.java</include>
+            <include>org/apache/tools/ant/types/optional/imageio/*</include>
           </includes>
+          <testIncludes>
+            <include>org/apache/tools/ant/taskdefs/optional/image/ImageIOTest.java</include>
+          </testIncludes>
         </configuration>
       </plugin>
       <plugin>
@@ -69,6 +73,20 @@
           </archive>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <basedir>../../../..</basedir>
+          <workingDirectory>../../../..</workingDirectory>
+          <systemProperties>
+            <property>
+              <name>ant.test.basedir.ignore</name>
+              <value>true</value>
+            </property>
+          </systemProperties>
+       </configuration>
+      </plugin>
     </plugins>
     <resources>
       <resource>
@@ -81,7 +99,7 @@
       </resource>
     </resources>
     <sourceDirectory>../../../../src/main</sourceDirectory>
-    <testSourceDirectory>../../../../src/testcases</testSourceDirectory>
+    <testSourceDirectory>../../../../src/tests/junit</testSourceDirectory>
     <outputDirectory>../../../../target/${project.artifactId}/classes</outputDirectory>
     <testOutputDirectory>../../../../target/${project.artifactId}/testcases</testOutputDirectory>
     <directory>../../../../target/${project.artifactId}</directory>
