@@ -40,5 +40,6 @@
     <lang.refactoringSupport language="MyMermaid"
                              implementationClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidRefactoringSupportProvider"/>
 
+    <typedHandler implementation="com.github.firsttimeinforever.mermaid.editor.MermaidTypedHandlerDelegate"/>
   </extensions>
 </idea-plugin>

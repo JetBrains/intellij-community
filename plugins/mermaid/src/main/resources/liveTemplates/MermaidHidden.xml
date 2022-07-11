@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templateSet group="Shell Script Hidden">
+<templateSet group="Mermaid Hidden">
   <template id="mermaid_subgraph" name="mermaid_subgraph"
             value="subgraph $ID$ &#10;    $END$$SELECTION$&#10;end"
             description="subgraph statement"
@@ -89,28 +89,6 @@
   <template id="mermaid_section" name="mermaid_section"
             value="section $ID$ &#10;    $END$$SELECTION$&#10;"
             description="section statement"
-            toReformat="false" toShortenFQNames="false">
-    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
-    <context>
-      <option name="MERMAID" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
-
-  <template id="mermaid_&#60;&#60;" name="mermaid_annotation"
-            value="&#60;&#60;$ID$&#62;&#62;$END$$SELECTION$"
-            description="annotation"
-            toReformat="false" toShortenFQNames="false">
-    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
-    <context>
-      <option name="MERMAID" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
-
-  <template id="mermaid_&#126;" name="mermaid_generic"
-            value="&#126;$ID$&#126;$END$$SELECTION$"
-            description="generic"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
     <context>

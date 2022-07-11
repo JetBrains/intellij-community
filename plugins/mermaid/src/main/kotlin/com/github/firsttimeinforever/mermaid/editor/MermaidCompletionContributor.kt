@@ -91,11 +91,6 @@ class MermaidCompletionContributor : CompletionContributor() {
     )
     extend(
       CompletionType.BASIC,
-      psiElement().insideDiagram(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)),
-      ClassDiagramCompletionProvider()
-    )
-    extend(
-      CompletionType.BASIC,
       and(
         psiElement().afterLeaf(psiElement(MermaidTokens.ANNOTATION_START)),
         psiElement().insideDiagram(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM))

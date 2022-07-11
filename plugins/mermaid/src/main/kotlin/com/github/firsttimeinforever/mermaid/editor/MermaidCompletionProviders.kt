@@ -101,18 +101,6 @@ class SequenceCompletionProvider : MermaidLiveTemplateCompletionProvider() {
 
 class ClassDiagramSimpleCompletionProvider : MermaidSimpleCompletionProvider(listOf("class", "direction"))
 
-class ClassDiagramCompletionProvider : MermaidLiveTemplateCompletionProvider() {
-  private val keywords = listOf("<<", "~")
-  override fun addCompletions(
-    parameters: CompletionParameters,
-    context: ProcessingContext,
-    result: CompletionResultSet
-  ) {
-    val project = parameters.originalFile.project
-    result.addAllElements(keywords.map { createKeywordLookupElement(project, it) })
-  }
-}
-
 class ClassDiagramAnnotationCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("interface", "abstract", "service", "enumeration"))
 
