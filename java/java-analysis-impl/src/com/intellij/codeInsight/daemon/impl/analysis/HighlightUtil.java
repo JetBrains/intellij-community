@@ -2873,6 +2873,21 @@ public final class HighlightUtil {
       .navigationShift(navigationShift).create();
   }
 
+  public static HighlightInfo checkArrayType(PsiTypeElement type) {
+    int dimensions = 0;
+    for (PsiElement child = type.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
+        dimensions++;
+      }
+    }
+    if (dimensions > 255) {
+      // JVM Specification, 4.3.2: no more than 255 dimensions allowed
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(type.getTextRange())
+        .description(JavaErrorBundle.message("too.many.array.dimensions")).create();
+    }
+    return null;
+  }
+
   @FunctionalInterface
   interface IncompatibleTypesTooltipComposer {
     @NotNull @NlsContexts.Tooltip

@@ -409,6 +409,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testTooManyArrayDimensions() { doTest(false);}
+
   public void testInsane() {
     configureFromFileText("x.java", "class X { \nx_x_x_x\n }");
     List<HighlightInfo> infos = highlightErrors();
