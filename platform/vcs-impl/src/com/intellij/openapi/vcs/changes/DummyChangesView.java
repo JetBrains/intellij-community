@@ -17,9 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -56,12 +54,6 @@ class DummyChangesView implements ChangesViewEx {
 
   @Override
   public void refreshImmediately() {
-  }
-
-  @Nullable
-  @Override
-  public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
-    return null;
   }
 
   @Override

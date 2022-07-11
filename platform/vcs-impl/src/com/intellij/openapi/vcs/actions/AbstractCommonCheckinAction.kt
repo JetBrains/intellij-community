@@ -121,7 +121,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
     }
 
     val executor = getExecutor(project)
-    val workflowHandler = ChangesViewManager.getInstanceEx(project).commitWorkflowHandler
+    val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
     if (executor == null && workflowHandler != null) {
       workflowHandler.run {
         setCommitState(initialChangeList, included, isForceUpdateCommitStateFromContext())

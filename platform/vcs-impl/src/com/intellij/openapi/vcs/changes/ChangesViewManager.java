@@ -280,7 +280,6 @@ public class ChangesViewManager implements ChangesViewEx,
     }
   }
 
-  @Override
   @Nullable
   public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
     ChangesViewToolWindowPanel toolWindowPanel = myToolWindowPanel;

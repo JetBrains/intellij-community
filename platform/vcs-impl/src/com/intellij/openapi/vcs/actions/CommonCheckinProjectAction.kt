@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.ChangesViewManager
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
@@ -83,7 +83,7 @@ class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
     }
 
   private fun AnActionEvent.getProjectCommitWorkflowHandler(): ChangesViewCommitWorkflowHandler? =
-    project?.let { ChangesViewManager.getInstanceEx(it).commitWorkflowHandler }
+    project?.let { ChangesViewWorkflowManager.getInstance(it).commitWorkflowHandler }
 }
 
 open class CommonCheckinProjectActionImpl : AbstractCommonCheckinAction() {
