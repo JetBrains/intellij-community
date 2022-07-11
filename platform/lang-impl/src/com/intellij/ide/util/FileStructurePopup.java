@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -74,7 +74,10 @@ import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -112,7 +115,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   private final AsyncTreeModel myAsyncTreeModel;
   private final StructureTreeModel myStructureTreeModel;
-  private final TreeSpeedSearch mySpeedSearch;
+  private final MyTreeSpeedSearch mySpeedSearch;
 
   private final Object myInitialElement;
   private final Map<Class, JBCheckBox> myCheckBoxes = new HashMap<>();
@@ -961,9 +964,27 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   private class MyTreeSpeedSearch extends TreeSpeedSearch {
+    private volatile boolean myPopupVisible;
 
     MyTreeSpeedSearch() {
       super(myTree, path -> getSpeedSearchText(TreeUtil.getLastUserObject(path)), true);
+    }
+
+    @Override
+    public void showPopup(String searchText) {
+      super.showPopup(searchText);
+      myPopupVisible = true;
+    }
+
+    @Override
+    public void hidePopup() {
+      super.hidePopup();
+      myPopupVisible = false;
+    }
+
+    @Override
+    public boolean isPopupActive() {
+      return myPopupVisible;
     }
 
     @Override
