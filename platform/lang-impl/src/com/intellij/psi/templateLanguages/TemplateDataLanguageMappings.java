@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.DependentLanguage;
@@ -18,17 +18,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
+
 @State(name = "TemplateDataLanguageMappings", storages = @Storage("templateLanguages.xml"))
-public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Language> {
+public final class TemplateDataLanguageMappings extends LanguagePerFileMappings<Language> {
+  private final FilePropertyPusher<Language> myPropertyPusher = new TemplateDataLanguagePusher();
 
   public static TemplateDataLanguageMappings getInstance(final Project project) {
     return project.getService(TemplateDataLanguageMappings.class);
   }
 
-  public TemplateDataLanguageMappings(final Project project) {
+  public TemplateDataLanguageMappings(@NotNull Project project) {
     super(project);
   }
 
@@ -42,9 +41,8 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
     return getTemplateableLanguages();
   }
 
-  @Nullable
   @Override
-  public Language getMapping(@Nullable VirtualFile file) {
+  public @Nullable Language getMapping(@Nullable VirtualFile file) {
     Language t = getConfiguredMapping(file);
     return t == null || t == Language.ANY ? getDefaultMapping(file) : t;
   }
@@ -54,8 +52,7 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
     return getDefaultMappingForFile(file);
   }
 
-  @Nullable
-  public static Language getDefaultMappingForFile(@Nullable VirtualFile file) {
+  public static @Nullable Language getDefaultMappingForFile(@Nullable VirtualFile file) {
     return file == null? null : TemplateDataLanguagePatterns.getInstance().getTemplateDataLanguageByFileName(file);
   }
 
@@ -73,16 +70,13 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
     });
   }
 
-  private final FilePropertyPusher<Language> myPropertyPusher = new TemplateDataLanguagePusher();
-
-  @NotNull
   @Override
-  protected FilePropertyPusher<Language> getFilePropertyPusher() {
+  protected @NotNull FilePropertyPusher<Language> getFilePropertyPusher() {
     return myPropertyPusher;
   }
 
   @Override
-  protected @Nullable Language handleUnknownMapping(VirtualFile file, String value) {
+  protected @NotNull Language handleUnknownMapping(VirtualFile file, String value) {
     Language defaultMapping = getDefaultMapping(file);
     return defaultMapping != null ? defaultMapping : PlainTextLanguage.INSTANCE;
   }
