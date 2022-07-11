@@ -50,6 +50,7 @@ class EntityStorageSerializerImpl(
   private val KRYO_BUFFER_SIZE = 64 * 1024
 
   private val interner = HashSetInterner<SerializableEntityId>()
+  private val typeInfoInterner = HashSetInterner<TypeInfo>()
 
   @set:TestOnly
   override var serializerDataFormatVersion: String = SERIALIZER_VERSION
@@ -202,7 +203,7 @@ class EntityStorageSerializerImpl(
       `object`.entityFamilies.forEachIndexed { i, v ->
         if (v == null) return@forEachIndexed
         val clazz = i.findEntityClass<WorkspaceEntity>()
-        val typeInfo = TypeInfo(clazz.name, typesResolver.getPluginId(clazz))
+        val typeInfo = clazz.typeInfo
         res[typeInfo] = v
       }
       kryo.writeClassAndObject(output, res)
@@ -225,8 +226,8 @@ class EntityStorageSerializerImpl(
     override fun write(kryo: Kryo, output: Output, `object`: ConnectionId) {
       val parentClassType = `object`.parentClass.findEntityClass<WorkspaceEntity>()
       val childClassType = `object`.childClass.findEntityClass<WorkspaceEntity>()
-      val parentTypeInfo = TypeInfo(parentClassType.name, typesResolver.getPluginId(parentClassType))
-      val childTypeInfo = TypeInfo(childClassType.name, typesResolver.getPluginId(childClassType))
+      val parentTypeInfo = parentClassType.typeInfo
+      val childTypeInfo = childClassType.typeInfo
 
       kryo.writeClassAndObject(output, parentTypeInfo)
       kryo.writeClassAndObject(output, childTypeInfo)
@@ -276,7 +277,7 @@ class EntityStorageSerializerImpl(
     override fun write(kryo: Kryo, output: Output, `object`: EntityId) {
       output.writeInt(`object`.arrayId)
       val typeClass = `object`.clazz.findEntityClass<WorkspaceEntity>()
-      val typeInfo = TypeInfo(typeClass.name, typesResolver.getPluginId(typeClass))
+      val typeInfo = typeClass.typeInfo
       kryo.writeClassAndObject(output, typeInfo)
     }
 
@@ -380,7 +381,7 @@ class EntityStorageSerializerImpl(
                              kryo: Kryo,
                              objectClasses: MutableMap<TypeInfo, Class<out Any>>,
                              simpleClasses: MutableMap<TypeInfo, Class<out Any>>): Boolean {
-    val typeInfo = TypeInfo(jClass.name, typesResolver.getPluginId(jClass))
+    val typeInfo = jClass.typeInfo
     if (kryo.classResolver.getRegistration(jClass) != null) return true
 
     val objectInstance = kClass.objectInstance
@@ -414,7 +415,7 @@ class EntityStorageSerializerImpl(
       val persistentIds = storage.indexes.persistentIdIndex.entries().toSet()
       output.writeVarInt(persistentIds.size, true)
       persistentIds.forEach {
-        val typeInfo = TypeInfo(it::class.jvmName, typesResolver.getPluginId(it::class.java))
+        val typeInfo = it::class.java.typeInfo
         kryo.register(it::class.java)
         kryo.writeClassAndObject(output, typeInfo)
       }
@@ -608,7 +609,7 @@ class EntityStorageSerializerImpl(
       output.writeString(serializerDataFormatVersion)
       saveContributedVersions(kryo, output)
 
-      val mapData = converterMap.map { (key, value) -> TypeInfo(key.name, typesResolver.getPluginId(key)) to value }
+      val mapData = converterMap.map { (key, value) -> key.typeInfo to value }
 
       kryo.writeClassAndObject(output, mapData)
     }
@@ -812,13 +813,15 @@ class EntityStorageSerializerImpl(
   }
 
   internal data class TypeInfo(val name: String, val pluginId: String?)
+  internal val Class<*>.typeInfo: TypeInfo
+    get() = typeInfoInterner.intern(TypeInfo(name, typesResolver.getPluginId(this)))
 
   private data class SerializableEntityId(val arrayId: Int, val type: TypeInfo)
 
   private fun EntityId.toSerializableEntityId(): SerializableEntityId {
     val arrayId = this.arrayId
     val clazz = this.clazz.findEntityClass<WorkspaceEntity>()
-    return interner.intern(SerializableEntityId(arrayId, TypeInfo(clazz.name, typesResolver.getPluginId(clazz))))
+    return interner.intern(SerializableEntityId(arrayId, clazz.typeInfo))
   }
 
   private fun SerializableEntityId.toEntityId(classesCache: MutableMap<TypeInfo, Int>): EntityId {
