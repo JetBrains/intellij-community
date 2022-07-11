@@ -27,10 +27,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-@Deprecated(forRemoval = true)
 /**
  * @deprecated Stub left for plugin API compatibility
  */
+@Deprecated(forRemoval = true)
 public class AddToFavoritesAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(AddToFavoritesAction.class);
 
