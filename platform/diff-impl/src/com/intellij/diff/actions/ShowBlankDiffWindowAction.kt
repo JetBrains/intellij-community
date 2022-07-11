@@ -9,7 +9,7 @@ import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.contents.FileContent
 import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.simple.SimpleDiffTool
+import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.DiffNotifications
 import com.intellij.diff.tools.util.base.DiffViewerBase
@@ -96,7 +96,6 @@ class ShowBlankDiffWindowAction : DumbAwareAction() {
 
     val chain = BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, baseContent)
     chain.putUserData(DiffUserDataKeys.PLACE, "BlankDiffWindow")
-    chain.putUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL, SimpleDiffTool.INSTANCE)
     chain.putUserData(DiffUserDataKeysEx.PREFERRED_FOCUS_SIDE, Side.LEFT)
     chain.putUserData(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, true)
 
@@ -198,6 +197,12 @@ internal abstract class BlankSwitchContentActionBase : DumbAwareAction() {
       val currentContent = side?.select(helper.chain.content1, helper.chain.baseContent, helper.chain.content2)
       e.presentation.isEnabledAndVisible = currentContent != null && isEnabled(currentContent)
     }
+    else if (viewer is UnifiedDiffViewer) {
+      val line = viewer.editor.caretModel.logicalPosition.line
+      val side = viewer.transferLineFromOneside(line).second
+      val currentContent = side?.select(helper.chain.content1, helper.chain.content2)
+      e.presentation.isEnabledAndVisible = currentContent != null && isEnabled(currentContent)
+    }
     else {
       e.presentation.isEnabledAndVisible = false
     }
@@ -222,6 +227,12 @@ internal abstract class BlankSwitchContentActionBase : DumbAwareAction() {
     }
     else if (viewer is ThreesideTextDiffViewer) {
       val side = ThreeSide.fromValue(viewer.editors, editor) ?: return
+      val newContent = createNewContent(viewer.project, viewer.component) ?: return
+      helper.setContent(newContent, side)
+    }
+    else if (viewer is UnifiedDiffViewer) {
+      val line = viewer.editor.caretModel.logicalPosition.line
+      val side = viewer.transferLineFromOneside(line).second
       val newContent = createNewContent(viewer.project, viewer.component) ?: return
       helper.setContent(newContent, side)
     }
