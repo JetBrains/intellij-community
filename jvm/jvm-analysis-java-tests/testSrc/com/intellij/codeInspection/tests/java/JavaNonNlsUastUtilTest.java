@@ -17,7 +17,7 @@ import static com.intellij.codeInspection.NonNlsUastUtil.isNonNlsStringLiteral;
 import static com.intellij.codeInspection.tests.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/nonNls")
-public class NonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {
+public class JavaNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/nonNls";

@@ -19,7 +19,7 @@ import static com.intellij.codeInspection.NonNlsUastUtil.isNonNlsStringLiteral;
 import static com.intellij.codeInspection.tests.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/nonNls")
-public class KtNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {
+public class KotlinNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

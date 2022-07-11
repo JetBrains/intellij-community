@@ -5,7 +5,7 @@ import com.intellij.testFramework.TestDataPath
 import com.siyeh.ig.dependency.SuspiciousPackagePrivateAccessInspectionTestCase
 
 @TestDataPath("\$CONTENT_ROOT/testData/codeInspection/suspiciousPackagePrivateAccess")
-class KtSuspiciousPackagePrivateAccessInspectionTest28 : SuspiciousPackagePrivateAccessInspectionTestCase("kt") {
+class KotlinSuspiciousPackagePrivateAccessInspectionTest28 : SuspiciousPackagePrivateAccessInspectionTestCase("kt") {
   fun testAccessingPackagePrivateMembers() {
     doTestWithDependency()
   }

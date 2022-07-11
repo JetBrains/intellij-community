@@ -16,7 +16,7 @@ import com.intellij.testFramework.fixtures.*;
 import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATIONS;
 import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATIONS;
 
-public class BlockingMethodInNonBlockingContextInspectionTest extends UsefulTestCase {
+public class JavaBlockingMethodInNonBlockingContextInspectionTest extends UsefulTestCase {
 
   private CodeInsightTestFixture myFixture;
 

@@ -7,7 +7,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATIONS;
 import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATIONS;
 
-public class BlockingCallDetectionKtTest extends JavaCodeInsightFixtureTestCase {
+public class KotlinBlockingCallDetectionTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

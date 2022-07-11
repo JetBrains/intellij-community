@@ -1,4 +1,4 @@
-package com.intellij.codeInspection.tests.kotlin.test
+package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.codeInspection.tests.ULanguage
