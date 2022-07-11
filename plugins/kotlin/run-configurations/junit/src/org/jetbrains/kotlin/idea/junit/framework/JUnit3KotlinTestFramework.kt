@@ -25,7 +25,7 @@ class JUnit3KotlinTestFramework : AbstractKotlinTestFramework() {
 
     override fun isTestClass(declaration: KtClassOrObject): Boolean {
         return super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {
-            CachedValueProvider.Result.create(isJUnit3TestClass(declaration), PsiModificationTracker.MODIFICATION_COUNT)
+            CachedValueProvider.Result.create(isJUnit3TestClass(declaration, mutableSetOf()), PsiModificationTracker.MODIFICATION_COUNT)
         }
     }
 
@@ -38,18 +38,22 @@ class JUnit3KotlinTestFramework : AbstractKotlinTestFramework() {
         return isTestClass(classOrObject)
     }
 
-    private fun isJUnit3TestClass(declaration: KtClassOrObject): Boolean {
+    private fun isJUnit3TestClass(declaration: KtClassOrObject, visitedShortNames: MutableSet<String>): Boolean {
         if (declaration is KtClass && declaration.isInner()) return false
         for (superTypeEntry in declaration.superTypeListEntries) {
             if (superTypeEntry is KtSuperTypeCallEntry && superTypeEntry.valueArguments.isEmpty()) {
                 val containingFile = declaration.containingKtFile
                 val superShortName = superTypeEntry.calleeExpression.text
+
+                // circular dependency detected
+                if (!visitedShortNames.add(superShortName)) return false
+
                 if (checkNameMatch(containingFile, CLASS_ANNOTATION_FQN, superShortName)) {
                     return true
                 }
 
                 containingFile.declarations.firstOrNull { it is KtClassOrObject && it.name == superShortName }?.let {
-                    return isJUnit3TestClass(it as KtClassOrObject)
+                    return isJUnit3TestClass(it as KtClassOrObject, visitedShortNames)
                 }
             }
         }
