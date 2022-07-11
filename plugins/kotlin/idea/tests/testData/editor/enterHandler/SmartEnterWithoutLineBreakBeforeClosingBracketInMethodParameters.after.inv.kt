@@ -4,4 +4,4 @@
 
 fun method(
          arg1: String,
-         <caret>) {}
+<caret>) {}
