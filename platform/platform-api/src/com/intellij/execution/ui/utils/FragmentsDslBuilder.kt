@@ -94,7 +94,8 @@ class VariantableTag<Settings : FragmentedSettings, V : Any>(
     @Nls val hint: String?,
     @Nls val description: String?,
     val getter: (S) -> Boolean,
-    val setter: (S) -> Unit
+    val setter: (S, Boolean) -> Unit,
+    val validation: (S) -> ValidationInfo?
   )
 
   private val myVariants = mutableMapOf<V, Variant<Settings, V>>()
@@ -106,21 +107,29 @@ class VariantableTag<Settings : FragmentedSettings, V : Any>(
     @Nls name: String,
     @Nls hint: String? = null,
     @Nls description: String? = null,
-    getter: (Settings) -> Boolean = { false },
-    setter: (Settings) -> Unit = {}
+    getter: (Settings) -> Boolean,
+    setter: (Settings, Boolean) -> Unit = { _, _ -> },
+    validation: (Settings) -> ValidationInfo? = { null }
   ) {
-    myVariants[key] = Variant(key, name, hint, description, getter, setter)
+    myVariants[key] = Variant(key, name, hint, description, getter, setter, validation)
   }
 
-  override fun build(): SettingsEditorFragment<Settings, *> {
+  override fun build(): SettingsEditorFragment<Settings, TagButton> {
     val getter: (Settings) -> V = { s -> myVariants.values.first { it.getter(s) }.key }
-    val setter: (Settings, V) -> Unit = { s, v -> myVariants[v]?.setter?.invoke(s) }
+    val setter: (Settings, V) -> Unit = { s, v -> myVariants.forEach { e -> e.value.setter(s, v == e.key) } }
     val array = Array<Any>(myVariants.size) { myVariants.keys.elementAt(it) }
 
     return VariantTagFragment.createFragment(id, name, group, {
       @Suppress("UNCHECKED_CAST")
       array as Array<V>
     }, getter, setter, visible).also {
+      it.setValidation { settings ->
+        val result = myVariants[it.selectedVariant]?.validation?.invoke(settings) ?: return@setValidation listOf(
+          ValidationInfo("").forComponent(it.editorComponent)
+        )
+
+        listOf(result.forComponent(it.editorComponent))
+      }
       it.setVariantNameProvider { v -> myVariants[v]?.name }
       it.setVariantHintProvider { v -> myVariants[v]?.hint }
       it.setVariantDescriptionProvider { v -> myVariants[v]?.description }
@@ -134,11 +143,6 @@ class Tag<Settings : FragmentedSettings>(
   val id: String,
   @Nls val name: String
 ) : AbstractFragmentBuilder<Settings>() {
-
-  var holder: SettingsEditorFragment<Settings, *>? = null
-
-  var buttonAction: (SettingsEditorFragment<Settings, *>) -> Unit = { it.isSelected = false }
-
   var getter: (Settings) -> Boolean = { false }
   var setter: (Settings, Boolean) -> Unit = { _, _ -> }
 
@@ -150,7 +154,7 @@ class Tag<Settings : FragmentedSettings>(
   override fun build(): SettingsEditorFragment<Settings, TagButton> {
     val ref = Ref<SettingsEditorFragment<Settings, *>>()
     val tagButton = TagButton(name) {
-      buttonAction(ref.get())
+      ref.get().isSelected = false
     }
 
     return Fragment<Settings, TagButton>(id, tagButton).also {
@@ -164,12 +168,7 @@ class Tag<Settings : FragmentedSettings>(
       it.actionDescription = actionDescription
     }.build().also {
       it.component().setToolTip(toolTip ?: actionHint)
-      if (holder == null) {
-        ref.set(it)
-      }
-      else {
-        ref.set(holder)
-      }
+      ref.set(it)
     }
   }
 }
