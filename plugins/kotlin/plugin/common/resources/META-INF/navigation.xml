@@ -8,6 +8,7 @@
             implementation="org.jetbrains.kotlin.idea.references.KotlinFilePathReferenceContributor"/>
 
     <psi.referenceContributor
+            language="kotlin"
             implementation="org.jetbrains.kotlin.idea.references.KotlinWebReferenceContributor"/>
   </extensions>
 </idea-plugin>
