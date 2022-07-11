@@ -36,7 +36,7 @@ import java.util.zip.ZipException
  * <p>Example: <code>["": "1.8", "lib/idea_rt.jar": "1.3"]</code>.</p>
  */
 @CompileStatic
-final class ClassVersionChecker {
+final class ClassFileChecker {
   private static final class Rule {
     final String path
     final int version
@@ -49,26 +49,29 @@ final class ClassVersionChecker {
     }
   }
 
-  private final List<Rule> rules
+  private final List<Rule> versionRules
+  private final List<String> forbiddenSubPaths
   private AtomicInteger checkedJarCount = new AtomicInteger()
   private AtomicInteger checkedClassCount = new AtomicInteger()
 
-  private ClassVersionChecker(List<Rule> rules) {
-    this.rules = rules
+  private ClassFileChecker(List<Rule> versionRules, List<String> forbiddenSubPaths) {
+    this.versionRules = versionRules
+    this.forbiddenSubPaths = forbiddenSubPaths
   }
 
   static int classVersion(String version) {
     return version.isEmpty() ? -1 : JavaVersion.parse(version).feature + 44  // 1.1 = 45
   }
 
-  static void checkVersions(Map<String, String> config, BuildMessages messages, Path root) {
+  static void checkClassFiles(Map<String, String> versionCheckConfig, List<String> forbiddenSubPaths, BuildMessages messages, Path root) {
     BuildHelperKt.span(TraceManager.spanBuilder("verify class file versions")
-                       .setAttribute("ruleCount", config.size())
-                       .setAttribute("root", root.toString()), new Runnable() {
+                         .setAttribute("ruleCount", versionCheckConfig.size())
+                         .setAttribute("root", root.toString())
+                         .setAttribute("forbiddenSubpathCount", forbiddenSubPaths.size()), new Runnable() {
       @Override
       void run() {
-        List<Rule> rules = new ArrayList<Rule>(config.size())
-        for (Map.Entry<String, String> entry : config.entrySet()) {
+        List<Rule> rules = new ArrayList<Rule>(versionCheckConfig.size())
+        for (Map.Entry<String, String> entry : versionCheckConfig.entrySet()) {
           rules.add(new Rule(entry.key, classVersion(entry.value)))
         }
         rules.sort(new Comparator<Rule>() {
@@ -77,11 +80,11 @@ final class ClassVersionChecker {
             return Integer.compare(-o1.path.length(), -o2.path.length())
           }
         })
-        if (rules.isEmpty() || !rules.last().path.isEmpty()) {
+        if (!rules.isEmpty() && !rules.last().path.isEmpty()) {
           throw new IllegalArgumentException("Invalid configuration: missing default version")
         }
 
-        ClassVersionChecker checker = new ClassVersionChecker(rules)
+        ClassFileChecker checker = new ClassFileChecker(rules, forbiddenSubPaths)
         Collection<String> errors = new ConcurrentLinkedQueue<>()
         if (Files.isDirectory(root)) {
           checker.visitDirectory(root, "", errors)
@@ -90,7 +93,7 @@ final class ClassVersionChecker {
           checker.visitFile(root, "", errors)
         }
 
-        if (checker.checkedClassCount.get() == 0) {
+        if (!rules.isEmpty() && checker.checkedClassCount.get() == 0) {
           messages.error("No classes found under $root - please check the configuration")
         }
 
@@ -109,7 +112,7 @@ final class ClassVersionChecker {
         Collection<String> unusedRules = rules.findResults { it.wasUsed ? null : it.path }
         if (!unusedRules.isEmpty()) {
           messages.error("Class version check rules for the following paths don't match any files, probably entries in " +
-                                 "ProductProperties::versionCheckerConfig are out of date:\n${String.join("\n", unusedRules)}")
+                         "ProductProperties::versionCheckerConfig are out of date:\n${String.join("\n", unusedRules)}")
         }
       }
     })
@@ -151,8 +154,13 @@ final class ClassVersionChecker {
     if (fullPath.endsWith(".zip") || fullPath.endsWith(".jar")) {
       visitZip(fullPath, relPath, new ZipFile(FileChannel.open(file, EnumSet.of(StandardOpenOption.READ))), errors)
     }
-    else if (fullPath.endsWith(".class") && !fullPath.endsWith("module-info.class") && !isMultiVersion(fullPath)) {
-      new BufferedInputStream(Files.newInputStream(file)).withCloseable { checkVersion(relPath, it, errors) }
+    else if (fullPath.endsWith(".class")) {
+      checkIfSubPathIsForbidden(relPath, errors)
+
+      boolean contentCheckRequired = !versionRules.isEmpty() && !fullPath.endsWith("module-info.class") && !isMultiVersion(fullPath)
+      if (contentCheckRequired) {
+        new BufferedInputStream(Files.newInputStream(file)).withCloseable { checkVersion(relPath, it, errors) }
+      }
     }
   }
 
@@ -181,13 +189,28 @@ final class ClassVersionChecker {
             throw new RuntimeException("Cannot read " + childZipPath, e)
           }
         }
-        else if (name.endsWith(".class") && !name.endsWith("module-info.class") && !isMultiVersion(name)) {
-          checkVersion(join(zipRelPath, "!/", name), file.getInputStream(entry), errors)
+        else if (name.endsWith(".class")) {
+          String relPath = join(zipRelPath, "!/", name)
+
+          checkIfSubPathIsForbidden(relPath, errors)
+
+          boolean contentCheckRequired = !versionRules.isEmpty() && !name.endsWith("module-info.class") && !isMultiVersion(name)
+          if (contentCheckRequired) {
+            checkVersion(relPath, file.getInputStream(entry), errors)
+          }
         }
       }
     }
     finally {
       file.close()
+    }
+  }
+
+  private checkIfSubPathIsForbidden(String relPath, Collection<String> errors) {
+    for (f in forbiddenSubPaths) {
+      if (relPath.contains(f)) {
+        errors.add(relPath + " .class file has a forbidden subpath: " + f)
+      }
     }
   }
 
@@ -211,7 +234,7 @@ final class ClassVersionChecker {
       return
     }
 
-    Rule rule = rules.find { it.path.isEmpty() || path.startsWith(it.path) }
+    Rule rule = versionRules.find { it.path.isEmpty() || path.startsWith(it.path) }
     rule.wasUsed = true
     int expected = rule.version
     if (expected > 0 && major > expected) {
