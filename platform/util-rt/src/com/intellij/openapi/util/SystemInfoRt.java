@@ -10,7 +10,7 @@ import java.util.Locale;
  * Intended to use by external (out-of-IDE-process) runners and helpers, so it should not contain any library dependencies.
  */
 public final class SystemInfoRt {
-  public static final String OS_NAME = System.getProperty("os.name");
+  public static final String OS_NAME = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
   public static final String OS_VERSION = System.getProperty("os.version").toLowerCase(Locale.ENGLISH);
 
   private static final String _OS_NAME = OS_NAME.toLowerCase(Locale.ENGLISH);
