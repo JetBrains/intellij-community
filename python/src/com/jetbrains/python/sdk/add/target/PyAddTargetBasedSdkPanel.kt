@@ -78,7 +78,7 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
                                          context = context,
                                          targetSupplier = targetSupplier,
                                          config = config)
-    val condaPanel = if (targetEnvironmentConfiguration.isMutableTarget) createAnacondaPanel() else null
+    val condaPanel = if (isUnderLocalTarget) createAnacondaPanel() else null
     val systemWidePanel = PyAddSystemWideInterpreterPanel(project, module, existingSdks, context, targetEnvironmentConfiguration, config)
     val newProjectPath = null
     val pipEnvPanel = if (isUnderLocalTarget) createPipEnvPanel(newProjectPath) else null
