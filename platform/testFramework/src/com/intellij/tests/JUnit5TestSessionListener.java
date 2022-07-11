@@ -2,16 +2,17 @@
 package com.intellij.tests;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.TestApplicationManager;
+import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Functions;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
@@ -44,8 +45,6 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
         if (suiteStarted == 0) {
           if (!includeFirstLast) return;
           suiteStarted = System.nanoTime();
-          Logger.setFactory(TestLoggerFactory.class);
-          IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
           String tempDirectory = FileUtilRt.getTempDirectory();
           String[] list = new File(tempDirectory).list();
           assert list != null;

@@ -2,7 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -69,6 +68,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
+import static com.intellij.testFramework.common.TestEnvironmentKt.initializeTestEnvironment;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -123,11 +123,7 @@ public abstract class UsefulTestCase extends TestCase {
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
 
   static {
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-    Logger.setFactory(TestLoggerFactory.class);
-
-    // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
-    System.setProperty("apple.awt.UIElement", "true");
+    initializeTestEnvironment();
   }
 
   /**
