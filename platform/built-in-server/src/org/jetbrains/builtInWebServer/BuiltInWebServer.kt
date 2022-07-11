@@ -219,10 +219,10 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
       isCandidateFromReferer = true
     }
     return false
-  }) ?: candidateByDirectoryName ?: return false
+  }) ?: candidateByDirectoryName
 
   if (isActivatable() && !PropertiesComponent.getInstance().getBoolean("ide.built.in.web.server.active")) {
-    notificationManager.notify("", BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), project)
+    notificationManager.notify("", BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), project) { }
     return false
   }
 
