@@ -20,6 +20,7 @@ class IdeKotlinVersion private constructor(
     @get:NlsSafe val rawVersion: String,
     val kotlinVersion: KotlinVersion,
     val kind: Kind,
+    private val requireBuildNumberForArtifact: Boolean,
     @get:NlsSafe val buildNumber: String?,
     val languageVersion: LanguageVersion,
     val apiVersion: ApiVersion
@@ -50,6 +51,7 @@ class IdeKotlinVersion private constructor(
                 rawVersion = version.toString(),
                 kotlinVersion = version,
                 kind = Kind.Release,
+                requireBuildNumberForArtifact = false,
                 buildNumber = null,
                 languageVersion = languageVersion,
                 apiVersion = ApiVersion.createByLanguageVersion(languageVersion)
@@ -62,6 +64,7 @@ class IdeKotlinVersion private constructor(
                 rawVersion = "${languageVersion.major}.${languageVersion.minor}.0",
                 kotlinVersion = KotlinVersion(languageVersion.major, languageVersion.minor, 0),
                 kind = Kind.Release,
+                requireBuildNumberForArtifact = false,
                 buildNumber = null,
                 languageVersion = languageVersion,
                 apiVersion = ApiVersion.createByLanguageVersion(languageVersion)
@@ -119,24 +122,29 @@ class IdeKotlinVersion private constructor(
 
             val buildNumber = matchResult.groupValues[5].takeIf { it.isNotEmpty() }
 
+            // Only artifacts with -release- in the number are published to the MavenCentral,
+            // i.e. all preliminary artifacts are published to the kotlin.jetbrains.space and contains the build number in the version
+            val requireBuildNumberForArtifact = !kindSuffix.contains("release") && buildNumber != null
+
             val languageVersion = LanguageVersion.values().firstOrNull { it.major == majorValue && it.minor == minorValue }
                 ?: LanguageVersion.FIRST_SUPPORTED
 
             val apiVersion = ApiVersion.createByLanguageVersion(languageVersion)
 
-            val ideKotlinVersion = IdeKotlinVersion(rawVersion, kotlinVersion, kind, buildNumber, languageVersion, apiVersion)
+            val ideKotlinVersion =
+                IdeKotlinVersion(rawVersion, kotlinVersion, kind, requireBuildNumberForArtifact, buildNumber, languageVersion, apiVersion)
             return Result.success(ideKotlinVersion)
         }
     }
 
-    sealed class Kind(val artifactSuffix: String?, val requireBuildNumber: Boolean = false) {
+    sealed class Kind(val artifactSuffix: String?) {
         object Release : Kind(artifactSuffix = null)
         data class ReleaseCandidate(val number: Int) : Kind(artifactSuffix = if (number == 1) "RC" else "RC$number")
         data class Beta(val number: Int) : Kind(artifactSuffix = if (number == 1) "Beta" else "Beta$number")
         data class Milestone(val number: Int) : Kind(artifactSuffix = "M$number")
         data class Eap(val number: Int) : Kind(artifactSuffix = if (number == 1) "eap" else "eap$number")
-        object Dev : Kind(artifactSuffix = "dev", requireBuildNumber = true)
-        object Snapshot : Kind(artifactSuffix = "SNAPSHOT", requireBuildNumber = true)
+        object Dev : Kind(artifactSuffix = "dev")
+        object Snapshot : Kind(artifactSuffix = "SNAPSHOT")
 
         override fun toString(): String = javaClass.simpleName
     }
@@ -149,9 +157,9 @@ class IdeKotlinVersion private constructor(
             append(baseVersion)
             if (kind.artifactSuffix != null) {
                 append('-').append(kind.artifactSuffix)
-                if (kind.requireBuildNumber && buildNumber != null) {
-                    append('-').append(buildNumber)
-                }
+            }
+            if (requireBuildNumberForArtifact && buildNumber != null) {
+                append('-').append(buildNumber)
             }
         }
 
