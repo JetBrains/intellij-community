@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
@@ -66,10 +67,8 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel) :
       support.installSearch(commitMessage.editorField, commitMessage.editorField)
     }
 
-    with(changesView) {
-      setInclusionListener { fireInclusionChanged() }
-      isShowCheckboxes = true
-    }
+    changesView.setInclusionListener { fireInclusionChanged() }
+    changesView.isShowCheckboxes = true
     changesViewHost.statusComponent =
       CommitStatusPanel(this).apply {
         border = emptyRight(6)
@@ -77,7 +76,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel) :
 
         addToLeft(toolbarPanel)
       }
-    ChangesViewCommitTabTitleUpdater(this).start()
+    ChangesViewCommitTabTitleUpdater(changesView, this, this).start()
 
     commitActionsPanel.isCommitButtonDefault = {
       !progressPanel.isDumbMode &&
@@ -210,10 +209,8 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel) :
 
   override fun dispose() {
     changesViewHost.statusComponent = null
-    with(changesView) {
-      isShowCheckboxes = false
-      setInclusionListener(null)
-    }
+    changesView.isShowCheckboxes = false
+    changesView.setInclusionListener(null)
   }
 }
 
@@ -236,17 +233,15 @@ private class ChangesViewCommitProgressPanel(
   }
 }
 
-private class ChangesViewCommitTabTitleUpdater(private val commitPanel: ChangesViewCommitPanel) :
-  CommitTabTitleUpdater(commitPanel.changesView, LOCAL_CHANGES, { message("local.changes.tab") }),
-  ChangesViewContentManagerListener {
-
+private class ChangesViewCommitTabTitleUpdater(tree: ChangesTree, workflowUi: CommitWorkflowUi, disposable: Disposable)
+  : CommitTabTitleUpdater(tree, LOCAL_CHANGES, { message("local.changes.tab") },
+                          pathsProvider = {
+                            val singleRoot = ProjectLevelVcsManager.getInstance(tree.project).allVersionedRoots.singleOrNull()
+                            if (singleRoot != null) listOf(getFilePath(singleRoot)) else workflowUi.getDisplayedPaths()
+                          }),
+    ChangesViewContentManagerListener {
   init {
-    Disposer.register(commitPanel, this)
-
-    pathsProvider = {
-      val singleRoot = ProjectLevelVcsManager.getInstance(project).allVersionedRoots.singleOrNull()
-      if (singleRoot != null) listOf(getFilePath(singleRoot)) else commitPanel.getDisplayedPaths()
-    }
+    Disposer.register(disposable, this)
   }
 
   override fun start() {
