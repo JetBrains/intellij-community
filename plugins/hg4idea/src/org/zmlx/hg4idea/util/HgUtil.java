@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
@@ -465,6 +466,7 @@ public abstract class HgUtil {
   }
 
   @Nullable
+  @RequiresEdt
   public static HgRepository getCurrentRepository(@NotNull Project project) {
     if (project.isDisposed()) return null;
     return DvcsUtil.guessRepositoryForFile(project, getRepositoryManager(project),
