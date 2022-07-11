@@ -632,7 +632,7 @@
 
         <group id="MainToolbarPopupActions" searchable="false">
           <reference id="ViewToolBar"/>
-          <action class="com.intellij.ide.actions.CustomizeUIAction" id="CustomizeUI"/>
+          <action id="CustomizeUI" class="com.intellij.ide.actions.CustomizeUIAction"/>
         </group>
 
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
