@@ -77,6 +77,7 @@ private fun findLanguagePluginToInstall(): PluginId? {
     )
 
     val matchedLanguagePlugins = getLanguagePlugins(locale.toLanguageTag())
+      .ifEmpty { getLanguagePlugins(locale.language) }
 
     return requests.searchPlugins(
       query = "tags=Language%20Pack",
