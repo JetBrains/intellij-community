@@ -57,7 +57,15 @@ class DebugLogManager {
   }
 
   private fun applyCategories(categories: List<Category>, level: DebugLogLevel, loggerLevel: Level) {
-    val filtered = categories.asSequence().filter { it.level == level }.map { it.category }.toList()
+    val filtered = categories.asSequence()
+      .filter { it.level == level }
+      // IDEA-297747 Convention for categories naming is not clear, so set logging for both with '#' and without '#'
+      .flatMap {
+        val trimmed = it.category.trimStart('#')
+        listOf(it.category, trimmed, "#$trimmed")
+      }
+      .distinct()
+      .toList()
     filtered.forEach {
       val logger = Logger.getLogger(it)
       logger.level = loggerLevel
