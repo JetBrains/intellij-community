@@ -22,6 +22,7 @@ import java.util.List;
  * @author Vladislav.Soroka
  */
 public class MultipleRepositoryUrlsFix extends GroovyFix {
+  @SuppressWarnings("ActionIsNotPreviewFriendly")
   private final SmartPsiElementPointer<GrClosableBlock> myClosure;
   private final String myRepoType;
 
