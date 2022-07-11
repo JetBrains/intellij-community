@@ -31,6 +31,8 @@ public final class ChangesViewWorkflowManager implements Disposable {
   @Nullable private ChangesViewPanel myChangesPanel;
   @Nullable private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
 
+  private boolean myInitialized = false;
+
   @NotNull
   public static ChangesViewWorkflowManager getInstance(@NotNull Project project) {
     return project.getService(ChangesViewWorkflowManager.class);
@@ -55,11 +57,16 @@ public final class ChangesViewWorkflowManager implements Disposable {
 
   @Nullable
   public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
+    if (ApplicationManager.getApplication().isDispatchThread() && !myInitialized) {
+      updateCommitWorkflow();
+    }
     return myCommitWorkflowHandler;
   }
 
   @RequiresEdt
   private void updateCommitWorkflow() {
+    myInitialized = true;
+
     boolean isNonModal = CommitModeManager.getInstance(myProject).getCurrentCommitMode() instanceof CommitMode.NonModalCommitMode;
     if (isNonModal) {
       if (myCommitWorkflowHandler == null) {

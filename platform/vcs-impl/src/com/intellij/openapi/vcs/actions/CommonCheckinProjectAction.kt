@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.getProjectCommitMode
 import com.intellij.vcsUtil.VcsUtil.getFilePath
@@ -72,18 +71,22 @@ class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
     commitProjectAction.update(e)
   }
 
-  override fun isSelected(e: AnActionEvent): Boolean = e.getProjectCommitWorkflowHandler()?.isActive == true
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val project = e.project ?: return false
+    val workflowManager = project.getServiceIfCreated(ChangesViewWorkflowManager::class.java) ?: return false
+    val workflowHandler = workflowManager.commitWorkflowHandler
+    return workflowHandler?.isActive == true
+  }
 
-  override fun setSelected(e: AnActionEvent, state: Boolean) =
-    if (state) {
-      commitProjectAction.actionPerformed(e)
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    val workflowHandler = ChangesViewWorkflowManager.getInstance(e.project!!).commitWorkflowHandler
+    if (workflowHandler != null && !workflowHandler.isActive) {
+      workflowHandler.deactivate(false)
     }
     else {
-      e.getProjectCommitWorkflowHandler()!!.deactivate(false)
+      commitProjectAction.actionPerformed(e)
     }
-
-  private fun AnActionEvent.getProjectCommitWorkflowHandler(): ChangesViewCommitWorkflowHandler? =
-    project?.let { ChangesViewWorkflowManager.getInstance(it).commitWorkflowHandler }
+  }
 }
 
 open class CommonCheckinProjectActionImpl : AbstractCommonCheckinAction() {
