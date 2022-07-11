@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.UncaughtExceptionsExtension
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.CancellationException
 import org.junit.jupiter.api.Assertions.*
@@ -29,10 +28,6 @@ abstract class CancellableReadActionTests {
     @RegisterExtension
     @JvmField
     val applicationExtension = ApplicationExtension()
-
-    @RegisterExtension
-    @JvmField
-    val uncaughtExceptionsExtension = UncaughtExceptionsExtension()
 
     @BeforeAll
     @JvmStatic

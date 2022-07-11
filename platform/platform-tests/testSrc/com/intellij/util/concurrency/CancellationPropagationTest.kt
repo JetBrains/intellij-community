@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.UncaughtExceptionsExtension
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
@@ -45,10 +44,6 @@ class CancellationPropagationTest {
     @RegisterExtension
     @JvmField
     val applicationExtension = ApplicationExtension()
-
-    @RegisterExtension
-    @JvmField
-    val uncaughtExceptionsExtension = UncaughtExceptionsExtension()
 
     @RegisterExtension
     @JvmField

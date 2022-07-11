@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.openapi.progress.timeoutWaitUp
 import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.UncaughtExceptionsExtension
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertSame
@@ -31,10 +30,6 @@ class ThreadContextPropagationTest {
     @RegisterExtension
     @JvmField
     val applicationExtension = ApplicationExtension()
-
-    @RegisterExtension
-    @JvmField
-    val uncaughtExceptionsExtension = UncaughtExceptionsExtension()
 
     @RegisterExtension
     @JvmField

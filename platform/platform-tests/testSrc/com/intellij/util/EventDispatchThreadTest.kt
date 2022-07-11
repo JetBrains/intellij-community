@@ -4,7 +4,6 @@ package com.intellij.util
 import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.openapi.progress.timeoutWaitUp
 import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.UncaughtExceptionsExtension
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineStart
@@ -22,10 +21,6 @@ class EventDispatchThreadTest {
     @RegisterExtension
     @JvmField
     val applicationExtension = ApplicationExtension()
-
-    @RegisterExtension
-    @JvmField
-    val uncaughtExceptionsExtension = UncaughtExceptionsExtension()
   }
 
   @Test

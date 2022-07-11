@@ -3,7 +3,6 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.ApplicationExtension;
-import com.intellij.testFramework.UncaughtExceptionsExtension;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -14,9 +13,6 @@ public abstract class CancellationTest {
 
   @RegisterExtension
   public static final ApplicationExtension applicationExtension = new ApplicationExtension();
-
-  @RegisterExtension
-  public static final UncaughtExceptionsExtension uncaughtExceptionsExtension = new UncaughtExceptionsExtension();
 
   @BeforeAll
   public static void initProgressManager() {

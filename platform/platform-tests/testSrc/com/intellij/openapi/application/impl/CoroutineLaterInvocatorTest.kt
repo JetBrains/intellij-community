@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.UncaughtExceptionsExtension
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
@@ -25,10 +24,6 @@ class CoroutineLaterInvocatorTest {
     @JvmField
     val applicationExtension = ApplicationExtension()
   }
-
-  @RegisterExtension
-  @JvmField
-  val uncaughtExceptionsExtension = UncaughtExceptionsExtension()
 
   @BeforeEach
   @AfterEach
