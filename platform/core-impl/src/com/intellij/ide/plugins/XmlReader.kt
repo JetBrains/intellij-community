@@ -777,37 +777,27 @@ private fun readInclude(reader: XMLStreamReader2,
                         allowedPointer: String) {
   var path: String? = null
   var pointer: String? = null
-  var includeIfPropertyIsTrue: String? = null
-  var includeIfPropertyIsFalseOrNotDefined: String? = null
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
       "href" -> path = getNullifiedAttributeValue(reader, i)
       "xpointer" -> pointer = reader.getAttributeValue(i)?.takeIf { !it.isEmpty() && it != allowedPointer }
       "includeIf" -> {
         checkConditionalIncludeIsSupported("includeIf", readInto)
-        includeIfPropertyIsTrue = reader.getAttributeValue(i)
+        val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
+        if (value != "true") {
+          reader.skipElement()
+          return
+        }
       }
       "includeUnless" -> {
         checkConditionalIncludeIsSupported("includeUnless", readInto)
-        includeIfPropertyIsFalseOrNotDefined = reader.getAttributeValue(i)
+        val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
+        if (value == "true") {
+          reader.skipElement()
+          return
+        }
       }
       else -> throw RuntimeException("Unknown attribute ${reader.getAttributeLocalName(i)} (${reader.location})")
-    }
-  }
-
-  if (includeIfPropertyIsTrue != null) {
-    val value = System.getProperty(includeIfPropertyIsTrue)
-    if (value != "true") {
-      reader.skipElement()
-      return
-    }
-  }
-
-  if (includeIfPropertyIsFalseOrNotDefined != null) {
-    val value = System.getProperty(includeIfPropertyIsFalseOrNotDefined)
-    if (value == "true") {
-      reader.skipElement()
-      return
     }
   }
 
