@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
@@ -46,18 +47,20 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
     if (project == null) {
       return;
     }
-    VirtualFile[] files = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    final HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
-    List<HgRepository> repositories = repositoryManager.getRepositories();
-    if (!repositories.isEmpty()) {
-      List<HgRepository> selectedRepositories = files != null
-                                                ? ContainerUtil.mapNotNull(files, repositoryManager::getRepositoryForFileQuick)
-                                                : ContainerUtil.emptyList();
 
-      execute(project, repositories,
-              selectedRepositories.isEmpty() ? Collections.singletonList(HgUtil.getCurrentRepository(project)) : selectedRepositories,
-              event.getDataContext());
+    VirtualFile[] files = ObjectUtils.notNull(event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY), VirtualFile.EMPTY_ARRAY);
+
+    HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
+    List<HgRepository> repositories = repositoryManager.getRepositories();
+    if (repositories.isEmpty()) return;
+
+    List<HgRepository> selectedRepositories = ContainerUtil.mapNotNull(files, repositoryManager::getRepositoryForFileQuick);
+    if (selectedRepositories.isEmpty()) {
+      HgRepository repository = HgUtil.getCurrentRepository(project);
+      selectedRepositories = repository != null ? Collections.singletonList(repository) : Collections.emptyList();
     }
+
+    execute(project, repositories, selectedRepositories, event.getDataContext());
   }
 
   @Override
