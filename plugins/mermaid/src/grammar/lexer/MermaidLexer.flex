@@ -136,6 +136,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   "gantt" { yybegin(gantt); return Gantt.GANTT; }
   "requirementDiagram" { yybegin(requirement_diagram); return Requirement.REQUIREMENT_DIAGRAM; }
   ";" { return SEMICOLON; }
+  [^\s%;{]+ { return BAD_CHARACTER; }
 }
 <directive> {
   "}%%" { yypopstate(); return CLOSE_DIRECTIVE; }

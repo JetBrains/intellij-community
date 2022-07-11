@@ -1,10 +1,10 @@
 package com.github.firsttimeinforever.mermaid.editor
 
 import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidSubgraphStatementImpl
-import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
@@ -30,22 +30,8 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
     result: CompletionResultSet
   ) {
     parameters.position.parentOfType<PsiFile>()?.let {
-      result.addAllElements(diagrams.map { d -> createKeywordLookupElement(d) })
+      result.addAllElements(diagrams.map { d -> LookupElementBuilder.create(d) })
     }
-  }
-
-  private fun createKeywordLookupElement(keyword: String): LookupElement {
-    val insertHandler = InsertHandler { ctx: InsertionContext, _: LookupElement? ->
-      val editor = ctx.editor
-      val document = editor.document
-      // attempt to fix bug with completion of first element in document
-      val lineStartOffset = document.getLineStartOffset(document.getLineNumber(ctx.startOffset))
-      document.deleteString(lineStartOffset, ctx.tailOffset)
-      EditorModificationUtil.insertStringAtCaret(editor, keyword)
-    }
-    return LookupElementBuilder
-      .create(keyword)
-      .withInsertHandler(insertHandler)
   }
 }
 
