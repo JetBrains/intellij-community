@@ -157,7 +157,7 @@ private class MigrateToAssertThatQuickFix(private val matcherClassFqn: String, p
   }
 
   private fun UastElementFactory.createAssertThat(params: List<UExpression>): UExpression? {
-    val matchAssert = createQualifiedReference("org.hamcrest.MatcherAssert", null) ?: return null
+    val matchAssert = createQualifiedReference(ORG_HAMCREST_MATCHER_ASSERT, null) ?: return null
     return createCallExpression(matchAssert, "assertThat", params, null, UastCallKind.METHOD_CALL)
       ?.getQualifiedParentOrThis()
   }

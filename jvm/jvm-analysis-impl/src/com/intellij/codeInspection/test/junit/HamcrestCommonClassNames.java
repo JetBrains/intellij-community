@@ -5,4 +5,5 @@ public class HamcrestCommonClassNames {
   public static final String ORG_HAMCREST_NUMBER_ORDERING_COMPARISON = "org.hamcrest.number.OrderingComparison";
   public static final String ORG_HAMCREST_CORE_MATCHERS = "org.hamcrest.CoreMatchers";
   public static final String ORG_HAMCREST_MATCHERS = "org.hamcrest.Matchers";
+  public static final String ORG_HAMCREST_MATCHER_ASSERT = "org.hamcrest.MatcherAssert";
 }
