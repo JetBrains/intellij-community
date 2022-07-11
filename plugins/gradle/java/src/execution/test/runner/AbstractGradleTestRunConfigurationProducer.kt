@@ -10,8 +10,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser.Companion.contextWithLocationName
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
-import org.jetbrains.plugins.gradle.util.GradleCommandLine.Companion.parse
-import org.jetbrains.plugins.gradle.util.GradleCommandLine.TasksAndArguments
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine.Companion.parse
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTasks
 import org.jetbrains.plugins.gradle.util.TasksToRun
 import org.jetbrains.plugins.gradle.util.createTestWildcardFilter
 import java.util.*
@@ -33,7 +33,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
 
   protected abstract fun getAllTestsTaskToRun(context: ConfigurationContext, element: E, chosenElements: List<Ex>): List<TestTasksToRun>
 
-  private fun getAllTasksAndArguments(context: ConfigurationContext, element: E, chosenElements: List<Ex>): List<TasksAndArguments> {
+  private fun getAllTasksAndArguments(context: ConfigurationContext, element: E, chosenElements: List<Ex>): List<GradleCommandLineTasks> {
     return getAllTestsTaskToRun(context, element, chosenElements)
       .map { it.toTasksAndArguments() }
   }
@@ -55,7 +55,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     configuration.name = suggestConfigurationName(context, element, emptyList())
     setUniqueNameIfNeeded(project, configuration)
     configuration.settings.externalProjectPath = externalProjectPath
-    configuration.settings.taskNames = tasksAndArguments.toList()
+    configuration.settings.taskNames = tasksAndArguments.tokens
     configuration.settings.scriptParameters = ""
 
     JavaRunConfigurationExtensionManager.instance.extendCreatedConfiguration(configuration, location)
@@ -70,10 +70,10 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     val externalProjectPath = resolveProjectPath(module) ?: return false
     val element = getElement(context) ?: return false
     val allTasksAndArguments = getAllTasksAndArguments(context, element, emptyList())
-    val tasksAndArguments = configuration.commandLine.tasksAndArguments.toList()
+    val tasksAndArguments = configuration.commandLine.tasks.tokens
     return externalProjectPath == configuration.settings.externalProjectPath &&
            tasksAndArguments.isNotEmpty() && allTasksAndArguments.isNotEmpty() &&
-           isConsistedFrom(tasksAndArguments, allTasksAndArguments.map { it.toList() })
+           isConsistedFrom(tasksAndArguments, allTasksAndArguments.map { it.tokens })
   }
 
   override fun onFirstRun(configuration: ConfigurationFromContext, context: ConfigurationContext, startRunnable: Runnable) {
@@ -98,7 +98,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
 
         runConfiguration.name = suggestConfigurationName(context, element, elements)
         setUniqueNameIfNeeded(project, runConfiguration)
-        runConfiguration.settings.taskNames = chosenTasksAndArguments.flatMap { it.toList() }
+        runConfiguration.settings.taskNames = chosenTasksAndArguments.flatMap { it.tokens }
         runConfiguration.settings.scriptParameters = if (chosenTasksAndArguments.size > 1) "--continue" else ""
 
         super.onFirstRun(configuration, context, startRunnable)
@@ -152,7 +152,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     return -1
   }
 
-  private fun createTasksAndArguments(tasksToRun: TasksToRun, testFilters: Collection<String>): TasksAndArguments {
+  private fun createTasksAndArguments(tasksToRun: TasksToRun, testFilters: Collection<String>): GradleCommandLineTasks {
     val commandLineBuilder = StringJoiner(" ")
     for (task in tasksToRun) {
       commandLineBuilder.add(task.escapeIfNeeded())
@@ -165,7 +165,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
       }
     }
     val commandLine = commandLineBuilder.toString()
-    return parse(commandLine).tasksAndArguments
+    return parse(commandLine).tasks
   }
 
   private fun TestTasksToRun.toTasksAndArguments() = createTasksAndArguments(tasksToRun, listOf(testFilter))

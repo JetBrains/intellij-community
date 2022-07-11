@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleIdeManager;
 import org.jetbrains.plugins.gradle.execution.target.GradleRuntimeType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleCommandLine;
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.StringJoiner;
@@ -79,8 +79,8 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
   }
 
   public void setCommandLine(@NotNull GradleCommandLine commandLine) {
-    getSettings().setTaskNames(commandLine.getTasksAndArguments().toList());
-    getSettings().setScriptParameters(commandLine.getScriptParameters().toString());
+    getSettings().setTaskNames(commandLine.getTasks().getTokens());
+    getSettings().setScriptParameters(commandLine.getOptions().getText());
   }
 
   public @NotNull GradleCommandLine getCommandLine() {

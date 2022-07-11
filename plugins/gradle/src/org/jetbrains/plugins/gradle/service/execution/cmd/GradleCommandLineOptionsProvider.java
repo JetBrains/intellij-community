@@ -26,6 +26,9 @@ public final class GradleCommandLineOptionsProvider {
 
   public static final Options UNSUPPORTED_OPTIONS;
 
+  public static final Options TASK_OPTIONS;
+  public static final OptionGroup TEST_TASK_OPTIONS;
+
   public static Options getSupportedOptions() {
     return OPTIONS;
   }
@@ -145,5 +148,12 @@ public final class GradleCommandLineOptionsProvider {
       .addOptionGroup(EXECUTING_TASKS_OPTIONS)
       .addOptionGroup(VERIFICATION_OPTIONS)
       .addOptionGroup(DAEMON_OPTIONS);
+
+    // https://docs.gradle.org/current/userguide/java_testing.html#sec:test_execution
+    TEST_TASK_OPTIONS = new OptionGroup()
+      .addOption(Option.builder().longOpt("tests").hasArg().build());
+
+    TASK_OPTIONS = new Options()
+      .addOptionGroup(TEST_TASK_OPTIONS);
   }
 }
