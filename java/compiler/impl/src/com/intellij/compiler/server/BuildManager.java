@@ -2,7 +2,6 @@
 package com.intellij.compiler.server;
 
 import com.intellij.DynamicBundle;
-import com.intellij.ProjectTopics;
 import com.intellij.application.options.RegistryManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
@@ -56,7 +55,10 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -88,6 +90,13 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -1903,17 +1912,34 @@ public final class BuildManager implements Disposable {
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         return;
       }
+      final MessageBusConnection connection = project.getMessageBus().connect();
+      if (!project.isDefault()) {
+        WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(connection, new WorkspaceModelChangeListener() {
+          @Override
+          public void changed(@NotNull VersionedStorageChange event) {
+            boolean needFSRescan = false;
+            for (EntityChange<SourceRootEntity> change : event.getChanges(SourceRootEntity.class)) {
+              final SourceRootEntity entity = getEntity(change); // added, changed or removed source root in some module
+              if (entity != null && !ModuleEntityUtils.isModuleUnloaded(entity.getContentRoot().getModule(), event.getStorageAfter())) {
+                needFSRescan = true;
+                break;
+              }
+            }
 
-      MessageBusConnection connection = project.getMessageBus().connect();
-      connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-        @Override
-        public void rootsChanged(@NotNull ModuleRootEvent event) {
-          Object source = event.getSource();
-          if (source instanceof Project && !((Project)source).isDefault()) {
-            getInstance().clearState((Project)source);
+            if (needFSRescan) {
+              getInstance().clearState(project);
+            }
+            else {
+              getInstance().cancelPreloadedBuilds(getProjectPath(project));
+            }
           }
-        }
-      });
+
+          private <T extends WorkspaceEntity> T getEntity(EntityChange<T> change) {
+            final T entity = change.getNewEntity();
+            return entity != null? entity : change.getOldEntity();
+          }
+        });
+      }
       connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
         @Override
         public void processStarting(@NotNull String executorId, @NotNull ExecutionEnvironment env) {
