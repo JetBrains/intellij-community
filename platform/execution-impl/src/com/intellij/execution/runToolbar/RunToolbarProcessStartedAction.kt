@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
+import com.intellij.execution.runToolbar.FixWidthSegmentedActionToolbarComponent.Companion.RUN_CONFIG_SCALED_WIDTH
 import com.intellij.execution.runToolbar.components.MouseListenerHelper
 import com.intellij.execution.runToolbar.components.TrimmedMiddleLabel
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -9,7 +10,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomPanel
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
@@ -18,7 +18,6 @@ import java.awt.Font
 import java.beans.PropertyChangeEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.SwingUtilities
 
 internal class RunToolbarProcessStartedAction : ComboBoxAction(),
                                                 RTRunConfiguration {
@@ -149,11 +148,7 @@ internal class RunToolbarProcessStartedAction : ComboBoxAction(),
 
       override fun getPreferredSize(): Dimension {
         val d = super.getPreferredSize()
-        (SwingUtilities.getWindowAncestor(this) as? IdeFrame)?.project?.let {
-          val project = it
-          d.width = RunToolbarSettings.getInstance(
-            project).getRunConfigWidth()
-        }
+        d.width = RUN_CONFIG_SCALED_WIDTH
         return d
       }
     }

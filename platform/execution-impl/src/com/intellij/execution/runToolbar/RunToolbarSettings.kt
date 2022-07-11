@@ -5,35 +5,21 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.util.xmlb.annotations.XMap
 import java.util.*
 
-@State(name = "RunToolbarSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "RunToolbarSettings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class RunToolbarSettings(private val project: Project) : SimplePersistentStateComponent<RunToolbarState>(RunToolbarState()) {
   companion object {
-    @JvmStatic
-    fun getState(project: Project): RunToolbarState = project.service<RunToolbarSettings>().state
-
     fun getInstance(project: Project): RunToolbarSettings = project.service()
-    private val listeners = mutableListOf<FixWidthSegmentedActionToolbarComponent.UpdateWidth>()
-    public fun addListener(listener: FixWidthSegmentedActionToolbarComponent.UpdateWidth) {
-      listeners.add(listener)
-    }
-
-    public fun removeListener(listener: FixWidthSegmentedActionToolbarComponent.UpdateWidth) {
-      listeners.remove(listener)
-    }
   }
 
   fun setConfigurations(map: Map<String, RunnerAndConfigurationSettings?>, slotOrder: List<String>) {
     val slt = mutableMapOf<String, String>()
-    map.filter { it.value != null }.forEach { entry ->
-      entry.value?.let {
-        slt[entry.key] = it.uniqueID
-      }
-    }
+    map.filter { it.value != null }.forEach{entry ->  entry.value?.let {
+      slt[entry.key] = it.uniqueID
+    }}
 
     state.slots.clear()
     state.slots.putAll(slt)
@@ -49,14 +35,13 @@ class RunToolbarSettings(private val project: Project) : SimplePersistentStateCo
     var slotOrder = mutableListOf<String>()
     val slt = mutableMapOf<String, RunnerAndConfigurationSettings>()
 
-    if (state.slots.isEmpty() || state.slotOrder.isEmpty()) {
+    if(state.slots.isEmpty() || state.slotOrder.isEmpty()) {
       state.installedItems.mapNotNull { runManager.getConfigurationById(it) }.forEach {
         val uid = UUID.randomUUID().toString()
         slotOrder.add(uid)
         slt[uid] = it
       }
-    }
-    else {
+    } else {
       state.slots.forEach { entry ->
         runManager.getConfigurationById(entry.value)?.let {
           slt[entry.key] = it
@@ -85,12 +70,11 @@ class RunToolbarSettings(private val project: Project) : SimplePersistentStateCo
   }
 
   fun setRunConfigWidth(value: Int) {
-    state.runConfigWidth = value / JBUI.scale(1)
-    listeners.forEach { it.updated() }
+    state.runConfigWidth = value
   }
 
   fun getRunConfigWidth(): Int {
-    return JBUI.scale(state.runConfigWidth)
+    return state.runConfigWidth
   }
 }
 
@@ -108,5 +92,4 @@ class RunToolbarState : BaseState() {
   var moveNewOnTop by property(defaultValue = true)
   var updateMainBySelected by property(defaultValue = true)
   var runConfigWidth by property(defaultValue = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH_UNSCALED_MIN)
-
 }

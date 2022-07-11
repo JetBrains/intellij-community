@@ -4,6 +4,7 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.runToolbar.data.RWSlotManagerState
 import com.intellij.execution.runToolbar.data.RWStateListener
 import com.intellij.ide.DataManager
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
@@ -12,7 +13,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
-import java.awt.Dimension
+import com.intellij.util.ui.JBUI
 import java.awt.event.ContainerEvent
 import java.awt.event.ContainerListener
 import javax.swing.SwingUtilities
@@ -37,7 +38,6 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
       field?.let {
         add(it)
-        updateWidth(it)
       }
     }
 
@@ -118,9 +118,13 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
     (SwingUtilities.getWindowAncestor(this) as? IdeFrame)?.project?.let {
       project = it
-      RUN_CONFIG_SCALED_WIDTH =
-        RunToolbarSettings.getInstance(it).getRunConfigWidth()
+      RUN_CONFIG_SCALED_WIDTH = PropertiesComponent.getInstance().getInt(RUN_CONFIG_WIDTH_PROP, JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MIN))
     }
+  }
+
+  override fun updateWidthHandler() {
+    super.updateWidthHandler()
+    PropertiesComponent.getInstance().setValue(RUN_CONFIG_WIDTH_PROP, RUN_CONFIG_SCALED_WIDTH, JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MIN))
   }
 
   private fun rebuildPopupControllerComponent() {
@@ -188,15 +192,6 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
     }
     popupController = null
     state = null
-  }
-
-  @Override
-  protected override fun getChildPreferredSize(index: Int): Dimension? {
-    val component = getComponent(index)
-    if (!component.isVisible) return Dimension()
-    if (component is ToolbarCustomPrefSizeComponent && project != null)
-      return component.getPreferredSize(project!!)
-    return component.preferredSize
   }
 }
 

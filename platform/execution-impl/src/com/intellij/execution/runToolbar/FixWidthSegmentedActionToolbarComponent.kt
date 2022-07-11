@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
-import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ComparatorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -18,22 +18,14 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
     val RUN_CONFIG_WIDTH_UNSCALED_MIN = 200
     private val RUN_CONFIG_WIDTH_UNSCALED_MAX = 1200
     private val ARROW_WIDTH_UNSCALED = 28
-    val ARROW_WIDTH: Int
-      get() {
-        return JBUI.scale(ARROW_WIDTH_UNSCALED)
-      }
-  }
+    const val RUN_CONFIG_WIDTH_PROP = "com.intellij.execution.runToolbar.runConfigWidthProp"
 
-  private var runConfigWidth: JBValue.Float? = null
-  private var rightSideWidth: JBValue.Float? = null
+    var RUN_CONFIG_SCALED_WIDTH = PropertiesComponent.getInstance().getInt(RUN_CONFIG_WIDTH_PROP, JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MIN))
+      set(value) {
+        if (field == value) return
+        val min = JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MIN)
+        val max = JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MAX)
 
-  var RUN_CONFIG_SCALED_WIDTH: Int? = null
-    set(value) {
-      if (field == value) return
-      val min = JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MIN)
-      val max = JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED_MAX)
-
-      if (value != null) {
         field = if (value > max) {
           max
         }
@@ -41,19 +33,33 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
           min
         }
         else value
+
+        listeners.forEach { it.updated() }
       }
+
+    val ARROW_WIDTH: Int
+      get() {
+        return JBUI.scale(ARROW_WIDTH_UNSCALED)
+      }
+
+    val CONFIG_WITH_ARROW_WIDTH: Int
+      get() {
+        return JBUI.scale(ARROW_WIDTH_UNSCALED) + RUN_CONFIG_SCALED_WIDTH
+      }
+
+    private var runConfigWidth: JBValue.Float? = null
+    private var rightSideWidth: JBValue.Float? = null
+
+    private val listeners = mutableListOf<UpdateWidth>()
+    private fun addListener(listener: UpdateWidth) {
+      listeners.add(listener)
     }
 
-
-  val CONFIG_WITH_ARROW_WIDTH: Int
-    get() {
-      return JBUI.scale(ARROW_WIDTH_UNSCALED) + (RUN_CONFIG_SCALED_WIDTH ?: 0)
+    private fun removeListener(listener: UpdateWidth) {
+      listeners.remove(listener)
     }
-
-  fun updateWidth(project: Project) {
-    RUN_CONFIG_SCALED_WIDTH =
-      RunToolbarSettings.getInstance(project).getRunConfigWidth()
   }
+
 
   private val listener = object : UpdateWidth {
     override fun updated() {
@@ -69,11 +75,11 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
 
   override fun addNotify() {
     super.addNotify()
-    RunToolbarSettings.addListener(listener)
+    addListener(listener)
   }
 
   override fun removeNotify() {
-    RunToolbarSettings.removeListener(listener)
+    removeListener(listener)
     super.removeNotify()
   }
 
@@ -247,7 +253,7 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
     }
   }
 
-  interface UpdateWidth {
+  private interface UpdateWidth {
     fun updated()
   }
 }
