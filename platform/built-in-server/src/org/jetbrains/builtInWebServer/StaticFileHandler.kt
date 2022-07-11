@@ -92,7 +92,7 @@ private class StaticFileHandler : WebServerFileHandler() {
   }
 }
 
-internal fun checkAccess(file: Path, root: Path = file.root): Boolean {
+fun checkAccess(file: Path, root: Path = file.root): Boolean {
   var parent = file
   do {
     if (!hasAccess(parent)) {
