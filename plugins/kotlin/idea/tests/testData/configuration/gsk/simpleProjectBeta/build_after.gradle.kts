@@ -19,7 +19,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
 }
 
-// VERSION: 1.6.20-Beta2-123
+// VERSION: 1.6.20-Beta2-release-123
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.kotlinOptions {
     jvmTarget = "1.8"
