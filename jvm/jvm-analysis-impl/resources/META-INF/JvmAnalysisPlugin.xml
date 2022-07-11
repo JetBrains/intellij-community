@@ -18,6 +18,11 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.testonly.display.name"
                      implementationClass="com.intellij.codeInspection.test.TestOnlyInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestMethodWithoutAssertion"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.test.method.without.assertion.display.name"
+                     implementationClass="com.intellij.codeInspection.test.TestMethodWithoutAssertionInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="TestFailedLine"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
