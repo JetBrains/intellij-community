@@ -2,6 +2,7 @@
 package com.intellij.compiler.server;
 
 import com.intellij.DynamicBundle;
+import com.intellij.ProjectTopics;
 import com.intellij.application.options.RegistryManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
@@ -55,10 +56,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.GeneratedSourcesFilter;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -1937,6 +1935,19 @@ public final class BuildManager implements Disposable {
           private <T extends WorkspaceEntity> T getEntity(EntityChange<T> change) {
             final T entity = change.getNewEntity();
             return entity != null? entity : change.getOldEntity();
+          }
+        });
+
+        connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+          @Override
+          public void rootsChanged(@NotNull ModuleRootEvent event) {
+            if (!event.isCausedByWorkspaceModelChangesOnly()) {
+              // only process events that are not covered by events from workspace model
+              final Object source = event.getSource();
+              if (source instanceof Project) {
+                getInstance().clearState((Project)source);
+              }
+            }
           }
         });
       }
