@@ -421,6 +421,7 @@ public class CustomizableActionsPanel {
     }
   }
 
+  static final IconInfo NONE = new IconInfo(null, "<None>", "", null);
   private static final IconInfo SEPARATOR = new IconInfo(null, "", "", null);
 
   private static List<IconInfo> getDefaultIcons() {
