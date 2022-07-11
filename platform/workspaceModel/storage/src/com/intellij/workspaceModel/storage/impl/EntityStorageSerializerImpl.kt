@@ -44,7 +44,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v35"
+    const val SERIALIZER_VERSION = "v36"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
@@ -533,40 +533,29 @@ class EntityStorageSerializerImpl(
   }
 
   private fun EntityId2Vfu.writeEntityIdToVfu(kryo: Kryo, output: Output) {
-    output.writeInt(this.keys.size)
-    this.forEach { (key: EntityId, value) ->
-      kryo.writeObject(output, key.toSerializableEntityId())
-      kryo.writeClassAndObject(output, value)
-    }
+    kryo.writeClassAndObject(output, this.mapKeys { it.key.toSerializableEntityId() })
   }
 
   private fun readEntityIdToVfu(kryo: Kryo, input: Input, classesCache: MutableMap<TypeInfo, Int>): EntityId2Vfu {
-    val index = EntityId2Vfu()
-    repeat(input.readInt()) {
-      val entityId = kryo.readObject(input, SerializableEntityId::class.java).toEntityId(classesCache)
-      val value = kryo.readClassAndObject(input) as Any
-      index[entityId] = value
+    val data = kryo.readClassAndObject(input) as Map<SerializableEntityId, Any>
+    return EntityId2Vfu(data.size).also {
+      data.forEach { key, value ->
+        it.put(key.toEntityId(classesCache), value)
+      }
     }
-    return index
   }
 
   private fun MultimapStorageIndex.writeSoftLinks(output: Output, kryo: Kryo) {
-    output.writeInt(index.keys.size)
-    for (key in index.keys) {
-      val value: Set<PersistentEntityId<*>> = index.getValues(key)
-
-      kryo.writeObject(output, key.toSerializableEntityId())
-      kryo.writeClassAndObject(output, value)
-    }
+    kryo.writeClassAndObject(output, toMap().mapKeys { it.key.toSerializableEntityId() })
   }
 
   @Suppress("UNCHECKED_CAST")
   private fun readSoftLinks(input: Input, kryo: Kryo, classesCache: MutableMap<TypeInfo, Int>): MultimapStorageIndex {
+    val data = kryo.readClassAndObject(input) as Map<SerializableEntityId, Set<PersistentEntityId<*>>>
+
     val index = MultimapStorageIndex.MutableMultimapStorageIndex.from(MultimapStorageIndex())
-    repeat(input.readInt()) {
-      val entityId = kryo.readObject(input, SerializableEntityId::class.java).toEntityId(classesCache)
-      val values = kryo.readClassAndObject(input) as Set<PersistentEntityId<*>>
-      index.index(entityId, values)
+    data.forEach { (key, value) ->
+      index.index(key.toEntityId(classesCache), value)
     }
     return index
   }

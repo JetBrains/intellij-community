@@ -115,4 +115,8 @@ class BidirectionalLongMultiMap<V> {
 
     return BidirectionalLongMultiMap(newKeyToValues, newValuesToKeys)
   }
+
+  internal fun toMap(): Map<Long, Set<V>> {
+    return keyToValues
+  }
 }
