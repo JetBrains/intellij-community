@@ -6,6 +6,7 @@ import com.intellij.ide.ui.customization.CustomizableActionsPanel.IconInfo
 import com.intellij.ide.ui.customization.CustomizableActionsPanel.NONE
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.QuickListsManager
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.keymap.impl.ui.Group
@@ -31,7 +32,8 @@ import javax.swing.tree.TreePath
 
 internal class AddActionDialog(private val customActionsSchema: CustomActionsSchema) : DialogWrapper(false) {
   private val actionsTree: JTree = Tree().apply {
-    val rootGroup = ActionsTreeUtil.createMainGroup(null, null, QuickListsManager.getInstance().allQuickLists)
+    val rootGroup = ActionsTreeUtil.createMainGroup(null, null, QuickListsManager.getInstance().allQuickLists,
+                                                    null, true) { action -> action !is Separator }
     val root = ActionsTreeUtil.createNode(rootGroup)
     this.model = DefaultTreeModel(root)
     isRootVisible = false

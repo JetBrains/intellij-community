@@ -250,7 +250,9 @@ public final class ActionsTreeUtil {
         }
       }
       else if (action instanceof Separator) {
-        group.addSeparator();
+        if (filtered == null || filtered.value(action)) {
+          group.addSeparator();
+        }
       }
       else {
         String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
@@ -685,7 +687,7 @@ public final class ActionsTreeUtil {
       }
     }
     else if (action instanceof Separator) {
-      if (group instanceof Group) {
+      if (group instanceof Group && (filtered == null || filtered.value(action))) {
         ((Group)group).addSeparator();
       }
     }
