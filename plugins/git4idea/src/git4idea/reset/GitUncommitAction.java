@@ -1,13 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.reset;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
@@ -21,7 +19,6 @@ import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
-import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -130,18 +127,10 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
                                                        @NotNull VcsShortCommitDetails commit) throws VcsException {
     Hash hash = commit.getId();
     VirtualFile root = commit.getRoot();
-    VcsFullCommitDetails details = getChangesFromCache(data, hash, root);
+    VcsFullCommitDetails details = data.getCommitDetailsGetter().getCommitDataIfAvailable(data.getCommitIndex(hash, root));
     if (details == null) {
       details = VcsLogUtil.getDetails(data, root, hash);
     }
     return details.getChanges();
-  }
-
-  @Nullable
-  private static VcsFullCommitDetails getChangesFromCache(@NotNull VcsLogData data, @NotNull Hash hash, @NotNull VirtualFile root) {
-    Ref<VcsFullCommitDetails> details = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(() -> details.set(data.getCommitDetailsGetter().getCommitDataIfAvailable(data.getCommitIndex(hash, root))));
-    if (details.isNull() || details.get() instanceof LoadingDetails) return null;
-    return details.get();
   }
 }
