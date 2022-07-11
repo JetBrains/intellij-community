@@ -452,7 +452,8 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       return IntentionPreviewInfo.EMPTY;
     }
     PsiMethod method = (PsiMethod)getStartElement();
-    if (method.getContainingFile() == file.getOriginalFile()) {
+    PsiFile containingFile = method.getContainingFile();
+    if (containingFile == file.getOriginalFile()) {
       PsiMethod methodCopy = PsiTreeUtil.findSameElementInCopy(method, file);
       PsiTypeElement typeElement = methodCopy.getReturnTypeElement();
       if (typeElement != null) {
@@ -471,6 +472,6 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     String name = method.getName();
     String origText = modifiersText + oldTypeText + name + "(" + parameters + ")";
     String newText = modifiersText + newTypeText + name + "(" + parameters + ")";
-    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, origText, newText);
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, containingFile.getName(), origText, newText);
   }
 }
