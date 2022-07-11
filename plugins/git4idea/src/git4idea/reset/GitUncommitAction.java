@@ -12,13 +12,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.data.AbstractDataGetter;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.util.VcsLogUtil;
-import com.intellij.vcs.log.visible.VisiblePack;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitSingleCommitEditingAction;
@@ -83,7 +79,8 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
       public void run(@NotNull ProgressIndicator indicator) {
         Collection<Change> changesInCommit;
         try {
-          changesInCommit = getChangesInCommit(data, commit);
+          changesInCommit = AbstractDataGetter.getCommitDetails(data.getCommitDetailsGetter(),
+                                                                commit.getId(), commit.getRoot()).getChanges();
         }
         catch (VcsException e) {
           String message = GitBundle.message("git.undo.action.could.not.load.changes.of.commit", commit.getId().asString());
@@ -108,17 +105,5 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
         }
       }
     }.queue();
-  }
-
-  @NotNull
-  private static Collection<Change> getChangesInCommit(@NotNull VcsLogData data,
-                                                       @NotNull VcsShortCommitDetails commit) throws VcsException {
-    Hash hash = commit.getId();
-    VirtualFile root = commit.getRoot();
-    VcsFullCommitDetails details = data.getCommitDetailsGetter().getCommitDataIfAvailable(data.getCommitIndex(hash, root));
-    if (details == null) {
-      details = VcsLogUtil.getDetails(data, root, hash);
-    }
-    return details.getChanges();
   }
 }
