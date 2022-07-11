@@ -48,6 +48,8 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     }
   }
 
+  private val commitActions = commitActionsPanel.createActions()
+
   init {
     Disposer.register(this, commitMessage)
 
@@ -76,7 +78,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       }
     ChangesViewCommitTabTitleUpdater(this).start()
 
-    commitActionsPanel.setupShortcuts(rootComponent, this)
+    commitActions.forEach { it.registerCustomShortcutSet(rootComponent, this) }
     commitActionsPanel.isCommitButtonDefault = {
       !progressPanel.isDumbMode &&
       IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
