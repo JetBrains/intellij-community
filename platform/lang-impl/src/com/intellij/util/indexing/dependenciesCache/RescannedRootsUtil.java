@@ -113,19 +113,36 @@ class RescannedRootsUtil {
     if (after.size() == 1 && before != null && before.size() == 1) {
       SyntheticLibraryDescriptor afterLib = after.iterator().next();
       SyntheticLibraryDescriptor beforeLib = before.iterator().next();
-      if (afterLib.excludeFileCondition == null && beforeLib.excludeFileCondition == null) {
-        Collection<VirtualFile> newRoots = ContainerUtil.subtract(afterLib.getAllRoots(), beforeLib.getAllRoots());
-        if (!newRoots.isEmpty()) {
-          return Collections.singletonList(
-            new SyntheticLibraryIteratorBuilder(afterLib.library, afterLib.presentableLibraryName, newRoots));
-        }
-        else {
-          return Collections.emptyList();
-        }
+      //fallback to logic for SyntheticLibrary without comparisonId & excludeFileCondition
+      if (afterLib.comparisonId == null && beforeLib.comparisonId == null &&
+          !afterLib.hasExcludeFileCondition && !beforeLib.hasExcludeFileCondition) {
+        return createLibraryIteratorBuilders(beforeLib, afterLib);
       }
     }
-    return ContainerUtil.map(after,
-                             lib -> new SyntheticLibraryIteratorBuilder(lib.library, lib.presentableLibraryName, lib.getAllRoots()));
+    List<IndexableIteratorBuilder> result = new ArrayList<>();
+    for (SyntheticLibraryDescriptor afterLib : after) {
+      SyntheticLibraryDescriptor libForIncrementalRescanning = afterLib.getLibForIncrementalRescanning(before);
+      if (libForIncrementalRescanning != null) {
+        result.addAll(createLibraryIteratorBuilders(libForIncrementalRescanning, afterLib));
+      }
+      else {
+        result.add(new SyntheticLibraryIteratorBuilder(afterLib.library, afterLib.presentableLibraryName, afterLib.getAllRoots()));
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private static List<? extends IndexableIteratorBuilder> createLibraryIteratorBuilders(@NotNull SyntheticLibraryDescriptor beforeLib,
+                                                                                        @NotNull SyntheticLibraryDescriptor afterLib) {
+    Collection<VirtualFile> newRoots = ContainerUtil.subtract(afterLib.getAllRoots(), beforeLib.getAllRoots());
+    if (!newRoots.isEmpty()) {
+      return Collections.singletonList(
+        new SyntheticLibraryIteratorBuilder(afterLib.library, afterLib.presentableLibraryName, newRoots));
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 
   @NotNull

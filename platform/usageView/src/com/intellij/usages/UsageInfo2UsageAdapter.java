@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
@@ -347,11 +347,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       List<SyntheticLibrary> list = new ArrayList<>();
       for (AdditionalLibraryRootsProvider e : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
         for (SyntheticLibrary library : e.getAdditionalProjectLibraries(project)) {
-          if (library.getSourceRoots().contains(sourcesRoot)) {
-            Condition<VirtualFile> excludeFileCondition = library.getExcludeFileCondition();
-            if (excludeFileCondition == null || !excludeFileCondition.value(virtualFile)) {
-              list.add(library);
-            }
+          if (library.getSourceRoots().contains(sourcesRoot) && !library.isExcludedByConditions(virtualFile)) {
+            list.add(library);
           }
         }
       }

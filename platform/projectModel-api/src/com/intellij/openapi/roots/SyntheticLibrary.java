@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.navigation.ItemPresentation;
@@ -8,10 +8,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BooleanSupplier;
 
 /**
  * A lightweight library definition comparing to {@link com.intellij.openapi.roots.libraries.Library}.
@@ -36,9 +38,40 @@ import java.util.*;
  *   <li>{@link com.intellij.navigation.LocationPresentation}</li>
  *   <li>{@link com.intellij.pom.Navigatable} or {@link com.intellij.pom.NavigatableWithText}</li>
  * </ul>
+ * <p>
+ * <p>
+ * Providing comparisonId in constructor and constant ExcludeFileCondition instead of getExcludeFileCondition
+ * allows rescanning changes in library incrementally.
+ *
  * @see AdditionalLibraryRootsProvider
  */
 public abstract class SyntheticLibrary {
+
+  @Nullable
+  @NonNls
+  private final String myComparisonId;
+  protected final ExcludeFileCondition myConstantExcludeCondition;
+
+  /**
+   * Providing comparisonId in constructor and constant ExcludeFileCondition instead of getExcludeFileCondition
+   * allows rescanning changes in library incrementally.
+   *
+   * @param comparisonId             should be different for all {@link SyntheticLibrary} provided by the same {@link AdditionalLibraryRootsProvider}
+   * @param constantExcludeCondition must not depend on any data other than provided parameters, and should be very fast.
+   *                                 All comments to {@link SyntheticLibrary#getExcludedRoots()} also relate to it.
+   */
+  protected SyntheticLibrary(@Nullable @NonNls String comparisonId, @Nullable ExcludeFileCondition constantExcludeCondition) {
+    myComparisonId = comparisonId;
+    myConstantExcludeCondition = constantExcludeCondition;
+  }
+
+  public SyntheticLibrary() {
+    this(null, null);
+  }
+
+  public final @Nullable String getComparisonId() {
+    return myComparisonId;
+  }
 
   @NotNull
   public abstract Collection<VirtualFile> getSourceRoots();
@@ -64,10 +97,29 @@ public abstract class SyntheticLibrary {
    * <p>
    * NOTE 2: Try not to use file.getFileType() method since it might load file's content to know the type,
    * which will try to load encoding and guess files project which is lead to SOE.
+   *
+   *  NOTE 3: Non-null value blocks from incremental rescanning of library changes. Consider switching to constantExcludeCondition and
+   *  providing non-null comparisonId in constructor.
    */
   @Nullable
   public Condition<VirtualFile> getExcludeFileCondition() {
     return null;
+  }
+
+  @Nullable
+  public final Condition<VirtualFile> getConstantExcludeConditionAsCondition() {
+    if (myConstantExcludeCondition == null) return null;
+    Collection<VirtualFile> allRoots = getAllRoots();
+    return file -> myConstantExcludeCondition.shouldExclude(file.isDirectory(), file.getName(),
+                                                            () -> allRoots.contains(file),
+                                                            () -> {
+                                                              VirtualFile parent = file.getParent();
+                                                              return parent != null && allRoots.contains(parent);
+                                                            },
+                                                            () -> {
+                                                              VirtualFile parent = file.getParent();
+                                                              return parent == null || parent.getParent() != null;
+                                                            });
   }
 
   public boolean isShowInExternalLibrariesNode() {
@@ -169,5 +221,21 @@ public abstract class SyntheticLibrary {
   @NotNull
   private static List<? extends VirtualFile> asList(@NotNull Collection<? extends VirtualFile> collection) {
     return collection instanceof List ? (List<? extends VirtualFile>)collection : new ArrayList<>(collection);
+  }
+
+  public final boolean isExcludedByConditions(@NotNull VirtualFile file) {
+    Condition<VirtualFile> condition = getExcludeFileCondition();
+    if (condition != null && condition.value(file)) return true;
+    Condition<VirtualFile> constantCondition = getConstantExcludeConditionAsCondition();
+    if (constantCondition != null && constantCondition.value(file)) return true;
+    return false;
+  }
+
+  public interface ExcludeFileCondition {
+    boolean shouldExclude(boolean isDir,
+                          @NotNull String filename,
+                          @NotNull BooleanSupplier isRoot,
+                          @NotNull BooleanSupplier isStrictRootChild,
+                          @NotNull BooleanSupplier hasParentNotGrandparent);
   }
 }

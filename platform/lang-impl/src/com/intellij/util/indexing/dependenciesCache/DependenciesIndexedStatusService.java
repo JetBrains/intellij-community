@@ -4,6 +4,7 @@ package com.intellij.util.indexing.dependenciesCache;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
+import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -14,10 +15,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 
@@ -27,9 +25,11 @@ import static com.intellij.util.indexing.roots.IndexableEntityProvider.Indexable
  * to rescan only them on rootsChanged event with
  * {@link com.intellij.openapi.project.RootsChangeRescanningInfo#RESCAN_DEPENDENCIES_IF_NEEDED}
  * <p>
- * Note that non-null {@link com.intellij.openapi.roots.SyntheticLibrary#getExcludeFileCondition()} is considered always changed, and
- * {@link com.intellij.openapi.roots.SyntheticLibrary} is rescanned incrementally only if its {@link AdditionalLibraryRootsProvider}
- * returns only one library.
+ * Note that non-null {@link SyntheticLibrary#getExcludeFileCondition()} is considered always changed, and then
+ * {@link SyntheticLibrary} is rescanned incrementally only if its {@link AdditionalLibraryRootsProvider}
+ * returns only one library. {@link SyntheticLibrary} with null {@link SyntheticLibrary#getExcludeFileCondition()}
+ * and non-null comparisonId is always rescanned incrementally, matched by comparisonId,
+ * and having constant exclusion condition {@link SyntheticLibrary.ExcludeFileCondition}.
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -117,11 +117,29 @@ public class DependenciesIndexedStatusService {
   @NotNull
   public List<IndexableFilesIterator> saveLibsAndInstantiateLibraryIterators() {
     LOG.assertTrue(shouldSaveStatus());
-    List<SyntheticLibraryDescriptor> libraries = SyntheticLibraryDescriptor.collectDescriptors(project);
+    List<SyntheticLibraryDescriptor> libraries = collectAdditionalLibDescriptors(project);
     synchronized (LOCK) {
       currentlyCollectedStatus = currentlyCollectedStatus.createWithLibs(getVersion(), libraries);
     }
     return ContainerUtil.map(libraries, lib -> lib.toIndexableIterator());
+  }
+
+  @NotNull
+  private static List<SyntheticLibraryDescriptor> collectAdditionalLibDescriptors(@NotNull Project project) {
+    List<SyntheticLibraryDescriptor> libraries = new ArrayList<>();
+    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
+      Set<String> comparisonIds = new HashSet<>();
+      Collection<SyntheticLibrary> allLibs = provider.getAdditionalProjectLibraries(project);
+      for (SyntheticLibrary library : allLibs) {
+        String id = library.getComparisonId();
+        if (id != null && !comparisonIds.add(id)) {
+          LOG.error("Multiple libraries have comparison id " + id + ": " +
+                    ContainerUtil.filter(allLibs, lib -> id.equals(lib.getComparisonId())));
+        }
+        libraries.add(new SyntheticLibraryDescriptor(library, provider));
+      }
+    }
+    return libraries;
   }
 
   @NotNull
@@ -153,7 +171,7 @@ public class DependenciesIndexedStatusService {
 
   @NotNull
   private MyStatus getCurrentStatus() {
-    List<SyntheticLibraryDescriptor> libraries = SyntheticLibraryDescriptor.collectDescriptors(project);
+    List<SyntheticLibraryDescriptor> libraries = collectAdditionalLibDescriptors(project);
     List<IndexableSetContributorDescriptor> contributors = IndexableSetContributorDescriptor.collectDescriptors(project);
     List<ExcludePolicyDescriptor> excludePolicies = ExcludePolicyDescriptor.collectDescriptors(project);
     return new MyStatus(getVersion(), libraries, contributors, excludePolicies);

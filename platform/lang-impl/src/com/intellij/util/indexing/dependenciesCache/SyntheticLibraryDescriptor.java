@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.util.Condition;
@@ -14,9 +13,7 @@ import com.intellij.util.indexing.roots.SyntheticLibraryIndexableFilesIteratorIm
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.Collection;
 import java.util.Set;
 
 class SyntheticLibraryDescriptor {
@@ -24,6 +21,8 @@ class SyntheticLibraryDescriptor {
   public final Class<? extends AdditionalLibraryRootsProvider> providerClass;
   @NotNull
   public final AdditionalLibraryRootsProvider provider;
+  @Nullable
+  public final String comparisonId;
   @NotNull
   public final SyntheticLibrary library;
   @Nullable @NlsSafe
@@ -37,8 +36,7 @@ class SyntheticLibraryDescriptor {
   public final Set<VirtualFile> binaryRoots;
   @NotNull
   public final Set<VirtualFile> excludedRoots;
-  @Nullable
-  public final Condition<VirtualFile> excludeFileCondition;
+  public final boolean hasExcludeFileCondition;
 
   SyntheticLibraryDescriptor(@NotNull SyntheticLibrary library,
                              @NotNull AdditionalLibraryRootsProvider provider) {
@@ -62,18 +60,25 @@ class SyntheticLibraryDescriptor {
                                      @Nullable Condition<VirtualFile> excludeFileCondition) {
     this.provider = provider;
     this.providerClass = provider.getClass();
+    this.comparisonId = library.getComparisonId();
     this.library = library;
     this.presentableLibraryName = presentableLibraryName;
     this.debugLibraryName = debugLibraryName;
     this.sourceRoots = sourceRoots;
     this.binaryRoots = binaryRoots;
     this.excludedRoots = excludedRoots;
-    this.excludeFileCondition = excludeFileCondition;
+    this.hasExcludeFileCondition = excludeFileCondition != null;
   }
 
   @NotNull
   public SyntheticLibraryIndexableFilesIteratorImpl toIndexableIterator() {
     return new SyntheticLibraryIndexableFilesIteratorImpl(presentableLibraryName, library, getAllRoots());
+  }
+
+  @Nullable
+  public SyntheticLibraryDescriptor getLibForIncrementalRescanning(@Nullable Collection<? extends SyntheticLibraryDescriptor> before) {
+    if (before == null || comparisonId == null || hasExcludeFileCondition) return null;
+    return ContainerUtil.find(before, lib -> comparisonId.equals(lib.comparisonId));
   }
 
   @NotNull
@@ -96,42 +101,12 @@ class SyntheticLibraryDescriptor {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SyntheticLibraryDescriptor that = (SyntheticLibraryDescriptor)o;
-    if ((excludeFileCondition != null) || (that.excludeFileCondition != null)) {
-      return false;
-    }
-    return providerClass.equals(that.providerClass) &&
-           sourceRoots.equals(that.sourceRoots) &&
-           binaryRoots.equals(that.binaryRoots) &&
-           excludedRoots.equals(that.excludedRoots);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(providerClass, sourceRoots, binaryRoots, excludedRoots, excludeFileCondition == null);
-  }
-
-  @Override
   public String toString() {
     return "SyntheticLibraryDescriptor{" +
            "providerClass=" + providerClass.getSimpleName() +
            ", sourceRoots=" + sourceRoots +
            ", binaryRoots=" + binaryRoots +
            ", excludedRoots=" + excludedRoots +
-           ", excludeFileCondition=" + (excludeFileCondition == null ? "<none>" : "exists") + '}';
-  }
-
-  @NotNull
-  static List<SyntheticLibraryDescriptor> collectDescriptors(@NotNull Project project) {
-    List<SyntheticLibraryDescriptor> libraries = new ArrayList<>();
-    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
-      for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(project)) {
-        libraries.add(new SyntheticLibraryDescriptor(library, provider));
-      }
-    }
-    return libraries;
+           ", hasExcludeFileCondition=" + hasExcludeFileCondition + '}';
   }
 }
