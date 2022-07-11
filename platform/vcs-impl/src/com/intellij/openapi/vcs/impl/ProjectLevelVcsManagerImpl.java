@@ -937,6 +937,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   static final class ActivateVcsesStartupActivity implements VcsStartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
+      project.getService(VcsDirectoryMappingStorage.class); // read vcs.xml
       getInstanceImpl(project).myMappings.activateActiveVcses();
     }
 
