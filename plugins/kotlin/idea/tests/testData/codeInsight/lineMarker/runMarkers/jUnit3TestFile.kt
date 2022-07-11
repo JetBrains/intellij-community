@@ -61,7 +61,7 @@ class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg
 }
 
 abstract class <lineMarker>AbstractFoo</lineMarker>: TestCase() {
-    inner class <lineMarker descr="Run Test">FooCase</lineMarker> : AbstractFoo() {
+    inner class FooCase : AbstractFoo() {
         fun testFoo() {
 
         }

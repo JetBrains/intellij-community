@@ -231,7 +231,7 @@ public final class JUnitUtil {
   }
 
   public static boolean isJUnit3TestClass(final PsiClass clazz) {
-    return isTestCaseInheritor(clazz);
+    return PsiClassUtil.isRunnableClass(clazz, true, false) && isTestCaseInheritor(clazz);
   }
 
   public static boolean isJUnit4TestClass(final PsiClass psiClass) {

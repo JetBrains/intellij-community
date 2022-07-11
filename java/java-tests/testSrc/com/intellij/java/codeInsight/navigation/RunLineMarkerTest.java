@@ -196,7 +196,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
                                                                    "", ""));
       myFixture.addClass("package junit.framework; public class TestCase {}");
       PsiFile file = myFixture.configureByText("MainTest.java", "public class Main {\n" +
-                                                                "  public class Main<caret>Test extends junit.framework.TestCase {\n" +
+                                                                "  public static class Main<caret>Test extends junit.framework.TestCase {\n" +
                                                                 "    public void testFoo() {\n" +
                                                                 "    }\n" +
                                                                 "  }" +

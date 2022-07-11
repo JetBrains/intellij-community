@@ -39,6 +39,7 @@ class JUnit3KotlinTestFramework : AbstractKotlinTestFramework() {
     }
 
     private fun isJUnit3TestClass(declaration: KtClassOrObject): Boolean {
+        if (declaration is KtClass && declaration.isInner()) return false
         for (superTypeEntry in declaration.superTypeListEntries) {
             if (superTypeEntry is KtSuperTypeCallEntry && superTypeEntry.valueArguments.isEmpty()) {
                 val containingFile = declaration.containingKtFile
