@@ -21,6 +21,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetMo
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
+import javax.swing.tree.TreePath
 
 internal fun computeModuleTreeModel(
     modules: List<ModuleModel>
@@ -63,3 +64,16 @@ private fun DefaultMutableTreeNode.appendChildren(
 
     return this
 }
+
+internal fun DefaultMutableTreeNode.findPathWithData(currentTargetModules: TargetModules): TreePath? {
+    if (targetModulesOrNull()?.id == currentTargetModules.id) {
+        return TreePath(path)
+    }
+
+    return children().asSequence()
+        .filterIsInstance<DefaultMutableTreeNode>()
+        .mapNotNull { it.findPathWithData(currentTargetModules) }
+        .firstOrNull()
+}
+
+private fun DefaultMutableTreeNode.targetModulesOrNull() = userObject as? TargetModules

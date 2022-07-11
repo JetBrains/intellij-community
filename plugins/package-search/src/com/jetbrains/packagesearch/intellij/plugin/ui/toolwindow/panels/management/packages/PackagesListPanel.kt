@@ -138,10 +138,6 @@ internal class PackagesListPanel(
     val onlyStableStateFlow: StateFlow<Boolean> = onlyStableMutableStateFlow
     val selectedPackageStateFlow: StateFlow<UiPackageModel<*>?> = packagesTable.selectedPackageStateFlow
 
-    val dataModelStateFlow = selectedPackageStateFlow.mapNotNull { it?.packageModel }
-        .filterIsInstance<PackageModel.Installed>()
-        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, null)
-
     private val onlyMultiplatformStateFlow = MutableStateFlow(false)
     private val searchQueryStateFlow = MutableStateFlow("")
     private val isSearchingStateFlow = MutableStateFlow(false)

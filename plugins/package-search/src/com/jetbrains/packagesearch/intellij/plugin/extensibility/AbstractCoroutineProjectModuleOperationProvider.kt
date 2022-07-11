@@ -109,7 +109,11 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
 
         suspend fun declaredDependenciesInModule(module: ProjectModule) =
             catchingReadAction { DependencyModifierService.getInstance(module.nativeModule.project).declaredDependencies(module.nativeModule) }
-                .onFailure { logWarn(this::class.qualifiedName!!, it) }
+                .onFailure {
+                    logWarn(this::class.qualifiedName!! + "#declaredDependenciesInModule", it){
+                        "Error while listing declared dependencies in module ${module.name}"
+                    }
+                }
                 .map { it.map { it.unifiedDependency } }
                 .getOrElse { emptyList() }
 
@@ -139,7 +143,7 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
 
         suspend fun listRepositoriesInModule(module: ProjectModule) =
             catchingReadAction { DependencyModifierService.getInstance(module.nativeModule.project).declaredRepositories(module.nativeModule) }
-                .onFailure { logWarn(this::class.qualifiedName!!, it) }
+                .onFailure { logWarn(this::class.qualifiedName!! + "#listRepositoriesInModule", it){ "Error while listing repositories in module ${module.name}" } }
                 .getOrElse { emptyList() }
     }
 
