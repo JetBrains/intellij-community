@@ -8,7 +8,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -185,6 +188,30 @@ public interface IntentionPreviewInfo {
       .append(iconChunk)
       .append(newName)
       .toFragment();
-    return new Html(fragment, icon == null ? Map.of() : Map.of("file", icon));
+    return new Html(fragment.wrapWith("p"), icon == null ? Map.of() : Map.of("file", icon));
+  }
+
+  /**
+   * @param file    file to be moved
+   * @param directory target directory
+   * @return a preview that visualizes the file move
+   */
+  static @NotNull IntentionPreviewInfo moveToDirectory(@NotNull VirtualFile file, @NotNull VirtualFile directory) {
+    Icon fileIcon = IconUtil.getIcon(file, 0, null);
+    Icon dirIcon = IconUtil.getIcon(directory, 0, null);
+    @NlsSafe String location = VfsUtilCore.getRelativeLocation(directory, file.getParent());
+    if (location == null) {
+      location = directory.getPath();
+    }
+    HtmlChunk fragment = new HtmlBuilder()
+      .append(HtmlChunk.tag("icon").attr("src", "file"))
+      .nbsp()
+      .append(file.getName())
+      .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
+      .append(HtmlChunk.tag("icon").attr("src", "dir"))
+      .nbsp()
+      .append(location)
+      .toFragment();
+    return new Html(fragment.wrapWith("p"), Map.of("file", fileIcon, "dir", dirIcon));
   }
 }
