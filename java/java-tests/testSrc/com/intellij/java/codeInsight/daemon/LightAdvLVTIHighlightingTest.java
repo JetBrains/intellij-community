@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.IdempotenceChecker;
 
 public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advLVTI";
@@ -62,6 +63,7 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     final int offset = getEditor().getCaretModel().getOffset();
     PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(getFile().findElementAt(offset), PsiMethodCallExpression.class);
+    IdempotenceChecker.disableRandomChecksUntil(getTestRootDisposable());
     assertTrue(expression.resolveMethodGenerics().isValidResult());
   }
 
