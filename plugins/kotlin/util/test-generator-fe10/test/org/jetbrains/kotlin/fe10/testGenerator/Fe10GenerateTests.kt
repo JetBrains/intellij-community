@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinArgumentsHintsP
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangesHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinReferenceTypeHintsProviderTest
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1IntentionTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTest
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
@@ -285,6 +286,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("outputFiles")
         }
     }
+
 
     testGroup("idea/tests") {
         testClass<AbstractAdditionalResolveDescriptorRendererTest> {
@@ -1338,6 +1340,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractPerformanceCompletionCharFilterTest> {
             model("handlers/charFilter", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
+        }
+    }
+
+    testGroup("code-insight/inspections-intentions-shared/tests/k1", testDataPath = "../testData") {
+        testClass<AbstractSharedK1IntentionTest> {
+            model("intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"))
         }
     }
 }

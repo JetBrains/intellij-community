@@ -221,5 +221,7 @@
     <module name="kotlin.project-wizard.idea"/>
     <module name="kotlin.project-wizard.gradle"/>
     <module name="kotlin.project-wizard.maven"/>
+
+    <module name="kotlin.code-insight.inspections-intentions-shared"/>
   </content>
 </idea-plugin>

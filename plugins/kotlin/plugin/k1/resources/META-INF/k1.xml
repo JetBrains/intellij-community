@@ -79,5 +79,7 @@
 
     <module name="kotlin.copyright"/>
     <module name="kotlin.injection"/>
+
+    <module name="kotlin.code-insight.inspections-intentions-shared"/>
   </content>
 </idea-plugin>

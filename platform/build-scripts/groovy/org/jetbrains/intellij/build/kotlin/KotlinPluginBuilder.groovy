@@ -159,6 +159,8 @@ final class KotlinPluginBuilder {
     "kotlin.base.fir.analysis-api-providers",
     "kotlin.base.fir.code-insight",
     "kotlin.code-insight.api",
+    "kotlin.code-insight.utils",
+    "kotlin.code-insight.inspections-intentions-shared",
     "kotlin.fir",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",

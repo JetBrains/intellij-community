@@ -124,6 +124,8 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.scripting-support" exported="" />
     <orderEntry type="module" module-name="kotlin.inspections-fe10" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-intentions-shared" />
     <orderEntry type="module" module-name="kotlin.features-trainer" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.run-configurations.jvm" exported="" />

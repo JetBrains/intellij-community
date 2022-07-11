@@ -1,26 +1,27 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.intentions
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.refactoring.getLineNumber
+import org.jetbrains.kotlin.idea.codeinsight.utils.getControlFlowElementDescription
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-class AddBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class.java, KotlinBundle.lazyMessage("add.braces")) {
+internal class AddBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class.java, KotlinBundle.lazyMessage("add.braces")) {
     override fun isApplicableTo(element: KtElement, caretOffset: Int): Boolean {
         val expression = element.getTargetExpression(caretOffset) ?: return false
         if (expression is KtBlockExpression) return false
 
         return when (val parent = expression.parent) {
             is KtContainerNode -> {
-                val description = parent.description() ?: return false
+                val description = parent.getControlFlowElementDescription() ?: return false
                 setTextGetter(KotlinBundle.lazyMessage("add.braces.to.0.statement", description))
                 true
             }

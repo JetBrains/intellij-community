@@ -106,6 +106,7 @@ import kotlin.math.min
 import org.jetbrains.kotlin.idea.core.util.getLineCount as newGetLineCount
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 
 const val CHECK_SUPER_METHODS_YES_NO_DIALOG = "CHECK_SUPER_METHODS_YES_NO_DIALOG"
 
@@ -336,11 +337,9 @@ fun PsiFile.getLineEndOffset(line: Int): Int? {
     return document?.getLineEndOffset(line)
 }
 
+@Deprecated("Use org.jetbrains.kotlin.idea.base.psi.GeneralPsiElementUtilsKt.getLineNumber instead",)
 fun PsiElement.getLineNumber(start: Boolean = true): Int {
-    val document = containingFile.viewProvider.document ?: PsiDocumentManager.getInstance(project).getDocument(containingFile)
-    val index = if (start) this.startOffset else this.endOffset
-    if (index > (document?.textLength ?: 0)) return 0
-    return document?.getLineNumber(index) ?: 0
+   return _getLineNumber(start)
 }
 
 class SeparateFileWrapper(manager: PsiManager) : LightElement(manager, KotlinLanguage.INSTANCE) {

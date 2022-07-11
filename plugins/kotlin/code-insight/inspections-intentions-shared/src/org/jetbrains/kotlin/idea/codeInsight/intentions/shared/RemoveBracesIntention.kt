@@ -1,6 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.intentions
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
@@ -9,11 +9,12 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.getControlFlowElementDescription
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class.java, KotlinBundle.lazyMessage("remove.braces")) {
+internal class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class.java, KotlinBundle.lazyMessage("remove.braces")) {
     private fun KtElement.findChildBlock() = when (this) {
         is KtBlockExpression -> this
         is KtLoopExpression -> body as? KtBlockExpression
@@ -26,7 +27,7 @@ class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class
         if (!isApplicableTo(block)) return false
         when (val container = block.parent) {
             is KtContainerNode -> {
-                val description = container.description() ?: return false
+                val description = container.getControlFlowElementDescription() ?: return false
                 setTextGetter(KotlinBundle.lazyMessage("remove.braces.from.0.statement", description))
             }
             is KtWhenEntry -> {
