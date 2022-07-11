@@ -8,10 +8,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.nio.file.Path
 
 @Service
 class VersionCatalogsLocator(val myProject: Project) {
-  fun getVersionCatalogsForModule(module: Module): Map<String, String> {
+  fun getVersionCatalogsForModule(module: Module): Map<String, Path> {
     val externalProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module) ?: return emptyMap()
     val projectInfo = ProjectDataManager.getInstance()
                         .getExternalProjectData(myProject, GradleConstants.SYSTEM_ID, externalProjectPath)
@@ -20,6 +21,6 @@ class VersionCatalogsLocator(val myProject: Project) {
       ExternalSystemApiUtil.find(it, BuildScriptClasspathData.VERSION_CATALOGS)?.data
     }
                                ?: return emptyMap()
-    return versionCatalogsModel.catalogsLocations
+    return versionCatalogsModel.catalogsLocations.mapValues { entry -> Path.of(entry.value) }
   }
 }

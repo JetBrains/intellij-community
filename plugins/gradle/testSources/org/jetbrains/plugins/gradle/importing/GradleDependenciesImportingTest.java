@@ -1932,9 +1932,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                     ).generate());
 
     VersionCatalogsLocator locator = myProject.getService(VersionCatalogsLocator.class);
-    final Map<String, String> stringStringMap = locator.getVersionCatalogsForModule(getModule("project.main"));
-    assertThat(stringStringMap).containsOnly(entry("libs1", toml1.getPath()),
-                                             entry("libs2", toml2.getPath()));
+    final Map<String, Path> stringStringMap = locator.getVersionCatalogsForModule(getModule("project.main"));
+    assertThat(stringStringMap).containsOnly(entry("libs1", Path.of(toml1.getPath())),
+                                             entry("libs2", Path.of(toml2.getPath())));
   }
 
   @SuppressWarnings("SameParameterValue")
