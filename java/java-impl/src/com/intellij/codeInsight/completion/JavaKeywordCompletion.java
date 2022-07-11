@@ -814,7 +814,8 @@ public class JavaKeywordCompletion {
     }
     if (parent.getParent() instanceof PsiExpressionStatement) {
       PsiElement previous = PsiTreeUtil.skipWhitespacesBackward(parent.getParent());
-      return previous == null || !(previous.getLastChild() instanceof PsiErrorElement);
+      return previous == null || previous.getLastChild() == null ||
+             !(PsiTreeUtil.getDeepestLast(previous.getLastChild()) instanceof PsiErrorElement);
     }
     return true;
   }

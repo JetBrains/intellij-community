@@ -2698,4 +2698,11 @@ class Abc {
       settings.setInsertParenthesesAutomatically(true)
     }
   }
+
+  void testNoPrimitiveTypeInElseIfCondition() {
+    myFixture.configureByText("Test.java", "class X {void a(Object obj) {if(obj instanceof String) {} else if (obj in<caret>)")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == null
+    myFixture.checkResult("class X {void a(Object obj) {if(obj instanceof String) {} else if (obj instanceof )")
+  }
 }
