@@ -23,7 +23,7 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
   val project: Project get() = tree.project
 
   open fun start() {
-    doWhenFirstShown(tree) { updateTab() } // as UI components could be created before tool window `Content`
+    doWhenFirstShown(tree, { updateTab() }, this)  // as UI components could be created before tool window `Content`
 
     branchComponent.addChangeListener(this::updateTab, this)
     Disposer.register(this) { setDefaultTitle() }

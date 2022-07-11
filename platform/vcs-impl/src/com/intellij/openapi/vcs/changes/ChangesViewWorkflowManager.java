@@ -2,15 +2,34 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.Topic;
+import com.intellij.vcs.commit.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EventListener;
+
 @Service
-public final class ChangesViewWorkflowManager {
+public final class ChangesViewWorkflowManager implements Disposable {
+  @Topic.ProjectLevel
+  public static final Topic<ChangesViewWorkflowListener> TOPIC =
+    new Topic<>(ChangesViewWorkflowListener.class, Topic.BroadcastDirection.NONE, true);
+
   @NotNull private final Project myProject;
+
+  @Nullable private ChangesViewPanel myChangesPanel;
+  @Nullable private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
 
   @NotNull
   public static ChangesViewWorkflowManager getInstance(@NotNull Project project) {
@@ -19,10 +38,62 @@ public final class ChangesViewWorkflowManager {
 
   public ChangesViewWorkflowManager(@NotNull Project project) {
     myProject = project;
+
+    MessageBusConnection busConnection = project.getMessageBus().connect(this);
+    CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateCommitWorkflow());
+    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflow(), ModalityState.NON_MODAL, myProject.getDisposed());
+  }
+
+  @NotNull
+  @RequiresEdt
+  ChangesViewPanel getChangesPanel() {
+    if (myChangesPanel == null) {
+      myChangesPanel = new ChangesViewPanel(myProject);
+    }
+    return myChangesPanel;
   }
 
   @Nullable
   public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
-    return ((ChangesViewManager)ChangesViewManager.getInstance(myProject)).getCommitWorkflowHandler();
+    return myCommitWorkflowHandler;
+  }
+
+  @RequiresEdt
+  private void updateCommitWorkflow() {
+    boolean isNonModal = CommitModeManager.getInstance(myProject).getCurrentCommitMode() instanceof CommitMode.NonModalCommitMode;
+    if (isNonModal) {
+      if (myCommitWorkflowHandler == null) {
+        Activity activity = StartUpMeasurer.startActivity("ChangesViewWorkflowManager initialization", ActivityCategory.DEFAULT);
+
+        ChangesViewPanel changesPanel = getChangesPanel(); // can be reused between workflow instances -> should clean up after ourselves
+        ChangesViewCommitWorkflow workflow = new ChangesViewCommitWorkflow(myProject);
+        ChangesViewCommitPanel commitPanel = new ChangesViewCommitPanel(myProject, changesPanel);
+        myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(workflow, commitPanel);
+
+        myProject.getMessageBus().syncPublisher(TOPIC).commitWorkflowChanged();
+
+        activity.end();
+      }
+    }
+    else {
+      if (myCommitWorkflowHandler != null) {
+        Disposer.dispose(myCommitWorkflowHandler);
+        myCommitWorkflowHandler = null;
+
+        myProject.getMessageBus().syncPublisher(TOPIC).commitWorkflowChanged();
+      }
+    }
+  }
+
+  @Override
+  public void dispose() {
+    if (myCommitWorkflowHandler != null) {
+      Disposer.dispose(myCommitWorkflowHandler);
+      myCommitWorkflowHandler = null;
+    }
+  }
+
+  public interface ChangesViewWorkflowListener extends EventListener {
+    void commitWorkflowChanged();
   }
 }

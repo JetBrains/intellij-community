@@ -57,7 +57,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   init {
     Disposer.register(this, inclusionModel)
-    Disposer.register(ui, this)
+    Disposer.register(this, ui)
 
     workflow.addListener(this, this)
     workflow.addCommitListener(GitCommitStateCleaner(), this)
@@ -174,7 +174,7 @@ internal class ChangesViewCommitWorkflowHandler(
   fun activate(): Boolean = fireActivityStateChanged { ui.activate() }
   fun deactivate(isRestoreState: Boolean) = fireActivityStateChanged { ui.deactivate(isRestoreState) }
 
-  fun addActivityListener(listener: ActivityListener, parent: Disposable) = activityEventDispatcher.addListener(listener, parent)
+  fun addActivityListener(listener: ActivityListener) = activityEventDispatcher.addListener(listener)
 
   private fun <T> fireActivityStateChanged(block: () -> T): T {
     val oldValue = isActive

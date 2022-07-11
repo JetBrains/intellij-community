@@ -3,6 +3,8 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
@@ -30,10 +32,10 @@ import kotlin.properties.Delegates.observable
 
 internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
 
-class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel) :
-  NonModalCommitPanel(changesViewHost.changesView.project), ChangesViewCommitWorkflowUi {
+class ChangesViewCommitPanel(project: Project, private val changesViewHost: ChangesViewPanel)
+  : NonModalCommitPanel(project), ChangesViewCommitWorkflowUi {
 
-  val changesView get() = changesViewHost.changesView
+  private val changesView get() = changesViewHost.changesView
 
   private val toolbarPanel = simplePanel().apply {
     isOpaque = false
@@ -85,6 +87,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel) :
   }
 
   fun registerRootComponent(newRootComponent: JComponent) {
+    logger<ChangesViewCommitPanel>().assertTrue(rootComponent == null)
     rootComponent = newRootComponent
     commitActions.forEach { it.registerCustomShortcutSet(newRootComponent, this) }
   }
