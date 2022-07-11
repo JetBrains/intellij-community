@@ -58,7 +58,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   // null keys must be supported
   // null key - root frame
-  private val projectToFrame: MutableMap<Project?, ProjectFrameHelper> = HashMap()
+  private val projectToFrame = HashMap<Project?, ProjectFrameHelper>()
 
   internal val defaultFrameInfoHelper = FrameInfoHelper()
 

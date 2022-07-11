@@ -44,7 +44,7 @@ import java.nio.file.Path
 import kotlin.math.min
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
-  open suspend fun <T : Any> run(task: suspend () -> T?): T? {
+  open suspend fun <T : Any> run(task: suspend () -> T): T {
     if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
       saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
     }
@@ -68,7 +68,7 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
 internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
   private val deferredProjectFrameHelper = CompletableDeferred<ProjectFrameHelper>()
 
-  override suspend fun <T : Any> run(task: suspend () -> T?): T? {
+  override suspend fun <T : Any> run(task: suspend () -> T): T {
     if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
       withContext(Dispatchers.EDT) {
         SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(ProjectManager.getInstance().defaultProject)
@@ -124,9 +124,9 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
   }
 
   override suspend fun projectLoaded(project: Project) {
+    val windowManager = WindowManager.getInstance() as WindowManagerImpl
+    val frameHelper = deferredProjectFrameHelper.await()
     withContext(Dispatchers.EDT) {
-      val windowManager = WindowManager.getInstance() as WindowManagerImpl
-      val frameHelper = deferredProjectFrameHelper.await()
       runActivity("project frame assigning") {
         windowManager.assignFrame(frameHelper, project)
       }

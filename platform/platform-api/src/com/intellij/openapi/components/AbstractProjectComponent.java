@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 /**
  * @deprecated Components are deprecated, please see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html">SDK Docs</a> for guidelines on migrating to other APIs.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class AbstractProjectComponent implements ProjectComponent {
   protected final Project myProject;
 

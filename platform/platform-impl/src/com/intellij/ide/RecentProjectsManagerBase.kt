@@ -243,12 +243,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
       for (project in openProjects) {
         val path = getProjectPath(project)
-        val info = if (path == null) null else state.additionalInfo.get(path)
-        if (info != null) {
-          info.opened = true
-          info.projectOpenTimestamp = System.currentTimeMillis()
-          info.displayName = getProjectDisplayName(project)
-        }
+        val info = path?.let { state.additionalInfo.get(it) } ?: continue
+        info.opened = true
+        info.projectOpenTimestamp = System.currentTimeMillis()
+        info.displayName = getProjectDisplayName(project)
       }
       state.validateRecentProjects(modCounter)
     }

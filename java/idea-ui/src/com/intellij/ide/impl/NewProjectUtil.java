@@ -138,7 +138,7 @@ public final class NewProjectUtil {
 
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     try {
-      Path projectFile = Paths.get(projectFilePath);
+      Path projectFile = Path.of(projectFilePath);
       Path projectDir;
       if (wizard.getStorageScheme() == StorageScheme.DEFAULT) {
         projectDir = projectFile.getParent();

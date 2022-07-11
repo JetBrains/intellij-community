@@ -26,10 +26,10 @@ import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Consumer
-import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
 
 /**
@@ -42,22 +42,20 @@ import kotlin.io.path.pathString
  */
 @ApiStatus.Internal
 suspend fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectFileOrDir: Path): Boolean {
-  return withContext(Dispatchers.EDT) {
-    val projectDir = if (projectFileOrDir.isDirectory()) projectFileOrDir else projectFileOrDir.parent
-    val trustedPaths = TrustedPaths.getInstance()
-    val trustedState = trustedPaths.getProjectPathTrustedState(projectDir)
-    if (trustedState == ThreeState.UNSURE) {
-      when (confirmOpeningUntrustedProject(projectDir)) {
-        OpenUntrustedProjectChoice.TRUST_AND_OPEN -> trustedPaths.setProjectPathTrusted(projectDir, true)
-        OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE -> trustedPaths.setProjectPathTrusted(projectDir, false)
-        OpenUntrustedProjectChoice.CANCEL -> return@withContext false
-      }
+  val projectDir = if (Files.isDirectory(projectFileOrDir)) projectFileOrDir else projectFileOrDir.parent
+  val trustedPaths = TrustedPaths.getInstance()
+  val trustedState = trustedPaths.getProjectPathTrustedState(projectDir)
+  if (trustedState == ThreeState.UNSURE) {
+    when (confirmOpeningUntrustedProject(projectDir)) {
+      OpenUntrustedProjectChoice.TRUST_AND_OPEN -> trustedPaths.setProjectPathTrusted(projectDir, true)
+      OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE -> trustedPaths.setProjectPathTrusted(projectDir, false)
+      OpenUntrustedProjectChoice.CANCEL -> return false
     }
-    true
   }
+  return true
 }
 
-private fun confirmOpeningUntrustedProject(projectDir: Path): OpenUntrustedProjectChoice {
+private suspend fun confirmOpeningUntrustedProject(projectDir: Path): OpenUntrustedProjectChoice {
   val fileName = projectDir.fileName ?: projectDir.pathString
   return confirmOpeningUntrustedProject(
     projectDir,
@@ -69,27 +67,29 @@ private fun confirmOpeningUntrustedProject(projectDir: Path): OpenUntrustedProje
   )
 }
 
-private fun confirmOpeningUntrustedProject(
+private suspend fun confirmOpeningUntrustedProject(
   projectDir: Path,
   @NlsContexts.DialogTitle title: String,
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String,
   @NlsContexts.Button cancelButtonText: String
-): OpenUntrustedProjectChoice = invokeAndWaitIfNeeded {
+): OpenUntrustedProjectChoice {
   if (isProjectImplicitlyTrusted(projectDir)) {
-    return@invokeAndWaitIfNeeded OpenUntrustedProjectChoice.TRUST_AND_OPEN
+    return OpenUntrustedProjectChoice.TRUST_AND_OPEN
   }
 
-  val doNotAskOption = projectDir.parent?.let { createDoNotAskOptionForLocation(it) }
-  val choice = MessageDialogBuilder.Message(title, message)
-    .buttons(trustButtonText, distrustButtonText, cancelButtonText)
-    .defaultButton(trustButtonText)
-    .focusedButton(distrustButtonText)
-    .doNotAsk(doNotAskOption)
-    .asWarning()
-    .help(TRUSTED_PROJECTS_HELP_TOPIC)
-    .show()
+  val doNotAskOption = projectDir.parent?.let(::createDoNotAskOptionForLocation)
+  val choice = withContext(Dispatchers.EDT) {
+    MessageDialogBuilder.Message(title, message)
+      .buttons(trustButtonText, distrustButtonText, cancelButtonText)
+      .defaultButton(trustButtonText)
+      .focusedButton(distrustButtonText)
+      .doNotAsk(doNotAskOption)
+      .asWarning()
+      .help(TRUSTED_PROJECTS_HELP_TOPIC)
+      .show()
+  }
 
   val openChoice = when (choice) {
     trustButtonText -> OpenUntrustedProjectChoice.TRUST_AND_OPEN
@@ -97,11 +97,11 @@ private fun confirmOpeningUntrustedProject(
     cancelButtonText, null -> OpenUntrustedProjectChoice.CANCEL
     else -> {
       LOG.error("Illegal choice $choice")
-      return@invokeAndWaitIfNeeded OpenUntrustedProjectChoice.CANCEL
+      return OpenUntrustedProjectChoice.CANCEL
     }
   }
   TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
-  return@invokeAndWaitIfNeeded openChoice
+  return openChoice
 }
 
 fun confirmLoadingUntrustedProject(
@@ -224,8 +224,7 @@ fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 @Deprecated("Use TrustedPaths instead")
-class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSettings.State>(State()) {
-
+internal class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSettings.State>(State()) {
   class State : BaseState() {
     @get:Attribute
     var isTrusted by enum(ThreeState.UNSURE)

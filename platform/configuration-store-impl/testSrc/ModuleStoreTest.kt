@@ -6,7 +6,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.BatchUpdateListener
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager

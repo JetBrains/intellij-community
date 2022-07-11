@@ -24,13 +24,14 @@ abstract class ProjectManagerEx : ProjectManager() {
     }
   }
 
-  @Deprecated("Use {@link #newProject(Path, OpenProjectTask)}")
-  abstract fun newProject(projectName: String?, filePath: String, useDefaultProjectSettings: Boolean, isDummy: Boolean): Project?
-
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Pass {@code projectName} using {@link OpenProjectTask#projectName}.")
-  fun newProject(file: Path, projectName: String?, options: OpenProjectTask): Project? {
-    return newProject(file, if (projectName == null) options else options.withProjectName(projectName))
+  @Suppress("UNUSED_PARAMETER")
+  @Deprecated("Use {@link #newProject(Path, OpenProjectTask)}", level = DeprecationLevel.ERROR)
+  fun newProject(projectName: String?, filePath: String, useDefaultProjectSettings: Boolean, isDummy: Boolean): Project? {
+    return newProject(Path.of(filePath), OpenProjectTask {
+      isNewProject = true
+      this.useDefaultProjectAsTemplate = useDefaultProjectSettings
+      this.projectName = projectName
+    })
   }
 
   /**

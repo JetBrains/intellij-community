@@ -7,7 +7,6 @@ import com.intellij.configurationStore.saveSettings
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.IdeCoreBundle
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
@@ -16,7 +15,6 @@ import com.intellij.ide.impl.OpenResult.Companion.failure
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -26,7 +24,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
-import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
@@ -476,45 +473,6 @@ object ProjectUtil {
   }
 
   /**
-   * @param isNewProject true if the project is just created
-   * @param projectName name of the project to open (can be displayed to the user)
-   * @return [GeneralSettings.OPEN_PROJECT_SAME_WINDOW] or
-   * [GeneralSettings.OPEN_PROJECT_NEW_WINDOW] or
-   * [Messages.CANCEL] (when a user cancels the dialog)
-   */
-  @JvmOverloads
-  fun confirmOpenNewProject(isNewProject: Boolean, projectName: String? = null): Int {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      return GeneralSettings.OPEN_PROJECT_NEW_WINDOW
-    }
-    var mode = GeneralSettings.getInstance().confirmOpenNewProject
-    if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
-      val message = if (projectName == null) IdeBundle.message("prompt.open.project.in.new.frame")
-      else IdeBundle.message("prompt.open.project.with.name.in.new.frame", projectName)
-      mode = if (isNewProject) {
-        val openInExistingFrame = yesNo(IdeCoreBundle.message("title.new.project"), message)
-          .yesText(IdeBundle.message("button.existing.frame"))
-          .noText(IdeBundle.message("button.new.frame"))
-          .doNotAsk(ProjectNewWindowDoNotAskOption())
-          .guessWindowAndAsk()
-        if (openInExistingFrame) GeneralSettings.OPEN_PROJECT_SAME_WINDOW else GeneralSettings.OPEN_PROJECT_NEW_WINDOW
-      }
-      else {
-        val exitCode = yesNoCancel(IdeBundle.message("title.open.project"), message)
-          .yesText(IdeBundle.message("button.existing.frame"))
-          .noText(IdeBundle.message("button.new.frame"))
-          .doNotAsk(ProjectNewWindowDoNotAskOption())
-          .guessWindowAndAsk()
-        if (exitCode == Messages.YES) GeneralSettings.OPEN_PROJECT_SAME_WINDOW else if (exitCode == Messages.NO) GeneralSettings.OPEN_PROJECT_NEW_WINDOW else Messages.CANCEL
-      }
-      if (mode != Messages.CANCEL) {
-        LifecycleUsageTriggerCollector.onProjectFrameSelected(mode)
-      }
-    }
-    return mode
-  }
-
-  /**
    * @return [GeneralSettings.OPEN_PROJECT_SAME_WINDOW] or
    * [GeneralSettings.OPEN_PROJECT_NEW_WINDOW] or
    * [GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH] or
@@ -868,16 +826,14 @@ object ProjectUtil {
 // inline is not used - easier debug
 fun <T> runUnderModalProgressIfIsEdt(task: suspend () -> T): T {
   if (!ApplicationManager.getApplication().isDispatchThread) {
-    return runBlocking { task() }
+    return runBlocking(CoreProgressManager.getCurrentThreadProgressModality().asContextElement()) { task() }
   }
-
-  logger<ProjectUtil>().warn("Do not execute in EDT")
   return runBlockingUnderModalProgress(task = task)
 }
 
 @Internal
 @RequiresEdt
-fun <T> runBlockingUnderModalProgress(title: String = "", project: Project? = null, task: suspend () -> T): T {
+inline fun <T> runBlockingUnderModalProgress(title: String = "", project: Project? = null, crossinline task: suspend () -> T): T {
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
     runBlocking(modalityState.asContextElement()) {

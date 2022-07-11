@@ -185,7 +185,6 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
           }
         }
       });
-      return true;
     });
     if (ApplicationManager.getApplication().isDispatchThread()) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();

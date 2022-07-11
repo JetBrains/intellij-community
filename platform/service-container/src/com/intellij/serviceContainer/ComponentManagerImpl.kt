@@ -1289,9 +1289,8 @@ abstract class ComponentManagerImpl(
     return null
   }
 
-  final override fun <T : Any> processInitializedComponents(aClass: Class<T>, processor: (T, PluginDescriptor) -> Unit) {
-    // We must use instances only from our adapter (could be service or something else).
-    // unsafeGetAdapters should be not used here as ProjectManagerImpl uses it to call projectOpened
+  fun <T : Any> processInitializedComponents(aClass: Class<T>, processor: (T, PluginDescriptor) -> Unit) {
+    // we must use instances only from our adapter (could be service or something else).
     for (adapter in componentAdapters.getImmutableSet()) {
       if (adapter is MyComponentAdapter) {
         val component = adapter.getInitializedInstance()

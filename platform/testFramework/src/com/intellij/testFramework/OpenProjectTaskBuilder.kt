@@ -9,7 +9,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.util.ThreeState
-import java.util.function.Predicate
+import java.util.function.Consumer
 
 // todo rewrite PlatfomTestUtil to kotlin
 internal fun saveProject(project: Project, forceSavingAllSettings: Boolean = false) {
@@ -67,7 +67,7 @@ class OpenProjectTaskBuilder {
 }
 
 @JvmOverloads
-fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true, beforeOpen: Predicate<Project>? = null): OpenProjectTask {
+fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true, beforeOpen: Consumer<Project>? = null): OpenProjectTask {
   // In tests, it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times).
   // Also, cleanPersistedContents is called on start test application.
   return OpenProjectTask {
@@ -80,7 +80,8 @@ fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true, befor
     useDefaultProjectAsTemplate = false
     if (beforeOpen != null) {
       this.beforeOpen = {
-        beforeOpen.test(it)
+        beforeOpen.accept(it)
+        true
       }
     }
 

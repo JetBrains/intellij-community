@@ -12,7 +12,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -670,7 +669,8 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
   AppUIExecutor.onUiThread().expireWith(project).submit {
     var notified: MutableList<String>? = null
     val manager = NotificationsManager.getNotificationsManager()
-    for (notification in manager.getNotificationsOfType(UnknownMacroNotification::class.java, project)) {
+    for (notification in manager.getNotificationsOfType(
+      UnknownMacroNotification::class.java, project)) {
       if (notified == null) {
         notified = SmartList()
       }
