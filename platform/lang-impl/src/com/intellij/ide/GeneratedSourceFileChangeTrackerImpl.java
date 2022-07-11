@@ -3,7 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -66,7 +66,7 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
         return;
       }
 
-      Project[] openProjects = ProjectUtil.getOpenProjects();
+      Project[] openProjects = ProjectUtilCore.getOpenProjects();
       if (openProjects.length == 0) {
         return;
       }
@@ -76,7 +76,7 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
         return;
       }
 
-      for (Project project : ProjectUtil.getOpenProjects()) {
+      for (Project project : openProjects) {
         if (project.isDisposed()) {
           continue;
         }
