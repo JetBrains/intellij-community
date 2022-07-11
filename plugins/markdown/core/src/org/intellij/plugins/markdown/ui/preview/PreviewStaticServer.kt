@@ -80,8 +80,8 @@ class PreviewStaticServer : HttpRequestHandler() {
   }
 
   companion object {
-    private const val prefixUuid = "4f800f8a-bbed-4dd8-b03c-00449c9f6698"
-    private const val prefixPath = "/$prefixUuid"
+    private const val endpointPrefix = "markdownPreview"
+    private const val prefixPath = "/$endpointPrefix"
 
     @JvmStatic
     val instance: PreviewStaticServer
@@ -108,7 +108,7 @@ class PreviewStaticServer : HttpRequestHandler() {
     fun getStaticUrl(resourceProvider: ResourceProvider, staticPath: String): String {
       val providerHash = resourceProvider.hashCode()
       val port = getInstance().port
-      val raw = "http://localhost:$port/$prefixUuid/$providerHash/$staticPath"
+      val raw = "http://localhost:$port/$endpointPrefix/$providerHash/$staticPath"
       val url = parseEncoded(raw)
       requireNotNull(url) { "Could not parse url!" }
       return getInstance().addAuthToken(url).toExternalForm()
