@@ -692,7 +692,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
       if (sdkVersionPair != null) {
         final Integer chunkSdkVersion = sdkVersionPair.second;
-        if (chunkSdkVersion != compilerSdkVersion && chunkSdkVersion >= 6 /*min. supported compiler version*/) {
+        if (chunkSdkVersion != compilerSdkVersion && chunkSdkVersion >= ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION) {
           // there is a special case because of difference in type inference behavior between javac8 and javac6-javac7
           // so if corresponding JDK is associated with the module chunk, prefer compiler from this JDK over the newer compiler version
           return true;

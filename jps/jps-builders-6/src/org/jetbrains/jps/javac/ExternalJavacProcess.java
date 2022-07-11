@@ -29,6 +29,7 @@ import java.util.logging.Formatter;
  */
 public final class ExternalJavacProcess {
   public static final String JPS_JAVA_COMPILING_TOOL_PROPERTY = "jps.java.compiling.tool";
+  public static final int MINIMUM_REQUIRED_JAVA_VERSION = 7;
   private final ChannelInitializer<?> myChannelInitializer;
   private final EventLoopGroup myEventLoopGroup;
   private final boolean myKeepRunning;
