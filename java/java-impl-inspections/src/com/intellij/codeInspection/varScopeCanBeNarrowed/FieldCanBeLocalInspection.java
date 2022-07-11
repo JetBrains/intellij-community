@@ -52,6 +52,11 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       if (!field.isPhysical() || AnnotationUtil.isAnnotated(field, excludeAnnos, 0)) {
         continue;
       }
+      if (field.hasModifierProperty(PsiModifier.VOLATILE)) {
+        // Assume that fields marked as volatile can be modified concurrently
+        // (e.g. if the only method where they are changed is called from several threads)
+        continue;
+      }
       if (field.hasModifierProperty(PsiModifier.PRIVATE) && !(field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL))) {
         candidates.add(field);
       }
