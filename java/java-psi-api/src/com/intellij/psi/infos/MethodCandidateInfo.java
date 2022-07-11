@@ -164,8 +164,11 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
       return level1;
     }, substitutor);
-    @ApplicabilityLevelConstant int level =
-      Objects.requireNonNull(ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable));
+    Integer applicabilityLevel = ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable);
+    if (applicabilityLevel == null) {
+      return ApplicabilityLevel.NOT_APPLICABLE;
+    }
+    @ApplicabilityLevelConstant int level = applicabilityLevel;
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(() -> substitutor)) {
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }

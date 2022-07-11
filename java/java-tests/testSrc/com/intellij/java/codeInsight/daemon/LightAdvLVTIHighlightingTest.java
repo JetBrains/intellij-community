@@ -12,6 +12,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 
 public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -55,6 +57,13 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testFailedInferenceWithLeftTypeVar() { doTest(); }
   public void testDisjunctionType() { doTest(); }
+
+  public void testRecursiveInference() {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    final int offset = getEditor().getCaretModel().getOffset();
+    PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(getFile().findElementAt(offset), PsiMethodCallExpression.class);
+    assertTrue(expression.resolveMethodGenerics().isValidResult());
+  }
 
   public void testVarInLambdaParameters() {
     setLanguageLevel(LanguageLevel.JDK_11);
