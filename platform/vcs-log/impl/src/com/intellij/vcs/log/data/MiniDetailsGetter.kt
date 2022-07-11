@@ -91,7 +91,6 @@ class MiniDetailsGetter internal constructor(project: Project,
   }
 
   override fun saveInCache(commit: Int, details: VcsCommitMetadata) = cache.put(commit, details)
-  private fun saveInCache(details: VcsCommitMetadata) = saveInCache(storage.getCommitIndex(details.id, details.root), details)
 
   @RequiresEdt
   private fun cacheCommit(commitId: Int, taskNumber: Long) {
@@ -106,31 +105,6 @@ class MiniDetailsGetter internal constructor(project: Project,
   override fun cacheCommits(commits: IntOpenHashSet) {
     val taskNumber = currentTaskIndex++
     commits.forEach(IntConsumer { commit -> cacheCommit(commit, taskNumber) })
-  }
-
-  @RequiresBackgroundThread
-  @Throws(VcsException::class)
-  fun loadCommitsData(commits: Iterable<Int>,
-                      consumer: Consumer<in VcsCommitMetadata>,
-                      indicator: ProgressIndicator) {
-    val toLoad = IntOpenHashSet()
-    for (id in commits) {
-      val details = cache.getIfPresent(id)
-      if (details == null || details is LoadingDetails) {
-        toLoad.add(id)
-      }
-      else {
-        consumer.consume(details)
-      }
-    }
-    if (!toLoad.isEmpty()) {
-      indicator.checkCanceled()
-      doLoadCommitsData(toLoad) { metadata ->
-        saveInCache(metadata)
-        consumer.consume(metadata)
-      }
-      notifyLoaded()
-    }
   }
 
   @RequiresBackgroundThread

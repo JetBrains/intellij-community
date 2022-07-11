@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.search
 
 import com.intellij.icons.AllIcons
@@ -70,9 +70,9 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
         it.hash.asString().startsWith(pattern, true) && dataPack.containsAll(listOf(it), storage)
       }?.let { commitId ->
         val id = storage.getCommitIndex(commitId.hash, commitId.root)
-        dataManager.miniDetailsGetter.loadCommitsData(listOf(id), {
+        dataManager.miniDetailsGetter.loadCommitsDataSynchronously(listOf(id), progressIndicator) {
           consumer.process(FoundItemDescriptor(it, COMMIT_BY_HASH.weight))
-        }, progressIndicator)
+        }
       }
     }
 
@@ -98,9 +98,9 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
 
       index.dataGetter?.filterMessages(VcsLogFilterObject.fromPattern(pattern)) { commitIdx ->
         progressIndicator.checkCanceled()
-        dataManager.miniDetailsGetter.loadCommitsData(listOf(commitIdx), {
+        dataManager.miniDetailsGetter.loadCommitsDataSynchronously(listOf(commitIdx), progressIndicator) {
           consumer.process(FoundItemDescriptor(it, COMMIT_BY_MESSAGE.weight))
-        }, progressIndicator)
+        }
       }
     }
   }
