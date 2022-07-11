@@ -267,12 +267,15 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                               envVariables: Map<String, String> = emptyMap(),
                               remoteDebugging: Boolean,
                               context: CompilationContext) {
+    val useKotlinK2 = System.getProperty("idea.kotlin.plugin.use.k2", "false").toBoolean() ||
+                      System.getProperty("teamcity.buildType.id", "").contains("KotlinK2Tests")
     val mainJpsModule = context.findRequiredModule(mainModule)
     val testRoots = JpsJavaExtensionService.dependencies(mainJpsModule).recursively()
       .withoutSdk()  // if the project requires different SDKs, they all shouldn't be added to the test classpath
       .includedIn(JpsJavaClasspathKind.runtime(true))
       .classes()
       .roots
+      .filterTo(mutableListOf()) { useKotlinK2 || it.name != "kotlin.plugin.k2" }
 
     if (isBootstrapSuiteDefault && !isRunningInBatchMode) {
       //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
