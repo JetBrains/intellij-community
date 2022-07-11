@@ -112,6 +112,7 @@ public final class DvcsUtil {
    * Returns the currently selected file, based on which VcsBranch or StatusBar components will identify the current repository root.
    */
   @Nullable
+  @RequiresEdt
   public static VirtualFile getSelectedFile(@NotNull Project project) {
     FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor();
     return fileEditor == null ? null : fileEditor.getFile();
@@ -261,6 +262,7 @@ public final class DvcsUtil {
   }
 
   @Nullable
+  @RequiresEdt
   public static <T extends Repository> T guessCurrentRepositoryQuick(@NotNull Project project,
                                                                      @NotNull AbstractRepositoryManager<T> manager,
                                                                      @Nullable @NonNls String defaultRootPathValue) {
