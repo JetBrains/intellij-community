@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.base.fe10.analysis.getEnumValue
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATION
 import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATION_ERROR
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix

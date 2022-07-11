@@ -7,7 +7,7 @@ import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class ShowInlayHintsSettings(private val providerKey: SettingsKey<*>) : AnAction(KotlinBundle.message("action.hints.settings.text")) {
     override fun actionPerformed(e: AnActionEvent) {

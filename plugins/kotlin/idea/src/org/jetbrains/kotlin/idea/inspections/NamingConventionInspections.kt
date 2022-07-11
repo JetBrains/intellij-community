@@ -23,7 +23,7 @@ import org.intellij.lang.annotations.Language
 import org.intellij.lang.regexp.RegExpFileType
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit

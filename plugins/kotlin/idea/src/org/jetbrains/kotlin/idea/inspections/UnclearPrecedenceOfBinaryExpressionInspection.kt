@@ -13,7 +13,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.siblings
 import com.intellij.ui.components.panels.VerticalBox
 import com.intellij.util.ui.CheckBox
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.UnclearPrecedenceOfBinaryExpressionInspection.Holder.dfs
 import org.jetbrains.kotlin.idea.inspections.UnclearPrecedenceOfBinaryExpressionInspection.Holder.doNeedToPutParentheses
 import org.jetbrains.kotlin.idea.inspections.UnclearPrecedenceOfBinaryExpressionInspection.Holder.toUnified

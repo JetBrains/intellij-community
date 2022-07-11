@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.fir.inspections.diagnosticBased
 import org.jetbrains.kotlin.idea.quickfix.RemovePsiElementSimpleFix
 import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator

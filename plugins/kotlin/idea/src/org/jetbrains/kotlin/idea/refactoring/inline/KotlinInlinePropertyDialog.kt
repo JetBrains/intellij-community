@@ -8,7 +8,7 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.HelpID
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtProperty

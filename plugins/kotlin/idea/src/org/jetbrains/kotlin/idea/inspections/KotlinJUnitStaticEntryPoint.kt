@@ -11,7 +11,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class KotlinJUnitStaticEntryPoint(@JvmField var wasSelected: Boolean = true) : EntryPoint() {
     override fun getDisplayName() = KotlinBundle.message("junit.static.methods")

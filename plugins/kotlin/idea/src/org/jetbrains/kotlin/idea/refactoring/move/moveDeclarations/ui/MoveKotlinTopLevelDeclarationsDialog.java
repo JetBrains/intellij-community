@@ -30,7 +30,7 @@ import com.intellij.util.ui.UIUtil;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.KotlinBundle;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinFileType;
 import org.jetbrains.kotlin.idea.core.util.PhysicalFileSystemUtilsKt;
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings;

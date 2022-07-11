@@ -10,7 +10,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.nextLeafs
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode

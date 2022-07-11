@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.refactoring.rename.RenameHandlerRegistry
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 open class RenameIdentifierFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("rename.identifier.fix.text")

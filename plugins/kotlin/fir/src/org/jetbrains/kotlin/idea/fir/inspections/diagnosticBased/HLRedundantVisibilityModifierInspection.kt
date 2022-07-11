@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.inspections.diagnosticBased
 
 import com.intellij.codeInspection.ProblemHighlightType
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.fir.applicators.ModifierApplicators
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic

@@ -12,7 +12,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase

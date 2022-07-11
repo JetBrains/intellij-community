@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.fir.inspections
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.fir.highlighter.KotlinHighLevelDiagnosticHighlightingPass
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest

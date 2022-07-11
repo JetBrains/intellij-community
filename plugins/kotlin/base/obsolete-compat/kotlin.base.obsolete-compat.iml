@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.editor" />
+    <orderEntry type="module" module-name="kotlin.base.util" />
   </component>
 </module>

@@ -23,7 +23,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.uiDesigner.core.GridConstraints
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull

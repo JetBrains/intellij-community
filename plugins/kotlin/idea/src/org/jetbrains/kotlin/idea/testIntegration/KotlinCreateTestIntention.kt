@@ -24,7 +24,7 @@ import com.intellij.testIntegration.createTest.TestGenerators
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
 import org.jetbrains.kotlin.idea.base.util.runWhenSmart
 import org.jetbrains.kotlin.idea.base.util.runWithAlternativeResolveEnabled

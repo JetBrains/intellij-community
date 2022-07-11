@@ -14,7 +14,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import com.siyeh.ig.BaseInspection
 import com.siyeh.ig.ui.UiUtils
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.name.FqName

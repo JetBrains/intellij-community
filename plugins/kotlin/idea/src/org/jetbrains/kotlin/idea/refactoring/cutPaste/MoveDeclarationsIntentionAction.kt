@@ -14,7 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.refactoring.BaseRefactoringIntentionAction
 import com.intellij.refactoring.suggested.range
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class MoveDeclarationsIntentionAction(
     private val processor: MoveDeclarationsProcessor,

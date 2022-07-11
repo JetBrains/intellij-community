@@ -11,7 +11,7 @@ import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 import com.intellij.usageView.UsageViewShortNameLocation
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.unwrapIfLabeled

@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBComboBoxLabel
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent
 import com.intellij.util.ui.AbstractTableCellEditor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.Parameter
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.AbstractParameterTablePanel
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.highlighter.markers
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.util.expectedDescriptors
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny

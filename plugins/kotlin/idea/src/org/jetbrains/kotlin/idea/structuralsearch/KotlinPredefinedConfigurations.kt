@@ -6,7 +6,7 @@ import com.intellij.structuralsearch.PredefinedConfigurationUtil.createConfigura
 import com.intellij.structuralsearch.plugin.ui.Configuration
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchCompanionObjectModifier
 import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchValModifier

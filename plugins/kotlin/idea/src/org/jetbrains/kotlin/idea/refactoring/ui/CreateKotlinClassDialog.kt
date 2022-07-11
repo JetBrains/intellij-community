@@ -34,7 +34,7 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.KotlinBundle.message
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
 import org.jetbrains.kotlin.idea.roots.getSuitableDestinationSourceRoots
 import java.awt.BorderLayout
 import java.awt.Dimension

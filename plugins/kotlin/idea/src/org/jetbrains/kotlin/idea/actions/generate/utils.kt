@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.actions.generate
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType

@@ -5,7 +5,7 @@ import com.intellij.application.options.editor.AutoImportOptionsProvider
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.options.ConfigurableBuilder
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class KotlinCodeInsightWorkspaceSettingsProvider(project: Project) :
     ConfigurableBuilder(KotlinBundle.message("code.insight.workspace.settings.title")), AutoImportOptionsProvider {
