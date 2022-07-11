@@ -479,6 +479,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return false;
   }
 
+  public static boolean isClassFiltered(@Nullable String name) {
+    if (name == null) {
+      return false;
+    }
+    return DebuggerUtilsEx.isFiltered(name, getActiveFilters());
+  }
+
   @NotNull
   private static List<ClassFilter> getActiveFilters() {
     DebuggerSettings settings = DebuggerSettings.getInstance();
