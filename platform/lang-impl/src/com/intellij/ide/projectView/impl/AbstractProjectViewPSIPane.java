@@ -47,6 +47,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
+
 public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
   private AsyncProjectViewSupport myAsyncSupport;
   private JComponent myComponent;
@@ -179,6 +181,8 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   protected void onSelectionChanged() {
+    myProject.getMessageBus().syncPublisher(PROJECT_VIEW_SELECTION_TOPIC).onChanged();
+
     if (myTree != null && myTree.getSelectionModel() != null) {
       int count = myTree.getSelectionModel().getSelectionCount();
       String description = count > 1 && myTree.hasFocus() ? LangBundle.message("project.view.elements.selected", count) : null;
