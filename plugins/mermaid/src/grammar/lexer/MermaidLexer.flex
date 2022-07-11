@@ -35,7 +35,6 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 %ignorecase
 
 %xstate double_quoted_string
-%xstate line_comment
 
 %xstate directive
 %xstate directive_close
@@ -124,7 +123,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   [\n\r] { return EOL; }
-  "%%" { yypushstate(line_comment); return LINE_COMMENT; }
+  %%([^{][^\n\r]*)? { return LINE_COMMENT; }
   "pie" { yybegin(pie); return Pie.PIE; }
   "journey" { yybegin(journey); return Journey.JOURNEY; }
   "flowchart" { yybegin(flowchart); return Flowchart.FLOWCHART; }
@@ -159,7 +158,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 <pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element> {
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
-  "%%" { yypushstate(line_comment); return LINE_COMMENT; }
+  %%([^{][^\n\r]*)? { return LINE_COMMENT; }
 }
 <pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, note_content, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element> {
   [\n\r] { return EOL; }
@@ -257,8 +256,8 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 
   "class" { yybegin(flowchart_class); return CLASS; }
 
-	[^\s\n\r;:\[({><\^\|\-\=\.]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
-	[^\s\n\r;:\[({><\^\|\-\=\.]+ { return ID; }
+	[^\s\n\r;:%\[({><\^\|\-\=\.]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
+	[^\s\n\r;:%\[({><\^\|\-\=\.]+ { return ID; }
 	[\-\=\.] { return ID; }
 	:|:: { return ID; }
 
@@ -637,12 +636,6 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 }
 
 //--------------------------------------------------------------------------------
-<line_comment> {
-  [^\n\r]+ { yypopstate(); return COMMENT_TEXT; }
-  [\n\r] { yypopstate(); return EOL; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
-}
-
 <double_quoted_string> {
   [\"] { yypopstate(); return DOUBLE_QUOTE; }
   [^\"]* { return STRING_VALUE; }

@@ -11,7 +11,6 @@ class PieTest : MermaidParserTestCase() {
     val expectedTree = """
     Element(FILE)
     >PsiComment(LINE_COMMENT)
-    >PsiComment(COMMENT_TEXT)
     >PsiElement(EOL)
     >Element(PIE_HEADER)
     >>PsiElement(Pie.PIE)

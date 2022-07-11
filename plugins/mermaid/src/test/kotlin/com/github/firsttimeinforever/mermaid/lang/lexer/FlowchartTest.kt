@@ -7,7 +7,6 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_ROUN
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_SQUARE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMA
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMENT_TEXT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DIR
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DIRECTION
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DOUBLE_QUOTE
@@ -671,8 +670,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 9, 10, " "),
       Token(DIR, 10, 12, "TD"),
       Token(WHITE_SPACE, 12, 13, " "),
-      Token(LINE_COMMENT, 13, 15, "%%"),
-      Token(COMMENT_TEXT, 15, 31, " This is comment"),
+      Token(LINE_COMMENT, 13, 31, "%% This is comment"),
       Token(EOL, 31, 32, "\n"),
       Token(WHITE_SPACE, 32, 34, "  "),
       Token(ID, 34, 39, "Start"),
@@ -681,12 +679,10 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 43, 44, " "),
       Token(ID, 44, 48, "Stop"),
       Token(WHITE_SPACE, 48, 49, " "),
-      Token(LINE_COMMENT, 49, 51, "%%"),
-      Token(COMMENT_TEXT, 51, 67, " This is comment"),
+      Token(LINE_COMMENT, 49, 67, "%% This is comment"),
       Token(EOL, 67, 68, "\n"),
       Token(WHITE_SPACE, 68, 70, "  "),
-      Token(LINE_COMMENT, 70, 72, "%%"),
-      Token(COMMENT_TEXT, 72, 88, " This is comment")
+      Token(LINE_COMMENT, 70, 88, "%% This is comment")
     )
     doTest(content, expected)
   }

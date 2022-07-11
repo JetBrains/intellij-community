@@ -8,7 +8,6 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.AS
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_CURLY
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_SQUARE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMENT_TEXT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DIR
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DIRECTION
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DOUBLE_QUOTE
@@ -508,8 +507,7 @@ class StateTest : MermaidLexerTestCase() {
       %% this is a comment
     """.trimIndent()
     val expected = listOf(
-      Token(LINE_COMMENT, 0, 2, "%%"),
-      Token(COMMENT_TEXT, 2, 20, " this is a comment"),
+      Token(LINE_COMMENT, 0, 20, "%% this is a comment"),
       Token(EOL, 20, 21, "\n"),
       Token(STATE_DIAGRAM, 21, 33, "stateDiagram"),
       Token(EOL, 33, 34, "\n"),
@@ -520,12 +518,10 @@ class StateTest : MermaidLexerTestCase() {
       Token(WHITE_SPACE, 41, 42, " "),
       Token(ID, 42, 43, "B"),
       Token(WHITE_SPACE, 43, 44, " "),
-      Token(LINE_COMMENT, 44, 46, "%%"),
-      Token(COMMENT_TEXT, 46, 64, " this is a comment"),
+      Token(LINE_COMMENT, 44, 64, "%% this is a comment"),
       Token(EOL, 64, 65, "\n"),
       Token(WHITE_SPACE, 65, 67, "  "),
-      Token(LINE_COMMENT, 67, 69, "%%"),
-      Token(COMMENT_TEXT, 69, 87, " this is a comment"),
+      Token(LINE_COMMENT, 67, 87, "%% this is a comment"),
       Token(EOL, 87, 88, "\n"),
       Token(WHITE_SPACE, 88, 90, "  "),
       Token(STATE, 90, 95, "state"),
@@ -541,15 +537,13 @@ class StateTest : MermaidLexerTestCase() {
       Token(WHITE_SPACE, 109, 110, " "),
       Token(ID, 110, 111, "b"),
       Token(WHITE_SPACE, 111, 112, " "),
-      Token(LINE_COMMENT, 112, 114, "%%"),
-      Token(COMMENT_TEXT, 114, 132, " this is a comment"),
+      Token(LINE_COMMENT, 112, 132, "%% this is a comment"),
       Token(EOL, 132, 133, "\n"),
       Token(WHITE_SPACE, 133, 135, "  "),
       Token(CLOSE_CURLY, 135, 136, "}"),
       Token(EOL, 136, 137, "\n"),
       Token(WHITE_SPACE, 137, 139, "  "),
-      Token(LINE_COMMENT, 139, 141, "%%"),
-      Token(COMMENT_TEXT, 141, 159, " this is a comment")
+      Token(LINE_COMMENT, 139, 159, "%% this is a comment")
     )
     doTest(content, expected)
   }

@@ -214,7 +214,6 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.TASK_NAME-> arrayOf(MermaidTextAttributes.string)
 
         MermaidTokens.LINE_COMMENT,
-        MermaidTokens.COMMENT_TEXT,
         MermaidTokens.IGNORED -> arrayOf(MermaidTextAttributes.comment)
 
         MermaidTokens.ID -> arrayOf(MermaidTextAttributes.identifier)

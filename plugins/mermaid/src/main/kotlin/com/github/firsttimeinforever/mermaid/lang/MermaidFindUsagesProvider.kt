@@ -16,7 +16,7 @@ class MermaidFindUsagesProvider: FindUsagesProvider {
     return DefaultWordsScanner(
       MermaidLexer(),
       TokenSet.create(MermaidElements.IDENTIFIER, MermaidElements.COMPLEX_IDENTIFIER),
-      TokenSet.create(MermaidTokens.COMMENT_TEXT),
+      TokenSet.create(MermaidTokens.LINE_COMMENT),
       TokenSet.EMPTY
     )
   }

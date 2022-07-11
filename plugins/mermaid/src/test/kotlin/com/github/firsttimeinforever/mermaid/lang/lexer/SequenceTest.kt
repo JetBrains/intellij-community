@@ -5,7 +5,6 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.AS
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_CURLY
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMA
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMENT_TEXT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DOUBLE_QUOTE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.END
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EOL
@@ -205,8 +204,7 @@ class SequenceTest : MermaidLexerTestCase() {
     val expected = listOf(
       Token(Sequence.SEQUENCE, 0, 15, "sequenceDiagram"),
       Token(WHITE_SPACE, 15, 16, " "),
-      Token(LINE_COMMENT, 16, 18, "%%"),
-      Token(COMMENT_TEXT, 18, 36, " this is a comment"),
+      Token(LINE_COMMENT, 16, 36, "%% this is a comment"),
       Token(EOL, 36, 37, "\n"),
       Token(WHITE_SPACE, 37, 39, "  "),
       Token(Sequence.ACTOR, 39, 44, "actor"),
@@ -233,8 +231,7 @@ class SequenceTest : MermaidLexerTestCase() {
       Token(Sequence.MESSAGE, 91, 141, " Hello John, how are you? %% this is not a comment"),
       Token(EOL, 141, 142, "\n"),
       Token(WHITE_SPACE, 142, 144, "  "),
-      Token(LINE_COMMENT, 144, 146, "%%"),
-      Token(COMMENT_TEXT, 146, 164, " this is a comment"),
+      Token(LINE_COMMENT, 144, 164, "%% this is a comment"),
       Token(EOL, 164, 165, "\n"),
       Token(WHITE_SPACE, 165, 167, "  "),
       Token(ID, 167, 171, "John"),

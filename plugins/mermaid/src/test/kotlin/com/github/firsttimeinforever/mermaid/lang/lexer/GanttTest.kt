@@ -2,7 +2,6 @@ package com.github.firsttimeinforever.mermaid.lang.lexer
 
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMA
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMENT_TEXT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EOL
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Gantt.DATE_FORMAT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Gantt.EXCLUDES
@@ -129,12 +128,11 @@ class GanttTest : MermaidLexerTestCase() {
       Token(EXCLUDES, 93, 113, "excludes    weekends"),
       Token(EOL, 113, 114, "\n"),
       Token(WHITE_SPACE, 114, 116, "  "),
-      Token(LINE_COMMENT, 116, 118, "%%"),
       Token(
-        COMMENT_TEXT,
-        118,
+        LINE_COMMENT,
+        116,
         248,
-        " (`excludes` accepts specific dates in YYYY-MM-DD format, days of the week (\"sunday\") or \"weekends\", but not the word \"weekdays\".)"
+        "%% (`excludes` accepts specific dates in YYYY-MM-DD format, days of the week (\"sunday\") or \"weekends\", but not the word \"weekdays\".)"
       ),
       Token(EOL, 248, 249, "\n"),
       Token(EOL, 249, 250, "\n"),

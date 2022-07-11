@@ -131,7 +131,6 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>PsiComment(LINE_COMMENT)
-    >>PsiComment(COMMENT_TEXT)
     >>Element(GANTT_LINE)
     >>>PsiElement(EOL)
     >>Element(GANTT_LINE)

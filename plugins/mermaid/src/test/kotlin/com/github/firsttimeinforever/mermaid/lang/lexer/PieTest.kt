@@ -1,7 +1,6 @@
 package com.github.firsttimeinforever.mermaid.lang.lexer
 
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMENT_TEXT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DOUBLE_QUOTE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EOL
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.LINE_COMMENT
@@ -72,8 +71,7 @@ class PieTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Pie.PIE, 0, 3, "pie"),
       Token(WHITE_SPACE, 3, 4, " "),
-      Token(LINE_COMMENT, 4, 6, "%%"),
-      Token(COMMENT_TEXT, 6, 22, " This is comment"),
+      Token(LINE_COMMENT, 4, 22, "%% This is comment"),
       Token(EOL, 22, 23, "\n"),
       Token(WHITE_SPACE, 23, 25, "  "),
       Token(TITLE, 25, 30, "title"),
@@ -89,12 +87,10 @@ class PieTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 91, 92, " "),
       Token(Pie.VALUE, 92, 95, "386"),
       Token(WHITE_SPACE, 95, 96, " "),
-      Token(LINE_COMMENT, 96, 98, "%%"),
-      Token(COMMENT_TEXT, 98, 114, " This is comment"),
+      Token(LINE_COMMENT, 96, 114, "%% This is comment"),
       Token(EOL, 114, 115, "\n"),
       Token(WHITE_SPACE, 115, 117, "  "),
-      Token(LINE_COMMENT, 117, 119, "%%"),
-      Token(COMMENT_TEXT, 119, 135, " This is comment")
+      Token(LINE_COMMENT, 117, 135, "%% This is comment")
     )
     doTest(content, expected)
   }

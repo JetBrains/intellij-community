@@ -3,7 +3,6 @@ package com.github.firsttimeinforever.mermaid.lang.lexer
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_DIRECTIVE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMA
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMENT_TEXT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DIRECTIVE_TEXT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DOUBLE_QUOTE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EOL
@@ -18,8 +17,7 @@ class LexerSanityTest: MermaidLexerTestCase() {
     %% This is comment
     """.trimIndent()
     val expected = listOf(
-      Token(LINE_COMMENT, 0, 2, "%%"),
-      Token(COMMENT_TEXT, 2, 18, " This is comment")
+      Token(LINE_COMMENT, 0, 18, "%% This is comment")
     )
     doTest(content, expected)
   }
@@ -30,8 +28,7 @@ class LexerSanityTest: MermaidLexerTestCase() {
     
     """.trimIndent()
     val expected = listOf(
-      Token(LINE_COMMENT, 0, 2, "%%"),
-      Token(COMMENT_TEXT, 2, 18, " This is comment"),
+      Token(LINE_COMMENT, 0, 18, "%% This is comment"),
       Token(EOL, 18, 19, "\n")
     )
     doTest(content, expected)

@@ -1,7 +1,6 @@
 package com.github.firsttimeinforever.mermaid.lang.lexer
 
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMENT_TEXT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EOL
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.IGNORED
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Journey
@@ -14,7 +13,7 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TITLE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TITLE_VALUE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
 
-class JourneyTest: MermaidLexerTestCase() {
+class JourneyTest : MermaidLexerTestCase() {
   fun `test simple journey title and section title`() {
     val content = """
     journey
@@ -314,8 +313,7 @@ class JourneyTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Journey.JOURNEY, 0, 7, "journey"),
       Token(WHITE_SPACE, 7, 8, " "),
-      Token(LINE_COMMENT, 8, 10, "%%"),
-      Token(COMMENT_TEXT, 10, 27, " This is comment "),
+      Token(LINE_COMMENT, 8, 27, "%% This is comment "),
       Token(EOL, 27, 28, "\n"),
       Token(WHITE_SPACE, 28, 30, "  "),
       Token(TITLE, 30, 35, "title"),
@@ -337,8 +335,7 @@ class JourneyTest: MermaidLexerTestCase() {
       Token(TASK_DATA, 135, 160, "Me %% This is not comment"),
       Token(EOL, 160, 161, "\n"),
       Token(WHITE_SPACE, 161, 165, "    "),
-      Token(LINE_COMMENT, 165, 167, "%%"),
-      Token(COMMENT_TEXT, 167, 183, " This is comment")
+      Token(LINE_COMMENT, 165, 183, "%% This is comment")
     )
     doTest(content, expected)
   }

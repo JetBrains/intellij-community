@@ -62,9 +62,6 @@ object MermaidTokens {
   val LINE_COMMENT = MermaidToken("LINE_COMMENT")
 
   @JvmField
-  val COMMENT_TEXT = MermaidToken("COMMENT_TEXT")
-
-  @JvmField
   val WHITE_SPACE: IElementType = TokenType.WHITE_SPACE
 
   @JvmField
