@@ -4,6 +4,7 @@ package com.intellij.diff.actions
 import com.intellij.diff.*
 import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.MutableDiffRequestChain
+import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.contents.FileContent
@@ -95,10 +96,7 @@ class ShowBlankDiffWindowAction : DumbAwareAction() {
     }
 
     val chain = BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, baseContent)
-    chain.putUserData(DiffUserDataKeys.PLACE, "BlankDiffWindow")
-    chain.putUserData(DiffUserDataKeysEx.PREFERRED_FOCUS_SIDE, Side.LEFT)
-    chain.putUserData(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, true)
-
+    BlankDiffWindowUtil.setupBlankContext(chain)
     DiffManagerEx.getInstance().showDiffBuiltin(project, chain, DiffDialogHints.DEFAULT)
   }
 }
@@ -407,6 +405,10 @@ object BlankDiffWindowUtil {
   val REMEMBER_CONTENT_KEY = Key.create<Boolean>("Diff.BlankWindow.BlankContent")
 
   @JvmStatic
+  fun createBlankDiffRequestChain(project: Project?): MutableDiffRequestChain =
+    createBlankDiffRequestChain(createEditableContent(project), createEditableContent(project))
+
+  @JvmStatic
   fun createBlankDiffRequestChain(content1: DocumentContent,
                                   content2: DocumentContent,
                                   baseContent: DocumentContent? = null): MutableDiffRequestChain {
@@ -415,6 +417,12 @@ object BlankDiffWindowUtil {
     return chain
   }
 
+  @JvmStatic
+  fun setupBlankContext(chain: DiffRequestChain) {
+    chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.BLANK)
+    chain.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE, Side.LEFT)
+    chain.putUserData(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, true)
+  }
 
   private val ourRecentFiles = LinkedListWithSum<RecentBlankContent> { it.text.length }
 

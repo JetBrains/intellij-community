@@ -4,6 +4,8 @@ package com.intellij.diff.applications;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.actions.BlankDiffWindowUtil;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
@@ -35,7 +37,7 @@ import java.util.concurrent.Future;
 
 final class DiffApplication extends DiffApplicationBase {
   DiffApplication() {
-    super(2, 3);
+    super(0, 2, 3);
   }
 
   @Override
@@ -64,8 +66,15 @@ final class DiffApplication extends DiffApplicationBase {
 
     CompletableFuture<CliResult> future = new CompletableFuture<>();
     ApplicationManager.getApplication().invokeLater(() -> {
-      SimpleDiffRequestChain chain = SimpleDiffRequestChain.fromProducer(new MyDiffRequestProducer(project, files));
-      chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.EXTERNAL);
+      DiffRequestChain chain;
+      if (files.isEmpty()) {
+        chain = BlankDiffWindowUtil.createBlankDiffRequestChain(project);
+        BlankDiffWindowUtil.setupBlankContext(chain);
+      }
+      else {
+        chain = SimpleDiffRequestChain.fromProducer(new MyDiffRequestProducer(project, files));
+        chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.EXTERNAL);
+      }
 
       WindowWrapper.Mode mode = project != null ? WindowWrapper.Mode.FRAME : WindowWrapper.Mode.MODAL;
       DiffDialogHints dialogHints = new DiffDialogHints(mode, null, wrapper -> {
