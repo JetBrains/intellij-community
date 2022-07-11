@@ -101,7 +101,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     repositoryList = JBList(loader.listModel).apply {
       cellRenderer = GHRepositoryListCellRenderer(ErrorHandler()) { accountListModel.itemsSet }
       isFocusable = false
-      selectionModel = SingleSelectionModel()
+      selectionModel = loader.listSelectionModel
     }.also {
       val mouseAdapter = GHRepositoryMouseAdapter(it)
       it.addMouseListener(mouseAdapter)
@@ -112,11 +112,6 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       }
     }
     //TODO: fix jumping selection in the presence of filter
-    loader.listModel.addListDataListener(object : ListDataListener {
-      override fun intervalAdded(e: ListDataEvent?) = ScrollingUtil.ensureSelectionExists(repositoryList)
-      override fun intervalRemoved(e: ListDataEvent?) = ScrollingUtil.ensureSelectionExists(repositoryList)
-      override fun contentsChanged(e: ListDataEvent?) = ScrollingUtil.ensureSelectionExists(repositoryList)
-    })
     loader.addLoadingStateListener {
       repositoryList.setPaintBusy(loader.loading)
     }
