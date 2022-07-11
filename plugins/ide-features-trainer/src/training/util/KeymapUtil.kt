@@ -18,18 +18,18 @@ object KeymapUtil {
    * *
    * @return null if actionId is null
    */
-  fun getShortcutByActionId(actionId: String?): KeyStroke? {
+  fun getShortcutByActionId(actionId: String?): KeyboardShortcut? {
     actionId ?: return null
 
     val activeKeymap = KeymapManager.getInstance().activeKeymap
     findCustomShortcut(activeKeymap, actionId)?.let {
-      return it.firstKeyStroke
+      return it
     }
     val shortcuts = activeKeymap.getShortcuts(actionId)
     val bestShortcut: KeyboardShortcut? = shortcuts.filterIsInstance<KeyboardShortcut>().let { kbShortcuts ->
       kbShortcuts.find { !it.isNumpadKey } ?: kbShortcuts.firstOrNull()
     }
-    return bestShortcut?.firstKeyStroke
+    return bestShortcut
   }
 
   private fun findCustomShortcut(activeKeymap: Keymap, actionId: String): KeyboardShortcut? {
@@ -53,8 +53,20 @@ object KeymapUtil {
     else -> null
   }
 
-  @NlsSafe
-  fun getKeyStrokeData(keyStroke: KeyStroke?): Pair<String, List<IntRange>> {
+  fun getKeyboardShortcutData(shortcut: KeyboardShortcut?): Pair<@NlsSafe String, List<IntRange>> {
+    if (shortcut == null) return Pair("", emptyList())
+    val firstKeyStrokeData = getKeyStrokeData(shortcut.firstKeyStroke)
+    val secondKeyStroke = shortcut.secondKeyStroke ?: return firstKeyStrokeData
+    val secondKeyStrokeData = getKeyStrokeData(secondKeyStroke)
+    val firstPartString = firstKeyStrokeData.first + "\u00A0\u00A0\u00A0,\u00A0\u00A0\u00A0"
+    val firstPartLength = firstPartString.length
+
+    val shiftedList = secondKeyStrokeData.second.map { IntRange(it.first + firstPartLength, it.last + firstPartLength) }
+
+    return (firstPartString + secondKeyStrokeData.first) to (firstKeyStrokeData.second + shiftedList)
+  }
+
+  fun getKeyStrokeData(keyStroke: KeyStroke?): Pair<@NlsSafe String, List<IntRange>> {
     if (keyStroke == null) return Pair("", emptyList())
     val modifiers = getModifiersText(keyStroke.modifiers)
     val keyCode = keyStroke.keyCode
@@ -95,8 +107,8 @@ object KeymapUtil {
   }
 
   fun getGotoActionData(@NonNls actionId: String): Pair<String, List<IntRange>> {
-    val keyStroke = getShortcutByActionId("GotoAction")
-    val gotoAction = getKeyStrokeData(keyStroke)
+    val gotoActionShortcut = getShortcutByActionId("GotoAction")
+    val gotoAction = getKeyboardShortcutData(gotoActionShortcut)
     val actionName = getActionById(actionId).templatePresentation.text.replaceSpacesWithNonBreakSpace()
     val updated = ArrayList<IntRange>(gotoAction.second)
     val start = gotoAction.first.length + 5

@@ -50,6 +50,7 @@ internal class UISettings {
   val codeBorderColor: Color = JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false)
   val inactiveColor: Color = defaultTextColor.addAlpha(transparencyInactiveFactor)
   val moduleProgressColor: Color = JBColor.namedColor("Label.infoForeground", 0x808080, 0x8C8C8C)
+  val shortcutSeparatorColor: Color = moduleProgressColor
   val backgroundColor: Color = UIUtil.getTreeBackground()
   val completedColor: Color = UIUtil.getLabelSuccessForeground()
   val activeTaskBorder: Color = JBColor.namedColor("Component.focusColor", 0x97C3F3, 0x3D6185)
