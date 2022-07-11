@@ -315,17 +315,20 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       InspectionsKt.configureInspections(localInspectionTools, project, parentDisposable);
 
       assertFalse(PsiManager.getInstance(project).isDisposed());
-      Boolean passed = null;
-      try {
-        passed = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
-      }
-      catch (Exception ignored) {
-      }
 
-      assertTrue("open: " + project.isOpen() +
-                 "; disposed:" + project.isDisposed() +
-                 "; startup passed:" + passed +
-                 "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), project.isInitialized());
+      if (!project.isInitialized()) {
+        Boolean passed = null;
+        try {
+          passed = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
+        }
+        catch (Exception ignored) {
+        }
+
+        throw new AssertionError("open: " + project.isOpen() +
+                                 "; disposed:" + project.isDisposed() +
+                                 "; startup passed:" + passed +
+                                 "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()));
+      }
 
       CodeStyle.setTemporarySettings(project, CodeStyle.createTestSettings());
 
