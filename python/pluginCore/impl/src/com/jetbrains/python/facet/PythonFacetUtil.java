@@ -17,53 +17,55 @@ public class PythonFacetUtil {
 
   public static void updateLibrary(Module module, PythonFacetSettings facetSettings) {
     ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
-      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      final ModifiableRootModel model = rootManager.getModifiableModel();
-      boolean modelChanged = false;
-      try {
-        // Just remove all old facet libraries except one, that is necessary
-        final Sdk sdk = facetSettings.getSdk();
-        final String name = (sdk != null) ? getFacetLibraryName(sdk.getName()) : null;
-        boolean librarySeen = false;
-        for (OrderEntry entry : model.getOrderEntries()) {
-          if (entry instanceof LibraryOrderEntry) {
-            final String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
-            if (name != null && name.equals(libraryName)) {
-              librarySeen = true;
-              continue;
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        final ModifiableRootModel model = rootManager.getModifiableModel();
+        boolean modelChanged = false;
+        try {
+          // Just remove all old facet libraries except one, that is necessary
+          final Sdk sdk = facetSettings.getSdk();
+          final String name = (sdk != null) ? getFacetLibraryName(sdk.getName()) : null;
+          boolean librarySeen = false;
+          for (OrderEntry entry : model.getOrderEntries()) {
+            if (entry instanceof LibraryOrderEntry) {
+              final String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
+              if (name != null && name.equals(libraryName)) {
+                librarySeen = true;
+                continue;
+              }
+              if (libraryName != null && libraryName.endsWith(PYTHON_FACET_LIBRARY_NAME_SUFFIX)) {
+                model.removeOrderEntry(entry);
+                modelChanged = true;
+              }
             }
-            if (libraryName != null && libraryName.endsWith(PYTHON_FACET_LIBRARY_NAME_SUFFIX)) {
-              model.removeOrderEntry(entry);
+          }
+          if (name != null) {
+            final ModifiableModelsProvider provider = ModifiableModelsProvider.getInstance();
+            final LibraryTable.ModifiableModel libraryTableModifiableModel = provider.getLibraryTableModifiableModel();
+            Library library = libraryTableModifiableModel.getLibraryByName(name);
+            provider.disposeLibraryTableModifiableModel(libraryTableModifiableModel);
+            if (library == null) {
+              // we just create new project library
+              library = PythonSdkTableListener.addLibrary(sdk);
+            }
+            else {
+              PythonSdkTableListener.updateLibrary(sdk);
+            }
+            if (!librarySeen) {
+              model.addLibraryEntry(library);
               modelChanged = true;
             }
           }
         }
-        if (name != null) {
-          final ModifiableModelsProvider provider = ModifiableModelsProvider.getInstance();
-          final LibraryTable.ModifiableModel libraryTableModifiableModel = provider.getLibraryTableModifiableModel();
-          Library library = libraryTableModifiableModel.getLibraryByName(name);
-          provider.disposeLibraryTableModifiableModel(libraryTableModifiableModel);
-          if (library == null) {
-            // we just create new project library
-            library = PythonSdkTableListener.addLibrary(sdk);
+        finally {
+          if (modelChanged) {
+            model.commit();
           }
           else {
-            PythonSdkTableListener.updateLibrary(sdk);
-          }
-          if (!librarySeen) {
-            model.addLibraryEntry(library);
-            modelChanged = true;
+            model.dispose();
           }
         }
-      }
-      finally {
-        if (modelChanged){
-          model.commit();
-        }
-        else {
-          model.dispose();
-        }
-      }
+      });
     });
   }
 
