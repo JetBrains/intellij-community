@@ -23,7 +23,6 @@ private val JAVA_IDE_API_MODULES: List<String> = java.util.List.of(
 
 private val JAVA_IDE_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
   "intellij.xml.dom.impl",
-  "intellij.platform.testFramework",
   "intellij.tools.testsBootstrap"
 )
 
@@ -153,6 +152,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
         "intellij.platform.testFramework.core",
         "intellij.platform.testFramework.common",
         "intellij.platform.testFramework.junit5",
+        "intellij.platform.testFramework",
       )) {
         if (!productLayout.productApiModules.contains(moduleName)) {
           layout.withModule(moduleName, "testFramework.jar")
