@@ -684,6 +684,24 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
   }
 
+  override suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project {
+    withContext(Dispatchers.IO) {
+      removeProjectConfigurationAndCaches(file)
+    }
+
+    val project = instantiateProject(file, options)
+    initProject(
+      file = file,
+      project = project,
+      isRefreshVfsNeeded = options.isRefreshVfsNeeded,
+      preloadServices = options.preloadServices,
+      template = if (options.useDefaultProjectAsTemplate) defaultProject else null,
+      indicator = ProgressManager.getInstance().progressIndicator
+    )
+    project.setTrusted(true)
+    return project
+  }
+
   protected open fun handleErrorOnNewProject(t: Throwable) {
     LOG.warn(t)
     try {

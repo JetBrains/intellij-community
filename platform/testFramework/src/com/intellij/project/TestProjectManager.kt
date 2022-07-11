@@ -8,6 +8,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.startup.StartupManagerEx
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -22,12 +23,14 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.runStartupActivities
+import com.intellij.openapi.util.Disposer
 import com.intellij.project.TestProjectManager.Companion.getCreationPlace
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.nio.file.Path
@@ -46,6 +49,18 @@ open class TestProjectManager : ProjectManagerImpl() {
     @JvmStatic
     fun getCreationPlace(project: Project): String {
       return "$project ${(if (project is ProjectEx) project.creationTrace else null) ?: ""}"
+    }
+
+    suspend fun loadAndOpenProject(path: Path, parent: Disposable): Project {
+      check(!ApplicationManager.getApplication().isDispatchThread)
+      val project = getInstanceEx().openProjectAsync(path, OpenProjectTask {})!!
+      Disposer.register(parent) {
+        check(!ApplicationManager.getApplication().isDispatchThread)
+        runBlocking {
+          getInstanceEx().forceCloseProjectAsync(project)
+        }
+      }
+      return project
     }
   }
 

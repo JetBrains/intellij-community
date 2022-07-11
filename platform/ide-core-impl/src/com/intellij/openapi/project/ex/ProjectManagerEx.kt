@@ -39,6 +39,9 @@ abstract class ProjectManagerEx : ProjectManager() {
    */
   abstract fun newProject(file: Path, options: OpenProjectTask): Project?
 
+  @Internal
+  abstract suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project
+
   abstract fun openProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project?
 
   abstract suspend fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask): Project?
