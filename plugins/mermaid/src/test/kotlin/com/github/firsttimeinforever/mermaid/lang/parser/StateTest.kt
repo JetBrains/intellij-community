@@ -362,6 +362,8 @@ class StateTest : MermaidParserTestCase() {
     >>>>Element(IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
+    >>Element(STATE_LINE)
+    >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>PsiElement(STATE)
@@ -493,6 +495,8 @@ class StateTest : MermaidParserTestCase() {
     >>>Element(STATE_ID)
     >>>>Element(IDENTIFIER)
     >>>>>PsiElement(ID)
+    >>>PsiElement(EOL)
+    >>Element(STATE_LINE)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)

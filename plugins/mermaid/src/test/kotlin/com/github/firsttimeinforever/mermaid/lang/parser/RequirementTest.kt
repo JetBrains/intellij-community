@@ -88,6 +88,8 @@ class RequirementTest : MermaidParserTestCase() {
     >>>>PsiWhiteSpace
     >>>>PsiElement(CLOSE_CURLY)
     >>>PsiElement(EOL)
+    >>Element(REQUIREMENT_LINE)
+    >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(REQUIREMENT_LINE)
     >>>Element(RELATIONSHIP_DEF)
@@ -225,6 +227,8 @@ class RequirementTest : MermaidParserTestCase() {
     >>>>PsiWhiteSpace
     >>>>PsiElement(CLOSE_CURLY)
     >>>PsiElement(EOL)
+    >>Element(REQUIREMENT_LINE)
+    >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(REQUIREMENT_LINE)
     >>>Element(REQUIREMENT_DEF)
@@ -269,6 +273,8 @@ class RequirementTest : MermaidParserTestCase() {
     >>>>>>PsiElement(EOL)
     >>>>PsiWhiteSpace
     >>>>PsiElement(CLOSE_CURLY)
+    >>>PsiElement(EOL)
+    >>Element(REQUIREMENT_LINE)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(REQUIREMENT_LINE)
@@ -315,6 +321,8 @@ class RequirementTest : MermaidParserTestCase() {
     >>>>PsiWhiteSpace
     >>>>PsiElement(CLOSE_CURLY)
     >>>PsiElement(EOL)
+    >>Element(REQUIREMENT_LINE)
+    >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(REQUIREMENT_LINE)
     >>>Element(REQUIREMENT_DEF)
@@ -359,6 +367,8 @@ class RequirementTest : MermaidParserTestCase() {
     >>>>>>PsiElement(EOL)
     >>>>PsiWhiteSpace
     >>>>PsiElement(CLOSE_CURLY)
+    >>>PsiElement(EOL)
+    >>Element(REQUIREMENT_LINE)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(REQUIREMENT_LINE)
@@ -405,6 +415,8 @@ class RequirementTest : MermaidParserTestCase() {
     >>>>PsiWhiteSpace
     >>>>PsiElement(CLOSE_CURLY)
     >>>PsiElement(EOL)
+    >>Element(REQUIREMENT_LINE)
+    >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(REQUIREMENT_LINE)
     >>>Element(REQUIREMENT_DEF)
@@ -450,6 +462,8 @@ class RequirementTest : MermaidParserTestCase() {
     >>>>PsiWhiteSpace
     >>>>PsiElement(CLOSE_CURLY)
     >>>PsiElement(EOL)
+    >>Element(REQUIREMENT_LINE)
+    >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(REQUIREMENT_LINE)
     >>>Element(ELEMENT_DEF)
@@ -470,6 +484,8 @@ class RequirementTest : MermaidParserTestCase() {
     >>>>>>PsiElement(EOL)
     >>>>PsiWhiteSpace
     >>>>PsiElement(CLOSE_CURLY)
+    >>>PsiElement(EOL)
+    >>Element(REQUIREMENT_LINE)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(REQUIREMENT_LINE)
@@ -498,6 +514,8 @@ class RequirementTest : MermaidParserTestCase() {
     >>>>>>PsiElement(EOL)
     >>>>PsiWhiteSpace
     >>>>PsiElement(CLOSE_CURLY)
+    >>>PsiElement(EOL)
+    >>Element(REQUIREMENT_LINE)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(REQUIREMENT_LINE)
@@ -529,6 +547,8 @@ class RequirementTest : MermaidParserTestCase() {
     >>>>>>PsiElement(EOL)
     >>>>PsiWhiteSpace
     >>>>PsiElement(CLOSE_CURLY)
+    >>>PsiElement(EOL)
+    >>Element(REQUIREMENT_LINE)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(REQUIREMENT_LINE)

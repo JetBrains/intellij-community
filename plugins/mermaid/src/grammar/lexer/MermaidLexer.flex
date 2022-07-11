@@ -123,7 +123,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 <YYINITIAL> {
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
-  [\n\r]+ { return EOL; }
+  [\n\r] { return EOL; }
   "%%" { yypushstate(line_comment); return LINE_COMMENT; }
   "pie" { yybegin(pie); return Pie.PIE; }
   "journey" { yybegin(journey); return Journey.JOURNEY; }
@@ -141,7 +141,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 <directive> {
   "}%%" { yypopstate(); return CLOSE_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
-  [\n\r]+ { return EOL; }
+  [\n\r] { return EOL; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   "{" { return OPEN_CURLY; }
   "}" { return CLOSE_CURLY; }
@@ -162,7 +162,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   "%%" { yypushstate(line_comment); return LINE_COMMENT; }
 }
 <pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, note_content, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element> {
-  [\n\r]+ { return EOL; }
+  [\n\r] { return EOL; }
   ";" { return SEMICOLON; }
 }
 
@@ -186,10 +186,10 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
 <direction_value, simple_direction_value> {
-  [\n\r]+ { yypopstate(); return EOL; }
+  [\n\r] { yypopstate(); return EOL; }
 }
 <flowchart> {
-  [\n\r]+ { yybegin(flowchart_body); return EOL; }
+  [\n\r] { yybegin(flowchart_body); return EOL; }
 }
 <flowchart, direction_value> {
 	"TD" |
@@ -363,7 +363,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 	[^\s;\n\r]+ { return Flowchart.STYLE_TARGET; }
   \s { yybegin(flowchart_body); return WHITE_SPACE; }
   ";" { yybegin(flowchart_body); return SEMICOLON; }
-  \n\r { yybegin(flowchart_body); return EOL; }
+  [\n\r] { yybegin(flowchart_body); return EOL; }
 }
 
 //---sequence---------------------------------------------------------------------
@@ -406,7 +406,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 }
 <sequence_id, sequence_alias, sequence_message, sequence> {
 	\s?(#[^\n\r]*)/[\n\r]? { yybegin(sequence); return IGNORED; }
-  \n { yybegin(sequence); return EOL; }
+  [\n\r] { yybegin(sequence); return EOL; }
   ";" { yybegin(sequence); return SEMICOLON; }
 }
 <sequence_id> {

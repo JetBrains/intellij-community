@@ -136,7 +136,8 @@ class GanttTest : MermaidLexerTestCase() {
         248,
         " (`excludes` accepts specific dates in YYYY-MM-DD format, days of the week (\"sunday\") or \"weekends\", but not the word \"weekdays\".)"
       ),
-      Token(EOL, 248, 250, "\n"),
+      Token(EOL, 248, 249, "\n"),
+      Token(EOL, 249, 250, "\n"),
       Token(WHITE_SPACE, 250, 252, "  "),
       Token(SECTION, 252, 259, "section"),
       Token(WHITE_SPACE, 259, 260, " "),
