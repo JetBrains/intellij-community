@@ -17,9 +17,9 @@ import git4idea.i18n.GitBundle
 
 private val LOG = Logger.getInstance("Git.Rebase.Log.Action.CommitDetailsLoader")
 
-internal fun getOrLoadDetails(project: Project, data: VcsLogData, commitList: List<VcsShortCommitDetails>): List<VcsCommitMetadata> {
-  val commitsToLoad = HashSet<VcsShortCommitDetails>(commitList)
-  val result = HashMap<VcsShortCommitDetails, VcsCommitMetadata>()
+internal fun getOrLoadDetails(project: Project, data: VcsLogData, commitList: List<VcsCommitMetadata>): List<VcsCommitMetadata> {
+  val commitsToLoad = HashSet<VcsCommitMetadata>(commitList)
+  val result = HashMap<VcsCommitMetadata, VcsCommitMetadata>()
   commitList.forEach { commit ->
     val commitMetadata = (commit as? VcsCommitMetadata) ?: getCommitDataFromCache(data, commit)
     if (commitMetadata != null) {
@@ -54,9 +54,9 @@ private fun getCommitDataFromCache(data: VcsLogData, commit: VcsShortCommitDetai
 private fun loadDetails(
   project: Project,
   data: VcsLogData,
-  commits: Collection<VcsShortCommitDetails>
-): Map<VcsShortCommitDetails, VcsCommitMetadata> {
-  val result = HashMap<VcsShortCommitDetails, VcsCommitMetadata>()
+  commits: Collection<VcsCommitMetadata>
+): Map<VcsCommitMetadata, VcsCommitMetadata> {
+  val result = HashMap<VcsCommitMetadata, VcsCommitMetadata>()
   ProgressManager.getInstance().runProcessWithProgressSynchronously(
     {
       try {

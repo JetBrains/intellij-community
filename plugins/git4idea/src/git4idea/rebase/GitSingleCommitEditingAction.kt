@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.vcs.log.VcsLog
-import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.GitUtil
 import git4idea.findProtectedRemoteBranch
@@ -43,7 +42,7 @@ internal abstract class GitSingleCommitEditingAction : GitCommitEditingActionBas
     log: VcsLog,
     logData: VcsLogData
   ) : MultipleCommitEditingData(repository, log, logData) {
-    val selectedCommit: VcsShortCommitDetails = selectedCommitList.first()
+    val selectedCommit = selectedCommitList.first()
     val isHeadCommit = selectedCommit.id.asString() == repository.currentRevision
   }
 }

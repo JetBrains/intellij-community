@@ -279,7 +279,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     val logData: VcsLogData
   ) {
     val project = repository.project
-    val selectedCommitList: List<VcsShortCommitDetails> = log.selectedShortDetails
+    val selectedCommitList: List<VcsCommitMetadata> = log.selectedShortDetails
   }
 
   protected sealed class ProhibitRebaseDuringRebasePolicy {
