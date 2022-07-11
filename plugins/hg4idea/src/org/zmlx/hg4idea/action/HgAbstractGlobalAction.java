@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -48,17 +49,11 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
       return;
     }
 
-    VirtualFile[] files = ObjectUtils.notNull(event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY), VirtualFile.EMPTY_ARRAY);
-
     HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
     List<HgRepository> repositories = repositoryManager.getRepositories();
     if (repositories.isEmpty()) return;
 
-    List<HgRepository> selectedRepositories = ContainerUtil.mapNotNull(files, repositoryManager::getRepositoryForFileQuick);
-    if (selectedRepositories.isEmpty()) {
-      HgRepository repository = HgUtil.getCurrentRepository(project);
-      selectedRepositories = repository != null ? Collections.singletonList(repository) : Collections.emptyList();
-    }
+    List<HgRepository> selectedRepositories = getSelectedRepositoriesFromEvent(event.getDataContext());
 
     execute(project, repositories, selectedRepositories, event.getDataContext());
   }
@@ -85,5 +80,20 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
       return false;
     }
     return true;
+  }
+
+  @NotNull
+  @CalledInAny
+  protected List<HgRepository> getSelectedRepositoriesFromEvent(@NotNull DataContext dataContext) {
+    Project project = dataContext.getData(CommonDataKeys.PROJECT);
+    if (project == null) return Collections.emptyList();
+
+    HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
+    VirtualFile[] files = ObjectUtils.notNull(dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY), VirtualFile.EMPTY_ARRAY);
+    List<HgRepository> selectedRepositories = ContainerUtil.mapNotNull(files, repositoryManager::getRepositoryForFileQuick);
+    if (!selectedRepositories.isEmpty()) return selectedRepositories;
+
+    HgRepository repository = HgUtil.getCurrentRepository(project);
+    return repository != null ? Collections.singletonList(repository) : Collections.emptyList();
   }
 }
