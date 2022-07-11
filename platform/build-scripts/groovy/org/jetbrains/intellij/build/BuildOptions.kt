@@ -145,6 +145,11 @@ class BuildOptions {
     const val VALIDATE_MODULES_STRUCTURE_PROPERTY = "intellij.build.module.structure"
 
     /**
+     * Verify whether class files have a forbidden subpaths in them, false by default
+     */
+    const val VALIDATE_CLASSFILE_SUBPATHS_PROPERTY = "intellij.verify.classfile.subpaths"
+
+    /**
      * Max attempts of dependencies resolution on fault. "1" means no retries.
      *
      * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies}
@@ -291,6 +296,8 @@ class BuildOptions {
   val hashAlgorithm = "SHA-384"
 
   var validateModuleStructure = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false"))
+
+  var validateClassFileSubpaths = parseBooleanValue(System.getProperty(VALIDATE_CLASSFILE_SUBPATHS_PROPERTY, "false"))
 
   @Internal
   var compressNonBundledPluginArchive = true

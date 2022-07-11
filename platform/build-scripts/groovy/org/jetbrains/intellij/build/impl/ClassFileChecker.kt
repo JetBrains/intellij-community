@@ -34,21 +34,22 @@ import java.util.zip.ZipException
  * </p>
  * <p>Example: <code>["": "1.8", "lib/idea_rt.jar": "1.3"]</code>.</p>
  */
-internal fun checkClassVersions(config: Map<String, String>, root: Path) {
-  spanBuilder("verify class file versions")
-    .setAttribute("ruleCount", config.size.toLong())
+internal fun checkClassFiles(versionCheckConfig: Map<String, String>, forbiddenSubPaths: List<String>, root: Path) {
+  spanBuilder("verify class files")
+    .setAttribute("ruleCount", versionCheckConfig.size.toLong())
+    .setAttribute("forbiddenSubpathCount", forbiddenSubPaths.size.toLong())
     .setAttribute("root", root.toString())
     .useWithScope {
-      val rules = ArrayList<Rule>(config.size)
-      for (entry in config.entries) {
+      val rules = ArrayList<Rule>(versionCheckConfig.size)
+      for (entry in versionCheckConfig.entries) {
         rules.add(Rule(path = entry.key, version = classVersion(entry.value)))
       }
       rules.sortWith { o1, o2 -> (-o1.path.length).compareTo(-o2.path.length) }
-      check(rules.last().path.isEmpty()) {
+      check(rules.isEmpty() || rules.last().path.isEmpty()) {
         "Invalid configuration: missing default version $rules"
       }
 
-      val checker = ClassVersionChecker(rules)
+      val checker = ClassFileChecker(rules, forbiddenSubPaths)
       val errors = ConcurrentLinkedQueue<String>()
       if (Files.isDirectory(root)) {
         checker.visitDirectory(root, "", errors)
@@ -57,7 +58,7 @@ internal fun checkClassVersions(config: Map<String, String>, root: Path) {
         checker.visitFile(root, "", errors)
       }
 
-      check(checker.checkedClassCount.get() != 0) {
+      check(rules.isEmpty() || checker.checkedClassCount.get() != 0) {
         "No classes found under $root - please check the configuration"
       }
 
@@ -80,7 +81,7 @@ internal fun checkClassVersions(config: Map<String, String>, root: Path) {
 
 private val READ = EnumSet.of(StandardOpenOption.READ)
 
-private class ClassVersionChecker(private val rules: List<Rule>) {
+private class ClassFileChecker(private val versionRules: List<Rule>, private val forbiddenSubPaths: List<String>) {
   val checkedJarCount = AtomicInteger()
   val checkedClassCount = AtomicInteger()
 
@@ -107,8 +108,13 @@ private class ClassVersionChecker(private val rules: List<Rule>) {
     if (fullPath.endsWith(".zip") || fullPath.endsWith(".jar")) {
       visitZip(fullPath, relPath, ZipFile(FileChannel.open(file, READ)), errors)
     }
-    else if (fullPath.endsWith(".class") && !fullPath.endsWith("module-info.class") && !isMultiVersion(fullPath)) {
-      BufferedInputStream(Files.newInputStream(file)).use { checkVersion(relPath, it, errors) }
+    else if (fullPath.endsWith(".class")) {
+      checkIfSubPathIsForbidden(relPath, errors)
+
+      val contentCheckRequired = versionRules.isNotEmpty() && !fullPath.endsWith("module-info.class") && !isMultiVersion(fullPath)
+      if (contentCheckRequired) {
+        BufferedInputStream(Files.newInputStream(file)).use { checkVersion(relPath, it, errors) }
+      }
     }
   }
 
@@ -136,9 +142,24 @@ private class ClassVersionChecker(private val rules: List<Rule>) {
             throw RuntimeException("Cannot read $childZipPath", e)
           }
         }
-        else if (name.endsWith(".class") && !name.endsWith("module-info.class") && !isMultiVersion(name)) {
-          checkVersion(join(zipRelPath, "!/", name), file.getInputStream(entry), errors)
+        else if (name.endsWith(".class")) {
+          val relPath = join(zipRelPath, "!/", name)
+
+          checkIfSubPathIsForbidden(relPath, errors)
+
+          val contentCheckRequired = versionRules.isNotEmpty() && !name.endsWith("module-info.class") && !isMultiVersion(name)
+          if (contentCheckRequired) {
+            checkVersion(relPath, file.getInputStream(entry), errors)
+          }
         }
+      }
+    }
+  }
+
+  private fun checkIfSubPathIsForbidden(relPath: String, errors: MutableCollection<String>) {
+    for (f in forbiddenSubPaths) {
+      if (relPath.contains(f)) {
+        errors.add("$relPath: .class file has a forbidden subpath: $f")
       }
     }
   }
@@ -158,7 +179,7 @@ private class ClassVersionChecker(private val rules: List<Rule>) {
       return
     }
 
-    val rule = rules.first { it.path.isEmpty() || path.startsWith(it.path) }
+    val rule = versionRules.first { it.path.isEmpty() || path.startsWith(it.path) }
     rule.wasUsed = true
     val expected = rule.version
     @Suppress("ConvertTwoComparisonsToRangeCheck")
