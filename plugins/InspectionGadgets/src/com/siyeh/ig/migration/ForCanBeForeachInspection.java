@@ -471,8 +471,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "for.can.be.foreach.problem.descriptor");
+    return InspectionGadgetsBundle.message("for.can.be.foreach.problem.descriptor");
   }
 
   @Override
@@ -674,12 +673,13 @@ public class ForCanBeForeachInspection extends BaseInspection {
           if (element != ((PsiTryStatement)parent).getFinallyBlock()) return false;
         }
         else if (parent instanceof PsiIfStatement) {
-          PsiIfStatement ifStatement = (PsiIfStatement)parent;
-          if (element == ifStatement.getThenBranch() || element == ifStatement.getElseBranch()) return false;
+          if (element != ((PsiIfStatement)parent).getCondition()) return false;
         }
         else if (parent instanceof PsiConditionalExpression) {
-          PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
-          if (element == conditionalExpression.getThenExpression() || element == conditionalExpression.getElseExpression()) return false;
+          if (element != ((PsiConditionalExpression)parent).getCondition()) return false;
+        }
+        else if (parent instanceof PsiSwitchBlock) {
+          if (element != ((PsiSwitchBlock)parent).getExpression()) return false;
         }
         else if (parent instanceof PsiPolyadicExpression) {
           PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
