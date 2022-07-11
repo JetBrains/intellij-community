@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -182,13 +183,13 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     });
   }
 
-  private void withCalculatedCertificateStrategy(ThrowingCallable<UntrustedCertificateStrategy, CertificateException> block) throws CertificateException {
+  private void withCalculatedCertificateStrategy(ThrowableConsumer<UntrustedCertificateStrategy, CertificateException> block) throws CertificateException {
     UntrustedCertificateStrategy initialStrategy = myUntrustedCertificateStrategy.get();
     if (initialStrategy != null) {
-      block.call(initialStrategy);
+      block.consume(initialStrategy);
     } else {
       UntrustedCertificateStrategy strategy = ApplicationManager.getApplication().getService(InitialUntrustedCertificateStrategyProvider.class).getStrategy();
-      block.call(strategy);
+      block.consume(strategy);
     }
   }
 
@@ -656,8 +657,4 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
   }
 
-  @FunctionalInterface
-  private interface ThrowingCallable<V, X extends Throwable> {
-    void call(V value) throws X;
-  }
 }
