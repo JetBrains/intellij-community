@@ -146,7 +146,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     checkProductProperties(context)
     val projectStructureMapping = DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context)
     layoutShared(context)
-    checkClassVersion(context.paths.distAllDir, context)
+    checkClassFiles(context.paths.distAllDir, context)
     if (context.productProperties.buildSourcesArchive) {
       buildSourcesArchive(projectStructureMapping, context)
     }
@@ -995,14 +995,24 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
   checkInArchive(context, targetFile, "")
   context.notifyArtifactBuilt(targetFile)
 
-  checkClassVersion(targetFile, context)
+  checkClassFiles(targetFile, context)
   return targetFile
 }
 
-private fun checkClassVersion( targetFile: Path, context: BuildContext) {
-  val checkerConfig = context.productProperties.versionCheckerConfig ?: return
-  if (!context.options.buildStepsToSkip.contains(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
-    ClassVersionChecker.checkVersions(checkerConfig, context.messages, targetFile)
+private fun checkClassFiles(targetFile: Path, context: BuildContext) {
+  val versionCheckerConfig =
+    if (context.options.buildStepsToSkip.contains(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) emptyMap()
+    else context.productProperties.versionCheckerConfig ?: emptyMap()
+
+  val forbiddenSubPaths =
+    if (context.options.validateClassFileSubpaths) context.productProperties.forbiddenClassFileSubPaths
+    else emptyList()
+
+  val classFileCheckRequired =
+    (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty())
+
+  if (classFileCheckRequired) {
+    ClassFileChecker.checkClassFiles(versionCheckerConfig, forbiddenSubPaths, context.messages, targetFile)
   }
 }
 
