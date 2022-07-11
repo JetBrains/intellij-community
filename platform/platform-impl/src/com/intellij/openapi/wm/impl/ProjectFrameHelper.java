@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -361,6 +362,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       ToolWindowManager manager = project != null && project.isInitialized() ? project.getServiceIfCreated(ToolWindowManager.class) : null;
       return manager instanceof ToolWindowManagerImpl ? JBIterable.from(
         ((ToolWindowManagerImpl)manager).getLastActiveToolWindows()).toArray(new ToolWindow[0]) : null;
+    }
+    else if (PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.is(dataId)) {
+      FileEditorManager manager = project != null && project.isInitialized() ? project.getComponent(FileEditorManager.class) : null;
+      return manager != null ? manager.getSelectedEditor() : null;
     }
 
     return null;

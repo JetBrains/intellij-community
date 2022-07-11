@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -24,6 +25,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
@@ -93,7 +95,10 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
     List<HgRepository> selectedRepositories = ContainerUtil.mapNotNull(files, repositoryManager::getRepositoryForFileQuick);
     if (!selectedRepositories.isEmpty()) return selectedRepositories;
 
-    HgRepository repository = HgUtil.getCurrentRepository(project);
+    HgRepository repository = DvcsUtil.guessRepositoryForFile(project,
+                                                              repositoryManager,
+                                                              DvcsUtil.getSelectedFile(dataContext),
+                                                              HgProjectSettings.getInstance(project).getRecentRootPath());
     return repository != null ? Collections.singletonList(repository) : Collections.emptyList();
   }
 }
