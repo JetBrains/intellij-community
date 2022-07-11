@@ -4,6 +4,7 @@ package com.intellij.ide.impl
 import com.intellij.CommonBundle
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
+import com.intellij.execution.wsl.WslPath.Companion.isWslUncPath
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
@@ -458,7 +459,7 @@ object ProjectUtil {
   }
 
   fun isRemotePath(path: String): Boolean {
-    return path.contains("://") || path.contains("\\\\")
+    return (path.contains("://") || path.contains("\\\\")) && !isWslUncPath(path)
   }
 
   fun findProject(file: Path): Project? = getOpenProjects().firstOrNull { isSameProject(file, it) }
