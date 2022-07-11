@@ -1,5 +1,5 @@
 fun testParam(a : String, b : Int,
-              <caret>) {
+<caret>) {
 }
 
 // SET_FALSE: ALIGN_MULTILINE_PARAMETERS
