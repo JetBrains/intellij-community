@@ -50,6 +50,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.lang.Runnable
+import java.nio.file.ClosedFileSystemException
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
@@ -329,10 +330,21 @@ open class ProjectImpl(filePath: Path, projectName: String?)
   final override fun toString(): String {
     val store = componentStoreValue.valueIfInitialized
     val containerState = if (isTemporarilyDisposed) "disposed temporarily" else containerStateName
-    val componentStore = when {
-      store == null -> "<not initialized>"
-      store.storageScheme == StorageScheme.DIRECTORY_BASED -> store.projectBasePath.toString()
-      else -> store.projectFilePath
+    val componentStore = if (store == null) {
+      "<not initialized>"
+    }
+    else {
+      try {
+        if (store.storageScheme == StorageScheme.DIRECTORY_BASED) {
+          store.projectBasePath.toString()
+        }
+        else {
+          store.projectFilePath
+        }
+      }
+      catch (e: ClosedFileSystemException) {
+        "<fs closed>"
+      }
     }
     val disposedStr = if (isDisposed) " (disposed)" else ""
     return "Project(name=$cachedName, containerState=$containerState, componentStore=$componentStore)$disposedStr"
