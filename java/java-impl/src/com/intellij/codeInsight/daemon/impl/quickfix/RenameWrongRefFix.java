@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -21,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -40,6 +42,11 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
   public RenameWrongRefFix(@NotNull PsiReferenceExpression refExpr, final boolean unresolvedOnly) {
     myRefExpr = refExpr;
     myUnresolvedOnly = unresolvedOnly;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new RenameWrongRefFix(PsiTreeUtil.findSameElementInCopy(myRefExpr, target), myUnresolvedOnly);
   }
 
   @Override
@@ -150,7 +157,9 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
 
     TemplateManager.getInstance(project).startTemplate(editor, template);
 
-    EditorUtil.setVerticalScrollProportion(editor, proportion);
+    if (file.isPhysical()) {
+      EditorUtil.setVerticalScrollProportion(editor, proportion);
+    }
   }
 
   @Override
