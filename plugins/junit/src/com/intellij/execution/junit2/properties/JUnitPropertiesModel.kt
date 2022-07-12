@@ -16,14 +16,16 @@ import com.intellij.psi.util.CachedValuesManager
 
 internal const val JUNIT_PLATFORM_PROPERTIES_CONFIG: String = "junit-platform.properties"
 internal const val JUNIT_CONSTANTS_CLASS: String = "org.junit.jupiter.engine.Constants"
-internal const val JUNIT_PROPERTY_NAME_SUFFIX: String = "_PROPERTY_NAME"
 
-internal data class JunitPlatformProperty(
+internal const val JUNIT_PROPERTY_NAME_SUFFIX: String = "_PROPERTY_NAME"
+internal const val JUNIT_DEFAULT_PARALLEL_EXECUTION_MODE_FIELD: String = "DEFAULT_PARALLEL_EXECUTION_MODE"
+
+internal data class JUnitPlatformProperty(
   val key: String,
   val declaration: PsiAnchor
 )
 
-internal fun getJunitPlatformProperties(file: PsiFile): Map<String, JunitPlatformProperty> {
+internal fun getJUnitPlatformProperties(file: PsiFile): Map<String, JUnitPlatformProperty> {
   return CachedValuesManager.getManager(file.project).getCachedValue(file, CachedValueProvider {
     val module = ModuleUtilCore.findModuleForFile(file)
 
@@ -33,10 +35,10 @@ internal fun getJunitPlatformProperties(file: PsiFile): Map<String, JunitPlatfor
 
     val psiEvaluator = PsiExpressionEvaluator()
     val properties = (constantsClass?.fields ?: emptyArray())
-      .filter { it.name.endsWith(JUNIT_PROPERTY_NAME_SUFFIX) }
+      .filter { it.name.endsWith(JUNIT_PROPERTY_NAME_SUFFIX) || it.name == JUNIT_DEFAULT_PARALLEL_EXECUTION_MODE_FIELD }
       .mapNotNull { field ->
         computePropertyName(psiEvaluator, field.initializer)
-          ?.let { key -> JunitPlatformProperty(key, PsiAnchor.create(field)) }
+          ?.let { key -> JUnitPlatformProperty(key, PsiAnchor.create(field)) }
       }
 
     Result.create(properties.associateBy { it.key },

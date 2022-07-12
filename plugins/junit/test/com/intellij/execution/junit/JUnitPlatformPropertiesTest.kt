@@ -20,6 +20,7 @@ class JUnitPlatformPropertiesTest : LightJavaCodeInsightFixtureTestCase() {
           public static final String EXTENSIONS_AUTODETECTION_ENABLED_PROPERTY_NAME = "junit.jupiter.extensions.autodetection.enabled";
           public static final String DEFAULT_TEST_INSTANCE_LIFECYCLE_PROPERTY_NAME = "junit.jupiter.testinstance.lifecycle.default";
           public static final String PARALLEL_EXECUTION_ENABLED_PROPERTY_NAME = "junit.jupiter.execution.parallel.enabled";
+          public static final String DEFAULT_PARALLEL_EXECUTION_MODE = "junit.jupiter.execution.parallel.mode.default";
       }
     """.trimIndent())
   }
@@ -45,6 +46,7 @@ class JUnitPlatformPropertiesTest : LightJavaCodeInsightFixtureTestCase() {
                                      "junit.jupiter.displayname.generator.default",
                                      "junit.jupiter.execution.parallel.enabled",
                                      "junit.jupiter.extensions.autodetection.enabled",
-                                     "junit.jupiter.testinstance.lifecycle.default")
+                                     "junit.jupiter.testinstance.lifecycle.default",
+                                     "junit.jupiter.execution.parallel.mode.default")
   }
 }

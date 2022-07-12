@@ -9,6 +9,6 @@ internal class JUnitImplicitPropertyUsageProvider : ImplicitPropertyUsageProvide
     val file = property.containingFile
     if (file?.name != JUNIT_PLATFORM_PROPERTIES_CONFIG) return false
 
-    return getJunitPlatformProperties(file).containsKey(property.key)
+    return getJUnitPlatformProperties(file).containsKey(property.key)
   }
 }

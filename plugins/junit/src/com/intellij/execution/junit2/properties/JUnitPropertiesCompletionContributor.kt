@@ -23,7 +23,7 @@ internal class JUnitPropertiesCompletionContributor : CompletionContributor() {
         override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
           val file = parameters.originalFile
 
-          val variants = getJunitPlatformProperties(file).values
+          val variants = getJUnitPlatformProperties(file).values
 
           val delimiterChar = PropertiesCodeStyleSettings.getInstance(parameters.editor.project).delimiter
           val defaultDelimiterType = CharTailType(delimiterChar)

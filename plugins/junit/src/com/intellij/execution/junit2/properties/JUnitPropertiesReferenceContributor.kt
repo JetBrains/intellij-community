@@ -27,6 +27,6 @@ private class JunitPropertyReference(element: PsiElement) : PsiReferenceBase<Psi
     val prop = element.parentOfType<Property>()
     val key = prop?.key
 
-    return getJunitPlatformProperties(element.containingFile)[key]?.declaration?.retrieve()
+    return getJUnitPlatformProperties(element.containingFile)[key]?.declaration?.retrieve()
   }
 }
