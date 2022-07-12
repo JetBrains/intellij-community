@@ -26,7 +26,7 @@ sealed class TerminalChangeFontSizeAction(text: Supplier<String?>, private val m
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   class IncreaseEditorFontSize : TerminalChangeFontSizeAction(EditorBundle.messagePointer("increase.editor.font"), 1f)
