@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
-internal class HLRedundantUnitReturnTypeInspection :
+internal class RedundantUnitReturnTypeInspection :
     AbstractKotlinApplicatorBasedInspection<KtNamedFunction, CallableReturnTypeUpdaterApplicator.TypeInfo>(
         KtNamedFunction::class
     ), CleanupLocalInspectionTool {

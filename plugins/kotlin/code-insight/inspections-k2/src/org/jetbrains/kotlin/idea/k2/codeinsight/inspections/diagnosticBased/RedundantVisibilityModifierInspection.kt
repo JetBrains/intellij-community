@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
-class HLRedundantVisibilityModifierInspection :
+class RedundantVisibilityModifierInspection :
     AbstractKotlinDiagnosticBasedInspection<KtModifierListOwner, KtFirDiagnostic.RedundantVisibilityModifier, ModifierApplicators.Modifier>(
         elementType = KtModifierListOwner::class,
         diagnosticType = KtFirDiagnostic.RedundantVisibilityModifier::class

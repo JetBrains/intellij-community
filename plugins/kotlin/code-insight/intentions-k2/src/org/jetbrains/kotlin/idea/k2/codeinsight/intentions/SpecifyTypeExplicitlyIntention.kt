@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableRetu
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator.getTypeInfo
 import org.jetbrains.kotlin.psi.*
 
-class SpecifyExplicitTypeForCallableDeclarationIntention :
+class SpecifyTypeExplicitlyIntention :
     AbstractKotlinApplicatorBasedIntention<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo>(KtCallableDeclaration::class)
 {
     override val applicabilityRange: KotlinApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER

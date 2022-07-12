@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 
-class HLUnusedVariableInspection :
+class UnusedVariableInspection :
     AbstractKotlinDiagnosticBasedInspection<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable, KotlinApplicatorInput.Empty>(
         elementType = KtNamedDeclaration::class,
         diagnosticType = KtFirDiagnostic.UnusedVariable::class,
