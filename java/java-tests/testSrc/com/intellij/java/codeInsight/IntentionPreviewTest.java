@@ -7,9 +7,9 @@ import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpda
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.intellij.lang.regexp.inspection.DuplicateCharacterInClassInspection;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ExecutionException;
 
@@ -153,19 +153,33 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
 
   public void testRenameFile() {
     configureFromFileText("Test.java", "public class <caret>Best {}");
-    IntentionAction action = findActionWithText("Rename File");
-    assertNotNull(action);
-    IntentionPreviewInfo info = IntentionPreviewPopupUpdateProcessor.getPreviewInfo(getProject(), action, getFile(), getEditor());
-    assertTrue(info instanceof IntentionPreviewInfo.Html);
-    HtmlChunk content = ((IntentionPreviewInfo.Html)info).content();
+    IntentionPreviewInfo.Html info = getPreviewHtml("Rename File");
     assertEquals("<p><icon src=\"file\"/>&nbsp;Test.java &rarr; <icon src=\"file\"/>&nbsp;Best.java</p>",
-                 content.toString());
-    assertNotNull(((IntentionPreviewInfo.Html)info).icon("file"));
+                 info.content().toString());
+    assertNotNull(info.icon("file"));
+  }
+
+  public void testMoveMemberIntoClass() {
+    configureFromFileText("Test.java", "public class Test {} void <caret>method() {}");
+    IntentionPreviewInfo.Html info = getPreviewHtml("Move member into class");
+    assertEquals("<p><icon src=\"source\"/>&nbsp;method &rarr; <icon src=\"target\"/>&nbsp;Test</p>",
+                 info.content().toString());
+    assertNotNull(info.icon("source"));
+    assertNotNull(info.icon("target"));
   }
 
   @Override
   protected void setupEditorForInjectedLanguage() {
     // we want to stay at host editor
+  }
+
+  @NotNull
+  private IntentionPreviewInfo.Html getPreviewHtml(String actionName) {
+    IntentionAction action = findActionWithText(actionName);
+    assertNotNull(action);
+    IntentionPreviewInfo info = IntentionPreviewPopupUpdateProcessor.getPreviewInfo(getProject(), action, getFile(), getEditor());
+    assertTrue(info instanceof IntentionPreviewInfo.Html);
+    return (IntentionPreviewInfo.Html)info;
   }
 
   private String getPreviewText(IntentionAction action) {

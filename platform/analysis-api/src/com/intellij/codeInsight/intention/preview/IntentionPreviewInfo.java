@@ -10,7 +10,10 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.ui.DeferredIcon;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -18,7 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Possible result for IntentionPreview.
@@ -178,9 +183,7 @@ public interface IntentionPreviewInfo {
    */
   static @NotNull IntentionPreviewInfo rename(@NotNull PsiFile file, @NotNull @NlsSafe String newName) {
     Icon icon = file.getIcon(0);
-    HtmlChunk iconChunk =
-      icon == null ? HtmlChunk.empty() :
-      new HtmlBuilder().append(HtmlChunk.tag("icon").attr("src", "file")).nbsp().toFragment();
+    HtmlChunk iconChunk = getIconChunk(icon, "file");
     HtmlChunk fragment = new HtmlBuilder()
       .append(iconChunk)
       .append(file.getName())
@@ -189,6 +192,12 @@ public interface IntentionPreviewInfo {
       .append(newName)
       .toFragment();
     return new Html(fragment.wrapWith("p"), icon == null ? Map.of() : Map.of("file", icon));
+  }
+
+  @NotNull
+  private static HtmlChunk getIconChunk(@Nullable Icon icon, @NotNull String id) {
+    return icon == null ? HtmlChunk.empty() :
+         new HtmlBuilder().append(HtmlChunk.tag("icon").attr("src", id)).nbsp().toFragment();
   }
 
   /**
@@ -213,5 +222,34 @@ public interface IntentionPreviewInfo {
       .append(location)
       .toFragment();
     return new Html(fragment.wrapWith("p"), Map.of("file", fileIcon, "dir", dirIcon));
+  }
+
+  /**
+   * @param source PsiElement to move
+   * @param target target PsiElement
+   * @return a presentation describing moving of source element to the target
+   */
+  static @NotNull IntentionPreviewInfo movePsi(@NotNull PsiNamedElement source, @NotNull PsiNamedElement target) {
+    Icon sourceIcon = source.getIcon(0);
+    if (sourceIcon instanceof DeferredIcon) {
+      sourceIcon = ((DeferredIcon)sourceIcon).evaluate();
+    }
+    Icon targetIcon = target.getIcon(0);
+    if (targetIcon instanceof DeferredIcon) {
+      targetIcon = ((DeferredIcon)targetIcon).evaluate();
+    }
+    HtmlChunk sourceIconChunk = getIconChunk(sourceIcon, "source");
+    HtmlChunk targetIconChunk = getIconChunk(targetIcon, "target");
+    HtmlChunk fragment = new HtmlBuilder()
+      .append(sourceIconChunk)
+      .append(Objects.requireNonNull(source.getName()))
+      .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
+      .append(targetIconChunk)
+      .append(Objects.requireNonNull(target.getName()))
+      .toFragment();
+    Map<String, Icon> iconMap = new HashMap<>();
+    iconMap.put("source", sourceIcon);
+    iconMap.put("target", targetIcon);
+    return new Html(fragment.wrapWith("p"), iconMap);
   }
 }
