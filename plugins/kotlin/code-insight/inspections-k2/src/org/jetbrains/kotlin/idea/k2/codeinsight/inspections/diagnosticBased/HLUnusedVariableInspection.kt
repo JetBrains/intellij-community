@@ -1,8 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.fir.inspections.diagnosticBased
+package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
-import org.jetbrains.kotlin.idea.quickfix.RemovePsiElementSimpleFix
 import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -15,8 +14,9 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorPresentation
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.presentation
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputByDiagnosticProvider
+import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInference
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeProperty
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.util.isExplicitTypeReferenceNeededForTypeInference
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 
@@ -29,7 +29,7 @@ class HLUnusedVariableInspection :
         get() = inputByDiagnosticProvider { diagnostic ->
             val ktProperty = diagnostic.psi as? KtProperty ?: return@inputByDiagnosticProvider null
             if (ktProperty.isExplicitTypeReferenceNeededForTypeInference()) return@inputByDiagnosticProvider null
-            KotlinApplicatorInput.Empty
+            KotlinApplicatorInput
         }
     override val presentation: KotlinApplicatorPresentation<KtNamedDeclaration>
         get() = presentation {
@@ -45,7 +45,7 @@ class HLUnusedVariableInspection :
                 KotlinBundle.message("remove.variable.0", psi.name.toString())
             }
             applyTo { psi, _ ->
-                RemovePsiElementSimpleFix.RemoveVariableFactory.removeProperty(psi as KtProperty)
+                removeProperty(psi as KtProperty)
             }
         }
 }

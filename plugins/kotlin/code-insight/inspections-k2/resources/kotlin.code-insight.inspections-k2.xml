@@ -1,6 +1,6 @@
-<idea-plugin>
+<idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.inspections">
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.fir.inspections.declarations.HLRedundantUnitReturnTypeInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.HLRedundantUnitReturnTypeInspection"
                      groupPath="Kotlin"
                      groupName="Redundant constructs"
                      enabledByDefault="true"
@@ -9,7 +9,7 @@
                      language="kotlin"
                      key="inspection.redundant.unit.return.type.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.fir.inspections.diagnosticBased.HLRedundantVisibilityModifierInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.HLRedundantVisibilityModifierInspection"
                      groupPath="Kotlin"
                      groupName="Redundant constructs"
                      enabledByDefault="true"
@@ -18,7 +18,7 @@
                      language="kotlin"
                      key="inspection.redundant.visibility.modifier.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.fir.inspections.KotlinHLUnusedImportInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinHLUnusedImportInspection"
                      groupPath="Kotlin"
                      groupName="Redundant constructs"
                      enabledByDefault="true"
@@ -27,7 +27,7 @@
                      language="kotlin"
                      key="inspection.kotlin.unused.import.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.fir.inspections.diagnosticBased.HLUnusedVariableInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.HLUnusedVariableInspection"
                      groupPath="Kotlin"
                      groupName="Redundant constructs"
                      enabledByDefault="true"
@@ -36,7 +36,7 @@
                      language="kotlin"
                      key="inspection.kotlin.unused.variable.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.fir.inspections.KotlinHLImplicitThisInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinHLImplicitThisInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"

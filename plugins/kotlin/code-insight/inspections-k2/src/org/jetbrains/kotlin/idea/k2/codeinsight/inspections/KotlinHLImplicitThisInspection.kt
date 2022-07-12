@@ -1,8 +1,5 @@
-/*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
-package org.jetbrains.kotlin.idea.fir.inspections
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -98,7 +95,7 @@ class KotlinHLImplicitThisInspection : AbstractKotlinApplicatorBasedInspection<K
 
     override val presentation: KotlinApplicatorPresentation<KtExpression> = presentation { highlightType(ProblemHighlightType.INFORMATION) }
 
-    override val applicator: KotlinApplicator<KtExpression, ImplicitReceiverInfo> = KotlinHLImplicitThisInspection.applicator
+    override val applicator: KotlinApplicator<KtExpression, ImplicitReceiverInfo> = Companion.applicator
 
     companion object {
 

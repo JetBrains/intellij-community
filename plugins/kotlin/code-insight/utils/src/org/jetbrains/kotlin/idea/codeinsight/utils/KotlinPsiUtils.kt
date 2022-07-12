@@ -2,10 +2,8 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.psi.KtContainerNode
-import org.jetbrains.kotlin.psi.KtDoWhileExpression
-import org.jetbrains.kotlin.psi.KtForExpression
-import org.jetbrains.kotlin.psi.KtWhileExpression
+import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.psi.*
 
 fun KtContainerNode.getControlFlowElementDescription(): String? {
     when (node.elementType) {
@@ -20,4 +18,15 @@ fun KtContainerNode.getControlFlowElementDescription(): String? {
         }
     }
     return null
+}
+
+fun removeProperty(ktProperty: KtProperty) {
+    val initializer = ktProperty.initializer
+    if (initializer != null && initializer !is KtConstantExpression) {
+        val commentSaver = CommentSaver(ktProperty)
+        val replaced = ktProperty.replace(initializer)
+        commentSaver.restore(replaced)
+    } else {
+        ktProperty.delete()
+    }
 }

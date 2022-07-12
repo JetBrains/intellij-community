@@ -164,6 +164,7 @@ final class KotlinPluginBuilder {
     "kotlin.code-insight.impl-base",
     "kotlin.code-insight.descriptions",
     "kotlin.code-insight.intentions-k2",
+    "kotlin.code-insight.inspections-k2",
     "kotlin.fir",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",
