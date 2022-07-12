@@ -1,19 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.fir.intentions
+package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInputProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -21,8 +15,39 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class HLUseExpressionBodyIntention : AbstractKotlinApplicatorBasedIntention<KtDeclarationWithBody, HLUseExpressionBodyIntention.Input>(
-    KtDeclarationWithBody::class, applicator
+    KtDeclarationWithBody::class,
 ) {
+
+    override val applicator: KotlinApplicator<KtDeclarationWithBody, Input>
+        get() = applicator<KtDeclarationWithBody, Input> {
+            familyAndActionName(KotlinBundle.lazyMessage(("convert.body.to.expression")))
+            isApplicableByPsi { declaration ->
+
+                // Check if either property accessor or named function
+                if (declaration !is KtNamedFunction && declaration !is KtPropertyAccessor) return@isApplicableByPsi false
+
+                // Check if a named function has explicit type
+                if (declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) return@isApplicableByPsi false
+
+                // Check if function has block with single non-empty KtReturnExpression
+                val returnedExpression = declaration.singleReturnedExpressionOrNull ?: return@isApplicableByPsi false
+
+                // Check if the returnedExpression actually always returns (early return is possible)
+                // TODO: take into consideration other cases (???)
+                if (returnedExpression.anyDescendantOfType<KtReturnExpression>(
+                        canGoInside = { it !is KtFunctionLiteral && it !is KtNamedFunction && it !is KtPropertyAccessor })
+                )
+                    return@isApplicableByPsi false
+
+                true
+            }
+            applyToWithEditorRequired { declaration, _, _, editor ->
+                val newFunctionBody = declaration.replaceWithPreservingComments()
+                editor.correctRightMargin(declaration, newFunctionBody)
+                if (declaration is KtNamedFunction) editor.selectFunctionColonType(declaration)
+            }
+        }
+
 
     class Input : KotlinApplicatorInput
 
@@ -44,35 +69,6 @@ class HLUseExpressionBodyIntention : AbstractKotlinApplicatorBasedIntention<KtDe
     override fun skipProcessingFurtherElementsAfter(element: PsiElement) = false
 
     companion object {
-
-        val applicator = applicator<KtDeclarationWithBody, Input> {
-            familyAndActionName(KotlinBundle.lazyMessage(("convert.body.to.expression")))
-            isApplicableByPsi { declaration ->
-
-                // Check if either property accessor or named function
-                if (declaration !is KtNamedFunction && declaration !is KtPropertyAccessor) return@isApplicableByPsi false
-
-                // Check if a named function has explicit type
-                if (declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) return@isApplicableByPsi false
-
-                // Check if function has block with single non-empty KtReturnExpression
-                val returnedExpression = declaration.singleReturnedExpressionOrNull ?: return@isApplicableByPsi false
-
-                // Check if the returnedExpression actually always returns (early return is possible)
-                // TODO: take into consideration other cases (???)
-                if (returnedExpression.anyDescendantOfType<KtReturnExpression>(
-                        canGoInside = { it !is KtFunctionLiteral && it !is KtNamedFunction && it !is KtPropertyAccessor }))
-                    return@isApplicableByPsi false
-
-                true
-            }
-            applyToWithEditorRequired { declaration, _, _, editor ->
-                val newFunctionBody = declaration.replaceWithPreservingComments()
-                editor.correctRightMargin(declaration, newFunctionBody)
-                if (declaration is KtNamedFunction) editor.selectFunctionColonType(declaration)
-            }
-        }
-
         private fun KtDeclarationWithBody.replaceWithPreservingComments(): KtExpression {
             val bodyBlock = bodyBlockExpression ?: return this
             val returnedExpression = singleReturnedExpressionOrNull ?: return this

@@ -1,27 +1,34 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.fir.applicators
+package org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators
 
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.intentions.ChooseValueExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator.TypeInfo.Companion.createByKtTypes
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.util.bfs
 
 object CallableReturnTypeUpdaterApplicator {
     val applicator = applicator<KtCallableDeclaration, TypeInfo> {
@@ -102,6 +109,74 @@ object CallableReturnTypeUpdaterApplicator {
     ) : ChooseValueExpression<TypeInfo.Type>(items, defaultItem) {
         override fun getLookupString(element: TypeInfo.Type): String = element.shortTypeRepresentation
         override fun getResult(element: TypeInfo.Type): String = element.longTypeRepresentation
+    }
+
+    fun KtAnalysisSession.getTypeInfo(declaration: KtCallableDeclaration): CallableReturnTypeUpdaterApplicator.TypeInfo {
+        val declarationType = declaration.getReturnKtType()
+        val overriddenTypes = (declaration.getSymbol() as? KtCallableSymbol)?.getDirectlyOverriddenSymbols()
+            ?.map { it.returnType }
+            ?.distinct()
+            ?: emptyList()
+        val cannotBeNull = overriddenTypes.any { !it.canBeNull }
+        val allTypes = (listOf(declarationType) + overriddenTypes)
+            // Here we do BFS manually rather than invoke `getAllSuperTypes` because we have multiple starting points. Simply calling
+            // `getAllSuperTypes` does not work because it would BFS traverse each starting point and put the result together, in which
+            // case, for example, calling `getAllSuperTypes` would put `Any` at middle if one of the super type in the hierarchy has
+            // multiple super types.
+            .bfs { it.getDirectSuperTypes(shouldApproximate = true).iterator() }
+            .map { it.approximateToSuperPublicDenotableOrSelf() }
+            .distinct()
+            .let { types ->
+                when {
+                    cannotBeNull -> types.map { it.withNullability(KtTypeNullability.NON_NULLABLE) }.distinct()
+                    declarationType.hasFlexibleNullability -> types.flatMap { type ->
+                        listOf(type.withNullability(KtTypeNullability.NON_NULLABLE), type.withNullability(KtTypeNullability.NULLABLE))
+                    }
+
+                    else -> types
+                }
+            }.toList()
+
+        return with(CallableReturnTypeUpdaterApplicator.TypeInfo) {
+            if (ApplicationManager.getApplication().isUnitTestMode) {
+                selectForUnitTest(declaration, allTypes)?.let { return it }
+            }
+
+            val approximatedDefaultType = declarationType.approximateToSuperPublicDenotableOrSelf().let {
+                if (cannotBeNull) it.withNullability(KtTypeNullability.NON_NULLABLE)
+                else it
+            }
+            createByKtTypes(
+                approximatedDefaultType,
+                allTypes.drop(1), // The first type is always the default type so we drop it.
+                useTemplate = true
+            )
+        }
+    }
+
+    // The following logic is copied from FE1.0 at
+    // org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention.Companion#createTypeExpressionForTemplate
+    private fun KtAnalysisSession.selectForUnitTest(
+        declaration: KtCallableDeclaration,
+        allTypes: List<KtType>
+    ): CallableReturnTypeUpdaterApplicator.TypeInfo? {
+        // This helps to be sure no nullable types are suggested
+        if (declaration.containingKtFile.findDescendantOfType<PsiComment>()?.takeIf {
+                it.text == "// CHOOSE_NULLABLE_TYPE_IF_EXISTS"
+            } != null) {
+            val targetType = allTypes.firstOrNull { it.isMarkedNullable } ?: allTypes.first()
+            return createByKtTypes(targetType)
+        }
+        // This helps to be sure something except Nothing is suggested
+        if (declaration.containingKtFile.findDescendantOfType<PsiComment>()?.takeIf {
+                it.text == "// DO_NOT_CHOOSE_NOTHING"
+            } != null
+        ) {
+            // Note that `isNothing` returns true for both `Nothing` and `Nothing?`
+            val targetType = allTypes.firstOrNull { !it.isNothing } ?: allTypes.first()
+            return createByKtTypes(targetType)
+        }
+        return null
     }
 
     class TypeInfo(

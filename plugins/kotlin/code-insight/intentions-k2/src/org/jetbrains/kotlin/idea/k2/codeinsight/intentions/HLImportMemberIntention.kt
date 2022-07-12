@@ -1,37 +1,46 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.fir.intentions
+package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.HighPriorityAction
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInputProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
-import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
-class HLImportMemberIntention : AbstractKotlinApplicatorBasedIntention<KtNameReferenceExpression, HLImportMemberIntention.Input>(
-    KtNameReferenceExpression::class, Companion.applicator
-), HighPriorityAction {
+class HLImportMemberIntention :
+    AbstractKotlinApplicatorBasedIntention<KtNameReferenceExpression, HLImportMemberIntention.Input>(KtNameReferenceExpression::class),
+    HighPriorityAction {
     override val applicabilityRange: KotlinApplicabilityRange<KtNameReferenceExpression> get() = ApplicabilityRanges.SELF
 
     override val inputProvider: KotlinApplicatorInputProvider<KtNameReferenceExpression, Input> = inputProvider { psi ->
         val symbol = psi.mainReference.resolveToSymbol() ?: return@inputProvider null
         computeInput(psi, symbol)
     }
+
+    override val applicator: KotlinApplicator<KtNameReferenceExpression, Input>
+        get() = applicator<KtNameReferenceExpression, Input> {
+            familyName(KotlinBundle.lazyMessage("add.import.for.member"))
+            actionName { _, input -> KotlinBundle.message("add.import.for.0", input.fqName.asString()) }
+            isApplicableByPsi {
+                // Ignore simple name expressions or already imported names.
+                if (it.getQualifiedElement() == it || it.isInImportDirective()) return@isApplicableByPsi false
+                true
+            }
+            applyTo { _, input ->
+                input.shortenCommand.invokeShortening()
+            }
+        }
 
     private fun KtAnalysisSession.computeInput(psi: KtNameReferenceExpression, symbol: KtSymbol): Input? {
         return when (symbol) {
@@ -58,6 +67,7 @@ class HLImportMemberIntention : AbstractKotlinApplicatorBasedIntention<KtNameRef
                 if (shortenCommand.isEmpty) return null
                 Input(classId.asSingleFqName(), shortenCommand)
             }
+
             is KtCallableSymbol -> {
                 val callableId = symbol.callableIdIfNonLocal ?: return null
                 if (callableId.callableName.isSpecial) return null
@@ -75,6 +85,7 @@ class HLImportMemberIntention : AbstractKotlinApplicatorBasedIntention<KtNameRef
                 if (shortenCommand.isEmpty) return null
                 Input(callableId.asSingleFqName(), shortenCommand)
             }
+
             else -> return null
         }
     }
@@ -82,18 +93,6 @@ class HLImportMemberIntention : AbstractKotlinApplicatorBasedIntention<KtNameRef
     class Input(val fqName: FqName, val shortenCommand: ShortenCommand) : KotlinApplicatorInput
 
     companion object {
-        val applicator = applicator<KtNameReferenceExpression, Input> {
-            familyName(KotlinBundle.lazyMessage("add.import.for.member"))
-            actionName { _, input -> KotlinBundle.message("add.import.for.0", input.fqName.asString()) }
-            isApplicableByPsi {
-                // Ignore simple name expressions or already imported names.
-                if (it.getQualifiedElement() == it || it.isInImportDirective()) return@isApplicableByPsi false
-                true
-            }
-            applyTo { _, input ->
-                input.shortenCommand.invokeShortening()
-            }
-        }
 
         private fun KtAnalysisSession.canBeImported(symbol: KtCallableSymbol): Boolean {
             if (symbol is KtEnumEntrySymbol) return true

@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.fir.intentions
+package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -12,13 +12,8 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInputProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
-import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.ClassId
@@ -28,7 +23,18 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
 class HLImportAllMembersIntention :
-    AbstractKotlinApplicatorBasedIntention<KtExpression, HLImportAllMembersIntention.Input>(KtExpression::class, Companion.applicator), HighPriorityAction {
+    AbstractKotlinApplicatorBasedIntention<KtExpression, HLImportAllMembersIntention.Input>(KtExpression::class), HighPriorityAction {
+
+    override val applicator: KotlinApplicator<KtExpression, Input>
+        get() = applicator<KtExpression, Input> {
+            familyName(KotlinBundle.lazyMessage("import.members.with"))
+            actionName { _, input -> KotlinBundle.message("import.members.from.0", input.fqName.asString()) }
+            isApplicableByPsi { it.isOnTheLeftOfQualificationDot && !it.isInImportDirective() }
+            applyTo { _, input ->
+                input.shortenCommand.invokeShortening()
+            }
+        }
+
     override val applicabilityRange: KotlinApplicabilityRange<KtExpression> get() = ApplicabilityRanges.SELF
 
     override val inputProvider: KotlinApplicatorInputProvider<KtExpression, Input> = inputProvider { psi ->
@@ -74,15 +80,6 @@ class HLImportAllMembersIntention :
     class Input(val fqName: FqName, val shortenCommand: ShortenCommand) : KotlinApplicatorInput
 
     companion object {
-        val applicator = applicator<KtExpression, Input> {
-            familyName(KotlinBundle.lazyMessage("import.members.with"))
-            actionName { _, input -> KotlinBundle.message("import.members.from.0", input.fqName.asString()) }
-            isApplicableByPsi { it.isOnTheLeftOfQualificationDot && !it.isInImportDirective() }
-            applyTo { _, input ->
-                input.shortenCommand.invokeShortening()
-            }
-        }
-
         private val KtExpression.isOnTheLeftOfQualificationDot: Boolean
             get() {
                 return when (val parent = parent) {
@@ -91,6 +88,7 @@ class HLImportAllMembersIntention :
                         val grandParent = parent.parent as? KtUserType ?: return false
                         grandParent.qualifier == parent && parent.referenceExpression == this
                     }
+
                     else -> false
                 }
             }

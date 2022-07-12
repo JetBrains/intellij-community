@@ -1,6 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeinsight.utils
 
-package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -11,7 +11,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import org.jetbrains.annotations.Nls
 
-//TODO: move it somewhere else and reuse
+
 abstract class ChooseValueExpression<in T : Any>(
     lookupItems: Collection<T>,
     defaultItem: T,

@@ -43,6 +43,8 @@
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fir.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" exported="" />

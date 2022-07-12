@@ -35,46 +35,6 @@ fun KtExpression.resultingWhens(): List<KtWhenExpression> = when (this) {
     else -> listOf()
 }
 
-fun generateWhenBranches(element: KtWhenExpression, missingCases: List<WhenMissingCase>) {
-    val psiFactory = KtPsiFactory(element)
-    val whenCloseBrace = element.closeBrace ?: run {
-        val craftingMaterials = psiFactory.createExpression("when(1){}") as KtWhenExpression
-        if (element.rightParenthesis == null) {
-            element.addAfter(
-                craftingMaterials.rightParenthesis!!,
-                element.subjectExpression ?: throw AssertionError("caller should have checked the presence of subject expression.")
-            )
-        }
-        if (element.openBrace == null) {
-            element.addAfter(craftingMaterials.openBrace!!, element.rightParenthesis!!)
-        }
-        element.addAfter(craftingMaterials.closeBrace!!, element.entries.lastOrNull() ?: element.openBrace!!)
-        element.closeBrace!!
-    }
-    val elseBranch = element.entries.find { it.isElse }
-    (whenCloseBrace.prevSibling as? PsiWhiteSpace)?.replace(psiFactory.createNewLine())
-    for (case in missingCases) {
-        val branchConditionText = when (case) {
-            WhenMissingCase.Unknown,
-            WhenMissingCase.NullIsMissing,
-            is WhenMissingCase.BooleanIsMissing,
-            is WhenMissingCase.ConditionTypeIsExpect -> case.branchConditionText
-            is WhenMissingCase.IsTypeCheckIsMissing ->
-                if (case.isSingleton) {
-                    ""
-                } else {
-                    "is "
-                } + case.classId.asSingleFqName().render()
-            is WhenMissingCase.EnumCheckIsMissing -> case.callableId.asSingleFqName().render()
-        }
-        val entry = psiFactory.createWhenEntry("$branchConditionText -> TODO()")
-        if (elseBranch != null) {
-            element.addBefore(entry, elseBranch)
-        } else {
-            element.addBefore(entry, whenCloseBrace)
-        }
-    }
-}
 
 /**
  * Consider a property initialization `val f: (Int) -> Unit = { println(it) }`. The type annotation `(Int) -> Unit` in this case is required

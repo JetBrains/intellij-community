@@ -1,19 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.fir.intentions
+package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import org.jetbrains.kotlin.analysis.api.annotations.containsAnnotation
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInputProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.idea.intentions.AbstractAddAccessorsIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddAccessorApplicator
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.ClassId
@@ -23,24 +16,9 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 
 abstract class HLAddAccessorIntention(private val addGetter: Boolean, private val addSetter: Boolean) :
-    AbstractKotlinApplicatorBasedIntention<KtProperty, KotlinApplicatorInput.Empty>(KtProperty::class, applicator(addGetter, addSetter)) {
-    override val applicabilityRange: KotlinApplicabilityRange<KtProperty> = applicabilityTarget { ktProperty ->
-        if (ktProperty.hasInitializer()) ktProperty.nameIdentifier else ktProperty
-    }
-
-    override val inputProvider: KotlinApplicatorInputProvider<KtProperty, KotlinApplicatorInput.Empty> = inputProvider { ktProperty ->
-        val symbol = ktProperty.getVariableSymbol() as? KtPropertySymbol ?: return@inputProvider null
-        if (symbol.containsAnnotation(JVM_FIELD_CLASS_ID)) return@inputProvider null
-
-        KotlinApplicatorInput
-    }
-
-    companion object {
-        private val JVM_FIELD_CLASS_ID = ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
-
-        private fun applicator(addGetter: Boolean, addSetter: Boolean): KotlinApplicator<KtProperty, KotlinApplicatorInput.Empty> = applicator {
-            familyAndActionName(AbstractAddAccessorsIntention.createFamilyName(addGetter, addSetter))
-
+    AbstractKotlinApplicatorBasedIntention<KtProperty, KotlinApplicatorInput.Empty>(KtProperty::class) {
+    override val applicator: KotlinApplicator<KtProperty, KotlinApplicatorInput.Empty>
+        get() = AddAccessorApplicator.applicator(addGetter, addSetter).with {
             isApplicableByPsi { ktProperty ->
                 if (ktProperty.isLocal || ktProperty.hasDelegate() ||
                     ktProperty.containingClass()?.isInterface() == true ||
@@ -58,11 +36,21 @@ abstract class HLAddAccessorIntention(private val addGetter: Boolean, private va
 
                 true
             }
-
-            applyTo { ktProperty, _, _, editor ->
-                AbstractAddAccessorsIntention.applyTo(ktProperty, editor, addGetter, addSetter)
-            }
         }
+
+    override val applicabilityRange: KotlinApplicabilityRange<KtProperty> = applicabilityTarget { ktProperty ->
+        if (ktProperty.hasInitializer()) ktProperty.nameIdentifier else ktProperty
+    }
+
+    override val inputProvider: KotlinApplicatorInputProvider<KtProperty, KotlinApplicatorInput.Empty> = inputProvider { ktProperty ->
+        val symbol = ktProperty.getVariableSymbol() as? KtPropertySymbol ?: return@inputProvider null
+        if (symbol.containsAnnotation(JVM_FIELD_CLASS_ID)) return@inputProvider null
+
+        KotlinApplicatorInput.Empty
+    }
+
+    companion object {
+        private val JVM_FIELD_CLASS_ID = ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
     }
 }
 

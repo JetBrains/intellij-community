@@ -1,26 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators
 
-package org.jetbrains.kotlin.idea.intentions
-
-import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-abstract class AbstractAddAccessorsIntention(
-    protected val addGetter: Boolean,
-    protected val addSetter: Boolean
-) : SelfTargetingRangeIntention<KtProperty>(KtProperty::class.java, createFamilyName(addGetter, addSetter)) {
+object AddAccessorApplicator {
+    fun applicator(addGetter: Boolean, addSetter: Boolean) = applicator<KtProperty, KotlinApplicatorInput.Empty> {
+        familyAndActionName {
+            when {
+                addGetter && addSetter -> KotlinBundle.message("text.add.getter.and.setter")
+                addGetter -> KotlinBundle.message("text.add.getter")
+                addSetter -> KotlinBundle.message("text.add.setter")
+                else -> throw AssertionError("At least one from (addGetter, addSetter) should be true")
+            }
+        }
 
-    override fun applyTo(element: KtProperty, editor: Editor?) {
-        applyTo(element, editor, addGetter, addSetter)
-    }
-
-    companion object {
-        fun applyTo(element: KtProperty, editor: Editor?, addGetter: Boolean, addSetter: Boolean) {
+        applyTo { element, _, _, editor ->
             val hasInitializer = element.hasInitializer()
             val psiFactory = KtPsiFactory(element)
             if (addGetter) {
@@ -47,13 +47,6 @@ abstract class AbstractAddAccessorsIntention(
                     }
                 }
             }
-        }
-
-        fun createFamilyName(addGetter: Boolean, addSetter: Boolean): () -> String = when {
-            addGetter && addSetter -> KotlinBundle.lazyMessage("text.add.getter.and.setter")
-            addGetter -> KotlinBundle.lazyMessage("text.add.getter")
-            addSetter -> KotlinBundle.lazyMessage("text.add.setter")
-            else -> throw AssertionError("At least one from (addGetter, addSetter) should be true")
         }
     }
 }

@@ -5,17 +5,22 @@
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
-import org.jetbrains.kotlin.idea.fir.intentions.declarations.HLSpecifyExplicitTypeForCallableDeclarationIntention
-import org.jetbrains.kotlin.idea.fir.intentions.declarations.HLSpecifyExplicitTypeForCallableDeclarationIntention.Companion.getTypeInfo
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.with
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator.getTypeInfo
 
 object SpecifyExplicitTypeFixFactories {
+    private val applicator = CallableReturnTypeUpdaterApplicator.applicator.with {
+        familyName(KotlinBundle.lazyMessage("specify.type.explicitly"))
+    }
 
     val ambiguousAnonymousTypeInferred = diagnosticFixFactory(
         KtFirDiagnostic.AmbiguousAnonymousTypeInferred::class,
-        HLSpecifyExplicitTypeForCallableDeclarationIntention.applicator
+        applicator
     ) { diagnostic ->
         val declaration = diagnostic.psi as? KtCallableDeclaration ?: return@diagnosticFixFactory emptyList()
         listOf(declaration withInput getTypeInfo(declaration))
@@ -24,7 +29,7 @@ object SpecifyExplicitTypeFixFactories {
     val noExplicitReturnTypeInApiMode =
         diagnosticFixFactory(
             KtFirDiagnostic.NoExplicitReturnTypeInApiMode::class,
-            HLSpecifyExplicitTypeForCallableDeclarationIntention.applicator
+            applicator
         ) { diagnostic ->
             val callableDeclaration = diagnostic.psi as? KtCallableDeclaration ?: return@diagnosticFixFactory emptyList()
             listOf(callableDeclaration withInput getTypeInfo(callableDeclaration))
@@ -33,7 +38,7 @@ object SpecifyExplicitTypeFixFactories {
     val noExplicitReturnTypeInApiModeWarning =
         diagnosticFixFactory(
             KtFirDiagnostic.NoExplicitReturnTypeInApiModeWarning::class,
-            HLSpecifyExplicitTypeForCallableDeclarationIntention.applicator
+            applicator
         ) { diagnostic ->
             val callableDeclaration = diagnostic.psi as? KtCallableDeclaration ?: return@diagnosticFixFactory emptyList()
             listOf(callableDeclaration withInput getTypeInfo(callableDeclaration))

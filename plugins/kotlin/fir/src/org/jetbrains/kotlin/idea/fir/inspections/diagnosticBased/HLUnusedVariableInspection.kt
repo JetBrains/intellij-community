@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorPresentation
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.presentation
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputByDiagnosticProvider
-import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.util.isExplicitTypeReferenceNeededForTypeInference
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
@@ -37,6 +37,7 @@ class HLUnusedVariableInspection :
         }
     override val applicabilityRange: KotlinApplicabilityRange<KtNamedDeclaration>
         get() = ApplicabilityRanges.DECLARATION_NAME
+
     override val applicator: KotlinApplicator<KtNamedDeclaration, KotlinApplicatorInput.Empty>
         get() = applicator {
             familyName(KotlinBundle.message("remove.element"))

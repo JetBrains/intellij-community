@@ -126,5 +126,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-intentions-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="RUNTIME" />
   </component>
 </module>

@@ -19,7 +19,6 @@
   <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="firInspections.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="firIntentions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="codeInsigts.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="light-classes-fir.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -198,7 +197,6 @@
 
   </extensions>
 
-
   <content>
     <module name="kotlin.base.analysis-api-providers"/>
     <module name="kotlin.base.fir.analysis-api-providers"/>
@@ -222,5 +220,6 @@
     <module name="kotlin.project-wizard.maven"/>
 
     <module name="kotlin.code-insight.inspections-intentions-shared"/>
+    <module name="kotlin.code-insight.intentions-k2"/>
   </content>
 </idea-plugin>

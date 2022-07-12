@@ -67,5 +67,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-intentions-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2" scope="RUNTIME" />
   </component>
 </module>

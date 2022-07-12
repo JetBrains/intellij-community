@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.fir.intentions
+package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.psi.PsiElement
@@ -12,21 +12,23 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInputProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
-import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
-import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddArgumentNamesApplicators
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
-import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators.SingleArgumentInput as Input
 
 class HLAddNameToArgumentIntention :
-    AbstractKotlinApplicatorBasedIntention<KtValueArgument, Input>(KtValueArgument::class, AddArgumentNamesApplicators.singleArgumentApplicator),
+    AbstractKotlinApplicatorBasedIntention<KtValueArgument, AddArgumentNamesApplicators.SingleArgumentInput>(KtValueArgument::class),
     LowPriorityAction {
+    override val applicator
+        get() = AddArgumentNamesApplicators.singleArgumentApplicator
+
     override val applicabilityRange = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
 
-    override val inputProvider: KotlinApplicatorInputProvider<KtValueArgument, Input> = inputProvider { element ->
+    override val inputProvider: KotlinApplicatorInputProvider<KtValueArgument, AddArgumentNamesApplicators.SingleArgumentInput> = inputProvider { element ->
         val argumentList = element.parent as? KtValueArgumentList ?: return@inputProvider null
         val shouldBeLastUnnamed = !element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
         if (shouldBeLastUnnamed && element != argumentList.arguments.last { !it.isNamed() }) return@inputProvider null
@@ -38,7 +40,7 @@ class HLAddNameToArgumentIntention :
             return@inputProvider null
         }
 
-        getArgumentNameIfCanBeUsedForCalls(element, resolvedCall)?.let { name -> Input(name) }
+        getArgumentNameIfCanBeUsedForCalls(element, resolvedCall)?.let(AddArgumentNamesApplicators::SingleArgumentInput)
     }
 
     override fun skipProcessingFurtherElementsAfter(element: PsiElement) = element is KtValueArgumentList ||

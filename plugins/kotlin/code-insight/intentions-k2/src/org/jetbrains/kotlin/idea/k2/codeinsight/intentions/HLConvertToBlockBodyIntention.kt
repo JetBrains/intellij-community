@@ -1,27 +1,59 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.fir.intentions
+package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.util.DocumentUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInputProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
-import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
-import org.jetbrains.kotlin.idea.util.setType
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.adjustLineIndent
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class HLConvertToBlockBodyIntention :
-    AbstractKotlinApplicatorBasedIntention<KtDeclarationWithBody, HLConvertToBlockBodyIntention.Input>(KtDeclarationWithBody::class, applicator) {
+    AbstractKotlinApplicatorBasedIntention<KtDeclarationWithBody, HLConvertToBlockBodyIntention.Input>(KtDeclarationWithBody::class) {
+
+    override val applicator: KotlinApplicator<KtDeclarationWithBody, Input>
+        get() =  applicator<KtDeclarationWithBody, Input> {
+            familyAndActionName(KotlinBundle.lazyMessage(("convert.to.block.body")))
+            isApplicableByPsi { (it is KtNamedFunction || it is KtPropertyAccessor) && !it.hasBlockBody() && it.hasBody() }
+            applyTo { declaration, input ->
+                val body = declaration.bodyExpression!!
+
+                val newBody = when (declaration) {
+                    is KtNamedFunction -> {
+                        if (!declaration.hasDeclaredReturnType() && !input.returnTypeIsUnit) {
+                            declaration.setType(input.returnTypeString, input.returnTypeClassId)
+                        }
+                        generateBody(body, input, !input.returnTypeIsUnit && !input.returnTypeIsNothing)
+                    }
+
+                    is KtPropertyAccessor -> {
+                        val parent = declaration.parent
+                        if (parent is KtProperty && parent.typeReference == null) {
+                            parent.setType(input.returnTypeString, input.returnTypeClassId)
+                        }
+
+                        generateBody(body, input, declaration.isGetter)
+                    }
+
+                    else -> throw RuntimeException("Unknown declaration type: $declaration")
+                }
+
+                declaration.equalsToken!!.delete()
+                val replaced = body.replace(newBody)
+                if (input.reformat) declaration.containingKtFile.adjustLineIndent(replaced.startOffset, replaced.endOffset)
+            }
+        }
 
     class Input(
         val returnTypeIsUnit: Boolean,
@@ -63,38 +95,6 @@ class HLConvertToBlockBodyIntention :
             )
         }
 
-        val applicator = applicator<KtDeclarationWithBody, Input> {
-            familyAndActionName(KotlinBundle.lazyMessage(("convert.to.block.body")))
-            isApplicableByPsi { (it is KtNamedFunction || it is KtPropertyAccessor) && !it.hasBlockBody() && it.hasBody() }
-            applyTo { declaration, input ->
-                val body = declaration.bodyExpression!!
-
-                val newBody = when (declaration) {
-                    is KtNamedFunction -> {
-                        if (!declaration.hasDeclaredReturnType() && !input.returnTypeIsUnit) {
-                            declaration.setType(input.returnTypeString, input.returnTypeClassId)
-                        }
-                        generateBody(body, input, !input.returnTypeIsUnit && !input.returnTypeIsNothing)
-                    }
-
-                    is KtPropertyAccessor -> {
-                        val parent = declaration.parent
-                        if (parent is KtProperty && parent.typeReference == null) {
-                            parent.setType(input.returnTypeString, input.returnTypeClassId)
-                        }
-
-                        generateBody(body, input, declaration.isGetter)
-                    }
-
-                    else -> throw RuntimeException("Unknown declaration type: $declaration")
-                }
-
-                declaration.equalsToken!!.delete()
-                val replaced = body.replace(newBody)
-                if (input.reformat) declaration.containingKtFile.adjustLineIndent(replaced.startOffset, replaced.endOffset)
-            }
-        }
-
         private fun generateBody(body: KtExpression, input: Input, returnsValue: Boolean): KtExpression {
             val factory = KtPsiFactory(body)
             if (input.bodyTypeIsUnit && body is KtNameReferenceExpression) return factory.createEmptyBody()
@@ -113,5 +113,12 @@ class HLConvertToBlockBodyIntention :
                 factory.createSingleStatementBlock(body)
             }
         }
+    }
+}
+
+private fun KtCallableDeclaration.setType(typeString: String, classId: ClassId?) {
+    val addedTypeReference = setTypeReference(KtPsiFactory(project).createType(typeString))
+    if (classId != null && addedTypeReference != null) {
+        shortenReferences(addedTypeReference)
     }
 }

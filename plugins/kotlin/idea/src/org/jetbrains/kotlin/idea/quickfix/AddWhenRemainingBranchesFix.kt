@@ -14,9 +14,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddRemainingWhenBranchesApplicator.generateWhenBranches
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention
-import org.jetbrains.kotlin.idea.util.generateWhenBranches
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
@@ -69,6 +69,7 @@ class AddWhenRemainingBranchesFix(
             if (element == null) return
             val missingCases = WhenChecker.getMissingCases(element, element.analyze())
 
+            @Suppress("DEPRECATION")
             generateWhenBranches(element, missingCases)
 
             ShortenReferences.DEFAULT.process(element)

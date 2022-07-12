@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
@@ -47,25 +48,14 @@ class AddNameToArgumentIntention : SelfTargetingIntention<KtValueArgument>(
             super.skipProcessingFurtherElementsAfter(element)
 
     override fun applyTo(element: KtValueArgument, editor: Editor?) {
-        apply(element)
+        apply(element, givenResolvedCall = null, editor)
     }
 
     companion object {
-        fun apply(element: KtValueArgument, givenResolvedCall: ResolvedCall<*>? = null) {
+        fun apply(element: KtValueArgument, givenResolvedCall: ResolvedCall<*>?, editor: Editor?) {
             val name = detectNameToAdd(element, shouldBeLastUnnamed = false, givenResolvedCall = givenResolvedCall) ?: return
-            apply(element, name)
-        }
-
-        fun apply(element: KtValueArgument, name: Name) {
-            val argumentExpression = element.getArgumentExpression() ?: return
-
-            val prevSibling = element.getPrevSiblingIgnoringWhitespace()
-            if (prevSibling is PsiComment && """/\*\s*$name\s*=\s*\*/""".toRegex().matches(prevSibling.text)) {
-                prevSibling.delete()
-            }
-
-            val newArgument = KtPsiFactory(element).createArgument(argumentExpression, name, element.getSpreadElement() != null)
-            element.replace(newArgument)
+            AddArgumentNamesApplicators.singleArgumentApplicator
+                .applyTo(element, AddArgumentNamesApplicators.SingleArgumentInput(name), element.project, editor)
         }
 
         fun detectNameToAdd(argument: KtValueArgument, shouldBeLastUnnamed: Boolean, givenResolvedCall: ResolvedCall<*>? = null): Name? {

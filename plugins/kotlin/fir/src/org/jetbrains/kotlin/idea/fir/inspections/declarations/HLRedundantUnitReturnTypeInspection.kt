@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.with
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.presentation
-import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.fir.applicators.CallableReturnTypeUpdaterApplicator
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 internal class HLRedundantUnitReturnTypeInspection :

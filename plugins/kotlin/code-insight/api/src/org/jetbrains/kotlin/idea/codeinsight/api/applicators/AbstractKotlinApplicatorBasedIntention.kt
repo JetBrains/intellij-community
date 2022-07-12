@@ -13,8 +13,14 @@ import kotlin.reflect.KClass
 
 abstract class AbstractKotlinApplicatorBasedIntention<PSI : KtElement, INPUT : KotlinApplicatorInput>(
     elementType: KClass<PSI>,
-    val applicator: KotlinApplicator<PSI, INPUT>
-) : SelfTargetingIntention<PSI>(elementType.java, applicator::getFamilyName) {
+) : SelfTargetingIntention<PSI>(elementType.java, { "" }) {
+
+    abstract val applicator: KotlinApplicator<PSI, INPUT>
+
+    init {
+        setFamilyNameGetter { applicator.getFamilyName() }
+    }
+
     final override fun isApplicableTo(element: PSI, caretOffset: Int): Boolean {
         val project = element.project// TODO expensive operation, may require traversing the tree up to containing PsiFile
         if (!applicator.isApplicableByPsi(element, project)) return false
