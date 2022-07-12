@@ -20,6 +20,16 @@ internal fun createCommunityBuildContext(
 }
 
 open class IdeaCommunityProperties(private val communityHome: BuildDependenciesCommunityRoot) : BaseIdeaProperties() {
+  companion object {
+    val MAVEN_ARTIFACTS_ADDITIONAL_MODULES = listOf(
+      "intellij.tools.jps.build.standalone",
+      "intellij.platform.debugger.testFramework",
+      "intellij.platform.vcs.testFramework",
+      "intellij.platform.externalSystem.testFramework",
+      "intellij.maven.testFramework"
+    )
+  }
+
   init {
     baseFileName = "idea"
     platformPrefix = "Idea"
@@ -47,12 +57,7 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
     }
 
     mavenArtifacts.forIdeModules = true
-    mavenArtifacts.additionalModules = listOf(
-      "intellij.platform.debugger.testFramework",
-      "intellij.platform.vcs.testFramework",
-      "intellij.platform.externalSystem.testFramework",
-      "intellij.maven.testFramework"
-    )
+    mavenArtifacts.additionalModules += MAVEN_ARTIFACTS_ADDITIONAL_MODULES
     mavenArtifacts.squashedModules += listOf(
       "intellij.platform.util.base",
       "intellij.platform.util.zip",
