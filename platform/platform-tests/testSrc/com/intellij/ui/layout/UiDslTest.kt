@@ -6,7 +6,6 @@ import com.intellij.testFramework.ProjectRule
 import org.junit.*
 import org.junit.rules.TestName
 import javax.swing.JPanel
-import javax.swing.JTable
 
 /**
  * Set `test.update.snapshots=true` to automatically update snapshots if needed.
@@ -57,11 +56,6 @@ abstract class UiDslTest {
   }
 
   @Test
-  fun `checkbox that acts as label`() {
-    doTest { checkBoxFollowedBySpinner() }
-  }
-
-  @Test
   fun `titled rows`() {
     doTest { titledRows() }
   }
@@ -69,25 +63,6 @@ abstract class UiDslTest {
   @Test
   fun `titled row`() {
     doTest { titledRow() }
-  }
-
-  @Test
-  fun scrollPaneNoGrow() {
-    doTest {
-      panel {
-        row {
-          scrollPane(JTable())
-        }
-        row {
-          scrollPane(JTable()).noGrowY()
-        }
-      }
-    }
-  }
-
-  @Test
-  fun subRowsIndent() {
-    doTest { rowWithIndent() }
   }
 
   protected abstract fun doTest(panelCreator: () -> JPanel)

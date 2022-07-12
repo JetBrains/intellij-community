@@ -185,10 +185,13 @@ interface CellBuilder<out T : JComponent> {
   fun withLeftGap(gapLeft: Int): CellBuilder<T>
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 internal interface CheckboxCellBuilder {
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun actsAsLabel()
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JCheckBox> CellBuilder<T>.actsAsLabel(): CellBuilder<T> {
   (this as CheckboxCellBuilder).actsAsLabel()
   return this
@@ -198,10 +201,13 @@ fun <T : JComponent> CellBuilder<T>.applyToComponent(task: T.() -> Unit): CellBu
   return also { task(component) }
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 internal interface ScrollPaneCellBuilder {
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun noGrowY()
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JScrollPane> CellBuilder<T>.noGrowY(): CellBuilder<T> {
   (this as ScrollPaneCellBuilder).noGrowY()
   return this

@@ -161,6 +161,7 @@ abstract class Row : Cell(), RowBuilder {
    * Indent for child rows of this row, expressed in steps (multiples of [SpacingConfiguration.indentLevel]). Replaces indent
    * calculated from row nesting.
    */
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var subRowIndent: Int
 
   protected abstract val builder: LayoutBuilderImpl
@@ -216,6 +217,7 @@ enum class GrowPolicy {
   SHORT_TEXT, MEDIUM_TEXT
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun Row.enableIf(predicate: ComponentPredicate) {
   enabled = predicate()
   predicate.addListener { enabled = it }

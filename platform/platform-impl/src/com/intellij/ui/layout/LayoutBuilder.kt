@@ -65,18 +65,22 @@ class CellBuilderWithButtonGroupProperty<T : Any>
 }
 
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 class RowBuilderWithButtonGroupProperty<T : Any>
     @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder {
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun Row.radioButton(@NlsContexts.RadioButton text: String, value: T, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
     attachSubRowsEnabled(component)
     return component(comment = comment).bindValue(value)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun CellBuilder<JBRadioButton>.bindValue(value: T): CellBuilder<JBRadioButton> = bindValueToProperty(prop, value)
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 private fun <T> CellBuilder<JBRadioButton>.bindValueToProperty(prop: PropertyBinding<T>, value: T): CellBuilder<JBRadioButton> = apply {
   onApply { if (component.isSelected) prop.set(value) }
   onReset { component.isSelected = prop.get() == value }

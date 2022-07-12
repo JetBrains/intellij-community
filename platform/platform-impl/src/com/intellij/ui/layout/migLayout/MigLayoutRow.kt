@@ -197,6 +197,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override var subRowIndent: Int = -1
 
   internal val isLabeledIncludingSubRows: Boolean
@@ -643,10 +644,12 @@ private class CellBuilderImpl<T : JComponent>(
     return !(applyIfEnabled && !viewComponent.isEnabled)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun actsAsLabel() {
     builder.updateComponentConstraints(viewComponent) { spanX = 1 }
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun noGrowY() {
     builder.updateComponentConstraints(viewComponent) {
       growY(0.0f)
