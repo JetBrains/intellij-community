@@ -210,7 +210,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
     UnloadedModulesListStorage.getInstance(project).setUnloadedModuleNames(unloadedModuleNames)
 
-    val unloadedModuleNamesSet = unloadedModuleNames.toSet()
+    val unloadedModuleNamesSet = unloadedModuleNames.toHashSet()
     val moduleMap = entityStore.current.moduleMap
     val modulesToUnload = entityStore.current.entities(ModuleEntity::class.java)
       .filter { it.name in unloadedModuleNamesSet }
@@ -223,8 +223,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       .toList()
 
     if (unloadedModuleNames.isNotEmpty()) {
-      val loadedModules = modules.map { it.name }.toMutableList()
-      loadedModules.removeAll(unloadedModuleNames)
+      val loadedModules = modules.asSequence().map { it.name }.filter { it !in unloadedModuleNames }.toMutableList()
       moduleEntitiesToLoad.mapTo(loadedModules) { it.name }
       AutomaticModuleUnloader.getInstance(project).setLoadedModules(loadedModules)
     }
@@ -238,6 +237,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     if (modulesToUnload.isNotEmpty()) {
       project.save()
     }
+
     runWriteAction {
       ProjectRootManagerEx.getInstanceEx(project).makeRootsChange({
         for ((moduleEntity, module) in modulesToUnload) {

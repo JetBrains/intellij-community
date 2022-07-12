@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl
 
 import com.intellij.ide.SaveAndSyncHandler
@@ -27,11 +27,16 @@ import com.intellij.xml.util.XmlStringUtil
 internal class AutomaticModuleUnloaderImpl(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()),
                                                                            AutomaticModuleUnloader {
   override fun processNewModules(currentModules: Set<String>, storage: EntityStorage) {
-    if (currentModules.isEmpty()) return
+    if (currentModules.isEmpty()) {
+      return
+    }
 
-    val oldLoaded = state.modules.toSet()
-    //if we don't store list of loaded modules most probably it means that the project wasn't opened on this machine, so let's not unload all modules
-    if (oldLoaded.isEmpty()) return
+    val oldLoaded = state.modules.toHashSet()
+    // if we don't store list of loaded modules most probably it means that the project wasn't opened on this machine,
+    // so let's not unload all modules
+    if (oldLoaded.isEmpty()) {
+      return
+    }
 
     val unloadedStorage = UnloadedModulesListStorage.getInstance(project)
     val unloadedModules = unloadedStorage.unloadedModuleNames
