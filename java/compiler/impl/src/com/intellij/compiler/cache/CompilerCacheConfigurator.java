@@ -92,8 +92,8 @@ public class CompilerCacheConfigurator {
       LOG.warn("Not found any caches for the latest commits in the branch");
       return null;
     }
-    LOG.info("Non Compiled commits count: " + commitsCountBetweenCompilation + ". " + commitsBehind + " commits behind the master. " +
-             "Commit to download: " + commitToDownload);
+    LOG.info("Project contains " + commitsCountBetweenCompilation + " non compiled commits. Cache will be downloaded for " + commitsBehind + " commits before the current master." +
+             " The rest commits will be build locally. Commit hash for download: " + commitToDownload);
     if (!forceUpdate && commitToDownload.equals(latestDownloadedCommit)) {
       LOG.info("The system contains up-to-date caches");
       return null;
