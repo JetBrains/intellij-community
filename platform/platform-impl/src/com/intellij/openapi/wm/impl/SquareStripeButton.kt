@@ -1,6 +1,4 @@
-/*******************************************************************************
- * Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
- ******************************************************************************/
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
@@ -18,7 +16,6 @@ import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.UIBundle
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.Component
@@ -124,8 +121,8 @@ private fun createPresentation(toolWindow: ToolWindowImpl): Presentation {
 }
 
 private fun scaleIcon(presentation: Presentation) {
-  if (presentation.icon is ScalableIcon && presentation.icon.iconWidth != JBUI.scale(20)) {
-    presentation.icon = IconLoader.loadCustomVersionOrScale(presentation.icon as ScalableIcon, JBUIScale.scale(20f))
+  if (presentation.icon is ScalableIcon && presentation.icon.iconWidth != 20) {
+    presentation.icon = IconLoader.loadCustomVersionOrScale(presentation.icon as ScalableIcon, 20f)
   }
 }
 
