@@ -35,6 +35,7 @@ public class JUnit5TeamCityRunnerForTestsOnClasspath {
       System.out.println("Number of test engines: " + ServiceLoader.load(TestEngine.class).stream().count());
 
       LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
+        .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
         .selectors(DiscoverySelectors.selectPackage(""))
         .filters(nameFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)).build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
