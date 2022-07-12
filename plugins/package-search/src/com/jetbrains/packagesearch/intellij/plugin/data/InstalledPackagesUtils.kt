@@ -19,6 +19,7 @@ package com.jetbrains.packagesearch.intellij.plugin.data
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.codeInsight.navigation.fileLocation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.DigestUtil
@@ -181,10 +182,9 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     }
 
     val dependenciesLocationMap = declaredDependencies
-        .mapNotNull {
-            it.asDependency()
-                ?.let { dependencyDeclarationCallback(it).await() }
-                ?.let { location -> it to location }
+        .mapNotNull { dependency ->
+            dependencyDeclarationCallback(dependency).await()
+                ?.let { location -> dependency to location }
         }
         .toMap()
 

@@ -140,7 +140,7 @@ private fun Module.hashCodeOrZero() =
     runCatching { moduleFilePath.hashCode() + 31 * name.hashCode() }
         .getOrDefault(0)
 
-typealias DependencyDeclarationCallback = (Dependency) -> CompletableFuture<DependencyDeclarationIndexes?>
+typealias DependencyDeclarationCallback = (UnifiedDependency) -> CompletableFuture<DependencyDeclarationIndexes?>
 
 /**
  * Container class for declaration coordinates for a dependency in a build file. \
@@ -180,9 +180,9 @@ val UnifiedDependency.key: UnifiedDependencyKey?
         return UnifiedDependencyKey(scope ?: return null, coordinates.groupId!!, coordinates.artifactId ?: return null)
     }
 
-fun UnifiedDependency.asDependency(): Dependency? {
+fun UnifiedDependency.asDependency(defaultScope: String? = null): Dependency? {
     return Dependency(
-        scope = scope ?: return null,
+        scope = scope ?: defaultScope ?: return null,
         groupId = coordinates.groupId ?: return null,
         artifactId = coordinates.artifactId ?: return null,
         version = coordinates.version ?: return null
@@ -193,3 +193,5 @@ data class Dependency(val scope: String, val groupId: String, val artifactId: St
 
     override fun toString() = "$scope(\"$groupId:$artifactId:$version\")"
 }
+
+fun Dependency.asUnifiedDependency() = UnifiedDependency(groupId, artifactId, version, scope)

@@ -16,6 +16,7 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.gradle
 
+import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
@@ -26,7 +27,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.Dependency
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationCallback
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
@@ -42,25 +42,31 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
 
     companion object {
 
-        private fun findDependencyElementIndex(file: PsiFile, dependency: Dependency): DependencyDeclarationIndexes? {
+        private fun findDependencyElementIndex(file: PsiFile, dependency: UnifiedDependency): DependencyDeclarationIndexes? {
+            val artifactId = dependency.coordinates.artifactId ?: return null
+            val groupId = dependency.coordinates.groupId ?: return null
+            val scope = dependency.scope ?: return null
             val isKotlinDependencyInKts = file.language::class.qualifiedName == "org.jetbrains.kotlin.idea.KotlinLanguage"
-                && dependency.groupId == "org.jetbrains.kotlin" && dependency.artifactId.startsWith("kotlin-")
+                && groupId == "org.jetbrains.kotlin" && artifactId.startsWith("kotlin-")
 
             val textToSearchFor = buildString {
-                appendEscapedToRegexp(dependency.scope)
+                appendEscapedToRegexp(scope)
                 append("[\\(\\s]+")
                 if (isKotlinDependencyInKts) {
                     append("(")
                     appendEscapedToRegexp("kotlin(\"")
-                    appendEscapedToRegexp(dependency.artifactId.removePrefix("kotlin-"))
+                    appendEscapedToRegexp(artifactId.removePrefix("kotlin-"))
                     appendEscapedToRegexp("\")")
                 } else {
                     append("[\\'\\\"]")
                     append("(")
-                    appendEscapedToRegexp("${dependency.groupId}:${dependency.artifactId}:")
-                    append("(\\\$?\\{?")
-                    appendEscapedToRegexp(dependency.version)
-                    append("\\}?)")
+                    appendEscapedToRegexp("$groupId:$artifactId")
+                    dependency.coordinates.version?.let {
+                        appendEscapedToRegexp(":")
+                        append("(\\\$?\\{?")
+                        appendEscapedToRegexp(it)
+                        append("\\}?)")
+                    }
                 }
                 append(")")
                 append("[\\'\\\"]")

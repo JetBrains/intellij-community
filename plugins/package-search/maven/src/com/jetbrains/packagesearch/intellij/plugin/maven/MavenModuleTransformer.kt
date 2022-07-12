@@ -29,8 +29,12 @@ import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSe
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import kotlinx.coroutines.future.future
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils.SearchProcessor
 import org.jetbrains.idea.maven.dom.MavenDomUtil
-import org.jetbrains.idea.maven.navigator.MavenNavigationUtil
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -39,23 +43,18 @@ internal class MavenModuleTransformer : CoroutineModuleTransformer {
 
     override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
         nativeModules.parallelMap { nativeModule ->
-            readAction { runCatching { MavenProjectsManager.getInstance(project).findProject(nativeModule) } }
-                .onFailure {
+            readAction { runCatching { MavenProjectsManager.getInstance(project).findProject(nativeModule) } }.onFailure {
                     logDebug(contextName = "MavenModuleTransformer", it) { "Error finding Maven module ${nativeModule.name}" }
-                }
-                .getOrNull()?.let {
+                }.getOrNull()?.let {
                     createMavenProjectModule(project, nativeModule, it)
                 }
         }.filterNotNull()
 
     private fun createMavenProjectModule(
-        project: Project,
-        nativeModule: Module,
-        mavenProject: MavenProject
+        project: Project, nativeModule: Module, mavenProject: MavenProject
     ): ProjectModule {
         val buildFile = mavenProject.file
-        return ProjectModule(
-            name = mavenProject.name ?: nativeModule.name,
+        return ProjectModule(name = mavenProject.name ?: nativeModule.name,
             nativeModule = nativeModule,
             parent = null,
             buildFile = buildFile,
@@ -65,15 +64,17 @@ internal class MavenModuleTransformer : CoroutineModuleTransformer {
             availableScopes = PackageSearchMavenConfiguration.getInstance(project).getMavenScopes(),
             dependencyDeclarationCallback = { dependency ->
                 project.lifecycleScope.future {
+                    val artifactId = dependency.coordinates.artifactId ?: return@future null
+                    val groupId = dependency.coordinates.groupId ?: return@future null
                     readAction {
                         val projectModel = MavenDomUtil.getMavenDomProjectModel(project, buildFile) ?: return@readAction null
 
-                        val mavenDependency = MavenNavigationUtil.findDependency(
-                            projectModel,
-                            dependency.groupId,
-                            dependency.artifactId,
-                            dependency.version,
-                            dependency.scope
+                        val mavenDependency = KMavenNavigationUtils.findDependency(
+                            mavenDomProjectModel = projectModel,
+                            groupId = groupId,
+                            artifactId = artifactId,
+                            version = dependency.coordinates.version,
+                            scope = dependency.scope
                         )
                         val dependencyIndex = when (val elem = mavenDependency?.xmlElement) {
                             is XmlTag -> elem.value.textElements.firstOrNull()?.startOffset
@@ -91,15 +92,43 @@ internal class MavenModuleTransformer : CoroutineModuleTransformer {
                         }
                     }
                 }
-            }
-        )
+            })
     }
 }
 
 val BuildSystemType.Companion.MAVEN
     get() = BuildSystemType(
-        name = "MAVEN",
-        language = "xml",
-        dependencyAnalyzerKey = MavenUtil.SYSTEM_ID,
-        statisticsKey = "maven"
+        name = "MAVEN", language = "xml", dependencyAnalyzerKey = MavenUtil.SYSTEM_ID, statisticsKey = "maven"
     )
+
+object KMavenNavigationUtils {
+
+    fun findDependency(
+        mavenDomProjectModel: MavenDomProjectModel,
+        groupId: String,
+        artifactId: String,
+        version: String?,
+        scope: String?
+    ): MavenDomDependency? {
+        val processor = MavenDependencyProcessor {
+            it.dependencies.find { dependency ->
+                val scopeAndVersionMatch = when {
+                    version != null && scope != null -> dependency.version.stringValue == version && dependency.scope.stringValue == scope
+                    version == null && scope != null -> dependency.scope.stringValue == scope
+                    version != null && scope == null -> dependency.version.stringValue == version
+                    else -> true
+                }
+                dependency.groupId.stringValue == groupId && dependency.artifactId.stringValue == artifactId && scopeAndVersionMatch
+            }
+        }
+        MavenDomProjectProcessorUtils.processDependencies(mavenDomProjectModel, processor)
+        return processor.result
+    }
+
+}
+
+@Suppress("FunctionName")
+private fun MavenDependencyProcessor(action: (MavenDomDependencies) -> MavenDomDependency?) =
+    object : SearchProcessor<MavenDomDependency, MavenDomDependencies>() {
+        override fun find(element: MavenDomDependencies) = action(element)
+    }

@@ -117,35 +117,4 @@ public final class MavenNavigationUtil {
 
     return processor.getResult();
   }
-
-  @Nullable
-  public static MavenDomDependency findDependency(@NotNull MavenDomProjectModel projectDom,
-                                                  @NotNull final String groupId,
-                                                  @NotNull final String artifactId,
-                                                  @NotNull final String version,
-                                                  @NotNull final String scope) {
-    MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies> processor =
-      new MavenDomProjectProcessorUtils.SearchProcessor<>() {
-        @Nullable
-        @Override
-        protected MavenDomDependency find(MavenDomDependencies element) {
-          for (MavenDomDependency dependency : element.getDependencies()) {
-            String dependencyScope = dependency.getScope().getStringValue();
-            if (Objects.equals(groupId, dependency.getGroupId().getStringValue()) &&
-                Objects.equals(artifactId, dependency.getArtifactId().getStringValue()) &&
-                Objects.equals(version, dependency.getVersion().getStringValue()) &&
-                Objects.equals(scope, dependencyScope != null ? dependencyScope : "compile")
-            ) {
-              return dependency;
-            }
-          }
-
-          return null;
-        }
-      };
-
-    MavenDomProjectProcessorUtils.processDependencies(projectDom, processor);
-
-    return processor.getResult();
-  }
 }
