@@ -271,7 +271,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       runnable.run();
     }
     else {
-      app.invokeLater(() -> unsafeRunWhenSmart(runnable), ModalityState.NON_MODAL, myProject.getDisposed());
+      app.invokeLater(() -> unsafeRunWhenSmart(runnable), myProject.getDisposed());
     }
   }
 

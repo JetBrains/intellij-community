@@ -190,7 +190,9 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     myProject = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(generateProjectPath(), options));
-
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    }
     EdtTestUtil.runInEdtAndWait(() -> {
       for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
         moduleFixtureBuilder.getFixture().setUp();
