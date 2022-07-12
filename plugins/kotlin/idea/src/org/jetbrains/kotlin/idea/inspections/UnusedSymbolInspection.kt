@@ -84,7 +84,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.findExistingEditor
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
 class UnusedSymbolInspection : AbstractKotlinInspection() {
     companion object {

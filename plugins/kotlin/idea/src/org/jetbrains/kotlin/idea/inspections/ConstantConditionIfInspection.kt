@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.findExistingEditor
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
 class ConstantConditionIfInspection : AbstractKotlinInspection() {
 

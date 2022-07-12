@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.findExistingEditor
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
 class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection() {
     companion object {

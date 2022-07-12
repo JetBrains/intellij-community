@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineAnonymousFunctio
 import org.jetbrains.kotlin.psi.*
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.findExistingEditor
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
 class RedundantLambdaOrAnonymousFunctionInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : KtVisitorVoid() {

@@ -100,5 +100,6 @@
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
+    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
   </component>
 </module>

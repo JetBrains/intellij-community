@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStartOffsetIn
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -203,16 +204,3 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
     ) : IntentionBasedQuickFix(intention, additionalChecker, targetElement), HighPriorityAction
 }
 
-fun PsiElement.findExistingEditor(): Editor? {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-
-    if (!containingFile.isValid) return null
-
-    val file = containingFile?.virtualFile ?: return null
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
-
-    val editorFactory = EditorFactory.getInstance()
-
-    val editors = editorFactory.getEditors(document)
-    return if (editors.isEmpty()) null else editors[0]
-}

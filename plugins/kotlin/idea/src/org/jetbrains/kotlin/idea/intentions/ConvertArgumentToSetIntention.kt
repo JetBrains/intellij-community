@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.core.receiverType
 import org.jetbrains.kotlin.idea.inspections.dfa.getKotlinType
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.findExistingEditor
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isConstant
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.lexer.KtTokens
