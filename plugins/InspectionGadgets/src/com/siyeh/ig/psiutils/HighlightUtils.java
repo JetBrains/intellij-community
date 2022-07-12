@@ -63,6 +63,7 @@ public final class HighlightUtils {
     if (elementCollection.isEmpty()) {
       return;
     }
+    if (!elementCollection.iterator().next().isPhysical()) return;
 
     Editor selectedTextEditor =
       FileEditorManager.getInstance(ContainerUtil.getFirstItem(elementCollection).getProject()).getSelectedTextEditor();
