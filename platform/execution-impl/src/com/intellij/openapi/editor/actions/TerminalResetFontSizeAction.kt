@@ -18,6 +18,6 @@ class TerminalResetFontSizeAction : DumbAwareAction(ActionsBundle.messagePointer
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 }
