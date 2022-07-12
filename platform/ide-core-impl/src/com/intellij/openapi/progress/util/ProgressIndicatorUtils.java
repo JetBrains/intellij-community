@@ -3,7 +3,6 @@ package com.intellij.openapi.progress.util;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.SensitiveProgressWrapper;
-import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
@@ -408,31 +407,6 @@ public final class ProgressIndicatorUtils {
   public static void awaitWithCheckCanceled(@NotNull Semaphore semaphore, @Nullable ProgressIndicator indicator) {
     while (!semaphore.waitFor(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)) {
       checkCancelledEvenWithPCEDisabled(indicator);
-    }
-  }
-
-  /**
-   * The method allows to interruptibly perform potentially blocking I/O operations.
-   * To avoid deadlocks, please pay attention to locks held at the call time and try to abstain from taking locks inside the {@code task}.
-   *
-   * @see com.intellij.openapi.vfs.DiskQueryRelay
-   */
-  public static <Result, E extends Exception> Result doIoWithCheckCanceled(@NotNull ThrowableComputable<Result, E> task) throws E {
-    Future<Result> future = ProcessIOExecutorService.INSTANCE.submit(() -> task.compute());
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    while (true) {
-      checkCancelledEvenWithPCEDisabled(indicator);
-      try {
-        return future.get(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-      }
-      catch (TimeoutException ignore) { }
-      catch (InterruptedException e) {
-        throw new ProcessCanceledException(e);
-      }
-      catch (ExecutionException e) {
-        @SuppressWarnings("unchecked") E cause = (E)e.getCause();
-        throw cause;
-      }
     }
   }
 }

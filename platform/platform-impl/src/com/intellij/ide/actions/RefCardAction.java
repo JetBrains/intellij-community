@@ -6,10 +6,10 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.DiskQueryRelay;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +19,7 @@ import java.nio.file.Path;
 public class RefCardAction extends DumbAwareAction {
   private final NullableLazyValue<Path> myRefCardPath = NullableLazyValue.volatileLazyNullable(() -> {
     var file = Path.of(PathManager.getHomePath() + "/help/ReferenceCard" + (SystemInfo.isMac ? "ForMac" : "") + ".pdf");
-    return ProgressIndicatorUtils.doIoWithCheckCanceled(() -> Files.exists(file) ? file : null);
+    return DiskQueryRelay.compute(() -> Files.exists(file) ? file : null);
   });
 
   @Override
