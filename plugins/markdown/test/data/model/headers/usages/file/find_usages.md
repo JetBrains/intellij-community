@@ -17,3 +17,4 @@ Some list:
 |     |                                        |     |
 
 [Other link to header](#header-name)
+[link with uppercase](#header-NAME)
