@@ -60,6 +60,11 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public final void actionPerformed(@NotNull final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
