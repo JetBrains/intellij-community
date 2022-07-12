@@ -15,7 +15,8 @@ fun zip(targetFile: Path,
         compress: Boolean,
         addDirEntries: Boolean = false,
         overwrite: Boolean = false,
-        compressionLevel: Int = Deflater.DEFAULT_COMPRESSION) {
+        compressionLevel: Int = Deflater.DEFAULT_COMPRESSION,
+        fileFilter: ((name: String) -> Boolean)? = null ) {
   // note - dirs contain duplicated directories (you cannot simply add directory entry on visit - uniqueness must be preserved)
   // anyway, directory entry are not added
   Files.createDirectories(targetFile.parent)
@@ -41,7 +42,7 @@ fun zip(targetFile: Path,
       }
     }
     else {
-      fileAdded = null
+      fileAdded = fileFilter?.let { { name -> it(name) } }
       dirNameSetToAdd = emptySet()
     }
     val archiver = ZipArchiver(it, fileAdded)

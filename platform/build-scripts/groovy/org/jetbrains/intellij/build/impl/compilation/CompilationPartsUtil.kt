@@ -148,7 +148,13 @@ private fun packCompilationResult(context: CompilationContext, zipDir: Path): Li
       ForkJoinTask.adapt(Callable {
         spanBuilder("pack").setParent(traceContext).setAttribute("name", item.name).use {
           // we compress the whole file using ZSTD
-          zip(targetFile = item.archive, dirs = mapOf(item.output to ""), compress = false, overwrite = true)
+          zip(
+            targetFile = item.archive,
+            dirs = mapOf(item.output to ""),
+            compress = false,
+            overwrite = true,
+            fileFilter = { it != "classpath.index" && it != ".unmodified" && it != ".DS_Store" }
+          )
         }
         spanBuilder("compute hash").setParent(traceContext).setAttribute("name", item.name).use {
           item.hash = computeHash(item.archive)
