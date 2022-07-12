@@ -106,7 +106,7 @@ final class ClassFileChecker {
           for (String error in errors) {
             messages.warning(error)
           }
-          messages.error("Failed with $errorCount problems")
+          messages.error("ClassFileChecker failed with $errorCount problems")
         }
 
         Collection<String> unusedRules = rules.findResults { it.wasUsed ? null : it.path }
