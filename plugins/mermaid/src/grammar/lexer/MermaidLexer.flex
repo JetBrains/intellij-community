@@ -344,7 +344,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 }
 <style_value> {
 	[^\S\n\r]+ { return WHITE_SPACE; }
-	[^\s,:;][^,:\n\r;]*/[,;\n\r] { return Flowchart.STYLE_VAL; }
+	[^\s,:;][^,:\n\r;]* { return Flowchart.STYLE_VAL; }
   "," { yybegin(style_opt); return COMMA; }
   ";" { yybegin(flowchart_body); return SEMICOLON; }
   [\n\r] { yybegin(flowchart_body); return EOL; }
