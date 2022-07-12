@@ -7,8 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.high-level-api" level="project" />
@@ -25,9 +25,10 @@
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.fir" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
-    <orderEntry type="module" module-name="kotlin.fir" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2.tests" scope="TEST" />
   </component>
 </module>

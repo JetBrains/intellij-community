@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.fir.testGenerator
 
+import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightTests
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractIdeKotlinAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdl
 import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.inspections.*
-import org.jetbrains.kotlin.idea.fir.intentions.AbstractHLIntentionTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDeclarationResolveTest
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
@@ -47,6 +47,8 @@ internal fun generateTests(isUpToDateCheck: Boolean = false) {
 }
 
 private fun assembleWorkspace(): TWorkspace = workspace {
+    generateK2CodeInsightTests()
+
     testGroup("base/fir/analysis-api-providers") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
             model("outOfBlockProjectWide", pattern = KT_WITHOUT_DOTS or Patterns.JAVA)
@@ -115,24 +117,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/autoImports", pattern = Patterns.forRegex("""^(\w+)\.((before\.Main\.\w+))$"""), testMethodName = "doTestWithExtraFile")
         }
 
-        testClass<AbstractHLInspectionTest> {
-            val pattern = Patterns.forRegex("^(inspections\\.test)$")
-            model("inspections/redundantUnitReturnType", pattern = pattern)
-        }
-
-        testClass<AbstractHLIntentionTest> {
-            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
-            model("intentions/addNameToArgument", pattern = pattern)
-            model("intentions/addNamesToCallArguments", pattern = pattern)
-            model("intentions/addNamesToFollowingArguments", pattern = pattern)
-            model("intentions/addPropertyAccessors", pattern = pattern)
-            model("intentions/specifyTypeExplicitly", pattern = pattern)
-            model("intentions/importAllMembers", pattern = pattern)
-            model("intentions/importMember", pattern = pattern)
-            model("intentions/convertToBlockBody", pattern = pattern)
-            model("intentions/addWhenRemainingBranches", pattern = pattern)
-            model("../../../fir/testData/intentions/useExpressionBody", pattern=pattern)
-        }
 
         testClass<AbstractFirShortenRefsTest> {
             model("shortenRefsFir", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
@@ -148,16 +132,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirJvmOptimizeImportsTest> {
             model("editor/optimizeImports/jvm", pattern = KT_WITHOUT_DOTS)
             model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
-        }
-    }
-
-    testGroup("fir", testDataPath = "..") {
-        testClass<AbstractHLLocalInspectionTest> {
-            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
-            model("idea/tests/testData/inspectionsLocal/unusedVariable", pattern = pattern)
-            model("idea/tests/testData/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
-            model("idea/tests/testData/inspectionsLocal/implicitThis")
-            model("fir/testData/inspectionsLocal", pattern = pattern)
         }
     }
 
@@ -287,10 +261,4 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-
-    testGroup("code-insight/inspections-intentions-shared/tests/k2", testDataPath = "../testData") {
-        testClass<AbstractSharedK2IntentionTest> {
-            model("intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"))
-        }
-    }
 }

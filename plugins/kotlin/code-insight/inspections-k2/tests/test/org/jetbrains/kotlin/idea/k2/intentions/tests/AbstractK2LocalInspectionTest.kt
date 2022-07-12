@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.fir.inspections
+package org.jetbrains.kotlin.idea.k2.intentions.tests
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import org.jetbrains.kotlin.idea.fir.highlighter.KotlinHighLevelDiagnosticHighlightingPass
@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
-abstract class AbstractHLLocalInspectionTest : AbstractLocalInspectionTest() {
+abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
     override fun isFirPlugin() = true
 
-    override val inspectionFileName: String = ".firInspection"
+    override val inspectionFileName: String = ".k2Inspection"
 
     override fun checkForUnexpectedErrors(fileText: String) {}
 

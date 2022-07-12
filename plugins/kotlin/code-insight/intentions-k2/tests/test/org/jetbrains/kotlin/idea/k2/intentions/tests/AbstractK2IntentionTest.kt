@@ -1,6 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.fir.intentions
+package org.jetbrains.kotlin.idea.k2.intentions.tests
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiFile
@@ -8,15 +8,14 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTest
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
-abstract class AbstractHLIntentionTest : AbstractIntentionTest() {
-    override fun intentionFileName() = ".firIntention"
+abstract class AbstractK2IntentionTest : AbstractIntentionTest() {
+    override fun intentionFileName() = ".k2Intention"
 
     override fun afterFileNameSuffix(ktFilePath: File): String {
-        return if (ktFilePath.resolveSibling(ktFilePath.name + AFTER_FIR_EXTENSION).exists()) AFTER_FIR_EXTENSION
+        return if (ktFilePath.resolveSibling(ktFilePath.name + AFTER_K2_EXTENSION).exists()) AFTER_K2_EXTENSION
         else super.afterFileNameSuffix(ktFilePath)
     }
 
@@ -39,6 +38,6 @@ abstract class AbstractHLIntentionTest : AbstractIntentionTest() {
     }
 
     companion object {
-        private const val AFTER_FIR_EXTENSION = ".after.fir"
+        private const val AFTER_K2_EXTENSION = ".after.k2"
     }
 }
