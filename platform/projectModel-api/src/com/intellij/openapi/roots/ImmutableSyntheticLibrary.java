@@ -18,15 +18,18 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
   private final Condition<? super VirtualFile> myExcludeCondition;
   private final int hashCode;
 
-  ImmutableSyntheticLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
+  ImmutableSyntheticLibrary(@Nullable String comparisonId,
+                            @NotNull List<? extends VirtualFile> sourceRoots,
                             @NotNull List<? extends VirtualFile> binaryRoots,
                             @NotNull Set<? extends VirtualFile> excludedRoots,
-                            @Nullable Condition<? super VirtualFile> excludeCondition) {
+                            @Nullable Condition<? super VirtualFile> excludeCondition,
+                            @Nullable ExcludeFileCondition constantCondition) {
+    super(comparisonId, constantCondition);
     mySourceRoots = immutableOrEmptyList(sourceRoots);
     myBinaryRoots = immutableOrEmptyList(binaryRoots);
     myExcludedRoots = ContainerUtil.unmodifiableOrEmptySet(excludedRoots);
     myExcludeCondition = excludeCondition;
-    hashCode = 31 * (31 * sourceRoots.hashCode() + binaryRoots.hashCode()) + excludedRoots.hashCode();
+    hashCode = Objects.hash(mySourceRoots, myBinaryRoots, myExcludedRoots, myExcludeCondition);
   }
 
   @NotNull

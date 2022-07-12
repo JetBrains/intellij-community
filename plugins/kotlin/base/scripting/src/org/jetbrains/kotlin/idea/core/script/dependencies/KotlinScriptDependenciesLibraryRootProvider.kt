@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.SyntheticLibrary
+
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
@@ -37,7 +38,7 @@ class KotlinScriptDependenciesLibraryRootProvider: AdditionalLibraryRootsProvide
         ScriptConfigurationManager.allExtraRoots(project).filterValid()
 
     private data class KotlinScriptDependenciesLibrary(val classes: Collection<VirtualFile>, val sources: Collection<VirtualFile>) :
-        SyntheticLibrary(), ItemPresentation {
+        SyntheticLibrary("KotlinScriptDependenciesLibrary", null), ItemPresentation {
         override fun getBinaryRoots(): Collection<VirtualFile> = classes
 
         override fun getSourceRoots(): Collection<VirtualFile> = sources

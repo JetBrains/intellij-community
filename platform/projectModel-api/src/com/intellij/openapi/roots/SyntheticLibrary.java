@@ -97,9 +97,9 @@ public abstract class SyntheticLibrary {
    * <p>
    * NOTE 2: Try not to use file.getFileType() method since it might load file's content to know the type,
    * which will try to load encoding and guess files project which is lead to SOE.
-   *
-   *  NOTE 3: Non-null value blocks from incremental rescanning of library changes. Consider switching to constantExcludeCondition and
-   *  providing non-null comparisonId in constructor.
+   * <p>
+   * NOTE 3: Non-null value blocks from incremental rescanning of library changes. Consider switching to constantExcludeCondition and
+   * providing non-null comparisonId in constructor.
    */
   @Nullable
   public Condition<VirtualFile> getExcludeFileCondition() {
@@ -162,6 +162,9 @@ public abstract class SyntheticLibrary {
     return newImmutableLibrary(asList(sourceRoots), Collections.emptySet(), null);
   }
 
+  /**
+   * @see SyntheticLibrary#newImmutableLibrary(String, List, List, Set, ExcludeFileCondition)
+   */
   @NotNull
   public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
                                                      @NotNull Set<? extends VirtualFile> excludedRoots,
@@ -169,12 +172,32 @@ public abstract class SyntheticLibrary {
     return newImmutableLibrary(sourceRoots, Collections.emptyList(), excludedRoots, excludeCondition);
   }
 
+  /**
+   * @see SyntheticLibrary#newImmutableLibrary(String, List, List, Set, ExcludeFileCondition)
+   */
   @NotNull
   public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
                                                      @NotNull List<? extends VirtualFile> binaryRoots,
                                                      @NotNull Set<? extends VirtualFile> excludedRoots,
                                                      @Nullable Condition<? super VirtualFile> excludeCondition) {
-    return new ImmutableSyntheticLibrary(sourceRoots, binaryRoots, excludedRoots, excludeCondition);
+    return new ImmutableSyntheticLibrary(null, sourceRoots, binaryRoots, excludedRoots, excludeCondition, null);
+  }
+
+  /**
+   * Providing comparisonId in constructor and constant ExcludeFileCondition instead of getExcludeFileCondition
+   * allows rescanning changes in library incrementally. Consider this method as the best of all newImmutableLibrary.
+   *
+   * @param comparisonId should be different for all libraries returned by the same {@link AdditionalLibraryRootsProvider},
+   *                     and retained for the same library between its invocations to enable rescan its changes incrementally
+   * @param excludeCondition should depend only on its parameters
+   */
+  @NotNull
+  public static SyntheticLibrary newImmutableLibrary(@NotNull String comparisonId,
+                                                     @NotNull List<? extends VirtualFile> sourceRoots,
+                                                     @NotNull List<? extends VirtualFile> binaryRoots,
+                                                     @NotNull Set<? extends VirtualFile> excludedRoots,
+                                                     @Nullable ExcludeFileCondition excludeCondition) {
+    return new ImmutableSyntheticLibrary(comparisonId, sourceRoots, binaryRoots, excludedRoots, null, excludeCondition);
   }
 
   @NotNull

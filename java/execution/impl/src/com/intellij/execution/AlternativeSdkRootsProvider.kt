@@ -26,10 +26,9 @@ class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
   }
 
   private fun createSdkLibrary(sdk: Sdk): JavaSyntheticLibrary {
-    return JavaSyntheticLibrary(sdk.rootProvider.getFiles(OrderRootType.SOURCES).toList(),
+    return JavaSyntheticLibrary(sdk.name, sdk.rootProvider.getFiles(OrderRootType.SOURCES).toList(),
                                 sdk.rootProvider.getFiles(OrderRootType.CLASSES).toList(),
-                                emptySet<VirtualFile>(),
-                                null)
+                                emptySet<VirtualFile>())
   }
 
   companion object {
