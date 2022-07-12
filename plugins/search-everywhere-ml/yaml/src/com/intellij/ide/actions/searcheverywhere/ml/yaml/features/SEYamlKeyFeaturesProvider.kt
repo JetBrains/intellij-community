@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.yaml.searcheverywhere.ml
+package com.intellij.ide.actions.searcheverywhere.ml.yaml.features
 
 import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCache
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider

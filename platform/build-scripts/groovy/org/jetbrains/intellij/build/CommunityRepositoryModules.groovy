@@ -260,7 +260,10 @@ final class CommunityRepositoryModules {
     plugin("intellij.vcs.git.featuresTrainer") {
       withProjectLibrary("git-learning-project")
     },
-    simplePlugin("intellij.searchEverywhereMl"),
+    plugin("intellij.searchEverywhereMl") {
+      withModule("intellij.searchEverywhereMl.core")
+      withModule("intellij.searchEverywhereMl.yaml")
+    },
     simplePlugin("intellij.keymap.eclipse"),
     simplePlugin("intellij.keymap.visualStudio"),
     simplePlugin("intellij.keymap.netbeans"),

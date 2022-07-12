@@ -23,7 +23,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.searchEverywhereMl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>
