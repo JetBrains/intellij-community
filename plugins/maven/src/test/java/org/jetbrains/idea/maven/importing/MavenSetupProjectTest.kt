@@ -12,11 +12,11 @@ import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectT
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestUtil
 import junit.framework.TestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
@@ -86,9 +86,11 @@ class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTest
     val projectManager = MavenProjectsManager.getInstance(project)
     projectManager.initForTests()
     if (isNewImportingProcess) {
-      val promise = MavenImportingManager.getInstance(project).getImportFinishPromise()
-      val importFinishedContext = PlatformTestUtil.waitForPromise(promise)
-      importFinishedContext?.error?.let { throw it }
+      val deferred = withContext(Dispatchers.EDT) {
+        MavenImportingManager.getInstance(project).getImportFinishPromise()
+      }.asDeferred()
+      val importFinishedContext = deferred.await()
+      importFinishedContext.error?.let { throw it }
     }
     else {
       withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
