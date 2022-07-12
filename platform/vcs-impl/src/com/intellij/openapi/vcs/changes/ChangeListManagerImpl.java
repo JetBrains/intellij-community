@@ -136,7 +136,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     myDelayedNotificator = new DelayedNotificator(myProject, this, myScheduler);
     myWorker = new ChangeListWorker(myProject, myDelayedNotificator);
 
-    myUpdater = new UpdateRequestsQueue(myProject, myScheduler, this::updateImmediately);
+    myUpdater = new UpdateRequestsQueue(myProject, myScheduler, this::updateImmediately, this::hasNothingToUpdate);
     myModifier = new Modifier(myWorker, myDelayedNotificator);
 
     MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
@@ -447,6 +447,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     catch (Exception | AssertionError ex) {
       LOG.error(ex);
     }
+  }
+
+  /**
+   * @return true if {@link #updateImmediately()} can be skipped.
+   */
+  private boolean hasNothingToUpdate() {
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    if (!vcsManager.hasActiveVcss()) return true;
+
+    VcsDirtyScopeManagerImpl dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(myProject);
+    return !dirtyScopeManager.hasDirtyScopes();
   }
 
   /**

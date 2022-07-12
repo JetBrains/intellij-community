@@ -29,7 +29,8 @@ public final class UpdateRequestsQueue {
 
   private final Project myProject;
   private final ChangeListManagerImpl.Scheduler myScheduler;
-  private final BooleanSupplier myDelegate;
+  private final BooleanSupplier myRefreshDelegate;
+  private final BooleanSupplier myFastTrackDelegate;
   private final Object myLock = new Object();
   private volatile boolean myStarted;
   private volatile boolean myStopped;
@@ -42,10 +43,12 @@ public final class UpdateRequestsQueue {
 
   public UpdateRequestsQueue(@NotNull Project project,
                              @NotNull ChangeListManagerImpl.Scheduler scheduler,
-                             @NotNull BooleanSupplier delegate) {
+                             @NotNull BooleanSupplier refreshDelegate,
+                             @NotNull BooleanSupplier fastTrackDelegate) {
     myProject = project;
     myScheduler = scheduler;
-    myDelegate = delegate;
+    myRefreshDelegate = refreshDelegate;
+    myFastTrackDelegate = fastTrackDelegate;
 
     // not initialized
     myStarted = false;
@@ -62,12 +65,22 @@ public final class UpdateRequestsQueue {
   }
 
   public void schedule() {
+    schedule(false);
+  }
+
+  public void schedule(boolean withFastTrack) {
     synchronized (myLock) {
       if (!myStarted && ApplicationManager.getApplication().isUnitTestMode()) return;
 
       if (myStopped) return;
       if (myRequestSubmitted) return;
       myRequestSubmitted = true;
+
+      if (withFastTrack) {
+        FastTrackRunnable fastRunnable = new FastTrackRunnable();
+        myScheduler.submit(fastRunnable);
+        debug("Scheduled fast-track", fastRunnable);
+      }
 
       RefreshRunnable runnable = new RefreshRunnable();
       myScheduler.schedule(runnable, 300, TimeUnit.MILLISECONDS);
@@ -157,7 +170,7 @@ public final class UpdateRequestsQueue {
       stopped = myStopped;
       if (!stopped) {
         myWaitingUpdateCompletionQueue.add(callback::endProgress);
-        schedule();
+        schedule(true);
       }
     }
     if (stopped) {
@@ -182,6 +195,58 @@ public final class UpdateRequestsQueue {
    */
   private boolean checkLifeCycle() {
     return !myStarted || !StartupManagerEx.getInstanceEx(myProject).startupActivityPassed();
+  }
+
+  private final class FastTrackRunnable implements Runnable {
+    @Override
+    public void run() {
+      List<Runnable> copy;
+      synchronized (myLock) {
+        if (!myRequestSubmitted) return;
+        myRequestSubmitted = false;
+
+        LOG.assertTrue(!myRequestRunning);
+
+        if (myStopped) {
+          debug("Stopped", this);
+          return;
+        }
+
+        copy = new ArrayList<>(myWaitingUpdateCompletionQueue);
+        myWaitingUpdateCompletionQueue.clear();
+      }
+
+      debug("Before callback", this);
+      boolean nothingToUpdate = false;
+      try {
+        nothingToUpdate = myFastTrackDelegate.getAsBoolean(); // CLM.hasNothingToUpdate
+      }
+      catch (ProcessCanceledException ignore) {
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+      debug("After callback", this);
+
+      if (nothingToUpdate) {
+        runWaiters(copy);
+        debug("Runnables executed", this);
+      }
+      else {
+        // Need to do a fair refresh, will fire events later
+        debug("Restoring runnables", this);
+        synchronized (myLock) {
+          myRequestSubmitted = true; // no need to schedule runnable - it's already pending
+
+          myWaitingUpdateCompletionQueue.addAll(0, copy);
+        }
+      }
+    }
+
+    @Override
+    public String toString() {
+      return "CLM Refresh Fast-Track runnable@" + hashCode();
+    }
   }
 
   private final class RefreshRunnable implements Runnable {
@@ -212,11 +277,11 @@ public final class UpdateRequestsQueue {
         }
 
         debug("Before callback", this);
-        boolean success = myDelegate.getAsBoolean(); // CLM.updateImmediately
+        boolean success = myRefreshDelegate.getAsBoolean(); // CLM.updateImmediately
         debug("After callback, was success: " + success, this);
 
         if (!success) {
-          // Refresh was cancelled, will fire events later
+          // Refresh was cancelled, will fire events after the next successful one
           debug("Restoring runnables", this);
           synchronized (myLock) {
             myWaitingUpdateCompletionQueue.addAll(0, copy);
