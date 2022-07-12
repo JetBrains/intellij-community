@@ -20,9 +20,6 @@ import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
@@ -35,9 +32,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageV
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 internal class ModuleOperationExecutor {
 
@@ -97,7 +91,7 @@ internal class ModuleOperationExecutor {
             projectModule = projectModule, dependency = operation.model, newVersion = operation.newVersion, newScope = operation.newScope
         )
 
-        val errors = withEDT { operationProvider.addDependencyToModule(operationMetadata, projectModule) }
+        val errors = operationProvider.addDependencyToModule(operationMetadata, projectModule)
 
         if (errors.isEmpty()) {
             PackageSearchEventsLogger.logPackageInstalled(
@@ -131,7 +125,7 @@ internal class ModuleOperationExecutor {
 
         val operationMetadata = dependencyOperationMetadataFrom(projectModule, operation.model)
 
-        val errors = withEDT { operationProvider.removeDependencyFromModule(operationMetadata, projectModule) }
+        val errors = operationProvider.removeDependencyFromModule(operationMetadata, projectModule)
 
         if (errors.isEmpty()) {
             PackageSearchEventsLogger.logPackageRemoved(
@@ -165,7 +159,7 @@ internal class ModuleOperationExecutor {
             projectModule = projectModule, dependency = operation.model, newVersion = operation.newVersion, newScope = operation.newScope
         )
 
-        val errors = withEDT { operationProvider.updateDependencyInModule(operationMetadata, projectModule) }
+        val errors = operationProvider.updateDependencyInModule(operationMetadata, projectModule)
 
         if (errors.isEmpty()) {
             PackageSearchEventsLogger.logPackageUpdated(
@@ -208,7 +202,7 @@ internal class ModuleOperationExecutor {
 
         logDebug("ModuleOperationExecutor#installRepository()") { "Installing repository ${operation.model.displayName} in ${projectModule.name}" }
 
-        val errors = withEDT { operationProvider.addRepositoryToModule(operation.model, projectModule) }
+        val errors = operationProvider.addRepositoryToModule(operation.model, projectModule)
 
         if (errors.isEmpty()) {
             PackageSearchEventsLogger.logRepositoryAdded(operation.model)
@@ -234,7 +228,7 @@ internal class ModuleOperationExecutor {
 
         logDebug("ModuleOperationExecutor#removeRepository()") { "Removing repository ${operation.model.displayName} from ${projectModule.name}" }
 
-        val errors = withEDT { operationProvider.removeRepositoryFromModule(operation.model, projectModule) }
+        val errors = operationProvider.removeRepositoryFromModule(operation.model, projectModule)
 
         if (errors.isEmpty()) {
             PackageSearchEventsLogger.logRepositoryRemoved(operation.model)
@@ -250,7 +244,4 @@ internal class ModuleOperationExecutor {
 
         return errors
     }
-
-    private suspend inline fun <T> withEDT(noinline action: suspend CoroutineScope.() -> T) =
-        withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement(), action)
 }

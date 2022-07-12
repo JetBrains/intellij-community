@@ -17,6 +17,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -39,6 +40,7 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -263,9 +265,7 @@ internal class BackgroundLoadingBarController(private val syncMutex: Mutex) {
     }
 }
 
-suspend fun <R> writeAction(action: () -> R): R = suspendCoroutine {
-    runWriteAction { it.resume(action()) }
-}
+suspend fun <R> writeAction(action: () -> R): R = withContext(Dispatchers.EDT) { action() }
 
 internal fun ModuleTransformer.asCoroutine() = object : CoroutineModuleTransformer {
     override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =

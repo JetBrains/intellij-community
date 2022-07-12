@@ -53,13 +53,12 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
             val modifierService = DependencyModifierService.getInstance(module.nativeModule.project)
 
             catchingReadAction { modifierService.declaredDependencies(operationMetadata.module.nativeModule) }
-                .mapCatching { it.first { it.unifiedDependency == dependency } }
-                .mapCatching {
-                    writeAction { modifierService.updateDependency(operationMetadata.module.nativeModule, it.unifiedDependency, dependency) }
-                }
-                .except<CancellationException, _>()
-                .onFailure { failures.add(OperationFailure(OperationType.ADD, dependency, it)) }
+                .map { it.firstOrNull { it.unifiedDependency == dependency } }
                 .getOrNull()
+                ?.runCatching {
+                    writeAction { modifierService.updateDependency(operationMetadata.module.nativeModule, unifiedDependency, dependency) }
+                }
+                ?.getOrNull()
                 ?: catchingWriteAction { modifierService.addDependency(operationMetadata.module.nativeModule, dependency) }
                     .onFailure { failures.add(OperationFailure(OperationType.ADD, dependency, it)) }
 
