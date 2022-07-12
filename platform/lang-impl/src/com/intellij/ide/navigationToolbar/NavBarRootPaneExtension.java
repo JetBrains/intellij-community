@@ -221,6 +221,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
             ((JBScrollPane) myScrollPane).setOverlappingScrollBar(true);
           }
           myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+          toggleScrollBar(false);
         }
         else {
           myScrollPane.setHorizontalScrollBar(null);
