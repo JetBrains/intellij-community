@@ -846,7 +846,7 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
 
-    for (EventDispatcher eachDispatcher : DISPATCHERS_EP.getExtensionList()) {
+    for (EventDispatcher eachDispatcher : DISPATCHERS_EP.getExtensionsIfPointIsRegistered()) {
       if (eachDispatcher.dispatch(e)) {
         return true;
       }
