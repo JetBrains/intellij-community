@@ -350,8 +350,9 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
     highlightButtonById("Stop", highlightInside = false, usePulsation = false)
     task {
+      val position = if (UIExperiment.isNewDebuggerUIEnabled()) Balloon.Position.above else Balloon.Position.atRight
       showBalloonOnHighlightingComponent(JavaLessonsBundle.message("java.onboarding.balloon.stop.debugging"),
-                                         Balloon.Position.atRight) { list -> list.maxByOrNull { it.locationOnScreen.y } }
+                                         position) { list -> list.maxByOrNull { it.locationOnScreen.y } }
       text(JavaLessonsBundle.message("java.onboarding.stop.debugging", icon(AllIcons.Actions.Suspend)))
       restoreIfModified(sample)
       stateCheck {
