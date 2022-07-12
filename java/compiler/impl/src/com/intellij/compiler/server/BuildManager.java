@@ -1928,7 +1928,7 @@ public final class BuildManager implements Disposable {
             if (needFSRescan) {
               getInstance().clearState(project);
             }
-            else {
+            else if (event.getAllChanges().iterator().hasNext()) {
               getInstance().cancelPreloadedBuilds(getProjectPath(project));
             }
           }
