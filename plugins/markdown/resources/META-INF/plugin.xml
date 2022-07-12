@@ -219,12 +219,12 @@ Includes the following features:</p>
     <typedHandler implementation="org.intellij.plugins.markdown.model.HeaderAnchorCompletionPopupTypedHandler"/>
 
     <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
-    <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.CommonLinkDestinationReferenceContributor"/>
-    <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
+    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.CommonLinkDestinationReferenceContributor"/>
+    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
 
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink$Manipulator"/>
-    <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.AutoLinkWebReferenceContributor"/>
+    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.AutoLinkWebReferenceContributor"/>
 
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="org.intellij.plugins.markdown.model.psi.MarkdownSymbolUsageSearcher"/>
