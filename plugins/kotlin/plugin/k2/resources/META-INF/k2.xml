@@ -183,7 +183,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <compileServer.plugin classpath="jps/kotlin-jps-plugin.jar;kotlin-stdlib.jar;kotlin-stdlib-jdk7.jar;kotlin-stdlib-jdk8.jar;kotlin-reflect.jar;kotlin-plugin.jar;kotlin-jps-common.jar;kotlin-common.jar"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector"
