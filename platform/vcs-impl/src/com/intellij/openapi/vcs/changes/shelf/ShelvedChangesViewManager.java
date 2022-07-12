@@ -429,7 +429,7 @@ public class ShelvedChangesViewManager implements Disposable {
           return map2Array(shelvedChanges, Change.class, s -> s.getChangeWithLocal(myProject));
         }
       }
-      else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId) && !isEditing()) {
         return myDeleteProvider;
       }
       else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
@@ -634,7 +634,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      return !getShelvedLists(dataContext).isEmpty();
+      return !myTree.isEditing() && !getShelvedLists(dataContext).isEmpty();
     }
   }
 
