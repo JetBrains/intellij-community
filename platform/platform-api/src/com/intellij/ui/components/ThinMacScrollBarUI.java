@@ -26,4 +26,9 @@ final class ThinMacScrollBarUI extends MacScrollBarUI {
   protected @NotNull Insets getInsets(boolean small) {
     return JBUI.emptyInsets();
   }
+
+  @Override
+  protected void updateStyle(MacScrollBarUI.Style style) {
+    super.updateStyle(Style.Overlay);
+  }
 }
