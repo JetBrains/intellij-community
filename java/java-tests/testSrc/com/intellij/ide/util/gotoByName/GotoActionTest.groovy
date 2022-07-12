@@ -308,9 +308,9 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   void "test navigable settings options appear in results"() {
     def contributor = createActionContributor(project, testRootDisposable)
     def patterns = [
-      "Smooth scrolling",
+      "support screen readers",
       "show line numbers",
-      "Widescreen tool window"
+      "tab placement"
     ]
 
     def errors = []
