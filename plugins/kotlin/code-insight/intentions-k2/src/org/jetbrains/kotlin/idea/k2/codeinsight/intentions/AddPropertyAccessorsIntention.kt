@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 
-abstract class HLAddAccessorIntention(private val addGetter: Boolean, private val addSetter: Boolean) :
+abstract class AbstractAddAccessorIntention(private val addGetter: Boolean, private val addSetter: Boolean) :
     AbstractKotlinApplicatorBasedIntention<KtProperty, KotlinApplicatorInput.Empty>(KtProperty::class) {
     override val applicator: KotlinApplicator<KtProperty, KotlinApplicatorInput.Empty>
         get() = AddAccessorApplicator.applicator(addGetter, addSetter).with {
@@ -54,6 +54,6 @@ abstract class HLAddAccessorIntention(private val addGetter: Boolean, private va
     }
 }
 
-class HLAddGetterAndSetterIntention : HLAddAccessorIntention(addGetter = true, addSetter = true), LowPriorityAction
-class HLAddGetterIntention : HLAddAccessorIntention(addGetter = true, addSetter = false)
-class HLAddSetterIntention : HLAddAccessorIntention(addGetter = false, addSetter = true)
+class AddPropertyAccessorsIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = true), LowPriorityAction
+class AddPropertyGetterIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = false)
+class AddPropertySetterIntention : AbstractAddAccessorIntention(addGetter = false, addSetter = true)

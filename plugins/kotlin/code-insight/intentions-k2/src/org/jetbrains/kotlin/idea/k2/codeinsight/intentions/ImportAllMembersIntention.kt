@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
-class HLImportAllMembersIntention :
-    AbstractKotlinApplicatorBasedIntention<KtExpression, HLImportAllMembersIntention.Input>(KtExpression::class), HighPriorityAction {
+class ImportAllMembersIntention :
+    AbstractKotlinApplicatorBasedIntention<KtExpression, ImportAllMembersIntention.Input>(KtExpression::class), HighPriorityAction {
 
     override val applicator: KotlinApplicator<KtExpression, Input>
         get() = applicator<KtExpression, Input> {

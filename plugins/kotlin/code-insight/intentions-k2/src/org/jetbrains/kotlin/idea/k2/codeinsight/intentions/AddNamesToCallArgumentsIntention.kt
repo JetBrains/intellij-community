@@ -7,11 +7,11 @@ import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddArgumentNamesApplicators
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.HLAddNameToArgumentIntention.Companion.getArgumentNameIfCanBeUsedForCalls
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddNameToArgumentIntention.Companion.getArgumentNameIfCanBeUsedForCalls
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 
-class HLAddNamesToCallArgumentsIntention :
+class AddNamesToCallArgumentsIntention :
     AbstractKotlinApplicatorBasedIntention<KtCallElement, AddArgumentNamesApplicators.MultipleArgumentsInput>(KtCallElement::class) {
     override val applicator =
         AddArgumentNamesApplicators.multipleArgumentsApplicator
@@ -42,4 +42,5 @@ class HLAddNamesToCallArgumentsIntention :
             getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return@inputProvider null
         })
     }
+
 }

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class HLUseExpressionBodyIntention : AbstractKotlinApplicatorBasedIntention<KtDeclarationWithBody, HLUseExpressionBodyIntention.Input>(
+class UseExpressionBodyIntention : AbstractKotlinApplicatorBasedIntention<KtDeclarationWithBody, UseExpressionBodyIntention.Input>(
     KtDeclarationWithBody::class,
 ) {
 

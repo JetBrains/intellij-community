@@ -2,25 +2,16 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.psi.PsiComment
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator.TypeInfo.Companion.createByKtTypes
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator.getTypeInfo
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.util.bfs
 
-class HLSpecifyExplicitTypeForCallableDeclarationIntention :
+class SpecifyExplicitTypeForCallableDeclarationIntention :
     AbstractKotlinApplicatorBasedIntention<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo>(KtCallableDeclaration::class)
 {
     override val applicabilityRange: KotlinApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER

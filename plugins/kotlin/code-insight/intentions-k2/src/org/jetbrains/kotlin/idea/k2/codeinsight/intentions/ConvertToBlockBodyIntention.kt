@@ -2,11 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.util.DocumentUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
@@ -19,8 +15,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class HLConvertToBlockBodyIntention :
-    AbstractKotlinApplicatorBasedIntention<KtDeclarationWithBody, HLConvertToBlockBodyIntention.Input>(KtDeclarationWithBody::class) {
+class ConvertToBlockBodyIntention :
+    AbstractKotlinApplicatorBasedIntention<KtDeclarationWithBody, ConvertToBlockBodyIntention.Input>(KtDeclarationWithBody::class) {
 
     override val applicator: KotlinApplicator<KtDeclarationWithBody, Input>
         get() =  applicator<KtDeclarationWithBody, Input> {

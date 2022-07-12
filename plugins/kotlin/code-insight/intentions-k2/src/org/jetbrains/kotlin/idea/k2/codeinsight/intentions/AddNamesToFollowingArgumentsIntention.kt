@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.HLAddNameToArgumentIntention.Companion.getArgumentNameIfCanBeUsedForCalls
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddNameToArgumentIntention.Companion.getArgumentNameIfCanBeUsedForCalls
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtValueArgument
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 
-class HLAddNamesToFollowingArgumentsIntention :
+class AddNamesToFollowingArgumentsIntention :
     AbstractKotlinApplicatorBasedIntention<KtValueArgument, AddArgumentNamesApplicators.MultipleArgumentsInput>(KtValueArgument::class),
     LowPriorityAction {
     override val applicabilityRange = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
