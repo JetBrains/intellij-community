@@ -16,6 +16,7 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
+import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
 import com.intellij.buildsystem.model.unified.UnifiedDependency
@@ -44,7 +45,7 @@ abstract class AbstractAsyncProjectModuleOperationProvider : AsyncProjectModuleO
     ): CompletableFuture<Collection<OperationFailure<out OperationItem>>> =
         module.lifecycleScope.future { AbstractCoroutineProjectModuleOperationProvider.updateDependencyInModule(operationMetadata, module) }
 
-    override fun declaredDependenciesInModule(module: ProjectModule): CompletableFuture<Collection<UnifiedDependency>> =
+    override fun declaredDependenciesInModule(module: ProjectModule): CompletableFuture<Collection<DeclaredDependency>> =
         module.lifecycleScope.future { AbstractCoroutineProjectModuleOperationProvider.declaredDependenciesInModule(module) }
 
     override fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>): CompletableFuture<Collection<UnifiedDependency>> =

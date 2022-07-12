@@ -16,6 +16,7 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
+import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
 import com.intellij.buildsystem.model.unified.UnifiedDependency
@@ -98,7 +99,7 @@ interface CoroutineProjectModuleOperationProvider {
      */
     suspend fun declaredDependenciesInModule(
         module: ProjectModule
-    ): List<UnifiedDependency>
+    ): List<DeclaredDependency>
 
     /**
      * Lists all resolved dependencies in the given [module].

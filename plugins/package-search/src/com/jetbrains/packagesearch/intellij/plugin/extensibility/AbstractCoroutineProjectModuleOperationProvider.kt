@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.writeAction
-import kotlinx.coroutines.CancellationException
 
 abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjectModuleOperationProvider {
 
@@ -120,16 +119,15 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
         }
 
         suspend fun declaredDependenciesInModule(module: ProjectModule) =
-            module.buildFile?.let {
-                catchingReadAction { DependencyModifierService.getInstance(module.nativeModule.project).declaredDependencies(module.nativeModule) }
-                    .onFailure {
-                        logWarn(this::class.qualifiedName!! + "#declaredDependenciesInModule", it) {
-                            "Error while listing declared dependencies in module ${module.name}"
-                        }
+            module.buildFile
+                ?.let { catchingReadAction { DependencyModifierService.getInstance(module.nativeModule.project).declaredDependencies(module.nativeModule) } }
+                ?.onFailure {
+                    logWarn(this::class.qualifiedName!! + "#declaredDependenciesInModule", it) {
+                        "Error while listing declared dependencies in module ${module.name}"
                     }
-                    .map { it.map { it.unifiedDependency } }
-                    .getOrElse { emptyList() }
-            } ?: emptyList()
+                }
+                ?.getOrElse { emptyList() }
+                ?: emptyList()
 
         suspend fun addRepositoryToModule(
             repository: UnifiedDependencyRepository,

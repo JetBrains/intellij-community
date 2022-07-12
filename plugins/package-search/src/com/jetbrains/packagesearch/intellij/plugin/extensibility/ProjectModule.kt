@@ -16,14 +16,19 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
+import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import kotlinx.coroutines.future.future
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.io.File
@@ -91,11 +96,9 @@ data class ProjectModule @JvmOverloads constructor(
     ) : this(name, nativeModule, parent, buildFile, buildFile.parent.toNioPath().toFile(), buildSystemType, moduleType, availableScopes)
 
     fun getBuildFileNavigatableAtOffset(offset: Int): Navigatable? =
-        buildFile?.let {
-            PsiManager.getInstance(nativeModule.project).findFile(it)?.let { psiFile ->
-                PsiUtil.getElementAtOffset(psiFile, offset).takeIf { it != buildFile } as? Navigatable
-            }
-        }
+        buildFile?.let { PsiManager.getInstance(nativeModule.project).findFile(it) }
+            ?.let { psiFile -> PsiUtil.getElementAtOffset(psiFile, offset) }
+            ?.takeIf { it != buildFile } as? Navigatable
 
     @NlsSafe
     fun getFullName(): String =
@@ -140,7 +143,11 @@ private fun Module.hashCodeOrZero() =
     runCatching { moduleFilePath.hashCode() + 31 * name.hashCode() }
         .getOrDefault(0)
 
-typealias DependencyDeclarationCallback = (UnifiedDependency) -> CompletableFuture<DependencyDeclarationIndexes?>
+typealias DependencyDeclarationCallback = (DeclaredDependency) -> CompletableFuture<DependencyDeclarationIndexes?>
+
+fun Project.dependencyDeclarationCallback(
+    action: (DeclaredDependency) -> DependencyDeclarationIndexes?
+): DependencyDeclarationCallback = { lifecycleScope.future { readAction { action(it) } } }
 
 /**
  * Container class for declaration coordinates for a dependency in a build file. \

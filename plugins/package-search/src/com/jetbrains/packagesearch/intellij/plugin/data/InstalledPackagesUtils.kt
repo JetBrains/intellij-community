@@ -142,7 +142,6 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
         ?.takeIf { it.isNotBlank() }
 
     val cache = if (cachedContents != null) {
-        // TODO: consider invalidating when ancillary files change (e.g., gradle.properties)
         runCatching { json.decodeFromString<InstalledDependenciesCache>(cachedContents) }
             .onFailure { logDebug("installedDependencies", it) { "Dependency JSON cache file read failed for ${buildFile.path}" } }
             .getOrNull()
@@ -169,7 +168,7 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
             ?.toList()
             ?: emptyList()
 
-    val scopes = declaredDependencies.mapNotNull { it.scope }.toSet()
+    val scopes = declaredDependencies.mapNotNull { it.unifiedDependency.scope }.toSet()
 
     val resolvedDependenciesMapJob = async {
         runCatching {
@@ -190,8 +189,8 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
 
     val resolvedDependenciesMap = resolvedDependenciesMapJob.await()
 
-    val dependencies: List<ResolvedUnifiedDependency> =
-        declaredDependencies.map { ResolvedUnifiedDependency(it, resolvedDependenciesMap[it.key], dependenciesLocationMap[it]) }
+    val dependencies: List<ResolvedUnifiedDependency> = declaredDependencies.map {
+        ResolvedUnifiedDependency(it.unifiedDependency, resolvedDependenciesMap[it.unifiedDependency.key], dependenciesLocationMap[it]) }
 
     nativeModule.project.lifecycleScope.launch {
         val jsonText = json.encodeToString(

@@ -16,6 +16,7 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
+import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
 import com.intellij.buildsystem.model.unified.UnifiedDependency
@@ -83,7 +84,7 @@ interface AsyncProjectModuleOperationProvider {
      */
     fun declaredDependenciesInModule(
         module: ProjectModule
-    ): CompletableFuture<Collection<UnifiedDependency>>
+    ): CompletableFuture<Collection<DeclaredDependency>>
 
     /**
      * Lists all resolved dependencies in the given [module].

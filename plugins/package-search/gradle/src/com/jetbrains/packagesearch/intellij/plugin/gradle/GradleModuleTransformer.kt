@@ -16,22 +16,20 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.gradle
 
-import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationCallback
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.dependencyDeclarationCallback
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import kotlinx.coroutines.future.future
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
@@ -42,48 +40,52 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
 
     companion object {
 
-        private fun findDependencyElementIndex(file: PsiFile, dependency: UnifiedDependency): DependencyDeclarationIndexes? {
+        private fun findDependencyElementIndex(dependency: DeclaredDependency): DependencyDeclarationIndexes? {
             val artifactId = dependency.coordinates.artifactId ?: return null
             val groupId = dependency.coordinates.groupId ?: return null
-            val scope = dependency.scope ?: return null
-            val isKotlinDependencyInKts = file.language::class.qualifiedName == "org.jetbrains.kotlin.idea.KotlinLanguage"
+            val scope = dependency.unifiedDependency.scope ?: return null
+            val psiElement = dependency.psiElement ?: return null
+            val isKotlinDependencyInKts = dependency.psiElement?.language?.let { it::class }
+                ?.qualifiedName == "org.jetbrains.kotlin.idea.KotlinLanguage"
                 && groupId == "org.jetbrains.kotlin" && artifactId.startsWith("kotlin-")
 
             val textToSearchFor = buildString {
                 appendEscapedToRegexp(scope)
-                append("[\\(\\s]+")
+                appendEscapedToRegexp("(")
                 if (isKotlinDependencyInKts) {
-                    append("(")
-                    appendEscapedToRegexp("kotlin(\"")
+                    append("((?:kotlin\\(\"|[\"']org.jetbrains.kotlin:kotlin-)")
                     appendEscapedToRegexp(artifactId.removePrefix("kotlin-"))
-                    appendEscapedToRegexp("\")")
                 } else {
-                    append("[\\'\\\"]")
-                    append("(")
+                    append("\"(")
                     appendEscapedToRegexp("$groupId:$artifactId")
-                    dependency.coordinates.version?.let {
-                        appendEscapedToRegexp(":")
-                        append("(\\\$?\\{?")
-                        appendEscapedToRegexp(it)
-                        append("\\}?)")
+                }
+                appendEscapedToRegexp(":")
+                append("?(\\$?\\{?")
+                appendEscapedToRegexp("${dependency.coordinates.version}")
+                append("\\}?")
+                append(")?[\"']\\))\\)?")
+            }
+
+            var currentPsi = psiElement
+            var attempts = 0
+            val compiledRegex = Regex(textToSearchFor)
+
+            while (attempts < 5) { // why 5? usually it's 3 parents up, maybe 2, sometimes 4. 5 is a safe bet.
+                val groups = compiledRegex.find(currentPsi.text)?.groups
+                if (groups != null) {
+                    return groups[0]?.range?.first?.let {
+                        DependencyDeclarationIndexes(
+                            wholeDeclarationStartIndex = currentPsi.textOffset,
+                            coordinatesStartIndex = groups[1]?.range?.first?.let { currentPsi.textOffset + it }
+                                ?: error("Cannot find coordinatesStartIndex for dependency $dependency in ${currentPsi.containingFile.virtualFile.path}"),
+                            versionStartIndex = groups[2]?.range?.first?.let { currentPsi.textOffset + it }
+                        )
                     }
                 }
-                append(")")
-                append("[\\'\\\"]")
-                appendEscapedToRegexp(")")
-                append("?")
+                currentPsi = currentPsi.parent
+                attempts++
             }
-
-            val groups = Regex(textToSearchFor).find(file.text)?.groups ?: return null
-
-            return groups[0]?.range?.first?.let {
-                DependencyDeclarationIndexes(
-                    wholeDeclarationStartIndex = it,
-                    coordinatesStartIndex = groups[1]?.range?.first
-                        ?: error("Cannot find coordinatesStartIndex for dependency $dependency in ${file.virtualFile.path}"),
-                    versionStartIndex = groups[2]?.range?.first
-                )
-            }
+            return null
         }
     }
 
@@ -131,7 +133,7 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
             buildSystemType = buildSystemType,
             moduleType = GradleProjectModuleType,
             availableScopes = scopes,
-            dependencyDeclarationCallback = getDependencyDeclarationCallback(project, buildVirtualFile)
+            dependencyDeclarationCallback = project.dependencyDeclarationCallback { findDependencyElementIndex(it) }
         )
 
         for (childExternalProject in childProjects.values) {
@@ -171,18 +173,5 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
 
         val externalProjectDataCache = ExternalProjectDataCache.getInstance(project)
         return externalProjectDataCache.getRootExternalProject(rootProjectPath)
-    }
-
-    private fun getDependencyDeclarationCallback(
-        project: Project,
-        buildVirtualFile: VirtualFile?
-    ): DependencyDeclarationCallback = { dependency ->
-        project.lifecycleScope.future {
-            readAction {
-                buildVirtualFile ?: return@readAction null
-                PsiManager.getInstance(project).findFile(buildVirtualFile)
-                    ?.let { findDependencyElementIndex(it, dependency) }
-            }
-        }
     }
 }

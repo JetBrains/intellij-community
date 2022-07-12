@@ -121,7 +121,6 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
     override fun declaredDependenciesInModule(module: ProjectModule) = runReadAction {
         DependencyModifierService.getInstance(module.nativeModule.project)
             .declaredDependencies(module.nativeModule)
-            .map { dep -> dep.unifiedDependency }
     }
 
     override fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>): List<UnifiedDependency> = emptyList()

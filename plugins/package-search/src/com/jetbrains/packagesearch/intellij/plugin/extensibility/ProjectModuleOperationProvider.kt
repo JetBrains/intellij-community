@@ -16,6 +16,7 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
+import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
 import com.intellij.buildsystem.model.unified.UnifiedDependency
@@ -106,7 +107,7 @@ interface ProjectModuleOperationProvider {
      */
     fun declaredDependenciesInModule(
         module: ProjectModule
-    ): Collection<UnifiedDependency> = emptyList()
+    ): Collection<DeclaredDependency> = emptyList()
 
     /**
      * Lists all resolved dependencies in the given [module].
