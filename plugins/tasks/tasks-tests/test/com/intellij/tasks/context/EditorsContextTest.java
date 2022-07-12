@@ -19,11 +19,11 @@ public class EditorsContextTest extends FileEditorManagerTestCase {
     DockManager dockManager = DockManager.getInstance(getProject());
     VirtualFile file = getFile("/foo.txt");
     manager.openFile(file, /* focusEditor = */ false);
-    assertThat(dockManager.getContainers()).hasSize(myInitialContainers + 1);
+    assertThat(dockManager.getContainers()).hasSize(initialContainers + 1);
     manager.initDockableContentFactory();
 
     manager.openFileInNewWindow(file);
-    assertThat(dockManager.getContainers()).hasSize(myInitialContainers + 2);
+    assertThat(dockManager.getContainers()).hasSize(initialContainers + 2);
 
     Element context = new Element("context");
     WorkingContextManager contextManager = WorkingContextManager.getInstance(getProject());
@@ -32,7 +32,7 @@ public class EditorsContextTest extends FileEditorManagerTestCase {
     assertThat(EditorFactory.getInstance().getAllEditors()).hasSize(2);
 
     contextManager.clearContext();
-    assertThat(dockManager.getContainers()).hasSize(myInitialContainers + 1);
+    assertThat(dockManager.getContainers()).hasSize(initialContainers + 1);
     assertThat(EditorFactory.getInstance().getAllEditors()).isEmpty();
   }
 

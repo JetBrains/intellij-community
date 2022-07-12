@@ -9,7 +9,7 @@ internal class OpenSettingsService : RestService() {
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     val name = urlDecoder.parameters()["name"]?.firstOrNull()?.trim() ?: return parameterMissedErrorMessage("name")
-    if (!doOpenSettings(name)) {
+    if (!OpenSettingsJbProtocolService.doOpenSettings(name)) {
       return "no configurables found"
     }
 

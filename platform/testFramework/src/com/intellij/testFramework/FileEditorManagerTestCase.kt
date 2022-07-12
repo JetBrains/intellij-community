@@ -14,7 +14,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.io.write
 import com.intellij.util.ui.EdtInvocationManager
@@ -26,6 +25,7 @@ import java.util.concurrent.TimeoutException
 abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
   @JvmField
   protected var manager: FileEditorManagerImpl? = null
+  protected @JvmField var initialContainers = 0
 
   @Throws(Exception::class)
   public override fun setUp() {
@@ -33,6 +33,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     manager = FileEditorManagerExImpl(project)
     project.registerComponentInstance(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
+    initialContainers = DockManager.getInstance(project).containers.size
   }
 
   @Throws(Exception::class)
@@ -46,7 +47,9 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
       {
         manager = null
         if (project != null) {
-          assertEmpty(project.getServiceIfCreated(DockManager::class.java)?.containers ?: emptySet<DockContainer>())
+          val dockManager = project.getServiceIfCreated(DockManager::class.java)
+          val containers = dockManager?.containers ?: emptySet()
+          assertSize(initialContainers, containers)
         }
       },
       { super.tearDown() }
