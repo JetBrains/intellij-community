@@ -439,7 +439,7 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRenameAppMenuItems(JNIEnv *env, j
     JNI_COCOA_ENTER();
     const int stringCount = (*env)->GetArrayLength(env, jStringArray);
     if (stringCount < 2) return; // simple protection (just for insurance)
-    __strong NSMutableArray * stringArray = [NSMutableArray arrayWithCapacity:stringCount];
+    NSMutableArray * __strong stringArray = [NSMutableArray arrayWithCapacity:stringCount];
     for (int i = 0; i < stringCount; i += 2) {
         jstring jTitle = (jstring) ((*env)->GetObjectArrayElement(env, jStringArray, i));
         [stringArray addObject:JavaStringToNSString(env, jTitle)];
