@@ -37,6 +37,7 @@ import java.util.concurrent.TimeoutException;
  */
 public abstract class FileEditorManagerTestCase extends BasePlatformTestCase {
   protected FileEditorManagerImpl myManager;
+  protected int myInitialContainers;
 
   @Override
   public void setUp() throws Exception {
@@ -45,6 +46,7 @@ public abstract class FileEditorManagerTestCase extends BasePlatformTestCase {
     myManager = new FileEditorManagerImpl(getProject());
     ServiceContainerUtil.registerComponentInstance(getProject(), FileEditorManager.class, myManager, getTestRootDisposable());
     ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
+    myInitialContainers = DockManager.getInstance(getProject()).getContainers().size();
   }
 
   @Override
@@ -60,7 +62,7 @@ public abstract class FileEditorManagerTestCase extends BasePlatformTestCase {
         if (project != null) {
           DockManager dockManager = project.getServiceIfCreated(DockManager.class);
           Set<DockContainer> containers = dockManager == null ? Collections.emptySet() : dockManager.getContainers();
-          assertEmpty(containers);
+          assertSize(myInitialContainers, containers);
         }
       },
       () -> super.tearDown()
