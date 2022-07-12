@@ -64,7 +64,10 @@ private var PropertiesComponent.ignoreLanguageDetector: Boolean
 private fun findLanguagePluginToInstall(): PluginId? {
   try {
     val locale = Locale.getDefault()
-    if (locale == Locale.ENGLISH || locale == Locale.UK || locale == Locale.US) {
+    if (locale == Locale.ENGLISH
+        || locale == Locale.UK
+        || locale == Locale.US
+        || locale == Locale.CANADA) {
       // no need to visit Marketplace for them
       return null
     }
