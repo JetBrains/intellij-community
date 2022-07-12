@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.util.ThrowableConsumer
@@ -14,57 +14,75 @@ class RunAll(private val actions: List<ThrowableRunnable<*>>) : Runnable {
   constructor(vararg actions: ThrowableRunnable<Throwable?>) : this(listOf(*actions))
 
   override fun run() {
-    doRun(actions.asSequence(), null)
+    runAll(actions.asSequence().map { it::run })
   }
 
   fun run(earlierExceptions: List<Throwable>? = null) {
-    doRun(actions.asSequence(), earlierExceptions)
+    if (earlierExceptions == null) {
+      runAll(actions.asSequence().map { it::run })
+    }
+    else {
+      val exceptions: MutableList<Throwable> = ArrayList(earlierExceptions)
+      for (action in actions) {
+        try {
+          action.run()
+        }
+        catch (e: CompoundRuntimeException) {
+          exceptions.addAll(e.exceptions)
+        }
+        catch (e: Throwable) {
+          exceptions.add(e)
+        }
+      }
+      throwIfNotEmpty(exceptions)
+    }
   }
 
   companion object {
     @JvmStatic
     fun runAll(vararg actions: ThrowableRunnable<*>) {
-      doRun(actions.asSequence())
-    }
-
-    @JvmStatic
-    fun <T> runAll(input: Collection<T>, action: ThrowableConsumer<in T, Throwable?>) {
-      if (input.isNotEmpty()) {
-        doRun(input.asSequence().map { ThrowableRunnable<Throwable> { action.consume(it) } }, null)
-      }
-    }
-
-    @JvmStatic
-    fun <K, V> runAll(input: Map<out K?, V?>, action: ThrowablePairConsumer<in K?, in V?, Throwable?>) {
-      if (input.isNotEmpty()) {
-        doRun(input.entries.asSequence().map { ThrowableRunnable<Throwable> { action.consume(it.key, it.value) } }, null)
-      }
+      runAll(actions.asSequence().map { it::run })
     }
   }
 }
 
-private fun doRun(actions: Sequence<ThrowableRunnable<*>>, earlierExceptions: List<Throwable>? = null) {
-  val exceptions: MutableList<Throwable> = if (earlierExceptions == null) ArrayList() else ArrayList(earlierExceptions)
-  for (action in actions) {
-    try {
-      action.run()
-    }
-    catch (e: CompoundRuntimeException) {
-      exceptions.addAll(e.exceptions)
-    }
-    catch (e: Throwable) {
-      exceptions.add(e)
-    }
+fun <K, V> runAll(input: Map<out K?, V?>, action: ThrowablePairConsumer<in K?, in V?, Throwable?>) {
+  if (input.isNotEmpty()) {
+    runAll(input.entries.asSequence().map { return@map { action.consume(it.key, it.value) } })
   }
-  throwIfNotEmpty(exceptions)
+}
+
+fun <T> runAll(input: Collection<T>, action: ThrowableConsumer<in T, Throwable?>) {
+  if (input.isNotEmpty()) {
+    runAll(input.asSequence().map { return@map { action.consume(it) } })
+  }
 }
 
 fun runAll(vararg actions: () -> Unit) {
-  doRun(actions.asSequence().map { ThrowableRunnable<Throwable> { it() } })
+  runAll(actions.asSequence())
 }
 
 fun runAll(actions: Sequence<() -> Unit>) {
-  doRun(actions.map { ThrowableRunnable<Throwable> { it() } })
+  var exception: Throwable? = null
+  for (action in actions) {
+    try {
+      action()
+    }
+    catch (e: Throwable) {
+      if (exception == null) {
+        exception = e
+      }
+      else if (e is CompoundRuntimeException) {
+        e.exceptions.forEach(exception::addSuppressed)
+      }
+      else {
+        exception.addSuppressed(e)
+      }
+    }
+  }
+  if (exception != null) {
+    throw exception
+  }
 }
 
 inline fun MutableList<Throwable>.catchAndStoreExceptions(executor: () -> Unit) {

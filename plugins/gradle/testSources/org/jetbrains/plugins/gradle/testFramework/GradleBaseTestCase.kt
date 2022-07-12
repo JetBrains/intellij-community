@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
-import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.runAll
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
@@ -49,7 +48,7 @@ abstract class GradleBaseTestCase : ExternalSystemTestCase() {
     @JvmStatic
     @AfterAll
     fun destroyAllGradleFixtures() {
-      RunAll.runAll(fixtures.values.reversed(), ::destroyGradleFixture)
+      runAll(fixtures.values.reversed(), ::destroyGradleFixture)
     }
 
     private fun rollbackOrDestroyGradleTestFixture(fixture: GradleTestFixture) {
