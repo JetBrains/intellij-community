@@ -6,7 +6,6 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.concurrency.Semaphore;
@@ -25,7 +24,6 @@ import java.util.function.BooleanSupplier;
  * Tries to zip several update requests into one (if starts and see several requests in the queue)
  * own inner synchronization
  */
-@SomeQueue
 public final class UpdateRequestsQueue {
   private static final Logger LOG = Logger.getInstance(UpdateRequestsQueue.class);
 
@@ -101,16 +99,16 @@ public final class UpdateRequestsQueue {
   }
 
   public void stop() {
-    debug("Calling stop");
-    final List<Runnable> waiters = new ArrayList<>(myWaitingUpdateCompletionQueue.size());
+    debug("Stop called");
+    List<Runnable> waiters;
     synchronized (myLock) {
       myStopped = true;
-      waiters.addAll(myWaitingUpdateCompletionQueue);
+      waiters = new ArrayList<>(myWaitingUpdateCompletionQueue);
       myWaitingUpdateCompletionQueue.clear();
     }
-    debug("Calling runnables in stop");
+    debug("Stop - calling runnables");
     runWaiters(waiters);
-    debug("Stop finished");
+    debug("Stop - finished");
   }
 
   @TestOnly
@@ -136,6 +134,9 @@ public final class UpdateRequestsQueue {
     }
   }
 
+  /**
+   * For tests only
+   */
   private void freeSemaphores() {
     synchronized (myLock) {
       for (Semaphore semaphore : myWaitingUpdateCompletionSemaphores) {
@@ -169,12 +170,16 @@ public final class UpdateRequestsQueue {
     }
   }
 
-  // true = do not execute
+  /**
+   * @return true if refresh should not be performed.
+   */
   private boolean checkHeavyOperations() {
     return !myIgnoreBackgroundOperation && ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning();
   }
 
-  // true = do not execute
+  /**
+   * @return true if refresh should not be performed.
+   */
   private boolean checkLifeCycle() {
     return !myStarted || !StartupManagerEx.getInstanceEx(myProject).startupActivityPassed();
   }
@@ -190,6 +195,7 @@ public final class UpdateRequestsQueue {
 
           LOG.assertTrue(!myRequestRunning);
           myRequestRunning = true;
+
           if (myStopped) {
             debug("Stopped", this);
             return;
@@ -197,8 +203,7 @@ public final class UpdateRequestsQueue {
 
           if (checkLifeCycle() || checkHeavyOperations()) {
             debug("Reschedule", this);
-            // try again after time
-            schedule();
+            schedule(); // try again later
             return;
           }
 
@@ -212,6 +217,7 @@ public final class UpdateRequestsQueue {
 
         if (!success) {
           // Refresh was cancelled, will fire events later
+          debug("Restoring runnables", this);
           synchronized (myLock) {
             myWaitingUpdateCompletionQueue.addAll(0, copy);
             copy.clear();
@@ -220,8 +226,8 @@ public final class UpdateRequestsQueue {
       }
       finally {
         synchronized (myLock) {
-          myRequestRunning = false;
           debug("Finally", this);
+          myRequestRunning = false;
 
           if (!myWaitingUpdateCompletionQueue.isEmpty() && !myRequestSubmitted && !myStopped) {
             LOG.error("No update task to handle request(s)");
@@ -241,6 +247,7 @@ public final class UpdateRequestsQueue {
 
   public void setIgnoreBackgroundOperation(boolean ignoreBackgroundOperation) {
     myIgnoreBackgroundOperation = ignoreBackgroundOperation;
+    debug("Ignore background operations: " + ignoreBackgroundOperation);
   }
 
   private void debug(@NotNull String text, @NotNull Runnable runnable) {
