@@ -2,7 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.RedundantUnitReturnTypeInspection"
                      groupPath="Kotlin"
-                     groupName="Redundant constructs"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
@@ -11,7 +11,7 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.RedundantVisibilityModifierInspection"
                      groupPath="Kotlin"
-                     groupName="Redundant constructs"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
@@ -20,7 +20,7 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinUnusedImportInspection"
                      groupPath="Kotlin"
-                     groupName="Redundant constructs"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
@@ -29,7 +29,7 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.UnusedVariableInspection"
                      groupPath="Kotlin"
-                     groupName="Redundant constructs"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING"
