@@ -106,10 +106,10 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         libraryInfo.library.name == KOTLIN_JAVA_RUNTIME_NAME
 
     override fun isStdlib(libraryInfo: LibraryInfo): Boolean {
-        return stdlibCache.get(libraryInfo)
+        return stdlibCache[libraryInfo]
     }
 
-    override fun isStdlibDependency(libraryInfo: LibraryInfo): Boolean = stdlibDependencyCache.get(libraryInfo)
+    override fun isStdlibDependency(libraryInfo: LibraryInfo): Boolean = stdlibDependencyCache[libraryInfo]
 
     override fun findStdlibInModuleDependencies(module: IdeaModuleInfo): LibraryInfo? {
         ProgressManager.checkCanceled()
@@ -162,9 +162,9 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
         fun get(key: IdeaModuleInfo): StdlibDependency =
             when(key) {
-                is LibraryInfo -> libraryCache.get(key)
-                is SdkInfo -> sdkCache.get(key)
-                else -> moduleCache.get(key)
+                is LibraryInfo -> libraryCache[key]
+                is SdkInfo -> sdkCache[key]
+                else -> moduleCache[key]
             }
 
         override fun dispose() = Unit
@@ -271,7 +271,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
                     for (manifest in stdlibManifests) {
                         val orderEntries = index.getOrderEntriesForFile(manifest)
                         orderEntries.firstNotNullOfOrNull { it.safeAs<LibraryOrderEntry>()?.library.safeAs<LibraryEx>() }?.let {
-                            LibraryInfoCache.getInstance(project).get(it)
+                            LibraryInfoCache.getInstance(project)[it]
                         }?.firstOrNull(::isStdlib)?.let {
                             return@index it
                         }

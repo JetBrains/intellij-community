@@ -33,7 +33,7 @@ val Project.platform: TargetPlatform?
     }
 
 val Module.platform: TargetPlatform
-    get() = ModulePlatformCache.getInstance(project).get(this)
+    get() = ModulePlatformCache.getInstance(project)[this]
 
 interface TargetPlatformDetector {
     companion object {

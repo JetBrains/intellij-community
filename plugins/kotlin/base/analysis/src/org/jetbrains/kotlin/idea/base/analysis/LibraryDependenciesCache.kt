@@ -63,7 +63,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         Disposer.register(this, libraryUsageIndex)
     }
 
-    override fun getLibraryDependencies(library: LibraryInfo): LibraryDependencies = cache.get(library)
+    override fun getLibraryDependencies(library: LibraryInfo): LibraryDependencies = cache[library]
 
     override fun dispose() = Unit
 
@@ -88,7 +88,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         for (module in modulesLibraryIsUsedIn) {
             ProgressManager.checkCanceled()
-            val (moduleLibraries, moduleSdks) = moduleDependenciesCache.get(module)
+            val (moduleLibraries, moduleSdks) = moduleDependenciesCache[module]
 
             libraries.addAll(moduleLibraries)
             sdks.addAll(moduleSdks)
@@ -117,7 +117,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
             override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
                 libraryOrderEntry.library.safeAs<LibraryEx>()?.takeIf { !it.isDisposed }?.let {
-                    libraries += LibraryInfoCache.getInstance(project).get(it).mapNotNull { libraryInfo ->
+                    libraries += LibraryInfoCache.getInstance(project)[it].mapNotNull { libraryInfo ->
                         LibraryDependencyCandidate.fromLibraryOrNull(
                             project,
                             libraryInfo.library
