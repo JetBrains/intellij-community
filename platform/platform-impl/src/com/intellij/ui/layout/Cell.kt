@@ -126,6 +126,7 @@ interface CellBuilder<out T : JComponent> {
    */
   @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
   fun sizeGroup(name: String): CellBuilder<T>
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T>
   fun constraints(vararg constraints: CCFlags): CellBuilder<T>
 

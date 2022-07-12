@@ -654,6 +654,7 @@ private class CellBuilderImpl<T : JComponent>(
     }
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
   override fun sizeGroup(name: String): CellBuilderImpl<T> {
     builder.updateComponentConstraints(viewComponent) {
       sizeGroup(name)
@@ -661,6 +662,7 @@ private class CellBuilderImpl<T : JComponent>(
     return this
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T> {
     builder.updateComponentConstraints(viewComponent) {
       builder.defaultComponentConstraintCreator.applyGrowPolicy(this, growPolicy)
