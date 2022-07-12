@@ -42,7 +42,8 @@ private fun runTests(tests: Collection<String>, modules: Collection<String>) {
     .filter { it.isDirectory || it.extension == "jar" }
     .plus(modules.flatMap { dependencies(project, it) })
     .map { it.toPath() }
-  val testClassLoader = UrlClassLoader.build().files(classpath).get()
+  val parentClassLoader = ClassLoader.getSystemClassLoader()
+  val testClassLoader = UrlClassLoader.build().parent(parentClassLoader).files(classpath).get()
   val testRunner = testClassLoader
     .loadClass("org.jetbrains.intellij.build.images.sync.IdeaTestRunnerKt")
     .getDeclaredMethod("runTest", Class::class.java)
