@@ -37,13 +37,15 @@ internal abstract class ObsoleteCodeMigrationInspection : AbstractKotlinInspecti
     }
 
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid {
+        val reporters = problemReporters
+
         return simpleNameExpressionVisitor(fun(simpleNameExpression) {
             val versionIsSatisfied = simpleNameExpression.languageVersionSettings.languageVersion >= toVersion
             if (!versionIsSatisfied && !isUnitTestMode()) {
                 return
             }
 
-            for (reporter in problemReporters) {
+            for (reporter in reporters) {
                 if (reporter.report(holder, isOnTheFly, simpleNameExpression)) {
                     return
                 }

@@ -27,29 +27,30 @@ internal class ObsoleteExperimentalCoroutinesInspection : ObsoleteCodeMigrationI
     override val fromVersion: LanguageVersion = LanguageVersion.KOTLIN_1_2
     override val toVersion: LanguageVersion = LanguageVersion.KOTLIN_1_3
 
-    override val problemReporters = listOf(
-        ObsoleteTopLevelFunctionUsageReporter(
-            "buildSequence",
-            "kotlin.coroutines.experimental.buildSequence",
-            "kotlin.sequences.sequence"
-        ),
-        ObsoleteTopLevelFunctionUsageReporter(
-            "buildIterator",
-            "kotlin.coroutines.experimental.buildIterator",
-            "kotlin.sequences.iterator"
-        ),
-        ObsoleteExtensionFunctionUsageReporter(
-            "resume",
-            "kotlin.coroutines.experimental.Continuation.resume",
-            "kotlin.coroutines.resume"
-        ),
-        ObsoleteExtensionFunctionUsageReporter(
-            "resumeWithException",
-            "kotlin.coroutines.experimental.Continuation.resumeWithException",
-            "kotlin.coroutines.resumeWithException"
-        ),
-        ObsoleteCoroutinesImportsUsageReporter
-    )
+    override val problemReporters: List<ObsoleteCodeProblemReporter>
+        get() = listOf(
+            ObsoleteTopLevelFunctionUsageReporter(
+                "buildSequence",
+                "kotlin.coroutines.experimental.buildSequence",
+                "kotlin.sequences.sequence"
+            ),
+            ObsoleteTopLevelFunctionUsageReporter(
+                "buildIterator",
+                "kotlin.coroutines.experimental.buildIterator",
+                "kotlin.sequences.iterator"
+            ),
+            ObsoleteExtensionFunctionUsageReporter(
+                "resume",
+                "kotlin.coroutines.experimental.Continuation.resume",
+                "kotlin.coroutines.resume"
+            ),
+            ObsoleteExtensionFunctionUsageReporter(
+                "resumeWithException",
+                "kotlin.coroutines.experimental.Continuation.resumeWithException",
+                "kotlin.coroutines.resumeWithException"
+            ),
+            ObsoleteCoroutinesImportsUsageReporter
+        )
 }
 
 private object ObsoleteCoroutinesUsageInWholeProjectFix : ObsoleteCodeInWholeProjectFix() {

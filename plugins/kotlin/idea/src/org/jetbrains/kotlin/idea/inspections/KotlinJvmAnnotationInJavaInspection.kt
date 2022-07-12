@@ -11,11 +11,9 @@ import com.intellij.psi.PsiAnnotation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class KotlinJvmAnnotationInJavaInspection : LocalInspectionTool() {
-    companion object {
-        private const val KOTLIN_JVM_PACKAGE = "kotlin.jvm."
-    }
-
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : JavaElementVisitor() {
+        private val KOTLIN_JVM_PACKAGE = "kotlin.jvm."
+
         override fun visitAnnotation(annotation: PsiAnnotation) {
             val qualifiedName = annotation.qualifiedName ?: return
             if (qualifiedName.startsWith(KOTLIN_JVM_PACKAGE)) {

@@ -37,12 +37,10 @@ class ReplaceGetOrSetInspection : AbstractApplicabilityBasedInspection<KtDotQual
             overriddenDescriptors.any { it.isExplicitOperator() }
     }
 
-    private val operatorNames = setOf(OperatorNameConventions.GET, OperatorNameConventions.SET)
-
     override fun isApplicable(element: KtDotQualifiedExpression): Boolean {
         val callExpression = element.callExpression ?: return false
         val calleeName = (callExpression.calleeExpression as? KtSimpleNameExpression)?.getReferencedNameAsName()
-        if (calleeName !in operatorNames) return false
+        if (calleeName != OperatorNameConventions.GET && calleeName != OperatorNameConventions.SET) return false
         if (callExpression.typeArgumentList != null) return false
         val arguments = callExpression.valueArguments
         if (arguments.isEmpty()) return false
@@ -53,7 +51,7 @@ class ReplaceGetOrSetInspection : AbstractApplicabilityBasedInspection<KtDotQual
         if (!resolvedCall.isReallySuccess()) return false
 
         val target = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return false
-        if (!target.isValidOperator() || target.name !in operatorNames) return false
+        if (!target.isValidOperator() || target.name !in setOf(OperatorNameConventions.GET, OperatorNameConventions.SET)) return false
 
         if (!element.isReceiverExpressionWithValue()) return false
 

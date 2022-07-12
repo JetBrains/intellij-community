@@ -20,11 +20,12 @@ internal class ObsoleteKotlinJsPackagesInspection : ObsoleteCodeMigrationInspect
     override val fromVersion: LanguageVersion = LanguageVersion.KOTLIN_1_3
     override val toVersion: LanguageVersion = LanguageVersion.KOTLIN_1_4
 
-    override val problemReporters: List<ObsoleteCodeProblemReporter> = listOf(
-        KotlinBrowserFullyQualifiedUsageReporter,
-        KotlinBrowserImportUsageReporter,
-        KotlinDomImportUsageReporter
-    )
+    override val problemReporters: List<ObsoleteCodeProblemReporter>
+        get() = listOf(
+            KotlinBrowserFullyQualifiedUsageReporter,
+            KotlinBrowserImportUsageReporter,
+            KotlinDomImportUsageReporter
+        )
 }
 
 private object ObsoleteKotlinJsPackagesUsagesInWholeProjectFix : ObsoleteCodeInWholeProjectFix() {
