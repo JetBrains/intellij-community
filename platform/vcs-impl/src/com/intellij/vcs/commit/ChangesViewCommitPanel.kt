@@ -125,6 +125,8 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     isVisible = true
     commitActionsPanel.isActive = true
 
+    toolbar.updateActionsImmediately()
+
     contentManager.selectContent(LOCAL_CHANGES)
     toolWindow.activate({ commitMessage.requestFocusInMessage() }, false)
     return true
@@ -136,6 +138,8 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     changesView.isShowCheckboxes = false
     isVisible = false
     commitActionsPanel.isActive = false
+
+    toolbar.updateActionsImmediately()
   }
 
   private fun saveToolWindowState() {
