@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.details.commit
 
 import com.intellij.ide.IdeTooltipManager
@@ -37,7 +37,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     const val SIDE_BORDER = 14
     const val INTERNAL_BORDER = 10
     const val EXTERNAL_BORDER = 14
-    const val VCS_LOG_DESCRIPTION_MIN_WIDTH = 40
+    const val LAYOUT_MIN_WIDTH = 40
   }
 
   private val statusesActionGroup = DefaultActionGroup()
@@ -75,7 +75,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
         addToCenter(hashAndAuthorPanel)
       }
 
-      val componentLayout = CC().minWidth("$VCS_LOG_DESCRIPTION_MIN_WIDTH").grow().push()
+      val componentLayout = CC().minWidth("$LAYOUT_MIN_WIDTH").grow().push()
       add(messagePanel, componentLayout)
       add(metadataPanel, componentLayout)
       add(branchesPanel, componentLayout)
