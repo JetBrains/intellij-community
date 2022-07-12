@@ -15,16 +15,20 @@
  */
 package org.jetbrains.idea.maven.dom.references;
 
-import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.DomPatterns;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
 
-public class MavenPropertyPsiReferenceContributor extends PsiReferenceContributor {
+import static com.intellij.patterns.XmlPatterns.xmlTag;
+
+public class MavenXmlPropertyPsiReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(PlatformPatterns.psiElement(),
-                                        new MavenFilteredPropertyPsiReferenceProvider(),
-                                        PsiReferenceRegistrar.DEFAULT_PRIORITY);
+    ElementPattern<XmlTag> pattern = xmlTag().withParent(DomPatterns.tagWithDom("properties", DomPatterns.domElement(MavenDomProperties.class)));
+    registrar.registerReferenceProvider(pattern, new MavenPropertyPsiReferenceProvider(), PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 }
