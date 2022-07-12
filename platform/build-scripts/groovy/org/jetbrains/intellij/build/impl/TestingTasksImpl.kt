@@ -643,7 +643,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       }
     }
 
-    args += if (suiteName == null) "com.intellij.tests.JUnit5AllRunner" else "com.intellij.tests.JUnit5Runner"
+    args += if (suiteName == null) "com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath" else "com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite"
 
     if (suiteName != null) {
       args += suiteName

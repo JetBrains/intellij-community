@@ -17,7 +17,7 @@ import java.lang.reflect.Method;
 import java.util.ServiceLoader;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class JUnit5AllRunner {
+public class JUnit5TeamCityRunnerForTestsOnClasspath {
   
   public static void main(String[] args) {
     try {
@@ -39,7 +39,7 @@ public class JUnit5AllRunner {
         .filters(nameFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)).build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
       if (testPlan.containsTests()) {
-        launcher.execute(testPlan, new JUnit5Runner.TCExecutionListener());
+        launcher.execute(testPlan, new JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener());
       }
       else {
         //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
