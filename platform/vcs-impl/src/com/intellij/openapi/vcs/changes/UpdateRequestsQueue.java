@@ -5,6 +5,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -108,10 +109,7 @@ public final class UpdateRequestsQueue {
       myWaitingUpdateCompletionQueue.clear();
     }
     debug("Calling runnables in stop");
-    // do not run under lock
-    for (Runnable runnable : waiters) {
-      runnable.run();
-    }
+    runWaiters(waiters);
     debug("Stop finished");
   }
 
@@ -229,10 +227,7 @@ public final class UpdateRequestsQueue {
             LOG.error("No update task to handle request(s)");
           }
         }
-        // do not run under lock
-        for (Runnable runnable : copy) {
-          runnable.run();
-        }
+        runWaiters(copy);
         freeSemaphores();
         debug("Runnables executed", this);
       }
@@ -257,6 +252,20 @@ public final class UpdateRequestsQueue {
   private void debug(@NotNull String text) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("%s. Project: %s", text, myProject));
+    }
+  }
+
+  private static void runWaiters(List<Runnable> copy) {
+    // do not run under lock
+    for (Runnable runnable : copy) {
+      try {
+        runnable.run();
+      }
+      catch (ProcessCanceledException ignore) {
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
   }
 }
