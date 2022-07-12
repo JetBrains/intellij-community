@@ -141,7 +141,7 @@ linksStatement ::= LINKS complexIdentifier COLON linksValues
 linksValues ::= OPEN_CURLY linkContent CLOSE_CURLY
 private linkContent ::= string COLON string [COMMA linkContent]
 
-linkStatement ::= LINK complexIdentifier MESSAGE
+linkStatement ::= LINK complexIdentifier COLON MESSAGE
 
 elseSections ::= sequenceDocument [ELSE [MESSAGE] elseSections]
 parSections ::= sequenceDocument [AND [MESSAGE] parSections]
