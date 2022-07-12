@@ -20,13 +20,13 @@ object KotlinCompilerDependencyDownloader {
     return extractFileToCacheLocation(communityRoot, kotlinDistJar)
   }
 
-  private fun downloadKotlinJpsPlugin(communityRoot: BuildDependenciesCommunityRoot): Path {
+  fun downloadKotlinJpsPlugin(communityRoot: BuildDependenciesCommunityRoot): Path {
     val kotlinJpsPluginVersion = getKotlinJpsPluginVersion(communityRoot)
     val kotlinJpsPluginUrl = getUriForMavenArtifact(MAVEN_REPOSITORY_URL, ARTIFACT_GROUP_ID, "kotlin-jps-plugin-classpath", kotlinJpsPluginVersion, "jar")
     return downloadFileToCacheLocation(communityRoot, kotlinJpsPluginUrl)
   }
 
-  private fun getKotlinJpsPluginVersion(communityRoot: BuildDependenciesCommunityRoot): String {
+  fun getKotlinJpsPluginVersion(communityRoot: BuildDependenciesCommunityRoot): String {
     val kotlinCompilerSettingsFile = communityRoot.communityRoot.resolve(".idea/kotlinc.xml")
     val root = readXmlAsModel(kotlinCompilerSettingsFile)
     val kotlinJpsPluginSettingsTag = findNode(root, "component", "KotlinJpsPluginSettings")
