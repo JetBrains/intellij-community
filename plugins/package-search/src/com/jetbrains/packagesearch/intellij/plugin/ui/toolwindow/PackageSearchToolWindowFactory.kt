@@ -26,7 +26,6 @@ import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.toolWindowManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
@@ -53,9 +52,11 @@ internal class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
             return false
         }
 
-        val isAvailable = project.packageSearchProjectService.projectModulesStateFlow.value.isNotEmpty()
+        val isAvailable = DependenciesToolwindowTabProvider.extensions(project).isNotEmpty()
+
         if (!isAvailable) {
-            project.packageSearchProjectService.projectModulesStateFlow.filter { it.isNotEmpty() }
+            DependenciesToolwindowTabProvider.availableTabsFlow(project)
+                .filter { it.isNotEmpty() }
                 .take(1)
                 .map {
                     RegisterToolWindowTask.closable(
@@ -69,8 +70,10 @@ internal class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
                 .flowOn(Dispatchers.toolWindowManager(project))
                 .launchIn(project.lifecycleScope)
         }
+
         return isAvailable
     }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = toolWindow.initialize(project)
 }
+

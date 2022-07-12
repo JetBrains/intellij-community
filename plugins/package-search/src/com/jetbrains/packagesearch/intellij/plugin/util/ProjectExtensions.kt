@@ -21,7 +21,11 @@ import com.intellij.ide.impl.TrustStateListener
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
@@ -49,13 +53,13 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchProjectCachesService
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.merge
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
-import kotlin.experimental.ExperimentalTypeInference
 
 internal val Project.packageSearchProjectService
     get() = service<PackageSearchProjectService>()
@@ -78,11 +82,21 @@ internal val Project.toolWindowManagerFlow
         }
     }
 
-@OptIn(ExperimentalTypeInference::class)
 fun <L : Any, K> Project.messageBusFlow(
     topic: Topic<L>,
     initialValue: (suspend () -> K)? = null,
-    @BuilderInference listener: suspend ProducerScope<K>.() -> L
+    listener: suspend ProducerScope<K>.() -> L
+) = callbackFlow {
+    initialValue?.let { send(it()) }
+    val connection = messageBus.simpleConnect()
+    connection.subscribe(topic, listener())
+    awaitClose { connection.disconnect() }
+}
+
+fun <L : Any, K> Application.messageBusFlow(
+    topic: Topic<L>,
+    initialValue: (suspend () -> K)? = null,
+    listener: suspend ProducerScope<K>.() -> L
 ) = callbackFlow {
     initialValue?.let { send(it()) }
     val connection = messageBus.simpleConnect()
@@ -166,3 +180,19 @@ internal val Project.lookAndFeelFlow
 
 internal val Project.toolWindowManager
     get() = service<ToolWindowManager>()
+
+val <T : Any> ExtensionPointName<T>.extensionsFlow: Flow<List<T>>
+    get() = callbackFlow {
+        val listener = object : ExtensionPointListener<T> {
+            override fun extensionAdded(extension: T, pluginDescriptor: PluginDescriptor) {
+                trySendBlocking(extensions.toList())
+            }
+
+            override fun extensionRemoved(extension: T, pluginDescriptor: PluginDescriptor) {
+                trySendBlocking(extensions.toList())
+            }
+        }
+        send(extensions.toList())
+        addExtensionPointListener(listener)
+        awaitClose { removeExtensionPointListener(listener) }
+    }

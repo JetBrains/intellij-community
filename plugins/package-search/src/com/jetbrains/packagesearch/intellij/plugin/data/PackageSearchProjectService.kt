@@ -101,7 +101,7 @@ internal class PackageSearchProjectService(private val project: Project) {
     private val packageUpgradesLoadingFlow = MutableStateFlow(false)
     private val availableUpgradesLoadingFlow = MutableStateFlow(false)
 
-    val canShowLoadingBar = MutableStateFlow(false)
+    private val canShowLoadingBar = MutableStateFlow(false)
 
     private val operationExecutedChannel = Channel<List<ProjectModule>>()
 

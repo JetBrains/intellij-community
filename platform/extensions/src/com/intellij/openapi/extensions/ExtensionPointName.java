@@ -147,6 +147,19 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
   }
 
+  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
+    getPointImpl(null).addExtensionPointListener(listener, false, null);
+  }
+
+  public void addExtensionPointListener(@NotNull AreaInstance areaInstance,
+                                        @NotNull ExtensionPointListener<T> listener) {
+    getPointImpl(areaInstance).addExtensionPointListener(listener, false, null);
+  }
+
+  public void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
+    getPointImpl(null).removeExtensionPointListener(listener);
+  }
+
   public void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable) {
     getPointImpl(null).addChangeListener(listener, parentDisposable);
   }

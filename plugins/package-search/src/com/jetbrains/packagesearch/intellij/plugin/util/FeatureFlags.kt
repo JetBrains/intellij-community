@@ -16,13 +16,27 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.util
 
+import com.intellij.application.options.RegistryManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
+import kotlinx.coroutines.flow.Flow
 
 object FeatureFlags {
 
     val useDebugLogging: Boolean
         get() = Registry.`is`("packagesearch.plugin.debug.logging", false)
 
-    val showRepositoriesTab: Boolean
-        get() = Registry.`is`("packagesearch.plugin.repositories.tab", false)
+    val showRepositoriesTabFlow
+        get() = registryChangesFlow("packagesearch.plugin.repositories.tab")
 }
+
+private fun registryChangesFlow(key: String, defaultValue: Boolean = false): Flow<Boolean> =
+    ApplicationManager.getApplication().messageBusFlow(RegistryManager.TOPIC, { Registry.`is`(key, defaultValue) }) {
+        object : RegistryValueListener {
+            override fun afterValueChanged(value: RegistryValue) {
+                trySend(Registry.`is`(key, defaultValue))
+            }
+        }
+    }
