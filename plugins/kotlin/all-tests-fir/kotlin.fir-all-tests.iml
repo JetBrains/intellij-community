@@ -20,6 +20,8 @@
     <orderEntry type="module" module-name="kotlin.testsFromCompiler" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.util.test-generator" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.util.test-generator-fir" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-intentions-shared.tests.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2.tests" scope="RUNTIME" />
   </component>
 </module>
