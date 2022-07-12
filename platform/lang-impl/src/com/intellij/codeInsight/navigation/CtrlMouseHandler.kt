@@ -37,7 +37,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.openapi.util.TextRange
@@ -62,10 +62,9 @@ import javax.swing.event.HyperlinkListener
 import kotlin.math.max
 import kotlin.math.min
 
-internal class InitCtrlMouseHandlerActivity : StartupActivity {
-
-  override fun runActivity(project: Project) {
-    if (!Registry.`is`("documentation.v2.ctrl.mouse")) {
+internal class InitCtrlMouseHandlerActivity : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
+    if (!Registry.`is`("documentation.v2.ctrl.mouse", true)) {
       return
     }
     project.service<CtrlMouseHandler2>()
@@ -82,7 +81,6 @@ class CtrlMouseHandler2(
     VisibleAreaListener,
     KeyAdapter(),
     Disposable {
-
   init {
     val eventMulticaster = EditorFactory.getInstance().eventMulticaster
     eventMulticaster.addEditorMouseMotionListener(this, this)
@@ -232,10 +230,7 @@ class CtrlMouseHandler2(
 
   private fun computeInReadAction(request: CtrlMouseRequest): CtrlMouseResult? {
     return injectedThenHost(project, request.editor, request.offset) { editor, file, offset ->
-      val data: CtrlMouseData? = request.action.getCtrlMouseData(editor, file, offset)
-      if (data == null) {
-        return@injectedThenHost null
-      }
+      val data: CtrlMouseData = request.action.getCtrlMouseData(editor, file, offset) ?: return@injectedThenHost null
       val result = CtrlMouseResult(
         data.isNavigatable,
         data.ranges,

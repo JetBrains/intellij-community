@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native
 
@@ -8,12 +8,13 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction.nonBlocking
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtilRt
@@ -31,14 +32,14 @@ import org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanel
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 
 /** TODO: merge [KotlinNativeABICompatibilityChecker] in the future with [UnsupportedAbiVersionNotificationPanelProvider], KT-34525 */
-class KotlinNativeABICompatibilityChecker : StartupActivity {
-    override fun runActivity(project: Project) {
+internal class KotlinNativeABICompatibilityChecker : ProjectPostStartupActivity {
+    override suspend fun execute(project: Project) {
         KotlinNativeABICompatibilityCheckerService.getInstance(project).runActivity()
     }
 }
 
-class KotlinNativeABICompatibilityCheckerService(private val project: Project): Disposable {
-
+@Service(Service.Level.PROJECT)
+internal class KotlinNativeABICompatibilityCheckerService(private val project: Project): Disposable {
     fun runActivity() {
         project.messageBus.connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
             override fun rootsChanged(event: ModuleRootEvent) {

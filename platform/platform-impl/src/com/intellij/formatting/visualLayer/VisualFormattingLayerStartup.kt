@@ -3,14 +3,11 @@ package com.intellij.formatting.visualLayer
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 
-
-class VisualFormattingLayerStartup : StartupActivity {
-
-  override fun runActivity(project: Project) {
+internal class VisualFormattingLayerStartup : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
     val service = VisualFormattingLayerService.getInstance()
     service.enabledGlobally = UISettings.getInstance().showVisualFormattingLayer
   }
-
 }

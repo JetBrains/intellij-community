@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl
 
 import com.intellij.ide.DataManager
@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.WindowManager
@@ -23,12 +23,11 @@ import java.util.concurrent.TimeUnit
 @State(name = "NotificationRemindLaterService",
        storages = [Storage(value = "notification.remind.later.xml", roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.APP)
-class RemindLaterManager : SimpleModificationTracker(), PersistentStateComponent<Element> {
+internal class RemindLaterManager : SimpleModificationTracker(), PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
     fun createAction(notification: Notification, delay: Long): Runnable? {
       val handlerId = notification.remindLaterHandlerId
-
       if (handlerId == null) {
         if (notification.listener != null || notification.actions.isNotEmpty() || notification.contextHelpAction != null) {
           return null
@@ -39,27 +38,23 @@ class RemindLaterManager : SimpleModificationTracker(), PersistentStateComponent
         }
       }
 
-      val handler = NotificationRemindLaterHandler.findHandler(handlerId)
-      if (handler == null) {
-        return null
-      }
-
+      val handler = NotificationRemindLaterHandler.findHandler(handlerId) ?: return null
       return Runnable {
         instance().addNotificationWithActions(handler, notification, delay)
       }
     }
 
     @JvmStatic
-    fun instance(): RemindLaterManager = ApplicationManager.getApplication().getService(RemindLaterManager::class.java)
+    fun instance(): RemindLaterManager = service()
   }
 
-  private val myRootElement = Element("state")
+  private val rootElement = Element("state")
 
   private fun addSimpleNotification(notification: Notification, delay: Long, action: ((Element) -> Unit)? = null) {
     val element = createElement(notification, System.currentTimeMillis() + delay)
     action?.invoke(element)
 
-    myRootElement.addContent(element)
+    rootElement.addContent(element)
     incModificationCount()
 
     schedule(element, delay)
@@ -116,13 +111,10 @@ class RemindLaterManager : SimpleModificationTracker(), PersistentStateComponent
   }
 
   private fun execute(element: Element) {
-    myRootElement.removeContent(element)
+    rootElement.removeContent(element)
     incModificationCount()
 
-    val groupId = element.getAttributeValue("groupId")
-    if (groupId == null) {
-      return
-    }
+    val groupId = element.getAttributeValue("groupId") ?: return
 
     val type = NotificationType.valueOf(element.getAttributeValue("type") ?: "INFORMATION")
 
@@ -150,15 +142,9 @@ class RemindLaterManager : SimpleModificationTracker(), PersistentStateComponent
 
     val actionsChild = element.getChild("Actions")
     if (actionsChild != null) {
-      val handlerId = actionsChild.getAttributeValue("id")
-      if (handlerId == null) {
-        return
-      }
+      val handlerId = actionsChild.getAttributeValue("id") ?: return
 
-      val handler = NotificationRemindLaterHandler.findHandler(handlerId)
-      if (handler == null) {
-        return
-      }
+      val handler = NotificationRemindLaterHandler.findHandler(handlerId) ?: return
 
       val children = actionsChild.children
       if (children.size != 1) {
@@ -179,14 +165,14 @@ class RemindLaterManager : SimpleModificationTracker(), PersistentStateComponent
   }
 
   override fun getState(): Element {
-    return myRootElement
+    return rootElement
   }
 
   override fun initializeComponent() {
     val time = System.currentTimeMillis()
     val removeList = ArrayList<Element>()
 
-    for (element in myRootElement.getChildren("Notification")) {
+    for (element in rootElement.getChildren("Notification")) {
       val timeValue = element.getAttributeValue("time")
       if (timeValue == null) {
         removeList.add(element)
@@ -212,7 +198,7 @@ class RemindLaterManager : SimpleModificationTracker(), PersistentStateComponent
     }
 
     for (element in removeList) {
-      myRootElement.removeContent(element)
+      rootElement.removeContent(element)
     }
     if (removeList.isNotEmpty()) {
       incModificationCount()
@@ -220,16 +206,16 @@ class RemindLaterManager : SimpleModificationTracker(), PersistentStateComponent
   }
 
   override fun loadState(state: Element) {
-    myRootElement.removeContent()
+    rootElement.removeContent()
 
     for (element in state.getChildren("Notification")) {
-      myRootElement.addContent(element.clone())
+      rootElement.addContent(element.clone())
     }
   }
 }
 
-class RemindLaterActivity : StartupActivity {
-  override fun runActivity(project: Project) {
+internal class RemindLaterActivity : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
     RemindLaterManager.instance()
   }
 }

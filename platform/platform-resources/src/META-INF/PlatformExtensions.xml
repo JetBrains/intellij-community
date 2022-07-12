@@ -1308,7 +1308,7 @@
 
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
 
-    <postStartupActivity implementation="com.intellij.notification.impl.RemindLaterActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.notification.impl.RemindLaterActivity"/>
 
     <applicationConfigurable id="advanced.settings"
                              key="title.advanced.settings"
