@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddNameToArgumentInte
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 
-class AddNamesToCallArgumentsIntention :
+internal class AddNamesToCallArgumentsIntention :
     AbstractKotlinApplicatorBasedIntention<KtCallElement, AddArgumentNamesApplicators.MultipleArgumentsInput>(KtCallElement::class) {
     override val applicator =
         AddArgumentNamesApplicators.multipleArgumentsApplicator

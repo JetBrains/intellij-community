@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class ConvertToBlockBodyIntention :
+internal class ConvertToBlockBodyIntention :
     AbstractKotlinApplicatorBasedIntention<KtDeclarationWithBody, ConvertToBlockBodyIntention.Input>(KtDeclarationWithBody::class) {
 
     override val applicator: KotlinApplicator<KtDeclarationWithBody, Input>

@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
-class AddNameToArgumentIntention :
+internal class AddNameToArgumentIntention :
     AbstractKotlinApplicatorBasedIntention<KtValueArgument, AddArgumentNamesApplicators.SingleArgumentInput>(KtValueArgument::class),
     LowPriorityAction {
     override val applicator

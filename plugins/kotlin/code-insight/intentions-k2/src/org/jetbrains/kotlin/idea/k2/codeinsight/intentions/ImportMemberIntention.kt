@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
-class ImportMemberIntention :
+internal class ImportMemberIntention :
     AbstractKotlinApplicatorBasedIntention<KtNameReferenceExpression, ImportMemberIntention.Input>(KtNameReferenceExpression::class),
     HighPriorityAction {
     override val applicabilityRange: KotlinApplicabilityRange<KtNameReferenceExpression> get() = ApplicabilityRanges.SELF

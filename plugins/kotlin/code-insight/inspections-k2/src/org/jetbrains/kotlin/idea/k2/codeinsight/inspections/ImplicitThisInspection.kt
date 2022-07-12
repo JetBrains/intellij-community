@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
-class ImplicitThisInspection : AbstractKotlinApplicatorBasedInspection<KtExpression, ImplicitThisInspection.ImplicitReceiverInfo>(
+internal class ImplicitThisInspection : AbstractKotlinApplicatorBasedInspection<KtExpression, ImplicitThisInspection.ImplicitReceiverInfo>(
     KtExpression::class
 ) {
 

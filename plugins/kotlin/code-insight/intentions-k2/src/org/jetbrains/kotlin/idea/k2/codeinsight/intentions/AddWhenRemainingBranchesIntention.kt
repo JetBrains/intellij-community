@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddRemaining
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
-class AddWhenRemainingBranchesIntention
+internal class AddWhenRemainingBranchesIntention
     : AbstractKotlinApplicatorBasedIntention<KtWhenExpression, AddRemainingWhenBranchesApplicator.Input>(KtWhenExpression::class,) {
     override val applicator get() =
         AddRemainingWhenBranchesApplicator.applicator
