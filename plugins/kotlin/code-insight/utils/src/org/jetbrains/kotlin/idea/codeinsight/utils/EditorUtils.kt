@@ -10,13 +10,13 @@ import com.intellij.psi.PsiElement
 fun PsiElement.findExistingEditor(): Editor? {
     ApplicationManager.getApplication().assertReadAccessAllowed()
 
+    val containingFile = containingFile
     if (!containingFile.isValid) return null
 
     val file = containingFile?.virtualFile ?: return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
 
     val editorFactory = EditorFactory.getInstance()
-
     val editors = editorFactory.getEditors(document)
-    return if (editors.isEmpty()) null else editors[0]
+    return editors.firstOrNull()
 }
