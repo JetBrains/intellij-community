@@ -103,7 +103,7 @@ import java.lang.annotation.Retention
 import java.util.*
 import javax.swing.Icon
 import kotlin.math.min
-import org.jetbrains.kotlin.idea.core.util.getLineCount as newGetLineCount
+import org.jetbrains.kotlin.idea.base.psi.getLineCount as newGetLineCount
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
@@ -308,8 +308,8 @@ class SelectionAwareScopeHighlighter(val editor: Editor) {
 }
 
 @Deprecated(
-    "Use org.jetbrains.kotlin.idea.core.util.getLineStartOffset() instead",
-    ReplaceWith("this.getLineStartOffset(line)", "org.jetbrains.kotlin.idea.core.util.getLineStartOffset"),
+    "Use org.jetbrains.kotlin.idea.base.psi.getLineStartOffset() instead",
+    ReplaceWith("this.getLineStartOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineStartOffset"),
     DeprecationLevel.ERROR
 )
 fun PsiFile.getLineStartOffset(line: Int): Int? {
@@ -328,8 +328,8 @@ fun PsiFile.getLineStartOffset(line: Int): Int? {
 }
 
 @Deprecated(
-    "Use org.jetbrains.kotlin.idea.core.util.getLineEndOffset() instead",
-    ReplaceWith("this.getLineEndOffset(line)", "org.jetbrains.kotlin.idea.core.util.getLineEndOffset"),
+    "Use org.jetbrains.kotlin.idea.base.psi.getLineEndOffset() instead",
+    ReplaceWith("this.getLineEndOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineEndOffset"),
     DeprecationLevel.ERROR
 )
 fun PsiFile.getLineEndOffset(line: Int): Int? {
@@ -1125,8 +1125,8 @@ fun <T : KtExpression> T.replaceWithCopyWithResolveCheck(
 }
 
 @Deprecated(
-    "Use org.jetbrains.kotlin.idea.core.util.getLineCount() instead",
-    ReplaceWith("this.getLineCount()", "org.jetbrains.kotlin.idea.core.util.getLineCount"),
+    "Use org.jetbrains.kotlin.idea.base.psi.getLineCount() instead",
+    ReplaceWith("this.getLineCount()", "org.jetbrains.kotlin.idea.base.psi.getLineCount"),
     DeprecationLevel.ERROR
 )
 fun PsiElement.getLineCount(): Int {

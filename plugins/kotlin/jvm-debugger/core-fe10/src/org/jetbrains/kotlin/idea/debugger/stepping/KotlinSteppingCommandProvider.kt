@@ -17,13 +17,8 @@ import com.intellij.util.Range
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.*
-import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
-import org.jetbrains.kotlin.idea.core.util.getLineNumber
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.debugger.findElementAtLine
 import org.jetbrains.kotlin.idea.debugger.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.idea.debugger.safeMethod
@@ -31,7 +26,6 @@ import org.jetbrains.kotlin.idea.debugger.safeStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.filter.KotlinStepOverFilter
 import org.jetbrains.kotlin.idea.debugger.stepping.filter.KotlinStepOverParamDefaultImplsMethodFilter
 import org.jetbrains.kotlin.idea.debugger.stepping.filter.LocationToken
-import org.jetbrains.kotlin.idea.debugger.stepping.filter.StepOverCallerInfo
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName

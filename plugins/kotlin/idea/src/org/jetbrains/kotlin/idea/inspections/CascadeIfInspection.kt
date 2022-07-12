@@ -7,7 +7,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.util.isOneLiner
+import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.getWhenConditionSubjectCandidate
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.IfToWhenIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf

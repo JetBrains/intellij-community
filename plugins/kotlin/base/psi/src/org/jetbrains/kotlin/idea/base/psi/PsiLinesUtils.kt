@@ -1,6 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.core.util
+package org.jetbrains.kotlin.idea.base.psi
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
@@ -37,7 +37,9 @@ fun PsiFile.getLineEndOffset(line: Int): Int? {
 
 fun PsiElement.getLineNumber(start: Boolean = true): Int {
     val document = containingFile.viewProvider.document ?: PsiDocumentManager.getInstance(project).getDocument(containingFile)
-    return document?.getLineNumber(if (start) this.startOffset else this.endOffset) ?: 0
+    val index = if (start) this.startOffset else this.endOffset
+    if (index > (document?.textLength ?: 0)) return 0
+    return document?.getLineNumber(index) ?: 0
 }
 
 // Copied to formatter
