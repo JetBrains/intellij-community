@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.serviceContainer.AlreadyDisposedException
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 // Workaround for duplicated libraries, see KT-42607
 @ApiStatus.Internal
@@ -37,8 +39,14 @@ class LibraryWrapper(val library: LibraryEx) {
     override fun hashCode(): Int = hashCode
 
     fun checkValidity() {
-        if (library.isDisposed) {
-            throw AlreadyDisposedException("Library '${library.name}' is already disposed")
+        library.checkValidity()
+    }
+}
+
+fun Library.checkValidity() {
+    safeAs<LibraryEx>()?.let {
+        if (it.isDisposed) {
+            throw AlreadyDisposedException("Library '${name}' is already disposed")
         }
     }
 }

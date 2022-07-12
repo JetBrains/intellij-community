@@ -40,7 +40,12 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
         invalidate()
     }
 
-    abstract fun get(key: Key): Value
+    abstract operator fun get(key: Key): Value
+
+    fun values(): Collection<Value> =
+        useCache {
+            it.values
+        } ?: emptyList()
 
     protected fun checkEntitiesIfRequired(cache: MutableMap<Key, Value>) {
         if (isValidityChecksEnabled && currentInvalidationCount > invalidationCount) {

@@ -5,12 +5,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
-import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import kotlin.reflect.KFunction1
 
 abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value : Any>(
     protected val project: Project,

@@ -31,6 +31,11 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinStdlibCache"
             serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.KotlinStdlibCacheImpl"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.caches.project.IdeaModelInfosCache"
+            serviceImplementation="org.jetbrains.kotlin.idea.caches.project.FineGrainedIdeaModelInfosCache"/>
+
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinModificationTrackerProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.KotlinModificationTrackerProviderImpl"/>
