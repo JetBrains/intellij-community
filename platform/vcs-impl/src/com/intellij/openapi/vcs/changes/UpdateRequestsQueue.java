@@ -54,7 +54,7 @@ public final class UpdateRequestsQueue {
   }
 
   public void initialized() {
-    LOG.debug("Initialized for project: " + myProject.getName());
+    debug("Initialized");
     myStarted = true;
   }
 
@@ -70,9 +70,9 @@ public final class UpdateRequestsQueue {
       if (myRequestSubmitted) return;
       myRequestSubmitted = true;
 
-      final MyRunnable runnable = new MyRunnable();
+      RefreshRunnable runnable = new RefreshRunnable();
       myScheduler.schedule(runnable, 300, TimeUnit.MILLISECONDS);
-      LOG.debug("Scheduled for project: " + myProject.getName() + ", runnable: " + runnable.hashCode());
+      debug("Scheduled", runnable);
     }
   }
 
@@ -100,19 +100,19 @@ public final class UpdateRequestsQueue {
   }
 
   public void stop() {
-    LOG.debug("Calling stop for project: " + myProject.getName());
+    debug("Calling stop");
     final List<Runnable> waiters = new ArrayList<>(myWaitingUpdateCompletionQueue.size());
     synchronized (myLock) {
       myStopped = true;
       waiters.addAll(myWaitingUpdateCompletionQueue);
       myWaitingUpdateCompletionQueue.clear();
     }
-    LOG.debug("Calling runnables in stop for project: " + myProject.getName());
+    debug("Calling runnables in stop");
     // do not run under lock
     for (Runnable runnable : waiters) {
       runnable.run();
     }
-    LOG.debug("Stop finished for project: " + myProject.getName());
+    debug("Stop finished");
   }
 
   @TestOnly
@@ -125,7 +125,7 @@ public final class UpdateRequestsQueue {
         }
 
         if (!myRequestRunning) {
-          myScheduler.submit(new MyRunnable());
+          myScheduler.submit(new RefreshRunnable());
         }
 
         semaphore.down();
@@ -150,7 +150,7 @@ public final class UpdateRequestsQueue {
   public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                 @NotNull InvokeAfterUpdateMode mode,
                                 @Nullable @Nls String title) {
-    LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
+    debug("invokeAfterUpdate called");
     InvokeAfterUpdateCallback.Callback callback = InvokeAfterUpdateCallback.create(myProject, mode, afterUpdate, title);
 
     boolean stopped;
@@ -162,12 +162,12 @@ public final class UpdateRequestsQueue {
       }
     }
     if (stopped) {
-      LOG.debug("invokeAfterUpdate: stopped, invoke right now for project: " + myProject.getName());
+      debug("invokeAfterUpdate: stopped, invoke right now");
       callback.handleStoppedQueue();
     }
     else {
       callback.startProgress();
-      LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
+      debug("invokeAfterUpdate: start progress");
     }
   }
 
@@ -181,7 +181,7 @@ public final class UpdateRequestsQueue {
     return !myStarted || !StartupManagerEx.getInstanceEx(myProject).startupActivityPassed();
   }
 
-  private final class MyRunnable implements Runnable {
+  private final class RefreshRunnable implements Runnable {
     @Override
     public void run() {
       final List<Runnable> copy = new ArrayList<>();
@@ -193,12 +193,12 @@ public final class UpdateRequestsQueue {
           LOG.assertTrue(!myRequestRunning);
           myRequestRunning = true;
           if (myStopped) {
-            LOG.debug("MyRunnable: STOPPED, project: " + myProject.getName() + ", runnable: " + hashCode());
+            debug("Stopped", this);
             return;
           }
 
           if (checkLifeCycle() || checkHeavyOperations()) {
-            LOG.debug("MyRunnable: reschedule, project: " + myProject.getName() + ", runnable: " + hashCode());
+            debug("Reschedule", this);
             // try again after time
             schedule();
             return;
@@ -208,10 +208,9 @@ public final class UpdateRequestsQueue {
           myWaitingUpdateCompletionQueue.clear();
         }
 
-        LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
+        debug("Before callback", this);
         boolean success = myDelegate.getAsBoolean(); // CLM.updateImmediately
-        LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", was success: " + success +
-                  ", runnable: " + hashCode());
+        debug("After callback, was success: " + success, this);
 
         if (!success) {
           // Refresh was cancelled, will fire events later
@@ -224,7 +223,7 @@ public final class UpdateRequestsQueue {
       finally {
         synchronized (myLock) {
           myRequestRunning = false;
-          LOG.debug("MyRunnable: delete executed, project: " + myProject.getName() + ", runnable: " + hashCode());
+          debug("Finally", this);
 
           if (!myWaitingUpdateCompletionQueue.isEmpty() && !myRequestSubmitted && !myStopped) {
             LOG.error("No update task to handle request(s)");
@@ -235,17 +234,29 @@ public final class UpdateRequestsQueue {
           runnable.run();
         }
         freeSemaphores();
-        LOG.debug("MyRunnable: Runnables executed, project: " + myProject.getName() + ", runnable: " + hashCode());
+        debug("Runnables executed", this);
       }
     }
 
     @Override
     public String toString() {
-      return "UpdateRequestQueue delegate: " + myDelegate; //NON-NLS
+      return "CLM Refresh runnable@" + hashCode();
     }
   }
 
   public void setIgnoreBackgroundOperation(boolean ignoreBackgroundOperation) {
     myIgnoreBackgroundOperation = ignoreBackgroundOperation;
+  }
+
+  private void debug(@NotNull String text, @NotNull Runnable runnable) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("%s. Runnable: %s, Project: %s", text, runnable, myProject));
+    }
+  }
+
+  private void debug(@NotNull String text) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("%s. Project: %s", text, myProject));
+    }
   }
 }
