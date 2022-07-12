@@ -1,0 +1,79 @@
+/*
+ Copyright 2020 Thomas Rosenau
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+{
+  parserClass="de.thomasrosenau.diffplugin.parser.DiffParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="Diff"
+  psiImplClassSuffix="Impl"
+  psiPackage="de.thomasrosenau.diffplugin.psi"
+  psiImplPackage="de.thomasrosenau.diffplugin.psi.impl"
+
+  elementTypeHolderClass="de.thomasrosenau.diffplugin.psi.DiffTypes"
+  elementTypeClass="de.thomasrosenau.diffplugin.psi.DiffElementType"
+  tokenTypeClass="de.thomasrosenau.diffplugin.psi.DiffTokenType"
+
+  // Strictly speaking, this should not be a mixin, but a psiImplUtilClass
+  // However, this does not work in Gradle:
+  // https://github.com/JetBrains/gradle-grammar-kit-plugin/issues/3#issuecomment-324901715
+  mixin("contextHunk|normalHunk|unifiedHunk|gitHeader|gitBinaryPatch|gitDiff|multiDiffPart")=
+        "de.thomasrosenau.diffplugin.psi.DiffNavigationItem"
+}
+
+// https://www.gnu.org/software/diffutils/manual/diffutils.html#Imperfect
+private diffFile ::= gitDiffFile | (singleDiffFile | multiDiffPart+) trailingText // TODO: handle indentation
+private singleDiffFile ::= anyLine* (normalDiff | contextDiff | unifiedDiff)
+multiDiffPart ::= anyLine* consoleCommand anyLine* singleDiffFile
+
+// TODO: Handle Prereq: and Index:
+consoleCommand ::= COMMAND
+private trailingText ::= anyLine*
+private anyLine ::= WHITE_SPACE | OTHER
+
+// https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Context
+private contextDiff ::= CONTEXT_FROM_LABEL CONTEXT_TO_LABEL contextHunk+
+contextHunk ::= CONTEXT_HUNK_SEPARATOR contextHunkFrom contextHunkTo {
+  mixin="de.thomasrosenau.diffplugin.psi.DiffContextHunkBase"
+}
+contextHunkFrom ::= CONTEXT_FROM_LINE_NUMBERS contextFromFileLine* (EOL_HINT)?
+contextHunkTo ::= CONTEXT_TO_LINE_NUMBERS contextToFileLine* (EOL_HINT)?
+private contextFromFileLine ::= CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_DELETED_LINE
+private contextToFileLine ::= CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_INSERTED_LINE
+
+// https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Unified
+private unifiedDiff ::= UNIFIED_FROM_LABEL UNIFIED_TO_LABEL unifiedHunk+
+unifiedHunk ::= UNIFIED_LINE_NUMBERS (unifiedLine | WHITE_SPACE)+
+private unifiedLine ::= UNIFIED_INSERTED_LINE | UNIFIED_DELETED_LINE | UNIFIED_COMMON_LINE | EOL_HINT
+
+// https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Normal
+private normalDiff ::= normalHunk+
+normalHunk ::= normalHunkAdd | normalHunkChange | normalHunkDelete
+private normalHunkAdd ::= NORMAL_ADD_COMMAND NORMAL_TO_LINE+ EOL_HINT?
+private normalHunkChange ::= NORMAL_CHANGE_COMMAND NORMAL_FROM_LINE+ EOL_HINT? NORMAL_SEPARATOR NORMAL_TO_LINE+ EOL_HINT?
+private normalHunkDelete ::= NORMAL_DELETE_COMMAND NORMAL_FROM_LINE+ EOL_HINT?
+
+// https://git-scm.com/docs/git-diff
+private gitDiffFile ::= gitHeader gitBody gitFooter
+gitHeader ::= GIT_FIRST_LINE anyLine+ GIT_SEPARATOR anyLine+ {
+  mixin="de.thomasrosenau.diffplugin.psi.DiffGitHeaderBase"
+}
+private gitBody ::= gitDiff+
+// TODO: Handle git extended header lines, cf. https://git-scm.com/docs/git-diff#_generating_patches_with_p
+gitDiff ::= consoleCommand anyLine* (unifiedDiff | gitBinaryPatch)
+gitBinaryPatch ::= GIT_BINARY_PATCH_HEADER (GIT_BINARY_PATCH_CONTENT | WHITE_SPACE)*
+gitFooter ::= GIT_SEPARATOR GIT_VERSION_NUMBER

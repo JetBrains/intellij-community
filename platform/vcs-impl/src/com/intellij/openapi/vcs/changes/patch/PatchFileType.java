@@ -3,11 +3,12 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import de.thomasrosenau.diffplugin.DiffLanguage;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -16,12 +17,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 
-public class PatchFileType implements FileType {
+public class PatchFileType extends LanguageFileType {
   public static final PatchFileType INSTANCE = new PatchFileType();
 
   public static final String NAME = "PATCH"; //NON-NLS
 
   private PatchFileType() {
+    super(DiffLanguage.INSTANCE);
   }
 
   @Override
@@ -53,11 +55,6 @@ public class PatchFileType implements FileType {
   @Override
   public Icon getIcon() {
     return AllIcons.Vcs.Patch_file;
-  }
-
-  @Override
-  public boolean isBinary() {
-    return false;
   }
 
   public static boolean isPatchFile(@Nullable VirtualFile vFile) {

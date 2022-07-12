@@ -1,0 +1,158 @@
+/*
+ Copyright 2020 Thomas Rosenau
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+import org.jetbrains.grammarkit.tasks.GenerateLexer
+import org.jetbrains.grammarkit.tasks.GenerateParser
+
+plugins {
+    id 'idea'
+    id 'java'
+    id 'org.jetbrains.intellij' version '0.4.21'
+    id 'org.jetbrains.grammarkit' version '2020.2.1'
+    id 'com.github.ManifestClasspath' version '0.1.0-RELEASE' // required in Windows
+}
+
+wrapper {
+    gradleVersion = '6.7.1'
+}
+
+
+group = 'de.thomasrosenau'
+
+sourceCompatibility = 1.8
+
+// version of this plugin
+version = '2.1.6-SNAPSHOT'
+
+// IDE version that will be used for compilation, unit tests, and for :runIde task
+intellij.version = '203.5981.155'
+
+patchPluginXml {
+    sinceBuild = '201'
+    untilBuild = '203.*'
+
+    // language=HTML prefix=<body> suffix=</body>
+    pluginDescription = '''
+        <h1>Syntax highlighting for .diff files and .patch files</h1>
+        <p>Supports the common formats: normal, contextual, unified, git patch.</p>
+        <p>Does not support the formats: side-by-side, diff3, ed, if-else, RCS.</p>
+        <br/>
+        <hr/>
+        <p>Copyright 2020 Thomas Rosenau</p>
+        <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this software except in
+           compliance with the License. You may obtain a copy of the License at</p>
+        <br/>
+        <p><a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+        <br/>
+        <p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+           on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for
+           the specific language governing permissions and limitations under the License.</p>
+        <hr/>
+        <br/>
+    '''
+
+    // language=HTML prefix=<body> suffix=</body>
+    changeNotes = '''
+        <h5>2.1.6</h5>
+        <ul>
+          <li>Switch to Java 11</li>
+          <li>Update compatibility for 2020.3 product line</li>
+          <li>Replace deprecated icon loader call</li>
+        </ul>
+        <h5>2.1.5</h5>
+        <ul>
+          <li>Update compatibility for 2020.2 product line</li>
+        </ul>
+        <h5>2.1.4</h5>
+        <ul>
+          <li>Update compatibility for 2020.1 product line</li>
+        </ul>
+        <h5>2.1.3</h5>
+        <ul>
+          <li>Update compatibility for 2019.3 product line</li>
+        </ul>
+        <h5>2.1.2</h5>
+        <ul>
+          <li>Update compatibility for 2019.2 product line</li>
+        </ul>
+        <h5>2.1.1</h5>
+        <ul>
+          <li>Fix Autoscroll from Source in Structure View</li>
+        </ul>
+        <h5>2.1.0</h5>
+        <ul>
+          <li>Structure View</li>
+          <li>Support for git binary patches</li>
+          <li>Fix git patch footer detection</li>
+        </ul>
+        <h5>2.0.0</h5>
+        <ul>
+          <li>Folding support</li>
+          <li>Stricter syntax</li>
+        </ul>
+        <h5>1.2.0</h5>
+        <ul>
+          <li>Support highlighting of git patch headers</li>
+        </ul>
+        <h5>1.1.0</h5>
+        <ul>
+          <li>Support highlighting of file names, separators, EOL hints, and modified lines</li>
+          <li>Color settings page</li>
+          <li>Icon changed</li>
+        </ul>
+    '''
+}
+
+def namespacePath = 'de/thomasrosenau/diffplugin'
+
+def genSrcPath = 'src/main/generated-java'
+File genSrc = file genSrcPath
+sourceSets.main.java.srcDir genSrc
+idea.module.generatedSourceDirs += genSrc
+
+task generateDiffLexer(type: GenerateLexer) {
+    source "src/main/java/${namespacePath}/lexer/Diff.flex"
+    targetDir "${genSrcPath}/${namespacePath}"
+    targetClass 'DiffLexer'
+    purgeOldFiles true
+}
+
+task generateDiffParser(type: GenerateParser) {
+    source "src/main/java/${namespacePath}/parser/Diff.bnf"
+    targetRoot genSrcPath
+    pathToParser 'DiffParser.java'
+    pathToPsiRoot "${namespacePath}/psi"
+    purgeOldFiles true
+}
+
+clean {
+    delete genSrcPath
+}
+
+def intellijPublishToken = project.properties['intellijPublishToken'] ?:
+        'see http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/deployment.html'
+publishPlugin {
+    token = intellijPublishToken
+    channels = 'beta'
+}
+
+test {
+    intellij.plugins = ['java']
+}
+
+repositories {
+    mavenCentral()
+}
