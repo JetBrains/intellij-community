@@ -168,6 +168,14 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
     assertNotNull(info.icon("target"));
   }
 
+  public void testNavigate() {
+    configureFromFileText("Test.java", "public class Test {} class <caret>Test {}");
+    IntentionPreviewInfo.Html info = getPreviewHtml("Navigate to duplicate class");
+    assertEquals("<p>&rarr; <icon src=\"icon\"/>&nbsp;Test.java, line #1</p>",
+                 info.content().toString());
+    assertNotNull(info.icon("icon"));
+  }
+
   @Override
   protected void setupEditorForInjectedLanguage() {
     // we want to stay at host editor

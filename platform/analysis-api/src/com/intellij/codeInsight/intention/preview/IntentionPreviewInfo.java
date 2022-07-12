@@ -1,7 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.preview;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.navigation.NavigationRequest;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -10,6 +14,8 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -212,16 +218,15 @@ public interface IntentionPreviewInfo {
     if (location == null) {
       location = directory.getPath();
     }
-    HtmlChunk fragment = new HtmlBuilder()
+    HtmlBuilder builder = new HtmlBuilder()
       .append(HtmlChunk.tag("icon").attr("src", "file"))
       .nbsp()
       .append(file.getName())
       .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
       .append(HtmlChunk.tag("icon").attr("src", "dir"))
       .nbsp()
-      .append(location)
-      .toFragment();
-    return new Html(fragment.wrapWith("p"), Map.of("file", fileIcon, "dir", dirIcon));
+      .append(location);
+    return new Html(builder.wrapWith("p"), Map.of("file", fileIcon, "dir", dirIcon));
   }
 
   /**
@@ -238,18 +243,35 @@ public interface IntentionPreviewInfo {
     if (targetIcon instanceof DeferredIcon) {
       targetIcon = ((DeferredIcon)targetIcon).evaluate();
     }
-    HtmlChunk sourceIconChunk = getIconChunk(sourceIcon, "source");
-    HtmlChunk targetIconChunk = getIconChunk(targetIcon, "target");
-    HtmlChunk fragment = new HtmlBuilder()
-      .append(sourceIconChunk)
+    HtmlBuilder builder = new HtmlBuilder()
+      .append(getIconChunk(sourceIcon, "source"))
       .append(Objects.requireNonNull(source.getName()))
       .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
-      .append(targetIconChunk)
-      .append(Objects.requireNonNull(target.getName()))
-      .toFragment();
+      .append(getIconChunk(targetIcon, "target"))
+      .append(Objects.requireNonNull(target.getName()));
     Map<String, Icon> iconMap = new HashMap<>();
     iconMap.put("source", sourceIcon);
     iconMap.put("target", targetIcon);
-    return new Html(fragment.wrapWith("p"), iconMap);
+    return new Html(builder.wrapWith("p"), iconMap);
+  }
+
+  static IntentionPreviewInfo navigate(@NotNull NavigatablePsiElement target) {
+    PsiFile file = target.getContainingFile();
+    Icon icon = file.getIcon(0);
+    if (icon instanceof DeferredIcon) {
+      ((DeferredIcon)icon).evaluate();
+    }
+    int offset = target.getTextOffset();
+    Document document = file.getViewProvider().getDocument();
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.append(HtmlChunk.htmlEntity("&rarr;")).append(" ");
+    builder.append(getIconChunk(icon, "icon"));
+    builder.append(file.getName());
+    if (document.getTextLength() > offset) {
+      int lineNumber = document.getLineNumber(offset);
+      builder.append(AnalysisBundle.message("html.preview.navigate.line"))
+        .append(String.valueOf(lineNumber+1));
+    }
+    return new Html(builder.wrapWith("p"), icon == null ? Map.of() : Map.of("icon", icon));
   }
 }
