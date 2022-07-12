@@ -55,10 +55,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -68,6 +65,7 @@ import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -2682,6 +2680,71 @@ public final class HighlightUtil {
     return null;
   }
 
+  static void checkIllegalUnicodeEscapes(@NotNull PsiElement element, HighlightInfoHolder holder) {
+    parseUnicodeEscapes(element.getText(), (start, end) -> {
+      int offset = element.getTextOffset();
+      holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(offset + start, offset + end)
+        .descriptionAndTooltip(JavaErrorBundle.message("illegal.unicode.escape"))
+        .create());
+    });
+  }
+  @SuppressWarnings("AssignmentToForLoopParameter")
+  private static String parseUnicodeEscapes(String text, BiConsumer<Integer, Integer> illegalEscapeConsumer) {
+    // JLS 3.3
+    if (!text.contains("\\u")) return text;
+    StringBuilder result = new StringBuilder();
+    boolean escape = false;
+    for (int i = 0, length = text.length(); i < length; i++) {
+      char c = text.charAt(i);
+      if (c == '\\') {
+        if (escape) result.append("\\\\");
+        escape = !escape;
+      }
+      else {
+        if (!escape) {
+          result.append(c);
+        }
+        else if (c != 'u') {
+          result.append('\'').append(c);
+          escape = false;
+        }
+        else {
+          int startOfUnicodeEscape = i - 1;
+          do {
+            i++;
+            if (i == length) {
+              if (illegalEscapeConsumer != null) illegalEscapeConsumer.accept(startOfUnicodeEscape, i);
+              return result.toString();
+            }
+            c = text.charAt(i);
+          } while (c == 'u');
+          int value = 0;
+          for (int j = 0; j < 4; j++) {
+            if (i + j >= length) {
+              if (illegalEscapeConsumer != null) illegalEscapeConsumer.accept(startOfUnicodeEscape, i + j);
+              return result.toString();
+            }
+            c = text.charAt(i + j);
+            if ('0' <= c && c <= '9') value += c - '0';
+            else if ('a' <= c && c <= 'f') value += (c - 'a') + 10;
+            else if ('A' <= c && c <= 'F') value += (c - 'A') + 10;
+            else {
+              if (illegalEscapeConsumer != null) illegalEscapeConsumer.accept(startOfUnicodeEscape, i + j);
+              value = -1;
+              break;
+            }
+          }
+          if (value != -1) {
+            i += 3;
+            result.appendCodePoint(value);
+          }
+          escape = false;
+        }
+      }
+    }
+    return result.toString();
+  }
 
   @NotNull
   static Collection<HighlightInfo> checkCatchTypeIsDisjoint(@NotNull PsiParameter parameter) {
