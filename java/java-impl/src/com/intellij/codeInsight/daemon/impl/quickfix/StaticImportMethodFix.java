@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -34,6 +36,11 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
     return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
                                                                     PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
                                                                     PsiFormatUtilBase.SHOW_FQ_NAME, 0);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return generatePreview(file, (expression, method) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, method, method.getName(), method.getContainingClass()));
   }
 
   @NotNull
