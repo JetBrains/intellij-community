@@ -64,6 +64,6 @@ public class CreateDirectoryPathFix extends AbstractCreateFileFix {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return new IntentionPreviewInfo.Html(getDescription(), Map.of("folder", AllIcons.Nodes.Folder, "file", AllIcons.Nodes.Folder));
+    return new IntentionPreviewInfo.Html(getDescription(AllIcons.Nodes.Folder));
   }
 }

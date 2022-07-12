@@ -4,6 +4,7 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.text.HtmlChunk;
 import org.junit.Test;
 
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
@@ -63,6 +64,13 @@ public class HtmlChunkTest {
     assertEquals("<p>hello</p>", HtmlChunk.text("hello").wrapWith("p").toString());
     assertEquals("<b>hello</b>", HtmlChunk.text("hello").bold().toString());
     assertEquals("<i>hello</i>", HtmlChunk.text("hello").italic().toString());
+  }
+
+  @Test
+  public void template() {
+    String userName = "Super<User>";
+    HtmlChunk greeting = HtmlChunk.template("Hello, $user$!", Map.entry("user", HtmlChunk.text(userName).wrapWith("b")));
+    assertEquals("Hello, <b>Super&lt;User&gt;</b>!", greeting.toString());
   }
   
   @Test

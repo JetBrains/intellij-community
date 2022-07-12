@@ -134,7 +134,6 @@ public interface IntentionPreviewInfo {
    */
   class Html implements IntentionPreviewInfo {
     private final @NotNull HtmlChunk myContent;
-    private final @NotNull Map<String, Icon> myIconMap;
 
     /**
      * Construct description from HtmlChunk
@@ -142,7 +141,7 @@ public interface IntentionPreviewInfo {
      * @param content description content
      */
     public Html(@NotNull HtmlChunk content) {
-      this(content, Map.of());
+      myContent = content;
     }
 
     /**
@@ -155,30 +154,10 @@ public interface IntentionPreviewInfo {
     }
 
     /**
-     * Construct description from HtmlChunk and icon map
-     *
-     * @param content content that may refer to some icons via {@code &lt;icon src="$id$"&gt;}
-     * @param iconMap a map from icon ID used in URL to the icon itself
-     */
-    public Html(@NotNull HtmlChunk content, @NotNull Map<String, Icon> iconMap) {
-      myContent = content;
-      myIconMap = Map.copyOf(iconMap);
-    }
-
-    /**
      * @return HTML content
      */
     public @NotNull HtmlChunk content() {
       return myContent;
-    }
-
-    /**
-     * @param id icon ID
-     * @return an icon referenced from HTML content via {@code &lt;icon src="$id$"&gt;}
-     */
-    @ApiStatus.Experimental
-    public @Nullable Icon icon(@NotNull String id) {
-      return myIconMap.get(id);
     }
   }
 
@@ -197,13 +176,15 @@ public interface IntentionPreviewInfo {
       .append(iconChunk)
       .append(newName)
       .toFragment();
-    return new Html(fragment.wrapWith("p"), icon == null ? Map.of() : Map.of("file", icon));
+    return new Html(fragment.wrapWith("p"));
   }
 
   @NotNull
   private static HtmlChunk getIconChunk(@Nullable Icon icon, @NotNull String id) {
-    return icon == null ? HtmlChunk.empty() :
-         new HtmlBuilder().append(HtmlChunk.tag("icon").attr("src", id)).nbsp().toFragment();
+    if (icon instanceof DeferredIcon) {
+      icon = ((DeferredIcon)icon).evaluate();
+    }
+    return icon == null ? HtmlChunk.empty() : new HtmlBuilder().append(HtmlChunk.icon(id, icon)).nbsp().toFragment();
   }
 
   /**
@@ -219,14 +200,14 @@ public interface IntentionPreviewInfo {
       location = directory.getPath();
     }
     HtmlBuilder builder = new HtmlBuilder()
-      .append(HtmlChunk.tag("icon").attr("src", "file"))
+      .append(HtmlChunk.icon("file", fileIcon))
       .nbsp()
       .append(file.getName())
       .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
-      .append(HtmlChunk.tag("icon").attr("src", "dir"))
+      .append(HtmlChunk.icon("dir", dirIcon))
       .nbsp()
       .append(location);
-    return new Html(builder.wrapWith("p"), Map.of("file", fileIcon, "dir", dirIcon));
+    return new Html(builder.wrapWith("p"));
   }
 
   /**
@@ -249,18 +230,12 @@ public interface IntentionPreviewInfo {
       .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
       .append(getIconChunk(targetIcon, "target"))
       .append(Objects.requireNonNull(target.getName()));
-    Map<String, Icon> iconMap = new HashMap<>();
-    iconMap.put("source", sourceIcon);
-    iconMap.put("target", targetIcon);
-    return new Html(builder.wrapWith("p"), iconMap);
+    return new Html(builder.wrapWith("p"));
   }
 
   static IntentionPreviewInfo navigate(@NotNull NavigatablePsiElement target) {
     PsiFile file = target.getContainingFile();
     Icon icon = file.getIcon(0);
-    if (icon instanceof DeferredIcon) {
-      ((DeferredIcon)icon).evaluate();
-    }
     int offset = target.getTextOffset();
     Document document = file.getViewProvider().getDocument();
     HtmlBuilder builder = new HtmlBuilder();
@@ -272,6 +247,6 @@ public interface IntentionPreviewInfo {
       builder.append(AnalysisBundle.message("html.preview.navigate.line"))
         .append(String.valueOf(lineNumber+1));
     }
-    return new Html(builder.wrapWith("p"), icon == null ? Map.of() : Map.of("icon", icon));
+    return new Html(builder.wrapWith("p"));
   }
 }

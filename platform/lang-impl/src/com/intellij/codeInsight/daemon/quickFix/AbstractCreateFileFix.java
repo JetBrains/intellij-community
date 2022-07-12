@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -15,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +36,9 @@ import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.openapi.project.ProjectUtilCore.displayUrlRelativeToProject;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
@@ -49,7 +53,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
   protected static final String CURRENT_DIRECTORY_REF = ".";
   protected static final String PARENT_DIRECTORY_REF = "..";
 
-  protected final String myNewFileName;
+  protected final @NlsSafe String myNewFileName;
   protected final List<TargetDirectory> myDirectories;
   protected final String[] mySubPath;
   @PropertyKey(resourceBundle = CodeInsightBundle.BUNDLE)
@@ -152,33 +156,34 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     throws IncorrectOperationException;
 
   @NotNull
-  protected HtmlChunk getDescription() {
-    String fileIcon = "<icon src=\"file\"> ";
+  protected HtmlChunk getDescription(@NotNull Icon itemIcon) {
+    Path filePath;
+    String directoryPath = null;
     if (myDirectories.size() == 1) {
       TargetDirectory directory = myDirectories.get(0);
       PsiDirectory psiDirectory = directory.getDirectory();
-      String path = psiDirectory == null ? "" : StringUtil.escapeXmlEntities(psiDirectory.getVirtualFile().getPresentableUrl());
-      String pathToCreate = StreamEx.of(directory.getPathToCreate())
-        .append(mySubPath)
-        .joining(File.separator);
-      if (pathToCreate.isEmpty()) {
-        return fragment(raw(CodeInsightBundle.message(myKey, fileIcon + StringUtil.escapeXmlEntities(myNewFileName))), br(),
-                        raw(CodeInsightBundle.message("intention.description.inside.directory", path)));
+      directoryPath = psiDirectory == null ? "" : psiDirectory.getVirtualFile().getPresentableUrl();
+      filePath = Path.of("", directory.getPathToCreate());
+      for (String component : mySubPath) {
+        filePath = filePath.resolve(component);
       }
-      String fullFileName = pathToCreate + File.separator + myNewFileName;
-      return fragment(raw(CodeInsightBundle.message(myKey, fileIcon + StringUtil.escapeXmlEntities(fullFileName))),
-                      br(),
-                      text(CodeInsightBundle.message("intention.description.including.intermediate.directories")),
-                      br(),
-                      raw(CodeInsightBundle.message("intention.description.inside.directory", path)));
+      filePath = filePath.resolve(myNewFileName);
+    } else {
+      filePath = Path.of("", mySubPath).resolve(myNewFileName);
     }
-    if (mySubPath.length == 0) {
-      return raw(CodeInsightBundle.message(myKey, fileIcon + StringUtil.escapeXmlEntities(myNewFileName)));
+    HtmlChunk fileReference = fragment(icon("file", itemIcon), nbsp(), text(filePath.toString()));
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.append(template(CodeInsightBundle.message(myKey, "$file$"), Map.entry("file", fileReference)));
+    if (filePath.getNameCount() > 1) {
+      builder.br().append(CodeInsightBundle.message("intention.description.including.intermediate.directories"));
     }
-    String fullFileName = StreamEx.of(mySubPath).append(myNewFileName).joining(File.separator);
-    return fragment(raw(CodeInsightBundle.message(myKey, fileIcon + StringUtil.escapeXmlEntities(fullFileName))),
-                    br(),
-                    text(CodeInsightBundle.message("intention.description.including.intermediate.directories")));
+    if (directoryPath != null) {
+      HtmlChunk dirReference = fragment(icon("dir", AllIcons.Nodes.Folder), nbsp(), text(directoryPath));
+      builder.br()
+        .append(template(CodeInsightBundle.message("intention.description.inside.directory", "$directory$"),
+                         Map.entry("directory", dirReference)));
+    }
+    return builder.toFragment();
   }
 
   @Nullable

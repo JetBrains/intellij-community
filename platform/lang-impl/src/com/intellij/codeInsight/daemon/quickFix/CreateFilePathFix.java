@@ -166,8 +166,8 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     String extension = StringUtil.substringAfterLast(myNewFileName, ".");
-    Map<String, Icon> icons = Map.of("folder", AllIcons.Nodes.Folder
-      , "file", extension == null ? AllIcons.FileTypes.Any_type : FileTypeRegistry.getInstance().getFileTypeByExtension(extension).getIcon());
-    return new IntentionPreviewInfo.Html(getDescription(), icons);
+    Icon icon =
+      extension == null ? AllIcons.FileTypes.Any_type : FileTypeRegistry.getInstance().getFileTypeByExtension(extension).getIcon();
+    return new IntentionPreviewInfo.Html(getDescription(icon));
   }
 }
