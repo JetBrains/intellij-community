@@ -57,7 +57,7 @@ class MavenArtifactsBuilder {
     modulesToPublish.each { module, artifactData ->
       String filePath = "$buildContext.paths.temp/pom-files/${artifactData.coordinates.getDirectoryPath()}/${artifactData.coordinates.getFileName("", "pom")}"
       pomXmlFiles[module] = filePath
-      generatePomXmlFile(filePath, artifactData)
+      MavenArtifactsBuilder.generatePomXmlFile(filePath, artifactData)
     }
     new LayoutBuilder(buildContext).layout("$buildContext.paths.artifacts/$outputDir") {
       modulesToPublish.each { aModule, artifactData ->
