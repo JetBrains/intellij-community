@@ -9,11 +9,8 @@ import org.jetbrains.deft.annotations.Child
 import java.io.Serializable
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.referrersx
 
 
 
@@ -63,12 +60,7 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: LibraryEntity, modification: LibraryEntity.Builder.() -> Unit) = modifyEntity(LibraryEntity.Builder::class.java, entity, modification)
 var LibraryEntity.Builder.externalSystemId: @Child LibraryExternalSystemIdEntity?
-    get() {
-        return referrersx(LibraryExternalSystemIdEntity::library).singleOrNull()
-    }
-    set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(LibraryExternalSystemIdEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
-    }
+    by WorkspaceEntity.extension()
 
 //endregion
 

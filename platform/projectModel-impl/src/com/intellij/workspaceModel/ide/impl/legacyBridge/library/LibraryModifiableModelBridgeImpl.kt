@@ -23,7 +23,6 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryPropertiesEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
-import com.intellij.workspaceModel.storage.referrersx
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -123,19 +122,18 @@ internal class LibraryModifiableModelBridgeImpl(
   private fun updateProperties(libraryType: String, propertiesXmlTag: String? = null) {
     val entity = currentLibrary.libraryEntity
 
-    val referrers = entity.referrersx(LibraryPropertiesEntity::library).toList()
-    if (referrers.isEmpty()) {
+    val properties = entity.libraryProperties
+    if (properties == null) {
       diff.addEntity(LibraryPropertiesEntity(entity.entitySource, libraryType) {
         library = entity
         if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
       })
     }
     else {
-      diff.modifyEntity(referrers.first()) {
+      diff.modifyEntity(properties) {
         this.libraryType = libraryType
         if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
       }
-      referrers.drop(1).forEach { diff.removeEntity(it) }
     }
   }
 

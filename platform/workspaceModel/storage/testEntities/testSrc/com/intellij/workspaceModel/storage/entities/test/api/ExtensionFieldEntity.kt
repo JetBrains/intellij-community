@@ -1,16 +1,13 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
-import com.intellij.workspaceModel.storage.*
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.referrersx
 
 
 
@@ -42,12 +39,7 @@ interface MainEntity : WorkspaceEntity {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: MainEntity, modification: MainEntity.Builder.() -> Unit) = modifyEntity(MainEntity.Builder::class.java, entity, modification)
 var MainEntity.Builder.child: @Child AttachedEntity?
-    get() {
-        return referrersx(AttachedEntity::ref).singleOrNull()
-    }
-    set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(AttachedEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
-    }
+    by WorkspaceEntity.extension()
 
 //endregion
 
@@ -83,4 +75,4 @@ fun MutableEntityStorage.modifyEntity(entity: AttachedEntity, modification: Atta
 //endregion
 
 val MainEntity.child: @Child AttachedEntity?
-  get() = referrersx(AttachedEntity::ref).singleOrNull()
+    by WorkspaceEntity.extension()

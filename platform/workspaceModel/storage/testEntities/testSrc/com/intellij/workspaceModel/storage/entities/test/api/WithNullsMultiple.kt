@@ -1,16 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.referrersy
+import com.intellij.workspaceModel.storage.*
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+
 
 
 interface ParentWithNullsMultiple : WorkspaceEntity {
@@ -70,14 +69,9 @@ interface ChildWithNullsMultiple : WorkspaceEntity {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ChildWithNullsMultiple, modification: ChildWithNullsMultiple.Builder.() -> Unit) = modifyEntity(ChildWithNullsMultiple.Builder::class.java, entity, modification)
 var ChildWithNullsMultiple.Builder.parent: ParentWithNullsMultiple?
-    get() {
-        return referrersy(ParentWithNullsMultiple::children).singleOrNull()
-    }
-    set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ParentWithNullsMultiple::class, false, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
-    }
+    by WorkspaceEntity.extension()
 
 //endregion
 
 val ChildWithNullsMultiple.parent: ParentWithNullsMultiple?
-  get() = referrersy(ParentWithNullsMultiple::children).singleOrNull()
+    by WorkspaceEntity.extension()

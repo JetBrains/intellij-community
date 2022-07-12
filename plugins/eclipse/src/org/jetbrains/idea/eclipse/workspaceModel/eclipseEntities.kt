@@ -11,11 +11,9 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.referrersx
 
 
 /**
@@ -76,17 +74,12 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: EclipseProjectPropertiesEntity, modification: EclipseProjectPropertiesEntity.Builder.() -> Unit) = modifyEntity(EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
 var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?
-    get() {
-        return referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()
-    }
-    set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(EclipseProjectPropertiesEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
-    }
+    by WorkspaceEntity.extension()
 
 //endregion
 
 val ModuleEntity.eclipseProperties: @Child EclipseProjectPropertiesEntity?
-  get() = referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()
+    by WorkspaceEntity.extension()
 
 data class EclipseProjectFile(
   val classpathFile: VirtualFileUrl,

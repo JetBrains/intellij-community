@@ -9,11 +9,8 @@ import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.referrersx
 
 
 
@@ -63,12 +60,7 @@ interface ArtifactEntity : WorkspaceEntityWithPersistentId {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ArtifactEntity, modification: ArtifactEntity.Builder.() -> Unit) = modifyEntity(ArtifactEntity.Builder::class.java, entity, modification)
 var ArtifactEntity.Builder.artifactExternalSystemIdEntity: @Child ArtifactExternalSystemIdEntity?
-    get() {
-        return referrersx(ArtifactExternalSystemIdEntity::artifactEntity).singleOrNull()
-    }
-    set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ArtifactExternalSystemIdEntity::class, true, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
-    }
+    by WorkspaceEntity.extension()
 
 //endregion
 
@@ -280,17 +272,12 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ArtifactOutputPackagingElementEntity, modification: ArtifactOutputPackagingElementEntity.Builder.() -> Unit) = modifyEntity(ArtifactOutputPackagingElementEntity.Builder::class.java, entity, modification)
 var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity
-    get() {
-        return referrersx(ArtifactEntity::artifactOutputPackagingElement).single()
-    }
-    set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ArtifactEntity::class, false, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
-    }
+    by WorkspaceEntity.extension()
 
 //endregion
 
 val ArtifactOutputPackagingElementEntity.artifactEntity: ArtifactEntity
-  get() = referrersx(ArtifactEntity::artifactOutputPackagingElement).single()
+    by WorkspaceEntity.extension()
 
 interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
     val module: ModuleId?
@@ -348,17 +335,12 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: LibraryFilesPackagingElementEntity, modification: LibraryFilesPackagingElementEntity.Builder.() -> Unit) = modifyEntity(LibraryFilesPackagingElementEntity.Builder::class.java, entity, modification)
 var LibraryFilesPackagingElementEntity.Builder.libraryEntity: LibraryEntity
-    get() {
-        return referrersx(LibraryEntity::libraryFilesPackagingElement).single()
-    }
-    set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(LibraryEntity::class, false, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
-    }
+    by WorkspaceEntity.extension()
 
 //endregion
 
 val LibraryFilesPackagingElementEntity.libraryEntity: LibraryEntity
-  get() = referrersx(LibraryEntity::libraryFilesPackagingElement).single()
+    by WorkspaceEntity.extension()
 
 interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
     val module: ModuleId?

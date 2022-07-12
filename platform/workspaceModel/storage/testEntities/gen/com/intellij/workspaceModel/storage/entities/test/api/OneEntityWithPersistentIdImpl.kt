@@ -127,10 +127,8 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
     }
 
     override fun persistentId(): PersistentEntityId<*> {
-        
       return OnePersistentId(myName)
-    
-    }
+    } 
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return OneEntityWithPersistentId::class.java

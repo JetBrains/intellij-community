@@ -1,15 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.referrersx
+import com.intellij.workspaceModel.storage.*
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
+import org.jetbrains.deft.annotations.Child
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
@@ -49,7 +47,7 @@ fun MutableEntityStorage.modifyEntity(entity: FacetsOrderEntity, modification: F
 //endregion
 
 val ModuleEntity.facetOrder: @Child FacetsOrderEntity?
-  get() = referrersx(FacetsOrderEntity::moduleEntity).singleOrNull()
+    by WorkspaceEntity.extension()
 
 /**
  * This property indicates that external-system-id attribute should be stored in facet configuration to avoid unnecessary modifications
@@ -85,7 +83,7 @@ fun MutableEntityStorage.modifyEntity(entity: FacetExternalSystemIdEntity, modif
 //endregion
 
 val FacetEntity.facetExternalSystemIdEntity: @Child FacetExternalSystemIdEntity?
-  get() = referrersx(FacetExternalSystemIdEntity::facet).singleOrNull()
+    by WorkspaceEntity.extension()
 
 /**
  * This property indicates that external-system-id attribute should be stored in artifact configuration file to avoid unnecessary modifications
@@ -120,7 +118,7 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactExternalSystemIdEntity, mo
 //endregion
 
 val ArtifactEntity.artifactExternalSystemIdEntity: @Child ArtifactExternalSystemIdEntity?
-  get() = referrersx(ArtifactExternalSystemIdEntity::artifactEntity).singleOrNull()
+    by WorkspaceEntity.extension()
 
 /**
  * This property indicates that external-system-id attribute should be stored in library configuration file to avoid unnecessary modifications
@@ -155,7 +153,7 @@ fun MutableEntityStorage.modifyEntity(entity: LibraryExternalSystemIdEntity, mod
 //endregion
 
 val LibraryEntity.externalSystemId: @Child LibraryExternalSystemIdEntity?
-  get() = referrersx(LibraryExternalSystemIdEntity::library).singleOrNull()
+    by WorkspaceEntity.extension()
 
 /**
  * This entity stores order of artifacts in ipr file. This is needed to ensure that artifact tags are saved in the same order to avoid

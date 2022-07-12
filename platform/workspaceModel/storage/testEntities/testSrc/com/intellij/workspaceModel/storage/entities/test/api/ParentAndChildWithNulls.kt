@@ -1,17 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
-import com.intellij.workspaceModel.storage.*
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.referrersx
 
 
 
@@ -72,14 +69,9 @@ interface ChildWithNulls : WorkspaceEntity {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ChildWithNulls, modification: ChildWithNulls.Builder.() -> Unit) = modifyEntity(ChildWithNulls.Builder::class.java, entity, modification)
 var ChildWithNulls.Builder.parentEntity: ParentWithNulls?
-    get() {
-        return referrersx(ParentWithNulls::child).singleOrNull()
-    }
-    set(value) {
-        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ParentWithNulls::class, false, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
-    }
+    by WorkspaceEntity.extension()
 
 //endregion
 
 val ChildWithNulls.parentEntity: ParentWithNulls?
-  get() = referrersx(ParentWithNulls::child).singleOrNull()
+    by WorkspaceEntity.extension()

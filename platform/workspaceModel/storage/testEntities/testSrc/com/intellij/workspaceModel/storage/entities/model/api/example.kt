@@ -8,6 +8,8 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
+import org.jetbrains.deft.annotations.Child
+
 
 
 interface TestEntity: WorkspaceEntity {
@@ -41,6 +43,9 @@ interface TestEntity: WorkspaceEntity {
 }
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: TestEntity, modification: TestEntity.Builder.() -> Unit) = modifyEntity(TestEntity.Builder::class.java, entity, modification)
+var TestEntity.Builder.anotherTest: @Child AnotherTest?
+    by WorkspaceEntity.extension()
+
 //endregion
 
 data class One(val foo: String, val bar: String)

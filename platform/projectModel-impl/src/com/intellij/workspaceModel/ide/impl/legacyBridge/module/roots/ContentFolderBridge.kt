@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaSourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.asCustomSourceRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -73,8 +72,8 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
     if (javaResourceRoot?.generated != otherJavaResourceRoot?.generated) return false
     if (javaResourceRoot?.relativeOutputPath != otherJavaResourceRoot?.relativeOutputPath) return false
 
-    val customRoot = sourceRootEntity.asCustomSourceRoot()
-    val otherCustomRoot = other.sourceRootEntity.asCustomSourceRoot()
+    val customRoot = sourceRootEntity.customSourceRootProperties
+    val otherCustomRoot = other.sourceRootEntity.customSourceRootProperties
     if (customRoot?.propertiesXmlTag != otherCustomRoot?.propertiesXmlTag) return false
 
     return true

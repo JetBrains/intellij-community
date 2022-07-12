@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityExtensionDelegate
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
@@ -84,6 +84,12 @@ import kotlin.reflect.KProperty1
 
   fun <E : WorkspaceEntity> createReference(): EntityReference<E>
   fun getEntityInterface(): Class<out WorkspaceEntity>
+
+  companion object {
+    inline fun <reified T> extension(): WorkspaceEntityExtensionDelegate<T> {
+      return WorkspaceEntityExtensionDelegate()
+    }
+  }
 }
 
 /**
@@ -128,6 +134,7 @@ interface DummyParentEntitySource : EntitySource
 /**
  * Base interface for entities which may need to find all entities referring to them.
  */
+@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
 interface ReferableWorkspaceEntity : WorkspaceEntity {
   /**
    * Returns all entities of type [R] which [propertyName] property refers to this entity. Consider using type-safe variant referrers(KProperty1) instead.
@@ -135,6 +142,7 @@ interface ReferableWorkspaceEntity : WorkspaceEntity {
   fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R>
 }
 
+@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
 interface ModifiableReferableWorkspaceEntity : ReferableWorkspaceEntity  {
   fun linkExternalEntity(entityClass: KClass<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity?>)
 }
@@ -142,14 +150,17 @@ interface ModifiableReferableWorkspaceEntity : ReferableWorkspaceEntity  {
 /**
  * Returns all entities of type [R] which [property] refers to this entity.
  */
+@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
 inline fun <E : ReferableWorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): Sequence<R> {
   return referrers(R::class.java, property.name)
 }
 
+@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
 inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): List<R> {
   return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
 }
 
+@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
 inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity, reified X : List<E>> E.referrersy(property: KProperty1<R, X?>): List<R> {
   return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
 }

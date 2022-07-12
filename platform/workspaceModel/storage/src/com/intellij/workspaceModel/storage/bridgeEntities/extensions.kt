@@ -5,7 +5,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import com.intellij.workspaceModel.storage.referrersx
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
 import kotlin.collections.HashMap
@@ -322,10 +321,8 @@ fun MutableEntityStorage.addCustomPackagingElementEntity(typeId: String,
   return entity
 }
 
-fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = referrersx(JavaSourceRootEntity::sourceRoot).firstOrNull()
-fun SourceRootEntity.asJavaResourceRoot() = referrersx(JavaResourceRootEntity::sourceRoot).firstOrNull()
-fun SourceRootEntity.asCustomSourceRoot() = referrersx(CustomSourceRootPropertiesEntity::sourceRoot).firstOrNull()
-fun LibraryEntity.getCustomProperties() = referrersx(LibraryPropertiesEntity::library).firstOrNull()
+fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = javaSourceRoots.firstOrNull()
+fun SourceRootEntity.asJavaResourceRoot(): JavaResourceRootEntity? = javaResourceRoots.firstOrNull()
 
 val ModuleEntity.sourceRoots: List<SourceRootEntity>
   get() = contentRoots.flatMap { it.sourceRoots }
@@ -409,8 +406,8 @@ fun ModuleDependencyItem.equalsAsOrderEntry(other: ModuleDependencyItem,
               val afterLibrary = otherStore.resolve(other.library)!!
               if (beforeLibrary.excludedRoots != afterLibrary.excludedRoots) false
               else {
-                val beforeLibraryKind = beforeLibrary.getCustomProperties()?.libraryType
-                val afterLibraryKind = afterLibrary.getCustomProperties()?.libraryType
+                val beforeLibraryKind = beforeLibrary.libraryProperties?.libraryType
+                val afterLibraryKind = afterLibrary.libraryProperties?.libraryType
                 when {
                   beforeLibraryKind != afterLibraryKind -> false
                   beforeLibrary.roots != afterLibrary.roots -> false

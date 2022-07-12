@@ -602,7 +602,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         sourceRootTag.setAttribute(IS_GENERATED_ATTRIBUTE, true.toString())
       }
     }
-    val customProperties = sourceRoot.asCustomSourceRoot()
+    val customProperties = sourceRoot.customSourceRootProperties
     if (customProperties != null) {
       val element = JDOMUtil.load(StringReader(customProperties.propertiesXmlTag))
       JDOMUtil.merge(sourceRootTag, element)
