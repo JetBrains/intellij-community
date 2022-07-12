@@ -80,7 +80,7 @@ class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val workflowHandler = ChangesViewWorkflowManager.getInstance(e.project!!).commitWorkflowHandler
-    if (workflowHandler != null && !workflowHandler.isActive) {
+    if (workflowHandler != null && workflowHandler.isActive) {
       workflowHandler.deactivate(false)
     }
     else {
