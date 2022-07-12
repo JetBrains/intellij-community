@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.fir.inspections;
+package org.jetbrains.kotlin.idea.k2.intentions.tests;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,21 +14,21 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("fir")
+@TestRoot("code-insight/inspections-k2/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/tests/testData/inspections/redundantUnitReturnType")
-public abstract class HLInspectionTestGenerated extends AbstractHLInspectionTest {
+@TestMetadata("../../../idea/tests/testData/inspections/redundantUnitReturnType")
+public abstract class K2InspectionTestGenerated extends AbstractK2InspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/inspections/redundantUnitReturnType/inspectionData")
-    public static class InspectionData extends AbstractHLInspectionTest {
+    @TestMetadata("../../../idea/tests/testData/inspections/redundantUnitReturnType/inspectionData")
+    public static class InspectionData extends AbstractK2InspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("inspections.test")
         public void testInspections_test() throws Exception {
-            runTest("../idea/tests/testData/inspections/redundantUnitReturnType/inspectionData/inspections.test");
+            runTest("../../../idea/tests/testData/inspections/redundantUnitReturnType/inspectionData/inspections.test");
         }
     }
 }
