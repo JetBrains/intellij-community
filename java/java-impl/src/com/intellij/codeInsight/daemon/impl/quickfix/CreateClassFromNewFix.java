@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -185,7 +187,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   @Override
   protected PsiElement getElement() {
     final PsiNewExpression expression = getNewExpression();
-    if (expression == null || !expression.getManager().isInProject(expression)) return null;
+    if (expression == null ||
+        (!expression.getManager().isInProject(expression) && !ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(expression)))) {
+      return null;
+    }
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement(expression);
     if (referenceElement == null) return null;
     if (referenceElement.getReferenceNameElement() instanceof PsiIdentifier) return expression;
