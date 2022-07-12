@@ -23,12 +23,12 @@ internal abstract class GitSingleCommitActionGroup() : ActionGroup(), DumbAware 
     if (e == null) return AnAction.EMPTY_ARRAY
 
     val project = e.project
-    val log = e.getData(VcsLogDataKeys.VCS_LOG)
-    if (project == null || log == null) {
+    val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
+    if (project == null || selection == null) {
       return AnAction.EMPTY_ARRAY
     }
 
-    val commits = log.selectedCommits
+    val commits = selection.commits
     if (commits.size != 1) return AnAction.EMPTY_ARRAY
     val commit = commits.first()
 

@@ -15,10 +15,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.vcs.log.VcsFullCommitDetails
-import com.intellij.vcs.log.VcsLog
-import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
@@ -88,18 +85,18 @@ class CheckSelectedCommits :
   IndexDiagnosticActionBase(VcsLogBundle.messagePointer("vcs.log.index.diagnostic.selected.action.title")) {
 
   override fun update(e: AnActionEvent, logManager: VcsLogManager) {
-    val vcsLog = e.getData(VcsLogDataKeys.VCS_LOG)
-    if (vcsLog == null) {
+    val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
+    if (selection == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val selectedCommits = getSelectedCommits(logManager.dataManager, vcsLog, false)
+    val selectedCommits = getSelectedCommits(logManager.dataManager, selection, false)
     e.presentation.isVisible = true
     e.presentation.isEnabled = selectedCommits.isNotEmpty()
   }
 
-  private fun getSelectedCommits(vcsLogData: VcsLogData, vcsLog: VcsLog, reportNotIndexed: Boolean): List<Int> {
-    val selectedCommits = vcsLog.selectedCommits.map { vcsLogData.getCommitIndex(it.hash, it.root) }
+  private fun getSelectedCommits(vcsLogData: VcsLogData, selection: VcsLogCommitSelection, reportNotIndexed: Boolean): List<Int> {
+    val selectedCommits = selection.ids
     if (selectedCommits.isEmpty()) return emptyList()
 
     val selectedIndexedCommits = selectedCommits.filter { vcsLogData.index.isIndexed(it) }
@@ -112,7 +109,7 @@ class CheckSelectedCommits :
   }
 
   override fun getCommitsToCheck(e: AnActionEvent, logManager: VcsLogManager): List<Int> {
-    return getSelectedCommits(logManager.dataManager, e.getRequiredData(VcsLogDataKeys.VCS_LOG), true)
+    return getSelectedCommits(logManager.dataManager, e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION), true)
   }
 }
 

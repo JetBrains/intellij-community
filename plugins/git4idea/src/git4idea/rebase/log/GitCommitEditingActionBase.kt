@@ -57,10 +57,9 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       val root = commitEditingData.repository.root
       val logData = commitEditingData.logData
       val dataPack = logData.dataPack
-      val commits = commitEditingData.selectedCommitList
       val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
       val commitsInfo = permanentGraph.permanentCommitsInfo
-      val commitIndices = commits.map { logData.getCommitIndex(it.id, root) }
+      val commitIndices = commitEditingData.selection.ids
 
       var description: String? = null
 
@@ -119,7 +118,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
   protected abstract fun createCommitEditingData(
     repository: GitRepository,
-    log: VcsLog,
+    selection: VcsLogCommitSelection,
     logData: VcsLogData
   ): CommitEditingDataCreationResult<T>
 
@@ -238,14 +237,14 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
   private fun createCommitEditingData(e: AnActionEvent): CommitEditingDataCreationResult<T> {
     val project = e.project
-    val log = e.getData(VcsLogDataKeys.VCS_LOG)
+    val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
     val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData?
 
-    if (project == null || log == null || logDataProvider == null) {
+    if (project == null || selection == null || logDataProvider == null) {
       return Prohibited()
     }
 
-    val commitList = log.selectedShortDetails.takeIf { it.isNotEmpty() } ?: return Prohibited()
+    val commitList = selection.cachedMetadata.takeIf { it.isNotEmpty() } ?: return Prohibited()
     val repositoryManager = GitUtil.getRepositoryManager(project)
 
     val root = commitList.map { it.root }.distinct().singleOrNull() ?: return Prohibited(
@@ -258,7 +257,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       )
     }
 
-    return createCommitEditingData(repository, log, logDataProvider)
+    return createCommitEditingData(repository, selection, logDataProvider)
   }
 
   protected open fun getProhibitedStateMessage(
@@ -275,11 +274,11 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
   open class MultipleCommitEditingData(
     val repository: GitRepository,
-    val log: VcsLog,
+    val selection: VcsLogCommitSelection,
     val logData: VcsLogData
   ) {
     val project = repository.project
-    val selectedCommitList: List<VcsCommitMetadata> = log.selectedShortDetails
+    val selectedCommitList: List<VcsCommitMetadata> = selection.cachedMetadata
   }
 
   protected sealed class ProhibitRebaseDuringRebasePolicy {

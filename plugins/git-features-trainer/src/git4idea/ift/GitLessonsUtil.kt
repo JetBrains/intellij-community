@@ -93,7 +93,7 @@ object GitLessonsUtil {
       this.usePulsation = usePulsation
     }.componentPart { ui: VcsLogGraphTable ->
       val rowIndexes = (0 until ui.rowCount).toList().toIntArray()
-      val startCommitRow = ui.model.getCommitMetadata(rowIndexes).indexOfFirst(startCommitPredicate)
+      val startCommitRow = ui.model.createSelection(rowIndexes).cachedMetadata.indexOfFirst(startCommitPredicate)
       if (startCommitRow >= 0) {
         ui.getRectForSubsequentCommits(startCommitRow, sequenceLength)
       }

@@ -6,12 +6,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -22,10 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.AbstractList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
 
 public final class GraphTableModel extends AbstractTableModel {
   private static final int UP_PRELOAD_COUNT = 20;
@@ -173,24 +167,8 @@ public final class GraphTableModel extends AbstractTableModel {
     return myLogData.getCommitId(getIdAtRow(row));
   }
 
-  @NotNull
-  public List<VcsFullCommitDetails> getFullDetails(int[] rows) {
-    return getDataForRows(rows, this::getFullDetails);
-  }
-
-  @NotNull
-  public List<VcsCommitMetadata> getCommitMetadata(int[] rows) {
-    return getDataForRows(rows, this::getCommitMetadata);
-  }
-
-  @NotNull
-  public List<CommitId> getCommitIds(int[] rows) {
-    return getDataForRows(rows, this::getCommitId);
-  }
-
-  @NotNull
-  public List<Integer> convertToCommitIds(@NotNull List<Integer> rows) {
-    return ContainerUtil.map(rows, (NotNullFunction<Integer, Integer>)this::getIdAtRow);
+  public @NotNull VcsLogCommitSelection createSelection(int[] rows) {
+    return new CommitSelectionImpl(myLogData, myDataPack.getVisibleGraph(), rows);
   }
 
   @NotNull
@@ -214,22 +192,6 @@ public final class GraphTableModel extends AbstractTableModel {
       @Override
       public void remove() {
         throw new UnsupportedOperationException("Removing elements is not supported.");
-      }
-    };
-  }
-
-  @NotNull
-  private static <T> List<T> getDataForRows(int[] rows, @NotNull Function<? super Integer, ? extends T> dataGetter) {
-    return new AbstractList<>() {
-      @NotNull
-      @Override
-      public T get(int index) {
-        return dataGetter.apply(rows[index]);
-      }
-
-      @Override
-      public int size() {
-        return rows.length;
       }
     };
   }

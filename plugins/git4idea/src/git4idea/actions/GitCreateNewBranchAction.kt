@@ -58,9 +58,9 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
     val manager = getRepositoryManager(project)
     if (manager.repositories.isEmpty()) return Data.Invisible
 
-    val log = e.getData(VcsLogDataKeys.VCS_LOG)
-    if (log != null) {
-      val commits = log.selectedCommits
+    val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
+    if (selection != null) {
+      val commits = selection.commits
       if (commits.isEmpty()) return Data.Invisible
       if (commits.size > 1) return Data.Disabled(GitBundle.message("action.New.Branch.disabled.several.commits.description"))
       val commit = commits.first()

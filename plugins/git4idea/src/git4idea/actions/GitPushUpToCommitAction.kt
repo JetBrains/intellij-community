@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions
 
 import com.intellij.dvcs.push.ui.VcsPushDialog
@@ -28,9 +28,9 @@ class GitPushUpToCommitAction : GitLogSingleCommitAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val log = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
+    val selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
     val logData = e.getRequiredData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData
-    val commit = ContainerUtil.getFirstItem(log.selectedCommits)!!
+    val commit = ContainerUtil.getFirstItem(selection.commits)!!
     val repository: GitRepository = getRepositoryForRoot(project, commit.root)!!
 
 
@@ -44,8 +44,8 @@ class GitPushUpToCommitAction : GitLogSingleCommitAction() {
         if (branch == repository.currentBranch && Registry.`is`("git.push.upto.commit.with.head.reference")) {
           // for the current branch, we can use HEAD relative reference a.e HEAD^1
           // that allows to re-push properly if an update is needed
-          val description = checkHeadLinearHistory(GitCommitEditingActionBase.MultipleCommitEditingData(repository, log, logData),
-            GitBundle.message("push.up.to.commit.allowed.progress.title"))
+          val description = checkHeadLinearHistory(GitCommitEditingActionBase.MultipleCommitEditingData(repository, selection, logData),
+                                                   GitBundle.message("push.up.to.commit.allowed.progress.title"))
           if (description != null) {
             Messages.showErrorDialog(project, description, GitBundle.message("push.upto.here.failed.dialog.title"))
             return

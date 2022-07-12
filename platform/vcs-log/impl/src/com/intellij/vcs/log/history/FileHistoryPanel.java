@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.Disposable;
@@ -230,18 +230,18 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       })
       .ifEq(VcsLogInternalDataKeys.LOG_UI_PROPERTIES).then(myProperties)
       .ifEq(VcsDataKeys.VCS_FILE_REVISION).thenGet(() -> {
-        List<VcsCommitMetadata> details = getSelectedMetadata();
+        List<VcsCommitMetadata> details = myGraphTable.getSelection().getCachedMetadata();
         if (details.isEmpty()) return null;
         return myFileHistoryModel.createRevision(getFirstItem(details));
       })
       .ifEq(VcsDataKeys.VCS_FILE_REVISIONS).thenGet(() -> {
-        List<VcsCommitMetadata> details = getSelectedMetadata();
+        List<VcsCommitMetadata> details = myGraphTable.getSelection().getCachedMetadata();
         if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
         return ContainerUtil.mapNotNull(details, myFileHistoryModel::createRevision).toArray(new VcsFileRevision[0]);
       })
       .ifEq(VcsDataKeys.FILE_PATH).then(myFilePath)
       .ifEq(VcsDataKeys.VCS_VIRTUAL_FILE).thenGet(() -> {
-        List<VcsCommitMetadata> details = getSelectedMetadata();
+        List<VcsCommitMetadata> details = myGraphTable.getSelection().getCachedMetadata();
         if (details.isEmpty()) return null;
         VcsCommitMetadata detail = Objects.requireNonNull(getFirstItem(details));
         return FileHistoryUtil.createVcsVirtualFile(myFileHistoryModel.createRevision(detail));
@@ -257,11 +257,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @Nullable
   Change getSelectedChange() {
     return myFileHistoryModel.getSelectedChange(myGraphTable.getSelectedRows());
-  }
-
-  @NotNull
-  private List<VcsCommitMetadata> getSelectedMetadata() {
-    return myGraphTable.getModel().getCommitMetadata(myGraphTable.getSelectedRows());
   }
 
   @NotNull

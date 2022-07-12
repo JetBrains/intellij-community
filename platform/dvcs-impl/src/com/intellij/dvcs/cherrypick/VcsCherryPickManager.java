@@ -18,7 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsLogCommitSelection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +39,8 @@ public final class VcsCherryPickManager {
     myTaskQueue = new BackgroundTaskQueue(project, DvcsBundle.message("cherry.picking.process"));
   }
 
-  public void cherryPick(@NotNull VcsLog log) {
-    log.requestSelectedDetails( details -> myTaskQueue.run(new CherryPickingTask(ContainerUtil.reverse(details))));
+  public void cherryPick(@NotNull VcsLogCommitSelection commitSelection) {
+    commitSelection.requestFullDetails(details -> myTaskQueue.run(new CherryPickingTask(ContainerUtil.reverse(details))));
   }
 
   public boolean isCherryPickAlreadyStartedFor(@NotNull List<? extends CommitId> commits) {

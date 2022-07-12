@@ -171,7 +171,7 @@ public final class VcsLogUiUtil {
 
     @Override
     public void queryPlace(@NotNull Place place) {
-      List<CommitId> commits = myUi.getVcsLog().getSelectedCommits();
+      List<CommitId> commits = myUi.getTable().getSelection().getCommits();
       if (commits.size() > 0) {
         place.putPath(PLACE_KEY, commits.get(0));
       }

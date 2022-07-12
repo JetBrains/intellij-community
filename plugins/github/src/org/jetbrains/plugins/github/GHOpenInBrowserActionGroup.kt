@@ -94,9 +94,9 @@ open class GHOpenInBrowserActionGroup
   }
 
   private fun getDataFromLog(project: Project, dataContext: DataContext): List<Data>? {
-    val log = dataContext.getData(VcsLogDataKeys.VCS_LOG) ?: return null
+    val selection = dataContext.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION) ?: return null
 
-    val selectedCommits = log.selectedCommits
+    val selectedCommits = selection.commits
     if (selectedCommits.size != 1) return null
 
     val commit = ContainerUtil.getFirstItem(selectedCommits) ?: return null

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
@@ -21,7 +21,7 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
   )
 
   override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
-    val details = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, listOf(commitEditingData.selectedCommit))
+    val details = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, commitEditingData.selection)
     val commit = details.first()
     val dialog = GitNewCommitMessageActionDialog(
       commitEditingData,

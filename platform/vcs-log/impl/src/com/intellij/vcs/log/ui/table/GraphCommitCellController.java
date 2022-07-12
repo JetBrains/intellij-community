@@ -96,7 +96,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
       triggerElementClick(printElement);
     }
 
-    Selection previousSelection = myTable.getSelection();
+    SelectionSnapshot previousSelection = myTable.getSelectionSnapshot();
     GraphAnswer<Integer> answer =
       myTable.getVisibleGraph().getActionController().performAction(new GraphAction.GraphActionImpl(printElement, actionType));
     return handleGraphAnswer(answer, isClickOnGraphElement, previousSelection, e);
@@ -104,7 +104,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
 
   @Nullable
   Cursor handleGraphAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange,
-                           @Nullable Selection previousSelection, @Nullable MouseEvent e) {
+                           @Nullable SelectionSnapshot previousSelection, @Nullable MouseEvent e) {
     if (dataCouldChange) {
       myTable.getModel().fireTableDataChanged();
 

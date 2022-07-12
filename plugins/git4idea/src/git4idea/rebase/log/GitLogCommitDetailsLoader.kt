@@ -9,6 +9,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
@@ -17,28 +18,28 @@ import git4idea.i18n.GitBundle
 
 private val LOG = Logger.getInstance("Git.Rebase.Log.Action.CommitDetailsLoader")
 
-internal fun getOrLoadDetails(project: Project, data: VcsLogData, commitList: List<VcsCommitMetadata>): List<VcsCommitMetadata> {
-  val cachedCommits = ArrayList(commitList)
+internal fun getOrLoadDetails(project: Project, data: VcsLogData, selection: VcsLogCommitSelection): List<VcsCommitMetadata> {
+  val cachedCommits = ArrayList(selection.cachedMetadata)
   if (cachedCommits.none { it is LoadingDetails }) return cachedCommits
 
-  return loadDetails(project, data, cachedCommits)
+  return loadDetails(project, data, selection)
 }
 
-private fun loadDetails(project: Project, data: VcsLogData, commits: List<VcsCommitMetadata>): List<VcsCommitMetadata> {
+private fun loadDetails(project: Project, data: VcsLogData, selection: VcsLogCommitSelection): List<VcsCommitMetadata> {
   try {
     val loadedDetails = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       ThrowableComputable<List<VcsCommitMetadata>, VcsException> {
-        return@ThrowableComputable data.miniDetailsGetter.getCommitDetails(commits.map { data.getCommitIndex(it.id, it.root) })
+        return@ThrowableComputable data.miniDetailsGetter.getCommitDetails(selection.ids)
       },
-      GitBundle.message("rebase.log.action.progress.indicator.loading.commit.message.title", commits.size),
+      GitBundle.message("rebase.log.action.progress.indicator.loading.commit.message.title", selection.size),
       true,
       project
     )
-    if (loadedDetails.size != commits.size) throw LoadCommitDetailsException()
+    if (loadedDetails.size != selection.size) throw LoadCommitDetailsException()
     return loadedDetails
   }
   catch (e: VcsException) {
-    val error = GitBundle.message("rebase.log.action.loading.commit.message.failed.message", commits.size)
+    val error = GitBundle.message("rebase.log.action.loading.commit.message.failed.message", selection.size)
     LOG.warn(error, e)
     val notification = VcsNotifier.STANDARD_NOTIFICATION
       .createNotification(error, NotificationType.ERROR)
