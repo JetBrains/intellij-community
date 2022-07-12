@@ -168,6 +168,9 @@ object ProjectUtils {
       NOTIFICATIONS_SILENT_MODE.set(it, true)
     })
     invokeLater {
+      // Set it every time when project opens to ensure that it will be trusted in case of restoring default settings
+      TrustedPaths.getInstance().setProjectPathTrusted(contentRoot, true)
+
       val confirmOpenNewProject = GeneralSettings.getInstance().confirmOpenNewProject
       if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
         GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
@@ -205,7 +208,6 @@ object ProjectUtils {
     }
     val path = langSupport.getLearningProjectPath(targetDirectory)
     LangManager.getInstance().setLearningProjectPath(langSupport, path.toAbsolutePath().toString())
-    TrustedPaths.getInstance().setProjectPathTrusted(path, true)
     return targetDirectory
   }
 
