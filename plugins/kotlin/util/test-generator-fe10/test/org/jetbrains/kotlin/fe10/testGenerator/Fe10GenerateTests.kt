@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsPro
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangesHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinReferenceTypeHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1IntentionTest
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1LocalInspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTest
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
@@ -1346,6 +1347,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("code-insight/inspections-intentions-shared/tests/k1", testDataPath = "../testData") {
         testClass<AbstractSharedK1IntentionTest> {
             model("intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"))
+        }
+    }
+
+    testGroup("code-insight/inspections-shared/tests/k1", testDataPath = "../testData") {
+        testClass<AbstractSharedK1LocalInspectionTest> {
+            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            model("inspectionsLocal", pattern = pattern)
         }
     }
 }

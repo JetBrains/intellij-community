@@ -71,5 +71,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="RUNTIME" />
   </component>
 </module>

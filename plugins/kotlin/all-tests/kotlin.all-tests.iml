@@ -46,5 +46,6 @@
     <orderEntry type="module" module-name="kotlin.util.test-generator" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.util.test-generator-fe10" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k1" scope="RUNTIME" />
   </component>
 </module>

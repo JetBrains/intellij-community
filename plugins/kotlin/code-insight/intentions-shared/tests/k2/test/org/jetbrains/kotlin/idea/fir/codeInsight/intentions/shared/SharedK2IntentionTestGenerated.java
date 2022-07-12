@@ -14,7 +14,7 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("code-insight/inspections-intentions-shared/tests/k2")
+@TestRoot("code-insight/intentions-shared/tests/k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/intentions")

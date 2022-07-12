@@ -26,7 +26,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
     }
 
 
-    testGroup("code-insight/inspections-intentions-shared/tests/k2", testDataPath = "../testData") {
+    testGroup("code-insight/intentions-shared/tests/k2", testDataPath = "../testData") {
         testClass<AbstractSharedK2IntentionTest> {
             model("intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"))
         }

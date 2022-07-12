@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.inspections
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -47,7 +47,7 @@ class RemoveRedundantBackticksInspection : AbstractKotlinInspection() {
     }
 }
 
-class RemoveRedundantBackticksQuickFix : LocalQuickFix {
+private class RemoveRedundantBackticksQuickFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("remove.redundant.backticks.quick.fix.text")
     override fun getFamilyName() = name
 

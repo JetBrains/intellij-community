@@ -10546,69 +10546,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/removeRedundantBackticks")
-    public static class RemoveRedundantBackticks extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("functionArgument.kt")
-        public void testFunctionArgument() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantBackticks/functionArgument.kt");
-        }
-
-        @TestMetadata("functionCall.kt")
-        public void testFunctionCall() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantBackticks/functionCall.kt");
-        }
-
-        @TestMetadata("identifierContainingSpaces.kt")
-        public void testIdentifierContainingSpaces() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantBackticks/identifierContainingSpaces.kt");
-        }
-
-        @TestMetadata("inStringTemplate.kt")
-        public void testInStringTemplate() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantBackticks/inStringTemplate.kt");
-        }
-
-        @TestMetadata("inStringTemplate2.kt")
-        public void testInStringTemplate2() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantBackticks/inStringTemplate2.kt");
-        }
-
-        @TestMetadata("inStringTemplate3.kt")
-        public void testInStringTemplate3() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantBackticks/inStringTemplate3.kt");
-        }
-
-        @TestMetadata("keyword.kt")
-        public void testKeyword() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantBackticks/keyword.kt");
-        }
-
-        @TestMetadata("property.kt")
-        public void testProperty() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantBackticks/property.kt");
-        }
-
-        @TestMetadata("underscores.kt")
-        public void testUnderscores() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantBackticks/underscores.kt");
-        }
-
-        @TestMetadata("underscores2.kt")
-        public void testUnderscores2() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantBackticks/underscores2.kt");
-        }
-
-        @TestMetadata("yield.kt")
-        public void testYield() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantBackticks/yield.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/removeRedundantQualifierName")
     public static class RemoveRedundantQualifierName extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

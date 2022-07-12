@@ -218,7 +218,8 @@
     <module name="kotlin.project-wizard.gradle"/>
     <module name="kotlin.project-wizard.maven"/>
 
-    <module name="kotlin.code-insight.inspections-intentions-shared"/>
+    <module name="kotlin.code-insight.intentions-shared"/>
+    <module name="kotlin.code-insight.inspections-shared"/>
     <module name="kotlin.code-insight.intentions-k2"/>
     <module name="kotlin.code-insight.inspections-k2"/>
   </content>

@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k2" scope="TEST" />
   </component>
 </module>

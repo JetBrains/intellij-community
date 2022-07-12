@@ -161,6 +161,7 @@ final class KotlinPluginBuilder {
     "kotlin.code-insight.api",
     "kotlin.code-insight.utils",
     "kotlin.code-insight.intentions-shared",
+    "kotlin.code-insight.inspections-shared",
     "kotlin.code-insight.impl-base",
     "kotlin.code-insight.descriptions",
     "kotlin.code-insight.intentions-k2",
