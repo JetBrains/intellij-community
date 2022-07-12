@@ -5,6 +5,7 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.RunManagerListener
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.idea.ActionsBundle
@@ -343,18 +344,22 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     caret(position)
 
     highlightLineNumberByOffset(position.startOffset)
-    highlightButtonById("RunToCursor", clearHighlights = false)
+    if (!UIExperiment.isNewDebuggerUIEnabled()) {
+      highlightButtonById("RunToCursor", clearHighlights = false)
+    }
+    else task { }
 
     actionTask("RunToCursor") {
       proposeRestore {
         checkPositionOfEditor(LessonSample(afterFixText, position))
       }
-      LessonsBundle.message("debug.workflow.run.to.cursor",
-                            code(debuggingMethodName),
-                            code("return"),
-                            action(it),
-                            icon(AllIcons.Actions.RunToCursor),
-                            LessonUtil.actionName(it))
+      val intro = LessonsBundle.message("debug.workflow.run.to.cursor.intro", code(debuggingMethodName), code("return"))
+      val actionPart = if (!UIExperiment.isNewDebuggerUIEnabled()) {
+        LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it), icon(AllIcons.Actions.RunToCursor))
+      }
+      else LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
+      val alternative = LessonsBundle.message("debug.workflow.run.to.cursor.alternative", LessonUtil.actionName(it))
+      "$intro $actionPart $alternative"
     }
   }
 
