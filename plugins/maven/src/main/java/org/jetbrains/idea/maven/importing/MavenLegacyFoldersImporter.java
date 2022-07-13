@@ -21,11 +21,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.NotNullList;
 import org.apache.commons.lang.StringUtils;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType;
-import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -158,7 +156,7 @@ MavenLegacyFoldersImporter {
   }
 
   @NotNull
-  public static Map<String, JpsModuleSourceRootType<?>> getSourceFolders(MavenProject mavenProject) {
+  private static Map<String, JpsModuleSourceRootType<?>> getSourceFolders(MavenProject mavenProject) {
     final MultiMap<JpsModuleSourceRootType<?>, String> roots = MultiMap.createLinked();
     addMainSourcePath(mavenProject, roots);
     addTestSourcePath(mavenProject, roots);
@@ -166,14 +164,14 @@ MavenLegacyFoldersImporter {
   }
 
   @NotNull
-  public static Map<String, JpsModuleSourceRootType<?>> getMainSourceFolders(MavenProject mavenProject) {
+  private static Map<String, JpsModuleSourceRootType<?>> getMainSourceFolders(MavenProject mavenProject) {
     final MultiMap<JpsModuleSourceRootType<?>, String> roots = MultiMap.createLinked();
     addMainSourcePath(mavenProject, roots);
     return getPathMap(mavenProject, roots);
   }
 
   @NotNull
-  public static Map<String, JpsModuleSourceRootType<?>> getTestSourceFolders(MavenProject mavenProject) {
+  private static Map<String, JpsModuleSourceRootType<?>> getTestSourceFolders(MavenProject mavenProject) {
     final MultiMap<JpsModuleSourceRootType<?>, String> roots = MultiMap.createLinked();
     addTestSourcePath(mavenProject, roots);
     return getPathMap(mavenProject, roots);
@@ -189,8 +187,10 @@ MavenLegacyFoldersImporter {
       roots.putValue(JavaResourceRootType.RESOURCE, each.getDirectory());
     }
 
-    addBuilderHelperPaths(mavenProject, "add-source", roots.getModifiable(JavaSourceRootType.SOURCE));
-    addBuilderHelperResourcesPaths(mavenProject, "add-resource", roots.getModifiable(JavaResourceRootType.RESOURCE));
+    BuildHelperMavenPluginUtil.addBuilderHelperPaths(mavenProject, "add-source",
+                                                     path -> roots.putValue(JavaSourceRootType.SOURCE, path));
+    BuildHelperMavenPluginUtil.addBuilderHelperResourcesPaths(mavenProject, "add-resource",
+                                                              path -> roots.putValue(JavaResourceRootType.RESOURCE, path));
   }
 
   private static void addTestSourcePath(MavenProject mavenProject, MultiMap<JpsModuleSourceRootType<?>, String> roots) {
@@ -199,8 +199,10 @@ MavenLegacyFoldersImporter {
       roots.putValue(JavaResourceRootType.TEST_RESOURCE, each.getDirectory());
     }
 
-    addBuilderHelperPaths(mavenProject, "add-test-source", roots.getModifiable(JavaSourceRootType.TEST_SOURCE));
-    addBuilderHelperResourcesPaths(mavenProject, "add-test-resource", roots.getModifiable(JavaResourceRootType.TEST_RESOURCE));
+    BuildHelperMavenPluginUtil.addBuilderHelperPaths(mavenProject, "add-test-source",
+                                                     path -> roots.putValue(JavaSourceRootType.TEST_SOURCE, path));
+    BuildHelperMavenPluginUtil.addBuilderHelperResourcesPaths(mavenProject, "add-test-resource",
+                                                              path -> roots.putValue(JavaResourceRootType.TEST_RESOURCE, path));
   }
 
   @NotNull
@@ -219,45 +221,6 @@ MavenLegacyFoldersImporter {
       }
     }
     return addedPaths;
-  }
-
-  private static void addBuilderHelperPaths(MavenProject mavenProject, String goal, Collection<String> folders) {
-    final MavenPlugin plugin = mavenProject.findPlugin("org.codehaus.mojo", "build-helper-maven-plugin");
-    if (plugin != null) {
-      for (MavenPlugin.Execution execution : plugin.getExecutions()) {
-        if (execution.getGoals().contains(goal)) {
-          final Element configurationElement = execution.getConfigurationElement();
-          if (configurationElement != null) {
-            final Element sourcesElement = configurationElement.getChild("sources");
-            if (sourcesElement != null) {
-              for (Element element : sourcesElement.getChildren()) {
-                folders.add(element.getTextTrim());
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private static void addBuilderHelperResourcesPaths(MavenProject mavenProject, String goal, Collection<String> folders) {
-    final MavenPlugin plugin = mavenProject.findPlugin("org.codehaus.mojo", "build-helper-maven-plugin");
-    if (plugin != null) {
-      for (MavenPlugin.Execution execution : plugin.getExecutions()) {
-        if (execution.getGoals().contains(goal)) {
-          final Element configurationElement = execution.getConfigurationElement();
-          if (configurationElement != null) {
-            final Element sourcesElement = configurationElement.getChild("resources");
-            if (sourcesElement != null) {
-              for (Element element : sourcesElement.getChildren()) {
-                Element directory = element.getChild("directory");
-                if (directory != null) folders.add(directory.getTextTrim());
-              }
-            }
-          }
-        }
-      }
-    }
   }
 
   private void configOutputFolders() {
