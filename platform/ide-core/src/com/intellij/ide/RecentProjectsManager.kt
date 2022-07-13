@@ -11,8 +11,8 @@ import java.nio.file.Path
 
 interface RecentProjectsManager {
   companion object {
-    @JvmField
-    val RECENT_PROJECTS_CHANGE_TOPIC = Topic("Change of recent projects", RecentProjectsChange::class.java)
+    @Topic.AppLevel
+    val RECENT_PROJECTS_CHANGE_TOPIC = Topic("Change of recent projects", RecentProjectsChange::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmStatic
     fun getInstance(): RecentProjectsManager = ApplicationManager.getApplication().getService(RecentProjectsManager::class.java)
