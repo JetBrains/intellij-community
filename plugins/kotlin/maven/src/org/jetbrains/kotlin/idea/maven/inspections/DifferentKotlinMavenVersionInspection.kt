@@ -10,15 +10,14 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.inspections.PluginVersionDependentInspection
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
-import org.jetbrains.kotlin.idea.versions.lastStableKnownCompilerVersionShort
+import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 
 class DifferentKotlinMavenVersionInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java),
     PluginVersionDependentInspection {
-    private val idePluginVersion by lazy { KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort }
+    private val idePluginVersion by lazy { kotlinCompilerVersionShort() }
 
     override var testVersionMessage: String? = null
         @TestOnly set
