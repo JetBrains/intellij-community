@@ -15,48 +15,23 @@
  */
 package org.jetbrains.jps.cmdline;
 
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 @SuppressWarnings("ALL")
 class ProfilingHelper {
   private final Class<?> myControllerClass;
   private final Object myController;
 
   ProfilingHelper() throws Exception {
-    Class<?> cls = null;
-    final List<String> controllerClassNames = Arrays.asList("com.yourkit.api.Controller", "com.yourkit.api.controller.Controller");
-    for (String name : controllerClassNames) {
-      try {
-        cls = Class.forName(name);
-        break;
-      }
-      catch (ClassNotFoundException ignored) {
-      }
-    }
-
-    if (cls == null) {
-      final StringBuilder message = new StringBuilder();
-      message.append("Classes ");
-      for (Object name : controllerClassNames) {
-        message.append(name).append(" ");
-      }
-      message.append("not found");
-      throw new ClassNotFoundException(message.toString());
-    }
-    
-    myControllerClass = cls;
-    myController = myControllerClass.newInstance();
+    myControllerClass = Class.forName("com.yourkit.api.controller.Controller");
+    //     final Controller controller = Controller.newBuilder().self().build();
+    final Object builder = myControllerClass.getDeclaredMethod("newBuilder").invoke(null);
+    final Class<?> builderClass = builder.getClass();
+    myController = builderClass.getMethod("build").invoke(builderClass.getMethod("self").invoke(builder));
   }
 
   public void startProfiling() {
     try {
-      getAPIMethod(Arrays.asList("startSampling", "startCPUSampling"), String.class).invoke(myController, new Object[] {null});
-    }
-    catch (NoSuchMethodException e) {
-      System.err.println("Cannot find method 'startCPUProfiling' in class " + myControllerClass.getName());
+      final Class<?> settingsClass = Class.forName("com.yourkit.api.controller.CpuProfilingSettings");
+      myControllerClass.getMethod("startSampling", settingsClass).invoke(myController, new Object[] {settingsClass.newInstance()});
     }
     catch (Throwable e) {
       e.printStackTrace();
@@ -65,39 +40,12 @@ class ProfilingHelper {
 
   public void stopProfiling() {
     try {
-      final String path = (String)getAPIMethod("captureSnapshot", long.class).invoke(myController, 0L/*ProfilingModes.SNAPSHOT_WITHOUT_HEAP*/);
+      final String path = (String)myControllerClass.getMethod("capturePerformanceSnapshot").invoke(myController);
       System.err.println("CPU Snapshot captured: " + path);
-      try {
-        getAPIMethod(Arrays.asList("stopCpuProfiling", "stopCPUProfiling")).invoke(myController);
-      }
-      catch (NoSuchMethodException e) {
-        System.err.println("Cannot find method 'stopCPUProfiling' in class " + myControllerClass.getName());
-      }
-    }
-    catch (NoSuchMethodException e) {
-      System.err.println("Cannot find method 'captureSnapshot' in class " + myControllerClass.getName());
+      myControllerClass.getMethod("stopCpuProfiling").invoke(myController);
     }
     catch (Throwable e) {
       e.printStackTrace();
     }
-  }
-
-  private Method getAPIMethod(String name, Class<?>... paramTypes) throws NoSuchMethodException {
-    return getAPIMethod(Collections.singleton(name), paramTypes);
-  }
-  
-  private Method getAPIMethod(Iterable<String> methodNameVariants, Class<?>... paramTypes) throws NoSuchMethodException {
-    NoSuchMethodException ex = null;
-    for (String name : methodNameVariants) {
-      try {
-        return myControllerClass.getDeclaredMethod(name, paramTypes);
-      }
-      catch (NoSuchMethodException e) {
-        if (ex != null) {
-          ex = e;
-        }
-      }
-    }
-    throw ex;
   }
 }
