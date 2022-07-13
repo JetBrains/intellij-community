@@ -26,6 +26,7 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -189,6 +190,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
     }
   }
 
+  @RequiresEdt
   private void updateNotification(@NotNull FileEditor editor,
                                   @NotNull EditorNotificationProvider provider,
                                   @Nullable JComponent component) {
