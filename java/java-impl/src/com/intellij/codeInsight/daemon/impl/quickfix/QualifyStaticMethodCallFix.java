@@ -43,7 +43,7 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return this.<PsiMethodCallExpression>generatePreview(file, (expression, method) -> qualifyStatically(method, project, expression.getMethodExpression()));
+    return generatePreview(file, (expression, method) -> qualifyStatically(method, project, ((PsiMethodCallExpression)expression).getMethodExpression()));
   }
 
   @Override

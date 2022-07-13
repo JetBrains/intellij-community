@@ -7,7 +7,10 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,8 +28,7 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    return this.<PsiReferenceExpression>generatePreview(file, (expression, field) -> QualifyStaticMethodCallFix.qualifyStatically(field, project, expression));
+    return generatePreview(file, (expression, field) -> QualifyStaticMethodCallFix.qualifyStatically(field, project, (PsiReferenceExpression)expression));
   }
 
   @NotNull

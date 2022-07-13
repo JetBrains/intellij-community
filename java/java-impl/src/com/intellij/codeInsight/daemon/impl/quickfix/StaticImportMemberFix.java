@@ -45,8 +45,8 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   }
 
   @NotNull
-  protected <K extends PsiElement> IntentionPreviewInfo generatePreview(@NotNull PsiFile file, BiConsumer<K, T> consumer) {
-    K copy = PsiTreeUtil.findSameElementInCopy((K)getElement(), file);
+  protected IntentionPreviewInfo generatePreview(@NotNull PsiFile file, BiConsumer<PsiElement, T> consumer) {
+    PsiElement copy = PsiTreeUtil.findSameElementInCopy(getElement(), file);
     if (copy == null) return IntentionPreviewInfo.EMPTY;
     if (candidates.isEmpty()) return IntentionPreviewInfo.EMPTY;
     T element = candidates.get(0);
