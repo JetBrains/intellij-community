@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
+import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -81,6 +82,29 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> implements PossiblyDumbAware {
+
+  private static final String[] DISABLED_ANNO = {"org.junit.jupiter.api.Disabled"};
+
+  private static final String[] DISABLED_COND_ANNO = {
+    "org.junit.jupiter.api.condition.DisabledOnJre",
+    "org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable",
+    "org.junit.jupiter.api.condition.DisabledIfSystemProperty",
+    "org.junit.jupiter.api.condition.DisabledOnOs"
+  };
+
+  private static final String[] SCRIPT_COND_ANNO =
+    {
+      "org.junit.jupiter.api.condition.DisabledIf",
+      "org.junit.jupiter.api.condition.EnabledIf"
+    };
+
+  private static final String[] ENABLED_COND_ANNO = {
+    "org.junit.jupiter.api.condition.EnabledOnJre",
+    "org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable",
+    "org.junit.jupiter.api.condition.EnabledIfSystemProperty",
+    "org.junit.jupiter.api.condition.EnabledOnOs"
+  };
+
   private static final String LAUNCHER_MODULE_NAME = "org.junit.platform.launcher";
   private static final String JUPITER_ENGINE_NAME  = "org.junit.jupiter.engine";
   private static final String VINTAGE_ENGINE_NAME  = "org.junit.vintage.engine";
@@ -94,7 +118,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   private final JUnitConfiguration myConfiguration;
   protected File myListenersFile;
-  
+
   private final Map<Module, JavaParameters> myAdditionalJarsForModuleFork = new HashMap<>();
 
   protected TestObject(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -174,7 +198,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   private Set<Module> collectPackageModules(String packageName) {
-    Set<Module> result = new HashSet<>(); 
+    Set<Module> result = new HashSet<>();
     final SourceScope sourceScope = getSourceScope();
     final Project project = getConfiguration().getProject();
     if (sourceScope != null && packageName != null && JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
@@ -231,7 +255,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
     javaParameters.getClassPath().addFirst(getJUnit5RtFile());
-    
+
     appendDownloadedDependenciesForForkedConfigurations(javaParameters, module);
   }
 
@@ -298,6 +322,66 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
 
     return javaParameters;
+  }
+
+  @Nullable
+  private String getDisabledConditionValue() {
+    String disabledCondition = null;
+    JUnitConfiguration.Data data = myConfiguration.getPersistentData();
+    final PsiClass psiClass = myConfiguration.myClass.getPsiElement();
+    if (psiClass != null && data != null) {
+      disabledCondition = getDisabledCondition(psiClass);
+      String methodName = data.getMethodName();
+      if (disabledCondition == null && methodName != null) {
+        final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(psiClass);
+        List<PsiMethod> foundMethod = new ArrayList<>();
+        //noinspection ResultOfMethodCallIgnored
+        ContainerUtil.exists(psiClass.findMethodsByName(methodName, true), method ->
+        {
+          boolean found = filter.value(method) &&
+                          Objects.equals(data.getMethodNameWithSignature(),
+                                         JUnitConfiguration.Data.getMethodPresentation(method));
+          if (found) foundMethod.add(method);
+          return found;
+        });
+        //noinspection ConstantConditions
+        if (!foundMethod.isEmpty()) {
+          PsiMethod psiMethod = foundMethod.get(0);
+          disabledCondition = getDisabledCondition(psiMethod);
+        }
+      }
+    }
+    return disabledCondition;
+  }
+
+  private static String getDisabledCondition(PsiElement element) {
+    if (isDisabledCondition(DISABLED_COND_ANNO, element)) {
+      return "org.junit.*Disabled*Condition";
+    }
+
+    if (isDisabledCondition(ENABLED_COND_ANNO, element)) {
+      return "org.junit.*Enabled*Condition";
+    }
+
+    if (isDisabledCondition(SCRIPT_COND_ANNO, element)) {
+      return "org.junit.*DisabledIfCondition";
+    }
+
+    if (isDisabledCondition(DISABLED_ANNO, element)) {
+      return "org.junit.*DisabledCondition";
+    }
+    return null;
+  }
+
+  private static boolean isDisabledCondition(String[] anno, PsiElement psiElement) {
+    ArrayList<PsiModifierListOwner> listOwners = new ArrayList<>();
+    if (psiElement instanceof PsiMethod) {
+      listOwners.add((PsiMethod)psiElement);
+    }
+    if (psiElement instanceof PsiClass) {
+      listOwners.add((PsiClass)psiElement);
+    }
+    return ContainerUtil.exists(anno, an -> MetaAnnotationUtil.isMetaAnnotated(listOwners.get(0), Collections.singleton(an)));
   }
 
   @TestOnly
@@ -400,7 +484,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   /**
    * junit 4.12+ must be on the classpath for vintage engine to work correctly.
    * Don't add engine when it will fail to detect tests anyway.
-   * <p> 
+   * <p>
    * Reflection is needed for the case when no sources are attached
    */
   private boolean isAcceptableVintageVersion() {
@@ -463,7 +547,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     catch (ProcessCanceledException e) {
       roots = Collections.emptyList();
     }
-    catch (Throwable e) { 
+    catch (Throwable e) {
       LOG.error(e);
       roots = Collections.emptyList();
     }
@@ -518,8 +602,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   /**
-   * Dependencies for full & forked per module configurations are downloaded; 
-   * <p> 
+   * Dependencies for full & forked per module configurations are downloaded;
+   * <p>
    * Dependencies for forked configurations are stored to be added later in {@link #appendDownloadedDependenciesForForkedConfigurations(JavaParameters, Module)}
    */
   @Override
@@ -560,6 +644,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       }
       else {
         downloader.compute();
+      }
+      String disabledCondition = getDisabledConditionValue();
+      if (disabledCondition != null) {
+        javaParameters.getProgramParametersList().add("-Djunit.jupiter.conditions.deactivate=" + disabledCondition);
       }
     }
   }
