@@ -9,9 +9,11 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
@@ -27,6 +29,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 interface Fe10WrapperContext {
     val builtIns: KotlinBuiltIns
     val moduleDescriptor: ModuleDescriptor
+    val languageVersionSettings: LanguageVersionSettings
     val bindingContext: BindingContext
     val fe10BindingSpecialConstructionFunctions: Fe10BindingSpecialConstructionsWrappers
 
@@ -107,6 +110,9 @@ class Fe10WrapperContextImpl(
 
     override val builtIns: KotlinBuiltIns
         get() = incorrectImplementation { DefaultBuiltIns.Instance }
+
+    override val languageVersionSettings: LanguageVersionSettings
+        get() = withAnalysisSession { (useSiteModule as KtSourceModule).languageVersionSettings  }
 
     override val bindingContext: BindingContext = KtSymbolBasedBindingContext(this)
 
