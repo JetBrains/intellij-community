@@ -47,6 +47,7 @@ import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.common.PlatformPrefix
+import com.intellij.testFramework.common.loadApp
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
@@ -122,7 +123,7 @@ class TestApplicationManager private constructor() {
       }
 
       PlatformPrefix.autodetectPlatformPrefix()
-      PlatformTestUtil.loadApp {
+      loadApp {
         if (EventQueue.isDispatchThread()) {
           // replaces system event queue
           IdeEventQueue.getInstance()

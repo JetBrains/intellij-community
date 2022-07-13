@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common
 
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.idea.Main
 import com.intellij.idea.callAppInitialized
 import com.intellij.idea.initConfigurationStore
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -13,8 +15,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean.Companion.addKeysFromPlugins
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
+import com.intellij.testFramework.UITestUtil
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.time.Duration
 
@@ -22,7 +26,20 @@ private val LOG: Logger = Logger.getInstance("com.intellij.testFramework.common.
 
 @TestOnly
 @OptIn(DelicateCoroutinesApi::class)
-internal fun loadAppInUnitTestMode(isHeadless: Boolean) {
+@Internal
+fun loadApp(setupEventQueue: Runnable) {
+  val isHeadless = UITestUtil.getAndSetHeadlessProperty()
+  Main.setHeadlessInTestMode(isHeadless)
+  PluginManagerCore.isUnitTestMode = true
+  IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
+  PluginManagerCore.scheduleDescriptorLoading(GlobalScope)
+  setupEventQueue.run()
+  loadAppInUnitTestMode(isHeadless)
+}
+
+@TestOnly
+@OptIn(DelicateCoroutinesApi::class)
+private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val loadedModuleFuture = PluginManagerCore.getInitPluginFuture()
 
   val app = ApplicationImpl(true, true, isHeadless, true)

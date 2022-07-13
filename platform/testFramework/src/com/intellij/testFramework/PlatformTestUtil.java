@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -23,12 +22,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
-import com.intellij.idea.Main;
 import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -66,6 +63,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
@@ -76,7 +74,6 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
-import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +113,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
 import static com.intellij.testFramework.UsefulTestCase.assertSameLines;
-import static com.intellij.testFramework.common.TestApplicationKt.loadAppInUnitTestMode;
 import static com.intellij.util.ObjectUtils.consumeIfNotNull;
 import static com.intellij.util.containers.ContainerUtil.map2List;
 import static com.intellij.util.containers.ContainerUtil.sorted;
@@ -156,17 +152,12 @@ public final class PlatformTestUtil {
     return uppercaseChars >= 3;
   }
 
+  /**
+   * @deprecated moved to {@link TestApplicationKt#loadApp(Runnable)}
+   */
+  @Deprecated
   static void loadApp(@NotNull Runnable setupEventQueue) {
-    boolean isHeadless = UITestUtil.getAndSetHeadlessProperty();
-
-    Main.setHeadlessInTestMode(isHeadless);
-    PluginManagerCore.isUnitTestMode = true;
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-
-    PluginManagerCore.scheduleDescriptorLoading(GlobalScope.INSTANCE);
-    setupEventQueue.run();
-
-    loadAppInUnitTestMode(isHeadless);
+    TestApplicationKt.loadApp(setupEventQueue);
   }
 
   /**
