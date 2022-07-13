@@ -26,7 +26,9 @@ public class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool 
         while (true) {
           pos = text.indexOf("\\s", pos + 1);
           if (pos == -1) return;
-          if (block && pos < text.length() + 2 && (text.charAt(pos + 2) == '\n' || text.startsWith("\\s", pos + 2))) return;
+          if (pos > 2 && text.startsWith("\\s", pos - 2)) continue;
+          if (text.startsWith("\\s", pos + 2)) continue;
+          if (block && (pos + 2 == text.length() || text.charAt(pos + 2) == '\n')) continue;
           holder.registerProblem(literal, TextRange.create(pos, pos+2),
                                  InspectionGadgetsBundle.message("inspection.use.of.slash.s.message"),
                                  new ReplaceWithSpaceFix(pos));
