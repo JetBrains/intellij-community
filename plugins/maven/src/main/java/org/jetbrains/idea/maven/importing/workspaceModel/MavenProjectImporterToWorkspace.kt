@@ -16,8 +16,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModu
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter
-import org.jetbrains.idea.maven.importing.MavenModelUtil
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper
 import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportContext
@@ -48,7 +48,8 @@ class MavenProjectImporterToWorkspace(
         val importedModules = importModules(builder, projectToImport, mavenProjectToModuleName, postTasks)
         val appliedModules = applyModulesToWorkspaceModel(builder, importedModules)
 
-        finalizeImport(appliedModules, mavenProjectToModuleName, projectToImport, postTasks)
+        configLegacyFacets(appliedModules, projectToImport, mavenProjectToModuleName, postTasks)
+        finalizeImport(projectToImport, postTasks)
 
         createdModulesList.addAll(appliedModules.map { it.module })
       }
@@ -120,10 +121,10 @@ class MavenProjectImporterToWorkspace(
         // if both projects reside in the same folder, then:
 
         // 'project' before 'project.main'/'project.test'
-        .then(compareBy { MavenModelUtil.isMainOrTestSubmodule(it.moduleData.moduleName) })
+        .then(compareBy { MavenImportUtil.isMainOrTestSubmodule(it.moduleData.moduleName) })
 
         // '.main' before '.test'
-        .then(compareBy { !MavenModelUtil.isMainModule(it.moduleData.moduleName) })
+        .then(compareBy { !MavenImportUtil.isMainModule(it.moduleData.moduleName) })
 
         // 'pom.*' files before custom named files (e.g. 'custom.xml')
         .then(compareBy { !FileUtil.namesEqual("pom", it.mavenProject.file.nameWithoutExtension) })
@@ -167,10 +168,10 @@ class MavenProjectImporterToWorkspace(
   private fun isMavenEntity(it: EntitySource) =
     (it as? JpsImportedEntitySource)?.externalSystemId == WorkspaceModuleImporter.EXTERNAL_SOURCE_ID
 
-  private fun finalizeImport(modules: List<AppliedModuleData>,
-                             moduleNameByProject: Map<MavenProject, String>,
-                             projectChanges: Map<MavenProject, MavenProjectChanges>,
-                             postTasks: List<MavenProjectsProcessorTask>) {
+  private fun configLegacyFacets(modules: List<AppliedModuleData>,
+                                 projectChanges: Map<MavenProject, MavenProjectChanges>,
+                                 moduleNameByProject: Map<MavenProject, String>,
+                                 postTasks: List<MavenProjectsProcessorTask>) {
     val legacyImporters = mutableListOf<MavenLegacyModuleImporter>()
     for ((module, mavenProject, moduleType) in modules) {
       legacyImporters.add(MavenLegacyModuleImporter(module,
@@ -183,9 +184,11 @@ class MavenProjectImporterToWorkspace(
                                                     moduleType))
     }
     configFacets(legacyImporters, postTasks)
+  }
 
+  private fun finalizeImport(projectChanges: Map<MavenProject, MavenProjectChanges>,
+                             postTasks: List<MavenProjectsProcessorTask>) {
     MavenUtil.invokeAndWaitWriteAction(myProject) { removeOutdatedCompilerConfigSettings() }
-
     scheduleRefreshResolvedArtifacts(postTasks, projectChanges.filterValues { it.hasChanges() }.keys)
   }
 

@@ -240,7 +240,7 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
     }
     if (!moduleProfile.isEnabled()) return null;
 
-    if (MavenModelUtil.isMainOrTestSubmodule(module.getName())) {
+    if (MavenImportUtil.isMainOrTestSubmodule(module.getName())) {
       moduleProfile.setOutputRelativeToContentRoot(false);
     }
     else {

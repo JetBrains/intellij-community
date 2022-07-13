@@ -3,10 +3,18 @@ package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -28,7 +36,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.compareVersionNumbers;
 
-public final class MavenModelUtil {
+public final class MavenImportUtil {
   public static final String TEST_SUFFIX = ".test";
   public static final String MAIN_SUFFIX = ".main";
 
@@ -155,8 +163,8 @@ public final class MavenModelUtil {
       Element compilerArgs = compilerConfiguration.getChild("compilerArgs");
       if (compilerArgs != null) {
         if (isPreviewText(compilerArgs) ||
-            compilerArgs.getChildren("arg").stream().anyMatch(MavenModelUtil::isPreviewText) ||
-            compilerArgs.getChildren("compilerArg").stream().anyMatch(MavenModelUtil::isPreviewText)) {
+            compilerArgs.getChildren("arg").stream().anyMatch(MavenImportUtil::isPreviewText) ||
+            compilerArgs.getChildren("compilerArg").stream().anyMatch(MavenImportUtil::isPreviewText)) {
           try {
             return LanguageLevel.valueOf(level.name() + "_PREVIEW");
           }
@@ -230,5 +238,20 @@ public final class MavenModelUtil {
     }
     moduleNameMap.put(project, moduleName);
     return moduleName;
+  }
+
+  public static Module createDummyModule(Project project, VirtualFile contentRoot) {
+    return WriteAction.compute(() -> {
+      Module module = ModuleManager.getInstance(project)
+        .newModule(contentRoot.toNioPath(), ModuleTypeManager.getInstance().getDefaultModuleType().getId());
+      ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+      modifiableModel.addContentEntry(contentRoot);
+      modifiableModel.commit();
+
+      //this is needed to ensure that dummy module created here will be correctly replaced by real ModuleEntity when import finishes
+      ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true);
+
+      return module;
+    });
   }
 }

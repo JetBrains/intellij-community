@@ -60,7 +60,6 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
 import org.jetbrains.idea.maven.project.importing.FilesList;
-import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.project.importing.MavenProjectManagerListenerToBusBridge;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
@@ -734,8 +733,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public MavenProject findProject(@NotNull Module module) {
     MavenProject mavenProject = getMavenProject(module);
     String moduleName = module.getName();
-    if (mavenProject == null && MavenModelUtil.isMainOrTestSubmodule(moduleName)) {
-      Module parentModule = ModuleManager.getInstance(myProject).findModuleByName(MavenModelUtil.getParentModuleName(moduleName));
+    if (mavenProject == null && MavenImportUtil.isMainOrTestSubmodule(moduleName)) {
+      Module parentModule = ModuleManager.getInstance(myProject).findModuleByName(MavenImportUtil.getParentModuleName(moduleName));
       mavenProject = parentModule != null ? getMavenProject(parentModule) : null;
     }
     return mavenProject;
@@ -1342,7 +1341,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
 
-      MavenFoldersImporter.updateProjectFolders(myProject, true);
+      MavenLegacyFoldersImporter.updateProjectFolders(myProject, true);
       VirtualFileManager.getInstance().asyncRefresh(null);
     });
   }

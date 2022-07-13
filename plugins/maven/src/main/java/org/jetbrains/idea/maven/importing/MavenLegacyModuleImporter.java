@@ -114,7 +114,7 @@ public final class MavenLegacyModuleImporter {
 
     configFolders();
     configDependencies(importData.getDependencies());
-    LanguageLevel level = MavenModelUtil.getLanguageLevel(myMavenProject, () -> importData.getModuleData().getSourceLanguageLevel());
+    LanguageLevel level = MavenImportUtil.getLanguageLevel(myMavenProject, () -> importData.getModuleData().getSourceLanguageLevel());
     configLanguageLevel(level);
   }
 
@@ -122,9 +122,9 @@ public final class MavenLegacyModuleImporter {
     assert importData.getModuleData().getType() == MavenModuleType.AGGREGATOR_MAIN_TEST;
     myRootModelAdapter = mavenRootModelAdapter;
 
-    new MavenFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).configMainAndTestAggregator();
+    new MavenLegacyFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).configMainAndTestAggregator();
     configDependencies(importData.getDependencies());
-    LanguageLevel level = MavenModelUtil.getLanguageLevel(myMavenProject, () -> importData.getModuleData().getSourceLanguageLevel());
+    LanguageLevel level = MavenImportUtil.getLanguageLevel(myMavenProject, () -> importData.getModuleData().getSourceLanguageLevel());
     configLanguageLevel(level);
   }
 
@@ -132,9 +132,9 @@ public final class MavenLegacyModuleImporter {
     MavenModuleType type = importData.getModuleData().getType();
     assert type == MavenModuleType.MAIN || type == MavenModuleType.TEST;
     myRootModelAdapter = mavenRootModelAdapter;
-    new MavenFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).configMainAndTest(type);
+    new MavenLegacyFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).configMainAndTest(type);
     configDependencies(importData.getDependencies());
-    LanguageLevel level = MavenModelUtil.getLanguageLevel(myMavenProject, () -> importData.getModuleData().getSourceLanguageLevel());
+    LanguageLevel level = MavenImportUtil.getLanguageLevel(myMavenProject, () -> importData.getModuleData().getSourceLanguageLevel());
     configLanguageLevel(level);
   }
 
@@ -236,7 +236,7 @@ public final class MavenLegacyModuleImporter {
   }
 
   private void configFolders() {
-    new MavenFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).config();
+    new MavenLegacyFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).config();
   }
 
   private void configDependencies() {
@@ -465,20 +465,20 @@ public final class MavenLegacyModuleImporter {
   }
 
   /**
-   * @deprecated use {@link MavenModelUtil#getSourceLanguageLevel(MavenProject)}
+   * @deprecated use {@link MavenImportUtil#getSourceLanguageLevel(MavenProject)}
    */
   @Deprecated
   public static @NotNull LanguageLevel getLanguageLevel(MavenProject mavenProject) {
-    return MavenModelUtil.getSourceLanguageLevel(mavenProject);
+    return MavenImportUtil.getSourceLanguageLevel(mavenProject);
   }
 
   /**
-   * @deprecated use {@link MavenModelUtil#getDefaultLevel(MavenProject)}
+   * @deprecated use {@link MavenImportUtil#getDefaultLevel(MavenProject)}
    */
   @Deprecated
   @NotNull
   public static LanguageLevel getDefaultLevel(MavenProject mavenProject) {
-    return MavenModelUtil.getDefaultLevel(mavenProject);
+    return MavenImportUtil.getDefaultLevel(mavenProject);
   }
 
   public boolean isModuleDisposed() {

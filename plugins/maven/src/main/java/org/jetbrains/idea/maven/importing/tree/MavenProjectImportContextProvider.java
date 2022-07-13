@@ -17,7 +17,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.concat;
-import static org.jetbrains.idea.maven.importing.MavenModelUtil.*;
+import static org.jetbrains.idea.maven.importing.MavenImportUtil.*;
 
 public class MavenProjectImportContextProvider {
   @NotNull

@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.jetbrains.idea.maven.importing.MavenModelUtil
+import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
@@ -129,7 +129,8 @@ class WorkspaceModuleImporter(
 
     val libraryId = LibraryId(artifact.libraryName, LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(moduleName)))
     addLibraryEntity(libraryId,
-                     classUrls = listOf(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
+                     classUrls = listOf(
+                       MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
                      sourceUrls = emptyList(),
                      javadocUrls = emptyList(),
                      moduleEntitySource)
@@ -140,9 +141,12 @@ class WorkspaceModuleImporter(
     assert(MavenConstants.SCOPE_SYSTEM != artifact.scope)
     return createLibraryDependency(artifact.libraryName,
                                    artifact.dependencyScope,
-                                   classUrls = listOf(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
-                                   sourceUrls = listOf(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
-                                   javadocUrls = listOf(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")))
+                                   classUrls = listOf(
+                                     MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
+                                   sourceUrls = listOf(
+                                     MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
+                                   javadocUrls = listOf(
+                                     MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")))
   }
 
   private fun createLibraryDependency(
@@ -193,7 +197,7 @@ class WorkspaceModuleImporter(
   private fun importJavaSettings(moduleEntity: ModuleEntity,
                                  importData: MavenModuleImportData,
                                  importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
-    val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
+    val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
     val inheritCompilerOutput: Boolean
     val compilerOutputUrl: VirtualFileUrl?
     val compilerOutputUrlForTests: VirtualFileUrl?
@@ -212,19 +216,19 @@ class WorkspaceModuleImporter(
   }
 
   private fun importJavaSettingsMainAndTestAggregator(moduleEntity: ModuleEntity, importData: MavenModuleImportData) {
-    val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
+    val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
     builder.addJavaModuleSettingsEntity(true, false, null, null, languageLevel.name, moduleEntity, moduleEntity.entitySource)
   }
 
   private fun importJavaSettingsAggregator(moduleEntity: ModuleEntity, importData: MavenModuleImportData) {
-    val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
+    val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
     builder.addJavaModuleSettingsEntity(true, false, null, null, languageLevel.name, moduleEntity, moduleEntity.entitySource)
   }
 
   private fun importJavaSettingsMain(moduleEntity: ModuleEntity,
                                      importData: MavenModuleImportData,
                                      importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
-    val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
+    val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
     val inheritCompilerOutput: Boolean
     val compilerOutputUrl: VirtualFileUrl?
     if (importingSettings.isUseMavenOutput) {
@@ -242,7 +246,7 @@ class WorkspaceModuleImporter(
   private fun importJavaSettingsTest(moduleEntity: ModuleEntity,
                                      importData: MavenModuleImportData,
                                      importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
-    val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
+    val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
     val inheritCompilerOutput: Boolean
     val compilerOutputUrlForTests: VirtualFileUrl?
     if (importingSettings.isUseMavenOutput) {

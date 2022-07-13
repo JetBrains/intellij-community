@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.MavenModelUtil;
+import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper;
 import org.jetbrains.idea.maven.importing.ModuleModelProxy;
 import org.jetbrains.idea.maven.project.*;
@@ -39,7 +39,7 @@ public class LegacyMavenProjectImportContextProvider extends MavenProjectImportC
 
   @Override
   protected @Nullable String getModuleName(MavenProject project) {
-    return MavenModelUtil.getModuleName(project, myProjectsTree, myMavenProjectToModuleName);
+    return MavenImportUtil.getModuleName(project, myProjectsTree, myMavenProjectToModuleName);
   }
 
   @NotNull

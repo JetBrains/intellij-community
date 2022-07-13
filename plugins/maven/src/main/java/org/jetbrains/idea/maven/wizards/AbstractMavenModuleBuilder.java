@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.MavenModelUtil;
+import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -89,7 +89,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     if (myParentProject == null) return;
     if (!MavenProjectImporter.isLegacyImportToTreeStructureEnabled(project)) return;
 
-    String parentModuleName = MavenModelUtil.getModuleName(myParentProject, project);
+    String parentModuleName = MavenImportUtil.getModuleName(myParentProject, project);
     if (StringUtil.isNotEmpty(parentModuleName)) {
       String moduleFilePath =
         project.getBasePath() + File.separator + parentModuleName + "." + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;

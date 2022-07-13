@@ -23,7 +23,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
+import org.jetbrains.idea.maven.importing.MavenLegacyFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterLegacyImpl;
 import org.jetbrains.idea.maven.importing.ModifiableModelsProviderProxyWrapper;
@@ -185,7 +185,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     });
 
 
-    MavenFoldersImporter.updateProjectFolders(myProject, true);
+    MavenLegacyFoldersImporter.updateProjectFolders(myProject, true);
 
     ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule("project"));
     CompilerModuleExtension compiler = rootManager.getModuleExtension(CompilerModuleExtension.class);
@@ -277,6 +277,6 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
   }
 
   private void updateProjectFolders() {
-    MavenFoldersImporter.updateProjectFolders(myProject, false);
+    MavenLegacyFoldersImporter.updateProjectFolders(myProject, false);
   }
 }

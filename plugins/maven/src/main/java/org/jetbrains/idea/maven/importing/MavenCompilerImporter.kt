@@ -152,17 +152,17 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
     val configuration = CompilerConfiguration.getInstance(project)
     if (java.lang.Boolean.TRUE != module.getUserData(IGNORE_MAVEN_COMPILER_TARGET_KEY)) {
       var level: LanguageLevel?
-      if (MavenModelUtil.isTestModule(module.name)) {
-        level = MavenModelUtil.getTargetTestLanguageLevel(mavenProject)
+      if (MavenImportUtil.isTestModule(module.name)) {
+        level = MavenImportUtil.getTargetTestLanguageLevel(mavenProject)
         if (level == null) {
-          level = MavenModelUtil.getTargetLanguageLevel(mavenProject)
+          level = MavenImportUtil.getTargetLanguageLevel(mavenProject)
         }
       }
       else {
-        level = MavenModelUtil.getTargetLanguageLevel(mavenProject)
+        level = MavenImportUtil.getTargetLanguageLevel(mavenProject)
       }
       if (level == null) {
-        level = MavenModelUtil.getDefaultLevel(mavenProject)
+        level = MavenImportUtil.getDefaultLevel(mavenProject)
       }
 
       // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin!

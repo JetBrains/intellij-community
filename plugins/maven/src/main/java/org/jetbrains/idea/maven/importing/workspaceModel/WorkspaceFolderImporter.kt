@@ -12,7 +12,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.jetbrains.idea.maven.importing.MavenFoldersImporter
+import org.jetbrains.idea.maven.importing.MavenLegacyFoldersImporter
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.project.MavenImportingSettings
@@ -73,11 +73,11 @@ class WorkspaceFolderImporter(
   private fun addSourceFolders(importData: MavenModuleImportData,
                                allFolders: MutableList<ContentRootCollector.ImportedFolder>) {
     val sourceFolders = when (importData.moduleData.type) {
-      MavenModuleType.MAIN -> MavenFoldersImporter.getMainSourceFolders(importData.mavenProject)
-      MavenModuleType.TEST -> MavenFoldersImporter.getTestSourceFolders(importData.mavenProject)
+      MavenModuleType.MAIN -> MavenLegacyFoldersImporter.getMainSourceFolders(importData.mavenProject)
+      MavenModuleType.TEST -> MavenLegacyFoldersImporter.getTestSourceFolders(importData.mavenProject)
       MavenModuleType.AGGREGATOR_MAIN_TEST -> emptyMap()
       MavenModuleType.AGGREGATOR -> emptyMap()
-      else -> MavenFoldersImporter.getSourceFolders(importData.mavenProject)
+      else -> MavenLegacyFoldersImporter.getSourceFolders(importData.mavenProject)
     }
 
     sourceFolders.forEach { (path, type) -> allFolders.add(ContentRootCollector.SourceFolder(path, type)) }

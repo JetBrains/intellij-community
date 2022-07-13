@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.jetbrains.idea.maven.importing.MavenModelUtil
+import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterInterface
 import org.jetbrains.idea.maven.importing.ModifiableModelsProviderProxy
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -187,7 +187,8 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
                                    scope: DependencyScope) {
     assert(MavenConstants.SCOPE_SYSTEM == artifact.scope) { "Artifact scope should be \"system\"" }
     val roots = ArrayList<LibraryRoot>()
-    roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
+    roots.add(LibraryRoot(virtualFileManager.fromUrl(
+      MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
                           LibraryRootTypeId.COMPILED))
 
     val libraryTableId = LibraryTableId.ModuleLibraryTableId(ModuleId(moduleEntity.name))
@@ -205,13 +206,16 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
                                     project: MavenProject): LibraryOrderEntry {
     val roots = ArrayList<LibraryRoot>()
 
-    roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
+    roots.add(LibraryRoot(virtualFileManager.fromUrl(
+      MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
                           LibraryRootTypeId.COMPILED))
     roots.add(
-      LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
+      LibraryRoot(virtualFileManager.fromUrl(
+        MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
                   WorkspaceModuleImporter.JAVADOC_TYPE))
     roots.add(
-      LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
+      LibraryRoot(virtualFileManager.fromUrl(
+        MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
                   LibraryRootTypeId.SOURCES))
 
     val libraryTableId = LibraryTableId.ProjectLibraryTableId //(ModuleId(moduleEntity.name))

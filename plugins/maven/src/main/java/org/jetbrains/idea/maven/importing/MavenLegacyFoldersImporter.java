@@ -43,7 +43,7 @@ import java.net.URL;
 import java.util.*;
 
 public class
-MavenFoldersImporter {
+MavenLegacyFoldersImporter {
   private final MavenProject myMavenProject;
   private final MavenImportingSettings myImportingSettings;
   private final MavenRootModelAdapter myModel;
@@ -60,7 +60,7 @@ MavenFoldersImporter {
 
         MavenRootModelAdapter a = new MavenRootModelAdapter(
           new MavenRootModelAdapterLegacyImpl(mavenProject, each, new ModifiableModelsProviderProxyWrapper(project)));
-        new MavenFoldersImporter(mavenProject, settings, a).config(updateTargetFoldersOnly);
+        new MavenLegacyFoldersImporter(mavenProject, settings, a).config(updateTargetFoldersOnly);
 
         ModifiableRootModel model = a.getRootModel();
         if (model.isChanged()) {
@@ -77,7 +77,9 @@ MavenFoldersImporter {
     });
   }
 
-  public MavenFoldersImporter(@NotNull MavenProject mavenProject, @NotNull MavenImportingSettings settings, MavenRootModelAdapter model) {
+  public MavenLegacyFoldersImporter(@NotNull MavenProject mavenProject,
+                                    @NotNull MavenImportingSettings settings,
+                                    MavenRootModelAdapter model) {
     myMavenProject = mavenProject;
     myImportingSettings = settings;
     myModel = model;
