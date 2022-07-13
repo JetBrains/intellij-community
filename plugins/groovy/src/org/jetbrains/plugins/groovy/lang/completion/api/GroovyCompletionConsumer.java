@@ -11,8 +11,19 @@ import java.util.function.Function;
 @ApiStatus.Experimental
 public interface GroovyCompletionConsumer extends AutoCloseable {
 
+  /**
+   * Accepts a lookup element
+   */
   void consume(@NotNull LookupElement element);
 
+  /**
+   * This method is called right before the start of absorbing slow variants.
+   */
+  default void fastElementsProcessed() {}
+
+  /**
+   * After this method is invoked, {@link GroovyCompletionConsumer#consume} won't accept results anymore
+   */
   void interrupt();
 
   @NotNull GroovyCompletionConsumer transform(@NotNull Function<? super CompletionResultSet, ? extends CompletionResultSet> transformer);

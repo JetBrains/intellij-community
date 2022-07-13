@@ -511,8 +511,10 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
         }
       }
     }
-
-    addSlowVariants.run();
+    consumer.fastElementsProcessed();
+    if (GroovyCompletionUtil.isSlowCompletionEnabled()) {
+      addSlowVariants.run();
+    }
   }
 
   private static GroovyCompletionConsumer getCompletionConsumer(CompletionResultSet resultSet, CompletionParameters completionParameters) {

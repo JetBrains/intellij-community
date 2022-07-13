@@ -7,6 +7,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionConsumer;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -30,6 +31,13 @@ public class AccumulatingGroovyCompletionConsumer implements GroovyCompletionCon
   @Override
   public void consume(@NotNull LookupElement element) {
     myAccumulator.add(element);
+  }
+
+  @Override
+  public void fastElementsProcessed() {
+    Set<LookupElement> newSet = new HashSet<>(myAccumulator);
+    myAccumulator.clear();
+    myResultSet.addAllElements(newSet);
   }
 
   @Override
