@@ -85,6 +85,10 @@ class ScriptClassRootsBuilder(
         classes.addAll(classesRoots)
     }
 
+    fun addSources(sourcesRoots: Collection<String>) {
+        sources.addAll(sourcesRoots)
+    }
+
     @Deprecated("Don't use, used only from DefaultScriptingSupport for saving to storage")
     fun add(other: ScriptClassRootsBuilder) {
         classes.addAll(other.classes)
