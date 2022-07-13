@@ -197,7 +197,6 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.w3c.dom.Node org.w3c.dom.Node getFirstChild()'>
     <annotation name='org.jetbrains.annotations.Contract'>
