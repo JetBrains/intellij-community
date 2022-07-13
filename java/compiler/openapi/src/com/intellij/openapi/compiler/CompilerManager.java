@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * A "root" class in compiler subsystem - allows one to register a custom compiler or a compilation task, register/unregister a compilation listener
@@ -190,11 +191,17 @@ public abstract class CompilerManager {
   public abstract void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
+   * Use {@link #isUpToDateAsync(CompileScope)}
+   */
+  @Deprecated
+  public abstract boolean isUpToDate(@NotNull CompileScope scope);
+
+  /**
    * Checks if compile scope given is up-to-date
    * @param scope
-   * @return true if make on the scope specified wouldn't do anything or false if something is to be compiled or deleted
+   * Returns true if make on the scope specified wouldn't do anything or false if something is to be compiled or deleted
    */
-  public abstract boolean isUpToDate(@NotNull CompileScope scope);
+  public abstract CompletableFuture<Boolean> isUpToDateAsync(@NotNull CompileScope scope);
 
   /**
    * Rebuild the whole project from scratch. Compiler excludes are honored.

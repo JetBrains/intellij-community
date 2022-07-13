@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.*;
@@ -46,12 +46,12 @@ import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -319,7 +319,12 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public boolean isUpToDate(@NotNull CompileScope scope) {
-    return new CompileDriver(myProject).isUpToDate(scope);
+    return new CompileDriver(myProject).isUpToDate(scope, true).join();
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isUpToDateAsync(@NotNull CompileScope scope) {
+    return new CompileDriver(myProject).isUpToDate(scope, false);
   }
 
   @Override

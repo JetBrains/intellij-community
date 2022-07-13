@@ -66,6 +66,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -106,16 +107,22 @@ public final class CompileDriver {
     }
   }
 
-  public boolean isUpToDate(@NotNull CompileScope scope) {
+  public @NotNull CompletableFuture<Boolean> isUpToDate(@NotNull CompileScope scope, boolean oldBehaviour) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation started");
     }
 
-    final CompilerTask task = new CompilerTask(myProject, JavaCompilerBundle.message("classes.up.to.date.check"), true, false, false,
-                                               isCompilationStartedAutomatically(scope));
-    final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, true, false);
+    CompilerTask task = new CompilerTask(
+      myProject,
+      JavaCompilerBundle.message("classes.up.to.date.check"),
+      /* headlessMode = */ true,
+      /* forceAsync = */ false,
+      /* waitForPreviousSession */ false,
+      isCompilationStartedAutomatically(scope)
+    );
+    CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, true, false);
 
-    final Ref<ExitStatus> result = new Ref<>();
+    Ref<ExitStatus> result = new Ref<>();
 
     Runnable compileWork = () -> {
       ProgressIndicator indicator = compileContext.getProgressIndicator();
@@ -150,6 +157,10 @@ public final class CompileDriver {
       }
     };
 
+    if (!oldBehaviour) {
+      return task.startAsync(compileWork, null).thenApply(__ -> ExitStatus.UP_TO_DATE.equals(result.get()));
+    }
+
     ProgressIndicatorProvider indicatorProvider = ProgressIndicatorProvider.getInstance();
     if (!EventQueue.isDispatchThread() && indicatorProvider.getProgressIndicator() != null) {
       // if called from background process on pooled thread, run synchronously
@@ -163,7 +174,7 @@ public final class CompileDriver {
       LOG.debug("isUpToDate operation finished");
     }
 
-    return ExitStatus.UP_TO_DATE.equals(result.get());
+    return CompletableFuture.completedFuture(ExitStatus.UP_TO_DATE.equals(result.get()));
   }
 
   public void compile(CompileScope scope, CompileStatusNotification callback) {

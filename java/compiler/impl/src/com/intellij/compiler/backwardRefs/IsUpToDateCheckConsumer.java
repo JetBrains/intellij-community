@@ -28,7 +28,7 @@ public interface IsUpToDateCheckConsumer {
    * Called if {@link IsUpToDateCheckConsumer#isApplicable(Project)}
    *
    * @param project
-   * @param isUpToDate the result of {@link CompilerManager#isUpToDate(CompileScope)}
+   * @param isUpToDate the result of {@link CompilerManager#isUpToDateAsync(CompileScope)}
    */
   void isUpToDate(@NotNull Project project, boolean isUpToDate);
 }

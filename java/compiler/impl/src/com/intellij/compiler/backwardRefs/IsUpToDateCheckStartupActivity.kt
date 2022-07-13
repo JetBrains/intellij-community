@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.future.asDeferred
 import kotlin.coroutines.coroutineContext
 
 /**
@@ -34,8 +35,11 @@ internal class IsUpToDateCheckStartupActivity : ProjectPostStartupActivity {
       logger.info("activity started")
     }
 
+    coroutineContext.ensureActive()
+
     val compilerManager = CompilerManager.getInstance(project)
-    val isUpToDate = compilerManager.isUpToDate(compilerManager.createProjectCompileScope(project))
+    val isUpToDate = compilerManager.isUpToDateAsync(compilerManager.createProjectCompileScope(project)).asDeferred().await()
+
     logger.info("isUpToDate = $isUpToDate")
     for (consumer in isUpToDateConsumers) {
       consumer.isUpToDate(project, isUpToDate)
