@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions
 
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -8,7 +8,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.VcsLog
 import com.intellij.vcs.log.VcsLogDataKeys
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -35,8 +34,8 @@ internal abstract class GitSingleCommitActionGroup() : ActionGroup(), DumbAware 
 
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(commit.root) ?: return AnAction.EMPTY_ARRAY
 
-    return getChildren(e, project, log, repository, commit)
+    return getChildren(e, project, repository, commit)
   }
 
-  abstract fun getChildren(e: AnActionEvent, project: Project, log: VcsLog, repository: GitRepository, commit: CommitId): Array<AnAction>
+  abstract fun getChildren(e: AnActionEvent, project: Project, repository: GitRepository, commit: CommitId): Array<AnAction>
 }
