@@ -972,8 +972,8 @@ public final class PluginManagerCore {
   }
 
   @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
-  static synchronized @NotNull PluginSet loadAndInitializePlugins(@NotNull DescriptorListLoadingContext context,
-                                                                  @NotNull ClassLoader coreLoader) {
+  static synchronized @NotNull PluginSet initializeAndSetPlugins(@NotNull DescriptorListLoadingContext context,
+                                                                 @NotNull ClassLoader coreLoader) {
     Activity activity = StartUpMeasurer.startActivity("plugin initialization");
     PluginManagerState initResult = initializePlugins(context, coreLoader, !isUnitTestMode, activity);
 

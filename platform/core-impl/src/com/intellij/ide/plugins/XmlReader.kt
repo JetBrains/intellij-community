@@ -742,7 +742,7 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
         }
         plugins!!.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(id!!)))
       }
-      else -> throw RuntimeException("Unknown content item type: ${elementName}")
+      else -> throw RuntimeException("Unknown content item type: $elementName")
     }
     reader.skipElement()
   }
@@ -766,6 +766,7 @@ private fun getNullifiedAttributeValue(reader: XMLStreamReader2, i: Int) = reade
 interface ReadModuleContext {
   val interner: XmlInterner
   val isMissingIncludeIgnored: Boolean
+    get() = false
 }
 
 private fun readInclude(reader: XMLStreamReader2,

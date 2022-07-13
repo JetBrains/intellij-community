@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.xml.dom.XmlInterner
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
@@ -11,9 +10,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Supplier
-
-private val LOG: Logger
-  get() = PluginManagerCore.getLogger()
 
 @ApiStatus.Internal
 class DescriptorListLoadingContext constructor(
@@ -74,7 +70,7 @@ class DescriptorListLoadingContext constructor(
       return false
     }
 
-    LOG.error("Optional config file with name $configFile already registered by $oldPluginId. " +
+    PluginManagerCore.getLogger().error("Optional config file with name $configFile already registered by $oldPluginId. " +
               "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
               "Current plugin: $descriptor.")
     return true

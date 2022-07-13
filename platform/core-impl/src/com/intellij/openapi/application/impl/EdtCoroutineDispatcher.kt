@@ -18,11 +18,6 @@ import kotlin.coroutines.CoroutineContext
  * This dispatcher is installed as [main][kotlinx.coroutines.Dispatchers.Main].
  */
 internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
-
-  init {
-
-  }
-
   override val immediate: MainCoroutineDispatcher get() = Immediate
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {

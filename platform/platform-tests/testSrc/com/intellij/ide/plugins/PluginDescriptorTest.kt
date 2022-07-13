@@ -607,8 +607,6 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
     input = input,
     readContext = object : ReadModuleContext {
       override val interner = NoOpXmlInterner
-      override val isMissingIncludeIgnored: Boolean
-        get() = false
     },
     pathResolver = pathResolver,
     dataLoader = dataLoader,
