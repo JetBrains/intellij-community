@@ -50,7 +50,7 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
         modifiableModelsProvider: ModifiableModelsProvider,
         buildScriptData: BuildScriptDataBuilder
     ) {
-        var kotlinVersion = KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort
+        var kotlinVersion = kotlinCompilerVersionShort()
         val additionalRepository = getRepositoryForVersion(kotlinVersion)
         if (isSnapshot(KotlinPluginLayout.instance.standaloneCompilerVersion)) {
             kotlinVersion = LAST_SNAPSHOT_VERSION
