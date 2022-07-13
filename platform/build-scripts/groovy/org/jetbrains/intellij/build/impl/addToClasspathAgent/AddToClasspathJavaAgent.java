@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl.addToClasspathAgent;
 import com.sun.tools.attach.VirtualMachine;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.lang.instrument.Instrumentation;
 import java.util.jar.JarFile;
 
@@ -17,7 +18,7 @@ public class AddToClasspathJavaAgent {
 
       File file = new File(cp);
       if (!file.exists()) {
-        throw new IllegalStateException("File does not exist: " + file);
+        throw new FileNotFoundException("File does not exist: " + file);
       }
 
       instrumentation.appendToSystemClassLoaderSearch(new JarFile(file));
@@ -27,6 +28,7 @@ public class AddToClasspathJavaAgent {
   public static void main(String[] args) throws Exception {
     if (args.length != 4 || !args[0].equals("attach-agent")) {
       System.err.println("Usage: ./app attach-agent PID AGENT_JAR AGENT_ARGUMENTS");
+      System.exit(1);
     }
 
     String pid = args[1];

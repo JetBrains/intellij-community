@@ -33,8 +33,8 @@ internal class KotlinBinaries(private val communityHome: BuildDependenciesCommun
 
     val current = getCurrentKotlinJpsPluginVersionFromClassPath()
     if (current != null) {
-      if (current != required) {
-        error("Currently loaded Kotlin JPS plugin version is '$current', but required '$required'")
+      check(current == required) {
+        "Currently loaded Kotlin JPS plugin version is '$current', but required '$required'"
       }
 
       // already loaded
@@ -45,8 +45,8 @@ internal class KotlinBinaries(private val communityHome: BuildDependenciesCommun
     AddToClasspathUtil.addToClassPathViaAgent(listOf(kotlinJpsPlugin))
 
     val afterLoad = getCurrentKotlinJpsPluginVersionFromClassPath()
-    if (afterLoad != required) {
-      error("Loaded Kotlin JPS plugin version '$afterLoad', but required '$required'")
+    check(afterLoad == required) {
+      "Loaded Kotlin JPS plugin version '$afterLoad', but required '$required'"
     }
   }
 

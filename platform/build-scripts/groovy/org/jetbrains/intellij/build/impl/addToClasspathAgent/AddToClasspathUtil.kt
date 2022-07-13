@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.addToClasspathAgent
 
+import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.intellij.build.io.runJava
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.jar.Attributes
 import java.util.jar.JarEntry
@@ -15,14 +17,14 @@ object AddToClasspathUtil {
 
   @Synchronized
   fun addToClassPathViaAgent(additionalClassPath: List<Path>) {
+    require(additionalClassPath.isNotEmpty())
+
     if (addStackTrace != null) {
       throw IllegalStateException("this method could be called only once, see nested exception for previous call", addStackTrace)
     }
     else {
       addStackTrace = Throwable()
     }
-
-    require(additionalClassPath.isNotEmpty())
 
     val mainClass = AddToClasspathJavaAgent::class.java
 
@@ -32,11 +34,18 @@ object AddToClasspathUtil {
 
   private fun attachAgent(agentPath: Path, mainClass: Class<*>, agentArguments: String) {
     // -Djdk.attach.allowAttachSelf required to attach to self,
+    // we could not guarantee any additional system parameters upon start
+    // since code will be run as any jvm main class e.g. from IDE gutter mark
     // so attach from another process
 
     val absoluteAgentPath = agentPath.absolutePathString()
 
-    val javaExecutable = Path.of(System.getProperty("java.home"), "bin", "java")
+    val javaFileName = if (SystemInfo.isWindows) "java.exe" else "java"
+    val javaExecutable = Path.of(System.getProperty("java.home"), "bin", javaFileName)
+    check(Files.exists(javaExecutable)) {
+      "Java executable is not found at $javaExecutable"
+    }
+
     runJava(
       mainClass = mainClass.name,
       args = listOf("attach-agent", ProcessHandle.current().pid().toString(), absoluteAgentPath, agentArguments),
@@ -60,10 +69,11 @@ object AddToClasspathUtil {
     jar.outputStream().buffered().let { JarOutputStream(it, manifest) }.use { jarStream ->
       for (klass in listOf(agentClass)) {
         val classEntryName = klass.name.replace(".", "/") + ".class"
-        val classBytes = klass.classLoader.getResourceAsStream(classEntryName)!!.use { it.readAllBytes() }
 
         jarStream.putNextEntry(JarEntry(classEntryName))
-        jarStream.write(classBytes)
+        klass.classLoader.getResourceAsStream(classEntryName)!!.use {
+          it.copyTo(jarStream)
+        }
         jarStream.closeEntry()
       }
     }
