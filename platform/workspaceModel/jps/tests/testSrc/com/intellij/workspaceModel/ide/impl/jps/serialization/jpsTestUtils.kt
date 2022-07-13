@@ -114,7 +114,7 @@ internal fun createProjectSerializers(projectDir: File,
   val configLocation = toConfigLocation(projectDir.toPath(), virtualFileManager)
   val reader = CachingJpsFileContentReader(configLocation)
   val externalStoragePath = projectDir.toPath().resolve("cache")
-  val serializer = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, reader, externalStoragePath, true,
+  val serializer = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, reader, externalStoragePath,
                                                                      virtualFileManager) as JpsProjectSerializersImpl
   return serializer to configLocation
 }

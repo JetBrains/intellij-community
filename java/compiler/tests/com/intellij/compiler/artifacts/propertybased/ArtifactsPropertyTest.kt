@@ -67,8 +67,6 @@ class ArtifactsPropertyTest {
 
   @Test
   fun `property test`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val writeDisposable = writeActionDisposable(disposableRule.disposable)
     invokeAndWaitIfNeeded {
       PackagingElementType.EP_NAME.point.registerExtension(MyWorkspacePackagingElementType, writeDisposable)

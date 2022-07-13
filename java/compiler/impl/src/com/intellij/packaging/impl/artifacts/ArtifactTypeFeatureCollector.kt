@@ -5,11 +5,12 @@ import com.intellij.ide.plugins.PluginFeatureService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.packaging.artifacts.ArtifactType
+import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge
 
 private class ArtifactTypeFeatureCollector : StartupActivity.Background {
   override fun runActivity(project: Project) {
     PluginFeatureService.instance.collectFeatureMapping(
-      ArtifactManagerImpl.FEATURE_TYPE,
+      ArtifactManagerBridge.FEATURE_TYPE,
       ArtifactType.EP_NAME,
       ArtifactType::getId,
       ArtifactType::getPresentableName,

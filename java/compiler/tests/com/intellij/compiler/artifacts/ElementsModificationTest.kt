@@ -347,10 +347,6 @@ class ElementsModificationTest {
 
   @Test
   fun `modification with dispose`() {
-
-    // Old artifacts implementation works incorrect in such case
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val project = projectModel.project
 
     val artifactManager = ArtifactManager.getInstance(project)

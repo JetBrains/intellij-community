@@ -257,7 +257,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(WorkspaceModel.getInstance(project).entityStorage.current)
     return JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath,
-                                                             WorkspaceModel.enabledForArtifacts,
                                                              virtualFileManager,
                                                              externalStorageConfigurationManager, fileInDirectorySourceNames)
   }

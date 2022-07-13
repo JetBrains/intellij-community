@@ -14,7 +14,6 @@ import org.jetbrains.annotations.ApiStatus
 internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
   val id = descriptor.pluginId
   return id == PluginManagerCore.CORE_ID ||
-         id == PluginManagerCore.JAVA_PLUGIN_ID ||
          // K/N Platform Deps is a repackaged Java plugin
          id.idString == "com.intellij.kotlinNative.platformDeps"
 }
