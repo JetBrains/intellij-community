@@ -8,7 +8,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.util.SmartList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -54,13 +53,11 @@ open class SaveSessionProducerManager : SaveExecutor {
   }
 
   fun collectSaveSessions(result: MutableList<SaveSession>) {
-    processSaveSessions {
-      result.add(it)
-    }
+    processSaveSessions(result::add)
   }
 
   override suspend fun save(): SaveResult {
-    val saveSessions = SmartList<SaveSession>()
+    val saveSessions = ArrayList<SaveSession>()
     collectSaveSessions(saveSessions)
     if (saveSessions.isEmpty()) {
       return SaveResult.EMPTY

@@ -57,7 +57,7 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
       session.setExternalModuleComponentState(FileUtil.getNameWithoutExtension(PathUtil.getFileName(filePath)), componentName, componentTag)
     }
     else {
-      val stateStorage = getProjectStateStorage(filePath, store, project) ?: return
+      val stateStorage = getProjectStateStorage(filePath, store, project)
       val producer = session.getProducer(stateStorage)
       if (producer is DirectoryBasedSaveSessionProducer) {
         producer.setFileState(PathUtil.getFileName(filePath), componentName, componentTag?.children?.first())
@@ -146,7 +146,7 @@ internal class StorageJpsConfigurationReader(private val project: Project,
       return getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
     }
     else {
-      val storage = getProjectStateStorage(filePath, project.stateStore, project) ?: return null
+      val storage = getProjectStateStorage(filePath, project.stateStore, project)
       val stateMap = storage.getStorageData()
       return if (storage is DirectoryBasedStorageBase) {
         val elementContent = stateMap.getElement(PathUtil.getFileName(filePath))
@@ -188,8 +188,8 @@ internal class StorageJpsConfigurationReader(private val project: Project,
 
 fun getProjectStateStorage(filePath: String,
                            store: IProjectStore,
-                           project: Project): StateStorageBase<StateMap>? {
-  val storageSpec = getStorageSpec(filePath, project) ?: return null
+                           project: Project): StateStorageBase<StateMap> {
+  val storageSpec = getStorageSpec(filePath, project)
   @Suppress("UNCHECKED_CAST")
   return store.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
 }

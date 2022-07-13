@@ -178,15 +178,13 @@ abstract class ComponentStoreImpl : IComponentStore {
                                              forceSavingAllSettings: Boolean,
                                              saveSessionProducerManager: SaveSessionProducerManager) {
     withContext(Dispatchers.EDT) {
-      val errors = SmartList<Throwable>()
-      commitComponents(forceSavingAllSettings, saveSessionProducerManager, errors)
-      saveResult.addErrors(errors)
+      commitComponents(forceSavingAllSettings, saveSessionProducerManager, saveResult)
       saveSessionProducerManager
     }
   }
 
   @RequiresEdt
-  internal open fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
+  internal open fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, saveResult: SaveResult) {
     if (components.isEmpty()) {
       return
     }
@@ -194,7 +192,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
 
     val names = ArrayUtilRt.toStringArray(components.keys)
-    Arrays.sort(names)
+    names.sort()
     @NonNls var timeLog: StringBuilder? = null
 
     // well, strictly speaking each component saving takes some time, but +/- several seconds doesn't matter
@@ -238,7 +236,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         info.updateModificationCount(currentModificationCount)
       }
       catch (e: Throwable) {
-        errors.add(Exception("Cannot get $name component state", e))
+        saveResult.addError(Exception("Cannot get $name component state", e))
       }
 
       val duration = System.currentTimeMillis() - start

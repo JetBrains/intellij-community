@@ -3,15 +3,14 @@ package com.intellij.configurationStore
 
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.UnableToSaveProjectNotification
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.SmartList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -26,7 +25,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
     }
 
     val saveResult = withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction(com.intellij.openapi.util.Computable {
+      ApplicationManager.getApplication().runWriteAction(Computable {
         val r = SaveResult()
         saveSessions(extraSessions, r)
         saveSessions(saveSessions, r)
@@ -41,7 +40,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
     val notifications = getUnableToSaveNotifications()
     val readonlyFiles = saveResult.readonlyFiles
     if (readonlyFiles.isEmpty()) {
-      notifications.forEach { it.expire() }
+      notifications.forEach(UnableToSaveProjectNotification::expire)
       return
     }
 
@@ -60,7 +59,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
     withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction(com.intellij.openapi.util.Computable {
+      ApplicationManager.getApplication().runWriteAction(Computable {
         val r = SaveResult()
         for (entry in oldList) {
           executeSave(entry.session, r)

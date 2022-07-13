@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.write
@@ -116,11 +115,8 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
     coroutineScope {
       launch {
         // save modules before project
-        val errors = SmartList<Throwable>()
         val saveSessionManager = createSaveSessionProducerManager()
-        val moduleSaveSessions = saveModules(errors, forceSavingAllSettings, saveSessionManager)
-        result.addErrors(errors)
-
+        val moduleSaveSessions = saveModules(result, forceSavingAllSettings, saveSessionManager)
         saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
         saveSessionManager
           .saveWithAdditionalSaveSessions(moduleSaveSessions)
@@ -138,7 +134,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
     }
   }
 
-  protected open suspend fun saveModules(errors: MutableList<Throwable>,
+  protected open suspend fun saveModules(result: SaveResult,
                                          isForceSavingAllSettings: Boolean,
                                          projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
     return emptyList()
@@ -166,7 +162,7 @@ interface ModuleSavingCustomizer {
 
 @ApiStatus.Internal
 open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
-  final override suspend fun saveModules(errors: MutableList<Throwable>,
+  final override suspend fun saveModules(result: SaveResult,
                                          isForceSavingAllSettings: Boolean,
                                          projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
     moduleSavingCustomizer.saveModules(projectSaveSessionManager, this)
@@ -183,7 +179,7 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
         val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
         // collectSaveSessions is very cheap, so, do it in EDT
         val saveManager = moduleStore.createSaveSessionProducerManager()
-        commitModuleComponents(moduleStore, saveManager, projectSaveSessionManager, isForceSavingAllSettings, errors)
+        commitModuleComponents(moduleStore, saveManager, projectSaveSessionManager, isForceSavingAllSettings, result)
         saveManager.collectSaveSessions(saveSessions)
       }
       saveSessions
@@ -194,10 +190,12 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
     return StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!)
   }
 
-  private fun commitModuleComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager,
-                                     projectSaveSessionManager: SaveSessionProducerManager, isForceSavingAllSettings: Boolean,
-                                     errors: MutableList<Throwable>) {
-    moduleStore.commitComponents(isForceSavingAllSettings, moduleSaveSessionManager, errors)
+  private fun commitModuleComponents(moduleStore: ComponentStoreImpl,
+                                     moduleSaveSessionManager: SaveSessionProducerManager,
+                                     projectSaveSessionManager: SaveSessionProducerManager,
+                                     isForceSavingAllSettings: Boolean,
+                                     saveResult: SaveResult) {
+    moduleStore.commitComponents(isForceSavingAllSettings, moduleSaveSessionManager, saveResult)
     moduleSavingCustomizer.commitModuleComponents(projectSaveSessionManager, moduleStore, moduleSaveSessionManager)
   }
 }
