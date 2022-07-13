@@ -13,8 +13,6 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -96,8 +94,8 @@ internal class ShowQuickFixesAction : AnAction() {
           val modality = editor?.contentComponent?.let { ModalityState.stateForComponent(it) } ?: ModalityState.current()
           getApplication().invokeLater(
             {
-              IdeFocusManager.getInstance(project).doWhenFocusSettlesDown({ 
-                (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity { super.chooseActionAndInvoke(cachedAction, file, project, editor) }
+              IdeFocusManager.getInstance(project).doWhenFocusSettlesDown({
+                super.chooseActionAndInvoke(cachedAction, file, project, editor)
               }, modality)
             }, modality, project.disposed)
         }
