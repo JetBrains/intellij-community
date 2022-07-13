@@ -107,15 +107,18 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
     val iconInfo = selectedIcon
     val selectedNode = selectedTreePath?.lastPathComponent as? DefaultMutableTreeNode
     if (iconInfo != null && selectedNode != null) {
-      CustomizableActionsPanel.doSetIcon(customActionsSchema, selectedNode, iconInfo.iconReference, contentPane)
-
-      val userObject = selectedNode.userObject
-      if (userObject is Pair<*, *>) {
-        val actionId = userObject.first as String
-        val action = ActionManager.getInstance().getAction(actionId)
-        val icon = userObject.second as? Icon
-        action.templatePresentation.icon = icon
-        action.isDefaultIcon = icon == null
+      val selectedIcon = iconInfo.icon
+      val (actionId, icon) = getActionIdAndIcon(selectedNode)
+      if (actionId != null) {
+        if (selectedIcon !== icon) {
+          val iconReference = if (selectedIcon != null) iconInfo.iconReference else null
+          CustomizableActionsPanel.doSetIcon(customActionsSchema, selectedNode, iconReference, contentPane)
+        }
+        if (selectedNode.userObject is Pair<*, *>) {
+          val action = ActionManager.getInstance().getAction(actionId)
+          action.templatePresentation.icon = selectedIcon
+          action.isDefaultIcon = selectedIcon == null
+        }
       }
     }
     super.doOKAction()
