@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 
-abstract class PlaybackCommandCoroutineAdapter(private val text: @NonNls String, private val line: Int) : PlaybackCommand {
+abstract class PlaybackCommandCoroutineAdapter(protected val text: @NonNls String, private val line: Int) : PlaybackCommand {
   companion object {
     const val CMD_PREFIX: @NonNls String = "%"
   }
