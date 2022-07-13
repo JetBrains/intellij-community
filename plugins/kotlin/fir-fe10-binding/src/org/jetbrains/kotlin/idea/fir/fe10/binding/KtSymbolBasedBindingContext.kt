@@ -25,6 +25,7 @@ class KtSymbolBasedBindingContext(val context: Fe10WrapperContext) : BindingCont
         CallAndResolverCallWrappers(this)
         ToDescriptorBindingContextValueProviders(this)
         MiscBindingContextValueProvider(this)
+        Fe10BindingScopeProvider(this)
     }
 
     fun <K, V> registerGetterByKey(slice: ReadOnlySlice<K, V>, getter: (K) -> V?) {

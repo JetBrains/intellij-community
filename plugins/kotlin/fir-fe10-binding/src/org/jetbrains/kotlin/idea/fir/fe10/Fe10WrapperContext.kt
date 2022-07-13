@@ -57,11 +57,17 @@ interface Fe10WrapperContext {
 
 fun KtSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDescriptor =
     when (this) {
-        is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(this, context)
+        is KtNamedClassOrObjectSymbol -> toDeclarationDescriptor(context)
         is KtFunctionLikeSymbol -> toDeclarationDescriptor(context)
         is KtVariableLikeSymbol -> toDeclarationDescriptor(context)
 
         else -> context.implementationPlanned(this::class.qualifiedName ?: "")
+    }
+
+fun KtClassOrObjectSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): ClassDescriptor =
+    when (this) {
+        is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(this, context)
+        is KtAnonymousObjectSymbol -> context.implementationPlanned("KtAnonymousObjectSymbol")
     }
 
 fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedFunctionLikeDescriptor =
