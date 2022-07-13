@@ -8,14 +8,12 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.*
 import com.intellij.ide.impl.HeadlessDataManager
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.structureView.StructureViewFactory
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl
-import com.intellij.idea.Java11ShimImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.Application
@@ -29,7 +27,6 @@ import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
@@ -46,14 +43,13 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.testFramework.common.PlatformPrefix
 import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
+import com.intellij.testFramework.common.initializeTestEnvironment
 import com.intellij.testFramework.common.loadApp
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
-import com.intellij.util.lang.Java11Shim
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.ui.UIUtil
@@ -69,8 +65,7 @@ import javax.swing.Timer
 class TestApplicationManager private constructor() {
   companion object {
     init {
-      Java11Shim.INSTANCE = Java11ShimImpl()
-      ExtensionNotApplicableException.useFactoryWithStacktrace()
+      initializeTestEnvironment()
     }
 
     @Volatile
@@ -113,13 +108,10 @@ class TestApplicationManager private constructor() {
         throw it
       }
 
-      StartUpMeasurer.disable()
-
       if (!isBootstrappingAppNow.compareAndSet(false, true)) {
         throw IllegalStateException("App bootstrap is already in process")
       }
 
-      PlatformPrefix.autodetectPlatformPrefix()
       loadApp()
       isBootstrappingAppNow.set(false)
       result = TestApplicationManager()
