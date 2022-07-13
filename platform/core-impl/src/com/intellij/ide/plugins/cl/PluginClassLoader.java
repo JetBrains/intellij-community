@@ -309,7 +309,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         }
       }
 
-      if (c == null && error != null) {
+      if (error != null) {
         throw error;
       }
     }
@@ -328,14 +328,23 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       return result;
     }
 
+    if (parents.length == 0) {
+      result = new ClassLoader[]{coreLoader};
+      allParents = result;
+      return result;
+    }
+
     Set<ClassLoader> parentSet = new LinkedHashSet<>();
-    if (parents.length != 0) {
-      Queue<PluginClassLoader> queue = getParentPluginClassLoaders();
-      PluginClassLoader classLoader;
-      while ((classLoader = queue.poll()) != null) {
-        if (parentSet.add(classLoader)) {
-          queue.addAll(classLoader.getParentPluginClassLoaders());
-        }
+    Deque<ClassLoader> queue = new ArrayDeque<>();
+    collectClassLoaders(queue);
+    ClassLoader classLoader;
+    while ((classLoader = queue.pollFirst()) != null) {
+      if (!parentSet.add(classLoader)) {
+        continue;
+      }
+
+      if (classLoader instanceof PluginClassLoader) {
+        ((PluginClassLoader)classLoader).collectClassLoaders(queue);
       }
     }
     parentSet.add(coreLoader);
@@ -345,15 +354,13 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     return result;
   }
 
-  private @NotNull Queue<PluginClassLoader> getParentPluginClassLoaders() {
-    Queue<PluginClassLoader> result = new ArrayDeque<>(parents.length);
+  private void collectClassLoaders(@NotNull Deque<? super ClassLoader> queue) {
     for (IdeaPluginDescriptorImpl parent : parents) {
       ClassLoader classLoader = parent.getPluginClassLoader();
-      if (classLoader instanceof PluginClassLoader) {
-        result.add((PluginClassLoader)classLoader);
+      if (classLoader != null && classLoader != coreLoader) {
+        queue.add(classLoader);
       }
     }
-    return result;
   }
 
   public void clearParentListCache() {
