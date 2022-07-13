@@ -48,11 +48,10 @@ internal abstract class AbstractAddAccessorIntention(private val addGetter: Bool
 
         KotlinApplicatorInput.Empty
     }
-
-    companion object {
-        private val JVM_FIELD_CLASS_ID = ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
-    }
 }
+
+private val JVM_FIELD_CLASS_ID = ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
+
 
 internal class AddPropertyAccessorsIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = true), LowPriorityAction
 internal class AddPropertyGetterIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = false)

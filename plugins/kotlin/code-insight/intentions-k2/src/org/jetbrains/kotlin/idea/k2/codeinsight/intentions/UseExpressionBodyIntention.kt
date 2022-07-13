@@ -18,6 +18,8 @@ internal class UseExpressionBodyIntention : AbstractKotlinApplicatorBasedIntenti
     KtDeclarationWithBody::class,
 ) {
 
+    class Input : KotlinApplicatorInput
+
     override fun getApplicator() = applicator<KtDeclarationWithBody, Input> {
         familyAndActionName(KotlinBundle.lazyMessage(("convert.body.to.expression")))
         isApplicableByPsi { declaration ->
@@ -48,8 +50,6 @@ internal class UseExpressionBodyIntention : AbstractKotlinApplicatorBasedIntenti
     }
 
 
-    class Input : KotlinApplicatorInput
-
     override fun getApplicabilityRange() = applicabilityRanges { declaration: KtDeclarationWithBody ->
         val returnExpression = declaration.singleReturnExpressionOrNull ?: return@applicabilityRanges emptyList()
         val resultTextRanges = mutableListOf(TextRange(0, returnExpression.returnKeyword.endOffset - declaration.startOffset))
@@ -58,68 +58,66 @@ internal class UseExpressionBodyIntention : AbstractKotlinApplicatorBasedIntenti
         val rBraceTextRange = declaration.rBraceOffSetTextRange ?: return@applicabilityRanges resultTextRanges
         resultTextRanges.add(rBraceTextRange)
 
-        return@applicabilityRanges resultTextRanges
+        resultTextRanges
     }
 
 
     override fun getInputProvider() = inputProvider<KtDeclarationWithBody, _> { Input() }
 
     override fun skipProcessingFurtherElementsAfter(element: PsiElement) = false
+}
 
-    companion object {
-        private fun KtDeclarationWithBody.replaceWithPreservingComments(): KtExpression {
-            val bodyBlock = bodyBlockExpression ?: return this
-            val returnedExpression = singleReturnedExpressionOrNull ?: return this
+private fun KtDeclarationWithBody.replaceWithPreservingComments(): KtExpression {
+    val bodyBlock = bodyBlockExpression ?: return this
+    val returnedExpression = singleReturnedExpressionOrNull ?: return this
 
-            val commentSaver = CommentSaver(bodyBlock)
+    val commentSaver = CommentSaver(bodyBlock)
 
-            val factory = KtPsiFactory(this)
-            val eq = addBefore(factory.createEQ(), bodyBlockExpression)
-            addAfter(factory.createWhiteSpace(), eq)
+    val factory = KtPsiFactory(this)
+    val eq = addBefore(factory.createEQ(), bodyBlockExpression)
+    addAfter(factory.createWhiteSpace(), eq)
 
-            val newBody = bodyBlock.replaced(returnedExpression)
+    val newBody = bodyBlock.replaced(returnedExpression)
 
-            commentSaver.restore(newBody)
+    commentSaver.restore(newBody)
 
-            return newBody
-        }
+    return newBody
+}
 
-        /**
-         * This function guarantees that the function with its old body replaced by returned expression
-         * will have this expression placed on the next line to the function's signature or property accessor's 'get() =' statement
-         * in case it goes beyond IDEA editor's right margin
-         * @param[declaration] the PSI element used as an anchor, as no indexes are built for newly generated body yet
-         * @param[newBody] the new "= <returnedExpression>" like body, which replaces the old one
-         */
-        private fun Editor.correctRightMargin(
-            declaration: KtDeclarationWithBody, newBody: KtExpression
-        ) {
-            val kotlinFactory = KtPsiFactory(declaration)
-            val startOffset = newBody.startOffset
-            val startLine = document.getLineNumber(startOffset)
-            val rightMargin = settings.getRightMargin(project)
-            if (document.getLineEndOffset(startLine) - document.getLineStartOffset(startLine) >= rightMargin) {
-                declaration.addBefore(kotlinFactory.createNewLine(), newBody)
-            }
-        }
-
-        private fun Editor.selectFunctionColonType(newFunctionBody: KtNamedFunction) {
-            val colon = newFunctionBody.colon ?: return
-            val typeReference = newFunctionBody.typeReference ?: return
-            selectionModel.setSelection(colon.startOffset, typeReference.endOffset)
-            caretModel.moveToOffset(typeReference.endOffset)
-        }
-
-        private val KtDeclarationWithBody.singleReturnExpressionOrNull: KtReturnExpression?
-            get() = bodyBlockExpression?.statements?.singleOrNull() as? KtReturnExpression
-
-        private val KtDeclarationWithBody.singleReturnedExpressionOrNull: KtExpression?
-            get() = singleReturnExpressionOrNull?.returnedExpression
-
-        private val KtDeclarationWithBody.rBraceOffSetTextRange: TextRange?
-            get() {
-                val rightBlockBodyBrace = bodyBlockExpression?.rBrace ?: return null
-                return rightBlockBodyBrace.textRange.shiftLeft(startOffset)
-            }
+/**
+ * This function guarantees that the function with its old body replaced by returned expression
+ * will have this expression placed on the next line to the function's signature or property accessor's 'get() =' statement
+ * in case it goes beyond IDEA editor's right margin
+ * @param[declaration] the PSI element used as an anchor, as no indexes are built for newly generated body yet
+ * @param[newBody] the new "= <returnedExpression>" like body, which replaces the old one
+ */
+private fun Editor.correctRightMargin(
+    declaration: KtDeclarationWithBody, newBody: KtExpression
+) {
+    val kotlinFactory = KtPsiFactory(declaration)
+    val startOffset = newBody.startOffset
+    val startLine = document.getLineNumber(startOffset)
+    val rightMargin = settings.getRightMargin(project)
+    if (document.getLineEndOffset(startLine) - document.getLineStartOffset(startLine) >= rightMargin) {
+        declaration.addBefore(kotlinFactory.createNewLine(), newBody)
     }
 }
+
+private fun Editor.selectFunctionColonType(newFunctionBody: KtNamedFunction) {
+    val colon = newFunctionBody.colon ?: return
+    val typeReference = newFunctionBody.typeReference ?: return
+    selectionModel.setSelection(colon.startOffset, typeReference.endOffset)
+    caretModel.moveToOffset(typeReference.endOffset)
+}
+
+private val KtDeclarationWithBody.singleReturnExpressionOrNull: KtReturnExpression?
+    get() = bodyBlockExpression?.statements?.singleOrNull() as? KtReturnExpression
+
+private val KtDeclarationWithBody.singleReturnedExpressionOrNull: KtExpression?
+    get() = singleReturnExpressionOrNull?.returnedExpression
+
+private val KtDeclarationWithBody.rBraceOffSetTextRange: TextRange?
+    get() {
+        val rightBlockBodyBrace = bodyBlockExpression?.rBrace ?: return null
+        return rightBlockBodyBrace.textRange.shiftLeft(startOffset)
+    }

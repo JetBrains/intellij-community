@@ -26,7 +26,7 @@ internal class UnusedVariableInspection :
         }
 
     override fun getApplicabilityRange() = ApplicabilityRanges.DECLARATION_NAME
-    override fun getApplicator() = applicator {
+    override fun getApplicator() = applicator<KtNamedDeclaration, KotlinApplicatorInput.Empty> {
         familyName(KotlinBundle.lazyMessage("remove.element"))
         actionName { psi, _ ->
             KotlinBundle.message("remove.variable.0", psi.name.toString())

@@ -15,7 +15,7 @@ internal class SpecifyTypeExplicitlyIntention :
     AbstractKotlinApplicatorBasedIntention<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo>(KtCallableDeclaration::class) {
     override fun getApplicabilityRange() = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
 
-    override fun getApplicator()=
+    override fun getApplicator() =
         CallableReturnTypeUpdaterApplicator.applicator.with {
             isApplicableByPsi { declaration: KtCallableDeclaration ->
                 if (declaration is KtConstructor<*> || declaration is KtFunctionLiteral) return@isApplicableByPsi false

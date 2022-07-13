@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinAppli
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddArgumentNamesApplicators
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddNameToArgumentIntention.Companion.getArgumentNameIfCanBeUsedForCalls
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 

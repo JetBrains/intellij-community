@@ -25,7 +25,9 @@ import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 internal class ImportAllMembersIntention :
     AbstractKotlinApplicatorBasedIntention<KtExpression, ImportAllMembersIntention.Input>(KtExpression::class), HighPriorityAction {
 
-    override fun getApplicator()= applicator<KtExpression, Input> {
+    class Input(val fqName: FqName, val shortenCommand: ShortenCommand) : KotlinApplicatorInput
+
+    override fun getApplicator() = applicator<KtExpression, Input> {
         familyName(KotlinBundle.lazyMessage("import.members.with"))
         actionName { _, input -> KotlinBundle.message("import.members.from.0", input.fqName.asString()) }
         isApplicableByPsi { it.isOnTheLeftOfQualificationDot && !it.isInImportDirective() }
@@ -73,40 +75,37 @@ internal class ImportAllMembersIntention :
         Input(classId.asSingleFqName(), shortenCommand)
     }
 
-    private fun ClassId.isNestedClassIn(classId: ClassId) =
-        packageFqName == classId.packageFqName && relativeClassName.parent() == classId.relativeClassName
+}
 
-    class Input(val fqName: FqName, val shortenCommand: ShortenCommand) : KotlinApplicatorInput
+private fun ClassId.isNestedClassIn(classId: ClassId) =
+    packageFqName == classId.packageFqName && relativeClassName.parent() == classId.relativeClassName
 
-    companion object {
-        private val KtExpression.isOnTheLeftOfQualificationDot: Boolean
-            get() {
-                return when (val parent = parent) {
-                    is KtDotQualifiedExpression -> this == parent.receiverExpression
-                    is KtUserType -> {
-                        val grandParent = parent.parent as? KtUserType ?: return false
-                        grandParent.qualifier == parent && parent.referenceExpression == this
-                    }
-
-                    else -> false
-                }
+private val KtExpression.isOnTheLeftOfQualificationDot: Boolean
+    get() {
+        return when (val parent = parent) {
+            is KtDotQualifiedExpression -> this == parent.receiverExpression
+            is KtUserType -> {
+                val grandParent = parent.parent as? KtUserType ?: return false
+                grandParent.qualifier == parent && parent.referenceExpression == this
             }
 
-        private val KtExpression.actualReference: KtReference?
-            get() = when (this) {
-                is KtDotQualifiedExpression -> selectorExpression?.mainReference ?: mainReference
-                else -> mainReference
-            }
-
-        private fun KtAnalysisSession.isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression): Boolean {
-            val selectorExpression: KtExpression? = qualifiedAccess.getQualifiedExpressionForReceiver()?.selectorExpression
-            val referencedSymbol = when (selectorExpression) {
-                is KtCallExpression -> selectorExpression.resolveCall().successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
-                is KtNameReferenceExpression -> selectorExpression.mainReference.resolveToSymbol()
-                else -> return false
-            } as? KtSymbolWithKind ?: return true
-            if (referencedSymbol is KtConstructorSymbol) return false
-            return (referencedSymbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind?.isObject ?: true
+            else -> false
         }
     }
+
+private val KtExpression.actualReference: KtReference?
+    get() = when (this) {
+        is KtDotQualifiedExpression -> selectorExpression?.mainReference ?: mainReference
+        else -> mainReference
+    }
+
+private fun KtAnalysisSession.isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression): Boolean {
+    val selectorExpression: KtExpression? = qualifiedAccess.getQualifiedExpressionForReceiver()?.selectorExpression
+    val referencedSymbol = when (selectorExpression) {
+        is KtCallExpression -> selectorExpression.resolveCall().successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
+        is KtNameReferenceExpression -> selectorExpression.mainReference.resolveToSymbol()
+        else -> return false
+    } as? KtSymbolWithKind ?: return true
+    if (referencedSymbol is KtConstructorSymbol) return false
+    return (referencedSymbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind?.isObject ?: true
 }
