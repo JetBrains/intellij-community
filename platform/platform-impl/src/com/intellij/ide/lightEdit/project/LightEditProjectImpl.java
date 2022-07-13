@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.project.impl.ProjectLoadHelper;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
@@ -34,7 +33,7 @@ final class LightEditProjectImpl extends ProjectImpl implements LightEditCompati
   private LightEditProjectImpl(@NotNull Path projectPath) {
     super(projectPath, NAME);
 
-    ProjectLoadHelper.registerComponents(this);
+    registerComponents();
     customizeRegisteredComponents();
     getComponentStore().setPath(projectPath, false, null);
     try {

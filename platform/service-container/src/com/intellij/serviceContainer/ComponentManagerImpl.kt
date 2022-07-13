@@ -231,7 +231,6 @@ abstract class ComponentManagerImpl(
     return _extensionArea
   }
 
-  // convenient method - use only in a not important code
   fun registerComponents() {
     registerComponents(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                        app = getApplication(),

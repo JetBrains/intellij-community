@@ -8,11 +8,8 @@ import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
 import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
-import com.intellij.diagnostic.Activity
-import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.*
 import com.intellij.diagnostic.opentelemetry.TraceManager
-import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
@@ -73,6 +70,7 @@ import java.io.IOException
 import java.nio.file.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.coroutineContext
 
 @Suppress("OVERRIDE_DEPRECATION")
 @Internal
@@ -367,6 +365,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   override fun closeAndDispose(project: Project) = closeProject(project, checkCanClose = true)
 
+  @Suppress("removal")
   override fun addProjectManagerListener(listener: ProjectManagerListener) {
     listeners.add(listener)
   }
@@ -375,6 +374,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     listeners.add(listener)
   }
 
+  @Suppress("removal")
   override fun removeProjectManagerListener(listener: ProjectManagerListener) {
     val removed = listeners.remove(listener)
     LOG.assertTrue(removed)
@@ -1102,18 +1102,20 @@ private suspend fun initProject(file: Path,
     @Suppress("DEPRECATION", "removal")
     ApplicationManager.getApplication().messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(file, project)
     activity.end()
+    coroutineContext.ensureActive()
     registerComponents(project)
+    coroutineContext.ensureActive()
     project.componentStore.setPath(file, isRefreshVfsNeeded, template)
     project.init(preloadServices, indicator)
   }
   catch (initThrowable: Throwable) {
-    withContext(Dispatchers.EDT) {
-      try {
+    try {
+      withContext(Dispatchers.EDT + NonCancellable) {
         ApplicationManager.getApplication().runWriteAction { Disposer.dispose(project) }
       }
-      catch (disposeThrowable: Throwable) {
-        initThrowable.addSuppressed(disposeThrowable)
-      }
+    }
+    catch (disposeThrowable: Throwable) {
+      initThrowable.addSuppressed(disposeThrowable)
     }
     throw initThrowable
   }
@@ -1162,3 +1164,28 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
   }
   return mode
 }
+
+private suspend fun registerComponents(project: ProjectImpl) {
+  var activity = createActivity(project) { "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}" }
+  project.registerComponents()
+
+  activity = activity?.endAndStart("projectComponentRegistered")
+  val ep = ProjectServiceContainerCustomizer.getEp()
+  for (adapter in ep.sortedAdapters) {
+    coroutineContext.ensureActive()
+
+    val pluginDescriptor = adapter.pluginDescriptor
+    if (!isCorePlugin(pluginDescriptor)) {
+      logger<ProjectImpl>().error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
+      continue
+    }
+
+    (adapter.createInstance<ProjectServiceContainerCustomizer>(project) ?: continue).serviceRegistered(project)
+  }
+  activity?.end()
+}
+
+private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {
+  return if (!StartUpMeasurer.isEnabled() || project.isDefault) null else StartUpMeasurer.startActivity(message(), ActivityCategory.DEFAULT)
+}
+
