@@ -27,6 +27,8 @@ import java.util.*
 import java.util.function.Supplier
 
 abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActions.ActionText String>) : DumbAwareAction(dynamicText) {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null) {
@@ -136,6 +138,4 @@ class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messagePointer("v
 
     return dataPack.getFirstCommits(logManager.dataManager.storage, indexedRoots)
   }
-
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }

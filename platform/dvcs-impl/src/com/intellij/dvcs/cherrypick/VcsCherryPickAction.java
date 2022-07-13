@@ -2,6 +2,7 @@
 package com.intellij.dvcs.cherrypick;
 
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -26,6 +27,11 @@ public class VcsCherryPickAction extends DumbAwareAction {
     super(DvcsBundle.messagePointer("cherry.pick.action.text"),
           DvcsBundle.messagePointer("cherry.pick.action.description"),
           DvcsImplIcons.CherryPick);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

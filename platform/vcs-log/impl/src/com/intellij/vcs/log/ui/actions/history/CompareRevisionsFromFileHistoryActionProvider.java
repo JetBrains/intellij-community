@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -21,6 +22,11 @@ import java.awt.event.KeyEvent;
 import java.util.Arrays;
 
 abstract public class CompareRevisionsFromFileHistoryActionProvider implements AnActionExtensionProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
