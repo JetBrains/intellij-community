@@ -24,7 +24,6 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.runStartupActivities
 import com.intellij.openapi.util.Disposer
-import com.intellij.project.TestProjectManager.Companion.getCreationPlace
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
 import com.intellij.util.ModalityUiUtil
@@ -46,9 +45,14 @@ var totalCreatedProjectsCount = 0
 @ApiStatus.Internal
 open class TestProjectManager : ProjectManagerImpl() {
   companion object {
+
+    @Deprecated(
+      message = "moved to LeakHunter",
+      replaceWith = ReplaceWith("LeakHunter.getCreationPlace(project)", "com.intellij.testFramework.LeakHunter")
+    )
     @JvmStatic
     fun getCreationPlace(project: Project): String {
-      return "$project ${(if (project is ProjectEx) project.creationTrace else null) ?: ""}"
+      return LeakHunter.getCreationPlace(project)
     }
 
     suspend fun loadAndOpenProject(path: Path, parent: Disposable): Project {
@@ -260,7 +264,7 @@ private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
                             val hashCode = System.identityHashCode(leaked)
                             leakers.append("Leaked project found:").append(leaked)
                               .append(", hash=").append(hashCode)
-                              .append(", place=").append(getCreationPlace(leaked!!)).append('\n')
+                              .append(", place=").append(LeakHunter.getCreationPlace(leaked!!)).append('\n')
                               .append(backLink).append('\n')
                               .append("-----\n")
                             hashCodes.remove(hashCode)

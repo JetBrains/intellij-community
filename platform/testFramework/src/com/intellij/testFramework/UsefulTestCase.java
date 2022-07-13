@@ -2,7 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,6 +28,7 @@ import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
@@ -812,8 +812,13 @@ public abstract class UsefulTestCase extends TestCase {
     Assert.fail(value + " should be equal to one of " + Arrays.toString(values));
   }
 
+  /**
+   * @deprecated moved to {@link ThreadUtil#printThreadDump()}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static void printThreadDump() {
-    PerformanceWatcher.dumpThreadsToConsole("Thread dump:");
+    ThreadUtil.printThreadDump();
   }
 
   public static void assertEmpty(Object @NotNull [] array) {

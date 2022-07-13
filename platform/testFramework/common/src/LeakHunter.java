@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ide.IdeEventQueue;
@@ -8,9 +8,10 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.project.TestProjectManager;
+import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.PersistentEnumeratorCache;
@@ -26,6 +27,13 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class LeakHunter {
+
+  @TestOnly
+  public static @NotNull String getCreationPlace(@NotNull Project project) {
+    String creationTrace = project instanceof ProjectEx ? ((ProjectEx)project).getCreationTrace() : null;
+    return project + " " + (creationTrace == null ? " " : creationTrace);
+  }
+
   @TestOnly
   public static void checkProjectLeak() throws AssertionError {
     checkLeak(allRoots(), ProjectImpl.class, project -> !project.isDefault() && !project.isLight());
@@ -49,13 +57,13 @@ public final class LeakHunter {
                                    @NotNull Class<T> suspectClass,
                                    @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
     processLeaks(rootsSupplier, suspectClass, isReallyLeak, (leaked, backLink)->{
-      String place = leaked instanceof Project ? TestProjectManager.getCreationPlace((Project)leaked) : "";
+      String place = leaked instanceof Project ? getCreationPlace((Project)leaked) : "";
       String message ="Found leaked "+leaked.getClass() + ": "+leaked +
                       "; hash: " + System.identityHashCode(leaked) + "; place: " + place + "\n" +
                       backLink;
       System.out.println(message);
       System.out.println(";-----");
-      UsefulTestCase.printThreadDump();
+      ThreadUtil.printThreadDump();
 
       throw new AssertionError(message);
     });
@@ -121,7 +129,7 @@ public final class LeakHunter {
       result.put(Disposer.getTree(), "Disposer.getTree()");
       result.put(IdeEventQueue.getInstance(), "IdeEventQueue.getInstance()");
       result.put(LaterInvocator.getLaterInvocatorEdtQueue(), "LaterInvocator.getLaterInvocatorEdtQueue()");
-      result.put(ThreadTracker.getThreads().values(), "all live threads");
+      result.put(ThreadUtil.getThreads().values(), "all live threads");
       if (allLoadedClasses != null) {
         result.put(allLoadedClasses, "all loaded classes statics");
       }
