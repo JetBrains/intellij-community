@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradle.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.ide.actions.RevealFileAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Editor
@@ -31,6 +32,8 @@ class ShowKotlinGradleDslLogs : IntentionAction, AnAction(), DumbAware {
     }
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = RevealFileAction.isSupported()
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
     override fun update(e: AnActionEvent) {
         val presentation = e.presentation
