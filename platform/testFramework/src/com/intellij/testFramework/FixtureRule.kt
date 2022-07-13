@@ -34,6 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
@@ -520,6 +521,10 @@ open class DisposableRule : ExternalResource() {
   }
 }
 
+@ScheduledForRemoval
+@Deprecated(
+  message = "Use com.intellij.testFramework.junit5.TestDisposable annotation",
+)
 class DisposableExtension : DisposableRule(), AfterEachCallback {
   override fun afterEach(context: ExtensionContext?) {
     after()

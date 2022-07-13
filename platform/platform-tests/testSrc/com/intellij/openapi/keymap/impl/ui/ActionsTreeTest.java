@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,10 +14,10 @@ import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.ApplicationExtension;
-import com.intellij.testFramework.DisposableExtension;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.junit5.DynamicTests;
 import com.intellij.testFramework.junit5.NamedFailure;
+import com.intellij.testFramework.junit5.TestDisposable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,15 +61,11 @@ public class ActionsTreeTest {
 
   private ActionsTree myActionsTree;
 
-  private ActionShortcutRestrictions mySavedRestrictions;
-
   @RegisterExtension
   static ApplicationExtension ourApplicationExtension = new ApplicationExtension();
-  @RegisterExtension 
-  DisposableExtension myDisposableExtension = new DisposableExtension();
 
   @BeforeEach
-  void setUp() {
+  void setUp(@TestDisposable Disposable testDisposable) {
     // create dummy actions
     myActionWithoutTextAndDescription = new MyAction(null, null);
     myActionWithTextOnly = new MyAction("some text", null);
@@ -96,8 +93,7 @@ public class ActionsTreeTest {
     KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
     KeymapManagerEx.getInstanceEx().bindShortcuts(NON_EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
 
-    mySavedRestrictions = ActionShortcutRestrictions.getInstance();
-    setRestrictions(new ActionShortcutRestrictions(){
+    setRestrictions(testDisposable, new ActionShortcutRestrictions(){
       @NotNull
       @Override
       public ShortcutRestrictions getForActionId(String actionId) {
@@ -138,10 +134,6 @@ public class ActionsTreeTest {
 
   @AfterEach
   void tearDown() {
-    if (mySavedRestrictions != null) {
-      setRestrictions(mySavedRestrictions);
-    }
-
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_EDITOR);
     group.remove(myActionWithoutTextAndDescription);
@@ -169,10 +161,11 @@ public class ActionsTreeTest {
     KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
   }
 
-  private void setRestrictions(@NotNull ActionShortcutRestrictions restrictions) {
+  private static void setRestrictions(@TestDisposable @NotNull Disposable testDisposable,
+                                      @NotNull ActionShortcutRestrictions restrictions) {
     ServiceContainerUtil
       .replaceService(ApplicationManager.getApplication(), ActionShortcutRestrictions.class, restrictions,
-                      myDisposableExtension.getDisposable());
+                      testDisposable);
   }
 
   @Test
