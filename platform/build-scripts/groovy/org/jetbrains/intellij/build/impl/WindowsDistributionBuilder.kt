@@ -107,9 +107,15 @@ internal class WindowsDistributionBuilder(
 
     copyFileToDir(vcRtDll, osAndArchSpecificDistPath.resolve("bin"))
 
-    val zipPathTask = if (customizer.buildZipArchive) {
-      val jreDirectoryPaths = if (customizer.zipArchiveWithBundledJre) listOf(jreDir) else emptyList()
-      createBuildWinZipTask(jreDirectoryPaths, ".win", osAndArchSpecificDistPath, customizer, context).fork()
+    val zipWithJbrPathTask = if (customizer.buildZipArchiveWithBundledJre) {
+      createBuildWinZipTask(listOf(jreDir), customizer.zipArchiveWithBundledJreSuffix, osAndArchSpecificDistPath, customizer, context).fork()
+    }
+    else {
+      null
+    }
+
+    val zipWithoutJbrPathTask = if (customizer.buildZipArchiveWithoutBundledJre) {
+      createBuildWinZipTask(emptyList(), customizer.zipArchiveWithoutBundledJreSuffix, osAndArchSpecificDistPath, customizer, context).fork()
     }
     else {
       null
@@ -132,8 +138,19 @@ internal class WindowsDistributionBuilder(
                                    context = context)
     }
 
-    val zipPath = zipPathTask?.join()
-    if (context.options.isInDevelopmentMode || zipPath == null || exePath == null) {
+    val zipWithJbrPath = zipWithJbrPathTask?.join()
+    zipWithoutJbrPathTask?.join()
+
+    val exePath1 = exePath
+    if (zipWithJbrPath != null && exePath1 != null) {
+      checkThatExeInstallerAndZipWithJbrAreTheSame(zipWithJbrPath, exePath1)
+      return
+    }
+  }
+
+  private fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path, exePath: Path) {
+    if (context.options.isInDevelopmentMode) {
+      Span.current().addEvent("comparing .zip and .exe skipped in development mode")
       return
     }
 
@@ -142,7 +159,7 @@ internal class WindowsDistributionBuilder(
       return
     }
 
-    Span.current().addEvent("compare ${zipPath.fileName} vs. ${exePath!!.fileName}")
+    Span.current().addEvent("compare ${zipPath.fileName} vs. ${exePath.fileName}")
 
     val tempZip = Files.createTempDirectory(context.paths.tempDir, "zip-")
     val tempExe = Files.createTempDirectory(context.paths.tempDir, "exe-")
@@ -153,7 +170,7 @@ internal class WindowsDistributionBuilder(
       NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
 
       runProcess(listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()), null, context.messages)
-      RepairUtilityBuilder.generateManifest(context, tempExe, exePath!!.fileName.toString())
+      RepairUtilityBuilder.generateManifest(context, tempExe, exePath.fileName.toString())
     }
     finally {
       NioFiles.deleteRecursively(tempZip)
