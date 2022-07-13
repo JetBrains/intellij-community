@@ -195,13 +195,13 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfoRt.isMac) {
+    if (SystemInfoRt.isLinux) {
       frame.setIconImage(null);
     }
 
     IdeMenuBar.installAppMenuIfNeeded(frame);
     // in production (not from sources) makes sense only on Linux
-    if (!SystemInfoRt.isMac) {
+    if (SystemInfoRt.isLinux) {
       AppUIUtil.updateWindowIcon(frame);
     }
 

@@ -27,7 +27,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -524,6 +524,7 @@ object ProjectUtil {
         false
       }
     }
+
     if (projectStore.storageScheme == StorageScheme.DEFAULT) {
       return try {
         Files.isSameFile(projectFile, projectStore.projectFilePath)
@@ -532,6 +533,7 @@ object ProjectUtil {
         false
       }
     }
+
     var parent: Path? = projectFile.parent ?: return false
     val parentFileName = parent!!.fileName
     if (parentFileName != null && parentFileName.toString() == Project.DIRECTORY_STORE_FOLDER) {
@@ -556,7 +558,7 @@ object ProjectUtil {
 
     // On macOS, `j.a.Window#toFront` restores the frame if needed.
     // On X Window, restoring minimized frame can steal focus from an active application, so we do it only when the IDE is active.
-    if (SystemInfo.isWindows || SystemInfo.isXWindow && appIsActive) {
+    if (SystemInfoRt.isWindows || (SystemInfoRt.isXWindow && appIsActive)) {
       val state = frame.extendedState
       if (state and Frame.ICONIFIED != 0) {
         frame.extendedState = state and Frame.ICONIFIED.inv()
@@ -566,11 +568,11 @@ object ProjectUtil {
       AppIcon.getInstance().requestFocus(frame as IdeFrame)
     }
     else {
-      if (!SystemInfo.isXWindow || appIsActive) {
+      if (!SystemInfoRt.isXWindow || appIsActive) {
         // some Linux window managers allow `j.a.Window#toFront` to steal focus, so we don't call it on Linux when the IDE is inactive
         frame.toFront()
       }
-      if (!SystemInfo.isWindows) {
+      if (!SystemInfoRt.isWindows) {
         // on Windows, `j.a.Window#toFront` will request attention if needed
         AppIcon.getInstance().requestAttention(project, true)
       }

@@ -9,7 +9,7 @@ import com.intellij.openapi.progress.impl.NonCancellableTaskCancellation
 import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.ui.DialogWrapperDialog
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.TitlePanel
@@ -19,11 +19,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.uiDesigner.core.GridConstraints
 import com.intellij.uiDesigner.core.GridConstraints.*
 import com.intellij.uiDesigner.core.GridLayoutManager
-import com.intellij.util.ui.DialogUtil
-import com.intellij.util.ui.EDT
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Contract
 import java.awt.Component
 import java.awt.Dimension
@@ -33,22 +29,21 @@ import java.io.File
 import javax.swing.*
 
 internal class ProgressDialogUI : Disposable {
-
   val panel: JPanel = JPanel()
   private val myTitlePanel = TitlePanel()
-  private val myTextLabel = JLabel(" ")
-  private val myDetailsLabel = JBLabel("")
+  private val textLabel = JLabel(" ")
+  private val detailsLabel = JBLabel("")
   val progressBar: JProgressBar = JProgressBar()
   val cancelButton: JButton = JButton()
   val backgroundButton: JButton = JButton()
 
   init {
     myTitlePanel.setActive(true)
-    myDetailsLabel.componentStyle = UIUtil.ComponentStyle.REGULAR
-    if (SystemInfo.isMac) {
-      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myDetailsLabel)
+    detailsLabel.componentStyle = UIUtil.ComponentStyle.REGULAR
+    if (SystemInfoRt.isMac) {
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, detailsLabel)
     }
-    myDetailsLabel.foreground = UIUtil.getContextHelpForeground()
+    detailsLabel.foreground = UIUtil.getContextHelpForeground()
     progressBar.putClientProperty("html.disable", java.lang.Boolean.FALSE)
     progressBar.maximum = 100
     cancelButton.text = CommonBundle.getCancelButtonText()
@@ -58,13 +53,13 @@ internal class ProgressDialogUI : Disposable {
 
     val progressPanel = JPanel()
     progressPanel.layout = GridLayoutManager(3, 2, JBInsets.emptyInsets(), -1, -1, false, false)
-    progressPanel.preferredSize = Dimension(if (SystemInfo.isMac) 350 else JBUIScale.scale(450), -1)
-    progressPanel.add(myTextLabel, gridConstraints(row = 0, minimumSize = Dimension(0, -1)))
+    progressPanel.preferredSize = Dimension(if (SystemInfoRt.isMac) 350 else JBUIScale.scale(450), -1)
+    progressPanel.add(textLabel, gridConstraints(row = 0, minimumSize = Dimension(0, -1)))
     progressPanel.add(JLabel(" "), gridConstraints(
       row = 0, column = 1, anchor = ANCHOR_WEST, fill = FILL_NONE, HSizePolicy = SIZEPOLICY_FIXED,
     ))
     progressPanel.add(progressBar, gridConstraints(row = 1, colSpan = 2))
-    progressPanel.add(myDetailsLabel, gridConstraints(
+    progressPanel.add(detailsLabel, gridConstraints(
       row = 2, anchor = ANCHOR_NORTHWEST, minimumSize = Dimension(0, -1),
     ))
     progressPanel.add(JLabel(" "), gridConstraints(
@@ -141,13 +136,13 @@ internal class ProgressDialogUI : Disposable {
 
   fun updateTitle(title: @ProgressTitle String?) {
     EDT.assertIsEdt()
-    myTitlePanel.setText(StringUtil.defaultIfEmpty(title, " "))
+    myTitlePanel.setText(title?.takeIf(String::isNotEmpty) ?: " ")
   }
 
   fun updateProgress(state: ProgressState) {
     EDT.assertIsEdt()
-    myTextLabel.text = fitTextToLabel(state.text, myTextLabel)
-    myDetailsLabel.text = fitTextToLabel(state.details, myDetailsLabel)
+    textLabel.text = fitTextToLabel(state.text, textLabel)
+    detailsLabel.text = fitTextToLabel(state.details, detailsLabel)
     if (progressBar.isShowing) {
       val fraction = state.fraction
       if (fraction < 0.0) {

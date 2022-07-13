@@ -144,8 +144,7 @@ open class IdeStarter : ModernApplicationStarter() {
         return
       }
       willReopenRecentProjectOnStart -> {
-        val isOpened = recentProjectManager.reopenLastProjectsOnStart()
-        if (!isOpened) {
+        if (!recentProjectManager.reopenLastProjectsOnStart()) {
           WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
         }
       }
@@ -157,7 +156,6 @@ open class IdeStarter : ModernApplicationStarter() {
 
   private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
     val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
-
     ApplicationManager.getApplication().invokeLater {
       showWelcomeFrameTask.run()
       lifecyclePublisher.welcomeScreenDisplayed()

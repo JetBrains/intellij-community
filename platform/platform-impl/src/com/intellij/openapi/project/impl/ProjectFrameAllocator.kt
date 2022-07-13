@@ -79,7 +79,12 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       val deferredWindow = async {
         val frameManager = createFrameManager()
         deferredProjectFrameHelper.complete(frameManager.init(this@ProjectUiFrameAllocator))
-        frameManager.getWindow()
+        val window = frameManager.getWindow()
+        // hide splash, otherwise ProgressDialogUI will be shown on top of splash
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          SplashManager.hide()
+        }
+        window
       }
 
       withModalProgressIndicator(owner = service<TaskSupport>().modalTaskOwner(deferredWindow), title = getProgressTitle()) {
@@ -150,6 +155,8 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         runActivity("toolbar updating") {
           rootPane.initOrCreateToolbar(project)
         }
+
+        frameHelper.frame?.isVisible = true
       }
     }
   }
@@ -283,7 +290,6 @@ private class DefaultProjectUiFrameManager(private val frame: IdeFrameImpl,
       restoreFrameState(frameHelper, frameInfo)
     }
 
-    frame.isVisible = true
     frameHelper.init()
     return frameHelper
   }
@@ -309,7 +315,6 @@ private class SingleProjectUiFrameManager(private val frameInfo: FrameInfo, priv
     }
 
     frameHelper.init()
-    frame.isVisible = true
     return frameHelper
   }
 }
