@@ -6,7 +6,10 @@ import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -21,7 +24,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.ui.*
 import com.intellij.ui.border.CustomLineBorder
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.toArray
 import com.intellij.util.text.UniqueNameGenerator
@@ -55,34 +60,35 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
    */
   private val bottomPanel: DialogPanel = panel {
     row(ExecutionBundle.message("targets.details.project.default.target")) {
-      cell {
-        projectDefaultTargetComboBox = comboBox(
-          model = DefaultComboBoxModel(),
-          getter = { TargetEnvironmentsManager.getInstance(project).defaultTarget },
-          setter = { value -> TargetEnvironmentsManager.getInstance(project).defaultTarget = value },
-          renderer = SimpleListCellRenderer.create { label, value, _ ->
-            if (value == null) {
-              label.text = ExecutionBundle.message("local.machine")
-              label.icon = AllIcons.Nodes.HomeFolder
-            }
-            else {
-              label.text = value.displayName
-              label.icon = value.getTargetType().icon
-            }
+      projectDefaultTargetComboBox = comboBox(
+        DefaultComboBoxModel<TargetEnvironmentConfiguration?>(),
+        SimpleListCellRenderer.create { label, value, _ ->
+          if (value == null) {
+            label.text = ExecutionBundle.message("local.machine")
+            label.icon = AllIcons.Nodes.HomeFolder
           }
-        ).component
-        val helpButton = ContextHelpLabel.createWithLink(
-          null,
-          generateProjectDefaultHelpHtml(),
-          ExecutionBundle.message("targets.details.project.default.target.help.documentation.link"),
-          true
-        ) {
-          HelpManager.getInstance().invokeHelp("reference.run.targets")
-        }.apply {
-          horizontalTextPosition = SwingConstants.LEFT
+          else {
+            label.text = value.displayName
+            label.icon = value.getTargetType().icon
+          }
         }
-        helpButton()
+      ).bindItem(
+        { TargetEnvironmentsManager.getInstance(project).defaultTarget },
+        { value -> TargetEnvironmentsManager.getInstance(project).defaultTarget = value },
+      ).gap(RightGap.SMALL)
+        .component
+
+      val helpButton = ContextHelpLabel.createWithLink(
+        null,
+        generateProjectDefaultHelpHtml(),
+        ExecutionBundle.message("targets.details.project.default.target.help.documentation.link"),
+        true
+      ) {
+        HelpManager.getInstance().invokeHelp("reference.run.targets")
+      }.apply {
+        horizontalTextPosition = SwingConstants.LEFT
       }
+      cell(helpButton)
     }
   }.withTopLineBorder()
 
