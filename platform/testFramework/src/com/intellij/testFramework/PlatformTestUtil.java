@@ -115,8 +115,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
-import static com.intellij.testFramework.TestApplicationLoaderKt.loadAppInUnitTestMode;
 import static com.intellij.testFramework.UsefulTestCase.assertSameLines;
+import static com.intellij.testFramework.common.TestApplicationKt.loadAppInUnitTestMode;
 import static com.intellij.util.ObjectUtils.consumeIfNotNull;
 import static com.intellij.util.containers.ContainerUtil.map2List;
 import static com.intellij.util.containers.ContainerUtil.sorted;

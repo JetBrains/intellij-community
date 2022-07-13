@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.testFramework
+package com.intellij.testFramework.common
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
@@ -7,7 +7,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.callAppInitialized
 import com.intellij.idea.initConfigurationStore
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean.Companion.addKeysFromPlugins
@@ -15,8 +15,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.TestOnly
 import java.time.Duration
 
+private val LOG: Logger = Logger.getInstance("com.intellij.testFramework.common.TestApplicationKt")
+
+@TestOnly
 @OptIn(DelicateCoroutinesApi::class)
 internal fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val loadedModuleFuture = PluginManagerCore.getInitPluginFuture()
@@ -45,7 +49,7 @@ internal fun loadAppInUnitTestMode(isHeadless: Boolean) {
             modules = pluginSet.getEnabledModules(),
             activityPrefix = "",
             syncScope = this,
-            asyncScope = GlobalScope + CoroutineExceptionHandler { _, throwable -> logger<TestApplicationManager>().error(throwable) }
+            asyncScope = GlobalScope + CoroutineExceptionHandler { _, throwable -> LOG.error(throwable) }
           )
         }
         app.loadComponents()
