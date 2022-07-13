@@ -61,7 +61,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRoot
 import junit.framework.AssertionFailedError
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.awt.EventQueue
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.DelayQueue
@@ -123,15 +122,7 @@ class TestApplicationManager private constructor() {
       }
 
       PlatformPrefix.autodetectPlatformPrefix()
-      loadApp {
-        if (EventQueue.isDispatchThread()) {
-          // replaces system event queue
-          IdeEventQueue.getInstance()
-        }
-        else {
-          UITestUtil.replaceIdeEventQueueSafely()
-        }
-      }
+      loadApp()
       isBootstrappingAppNow.set(false)
       result = TestApplicationManager()
       ourInstance = result

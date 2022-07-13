@@ -45,6 +45,16 @@ public class UITestUtil {
     }
   }
 
+  public static void setupEventQueue() {
+    if (EventQueue.isDispatchThread()) {
+      //noinspection ResultOfMethodCallIgnored
+      IdeEventQueue.getInstance(); // replaces system event queue
+    }
+    else {
+      replaceIdeEventQueueSafely();
+    }
+  }
+
   public static void replaceIdeEventQueueSafely() {
     if (Toolkit.getDefaultToolkit().getSystemEventQueue() instanceof IdeEventQueue) {
       return;

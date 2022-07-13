@@ -25,6 +25,12 @@ import java.time.Duration
 private val LOG: Logger = Logger.getInstance("com.intellij.testFramework.common.TestApplicationKt")
 
 @TestOnly
+@Internal
+fun loadApp() {
+  loadApp(UITestUtil::setupEventQueue)
+}
+
+@TestOnly
 @OptIn(DelicateCoroutinesApi::class)
 @Internal
 fun loadApp(setupEventQueue: Runnable) {
