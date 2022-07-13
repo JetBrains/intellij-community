@@ -170,7 +170,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         PsiMethodReferenceExpression ref = PsiTreeUtil.getParentOfType(typeArgumentList, PsiMethodReferenceExpression.class);
         PsiTypeElement qualifierType = ref != null ? ref.getQualifierType() : null;
-        if (qualifierType != null && PsiTreeUtil.isAncestor(qualifierType, typeArgumentList, false)) {
+        if (PsiTreeUtil.isAncestor(qualifierType, typeArgumentList, false)) {
           PsiClass targetClass = PsiUtil.resolveClassInType(qualifierType.getType());
           if (targetClass != null) {
             new CommentTracker().replaceAndRestoreComments(qualifierType, elementFactory.createReferenceExpression(targetClass));
