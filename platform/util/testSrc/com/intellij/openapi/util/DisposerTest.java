@@ -8,12 +8,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NonNls;
 import org.junit.*;
 import org.junit.rules.TestName;
 
+import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -457,8 +457,8 @@ public class DisposerTest  {
       assertTrue(parent.isDisposed());
       assertEquals(registered, child.isDisposed());
       LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
-      ObjectUtils.reachabilityFence(parent);
-      ObjectUtils.reachabilityFence(child);
+      Reference.reachabilityFence(parent);
+      Reference.reachabilityFence(child);
     }
   }
 
