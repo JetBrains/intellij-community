@@ -5,16 +5,14 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.ui.components.labels.LinkLabel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class HideCoverageInfoAction extends IconWithTextAction {
   public HideCoverageInfoAction() {
@@ -24,7 +22,7 @@ public class HideCoverageInfoAction extends IconWithTextAction {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    CoverageDataManager.getInstance(e.getData(CommonDataKeys.PROJECT)).chooseSuitesBundle(null);
+    CoverageDataManager.getInstance(Objects.requireNonNull(e.getData(CommonDataKeys.PROJECT))).chooseSuitesBundle(null);
   }
 
   @NotNull
@@ -39,6 +37,11 @@ public class HideCoverageInfoAction extends IconWithTextAction {
         HintManagerImpl.getInstanceImpl().hideAllHints();
       }
     };
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
