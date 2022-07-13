@@ -624,7 +624,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     Runnable r = () -> counter.incrementAndGet();
     Application application = ApplicationManager.getApplication();
     application.invokeAndWait(r);
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 800, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 900, () -> {
       counter.set(0);
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> LaterInvocator.enterModal(myWindow1));
       for (int i = 0; i < N; i++) {
