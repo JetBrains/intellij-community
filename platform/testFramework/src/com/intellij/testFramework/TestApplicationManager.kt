@@ -47,9 +47,9 @@ import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.common.PlatformPrefix
+import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
 import com.intellij.testFramework.common.loadApp
 import com.intellij.ui.UiInterceptors
-import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
@@ -61,8 +61,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRoot
 import junit.framework.AssertionFailedError
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.util.concurrent.DelayQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -270,18 +268,8 @@ class TestApplicationManager private constructor() {
         l.catchAndStoreExceptions { UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS) }
 
         l.catchAndStoreExceptions {
-          try {
-            if (ApplicationManager.getApplication() != null) {
-              LeakHunter.checkNonDefaultProjectLeak()
-            }
-          }
-          catch (e: AssertionError) {
-            publishHeapDump("leakedProjects")
-            throw e
-          }
-          catch (e: Exception) {
-            publishHeapDump("leakedProjects")
-            throw e
+          if (ApplicationManager.getApplication() != null) {
+            assertNonDefaultProjectsAreNotLeaked()
           }
         }
 
@@ -321,21 +309,13 @@ class TestApplicationManager private constructor() {
         ?.cancelAllAndWait(10, TimeUnit.SECONDS)
     }
 
+    @Deprecated(
+      message = "moved to dump.kt",
+      replaceWith = ReplaceWith("com.intellij.testFramework.common.publishHeapDump(fileNamePrefix)")
+    )
     @JvmStatic
     fun publishHeapDump(fileNamePrefix: String): String {
-      val fileName = "$fileNamePrefix.hprof.zip"
-      val dumpFile = Paths.get(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), fileName)
-      try {
-        Files.deleteIfExists(dumpFile)
-        MemoryDumpHelper.captureMemoryDumpZipped(dumpFile)
-      }
-      catch (e: Exception) {
-        e.printStackTrace()
-      }
-
-      val dumpPath = dumpFile.toAbsolutePath().toString()
-      println("##teamcity[publishArtifacts '$dumpPath']")
-      return dumpPath
+      return com.intellij.testFramework.common.publishHeapDump(fileNamePrefix)
     }
   }
 

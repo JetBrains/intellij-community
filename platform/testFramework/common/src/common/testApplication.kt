@@ -15,6 +15,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean.Companion.addKeysFromPlugins
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
+import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.UITestUtil
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.*
@@ -86,5 +87,21 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
   catch (e: InterruptedException) {
     throw e.cause ?: e
+  }
+}
+
+@TestOnly
+@Internal
+fun assertNonDefaultProjectsAreNotLeaked() {
+  try {
+    LeakHunter.checkNonDefaultProjectLeak()
+  }
+  catch (e: AssertionError) {
+    publishHeapDump("leakedProjects")
+    throw e
+  }
+  catch (e: Exception) {
+    publishHeapDump("leakedProjects")
+    throw e
   }
 }
