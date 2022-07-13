@@ -157,13 +157,7 @@ public final class PlatformTestUtil {
   }
 
   static void loadApp(@NotNull Runnable setupEventQueue) {
-    var isHeadless = true;
-    if ("false".equals(System.getProperty("java.awt.headless"))) {
-      isHeadless = false;
-    }
-    else {
-      UITestUtil.setHeadlessProperty(true);
-    }
+    boolean isHeadless = UITestUtil.getAndSetHeadlessProperty();
 
     Main.setHeadlessInTestMode(isHeadless);
     PluginManagerCore.isUnitTestMode = true;

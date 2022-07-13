@@ -13,6 +13,17 @@ import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 
 public class UITestUtil {
+
+  public static boolean getAndSetHeadlessProperty() {
+    if ("false".equals(System.getProperty("java.awt.headless"))) {
+      return false;
+    }
+    else {
+      setHeadlessProperty(true);
+      return true;
+    }
+  }
+
   /**
    * Sets "java.awt.headless" system property
    */
