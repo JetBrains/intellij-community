@@ -1,5 +1,5 @@
 class Test {
   void m() {
-      <caret>switch ("\") {}
+    2<caret>2;
   }
 }
