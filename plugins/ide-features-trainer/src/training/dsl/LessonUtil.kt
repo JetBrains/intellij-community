@@ -632,7 +632,7 @@ fun LessonContext.highlightButtonById(actionId: String,
         }
         catch (e: Throwable) {
           // Just go to the next step if we cannot find needed button (when this method is used as pass trigger)
-          feature.complete(false)
+          taskInvokeLater { feature.complete(false) }
           throw IllegalStateException("Cannot find button for $actionId", e)
         }
         taskInvokeLater {
