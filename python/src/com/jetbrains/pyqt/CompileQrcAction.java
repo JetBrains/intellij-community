@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,6 +56,7 @@ public class CompileQrcAction extends AnAction {
     try {
       ProcessHandler process = new OSProcessHandler(cmdLine);
       ProcessTerminatedListener.attach(process);
+      process.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
       new RunContentExecutor(project, process)
         .withTitle(PyBundle.message("qt.run.tab.title.compile.qrc"))
         .run();

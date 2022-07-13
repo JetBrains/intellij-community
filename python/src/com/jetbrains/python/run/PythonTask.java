@@ -28,6 +28,7 @@ import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
@@ -234,6 +235,7 @@ public class PythonTask {
     final ProcessHandler process = createProcess(env);
     final Project project = myModule.getProject();
     stopProcessWhenAppClosed(process);
+    process.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
     new RunContentExecutor(project, process)
       .withFilter(new PythonTracebackFilter(project))
       .withConsole(consoleView)
