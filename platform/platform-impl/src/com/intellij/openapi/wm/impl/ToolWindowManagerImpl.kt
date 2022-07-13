@@ -95,7 +95,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   private val state: ToolWindowManagerState
     get() = project.service()
 
-  private var layoutState
+  var layoutState
     get() = state.layout
     set(value) { state.layout = value }
 
