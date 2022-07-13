@@ -2,4 +2,4 @@
 # One more
 Django==3.0.0
 # And another
-numpy==1.18.1
+numpy==1.22.0
