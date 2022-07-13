@@ -2,7 +2,6 @@
 package git4idea.rebase.log
 
 import com.intellij.vcs.log.VcsLog
-import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.repo.GitRepository
 
@@ -10,7 +9,6 @@ internal abstract class GitMultipleCommitEditingAction : GitCommitEditingActionB
   override fun createCommitEditingData(
     repository: GitRepository,
     log: VcsLog,
-    logData: VcsLogData,
-    logUi: VcsLogUi
-  ) = CommitEditingDataCreationResult.Created(MultipleCommitEditingData(repository, log, logData, logUi))
+    logData: VcsLogData
+  ) = CommitEditingDataCreationResult.Created(MultipleCommitEditingData(repository, log, logData))
 }

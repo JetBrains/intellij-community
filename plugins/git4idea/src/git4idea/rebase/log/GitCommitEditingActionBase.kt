@@ -120,8 +120,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
   protected abstract fun createCommitEditingData(
     repository: GitRepository,
     log: VcsLog,
-    logData: VcsLogData,
-    logUi: VcsLogUi
+    logData: VcsLogData
   ): CommitEditingDataCreationResult<T>
 
   protected open fun update(e: AnActionEvent, commitEditingData: T) {
@@ -241,9 +240,8 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     val project = e.project
     val log = e.getData(VcsLogDataKeys.VCS_LOG)
     val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData?
-    val logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI)
 
-    if (project == null || log == null || logDataProvider == null || logUi == null) {
+    if (project == null || log == null || logDataProvider == null) {
       return Prohibited()
     }
 
@@ -260,7 +258,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       )
     }
 
-    return createCommitEditingData(repository, log, logDataProvider, logUi)
+    return createCommitEditingData(repository, log, logDataProvider)
   }
 
   protected open fun getProhibitedStateMessage(
@@ -278,8 +276,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
   open class MultipleCommitEditingData(
     val repository: GitRepository,
     val log: VcsLog,
-    val logData: VcsLogData,
-    val logUi: VcsLogUi
+    val logData: VcsLogData
   ) {
     val project = repository.project
     val selectedCommitList: List<VcsShortCommitDetails> = log.selectedShortDetails

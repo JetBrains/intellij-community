@@ -2,7 +2,6 @@
 package git4idea.rebase
 
 import com.intellij.vcs.log.VcsLog
-import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.GitUtil
@@ -15,13 +14,12 @@ internal abstract class GitSingleCommitEditingAction : GitCommitEditingActionBas
   override fun createCommitEditingData(
     repository: GitRepository,
     log: VcsLog,
-    logData: VcsLogData,
-    logUi: VcsLogUi
+    logData: VcsLogData
   ): CommitEditingDataCreationResult<SingleCommitEditingData> {
     if (log.selectedCommits.size != 1) {
       return CommitEditingDataCreationResult.Prohibited()
     }
-    return CommitEditingDataCreationResult.Created(SingleCommitEditingData(repository, log, logData, logUi))
+    return CommitEditingDataCreationResult.Created(SingleCommitEditingData(repository, log, logData))
   }
 
   override fun checkCommitsEditingAvailability(commitEditingData: SingleCommitEditingData): String? {
@@ -43,9 +41,8 @@ internal abstract class GitSingleCommitEditingAction : GitCommitEditingActionBas
   class SingleCommitEditingData(
     repository: GitRepository,
     log: VcsLog,
-    logData: VcsLogData,
-    logUi: VcsLogUi
-  ) : MultipleCommitEditingData(repository, log, logData, logUi) {
+    logData: VcsLogData
+  ) : MultipleCommitEditingData(repository, log, logData) {
     val selectedCommit: VcsShortCommitDetails = selectedCommitList.first()
     val isHeadCommit = selectedCommit.id.asString() == repository.currentRevision
   }

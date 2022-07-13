@@ -30,7 +30,6 @@ class GitPushUpToCommitAction : GitLogSingleCommitAction() {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val log = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
     val logData = e.getRequiredData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData
-    val logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)
     val commit = ContainerUtil.getFirstItem(log.selectedCommits)!!
     val repository: GitRepository = getRepositoryForRoot(project, commit.root)!!
 
@@ -45,7 +44,7 @@ class GitPushUpToCommitAction : GitLogSingleCommitAction() {
         if (branch == repository.currentBranch && Registry.`is`("git.push.upto.commit.with.head.reference")) {
           // for the current branch, we can use HEAD relative reference a.e HEAD^1
           // that allows to re-push properly if an update is needed
-          val description = checkHeadLinearHistory(GitCommitEditingActionBase.MultipleCommitEditingData(repository, log, logData, logUI),
+          val description = checkHeadLinearHistory(GitCommitEditingActionBase.MultipleCommitEditingData(repository, log, logData),
             GitBundle.message("push.up.to.commit.allowed.progress.title"))
           if (description != null) {
             Messages.showErrorDialog(project, description, GitBundle.message("push.upto.here.failed.dialog.title"))

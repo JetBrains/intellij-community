@@ -15,10 +15,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -41,15 +38,6 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
   @Override
   protected void update(@NotNull AnActionEvent e, @NotNull SingleCommitEditingData commitEditingData) {
     if (e.getPresentation().isEnabledAndVisible()) {
-      VcsLogUi logUi = commitEditingData.getLogUi();
-      // DataPack is unavailable during refresh
-      DataPackBase dataPackBase = ((VisiblePack)logUi.getDataPack()).getDataPack();
-      if (!(dataPackBase instanceof DataPack)) {
-        e.getPresentation().setVisible(true);
-        e.getPresentation().setEnabled(false);
-        return;
-      }
-
       // support undo only for the last commit in the branch
       if (commitEditingData.isHeadCommit()) {
         e.getPresentation().setEnabled(true);
