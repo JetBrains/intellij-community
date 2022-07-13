@@ -15,6 +15,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.io.IOException
 import java.util.*
@@ -79,10 +80,18 @@ private fun findLanguagePluginToInstall(): PluginId? {
       implementationName = implementationName,
     )
 
-    val pattern = if (Locale.SIMPLIFIED_CHINESE.language.equals(locale.language) &&
-                      Locale.SIMPLIFIED_CHINESE.country.equals(locale.country))
-    { Locale.SIMPLIFIED_CHINESE.toLanguageTag() }
-    else { locale.language }
+    val pattern = if (SystemInfoRt.isMac) {
+      if (Locale.SIMPLIFIED_CHINESE.language.equals(locale.language)
+          && (Locale.SIMPLIFIED_CHINESE.country.equals(locale.country) || Locale.TAIWAN.country.equals(locale.country)))
+        if (locale.script == "Hans") Locale.SIMPLIFIED_CHINESE.toLanguageTag()
+        else locale.language
+      else locale.language
+    }
+    else {
+      if (Locale.SIMPLIFIED_CHINESE.language.equals(locale.language) && Locale.SIMPLIFIED_CHINESE.country.equals(locale.country))
+        Locale.SIMPLIFIED_CHINESE.toLanguageTag()
+      else locale.language
+    }
 
     val matchedLanguagePlugins = getLanguagePlugins(pattern)
 
