@@ -9,6 +9,7 @@ import com.intellij.idea.Main
 import com.intellij.idea.callAppInitialized
 import com.intellij.idea.initConfigurationStore
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.RecursionManager
@@ -23,6 +24,7 @@ import com.intellij.testFramework.UITestUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -30,6 +32,30 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 private val LOG: Logger = Logger.getInstance("com.intellij.testFramework.common.TestApplicationKt")
+
+private var applicationInitializationResult: Result<Unit>? = null
+
+val isApplicationInitialized: Boolean
+  get() = applicationInitializationResult?.isSuccess == true
+
+@TestOnly
+@Internal
+fun initTestApplication() {
+  (applicationInitializationResult ?: doInitTestApplication()).getOrThrow()
+}
+
+@TestOnly
+@Synchronized
+private fun doInitTestApplication(): Result<Unit> {
+  applicationInitializationResult?.let {
+    return it
+  }
+  val result = runCatching {
+    loadApp()
+  }
+  applicationInitializationResult = result
+  return result
+}
 
 @TestOnly
 @Internal
@@ -121,4 +147,13 @@ fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: 
 
   val commitThread = application.getServiceIfCreated(DocumentCommitProcessor::class.java) as? DocumentCommitThread
   commitThread?.waitForAllCommits(timeout, timeUnit)
+}
+
+@TestOnly
+@Internal
+fun disposeTestApplication() {
+  EDT.assertIsEdt()
+  val app = ApplicationManager.getApplication() as ApplicationImpl
+  app.disposeContainer() // `ApplicationManager#ourApplication` will be automatically set to `null`
+  applicationInitializationResult = null
 }

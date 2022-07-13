@@ -43,9 +43,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
-import com.intellij.testFramework.common.initializeTestEnvironment
-import com.intellij.testFramework.common.loadApp
+import com.intellij.testFramework.common.*
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -59,7 +57,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.DelayQueue
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Timer
 
 class TestApplicationManager private constructor() {
@@ -68,55 +65,25 @@ class TestApplicationManager private constructor() {
       initializeTestEnvironment()
     }
 
-    @Volatile
-    private var ourInstance: TestApplicationManager? = null
-
-    @Volatile
-    private var bootstrapError: Throwable? = null
-    private val isBootstrappingAppNow = AtomicBoolean()
+    private val ourInstance = TestApplicationManager()
 
     private val dataManager: HeadlessDataManager
       get() = DataManager.getInstance() as HeadlessDataManager
 
     @JvmStatic
     fun getInstance(): TestApplicationManager {
-      var result = ourInstance
-      if (result == null) {
-        try {
-          result = createInstance()
-        }
-        catch (e: Throwable) {
-          bootstrapError = e
-          isBootstrappingAppNow.set(false)
-          throw e
-        }
-      }
-      return result
+      initTestApplication()
+      return ourInstance
     }
 
     @JvmStatic
-    fun getInstanceIfCreated() = ourInstance
-
-    @Synchronized
-    private fun createInstance(): TestApplicationManager {
-      var result = ourInstance
-      if (result != null) {
-        return result
+    fun getInstanceIfCreated(): TestApplicationManager? {
+      if (isApplicationInitialized) {
+        return ourInstance
       }
-
-      bootstrapError?.let {
-        throw it
+      else {
+        return null
       }
-
-      if (!isBootstrappingAppNow.compareAndSet(false, true)) {
-        throw IllegalStateException("App bootstrap is already in process")
-      }
-
-      loadApp()
-      isBootstrappingAppNow.set(false)
-      result = TestApplicationManager()
-      ourInstance = result
-      return result
     }
 
     private var testCounter = 0
@@ -322,11 +289,6 @@ class TestApplicationManager private constructor() {
   fun getData(dataId: String) = dataManager.dataContext.getData(dataId)
 
   fun dispose() {
-    val app = ApplicationManager.getApplication() as ApplicationImpl? ?: return
-    app.invokeAndWait {
-      // `ApplicationManager#ourApplication` will be automatically set to `null`
-      app.disposeContainer()
-      ourInstance = null
-    }
+    disposeTestApplication()
   }
 }
