@@ -1344,7 +1344,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("code-insight/inspections-intentions-shared/tests/k1", testDataPath = "../testData") {
+    testGroup("code-insight/intentions-shared/tests/k1", testDataPath = "../testData") {
         testClass<AbstractSharedK1IntentionTest> {
             model("intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"))
         }
