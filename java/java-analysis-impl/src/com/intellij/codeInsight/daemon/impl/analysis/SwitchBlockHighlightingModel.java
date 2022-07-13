@@ -562,16 +562,34 @@ public class SwitchBlockHighlightingModel {
       switchLabels.add(labelStatement);
     }
 
-    private static void fillElementsToCheckDominance(@NotNull List<PsiCaseLabelElement> elements,
-                                                     @NotNull PsiCaseLabelElement labelElement) {
-      if (labelElement instanceof PsiPattern) {
-        elements.add(labelElement);
-      }
-      else if (labelElement instanceof PsiExpression) {
-        if (isNullType(labelElement) || isConstantLabelElement(labelElement)) {
-          elements.add(labelElement);
+    @NotNull
+    private Map<PsiCaseLabelElement, PsiCaseLabelElement> findDominatedLabels(@NotNull List<PsiCaseLabelElement> switchLabels) {
+      Map<PsiCaseLabelElement, PsiCaseLabelElement> result = new HashMap<>();
+      for (int i = 0; i < switchLabels.size() - 1; i++) {
+        PsiCaseLabelElement current = switchLabels.get(i);
+        if (result.containsKey(current)) continue;
+        for (int j = i + 1; j < switchLabels.size(); j++) {
+          PsiCaseLabelElement next = switchLabels.get(j);
+          if (isConstantLabelElement(next)) {
+            PsiExpression constExpr = ObjectUtils.tryCast(next, PsiExpression.class);
+            assert constExpr != null;
+            if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_18_PREVIEW) ||
+                 JavaPsiPatternUtil.isTotalForType(current, mySelectorType)) &&
+                JavaPsiPatternUtil.dominates(current, constExpr.getType())) {
+              result.put(next, current);
+            }
+            continue;
+          }
+          if (isNullType(next) && JavaPsiPatternUtil.isTotalForType(current, mySelectorType)) {
+            result.put(next, current);
+            continue;
+          }
+          if (JavaPsiPatternUtil.dominates(current, next)) {
+            result.put(next, current);
+          }
         }
       }
+      return result;
     }
 
     @Override
@@ -693,8 +711,8 @@ public class SwitchBlockHighlightingModel {
      * <p>
      * The dominance is based on pattern totality and dominance (14.30.3).
      *
-     * @see JavaPsiPatternUtil#isTotalForType(PsiPattern, PsiType)
-     * @see JavaPsiPatternUtil#dominates(PsiPattern, PsiPattern)
+     * @see JavaPsiPatternUtil#isTotalForType(PsiCaseLabelElement, PsiType)
+     * @see JavaPsiPatternUtil#dominates(PsiCaseLabelElement, PsiCaseLabelElement)
      */
     private void checkDominance(@NotNull List<PsiCaseLabelElement> switchLabels, @NotNull List<HighlightInfo> results) {
       Map<PsiCaseLabelElement, PsiCaseLabelElement> dominatedLabels = findDominatedLabels(switchLabels);
@@ -710,39 +728,6 @@ public class SwitchBlockHighlightingModel {
       });
     }
 
-    @NotNull
-    private Map<PsiCaseLabelElement, PsiCaseLabelElement> findDominatedLabels(@NotNull List<PsiCaseLabelElement> switchLabels) {
-      Map<PsiCaseLabelElement, PsiCaseLabelElement> result = new HashMap<>();
-      for (int i = 0; i < switchLabels.size() - 1; i++) {
-        PsiPattern currPattern = ObjectUtils.tryCast(switchLabels.get(i), PsiPattern.class);
-        if (currPattern == null) continue;
-        if (result.containsKey(currPattern)) continue;
-        for (int j = i + 1; j < switchLabels.size(); j++) {
-          PsiCaseLabelElement next = switchLabels.get(j);
-          if (isConstantLabelElement(next)) {
-            PsiExpression constExpr = ObjectUtils.tryCast(next, PsiExpression.class);
-            assert constExpr != null;
-            if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_18_PREVIEW) ||
-                JavaPsiPatternUtil.isTotalForType(currPattern, mySelectorType)) &&
-                JavaPsiPatternUtil.dominates(currPattern, constExpr.getType())) {
-              result.put(next, currPattern);
-            }
-            continue;
-          }
-          if (isNullType(next) && JavaPsiPatternUtil.isTotalForType(currPattern, mySelectorType)) {
-            result.put(next, currPattern);
-            continue;
-          }
-          PsiPattern nextPattern = ObjectUtils.tryCast(next, PsiPattern.class);
-          if (nextPattern == null) continue;
-          if (JavaPsiPatternUtil.dominates(currPattern, nextPattern)) {
-            result.put(next, currPattern);
-          }
-        }
-      }
-      return result;
-    }
-
     /**
      * 14.11.1 Switch Blocks
      * To ensure completeness and the absence of undescribed statements, different rules are provided
@@ -750,7 +735,7 @@ public class SwitchBlockHighlightingModel {
      * <p>
      * The completeness is based on pattern totality (14.30.3).
      *
-     * @see JavaPsiPatternUtil#isTotalForType(PsiPattern, PsiType)
+     * @see JavaPsiPatternUtil#isTotalForType(PsiCaseLabelElement, PsiType)
      */
     private void checkCompleteness(@NotNull List<PsiCaseLabelElement> elements, @NotNull List<HighlightInfo> results,
                                    boolean inclusiveTotalAndDefault) {
@@ -793,6 +778,18 @@ public class SwitchBlockHighlightingModel {
       }
       else {
         results.add(createCompletenessInfoForSwitch(!elements.isEmpty()));
+      }
+    }
+
+    private static void fillElementsToCheckDominance(@NotNull List<PsiCaseLabelElement> elements,
+                                                     @NotNull PsiCaseLabelElement labelElement) {
+      if (labelElement instanceof PsiPattern || labelElement instanceof PsiPatternGuard) {
+        elements.add(labelElement);
+      }
+      else if (labelElement instanceof PsiExpression) {
+        if (isNullType(labelElement) || isConstantLabelElement(labelElement)) {
+          elements.add(labelElement);
+        }
       }
     }
 
