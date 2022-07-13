@@ -1207,6 +1207,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/test-generator/kotlin.util.test-generator.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/test-generator/kotlin.util.test-generator.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/test-generator-fe10/kotlin.util.test-generator-fe10.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/test-generator-fe10/kotlin.util.test-generator-fe10.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/test-generator-fir/kotlin.util.test-generator-fir.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/test-generator-fir/kotlin.util.test-generator-fir.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.metricsCollector/intellij.tools.ide.metricsCollector.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.metricsCollector/intellij.tools.ide.metricsCollector.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter/intellij.tools.ide.starter.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter/intellij.tools.ide.starter.iml" />
     </modules>
   </component>
 </project>
