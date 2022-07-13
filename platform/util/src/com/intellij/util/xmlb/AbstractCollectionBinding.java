@@ -1,14 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Content;
@@ -207,7 +206,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
     Binding binding = getItemBinding(value.getClass());
     if (binding == null) {
       String elementName = getElementName();
-      if (StringUtil.isEmpty(elementName)) {
+      if (elementName.isEmpty()) {
         throw new Error("elementName must be not empty");
       }
 

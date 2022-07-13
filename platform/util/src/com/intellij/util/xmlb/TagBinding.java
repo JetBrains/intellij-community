@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.ClassUtil;
@@ -30,17 +30,17 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
 
   @Override
   public @Nullable Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
-    Object value = myAccessor.read(o);
+    Object value = accessor.read(o);
     if (value == null) {
       return null;
     }
 
     Element serialized = new Element(name);
-    if (myBinding == null) {
+    if (binding == null) {
       serialized.addContent(new Text(XmlSerializerImpl.convertToString(value)));
     }
     else {
-      Object node = myBinding.serialize(value, serialized, filter);
+      Object node = binding.serialize(value, serialized, filter);
       if (node != null && node != serialized) {
         Binding.addContent(serialized, node);
       }
@@ -86,14 +86,14 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
 
   @Override
   public boolean isMulti() {
-    return myBinding instanceof MultiNodeBinding && ((MultiNodeBinding)myBinding).isMulti();
+    return binding instanceof MultiNodeBinding && ((MultiNodeBinding)binding).isMulti();
   }
 
   @Override
   public @NotNull Object deserialize(@NotNull Object context, @NotNull Element element) {
-    if (myBinding == null) {
+    if (binding == null) {
       String value = XmlSerializerImpl.getTextValue(element, myTextIfEmpty);
-      XmlSerializerImpl.doSet(context, value, myAccessor, ClassUtil.typeToClass(myAccessor.getGenericType()));
+      XmlSerializerImpl.doSet(context, value, accessor, ClassUtil.typeToClass(accessor.getGenericType()));
     }
     else {
       deserialize(context, element.getChildren());
@@ -103,12 +103,12 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
 
   @Override
   public @NotNull Object deserialize(@NotNull Object context, @NotNull XmlElement element) {
-    if (myBinding == null) {
+    if (binding == null) {
       String value = element.content;
       if (value == null) {
         value = myTextIfEmpty;
       }
-      XmlSerializerImpl.doSet(context, value, myAccessor, ClassUtil.typeToClass(myAccessor.getGenericType()));
+      XmlSerializerImpl.doSet(context, value, accessor, ClassUtil.typeToClass(accessor.getGenericType()));
     }
     else {
       deserialize2(context, element.children);
@@ -117,28 +117,28 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
   }
 
   private void deserialize(@NotNull Object context, @NotNull List<Element> children) {
-    assert myBinding != null;
-    if (myBinding instanceof BeanBinding && !myAccessor.isWritable()) {
-      ((BeanBinding)myBinding).deserializeInto(context, children.get(0));
+    assert binding != null;
+    if (binding instanceof BeanBinding && !accessor.isWritable()) {
+      ((BeanBinding)binding).deserializeInto(context, children.get(0));
     }
-    else if ((myBinding instanceof CollectionBinding || myBinding instanceof MapBinding) && !myAccessor.isWritable()) {
-      Binding.deserializeList(myBinding, myAccessor.read(context), children);
+    else if ((binding instanceof CollectionBinding || binding instanceof MapBinding) && !accessor.isWritable()) {
+      Binding.deserializeList(binding, accessor.read(context), children);
     }
     else {
-      myAccessor.set(context, Binding.deserializeList(myBinding, myAccessor.read(context), children));
+      accessor.set(context, Binding.deserializeList(binding, accessor.read(context), children));
     }
   }
 
   private void deserialize2(@NotNull Object context, @NotNull List<XmlElement> children) {
-    assert myBinding != null;
-    if (myBinding instanceof BeanBinding && !myAccessor.isWritable()) {
-      ((BeanBinding)myBinding).deserializeInto(context, children.get(0));
+    assert binding != null;
+    if (binding instanceof BeanBinding && !accessor.isWritable()) {
+      ((BeanBinding)binding).deserializeInto(context, children.get(0));
     }
-    else if ((myBinding instanceof CollectionBinding || myBinding instanceof MapBinding) && !myAccessor.isWritable()) {
-      Binding.deserializeList2(myBinding, myAccessor.read(context), children);
+    else if ((binding instanceof CollectionBinding || binding instanceof MapBinding) && !accessor.isWritable()) {
+      Binding.deserializeList2(binding, accessor.read(context), children);
     }
     else {
-      myAccessor.set(context, Binding.deserializeList2(myBinding, myAccessor.read(context), children));
+      accessor.set(context, Binding.deserializeList2(binding, accessor.read(context), children));
     }
   }
 
