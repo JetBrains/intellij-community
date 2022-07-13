@@ -300,6 +300,9 @@ class ShowBlankDiffWindowDiffExtension : DiffExtension() {
       DnDHandler3(viewer, helper, ThreeSide.BASE).install()
       DnDHandler3(viewer, helper, ThreeSide.RIGHT).install()
     }
+    else if (viewer is UnifiedDiffViewer) {
+      DnDHandlerUnified(viewer, helper).install()
+    }
 
     if (viewer is DiffViewerBase) {
       RecentContentHandler(viewer, helper).install()
@@ -308,78 +311,84 @@ class ShowBlankDiffWindowDiffExtension : DiffExtension() {
 }
 
 private class DnDHandler2(val viewer: TwosideTextDiffViewer,
-                          val helper: MutableDiffRequestChain.Helper,
-                          val side: Side) : EditorDropHandler {
+                          helper: MutableDiffRequestChain.Helper,
+                          val side: Side) : DnDHandlerBase(viewer.project, helper) {
   fun install() {
-    val editor = viewer.getEditor(side) as? EditorImpl ?: return
-    editor.setDropHandler(this)
-  }
-
-  override fun canHandleDrop(transferFlavors: Array<out DataFlavor>): Boolean {
-    return FileCopyPasteUtil.isFileListFlavorAvailable(transferFlavors)
+    install(viewer.getEditor(side))
   }
 
   override fun handleDrop(t: Transferable, project: Project?, editorWindow: EditorWindow?) {
-    val success = doHandleDnD(t)
-    if (success) helper.fireRequestUpdated()
+    handleDnD2(t, side)
+  }
+}
+
+private class DnDHandlerUnified(val viewer: UnifiedDiffViewer,
+                                helper: MutableDiffRequestChain.Helper) : DnDHandlerBase(viewer.project, helper) {
+  fun install() {
+    install(viewer.editor)
   }
 
-  private fun doHandleDnD(transferable: Transferable): Boolean {
-    val files = FileCopyPasteUtil.getFileList(transferable)
-    if (files != null) {
-      if (files.size == 1) {
-        val newContent = createFileContent(viewer.project, files[0]) ?: return false
-        helper.setContent(newContent, side)
-        return true
-      }
-      if (files.size >= 2) {
-        val newContent1 = createFileContent(viewer.project, files[0]) ?: return false
-        val newContent2 = createFileContent(viewer.project, files[1]) ?: return false
-        helper.setContent(newContent1, Side.LEFT)
-        helper.setContent(newContent2, Side.RIGHT)
-        return true
-      }
-    }
-    return false
+  override fun handleDrop(t: Transferable, project: Project?, editorWindow: EditorWindow?) {
+    handleDnD2(t, viewer.masterSide)
   }
 }
 
 private class DnDHandler3(val viewer: ThreesideTextDiffViewer,
-                          val helper: MutableDiffRequestChain.Helper,
-                          val side: ThreeSide) : EditorDropHandler {
+                          helper: MutableDiffRequestChain.Helper,
+                          val side: ThreeSide) : DnDHandlerBase(viewer.project, helper) {
   fun install() {
-    val editor = viewer.getEditor(side) as? EditorImpl ?: return
-    editor.setDropHandler(this)
+    install(viewer.getEditor(side))
+  }
+
+  override fun handleDrop(t: Transferable, project: Project?, editorWindow: EditorWindow?) {
+    handleDnD3(t, side)
+  }
+}
+
+private abstract class DnDHandlerBase(val project: Project?,
+                                      val helper: MutableDiffRequestChain.Helper) : EditorDropHandler {
+  protected fun install(editor: Editor) {
+    if (editor is EditorImpl) {
+      editor.setDropHandler(this)
+    }
   }
 
   override fun canHandleDrop(transferFlavors: Array<out DataFlavor>): Boolean {
     return FileCopyPasteUtil.isFileListFlavorAvailable(transferFlavors)
   }
 
-  override fun handleDrop(t: Transferable, project: Project?, editorWindow: EditorWindow?) {
-    val success = doHandleDnD(t)
-    if (success) helper.fireRequestUpdated()
+  protected fun handleDnD2(transferable: Transferable, activeSide: Side) {
+    val files = FileCopyPasteUtil.getFileList(transferable) ?: return
+    if (files.size == 1) {
+      val newContent = createFileContent(project, files[0]) ?: return
+      helper.setContent(newContent, activeSide)
+      helper.fireRequestUpdated()
+    }
+    if (files.size >= 2) {
+      val newContent1 = createFileContent(project, files[0]) ?: return
+      val newContent2 = createFileContent(project, files[1]) ?: return
+      helper.setContent(newContent1, Side.LEFT)
+      helper.setContent(newContent2, Side.RIGHT)
+      helper.fireRequestUpdated()
+    }
   }
 
-  private fun doHandleDnD(transferable: Transferable): Boolean {
-    val files = FileCopyPasteUtil.getFileList(transferable)
-    if (files != null) {
-      if (files.size == 1) {
-        val newContent = createFileContent(viewer.project, files[0]) ?: return false
-        helper.setContent(newContent, side)
-        return true
-      }
-      if (files.size == 3) {
-        val newContent1 = createFileContent(viewer.project, files[0]) ?: return false
-        val newBaseContent = createFileContent(viewer.project, files[1]) ?: return false
-        val newContent2 = createFileContent(viewer.project, files[2]) ?: return false
-        helper.setContent(newContent1, ThreeSide.LEFT)
-        helper.setContent(newBaseContent, ThreeSide.BASE)
-        helper.setContent(newContent2, ThreeSide.RIGHT)
-        return true
-      }
+  protected fun handleDnD3(transferable: Transferable, activeSide: ThreeSide) {
+    val files = FileCopyPasteUtil.getFileList(transferable) ?: return
+    if (files.size == 1) {
+      val newContent = createFileContent(project, files[0]) ?: return
+      helper.setContent(newContent, activeSide)
+      helper.fireRequestUpdated()
     }
-    return false
+    if (files.size == 3) {
+      val newContent1 = createFileContent(project, files[0]) ?: return
+      val newBaseContent = createFileContent(project, files[1]) ?: return
+      val newContent2 = createFileContent(project, files[2]) ?: return
+      helper.setContent(newContent1, ThreeSide.LEFT)
+      helper.setContent(newBaseContent, ThreeSide.BASE)
+      helper.setContent(newContent2, ThreeSide.RIGHT)
+      helper.fireRequestUpdated()
+    }
   }
 }
 
