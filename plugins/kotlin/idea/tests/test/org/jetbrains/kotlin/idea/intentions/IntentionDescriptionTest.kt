@@ -19,7 +19,8 @@ class IntentionDescriptionTest : LightPlatformTestCase() {
     private val necessaryMavenNames = listOf("description.html")
     private val directories = listOf(
         KotlinRoot.DIR.resolve("idea/resources-en/intentionDescriptions"),
-        KotlinRoot.DIR.resolve("code-insight/inspections-intentions-shared/resources-en/intentionDescriptions"),
+        KotlinRoot.DIR.resolve("code-insight/intentions-shared/resources-en/intentionDescriptions"),
+        KotlinRoot.DIR.resolve("code-insight/descriptions/resources-en/intentionDescriptions"),
     )
 
     fun testDescriptionsAndShortNames() {
