@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
@@ -34,7 +33,7 @@ import org.jetbrains.kotlin.idea.test.configureKotlinFacet
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
 import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
-import org.jetbrains.kotlin.idea.versions.lastStableKnownCompilerVersionShort
+import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -93,7 +92,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals("1.1", KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.apiVersion)
 
         val actualVersion = getRuntimeLibraryVersion(myFixture.module)
-        val expectedVersionPrefix = KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort
+        val expectedVersionPrefix = kotlinCompilerVersionShort()
         assertTrue("$actualVersion expected to start with $expectedVersionPrefix", actualVersion?.startsWith(expectedVersionPrefix) == true)
     }
 
@@ -111,7 +110,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals(LanguageVersion.KOTLIN_1_1, module.languageVersionSettings.languageVersion)
 
         val actualVersion = getRuntimeLibraryVersion(myFixture.module)
-        val expectedVersionPrefix = KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort
+        val expectedVersionPrefix = kotlinCompilerVersionShort()
         assertTrue("$actualVersion expected to start with $expectedVersionPrefix", actualVersion?.startsWith(expectedVersionPrefix) == true)
     }
 
@@ -137,10 +136,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         val kotlinRuntime = module.findLibrary { LibraryJarDescriptor.REFLECT_JAR.findExistingJar(it) != null }
         assertNotNull(kotlinRuntime)
         val sources = kotlinRuntime!!.getFiles(OrderRootType.SOURCES)
-        assertContainsElements(
-            sources.map { it.name },
-            "kotlin-reflect-${KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort}-sources.jar"
-        )
+        assertContainsElements(sources.map { it.name }, "kotlin-reflect-${kotlinCompilerVersionShort()}-sources.jar")
     }
 
     private fun configureRuntime(path: String) {

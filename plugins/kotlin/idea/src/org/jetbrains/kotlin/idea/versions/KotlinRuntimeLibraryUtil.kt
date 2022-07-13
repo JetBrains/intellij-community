@@ -71,14 +71,8 @@ enum class LibraryJarDescriptor(val mavenArtifactId: String) {
     fun findExistingJar(library: Library): VirtualFile? =
         library.getFiles(OrderRootType.CLASSES).firstOrNull { it.name.startsWith(mavenArtifactId) }
 
-    val repositoryLibraryProperties: RepositoryLibraryProperties
-        get() = RepositoryLibraryProperties(
-            KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID,
-            mavenArtifactId,
-            KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort,
-            true,
-            emptyList()
-        )
+    val repositoryLibraryProperties: RepositoryLibraryProperties get() =
+        RepositoryLibraryProperties(KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID, mavenArtifactId, kotlinCompilerVersionShort(), true, emptyList())
 }
 
 @NlsSafe
@@ -98,11 +92,10 @@ private val KOTLIN_COMPILER_VERSION_SEPARATOR = "-(?:dev|release)".toRegex()
  * Bundled compiler version usually looks like: `1.5.0-release-759`.
  * `kotlinCompilerVersionShort` would return `1.5.0` in such case
  */
-val KotlinPluginLayout.lastStableKnownCompilerVersionShort: String
-    get() {
-        val parts = KOTLIN_COMPILER_VERSION_SEPARATOR.split(lastStableKnownCompilerVersion)
-        return parts.first()
-    }
+fun kotlinCompilerVersionShort(): String {
+    val parts = KOTLIN_COMPILER_VERSION_SEPARATOR.split(KotlinPluginLayout.instance.standaloneCompilerVersion)
+    return parts.first()
+}
 
 private val KOTLIN_COMPILER_VERSION_PATTERN = "(\\d+)\\.(\\d+)(?:\\.(\\d+))?.*".toRegex()
 

@@ -28,7 +28,6 @@ import com.intellij.ui.EditorNotificationProvider.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.*
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.util.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -93,7 +92,7 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
 
                 answer.createActionLabel(actionLabelText) {
                     ApplicationManager.getApplication().invokeLater {
-                        updateLibraries(project, KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort, badRuntimeLibraries)
+                        updateLibraries(project, kotlinCompilerVersionShort(), badRuntimeLibraries)
                     }
                 }
             }
