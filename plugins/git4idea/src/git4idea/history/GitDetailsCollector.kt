@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
+import com.intellij.diagnostic.opentelemetry.TraceManager
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
@@ -10,7 +12,6 @@ import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.util.StopWatch
 import git4idea.GitCommit
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
@@ -84,13 +85,11 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     handler.addParameters("--name-status")
     handler.endOptions()
 
-    val sw = StopWatch.start("loading details in [" + root.name + "]")
-
-    val handlerListener = GitLogOutputSplitter(handler, parser, converter)
-    Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
-    handlerListener.reportErrors()
-
-    sw.report()
+    TraceManager.getTracer("vcs").spanBuilder("loading details").setAttribute("root name", root.name).useWithScope {
+      val handlerListener = GitLogOutputSplitter(handler, parser, converter)
+      Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
+      handlerListener.reportErrors()
+    }
   }
 
   protected abstract fun createRecordsCollector(consumer: (List<R>) -> Unit): GitLogRecordCollector<R>

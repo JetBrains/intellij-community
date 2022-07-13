@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
+import com.intellij.diagnostic.opentelemetry.TraceManager
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -31,7 +33,6 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.history.FileHistoryPaths.fileHistory
 import com.intellij.vcs.log.history.FileHistoryPaths.withFileHistory
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
-import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.*
@@ -41,6 +42,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
+
 
 class FileHistoryFilterer(private val logData: VcsLogData, private val logId: String) : VcsLogFilterer, Disposable {
   private val project = logData.project
@@ -115,36 +117,38 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
                sortType: PermanentGraph.SortType,
                filters: VcsLogFilterCollection,
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
-      val start = System.currentTimeMillis()
-      val isInitial = commitCount == CommitCountStage.INITIAL
+      TraceManager.getTracer("vcs").spanBuilder("computing history ").useWithScope {
+        val isInitial = commitCount == CommitCountStage.INITIAL
 
-      val indexDataGetter = index.dataGetter
-      if (indexDataGetter != null && index.isIndexed(root) && dataPack.isFull) {
-        cancelLastTask(false)
-        val visiblePack = filterWithIndex(indexDataGetter, dataPack, oldVisiblePack, sortType, filters, isInitial)
-        LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
-        if (checkNotEmpty(dataPack, visiblePack, true)) {
-          return Pair(visiblePack, commitCount)
-        }
-      }
-
-      ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.let { vcs ->
-        if (vcs.vcsHistoryProvider != null) {
-          try {
-            val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters, isInitial)
-            LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
-                      " for computing history for $filePath with history provider")
-            checkNotEmpty(dataPack, visiblePack, false)
-            return@filter Pair(visiblePack, commitCount)
-          }
-          catch (e: VcsException) {
-            LOG.error(e)
+        val indexDataGetter = index.dataGetter
+        if (indexDataGetter != null && index.isIndexed(root) && dataPack.isFull) {
+          cancelLastTask(false)
+          val visiblePack = filterWithIndex(indexDataGetter, dataPack, oldVisiblePack, sortType, filters, isInitial)
+          it.setAttribute("File path", filePath.toString())
+          it.setAttribute("Type", "index")
+          if (checkNotEmpty(dataPack, visiblePack, true)) {
+            return Pair(visiblePack, commitCount)
           }
         }
-      }
 
-      LOG.warn("Could not find vcs or history provider for file $filePath")
-      return null
+        ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.let { vcs ->
+          if (vcs.vcsHistoryProvider != null) {
+            try {
+              val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters, isInitial)
+              it.setAttribute("File path", filePath.toString())
+              it.setAttribute("Type", "history provider")
+              checkNotEmpty(dataPack, visiblePack, false)
+              return@filter Pair(visiblePack, commitCount)
+            }
+            catch (e: VcsException) {
+              LOG.error(e)
+            }
+          }
+        }
+
+        LOG.warn("Could not find vcs or history provider for file $filePath")
+        return null
+      }
     }
 
     private fun checkNotEmpty(dataPack: DataPack, visiblePack: VisiblePack, withIndex: Boolean): Boolean {
@@ -248,25 +252,25 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
     private fun collectRenamesFromProvider(fileHistory: FileHistory): MultiMap<UnorderedPair<Int>, Rename> {
       if (fileHistory.unmatchedAdditionsDeletions.isEmpty()) return MultiMap.empty()
 
-      val start = System.currentTimeMillis()
+      TraceManager.getTracer("vcs").spanBuilder("collecting renames").useWithScope {
+        val handler = logProviders[root]?.fileHistoryHandler ?: return MultiMap.empty()
 
-      val handler = logProviders[root]?.fileHistoryHandler ?: return MultiMap.empty()
+        val renames = fileHistory.unmatchedAdditionsDeletions.mapNotNull {
+          val parentHash = storage.getCommitId(it.parent)!!.hash
+          val childHash = storage.getCommitId(it.child)!!.hash
+          if (it.isAddition) handler.getRename(root, it.filePath, parentHash, childHash)
+          else handler.getRename(root, it.filePath, childHash, parentHash)
+        }.map { r ->
+          Rename(r.filePath1, r.filePath2, storage.getCommitIndex(r.hash1, root), storage.getCommitIndex(r.hash2, root))
+        }
 
-      val renames = fileHistory.unmatchedAdditionsDeletions.mapNotNull {
-        val parentHash = storage.getCommitId(it.parent)!!.hash
-        val childHash = storage.getCommitId(it.child)!!.hash
-        if (it.isAddition) handler.getRename(root, it.filePath, parentHash, childHash)
-        else handler.getRename(root, it.filePath, childHash, parentHash)
-      }.map { r ->
-        Rename(r.filePath1, r.filePath2, storage.getCommitIndex(r.hash1, root), storage.getCommitIndex(r.hash2, root))
+        it.setAttribute("Renames size", renames.size.toLong())
+        it.setAttribute("Number of addition-deletions",fileHistory.unmatchedAdditionsDeletions.size.toLong())
+
+        val result = MultiMap<UnorderedPair<Int>, Rename>()
+        renames.forEach { result.putValue(it.commits, it) }
+        return result
       }
-
-      LOG.debug("Found ${renames.size} renames for ${fileHistory.unmatchedAdditionsDeletions.size} addition-deletions in " +
-                StopWatch.formatTime(System.currentTimeMillis() - start))
-
-      val result = MultiMap<UnorderedPair<Int>, Rename>()
-      renames.forEach { result.putValue(it.commits, it) }
-      return result
     }
 
     private fun getHead(pack: DataPack): Hash? {

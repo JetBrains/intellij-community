@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.google.common.collect.Lists;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.diagnostic.opentelemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -52,10 +53,13 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.Scope;
 import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.CalledInAny;
@@ -106,6 +110,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private ScheduledFuture<?> myCleaningFuture;
   private final ReadWriteLock SHELVED_FILES_LOCK = new ReentrantReadWriteLock(true);
   @Nullable private Set<VirtualFile> myShelvingFiles;
+  private final Tracer myTracer = TraceManager.INSTANCE.getTracer("vcs");
 
   public static ShelveChangesManager getInstance(@NotNull Project project) {
     return project.getService(ShelveChangesManager.class);
@@ -434,7 +439,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     throws IOException, VcsException {
 
     LOG.debug("Shelving of " + changes.size() + " changes...");
-    StopWatch totalSW = StopWatch.start("Total shelving");
+    Span totalSpan = myTracer.spanBuilder("total shelving").setAttribute("changes size", changes.size()).startSpan();
+    Scope scope = totalSpan.makeCurrent();
 
     Path schemePatchDir = generateUniqueSchemePatchDir(commitMessage, true);
     List<Change> textChanges = new ArrayList<>();
@@ -461,7 +467,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     changeList.setName(schemePatchDir.getFileName().toString());
     ProgressManager.checkCanceled();
     mySchemeManager.addScheme(changeList, false);
-    totalSW.report(LOG);
+    totalSpan.end();
+    scope.close();
     return changeList;
   }
 
@@ -480,36 +487,34 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     List<List<Change>> partition = Lists.partition(textChanges, partitionSize);
     for (List<Change> list : partition) {
       batchIndex++;
-      String inbatch = partition.size() > 1 ? " in batch #" + batchIndex : ""; //NON-NLS
-      StopWatch totalSw = StopWatch.start("Total shelving" + inbatch);
-      try {
-        StopWatch iterSw;
+      Span mainSpan = myTracer.spanBuilder("batch shelving").setAttribute("batch", batchIndex).startSpan();
+      try (Scope ignored = mainSpan.makeCurrent()) {
         if (baseContentsPreloadSize > 0) {
-          iterSw = StopWatch.start("Preloading base revisions for " + list.size() + " changes");
+          Span span = myTracer.spanBuilder("preloading base revisions").setAttribute("changes size", list.size()).startSpan();
           preloadBaseRevisions(list);
-          iterSw.report(LOG);
+          span.end();
         }
 
         ProgressManager.checkCanceled();
-        iterSw = StopWatch.start("Building patches" + inbatch);
+        Span spanBuildingPatches = myTracer.spanBuilder("building patches").startSpan();
         patches.addAll(IdeaTextPatchBuilder
                          .buildPatch(myProject, list, ProjectKt.getStateStore(myProject).getProjectBasePath(), false,
                                      honorExcludedFromCommit));
-        iterSw.report(LOG);
+        spanBuildingPatches.end();
         ProgressManager.checkCanceled();
 
-        iterSw = StopWatch.start("Storing base revisions" + inbatch);
+        Span spanStoringBaseRevisions = myTracer.spanBuilder("storing base revisions").startSpan();
         CommitContext commitContext = new CommitContext();
         baseRevisionsOfDvcsIntoContext(list, commitContext);
-        iterSw.report(LOG);
+        spanStoringBaseRevisions.end();
 
-        iterSw = StopWatch.start("Saving patch file" + inbatch);
+        Span spanSavingPatchFile = myTracer.spanBuilder("saving patch file").startSpan();
         savePatchFile(myProject, patchFile, patches, null, commitContext);
-        iterSw.report(LOG);
+        spanSavingPatchFile.end();
       }
       finally {
         ProjectLevelVcsManager.getInstance(myProject).getContentRevisionCache().clearConstantCache();
-        totalSw.report(LOG);
+        mainSpan.end();
       }
     }
     return patches;
@@ -542,10 +547,10 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private void rollbackChangesAfterShelve(@NotNull Collection<? extends Change> changes, boolean honorExcludedFromCommit) {
     final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
     boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
-    StopWatch sw = StopWatch.start("Rollback after shelve");
+    Span span = myTracer.spanBuilder("rollback after shelve").startSpan();
     new RollbackWorker(myProject, operationName, modalContext)
       .doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"), honorExcludedFromCommit);
-    sw.report(LOG);
+    span.end();
   }
 
   private static @NotNull Path getPatchFileInConfigDir(@NotNull Path schemePatchDir) {
