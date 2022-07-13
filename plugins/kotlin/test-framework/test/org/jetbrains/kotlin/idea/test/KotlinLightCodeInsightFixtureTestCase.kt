@@ -52,7 +52,10 @@ import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.facet.configureFacet
+import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
+import org.jetbrains.kotlin.idea.facet.removeKotlinFacet
 import org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
@@ -129,9 +132,9 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     }
 
     override fun tearDown() {
-        runAll(
-            ThrowableRunnable { disableKotlinOfficialCodeStyle(project) },
-            ThrowableRunnable { super.tearDown() },
+        com.intellij.testFramework.runAll(
+            { runCatching { project }.getOrNull()?.let { disableKotlinOfficialCodeStyle(it) } },
+            { super.tearDown() },
         )
 
         if (exceptions.isNotEmpty()) {

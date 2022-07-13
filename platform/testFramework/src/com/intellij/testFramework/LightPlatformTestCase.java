@@ -441,13 +441,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   static void tearDownSourceRoot(@NotNull Project project) {
     WriteCommandAction.runWriteCommandAction(project, () -> {
-      if (ourSourceRoot != null) {
+      VirtualFile sourceRoot = ourSourceRoot;
+      if (sourceRoot == null) {
+        return;
+      }
+
+      for (VirtualFile child : sourceRoot.getChildren()) {
         try {
-          for (VirtualFile child : ourSourceRoot.getChildren()) {
-            child.delete(LightPlatformTestCase.class);
-          }
+          child.delete(LightPlatformTestCase.class);
         }
-        catch (IOException e) {
+        catch (IOException | IllegalStateException e) {
+          // TempFileSystem.deleteFile can throw not IOException but IllegalStateException
           //noinspection CallToPrintStackTrace
           e.printStackTrace();
         }
@@ -635,7 +639,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       if (ourPsiManager != null) {
         assertTrue(ourPsiManager.isDisposed());
       }
-    } finally {
+    }
+    finally {
       setProject(null);
       ourModule = null;
       ourPsiManager = null;
