@@ -13,6 +13,9 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
+
+import java.util.Map;
 
 public final class MoveAnnotationOnStaticMemberQualifyingTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   public MoveAnnotationOnStaticMemberQualifyingTypeFix(@NotNull final PsiAnnotation annotation) {
@@ -67,12 +70,16 @@ public final class MoveAnnotationOnStaticMemberQualifyingTypeFix extends LocalQu
   @Nullable("No type element found")
   @Contract(pure = true)
   private static PsiTypeElement getTypeElement(@NotNull final PsiElement startElement) {
-    final PsiTypeElement psiTypeElement = PsiTreeUtil.getParentOfType(startElement, PsiTypeElement.class);
-    if (psiTypeElement != null) return psiTypeElement;
-
-    final PsiVariable variable = PsiTreeUtil.getParentOfType(startElement, PsiVariable.class);
-    if (variable == null) return null;
-
-    return variable.getTypeElement();
+    PsiElement parent = PsiTreeUtil.getParentOfType(startElement, PsiTypeElement.class, PsiVariable.class, PsiMethod.class);
+    if (parent instanceof PsiTypeElement) {
+      return (PsiTypeElement)parent;
+    }
+    if (parent instanceof PsiVariable) {
+      return ((PsiVariable)parent).getTypeElement();
+    }
+    if (parent instanceof PsiMethod) {
+      return ((PsiMethod)parent).getReturnTypeElement();
+    }
+    return null;
   }
 }
