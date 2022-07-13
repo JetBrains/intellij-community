@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.turnRefsToSuper;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -27,6 +28,8 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   private static final Logger LOG = Logger.getInstance(TurnRefsToSuperProcessor.class);
 
   private PsiClass mySuper;
+  private final @NotNull @NlsContexts.Command String myRefactoringName;
+
   public TurnRefsToSuperProcessor(Project project,
                                   @NotNull PsiClass aClass,
                                   @NotNull PsiClass aSuper,
@@ -34,13 +37,13 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     super(project, replaceInstanceOf, aSuper.getName());
     myClass = aClass;
     mySuper = aSuper;
+    myRefactoringName = JavaRefactoringBundle.message("turn.refs.to.super.command", DescriptiveNameUtil.getDescriptiveName(myClass), DescriptiveNameUtil.getDescriptiveName(mySuper));
   }
 
   @Override
   @NotNull
   protected String getCommandName() {
-    return JavaRefactoringBundle.message("turn.refs.to.super.command",
-                                     DescriptiveNameUtil.getDescriptiveName(myClass), DescriptiveNameUtil.getDescriptiveName(mySuper));
+    return myRefactoringName;
   }
 
   @Override
