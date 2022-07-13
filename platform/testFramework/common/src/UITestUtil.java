@@ -5,14 +5,20 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 
-public class UITestUtil {
+@TestOnly
+@Internal
+public final class UITestUtil {
+
+  private UITestUtil() { }
 
   public static boolean getAndSetHeadlessProperty() {
     if ("false".equals(System.getProperty("java.awt.headless"))) {
