@@ -55,7 +55,7 @@ fun getModuleInfosFromIdeaModel(project: Project, platform: TargetPlatform? = nu
 }
 
 fun getIdeaModelInfosCache(project: Project): IdeaModelInfosCache =
-    if (FineGrainedEntityCache.isFineGrainedCacheInvalidationEnabled) {
+    if (false && FineGrainedEntityCache.isFineGrainedCacheInvalidationEnabled) {
         project.service()
     } else {
         project.cacheInvalidatingOnRootModifications {
@@ -180,7 +180,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
     override fun dispose() = Unit
 
     inner class ModuleCache(modules: List<Module>) :
-        SynchronizedFineGrainedEntityCache<Module, List<ModuleSourceInfo>>(project, cleanOnLowMemory = true),
+        SynchronizedFineGrainedEntityCache<Module, List<ModuleSourceInfo>>(project, cleanOnLowMemory = false),
         WorkspaceModelChangeListener {
 
         init {
@@ -225,7 +225,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
     }
 
     inner class LibraryCache(modules: List<Module>) :
-        SynchronizedFineGrainedEntityCache<Library, List<LibraryInfo>>(project, cleanOnLowMemory = true),
+        SynchronizedFineGrainedEntityCache<Library, List<LibraryInfo>>(project, cleanOnLowMemory = false),
         WorkspaceModelChangeListener {
 
         init {
@@ -279,7 +279,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
     }
 
     inner class SdkCache :
-        SynchronizedFineGrainedEntityCache<Sdk, SdkInfo>(project, cleanOnLowMemory = true),
+        SynchronizedFineGrainedEntityCache<Sdk, SdkInfo>(project, cleanOnLowMemory = false),
         ProjectJdkTable.Listener,
         ModuleRootListener {
 
