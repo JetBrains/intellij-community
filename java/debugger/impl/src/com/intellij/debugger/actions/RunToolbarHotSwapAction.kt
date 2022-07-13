@@ -8,6 +8,7 @@ import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.HotSwapUI
 import com.intellij.debugger.ui.HotSwapUIImpl
 import com.intellij.execution.runToolbar.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ShortcutSet
@@ -68,5 +69,9 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
     }
 
     //LOG.info(getLog(e))
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
