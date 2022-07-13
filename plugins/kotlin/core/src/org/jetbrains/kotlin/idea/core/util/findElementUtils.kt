@@ -12,15 +12,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.psiUtil.isTypeConstructorReference
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.scopes.receivers.ClassQualifier
-import org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils
 
 enum class ElementKind {
     EXPRESSION {
@@ -46,7 +46,7 @@ fun findElement(
         file, startOffset, endOffset, elementKind.elementClass
     ) ?: return null
     return when(elementKind) {
-        ElementKind.TYPE_ELEMENT -> null
+        ElementKind.TYPE_ELEMENT -> element
         ElementKind.TYPE_CONSTRUCTOR -> element.takeIf(::isTypeConstructorReference)
         ElementKind.EXPRESSION -> findExpression(element)
     }
@@ -81,9 +81,9 @@ fun findElements(file: PsiFile, startOffset: Int, endOffset: Int, kind: ElementK
     val newEndOffset = element2.endOffset
     if (newStartOffset >= newEndOffset) return PsiElement.EMPTY_ARRAY
 
-    var parent = PsiTreeUtil.findCommonParent(element1, element2) ?: return PsiElement.EMPTY_ARRAY
+    var parent: PsiElement? = PsiTreeUtil.findCommonParent(element1, element2) ?: return PsiElement.EMPTY_ARRAY
     while (parent !is KtBlockExpression) {
-        if (parent is KtFile) return PsiElement.EMPTY_ARRAY
+        if (parent == null || parent is KtFile) return PsiElement.EMPTY_ARRAY
         parent = parent.parent
     }
 
