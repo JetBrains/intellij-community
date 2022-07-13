@@ -173,11 +173,17 @@ public final class DirectBufferWrapper {
 
 
   private ByteBuffer create() throws IOException {
-    ByteBuffer buffer = DirectByteBufferAllocator.ALLOCATOR.allocate(myFile.myPageSize);
+    int bufferSize = myFile.myPageSize;
+    ByteBuffer buffer = DirectByteBufferAllocator.ALLOCATOR.allocate(bufferSize);
     buffer.order(myFile.useNativeByteOrder() ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN);
     assert buffer.limit() > 0;
     return myFile.useChannel(ch -> {
-      ch.read(buffer, myPosition);
+      int readBytes = ch.read(buffer, myPosition);
+      if (myFile.isFillBuffersWithZeros() && readBytes < bufferSize) {
+        for (int i = Math.max(0, readBytes); i < bufferSize; i++) {
+          buffer.put(i, (byte) 0);
+        }
+      }
       return buffer;
     }, myFile.isReadOnly());
   }
