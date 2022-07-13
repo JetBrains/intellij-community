@@ -3,12 +3,10 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.with
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.presentation
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.with
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -35,9 +33,5 @@ internal class RedundantUnitReturnTypeInspection :
                 CallableReturnTypeUpdaterApplicator.TypeInfo(CallableReturnTypeUpdaterApplicator.TypeInfo.UNIT)
             else -> null
         }
-    }
-
-    override val presentation = presentation<KtNamedFunction> {
-        highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
     }
 }

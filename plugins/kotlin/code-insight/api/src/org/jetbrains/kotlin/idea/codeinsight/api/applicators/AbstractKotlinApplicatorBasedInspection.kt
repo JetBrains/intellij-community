@@ -50,14 +50,11 @@ abstract class AbstractKotlinApplicatorBasedInspection<PSI : KtElement, INPUT : 
         isOnTheFly: Boolean,
         input: INPUT
     ) {
-        val highlightType = presentation.getHighlightType(element)
-        if (!isOnTheFly && highlightType == ProblemHighlightType.INFORMATION) return
-
         val description = applicator.getActionName(element, input)
         val fix = applicator.asLocalQuickFix(input, actionName = applicator.getActionName(element, input))
 
         ranges.forEach { range ->
-            registerProblem(holder, element, range, description, highlightType, isOnTheFly, fix)
+            registerProblem(holder, element, range, description, isOnTheFly, fix)
         }
     }
 
@@ -66,12 +63,18 @@ abstract class AbstractKotlinApplicatorBasedInspection<PSI : KtElement, INPUT : 
         element: PSI,
         range: TextRange,
         @InspectionMessage description: String,
-        highlightType: ProblemHighlightType,
         isOnTheFly: Boolean,
         fix: LocalQuickFix
     ) {
         with(holder) {
-            val problemDescriptor = manager.createProblemDescriptor(element, range, description, highlightType, isOnTheFly, fix)
+            val problemDescriptor = manager.createProblemDescriptor(
+                element,
+                range,
+                description,
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                isOnTheFly,
+                fix
+            )
             registerProblem(problemDescriptor)
         }
     }
@@ -84,7 +87,6 @@ abstract class AbstractKotlinApplicatorBasedInspection<PSI : KtElement, INPUT : 
     }
 
 
-    abstract val presentation: KotlinApplicatorPresentation<PSI>
     abstract val applicabilityRange: KotlinApplicabilityRange<PSI>
     abstract val inputProvider: KotlinApplicatorInputProvider<PSI, INPUT>
     abstract val applicator: KotlinApplicator<PSI, INPUT>

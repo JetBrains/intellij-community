@@ -5,7 +5,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="WARNING"
+                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      language="kotlin"
                      key="inspection.redundant.unit.return.type.display.name" bundle="messages.KotlinBundle"/>
 
@@ -14,7 +14,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="WARNING"
+                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      language="kotlin"
                      key="inspection.redundant.visibility.modifier.display.name" bundle="messages.KotlinBundle"/>
 
@@ -23,7 +23,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="WARNING"
+                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      language="kotlin"
                      key="inspection.kotlin.unused.import.display.name" bundle="messages.KotlinBundle"/>
 
@@ -32,7 +32,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="WARNING"
+                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      language="kotlin"
                      key="inspection.kotlin.unused.variable.display.name" bundle="messages.KotlinBundle"/>
 

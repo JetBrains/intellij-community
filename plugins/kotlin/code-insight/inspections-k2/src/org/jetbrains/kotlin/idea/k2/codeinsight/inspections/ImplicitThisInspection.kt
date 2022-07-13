@@ -93,8 +93,6 @@ internal class ImplicitThisInspection : AbstractKotlinApplicatorBasedInspection<
         return Pair(associatedClass, associatedTag)
     }
 
-    override val presentation: KotlinApplicatorPresentation<KtExpression> = presentation { highlightType(ProblemHighlightType.INFORMATION) }
-
     override val applicator: KotlinApplicator<KtExpression, ImplicitReceiverInfo> = Companion.applicator
 
     companion object {

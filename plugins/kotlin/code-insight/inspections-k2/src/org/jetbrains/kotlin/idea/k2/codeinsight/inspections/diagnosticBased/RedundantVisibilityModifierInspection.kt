@@ -24,10 +24,6 @@ internal class RedundantVisibilityModifierInspection :
             ModifierApplicators.Modifier(modifier)
         }
 
-    override val presentation: KotlinApplicatorPresentation<KtModifierListOwner> = presentation {
-        highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
-    }
-
     override val applicabilityRange: KotlinApplicabilityRange<KtModifierListOwner> = ApplicabilityRanges.VISIBILITY_MODIFIER
 
     override val applicator: KotlinApplicator<KtModifierListOwner, ModifierApplicators.Modifier> =

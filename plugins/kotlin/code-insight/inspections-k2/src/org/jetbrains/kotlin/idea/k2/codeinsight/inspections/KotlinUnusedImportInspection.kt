@@ -33,7 +33,7 @@ internal class KotlinUnusedImportInspection : AbstractKotlinInspection() {
                 KotlinBundle.message("unused.import.directive"),
                 isOnTheFly,
                 quickFixes,
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             )
         }
 

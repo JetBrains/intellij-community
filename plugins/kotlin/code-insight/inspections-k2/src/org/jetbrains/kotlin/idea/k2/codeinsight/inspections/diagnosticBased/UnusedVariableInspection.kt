@@ -23,10 +23,7 @@ internal class UnusedVariableInspection :
             if (ktProperty.isExplicitTypeReferenceNeededForTypeInference()) return@inputByDiagnosticProvider null
             KotlinApplicatorInput
         }
-    override val presentation: KotlinApplicatorPresentation<KtNamedDeclaration>
-        get() = presentation {
-            highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
-        }
+
     override val applicabilityRange: KotlinApplicabilityRange<KtNamedDeclaration>
         get() = ApplicabilityRanges.DECLARATION_NAME
 
