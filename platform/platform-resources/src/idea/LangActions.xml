@@ -848,37 +848,6 @@
       <reference ref="ProjectViewPopupMenuSettingsGroup"/>
     </group>
 
-    <group id="FavoritesViewPopupMenu">
-      <reference ref="NewGroup"/>
-      <reference ref="AssociateWithFileType"/>
-      <separator/>
-      <reference ref="CutCopyPasteGroup"/>
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="FindInPath"/>
-      <reference ref="ReplaceInPath"/>
-      <separator/>
-      <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
-      <separator/>
-      <separator/>
-      <reference ref="ProjectViewPopupMenuModifyGroup"/>
-      <separator/>
-      <reference ref="ProjectViewPopupMenuRunGroup"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <reference ref="SynchronizeCurrentFile"/>
-      <separator/>
-      <reference ref="ShowFilePath"/>
-      <separator/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="ProjectViewPopupMenuSettingsGroup"/>
-    </group>
-
     <group id="ScopeViewPopupMenu">
       <reference ref="ProjectViewPopupMenu"/>
     </group>
