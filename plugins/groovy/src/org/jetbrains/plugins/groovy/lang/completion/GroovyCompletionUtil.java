@@ -83,7 +83,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.impl.ConstructorsKt.getA
  */
 public final class GroovyCompletionUtil {
 
-  private static volatile boolean isSlowCompletionEnabled;
+  private static volatile boolean isSlowCompletionEnabled = true;
 
   private GroovyCompletionUtil() {
   }
