@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.Main
 import com.intellij.idea.callAppInitialized
 import com.intellij.idea.initConfigurationStore
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.RecursionManager
@@ -15,13 +16,18 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean.Companion.addKeysFromPlugins
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
+import com.intellij.psi.impl.DocumentCommitProcessor
+import com.intellij.psi.impl.DocumentCommitThread
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.UITestUtil
 import com.intellij.util.SystemProperties
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 private val LOG: Logger = Logger.getInstance("com.intellij.testFramework.common.TestApplicationKt")
 
@@ -104,4 +110,15 @@ fun assertNonDefaultProjectsAreNotLeaked() {
     publishHeapDump("leakedProjects")
     throw e
   }
+}
+
+@TestOnly
+fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: TimeUnit) {
+  require(!application.isDisposed)
+
+  val index = application.getServiceIfCreated(FileBasedIndex::class.java) as? FileBasedIndexImpl
+  index?.changedFilesCollector?.waitForVfsEventsExecuted(timeout, timeUnit)
+
+  val commitThread = application.getServiceIfCreated(DocumentCommitProcessor::class.java) as? DocumentCommitThread
+  commitThread?.waitForAllCommits(timeout, timeUnit)
 }

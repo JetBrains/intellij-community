@@ -24,18 +24,15 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.DocumentCommitProcessor;
-import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
@@ -1137,15 +1134,7 @@ public abstract class UsefulTestCase extends TestCase {
     EdtTestUtil.runInEdtAndWait(() -> {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        FileBasedIndex index = app.getServiceIfCreated(FileBasedIndex.class);
-        if (index instanceof FileBasedIndexImpl) {
-          ((FileBasedIndexImpl)index).getChangedFilesCollector().waitForVfsEventsExecuted(timeout, timeUnit);
-        }
-
-        DocumentCommitThread commitThread = (DocumentCommitThread)app.getServiceIfCreated(DocumentCommitProcessor.class);
-        if (commitThread != null) {
-          commitThread.waitForAllCommits(timeout, timeUnit);
-        }
+        TestApplicationKt.waitForAppLeakingThreads(app, timeout, timeUnit);
       }
     });
   }
