@@ -26,7 +26,7 @@ object CastExpressionFixFactories {
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     val applicator = applicator<PsiElement, Input> {
-        familyName(KotlinBundle.message("fix.cast.expression.family"))
+        familyName(KotlinBundle.lazyMessage("fix.cast.expression.family"))
         actionName { psi, input -> KotlinBundle.message("fix.cast.expression.text", psi.text, input.typePresentation) }
         applyToWithEditorRequired { psi, input, project, editor ->
             val expressionToInsert = KtPsiFactory(psi).createExpressionByPattern("$0 as $1", psi, input.typeSourceCode)

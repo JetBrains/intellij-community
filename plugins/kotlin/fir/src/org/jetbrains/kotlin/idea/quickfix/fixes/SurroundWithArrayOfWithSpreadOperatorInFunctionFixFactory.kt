@@ -25,7 +25,7 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
     class Input(val fullyQualifiedArrayOfCall: String, val shortArrayOfCall: String) : KotlinApplicatorInput
 
     val applicator = applicator<KtExpression, Input> {
-        familyName(KotlinBundle.getMessage("surround.with.array.of"))
+        familyName(KotlinBundle.lazyMessage("surround.with.array.of"))
         actionName { _, input ->
             KotlinBundle.getMessage("surround.with.0", input.shortArrayOfCall)
         }

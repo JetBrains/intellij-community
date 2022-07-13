@@ -3,8 +3,11 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators
 
 import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
@@ -44,7 +47,7 @@ sealed class KotlinApplicator<in PSI : PsiElement, in INPUT : KotlinApplicatorIn
      *
      * @see com.intellij.codeInsight.intention.IntentionAction.getText
      */
-    fun getActionName(psi: PSI, input: INPUT): String = getActionNameImpl(psi, input)
+    fun getActionName(psi: PSI, input: INPUT): @IntentionName String = getActionNameImpl(psi, input)
 
 
     /**
@@ -52,13 +55,13 @@ sealed class KotlinApplicator<in PSI : PsiElement, in INPUT : KotlinApplicatorIn
      *
      * @see com.intellij.codeInsight.intention.IntentionAction.getFamilyName
      */
-    fun getFamilyName(): String = getFamilyNameImpl()
+    fun getFamilyName(): @IntentionFamilyName String = getFamilyNameImpl()
 
 
     protected abstract fun applyToImpl(psi: PSI, input: INPUT, project: Project, editor: Editor?)
     protected abstract fun isApplicableByPsiImpl(psi: PSI): Boolean
-    protected abstract fun getActionNameImpl(psi: PSI, input: INPUT): String
-    protected abstract fun getFamilyNameImpl(): String
+    protected abstract fun getActionNameImpl(psi: PSI, input: INPUT): @IntentionName String
+    protected abstract fun getFamilyNameImpl(): @IntentionFamilyName String
 }
 
 /**
@@ -95,8 +98,8 @@ fun <PSI : PsiElement, NEW_PSI : PSI, INPUT : KotlinApplicatorInput> KotlinAppli
 internal class KotlinApplicatorImpl<PSI : PsiElement, INPUT : KotlinApplicatorInput>(
     val applyTo: (PSI, INPUT, Project, Editor?) -> Unit,
     val isApplicableByPsi: (PSI) -> Boolean,
-    val getActionName: (PSI, INPUT) -> String,
-    val getFamilyName: () -> String,
+    val getActionName: (PSI, INPUT) -> @IntentionName String,
+    val getFamilyName: () -> @IntentionFamilyName String,
 ) : KotlinApplicator<PSI, INPUT>() {
     override fun applyToImpl(psi: PSI, input: INPUT, project: Project, editor: Editor?) {
         applyTo.invoke(psi, input, project, editor)
@@ -117,27 +120,23 @@ class KotlinApplicatorBuilder<PSI : PsiElement, INPUT : KotlinApplicatorInput> i
     @property:PrivateForInline
     var applyTo: ((PSI, INPUT, Project, Editor?) -> Unit)? = null,
     private var isApplicableByPsi: ((PSI) -> Boolean)? = null,
-    private var getActionName: ((PSI, INPUT) -> String)? = null,
-    private var getFamilyName: (() -> String)? = null
+    private var getActionName: ((PSI, INPUT) -> @IntentionName String)? = null,
+    private var getFamilyName: (() -> @IntentionFamilyName String)? = null
 ) {
-    fun familyName(name: String) {
-        getFamilyName = { name }
-    }
-
-    fun familyName(getName: () -> String) {
+    fun familyName(getName: () -> @IntentionFamilyName String) {
         getFamilyName = getName
     }
 
-    fun familyAndActionName(getName: () -> String) {
+    fun familyAndActionName(getName: () -> @NlsSafe String) {
         getFamilyName = getName
         getActionName = { _, _ -> getName() }
     }
 
-    fun actionName(getActionName: (PSI, INPUT) -> String) {
+    fun actionName(getActionName: (PSI, INPUT) -> @IntentionName String) {
         this.getActionName = getActionName
     }
 
-    fun actionName(getActionName: () -> String) {
+    fun actionName(getActionName: () -> @IntentionName String) {
         this.getActionName = { _, _ -> getActionName() }
     }
 
@@ -204,7 +203,7 @@ fun <PSI : PsiElement, INPUT : KotlinApplicatorInput> applicator(
  * @see KotlinApplicator
  */
 fun <PSI : PsiElement, INPUT : KotlinApplicatorInput, QUICK_FIX : KotlinPsiOnlyQuickFixAction<PSI>> applicatorByQuickFix(
-    getFamilyName: () -> String,
+    getFamilyName: () -> @IntentionFamilyName String,
     isApplicableByPsi: (PSI) -> Boolean = { true },
     quickFixByInput: (PSI, INPUT) -> QUICK_FIX,
 ): KotlinApplicator<PSI, INPUT> = KotlinApplicatorImpl(

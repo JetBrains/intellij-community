@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators
 
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -63,7 +65,7 @@ abstract class AbstractKotlinApplicatorBasedInspection<PSI : KtElement, INPUT : 
         holder: ProblemsHolder,
         element: PSI,
         range: TextRange,
-        description: String,
+        @InspectionMessage description: String,
         highlightType: ProblemHighlightType,
         isOnTheFly: Boolean,
         fix: LocalQuickFix
@@ -90,7 +92,7 @@ abstract class AbstractKotlinApplicatorBasedInspection<PSI : KtElement, INPUT : 
 
 private fun <PSI : PsiElement, INPUT : KotlinApplicatorInput> KotlinApplicator<PSI, INPUT>.asLocalQuickFix(
     input: INPUT,
-    actionName: String,
+    @IntentionName actionName: String,
 ): LocalQuickFix = object : LocalQuickFix {
     override fun startInWriteAction() = false
 

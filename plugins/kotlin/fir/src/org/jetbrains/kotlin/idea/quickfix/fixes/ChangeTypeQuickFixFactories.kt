@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 object ChangeTypeQuickFixFactories {
     val applicator = applicator<KtCallableDeclaration, Input> {
-        familyName(CallableReturnTypeUpdaterApplicator.applicator.getFamilyName())
+        familyName(CallableReturnTypeUpdaterApplicator.applicator::getFamilyName)
 
         actionName { declaration, (targetType, type) ->
             val presentation = getPresentation(targetType, declaration)

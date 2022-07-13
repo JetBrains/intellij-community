@@ -2,18 +2,9 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
-import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinDiagnosticBasedInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInputByDiagnosticProvider
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorPresentation
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.presentation
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputByDiagnosticProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInference
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeProperty
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -25,6 +16,7 @@ internal class UnusedVariableInspection :
         elementType = KtNamedDeclaration::class,
         diagnosticType = KtFirDiagnostic.UnusedVariable::class,
     ) {
+
     override val inputByDiagnosticProvider: KotlinApplicatorInputByDiagnosticProvider<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable, KotlinApplicatorInput.Empty>
         get() = inputByDiagnosticProvider { diagnostic ->
             val ktProperty = diagnostic.psi as? KtProperty ?: return@inputByDiagnosticProvider null
@@ -40,7 +32,7 @@ internal class UnusedVariableInspection :
 
     override val applicator: KotlinApplicator<KtNamedDeclaration, KotlinApplicatorInput.Empty>
         get() = applicator {
-            familyName(KotlinBundle.message("remove.element"))
+            familyName(KotlinBundle.lazyMessage("remove.element"))
             actionName { psi, _ ->
                 KotlinBundle.message("remove.variable.0", psi.name.toString())
             }
