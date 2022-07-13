@@ -138,10 +138,12 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
         })
     }
 
-    class KCRIIsUpToDateConsumer : IsUpToDateCheckConsumer {
+    internal class KCRIIsUpToDateConsumer : IsUpToDateCheckConsumer {
         override fun isApplicable(project: Project): Boolean = isEnabled(project) && KotlinCompilerReferenceIndexStorage.hasIndex(project)
         override fun isUpToDate(project: Project, isUpToDate: Boolean) {
-            if (!isUpToDate) return
+            if (!isUpToDate) {
+                return
+            }
 
             val service = getInstanceIfEnabled(project) ?: return
             executeOnBuildThread(service::markAsUpToDate)
