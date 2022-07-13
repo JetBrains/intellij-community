@@ -1,13 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
-import com.esotericsoftware.kryo.Kryo
-import com.esotericsoftware.kryo.KryoException
-import com.esotericsoftware.kryo.Serializer
-import com.esotericsoftware.kryo.io.Input
-import com.esotericsoftware.kryo.io.Output
-import com.esotericsoftware.kryo.serializers.DefaultSerializers
-import com.esotericsoftware.kryo.serializers.FieldSerializer
+import com.esotericsoftware.kryo.kryo5.Kryo
+import com.esotericsoftware.kryo.kryo5.KryoException
+import com.esotericsoftware.kryo.kryo5.Serializer
+import com.esotericsoftware.kryo.kryo5.io.Input
+import com.esotericsoftware.kryo.kryo5.io.Output
+import com.esotericsoftware.kryo.kryo5.objenesis.instantiator.ObjectInstantiator
+import com.esotericsoftware.kryo.kryo5.objenesis.strategy.StdInstantiatorStrategy
+import com.esotericsoftware.kryo.kryo5.serializers.DefaultSerializers
+import com.esotericsoftware.kryo.kryo5.serializers.FieldSerializer
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
@@ -25,8 +27,6 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.TestOnly
-import org.objenesis.instantiator.ObjectInstantiator
-import org.objenesis.strategy.StdInstantiatorStrategy
 import java.io.InputStream
 import java.io.OutputStream
 import java.lang.reflect.Modifier
@@ -34,7 +34,6 @@ import java.lang.reflect.ParameterizedType
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.reflect.KClass
-import kotlin.reflect.jvm.jvmName
 
 private val LOG = logger<EntityStorageSerializerImpl>()
 
@@ -44,7 +43,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v36"
+    const val SERIALIZER_VERSION = "v37"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
@@ -61,7 +60,7 @@ class EntityStorageSerializerImpl(
     val classesCache: MutableMap<TypeInfo, Int> = HashMap()
 
     kryo.setAutoReset(false)
-    kryo.isRegistrationRequired = true
+    kryo.references = true
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
     kryo.addDefaultSerializer(VirtualFileUrl::class.java, VirtualFileUrlSerializer())
@@ -164,7 +163,7 @@ class EntityStorageSerializerImpl(
       `object`.forEach { kryo.writeClassAndObject(output, it) }
     }
 
-    override fun read(kryo: Kryo, input: Input, type: Class<ObjectOpenHashSet<*>>): ObjectOpenHashSet<*> {
+    override fun read(kryo: Kryo, input: Input, type: Class<out ObjectOpenHashSet<*>>): ObjectOpenHashSet<*> {
       val res = ObjectOpenHashSet<Any>()
       repeat(input.readInt()) {
         val data = kryo.readClassAndObject(input)
@@ -179,7 +178,7 @@ class EntityStorageSerializerImpl(
       kryo.writeClassAndObject(output, `object`.id.toSerializableEntityId())
     }
 
-    override fun read(kryo: Kryo, input: Input, type: Class<ParentEntityId>): ParentEntityId {
+    override fun read(kryo: Kryo, input: Input, type: Class<out ParentEntityId>): ParentEntityId {
       val entityId = kryo.readClassAndObject(input) as SerializableEntityId
       return ParentEntityId(entityId.toEntityId(classesCache))
     }
@@ -190,7 +189,7 @@ class EntityStorageSerializerImpl(
       kryo.writeClassAndObject(output, `object`.id.toSerializableEntityId())
     }
 
-    override fun read(kryo: Kryo, input: Input, type: Class<ChildEntityId>): ChildEntityId {
+    override fun read(kryo: Kryo, input: Input, type: Class<out ChildEntityId>): ChildEntityId {
       val entityId = kryo.readClassAndObject(input) as SerializableEntityId
       return ChildEntityId(entityId.toEntityId(classesCache))
     }
@@ -210,7 +209,7 @@ class EntityStorageSerializerImpl(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun read(kryo: Kryo, input: Input, type: Class<ImmutableEntitiesBarrel>): ImmutableEntitiesBarrel {
+    override fun read(kryo: Kryo, input: Input, type: Class<out ImmutableEntitiesBarrel>): ImmutableEntitiesBarrel {
       val mutableBarrel = MutableEntitiesBarrel.create()
       val families = kryo.readClassAndObject(input) as HashMap<TypeInfo, EntityFamily<*>>
       for ((typeInfo, family) in families) {
@@ -236,7 +235,7 @@ class EntityStorageSerializerImpl(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun read(kryo: Kryo, input: Input, type: Class<ConnectionId>): ConnectionId {
+    override fun read(kryo: Kryo, input: Input, type: Class<out ConnectionId>): ConnectionId {
       val parentClazzInfo = kryo.readClassAndObject(input) as TypeInfo
       val childClazzInfo = kryo.readClassAndObject(input) as TypeInfo
 
@@ -263,7 +262,7 @@ class EntityStorageSerializerImpl(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun read(kryo: Kryo, input: Input, type: Class<HashMultimap<*, *>>): HashMultimap<*, *> {
+    override fun read(kryo: Kryo, input: Input, type: Class<out HashMultimap<*, *>>): HashMultimap<*, *> {
       val res = HashMultimap.create<Any, Any>()
       val map = kryo.readClassAndObject(input) as HashMap<*, Collection<*>>
       map.forEach { (key, values) ->
@@ -281,7 +280,7 @@ class EntityStorageSerializerImpl(
       kryo.writeClassAndObject(output, typeInfo)
     }
 
-    override fun read(kryo: Kryo, input: Input, type: Class<EntityId>): EntityId {
+    override fun read(kryo: Kryo, input: Input, type: Class<out EntityId>): EntityId {
       val arrayId = input.readInt()
       val clazzInfo = kryo.readClassAndObject(input) as TypeInfo
       val clazz = classesCache.getOrPut(clazzInfo) { typesResolver.resolveClass(clazzInfo.name, clazzInfo.pluginId).toClassId() }
@@ -295,7 +294,7 @@ class EntityStorageSerializerImpl(
       kryo.writeObject(output, obj.urlSegments)
     }
 
-    override fun read(kryo: Kryo, input: Input, type: Class<VirtualFileUrl>): VirtualFileUrl {
+    override fun read(kryo: Kryo, input: Input, type: Class<out VirtualFileUrl>): VirtualFileUrl {
       val url = kryo.readObject(input, List::class.java) as List<String>
       return virtualFileManager.fromUrlSegments(url)
     }
@@ -313,7 +312,7 @@ class EntityStorageSerializerImpl(
 
   object EmptySerializer : Serializer<Any>(false, true) {
     override fun write(kryo: Kryo?, output: Output?, `object`: Any?) {}
-    override fun read(kryo: Kryo, input: Input?, type: Class<Any>): Any? = kryo.newInstance(type)
+    override fun read(kryo: Kryo, input: Input?, type: Class<out Any>?): Any = kryo.newInstance(type)
   }
 
   private fun <T : Any> registerSerializer(kryo: Kryo, type: Class<T>, serializer: Serializer<in T>, initializer: ObjectInstantiator<T>) {
@@ -437,7 +436,7 @@ class EntityStorageSerializerImpl(
       SerializationResult.Success
     }
     catch (e: Exception) {
-      output.clear()
+      output.reset()
       LOG.warn("Exception at project serialization", e)
       SerializationResult.Fail(e.message)
     }
@@ -612,7 +611,7 @@ class EntityStorageSerializerImpl(
       output.flush()
     }
     catch (e: KryoException) {
-      output.clear()
+      output.reset()
       LOG.warn("Exception at project serialization", e)
       SerializationResult.Fail(e.message)
     }
