@@ -8,8 +8,8 @@ fun main() {
     val productionModuleRootOutput = File("community/platform/workspaceModel/storage/gen/com/intellij/workspaceModel/storage/bridgeEntities/api").absoluteFile
     CodeWriter.generate(productionModuleRoot, "api", productionModuleRootOutput, false)
 
-    val productionModuleRootTestEntity = File("community/platform/workspaceModel/storage/src/com/intellij/workspaceModel/storage/entity").absoluteFile
-    val productionModuleRootOutputTestEntity = File("community/platform/workspaceModel/storage/gen/com/intellij/workspaceModel/storage/entity/api").absoluteFile
+    val productionModuleRootTestEntity = File("community/platform/workspaceModel/storage/testEntities/testSrc/com/intellij/workspaceModel/storage/entities/model").absoluteFile
+    val productionModuleRootOutputTestEntity = File("community/platform/workspaceModel/storage/testEntities/testSrc/com/intellij/workspaceModel/storage/entities/model/api").absoluteFile
     CodeWriter.generate(productionModuleRootTestEntity, "", productionModuleRootOutputTestEntity, false)
 
     val testRoots = File("community/platform/workspaceModel/storage/testEntities/testSrc/com/intellij/workspaceModel/storage/entities").absoluteFile
