@@ -4,8 +4,10 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
+import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.structureView.MarkdownBasePresentation
 
 class MarkdownLinkDefinition(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiElement {
@@ -17,6 +19,9 @@ class MarkdownLinkDefinition(node: ASTNode): ASTWrapperPsiElement(node), Markdow
 
   val linkTitle: PsiElement?
     get() = findChildByType(MarkdownElementTypes.LINK_TITLE)
+
+  internal val isCommentWrapper
+    get() = childrenOfType(MarkdownElementTypes.LINK_COMMENT).any()
 
   override fun getPresentation(): ItemPresentation {
     return LinkDefinitionPresentation()
@@ -35,6 +40,13 @@ class MarkdownLinkDefinition(node: ASTNode): ASTWrapperPsiElement(node), Markdow
         !isValid -> null
         else -> linkTitle?.text
       }
+    }
+  }
+
+  companion object {
+    internal fun isUnderCommentWrapper(element: PsiElement): Boolean {
+      val linkDefinition = element.parentOfType<MarkdownLinkDefinition>(withSelf = true)
+      return linkDefinition?.isCommentWrapper == true
     }
   }
 }
