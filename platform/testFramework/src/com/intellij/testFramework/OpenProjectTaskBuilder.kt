@@ -11,7 +11,7 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.util.ThreeState
 import java.util.function.Consumer
 
-// todo rewrite PlatfomTestUtil to kotlin
+// todo rewrite PlatformTestUtil to kotlin
 internal fun saveProject(project: Project, forceSavingAllSettings: Boolean = false) {
   StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
   runUnderModalProgressIfIsEdt {
@@ -28,7 +28,7 @@ class OpenProjectTaskBuilder {
   private var componentStoreLoadingEnabled = ThreeState.UNSURE
 
   /**
-   * Disabling running post start-up activities can speed-up test a little bit.
+   * Disabling running post start-up activities can speed up test a little.
    */
   fun runPostStartUpActivities(value: Boolean): OpenProjectTaskBuilder {
     runPostStartUpActivities = value
