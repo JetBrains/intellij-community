@@ -117,6 +117,9 @@ public final class JavaPsiPatternUtil {
     else if (pattern instanceof PsiParenthesizedPattern) {
       return getPatternType(((PsiParenthesizedPattern)pattern).getPattern());
     }
+    else if (pattern instanceof PsiDeconstructionPattern) {
+      return ((PsiDeconstructionPattern)pattern).getTypeElement().getType();
+    }
     else if (pattern instanceof PsiTypeTestPattern) {
       PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
       if (checkType != null) return checkType.getType();
@@ -143,7 +146,7 @@ public final class JavaPsiPatternUtil {
     else if (pattern instanceof PsiParenthesizedPattern) {
       return isTotalForType(((PsiParenthesizedPattern)pattern).getPattern(), type);
     }
-    else if (pattern instanceof PsiTypeTestPattern) {
+    else if (pattern instanceof PsiTypeTestPattern || pattern instanceof PsiDeconstructionPattern) {
       type = TypeConversionUtil.erasure(type);
       PsiType baseType = TypeConversionUtil.erasure(getPatternType(pattern));
       if (type instanceof PsiArrayType || baseType instanceof PsiArrayType) {
@@ -163,7 +166,41 @@ public final class JavaPsiPatternUtil {
   public static boolean dominates(@Nullable PsiCaseLabelElement who, @NotNull PsiCaseLabelElement overWhom) {
     if (who == null) return false;
     PsiType overWhomType = getPatternType(overWhom);
-    return overWhomType != null && isTotalForType(who, overWhomType);
+    if (overWhomType == null || !isTotalForType(who, overWhomType)) {
+      return false;
+    }
+    PsiDeconstructionPattern whoDeconstruction = findDeconstructionPattern(who);
+    if (whoDeconstruction == null) return true;
+    PsiDeconstructionPattern overWhomDeconstruction = findDeconstructionPattern(overWhom);
+    return dominatesComponents(whoDeconstruction, overWhomDeconstruction);
+  }
+
+  private static boolean dominatesComponents(@NotNull PsiDeconstructionPattern who, @Nullable PsiDeconstructionPattern overWhom) {
+    if (overWhom == null) return false;
+    PsiPattern[] whoComponents = who.getDeconstructionList().getDeconstructionComponents();
+    PsiPattern[] overWhomComponents = overWhom.getDeconstructionList().getDeconstructionComponents();
+    if (whoComponents.length != overWhomComponents.length) return false;
+    for (int i = 0; i < whoComponents.length; i++) {
+      PsiPattern whoComponent = whoComponents[i];
+      PsiPattern overWhomComponent = overWhomComponents[i];
+      if (!dominates(whoComponent, overWhomComponent)) return false;
+    }
+    return true;
+  }
+
+  private static @Nullable PsiDeconstructionPattern findDeconstructionPattern(@Nullable PsiCaseLabelElement element) {
+    if (element instanceof PsiParenthesizedPattern) {
+      return findDeconstructionPattern(((PsiParenthesizedPattern)element).getPattern());
+    }
+    else if (element instanceof PsiPatternGuard) {
+      return findDeconstructionPattern(((PsiPatternGuard)element).getPattern());
+    }
+    else if (element instanceof PsiDeconstructionPattern) {
+      return (PsiDeconstructionPattern)element;
+    }
+    else {
+      return null;
+    }
   }
 
   /**
