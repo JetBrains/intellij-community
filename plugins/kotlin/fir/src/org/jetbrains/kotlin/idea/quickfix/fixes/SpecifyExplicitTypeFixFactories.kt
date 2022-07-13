@@ -10,12 +10,20 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.with
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator.getTypeInfo
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtFunction
 
 object SpecifyExplicitTypeFixFactories {
     private val applicator = CallableReturnTypeUpdaterApplicator.applicator.with {
         familyName(KotlinBundle.lazyMessage("specify.type.explicitly"))
+
+        actionName { declaration, _ ->
+            when (declaration) {
+                is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
+                else -> KotlinBundle.message("specify.type.explicitly")
+            }
+        }
     }
 
     val ambiguousAnonymousTypeInferred = diagnosticFixFactory(
