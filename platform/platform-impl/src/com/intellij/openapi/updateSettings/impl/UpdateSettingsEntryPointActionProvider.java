@@ -58,7 +58,13 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
   private static void preparePrevPlatformUpdate() {
     PropertiesComponent properties = PropertiesComponent.getInstance();
-    BuildNumber newBuildForUpdate = BuildNumber.fromString(properties.getValue(NEXT_RUN_KEY_BUILD));
+    BuildNumber newBuildForUpdate;
+    try {
+      newBuildForUpdate = BuildNumber.fromString(properties.getValue(NEXT_RUN_KEY_BUILD));
+    }
+    catch (Exception ignore) {
+      return;
+    }
 
     if (newBuildForUpdate != null) {
       if (newBuildForUpdate.compareTo(ApplicationInfo.getInstance().getBuild()) > 0) {
