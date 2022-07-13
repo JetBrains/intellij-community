@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInputProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -23,14 +22,14 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 internal class AddNameToArgumentIntention :
     AbstractKotlinApplicatorBasedIntention<KtValueArgument, AddArgumentNamesApplicators.SingleArgumentInput>(KtValueArgument::class),
     LowPriorityAction {
-    override val applicator
-        get() = AddArgumentNamesApplicators.singleArgumentApplicator
+    override fun getApplicator() = AddArgumentNamesApplicators.singleArgumentApplicator
 
-    override val applicabilityRange = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
+    override fun getApplicabilityRange() = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
 
-    override val inputProvider: KotlinApplicatorInputProvider<KtValueArgument, AddArgumentNamesApplicators.SingleArgumentInput> = inputProvider { element ->
+    override fun getInputProvider() = inputProvider { element: KtValueArgument ->
         val argumentList = element.parent as? KtValueArgumentList ?: return@inputProvider null
-        val shouldBeLastUnnamed = !element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
+        val shouldBeLastUnnamed =
+            !element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
         if (shouldBeLastUnnamed && element != argumentList.arguments.last { !it.isNamed() }) return@inputProvider null
 
         val callElement = argumentList.parent as? KtCallElement ?: return@inputProvider null

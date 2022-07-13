@@ -32,18 +32,20 @@ abstract class AbstractKotlinApplicatorBasedInspection<PSI : KtElement, INPUT : 
         }
 
     private fun visitTargetElement(element: PSI, holder: ProblemsHolder, isOnTheFly: Boolean) {
+        val applicator = getApplicator()
         if (!applicator.isApplicableByPsi(element, holder.project)) return
-        val targets = applicabilityRange.getApplicabilityRanges(element)
+        val targets = getApplicabilityRange().getApplicabilityRanges(element)
         if (targets.isEmpty()) return
 
         val input = getInput(element) ?: return
         require(input.isValidFor(element)) { "Input should be valid after creation" }
 
-        registerProblems(holder, element, targets, isOnTheFly, input)
+        registerProblems(applicator, holder, element, targets, isOnTheFly, input)
     }
 
 
     private fun registerProblems(
+        applicator: KotlinApplicator<PSI, INPUT>,
         holder: ProblemsHolder,
         element: PSI,
         ranges: List<TextRange>,
@@ -82,14 +84,14 @@ abstract class AbstractKotlinApplicatorBasedInspection<PSI : KtElement, INPUT : 
     @OptIn(KtAllowAnalysisOnEdt::class)
     private fun getInput(element: PSI): INPUT? = allowAnalysisOnEdt {
         analyzeWithReadAction(element) {
-            with(inputProvider) { provideInput(element) }
+            with(getInputProvider()) { provideInput(element) }
         }
     }
 
 
-    abstract val applicabilityRange: KotlinApplicabilityRange<PSI>
-    abstract val inputProvider: KotlinApplicatorInputProvider<PSI, INPUT>
-    abstract val applicator: KotlinApplicator<PSI, INPUT>
+    abstract fun getApplicabilityRange(): KotlinApplicabilityRange<PSI>
+    abstract fun getInputProvider(): KotlinApplicatorInputProvider<PSI, INPUT>
+    abstract fun getApplicator(): KotlinApplicator<PSI, INPUT>
 }
 
 private fun <PSI : PsiElement, INPUT : KotlinApplicatorInput> KotlinApplicator<PSI, INPUT>.asLocalQuickFix(

@@ -25,19 +25,18 @@ import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 internal class ImportAllMembersIntention :
     AbstractKotlinApplicatorBasedIntention<KtExpression, ImportAllMembersIntention.Input>(KtExpression::class), HighPriorityAction {
 
-    override val applicator: KotlinApplicator<KtExpression, Input>
-        get() = applicator<KtExpression, Input> {
-            familyName(KotlinBundle.lazyMessage("import.members.with"))
-            actionName { _, input -> KotlinBundle.message("import.members.from.0", input.fqName.asString()) }
-            isApplicableByPsi { it.isOnTheLeftOfQualificationDot && !it.isInImportDirective() }
-            applyTo { _, input ->
-                input.shortenCommand.invokeShortening()
-            }
+    override fun getApplicator()= applicator<KtExpression, Input> {
+        familyName(KotlinBundle.lazyMessage("import.members.with"))
+        actionName { _, input -> KotlinBundle.message("import.members.from.0", input.fqName.asString()) }
+        isApplicableByPsi { it.isOnTheLeftOfQualificationDot && !it.isInImportDirective() }
+        applyTo { _, input ->
+            input.shortenCommand.invokeShortening()
         }
+    }
 
-    override val applicabilityRange: KotlinApplicabilityRange<KtExpression> get() = ApplicabilityRanges.SELF
+    override fun getApplicabilityRange() = ApplicabilityRanges.SELF
 
-    override val inputProvider: KotlinApplicatorInputProvider<KtExpression, Input> = inputProvider { psi ->
+    override fun getInputProvider(): KotlinApplicatorInputProvider<KtExpression, Input> = inputProvider { psi ->
         val target = psi.actualReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol ?: return@inputProvider null
         val classId = target.classIdIfNonLocal ?: return@inputProvider null
         if (target.origin != KtSymbolOrigin.JAVA &&

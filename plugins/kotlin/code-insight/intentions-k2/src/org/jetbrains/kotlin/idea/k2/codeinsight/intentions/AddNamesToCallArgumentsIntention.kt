@@ -5,7 +5,9 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddNameToArgumentIntention.Companion.getArgumentNameIfCanBeUsedForCalls
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -13,10 +15,10 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 
 internal class AddNamesToCallArgumentsIntention :
     AbstractKotlinApplicatorBasedIntention<KtCallElement, AddArgumentNamesApplicators.MultipleArgumentsInput>(KtCallElement::class) {
-    override val applicator =
+    override fun getApplicator() =
         AddArgumentNamesApplicators.multipleArgumentsApplicator
 
-    override val applicabilityRange: KotlinApplicabilityRange<KtCallElement> = applicabilityRanges { element ->
+    override fun getApplicabilityRange() = applicabilityRanges { element: KtCallElement ->
         // Note: Applicability range matches FE 1.0 (see AddNamesToCallArgumentsIntention).
         val calleeExpression = element.calleeExpression ?: return@applicabilityRanges emptyList()
         val calleeExpressionTextRange = calleeExpression.textRangeIn(element)
@@ -30,7 +32,7 @@ internal class AddNamesToCallArgumentsIntention :
         }
     }
 
-    override val inputProvider: KotlinApplicatorInputProvider<KtCallElement, AddArgumentNamesApplicators.MultipleArgumentsInput> = inputProvider { element ->
+    override fun getInputProvider() = inputProvider { element: KtCallElement ->
         val resolvedCall = element.resolveCall().singleFunctionCallOrNull() ?: return@inputProvider null
 
         if (!resolvedCall.symbol.hasStableParameterNames) {

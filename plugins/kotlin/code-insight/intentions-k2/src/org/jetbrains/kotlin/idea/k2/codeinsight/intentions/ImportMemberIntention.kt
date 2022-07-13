@@ -21,26 +21,25 @@ import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 internal class ImportMemberIntention :
     AbstractKotlinApplicatorBasedIntention<KtNameReferenceExpression, ImportMemberIntention.Input>(KtNameReferenceExpression::class),
     HighPriorityAction {
-    override val applicabilityRange: KotlinApplicabilityRange<KtNameReferenceExpression> get() = ApplicabilityRanges.SELF
+    override fun getApplicabilityRange() = ApplicabilityRanges.SELF
 
-    override val inputProvider: KotlinApplicatorInputProvider<KtNameReferenceExpression, Input> = inputProvider { psi ->
+    override fun getInputProvider() = inputProvider { psi: KtNameReferenceExpression ->
         val symbol = psi.mainReference.resolveToSymbol() ?: return@inputProvider null
         computeInput(psi, symbol)
     }
 
-    override val applicator: KotlinApplicator<KtNameReferenceExpression, Input>
-        get() = applicator<KtNameReferenceExpression, Input> {
-            familyName(KotlinBundle.lazyMessage("add.import.for.member"))
-            actionName { _, input -> KotlinBundle.message("add.import.for.0", input.fqName.asString()) }
-            isApplicableByPsi {
-                // Ignore simple name expressions or already imported names.
-                if (it.getQualifiedElement() == it || it.isInImportDirective()) return@isApplicableByPsi false
-                true
-            }
-            applyTo { _, input ->
-                input.shortenCommand.invokeShortening()
-            }
+    override fun getApplicator() = applicator<KtNameReferenceExpression, Input> {
+        familyName(KotlinBundle.lazyMessage("add.import.for.member"))
+        actionName { _, input -> KotlinBundle.message("add.import.for.0", input.fqName.asString()) }
+        isApplicableByPsi {
+            // Ignore simple name expressions or already imported names.
+            if (it.getQualifiedElement() == it || it.isInImportDirective()) return@isApplicableByPsi false
+            true
         }
+        applyTo { _, input ->
+            input.shortenCommand.invokeShortening()
+        }
+    }
 
     private fun KtAnalysisSession.computeInput(psi: KtNameReferenceExpression, symbol: KtSymbol): Input? {
         return when (symbol) {

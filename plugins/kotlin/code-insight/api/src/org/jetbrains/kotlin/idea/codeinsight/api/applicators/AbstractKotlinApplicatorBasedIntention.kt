@@ -16,16 +16,20 @@ abstract class AbstractKotlinApplicatorBasedIntention<PSI : KtElement, INPUT : K
     elementType: KClass<PSI>,
 ) : SelfTargetingIntention<PSI>(elementType.java, { "" }) {
 
-    abstract val applicator: KotlinApplicator<PSI, INPUT>
+    abstract fun getApplicator(): KotlinApplicator<PSI, INPUT>
+    abstract fun getApplicabilityRange(): KotlinApplicabilityRange<PSI>
+    abstract fun getInputProvider(): KotlinApplicatorInputProvider<PSI, INPUT>
 
     init {
-        setFamilyNameGetter { applicator.getFamilyName() }
+        setFamilyNameGetter { getApplicator().getFamilyName() }
     }
 
     final override fun isApplicableTo(element: PSI, caretOffset: Int): Boolean {
         val project = element.project// TODO expensive operation, may require traversing the tree up to containing PsiFile
+        val applicator = getApplicator()
+
         if (!applicator.isApplicableByPsi(element, project)) return false
-        val ranges = applicabilityRange.getApplicabilityRanges(element)
+        val ranges = getApplicabilityRange().getApplicabilityRanges(element)
         if (ranges.isEmpty()) return false
 
         // An KotlinApplicabilityRange should be relative to the element, while `caretOffset` is absolute
@@ -47,6 +51,7 @@ abstract class AbstractKotlinApplicatorBasedIntention<PSI : KtElement, INPUT : K
     final override fun applyTo(element: PSI, project: Project, editor: Editor?) {
         val input = getInput(element) ?: return
         if (input.isValidFor(element)) {
+            val applicator = getApplicator() // TODO reuse existing applicator
             applicator.applyTo(element, input, project, editor)
         }
     }
@@ -59,10 +64,8 @@ abstract class AbstractKotlinApplicatorBasedIntention<PSI : KtElement, INPUT : K
     @OptIn(KtAllowAnalysisOnEdt::class)
     private fun getInput(element: PSI): INPUT? = allowAnalysisOnEdt {
         analyzeWithReadAction(element) {
-            with(inputProvider) { provideInput(element) }
+            with(getInputProvider()) { provideInput(element) }
         }
     }
 
-    abstract val applicabilityRange: KotlinApplicabilityRange<PSI>
-    abstract val inputProvider: KotlinApplicatorInputProvider<PSI, INPUT>
 }

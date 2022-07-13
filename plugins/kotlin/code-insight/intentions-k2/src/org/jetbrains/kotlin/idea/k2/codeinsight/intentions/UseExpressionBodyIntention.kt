@@ -18,53 +18,51 @@ internal class UseExpressionBodyIntention : AbstractKotlinApplicatorBasedIntenti
     KtDeclarationWithBody::class,
 ) {
 
-    override val applicator: KotlinApplicator<KtDeclarationWithBody, Input>
-        get() = applicator<KtDeclarationWithBody, Input> {
-            familyAndActionName(KotlinBundle.lazyMessage(("convert.body.to.expression")))
-            isApplicableByPsi { declaration ->
+    override fun getApplicator() = applicator<KtDeclarationWithBody, Input> {
+        familyAndActionName(KotlinBundle.lazyMessage(("convert.body.to.expression")))
+        isApplicableByPsi { declaration ->
 
-                // Check if either property accessor or named function
-                if (declaration !is KtNamedFunction && declaration !is KtPropertyAccessor) return@isApplicableByPsi false
+            // Check if either property accessor or named function
+            if (declaration !is KtNamedFunction && declaration !is KtPropertyAccessor) return@isApplicableByPsi false
 
-                // Check if a named function has explicit type
-                if (declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) return@isApplicableByPsi false
+            // Check if a named function has explicit type
+            if (declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) return@isApplicableByPsi false
 
-                // Check if function has block with single non-empty KtReturnExpression
-                val returnedExpression = declaration.singleReturnedExpressionOrNull ?: return@isApplicableByPsi false
+            // Check if function has block with single non-empty KtReturnExpression
+            val returnedExpression = declaration.singleReturnedExpressionOrNull ?: return@isApplicableByPsi false
 
-                // Check if the returnedExpression actually always returns (early return is possible)
-                // TODO: take into consideration other cases (???)
-                if (returnedExpression.anyDescendantOfType<KtReturnExpression>(
-                        canGoInside = { it !is KtFunctionLiteral && it !is KtNamedFunction && it !is KtPropertyAccessor })
-                )
-                    return@isApplicableByPsi false
+            // Check if the returnedExpression actually always returns (early return is possible)
+            // TODO: take into consideration other cases (???)
+            if (returnedExpression.anyDescendantOfType<KtReturnExpression>(
+                    canGoInside = { it !is KtFunctionLiteral && it !is KtNamedFunction && it !is KtPropertyAccessor })
+            )
+                return@isApplicableByPsi false
 
-                true
-            }
-            applyToWithEditorRequired { declaration, _, _, editor ->
-                val newFunctionBody = declaration.replaceWithPreservingComments()
-                editor.correctRightMargin(declaration, newFunctionBody)
-                if (declaration is KtNamedFunction) editor.selectFunctionColonType(declaration)
-            }
+            true
         }
+        applyToWithEditorRequired { declaration, _, _, editor ->
+            val newFunctionBody = declaration.replaceWithPreservingComments()
+            editor.correctRightMargin(declaration, newFunctionBody)
+            if (declaration is KtNamedFunction) editor.selectFunctionColonType(declaration)
+        }
+    }
 
 
     class Input : KotlinApplicatorInput
 
-    override val applicabilityRange: KotlinApplicabilityRange<KtDeclarationWithBody> =
-        applicabilityRanges { declaration: KtDeclarationWithBody ->
-            val returnExpression = declaration.singleReturnExpressionOrNull ?: return@applicabilityRanges emptyList()
-            val resultTextRanges = mutableListOf(TextRange(0, returnExpression.returnKeyword.endOffset - declaration.startOffset))
+    override fun getApplicabilityRange() = applicabilityRanges { declaration: KtDeclarationWithBody ->
+        val returnExpression = declaration.singleReturnExpressionOrNull ?: return@applicabilityRanges emptyList()
+        val resultTextRanges = mutableListOf(TextRange(0, returnExpression.returnKeyword.endOffset - declaration.startOffset))
 
-            // Adding applicability to the end of the declaration block
-            val rBraceTextRange = declaration.rBraceOffSetTextRange ?: return@applicabilityRanges resultTextRanges
-            resultTextRanges.add(rBraceTextRange)
+        // Adding applicability to the end of the declaration block
+        val rBraceTextRange = declaration.rBraceOffSetTextRange ?: return@applicabilityRanges resultTextRanges
+        resultTextRanges.add(rBraceTextRange)
 
-            return@applicabilityRanges resultTextRanges
-        }
+        return@applicabilityRanges resultTextRanges
+    }
 
 
-    override val inputProvider: KotlinApplicatorInputProvider<KtDeclarationWithBody, Input> = inputProvider { Input() }
+    override fun getInputProvider() = inputProvider<KtDeclarationWithBody, _> { Input() }
 
     override fun skipProcessingFurtherElementsAfter(element: PsiElement) = false
 

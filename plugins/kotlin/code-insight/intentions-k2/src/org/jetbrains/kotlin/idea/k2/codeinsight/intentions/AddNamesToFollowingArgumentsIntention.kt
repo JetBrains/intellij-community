@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -16,14 +16,13 @@ import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 
 internal class AddNamesToFollowingArgumentsIntention :
     AbstractKotlinApplicatorBasedIntention<KtValueArgument, AddArgumentNamesApplicators.MultipleArgumentsInput>(KtValueArgument::class),
     LowPriorityAction {
-    override val applicabilityRange = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
+    override fun getApplicabilityRange() = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
 
-    override val applicator get() = applicator<KtValueArgument, AddArgumentNamesApplicators.MultipleArgumentsInput> {
+    override fun getApplicator() = applicator<KtValueArgument, AddArgumentNamesApplicators.MultipleArgumentsInput> {
         familyAndActionName(KotlinBundle.lazyMessage("add.names.to.this.argument.and.following.arguments"))
 
         isApplicableByPsi { element ->
@@ -48,21 +47,20 @@ internal class AddNamesToFollowingArgumentsIntention :
     }
 
 
-    override val inputProvider: KotlinApplicatorInputProvider<KtValueArgument, AddArgumentNamesApplicators.MultipleArgumentsInput> =
-        inputProvider { element ->
-            val argumentList = element.parent as? KtValueArgumentList ?: return@inputProvider null
+    override fun getInputProvider() = inputProvider { element: KtValueArgument ->
+        val argumentList = element.parent as? KtValueArgumentList ?: return@inputProvider null
 
-            val callElement = argumentList.parent as? KtCallElement ?: return@inputProvider null
-            val resolvedCall = callElement.resolveCall().singleFunctionCallOrNull() ?: return@inputProvider null
+        val callElement = argumentList.parent as? KtCallElement ?: return@inputProvider null
+        val resolvedCall = callElement.resolveCall().singleFunctionCallOrNull() ?: return@inputProvider null
 
-            if (!resolvedCall.symbol.hasStableParameterNames) {
-                return@inputProvider null
-            }
-
-            val argumentsExcludingPrevious =
-                callElement.valueArgumentList?.arguments?.dropWhile { it != element } ?: return@inputProvider null
-            AddArgumentNamesApplicators.MultipleArgumentsInput(argumentsExcludingPrevious.associateWith {
-                getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return@inputProvider null
-            })
+        if (!resolvedCall.symbol.hasStableParameterNames) {
+            return@inputProvider null
         }
+
+        val argumentsExcludingPrevious =
+            callElement.valueArgumentList?.arguments?.dropWhile { it != element } ?: return@inputProvider null
+        AddArgumentNamesApplicators.MultipleArgumentsInput(argumentsExcludingPrevious.associateWith {
+            getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return@inputProvider null
+        })
+    }
 }

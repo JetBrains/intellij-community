@@ -16,9 +16,9 @@ internal class RedundantUnitReturnTypeInspection :
         KtNamedFunction::class
     ), CleanupLocalInspectionTool {
 
-    override val applicabilityRange = ApplicabilityRanges.CALLABLE_RETURN_TYPE
+    override fun getApplicabilityRange() = ApplicabilityRanges.CALLABLE_RETURN_TYPE
 
-    override val applicator = CallableReturnTypeUpdaterApplicator.applicator.with {
+    override fun getApplicator() = CallableReturnTypeUpdaterApplicator.applicator.with {
         isApplicableByPsi { callable ->
             val function = callable as? KtNamedFunction ?: return@isApplicableByPsi false
             function.hasBlockBody() && function.typeReference != null
@@ -27,10 +27,11 @@ internal class RedundantUnitReturnTypeInspection :
         actionName(KotlinBundle.lazyMessage("redundant.unit.return.type"))
     }
 
-    override val inputProvider = inputProvider<KtNamedFunction, CallableReturnTypeUpdaterApplicator.TypeInfo> { function ->
+    override fun getInputProvider() = inputProvider<KtNamedFunction, CallableReturnTypeUpdaterApplicator.TypeInfo> { function ->
         when {
             function.getFunctionLikeSymbol().returnType.isUnit ->
                 CallableReturnTypeUpdaterApplicator.TypeInfo(CallableReturnTypeUpdaterApplicator.TypeInfo.UNIT)
+
             else -> null
         }
     }

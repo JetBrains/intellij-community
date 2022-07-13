@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 
 internal abstract class AbstractAddAccessorIntention(private val addGetter: Boolean, private val addSetter: Boolean) :
     AbstractKotlinApplicatorBasedIntention<KtProperty, KotlinApplicatorInput.Empty>(KtProperty::class) {
-    override val applicator: KotlinApplicator<KtProperty, KotlinApplicatorInput.Empty>
-        get() = AddAccessorApplicator.applicator(addGetter, addSetter).with {
+    override fun getApplicator() =
+        AddAccessorApplicator.applicator(addGetter, addSetter).with {
             isApplicableByPsi { ktProperty ->
                 if (ktProperty.isLocal || ktProperty.hasDelegate() ||
                     ktProperty.containingClass()?.isInterface() == true ||
@@ -38,11 +38,11 @@ internal abstract class AbstractAddAccessorIntention(private val addGetter: Bool
             }
         }
 
-    override val applicabilityRange: KotlinApplicabilityRange<KtProperty> = applicabilityTarget { ktProperty ->
+    override fun getApplicabilityRange() = applicabilityTarget { ktProperty: KtProperty ->
         if (ktProperty.hasInitializer()) ktProperty.nameIdentifier else ktProperty
     }
 
-    override val inputProvider: KotlinApplicatorInputProvider<KtProperty, KotlinApplicatorInput.Empty> = inputProvider { ktProperty ->
+    override fun getInputProvider(): KotlinApplicatorInputProvider<KtProperty, KotlinApplicatorInput.Empty> = inputProvider { ktProperty ->
         val symbol = ktProperty.getVariableSymbol() as? KtPropertySymbol ?: return@inputProvider null
         if (symbol.containsAnnotation(JVM_FIELD_CLASS_ID)) return@inputProvider null
 

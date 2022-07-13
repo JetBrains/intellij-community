@@ -9,16 +9,18 @@ import kotlin.reflect.KClass
 
 abstract class AbstractKotlinDiagnosticBasedInspection<PSI : KtElement, DIAGNOSTIC : KtDiagnosticWithPsi<PSI>, INPUT : KotlinApplicatorInput>(
     elementType: KClass<PSI>,
-    private val diagnosticType: KClass<DIAGNOSTIC>,
 ) : AbstractKotlinApplicatorBasedInspection<PSI, INPUT>(elementType) {
-    abstract val inputByDiagnosticProvider: KotlinApplicatorInputByDiagnosticProvider<PSI, DIAGNOSTIC, INPUT>
+    abstract fun getDiagnosticType(): KClass<DIAGNOSTIC>
 
-    final override val inputProvider: KotlinApplicatorInputProvider<PSI, INPUT> = inputProvider { psi ->
+    abstract fun getInputByDiagnosticProvider(): KotlinApplicatorInputByDiagnosticProvider<PSI, DIAGNOSTIC, INPUT>
+
+    final override fun getInputProvider(): KotlinApplicatorInputProvider<PSI, INPUT> = inputProvider { psi ->
         val diagnostics = psi.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
+        val diagnosticType = getDiagnosticType()
         val suitableDiagnostics = diagnostics.filterIsInstance(diagnosticType.java)
         val diagnostic = suitableDiagnostics.firstOrNull() ?: return@inputProvider null
         // TODO handle case with multiple diagnostics on single element
-        with(inputByDiagnosticProvider) { createInfo(diagnostic) }
+        with(getInputByDiagnosticProvider()) { createInfo(diagnostic) }
     }
 }
 

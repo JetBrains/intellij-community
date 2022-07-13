@@ -18,38 +18,37 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 internal class ConvertToBlockBodyIntention :
     AbstractKotlinApplicatorBasedIntention<KtDeclarationWithBody, ConvertToBlockBodyIntention.Input>(KtDeclarationWithBody::class) {
 
-    override val applicator: KotlinApplicator<KtDeclarationWithBody, Input>
-        get() =  applicator<KtDeclarationWithBody, Input> {
-            familyAndActionName(KotlinBundle.lazyMessage(("convert.to.block.body")))
-            isApplicableByPsi { (it is KtNamedFunction || it is KtPropertyAccessor) && !it.hasBlockBody() && it.hasBody() }
-            applyTo { declaration, input ->
-                val body = declaration.bodyExpression!!
+    override fun getApplicator() = applicator<KtDeclarationWithBody, Input> {
+        familyAndActionName(KotlinBundle.lazyMessage(("convert.to.block.body")))
+        isApplicableByPsi { (it is KtNamedFunction || it is KtPropertyAccessor) && !it.hasBlockBody() && it.hasBody() }
+        applyTo { declaration, input ->
+            val body = declaration.bodyExpression!!
 
-                val newBody = when (declaration) {
-                    is KtNamedFunction -> {
-                        if (!declaration.hasDeclaredReturnType() && !input.returnTypeIsUnit) {
-                            declaration.setType(input.returnTypeString, input.returnTypeClassId)
-                        }
-                        generateBody(body, input, !input.returnTypeIsUnit && !input.returnTypeIsNothing)
+            val newBody = when (declaration) {
+                is KtNamedFunction -> {
+                    if (!declaration.hasDeclaredReturnType() && !input.returnTypeIsUnit) {
+                        declaration.setType(input.returnTypeString, input.returnTypeClassId)
                     }
-
-                    is KtPropertyAccessor -> {
-                        val parent = declaration.parent
-                        if (parent is KtProperty && parent.typeReference == null) {
-                            parent.setType(input.returnTypeString, input.returnTypeClassId)
-                        }
-
-                        generateBody(body, input, declaration.isGetter)
-                    }
-
-                    else -> throw RuntimeException("Unknown declaration type: $declaration")
+                    generateBody(body, input, !input.returnTypeIsUnit && !input.returnTypeIsNothing)
                 }
 
-                declaration.equalsToken!!.delete()
-                val replaced = body.replace(newBody)
-                if (input.reformat) declaration.containingKtFile.adjustLineIndent(replaced.startOffset, replaced.endOffset)
+                is KtPropertyAccessor -> {
+                    val parent = declaration.parent
+                    if (parent is KtProperty && parent.typeReference == null) {
+                        parent.setType(input.returnTypeString, input.returnTypeClassId)
+                    }
+
+                    generateBody(body, input, declaration.isGetter)
+                }
+
+                else -> throw RuntimeException("Unknown declaration type: $declaration")
             }
+
+            declaration.equalsToken!!.delete()
+            val replaced = body.replace(newBody)
+            if (input.reformat) declaration.containingKtFile.adjustLineIndent(replaced.startOffset, replaced.endOffset)
         }
+    }
 
     class Input(
         val returnTypeIsUnit: Boolean,
@@ -64,16 +63,15 @@ internal class ConvertToBlockBodyIntention :
     override fun skipProcessingFurtherElementsAfter(element: PsiElement) =
         element is KtDeclaration || super.skipProcessingFurtherElementsAfter(element)
 
-    override val applicabilityRange: KotlinApplicabilityRange<KtDeclarationWithBody> get() = ApplicabilityRanges.SELF
+    override fun getApplicabilityRange()= ApplicabilityRanges.SELF
 
-    override val inputProvider: KotlinApplicatorInputProvider<KtDeclarationWithBody, Input>
-        get() = inputProvider { psi ->
-            if (psi is KtNamedFunction) {
-                val returnType = psi.getReturnKtType()
-                if (!psi.hasDeclaredReturnType() && returnType is KtClassErrorType) return@inputProvider null
-            }
-            createInputForDeclaration(psi, true)
+    override fun getInputProvider() = inputProvider { psi: KtDeclarationWithBody ->
+        if (psi is KtNamedFunction) {
+            val returnType = psi.getReturnKtType()
+            if (!psi.hasDeclaredReturnType() && returnType is KtClassErrorType) return@inputProvider null
         }
+        createInputForDeclaration(psi, true)
+    }
 
     companion object {
         fun KtAnalysisSession.createInputForDeclaration(declaration: KtDeclarationWithBody, reformat: Boolean): Input? {

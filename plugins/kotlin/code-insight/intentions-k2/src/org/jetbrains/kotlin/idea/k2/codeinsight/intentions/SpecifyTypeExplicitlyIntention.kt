@@ -13,10 +13,10 @@ import org.jetbrains.kotlin.psi.*
 
 internal class SpecifyTypeExplicitlyIntention :
     AbstractKotlinApplicatorBasedIntention<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo>(KtCallableDeclaration::class) {
-    override val applicabilityRange: KotlinApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
+    override fun getApplicabilityRange() = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
 
-    override val applicator: KotlinApplicator<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo>
-        get() = CallableReturnTypeUpdaterApplicator.applicator.with {
+    override fun getApplicator()=
+        CallableReturnTypeUpdaterApplicator.applicator.with {
             isApplicableByPsi { declaration: KtCallableDeclaration ->
                 if (declaration is KtConstructor<*> || declaration is KtFunctionLiteral) return@isApplicableByPsi false
                 declaration.typeReference == null && (declaration as? KtNamedFunction)?.hasBlockBody() != true
@@ -32,7 +32,7 @@ internal class SpecifyTypeExplicitlyIntention :
             }
         }
 
-    override val inputProvider = inputProvider<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo> { declaration ->
+    override fun getInputProvider() = inputProvider<KtCallableDeclaration, _> { declaration ->
         val diagnostics = declaration.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         // Avoid redundant intentions
         if (diagnostics.any { diagnostic ->

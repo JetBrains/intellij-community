@@ -10,31 +10,29 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.removeProperty
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
+import kotlin.reflect.KClass
 
 internal class UnusedVariableInspection :
     AbstractKotlinDiagnosticBasedInspection<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable, KotlinApplicatorInput.Empty>(
         elementType = KtNamedDeclaration::class,
-        diagnosticType = KtFirDiagnostic.UnusedVariable::class,
     ) {
+    override fun getDiagnosticType() = KtFirDiagnostic.UnusedVariable::class
 
-    override val inputByDiagnosticProvider: KotlinApplicatorInputByDiagnosticProvider<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable, KotlinApplicatorInput.Empty>
-        get() = inputByDiagnosticProvider { diagnostic ->
+    override fun getInputByDiagnosticProvider() =
+        inputByDiagnosticProvider<_, KtFirDiagnostic.UnusedVariable, _> { diagnostic ->
             val ktProperty = diagnostic.psi as? KtProperty ?: return@inputByDiagnosticProvider null
             if (ktProperty.isExplicitTypeReferenceNeededForTypeInference()) return@inputByDiagnosticProvider null
             KotlinApplicatorInput
         }
 
-    override val applicabilityRange: KotlinApplicabilityRange<KtNamedDeclaration>
-        get() = ApplicabilityRanges.DECLARATION_NAME
-
-    override val applicator: KotlinApplicator<KtNamedDeclaration, KotlinApplicatorInput.Empty>
-        get() = applicator {
-            familyName(KotlinBundle.lazyMessage("remove.element"))
-            actionName { psi, _ ->
-                KotlinBundle.message("remove.variable.0", psi.name.toString())
-            }
-            applyTo { psi, _ ->
-                removeProperty(psi as KtProperty)
-            }
+    override fun getApplicabilityRange() = ApplicabilityRanges.DECLARATION_NAME
+    override fun getApplicator() = applicator {
+        familyName(KotlinBundle.lazyMessage("remove.element"))
+        actionName { psi, _ ->
+            KotlinBundle.message("remove.variable.0", psi.name.toString())
         }
+        applyTo { psi, _ ->
+            removeProperty(psi as KtProperty)
+        }
+    }
 }

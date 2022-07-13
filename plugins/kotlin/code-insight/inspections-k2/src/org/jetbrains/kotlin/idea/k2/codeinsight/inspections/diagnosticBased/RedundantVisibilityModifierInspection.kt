@@ -2,9 +2,8 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
-import com.intellij.codeInspection.ProblemHighlightType
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ModifierApplicators
@@ -15,18 +14,19 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 internal class RedundantVisibilityModifierInspection :
     AbstractKotlinDiagnosticBasedInspection<KtModifierListOwner, KtFirDiagnostic.RedundantVisibilityModifier, ModifierApplicators.Modifier>(
         elementType = KtModifierListOwner::class,
-        diagnosticType = KtFirDiagnostic.RedundantVisibilityModifier::class
     ) {
 
-    override val inputByDiagnosticProvider =
-        inputByDiagnosticProvider<KtModifierListOwner, KtFirDiagnostic.RedundantVisibilityModifier, ModifierApplicators.Modifier> { diagnostic ->
+    override fun getDiagnosticType() = KtFirDiagnostic.RedundantVisibilityModifier::class
+
+    override fun getInputByDiagnosticProvider() =
+        inputByDiagnosticProvider<_, KtFirDiagnostic.RedundantVisibilityModifier, _> { diagnostic ->
             val modifier = diagnostic.psi.visibilityModifierType() ?: return@inputByDiagnosticProvider null
             ModifierApplicators.Modifier(modifier)
         }
 
-    override val applicabilityRange: KotlinApplicabilityRange<KtModifierListOwner> = ApplicabilityRanges.VISIBILITY_MODIFIER
+    override fun getApplicabilityRange() = ApplicabilityRanges.VISIBILITY_MODIFIER
 
-    override val applicator: KotlinApplicator<KtModifierListOwner, ModifierApplicators.Modifier> =
+    override fun getApplicator() =
         ModifierApplicators.removeModifierApplicator(
             KtTokens.VISIBILITY_MODIFIERS,
             KotlinBundle.lazyMessage("redundant.visibility.modifier")

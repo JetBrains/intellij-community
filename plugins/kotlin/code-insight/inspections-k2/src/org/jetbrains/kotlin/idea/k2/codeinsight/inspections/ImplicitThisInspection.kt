@@ -24,9 +24,9 @@ internal class ImplicitThisInspection : AbstractKotlinApplicatorBasedInspection<
         val isUnambiguousLabel: Boolean
     ) : KotlinApplicatorInput
 
-    override val applicabilityRange: KotlinApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
 
-    override val inputProvider: KotlinApplicatorInputProvider<KtExpression, ImplicitReceiverInfo> = inputProvider { expression ->
+    override fun getInputProvider() = inputProvider { expression: KtExpression ->
         val reference = if (expression is KtCallableReferenceExpression) expression.callableReference else expression
         val declarationSymbol = reference.mainReference?.resolveToSymbol() ?: return@inputProvider null
 
@@ -93,7 +93,7 @@ internal class ImplicitThisInspection : AbstractKotlinApplicatorBasedInspection<
         return Pair(associatedClass, associatedTag)
     }
 
-    override val applicator: KotlinApplicator<KtExpression, ImplicitReceiverInfo> = Companion.applicator
+    override fun getApplicator(): KotlinApplicator<KtExpression, ImplicitReceiverInfo> = Companion.applicator
 
     companion object {
 
