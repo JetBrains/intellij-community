@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -138,4 +139,6 @@ class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messagePointer("v
 
     return dataPack.getFirstCommits(logManager.dataManager.storage, indexedRoots)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }

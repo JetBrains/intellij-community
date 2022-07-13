@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.thisLogger
@@ -49,6 +50,8 @@ class InvalidateVcsLogCaches : DumbAwareAction(actionText(VcsLogBundle.message("
       }
     }, VcsLogBundle.message("vcs.log.invalidate.caches.progress", vcsName), false, project)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   companion object {
     private fun actionText(vcsName: String): @Nls String {
