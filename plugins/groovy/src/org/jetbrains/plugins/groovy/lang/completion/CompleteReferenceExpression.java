@@ -432,7 +432,9 @@ public final class CompleteReferenceExpression {
         PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
         if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
         if (element instanceof PsiMethod) {
-          substitutor = mySubstitutorComputer.obtainSubstitutor(substitutor, (PsiMethod)element, resolveContext);
+          for (PsiTypeParameter typeParameter : ((PsiMethod)element).getTypeParameters()) {
+            substitutor = substitutor.put(typeParameter, null);
+          }
         }
 
         consume(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
