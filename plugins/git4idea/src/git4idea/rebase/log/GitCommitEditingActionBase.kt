@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log
 
 import com.intellij.dvcs.repo.Repository
@@ -165,7 +165,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
     // check that first and last selected commits are in HEAD and not pushed to protected branch
     listOf(commitList.first(), commitList.last()).forEach { commit ->
-      val branches = commitEditingData.log.getContainingBranches(commit.id, commit.root)
+      val branches = commitEditingData.logData.containingBranchesGetter.getContainingBranchesQuickly(commit.root, commit.id)
       if (branches != null) { // otherwise the information is not available yet, and we'll recheck harder in actionPerformed
         if (GitUtil.HEAD !in branches) {
           e.presentation.description = GitBundle.message("rebase.log.commit.editing.action.commit.not.in.head.error.text")
