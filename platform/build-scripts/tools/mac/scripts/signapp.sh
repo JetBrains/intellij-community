@@ -15,11 +15,10 @@ PASSWORD=$4
 set -x
 
 CODESIGN_STRING=$5
-JDK_ARCHIVE="$6"
-NOTARIZE=$7
-BUNDLE_ID=$8
-COMPRESS_INPUT=${9:-false}
-JETSIGN_CLIENT=${10:-null}
+NOTARIZE=$6
+BUNDLE_ID=$7
+COMPRESS_INPUT=${8:-false}
+JETSIGN_CLIENT=${9:-null}
 
 if [ "$JETSIGN_CLIENT" != "null" ] && [ "$CODESIGN_STRING" == "" ]; then
   echo "CertificateID is not specified"
@@ -72,16 +71,6 @@ BUILD_NAME="$(ls "$EXPLODED")"
 log "$SIT_FILE unzipped and removed"
 
 APPLICATION_PATH="$EXPLODED/$BUILD_NAME"
-
-if [ "$JDK_ARCHIVE" != "no-jdk" ] && [ -f "$JDK_ARCHIVE" ]; then
-  RUNTIME_DIR="$APPLICATION_PATH/Contents/jbr"
-  log "Copying JDK: $JDK_ARCHIVE to $RUNTIME_DIR"
-  mkdir -p "$RUNTIME_DIR"
-  tar xvf "$JDK_ARCHIVE" --strip 1 -C "$RUNTIME_DIR"
-  find "$RUNTIME_DIR" -mindepth 1 -maxdepth 1 -exec chmod -R u+w '{}' \;
-  log "JDK has been copied"
-  rm -f "$JDK_ARCHIVE"
-fi
 
 find "$APPLICATION_PATH/Contents/bin" \
   -maxdepth 1 -type f -name '*.jnilib' -print0 |

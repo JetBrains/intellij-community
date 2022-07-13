@@ -50,7 +50,7 @@ internal fun signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
     Span.current().addEvent("build step '${BuildOptions.MAC_SIGN_STEP}' is disabled")
   }
   if (!sign || macHostProperties?.host == null && SystemInfoRt.isMac) {
-    buildLocally(sitFile, targetName, jreArchivePath, sign, notarize, customizer, context)
+    buildLocally(sitFile, targetName, sign, notarize, customizer, context)
   }
   else if (macHostProperties?.host == null ||
            macHostProperties.userName == null ||
@@ -60,7 +60,7 @@ internal fun signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
                                 "Probably you want to skip BuildOptions.MAC_SIGN_STEP step")
   }
   else {
-    buildAndSignWithMacBuilderHost(sitFile, jreArchivePath, macHostProperties, notarize, customizer, context)
+    buildAndSignWithMacBuilderHost(sitFile, macHostProperties, notarize, customizer, context)
   }
 
   require(Files.exists(sitFile)) {
@@ -72,7 +72,6 @@ internal fun signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
 }
 
 private fun buildAndSignWithMacBuilderHost(sitFile: Path,
-                                           jreArchivePath: Path?,
                                            macHostProperties: MacHostProperties,
                                            notarize: Boolean,
                                            customizer: MacDistributionCustomizer,
@@ -94,8 +93,7 @@ private fun buildAndSignWithMacBuilderHost(sitFile: Path,
     codesignString = macHostProperties.codesignString!!,
     fullBuildNumber = context.fullBuildNumber,
     notarize = notarize, bundleIdentifier = customizer.bundleIdentifier,
-    appArchiveFile = sitFile, jreArchiveFile = jreArchivePath,
-    communityHome = context.paths.communityHomeDir,
+    appArchiveFile = sitFile, communityHome = context.paths.communityHomeDir,
     artifactDir = Path.of(context.paths.artifacts),
     dmgImage = dmgImage,
     artifactBuilt = context::notifyArtifactWasBuilt,
@@ -106,17 +104,15 @@ private fun buildAndSignWithMacBuilderHost(sitFile: Path,
 
 private fun buildLocally(sitFile: Path,
                          targetName: String,
-                         jreArchivePath: Path?,
                          sign: Boolean,
                          notarize: Boolean,
                          customizer: MacDistributionCustomizer,
                          context: BuildContext) {
   val tempDir = context.paths.tempDir.resolve(sitFile.fileName.toString().replace(".sit", ""))
   spanBuilder("bundle JBR and sign sit locally")
-    .setAttribute("jreArchive", jreArchivePath.toString())
     .setAttribute("sitFile", sitFile.toString()).useWithScope {
       Files.createDirectories(tempDir)
-      bundleRuntimeAndSignSitLocally(sitFile, tempDir, jreArchivePath, sign, notarize, customizer, context)
+      signSitLocally(sitFile, tempDir, sign, notarize, customizer, context)
     }
   if (customizer.publishArchive) {
     context.notifyArtifactBuilt(sitFile)
@@ -128,18 +124,14 @@ private fun buildLocally(sitFile: Path,
   NioFiles.deleteRecursively(tempDir)
 }
 
-private fun bundleRuntimeAndSignSitLocally(sourceFile: Path,
-                                           tempDir: Path,
-                                           jreArchivePath: Path?,
-                                           sign: Boolean,
-                                           notarize: Boolean,
-                                           customizer: MacDistributionCustomizer,
-                                           context: BuildContext) {
+private fun signSitLocally(sourceFile: Path,
+                           tempDir: Path,
+                           sign: Boolean,
+                           notarize: Boolean,
+                           customizer: MacDistributionCustomizer,
+                           context: BuildContext) {
   val targetFile = tempDir.resolve(sourceFile.fileName)
   Files.copy(sourceFile, targetFile)
-  if (jreArchivePath != null) {
-    Files.copy(jreArchivePath, tempDir.resolve(jreArchivePath.fileName))
-  }
 
   val scripts = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/tools/mac/scripts")
   Files.walk(scripts).use { stream ->
@@ -161,7 +153,6 @@ private fun bundleRuntimeAndSignSitLocally(sourceFile: Path,
       "",
       "",
       context.proprietaryBuildTools.macHostProperties?.codesignString?.takeIf { sign } ?: "",
-      (jreArchivePath?.fileName?.toString() ?: "no-jdk"),
       if (notarize) "yes" else "no",
       customizer.bundleIdentifier,
       customizer.publishArchive.toString(), // compress-input

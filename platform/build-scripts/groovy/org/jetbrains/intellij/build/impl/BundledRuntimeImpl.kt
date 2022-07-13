@@ -10,7 +10,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import java.io.BufferedInputStream
@@ -64,7 +63,7 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
     val targetDir = context.paths.communityHomeDir.communityRoot.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
     val jbrDir = targetDir.resolve("jbr")
 
-    val archive = findArchiveImpl(prefix, os, arch)
+    val archive = findArchive(prefix, os, arch)
     BuildDependenciesDownloader.extractFile(
       archive, jbrDir,
       context.paths.communityHomeDir,
@@ -82,14 +81,10 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
   }
 
   override fun extractTo(prefix: String, os: OsFamily, destinationDir: Path, arch: JvmArchitecture) {
-    doExtract(findArchiveImpl(prefix, os, arch), destinationDir, os)
+    doExtract(findArchive(prefix, os, arch), destinationDir, os)
   }
 
-  override fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    return findArchiveImpl(prefix, os, arch)
-  }
-
-  private fun findArchiveImpl(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
+  private fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
     val archiveName = archiveName(prefix, arch, os)
     val url = URI("https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName")
     return BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDir, url)

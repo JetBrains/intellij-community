@@ -6,6 +6,7 @@ import com.intellij.diagnostic.telemetry.use
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SystemProperties
+import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
@@ -23,13 +24,17 @@ import org.jetbrains.intellij.build.tasks.dir
 import org.jetbrains.intellij.build.tasks.entry
 import org.jetbrains.intellij.build.tasks.executableFileUnixMode
 import java.io.File
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermission
 import java.time.LocalDate
 import java.util.concurrent.ForkJoinTask
 import java.util.function.BiConsumer
 import java.util.zip.Deflater
+import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
 
 class MacDistributionBuilder(private val context: BuildContext,
                              private val customizer: MacDistributionCustomizer,
@@ -319,7 +324,7 @@ private fun createBuildForArchTask(builtinModule: BuiltinModulesFileData?,
 
 private fun buildForArch(builtinModule: BuiltinModulesFileData?,
                          arch: JvmArchitecture,
-                         jreManager: BundledRuntime,
+                         runtime: BundledRuntime,
                          macZip: Path,
                          notarize: Boolean,
                          customizer: MacDistributionCustomizer,
@@ -327,41 +332,73 @@ private fun buildForArch(builtinModule: BuiltinModulesFileData?,
   val tasks = mutableListOf<ForkJoinTask<*>?>()
   val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
   val archStr = arch.name
-  // with JRE
+  val runtimeDir = runtime.extract(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
+  val (macZipWithRuntime, macZipWithoutRuntime) = when {
+    !context.options.buildDmgWithBundledJre -> macZip to macZip
+    context.options.buildDmgWithoutBundledJre -> {
+      val macZipWithRuntime = Files.copy(macZip, macZip, StandardCopyOption.REPLACE_EXISTING)
+      macZipWithRuntime.addToZip(runtimeDir, "Contents")
+      macZipWithRuntime to macZip
+    }
+    else -> {
+      macZip.addToZip(runtimeDir, "Contents")
+      macZip to macZip
+    }
+  }
+  // with Runtime
   if (context.options.buildDmgWithBundledJre) {
     tasks.add(createSkippableTask(
-      spanBuilder("build DMG with JRE").setAttribute("arch", archStr), "${BuildOptions.MAC_ARTIFACTS_STEP}_jre_$archStr",
+      spanBuilder("build DMG with Runtime").setAttribute("arch", archStr), "${BuildOptions.MAC_ARTIFACTS_STEP}_jre_$archStr",
       context
     ) {
-      val jreArchive = jreManager.findArchive(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
       signAndBuildDmg(builtinModule = builtinModule,
                       context = context,
                       customizer = customizer,
                       macHostProperties = context.proprietaryBuildTools.macHostProperties,
-                      macZip = macZip,
-                      jreArchivePath = jreArchive,
+                      macZip = macZipWithRuntime,
+                      jreArchivePath = runtimeDir,
                       suffix = suffix,
                       notarize = notarize)
     })
   }
 
-  // without JRE
+  // without Runtime
   if (context.options.buildDmgWithoutBundledJre) {
     tasks.add(createSkippableTask(
-      spanBuilder("build DMG without JRE").setAttribute("arch", archStr), "${BuildOptions.MAC_ARTIFACTS_STEP}_no_jre_$archStr",
+      spanBuilder("build DMG without Runtime").setAttribute("arch", archStr), "${BuildOptions.MAC_ARTIFACTS_STEP}_no_jre_$archStr",
       context
     ) {
       signAndBuildDmg(builtinModule = builtinModule,
                       context = context,
                       customizer = customizer,
                       macHostProperties = context.proprietaryBuildTools.macHostProperties,
-                      macZip = macZip,
+                      macZip = macZipWithoutRuntime,
                       jreArchivePath = null,
                       suffix = "-no-jdk$suffix",
                       notarize = notarize)
     })
   }
   return tasks.filterNotNull()
+}
+
+private fun Path.addToZip(dir: Path, pathPrefix: String) {
+  require(extension == "zip")
+  require(dir.isDirectory())
+  FileSystems.newFileSystem(this, null).use { zip ->
+    val contents = zip.rootDirectories.singleOrNull()?.resolve(pathPrefix)
+                   ?: error("Single root directory is expected in $this but found ${zip.rootDirectories}")
+    Files.walk(dir).use {
+      it.forEach { sourcePath ->
+        val targetPath = contents.resolve(sourcePath.toString().removePrefix("/"))
+        if (sourcePath.isDirectory()) {
+          Files.createDirectories(targetPath)
+        }
+        else {
+          Files.copy(sourcePath, targetPath)
+        }
+      }
+    }
+  }
 }
 
 private fun optionsToXml(options: List<String>): String {

@@ -87,7 +87,6 @@ fun signMacApp(
   notarize: Boolean,
   bundleIdentifier: String,
   appArchiveFile: Path,
-  jreArchiveFile: Path?,
   communityHome: BuildDependenciesCommunityRoot,
   artifactDir: Path,
   dmgImage: Path?,
@@ -103,16 +102,6 @@ fun signMacApp(
       .use {
         sftp.put(NioFileSource(appArchiveFile, filePermission = regularFileMode), "$remoteDir/${appArchiveFile.fileName}")
       }
-
-    if (jreArchiveFile != null) {
-      tracer.spanBuilder("upload JRE archive")
-        .setAttribute("file", jreArchiveFile.toString())
-        .setAttribute("remoteDir", remoteDir)
-        .setAttribute("host", host)
-        .use {
-          sftp.put(NioFileSource(jreArchiveFile, filePermission = regularFileMode), "$remoteDir/${jreArchiveFile.fileName}")
-        }
-    }
 
     val scriptDir = communityHome.communityRoot.resolve("platform/build-scripts/tools/mac/scripts")
     tracer.spanBuilder("upload scripts")
@@ -138,7 +127,6 @@ fun signMacApp(
       user,
       password,
       codesignString,
-      jreArchiveFile?.fileName?.toString() ?: "no-jdk",
       if (notarize) "yes" else "no",
       bundleIdentifier,
       publishAppArchive.toString(),
