@@ -53,7 +53,18 @@ public class DisposerTest  {
 
   @After
   public void tearDown() throws Exception {
-    Disposer.dispose(myRoot);
+    try {
+      Disposer.dispose(myRoot);
+    }
+    finally {
+      myRoot = null;
+      myFolder1 = null;
+      myFolder2 = null;
+      myLeaf1 = null;
+      myLeaf2 = null;
+      myDisposedObjects.clear();
+      myDisposeActions.clear();
+    }
   }
 
   @Test
