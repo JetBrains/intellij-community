@@ -46,6 +46,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.testFramework.common.PlatformPrefix
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
@@ -120,7 +121,7 @@ class TestApplicationManager private constructor() {
         throw IllegalStateException("App bootstrap is already in process")
       }
 
-      HeavyPlatformTestCase.doAutodetectPlatformPrefix()
+      PlatformPrefix.autodetectPlatformPrefix()
       PlatformTestUtil.loadApp {
         if (EventQueue.isDispatchThread()) {
           // replaces system event queue

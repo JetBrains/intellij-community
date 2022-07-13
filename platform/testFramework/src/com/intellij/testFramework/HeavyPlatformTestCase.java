@@ -58,7 +58,6 @@ import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
@@ -78,7 +77,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -106,7 +104,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
 
-  private static boolean ourPlatformPrefixInitialized;
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
   private SdkLeakTracker myOldSdks;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
@@ -181,38 +178,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     testAppManager.setDataProvider(this);
     // try to remember old sdks as soon as possible after the app instantiation
     myOldSdks = new SdkLeakTracker();
-  }
-
-  private static final String[] PREFIX_CANDIDATES = {
-    "Rider", "GoLand", "CLion", "MobileIDE",
-    null,
-    "AppCode", "SwiftTests",
-    "DataGrip",
-    "Python", "DataSpell", "PyCharmCore",
-    "Ruby",
-    "PhpStorm",
-    "UltimateLangXml", "Idea", "PlatformLangXml"};
-
-  public static void doAutodetectPlatformPrefix() {
-    if (ourPlatformPrefixInitialized) {
-      return;
-    }
-
-    if (System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) != null) {
-      ourPlatformPrefixInitialized = true;
-      return;
-    }
-
-    for (String candidate : PREFIX_CANDIDATES) {
-      String markerPath = candidate == null ? "idea/ApplicationInfo.xml" : "META-INF/" + candidate + "Plugin.xml";
-      URL resource = HeavyPlatformTestCase.class.getClassLoader().getResource(markerPath);
-      if (resource != null) {
-        if (candidate != null) {
-          setPlatformPrefix(candidate);
-        }
-        break;
-      }
-    }
   }
 
   @Override
@@ -749,11 +714,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   protected final @Nullable PsiFile getPsiFile(@NotNull Document document) {
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-  }
-
-  private static void setPlatformPrefix(@NotNull String prefix) {
-    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
-    ourPlatformPrefixInitialized = true;
   }
 
   @Retention(RetentionPolicy.RUNTIME)
