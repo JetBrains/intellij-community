@@ -4,6 +4,7 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.settings.ThreadsViewConfigurable;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,5 +19,10 @@ public class CustomizeThreadsViewAction extends DebuggerAction {
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(true);
     e.getPresentation().setText(ActionsBundle.actionText("Debugger.CustomizeThreadsView"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

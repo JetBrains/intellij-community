@@ -111,6 +111,11 @@ public class ToggleFieldBreakpointAction extends AnAction {
     presentation.setVisible(toEnable);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Nullable
   public static SourcePosition getPlace(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
