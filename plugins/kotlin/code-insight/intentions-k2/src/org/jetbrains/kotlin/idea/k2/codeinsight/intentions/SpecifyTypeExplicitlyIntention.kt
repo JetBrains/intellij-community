@@ -12,8 +12,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableRetu
 import org.jetbrains.kotlin.psi.*
 
 internal class SpecifyTypeExplicitlyIntention :
-    AbstractKotlinApplicatorBasedIntention<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo>(KtCallableDeclaration::class)
-{
+    AbstractKotlinApplicatorBasedIntention<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo>(KtCallableDeclaration::class) {
     override val applicabilityRange: KotlinApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
 
     override val applicator: KotlinApplicator<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo>
@@ -34,12 +33,16 @@ internal class SpecifyTypeExplicitlyIntention :
         }
 
     override val inputProvider = inputProvider<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo> { declaration ->
-        val diagnostics = declaration.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).map { it::class }.toSet()
+        val diagnostics = declaration.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         // Avoid redundant intentions
-        if (KtFirDiagnostic.AmbiguousAnonymousTypeInferred::class in diagnostics ||
-            KtFirDiagnostic.PropertyWithNoTypeNoInitializer::class in diagnostics ||
-            KtFirDiagnostic.MustBeInitialized::class in diagnostics
-        ) return@inputProvider null
+        if (diagnostics.any { diagnostic ->
+                diagnostic is KtFirDiagnostic.AmbiguousAnonymousTypeInferred
+                        || diagnostic is KtFirDiagnostic.PropertyWithNoTypeNoInitializer
+                        || diagnostic is KtFirDiagnostic.MustBeInitialized
+            }
+        ) {
+            return@inputProvider null
+        }
         getTypeInfo(declaration)
     }
 }
