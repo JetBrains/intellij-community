@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.BundleBase;
@@ -479,6 +479,35 @@ public final class ConfigurableExtensionPointUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * @return path from configurable to Settings/Preferences root as a string of display names separated by '|' e.g., Editor | Inspections
+   */
+  @Nls
+  public static String getConfigurablePath(Class<? extends Configurable> configurableClass, Project project) {
+    List<String> path = new ArrayList<>();
+    collectPath(configurableClass, path, getConfigurableGroup(project, true).getConfigurables());
+    return StringUtil.join(path, " | ");
+  }
+
+  private static void collectPath(Class<? extends Configurable> configurableClass, List<String> path, Configurable[] configurables) {
+    for (Configurable configurable : configurables) {
+      if (configurableClass.equals(configurable.getClass()) ||
+          configurable instanceof ConfigurableWrapper &&
+          configurableClass.getName().equals(((ConfigurableWrapper)configurable).getExtensionPoint().instanceClass)) {
+        path.add(configurable.getDisplayName());
+      }
+      if (configurable instanceof Configurable.Composite) {
+        ArrayList<String> thisPart = new ArrayList<>();
+        collectPath(configurableClass, thisPart, ((Configurable.Composite)configurable).getConfigurables());
+        if (!thisPart.isEmpty()) {
+          path.add(configurable.getDisplayName());
+          path.addAll(thisPart);
+          break;
+        }
+      }
+    }
   }
 
   /**
