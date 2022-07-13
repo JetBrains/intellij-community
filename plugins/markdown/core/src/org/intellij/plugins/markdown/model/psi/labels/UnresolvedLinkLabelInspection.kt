@@ -20,8 +20,9 @@ internal class UnresolvedLinkLabelInspection: LocalInspectionTool() {
   }
 
   private fun checkReference(element: PsiElement, holder: ProblemsHolder) {
-    val references = MarkdownPsiSymbolReference.findSymbolReferences(element).filter { it.resolveReference().isEmpty() }
-    for (reference in references) {
+    val references = MarkdownPsiSymbolReference.findSymbolReferences(element).filterIsInstance<LinkLabelSymbolReference>()
+    val unresolvedReferences = references.filter { it.resolveReference().isEmpty() }
+    for (reference in unresolvedReferences) {
       val text = reference.rangeInElement.substring(reference.element.text)
       holder.registerProblem(
         element,
