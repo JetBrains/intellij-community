@@ -160,6 +160,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   @Override
   public void doWhenFocusSettlesDown(@NotNull Runnable runnable) {
+    // Not a "Write-safe" context when postponed
     myQueue.executeWhenAllFocusEventsLeftTheQueue(runnable);
   }
 
@@ -168,13 +169,15 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     AtomicBoolean immediate = new AtomicBoolean(true);
     doWhenFocusSettlesDown(() -> {
       if (immediate.get()) {
-        if (!(runnable instanceof ExpirableRunnable) || !((ExpirableRunnable)runnable).isExpired()) {
+        boolean expired = runnable instanceof ExpirableRunnable && ((ExpirableRunnable)runnable).isExpired();
+        if (!expired) {
           runnable.run();
         }
-        return;
       }
-
-      ApplicationManager.getApplication().invokeLater(() -> doWhenFocusSettlesDown(runnable, modality), modality);
+      else {
+        // "Write-safe context" when postponed due to `TransactionGuardImpl#wrapLaterInvocation`
+        ApplicationManager.getApplication().invokeLater(() -> doWhenFocusSettlesDown(runnable, modality), modality);
+      }
     });
     immediate.set(false);
   }
