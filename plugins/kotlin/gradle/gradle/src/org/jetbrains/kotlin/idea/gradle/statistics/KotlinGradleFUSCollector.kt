@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin.idea.gradle.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.statistics.GradleStatisticsEventGroups
 import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
@@ -129,7 +131,10 @@ class KotlinGradleFUSCollector : CounterUsagesCollector() {
             kotlinGradleEvents.forEach { event ->
                 val eventPairs = event.getEventPairs(currentMetrics, previousMetrics)
                 if (eventPairs.isNotEmpty()) {
-                    event.eventId.log(*eventPairs)
+                    if (KotlinGradleEvent.addIDEPluginVersion(event.eventName))
+                        event.eventId.log(EventFields.PluginInfo.with(KotlinIdePlugin.getPluginInfo()), *eventPairs)
+                    else
+                        event.eventId.log(*eventPairs)
                 }
             }
         }

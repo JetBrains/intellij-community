@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -37,16 +36,7 @@ enum class CustomNumericalMetrics(val eventGroup: GradleStatisticsEventGroups, v
     })
 }
 
-enum class CustomStringMetrics(val eventGroup: GradleStatisticsEventGroups, val regexp: String, val consumer: StringMetricConsumer) :
-    ICustomMetric {
-    PLUGIN_VERSION(GradleStatisticsEventGroups.ComponentVersions,
-                   "(@snapshot@|(\\d+-)?\\d(\\.\\d)?\\.\\d{1,3}(-(beta\\d?|dev|eap|release|m\\d?|rc\\d?))+-(\\d+-)?(appcode|clion|ij|studio|as)[0-9\\-\\.]+)",
-                   { _, _ ->
-                       org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin.version.toLowerCaseAsciiOnly()
-                   })
-}
-
-class KotlinGradleEvent(group: EventLogGroup, eventName: GradleStatisticsEventGroups, vararg metrics: Any) {
+class KotlinGradleEvent(group: EventLogGroup, val eventName: GradleStatisticsEventGroups, vararg metrics: Any) {
 
     private val booleanEventFields = TreeMap<String, EventField<Boolean>>() // we prefer sorted collection for event creation
     private val booleanMetricConsumers = HashMap<String, BooleanMetricConsumer>()
@@ -85,13 +75,10 @@ class KotlinGradleEvent(group: EventLogGroup, eventName: GradleStatisticsEventGr
                 numericalMetricConsumers[it.name] = it.consumer
             }
         }
-        CustomStringMetrics.values().forEach {
-            if (it.eventGroup == eventName || eventName == GradleStatisticsEventGroups.All) {
-                stringEventFields[it.name] = EventFields.StringValidatedByInlineRegexp(it.name.lowercase(), it.regexp)
-                stringMetricConsumers[it.name] = it.consumer
-            }
-        }
-        eventId = group.registerVarargEvent(eventName.name, *allEventFieldsValues().toTypedArray())
+        eventId = if (addIDEPluginVersion(eventName))
+            group.registerVarargEvent(eventName.name, EventFields.PluginInfo, *allEventFieldsValues().toTypedArray())
+        else
+            group.registerVarargEvent(eventName.name, *allEventFieldsValues().toTypedArray())
     }
 
     fun getEventPairs(currentMetrics: MetricsContainer, previousMetrics: MetricsContainer?): Array<EventPair<*>> {
@@ -120,6 +107,10 @@ class KotlinGradleEvent(group: EventLogGroup, eventName: GradleStatisticsEventGr
     }
 
     companion object {
+
+        internal fun addIDEPluginVersion(event: GradleStatisticsEventGroups) = event == GradleStatisticsEventGroups.ComponentVersions
+                || event == GradleStatisticsEventGroups.All
+
 
         private val IDE_STRING_ANONYMIZERS = lazy {
             mapOf(
