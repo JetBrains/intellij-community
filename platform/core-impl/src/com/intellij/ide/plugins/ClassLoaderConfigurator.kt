@@ -94,7 +94,7 @@ class ClassLoaderConfigurator(
 
     val isMain = module.moduleName == null
     val dependencies = pluginSet.moduleGraph.getDependencies(module).toTypedArray()
-    sortDependenciesInPlace(dependencies)
+    //sortDependenciesInPlace(dependencies)
 
     if (isMain) {
       if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
