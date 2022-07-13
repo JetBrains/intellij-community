@@ -18,6 +18,7 @@ package com.jetbrains.packagesearch.intellij.plugin.dependency.analyzer
 
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.ide.IdeTooltipManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
@@ -72,6 +73,8 @@ abstract class DependencyAnalyzerGoToPackageSearchAction : DumbAwareAction() {
             .createBalloon()
             .show(getBestBalloonPosition(dataContext), Balloon.Position.above)
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible =

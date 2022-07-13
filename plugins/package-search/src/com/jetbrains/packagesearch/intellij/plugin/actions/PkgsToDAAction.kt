@@ -16,6 +16,7 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
@@ -41,6 +42,8 @@ internal class PkgsToDAAction : AnAction(
     }
 
     override fun isDumbAware() = true
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         val data = e.getData(PACKAGES_LIST_PANEL_DATA_KEY)
