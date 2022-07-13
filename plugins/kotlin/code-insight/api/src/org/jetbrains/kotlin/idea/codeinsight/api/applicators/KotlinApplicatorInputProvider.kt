@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 
 /**
  * Resolves the code to provide [KotlinApplicator] some input
  */
+@FileModifier.SafeTypeForPreview
 abstract class KotlinApplicatorInputProvider<PSI : PsiElement, out INPUT : KotlinApplicatorInput> {
     /**
      * Provide input to the applicator, if returns `null` then the applicator is not applicable and will not be called

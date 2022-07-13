@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -12,7 +13,9 @@ import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinApplicatorBasedQuickFix<PSI : PsiElement, in INPUT : KotlinApplicatorInput>(
     target: PSI,
+    @FileModifier.SafeFieldForPreview
     private val input: INPUT,
+    @FileModifier.SafeFieldForPreview
     val applicator: KotlinApplicator<PSI, INPUT>,
 ) : KotlinQuickFixAction<PSI>(target) {
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {

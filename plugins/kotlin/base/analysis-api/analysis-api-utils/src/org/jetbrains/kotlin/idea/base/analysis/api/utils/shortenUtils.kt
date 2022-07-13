@@ -42,8 +42,7 @@ fun shortenReferencesInRange(
     classShortenOption: (KtClassLikeSymbol) -> ShortenOption = defaultClassShortenOption,
     callableShortenOption: (KtCallableSymbol) -> ShortenOption = defaultCallableShortenOption
 ) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    val shortenCommand = allowAnalysisOnEdt {
+     val shortenCommand = allowAnalysisOnEdt {
         analyze(file) {
             collectPossibleReferenceShortenings(file, range, classShortenOption, callableShortenOption)
         }

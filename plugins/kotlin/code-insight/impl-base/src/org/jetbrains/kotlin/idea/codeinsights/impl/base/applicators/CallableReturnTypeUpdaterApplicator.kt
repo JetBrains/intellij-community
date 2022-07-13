@@ -35,7 +35,7 @@ object CallableReturnTypeUpdaterApplicator {
         familyAndActionName(KotlinBundle.lazyMessage("fix.change.return.type.family"))
 
         applyTo { declaration, typeInfo, project, editor ->
-            if (editor == null || !typeInfo.useTemplate) {
+            if (editor == null || !typeInfo.useTemplate || !ApplicationManager.getApplication().isWriteAccessAllowed) {
                 declaration.setType(typeInfo.defaultType, project)
             } else {
                 setTypeWithTemplate(listOf(declaration to typeInfo).iterator(), project, editor)
@@ -49,10 +49,8 @@ object CallableReturnTypeUpdaterApplicator {
         } else {
             KtPsiFactory(project).createType(type.longTypeRepresentation)
         }
-        runWriteAction {
-            typeReference = newTypeRef
-            typeReference?.let { shortenReferences(it) }
-        }
+        typeReference = newTypeRef
+        typeReference?.let { shortenReferences(it) }
     }
 
     private fun KtCallableDeclaration.isProcedure(type: TypeInfo.Type) =

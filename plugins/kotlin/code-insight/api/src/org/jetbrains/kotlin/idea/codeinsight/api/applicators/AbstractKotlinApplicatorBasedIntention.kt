@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt

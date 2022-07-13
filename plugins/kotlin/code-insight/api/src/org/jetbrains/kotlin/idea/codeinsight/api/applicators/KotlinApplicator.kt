@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -17,6 +18,7 @@ import kotlin.reflect.KClass
  *
  * Uses some additional information from [INPUT] to apply the element
  */
+@FileModifier.SafeTypeForPreview
 sealed class KotlinApplicator<in PSI : PsiElement, in INPUT : KotlinApplicatorInput> {
 
     /**

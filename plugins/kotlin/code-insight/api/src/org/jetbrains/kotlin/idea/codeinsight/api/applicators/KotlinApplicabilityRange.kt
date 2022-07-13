@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtElement
  *
  * [getApplicabilityRanges] is guarantied to be called inside read action
  */
+@FileModifier.SafeTypeForPreview
 sealed class KotlinApplicabilityRange<in ELEMENT : PsiElement> {
     /**
      * Return the list of ranges on which [KotlinApplicator] is available
