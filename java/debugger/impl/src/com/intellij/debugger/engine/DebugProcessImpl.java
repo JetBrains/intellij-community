@@ -450,7 +450,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       stepRequest.addCountFilter(1);
 
       if (hint != null) {
-        //noinspection HardCodedStringLiteral
         stepRequest.putProperty("hint", hint);
       }
       DebuggerUtilsAsync.setEnabled(stepRequest, true).whenComplete((__, e) -> {
@@ -821,11 +820,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public boolean canRedefineClasses() {
     final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
     return vm != null && vm.canRedefineClasses();
-  }
-
-  public boolean canWatchFieldModification() {
-    final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
-    return vm != null && vm.canWatchFieldModification();
   }
 
   public boolean isInInitialState() {
@@ -2334,11 +2328,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         processListener.run();
       }
     }
-  }
-
-  public boolean isPausePressed() {
-    final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
-    return vm != null && vm.isPausePressed();
   }
 
   @NotNull

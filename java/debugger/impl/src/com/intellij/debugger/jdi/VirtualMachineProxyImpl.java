@@ -15,8 +15,7 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.attach.SAJDWPRemoteConnection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
@@ -26,8 +25,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,7 +46,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private List<ReferenceType> myAllClasses;
   private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new HashMap<>();
 
-  public final Throwable mySuspendLogger = new Throwable();
   private final boolean myVersionHigher_15;
   private final boolean myVersionHigher_14;
 
@@ -334,190 +330,60 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     myVirtualMachine.exit(i);
   }
 
-  private final Capability myWatchFielsModification = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canWatchFieldModification();
-    }
-  };
   @Override
   public boolean canWatchFieldModification() {
-    return myWatchFielsModification.isAvailable();
+    return myVirtualMachine.canWatchFieldModification();
   }
 
-  private final Capability myWatchFieldAccess = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canWatchFieldAccess();
-    }
-  };
   @Override
   public boolean canWatchFieldAccess() {
-    return myWatchFieldAccess.isAvailable();
+    return myVirtualMachine.canWatchFieldAccess();
   }
 
-  private final Capability myIsJ2ME = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return isJ2ME();
-    }
-  };
   @Override
   public boolean canInvokeMethods() {
-    return !myIsJ2ME.isAvailable();
+    return !isJ2ME();
   }
 
-  private final Capability myGetBytecodes = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetBytecodes();
-    }
-  };
   @Override
   public boolean canGetBytecodes() {
-    return myGetBytecodes.isAvailable();
+    return myVirtualMachine.canGetBytecodes();
   }
 
-  private final Capability myGetConstantPool = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetConstantPool();
-    }
-  };
   public boolean canGetConstantPool() {
-    return myGetConstantPool.isAvailable();
+    return myVirtualMachine.canGetConstantPool();
   }
 
-  private final Capability myGetSyntheticAttribute = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetSyntheticAttribute();
-    }
-  };
   public boolean canGetSyntheticAttribute() {
-    return myGetSyntheticAttribute.isAvailable();
+    return myVirtualMachine.canGetSyntheticAttribute();
   }
 
-  private final Capability myGetOwnedMonitorInfo = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetOwnedMonitorInfo();
-    }
-  };
   public boolean canGetOwnedMonitorInfo() {
-    return myGetOwnedMonitorInfo.isAvailable();
+    return myVirtualMachine.canGetOwnedMonitorInfo();
   }
 
-  private final Capability myGetMonitorFrameInfo = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetMonitorFrameInfo();
-    }
-  };
   public boolean canGetMonitorFrameInfo() {
-      return myGetMonitorFrameInfo.isAvailable();
+      return myVirtualMachine.canGetMonitorFrameInfo();
   }
 
-  private final Capability myGetCurrentContendedMonitor = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetCurrentContendedMonitor();
-    }
-  };
   public boolean canGetCurrentContendedMonitor() {
-    return myGetCurrentContendedMonitor.isAvailable();
+    return myVirtualMachine.canGetCurrentContendedMonitor();
   }
 
-  private final Capability myGetMonitorInfo = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetMonitorInfo();
-    }
-  };
   public boolean canGetMonitorInfo() {
-    return myGetMonitorInfo.isAvailable();
+    return myVirtualMachine.canGetMonitorInfo();
   }
 
-  private final Capability myUseInstanceFilters = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canUseInstanceFilters();
-    }
-  };
-  public boolean canUseInstanceFilters() {
-    return myUseInstanceFilters.isAvailable();
-  }
-
-  private final Capability myRedefineClasses = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canRedefineClasses();
-    }
-  };
   public boolean canRedefineClasses() {
-    return myRedefineClasses.isAvailable();
+    return myVersionHigher_14 && myVirtualMachine.canRedefineClasses();
   }
 
-  private final Capability myAddMethod = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canAddMethod();
-    }
-  };
-  public boolean canAddMethod() {
-    return myAddMethod.isAvailable();
-  }
-
-  private final Capability myUnrestrictedlyRedefineClasses = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canUnrestrictedlyRedefineClasses();
-    }
-  };
-  public boolean canUnrestrictedlyRedefineClasses() {
-    return myUnrestrictedlyRedefineClasses.isAvailable();
-  }
-
-  private final Capability myPopFrames = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canPopFrames();
-    }
-  };
   public boolean canPopFrames() {
-    return myPopFrames.isAvailable();
+    return myVersionHigher_14 && myVirtualMachine.canPopFrames();
   }
 
-  private final Capability myForceEarlyReturn = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canForceEarlyReturn();
-    }
-  };
   public boolean canForceEarlyReturn() {
-    return myForceEarlyReturn.isAvailable();
-  }
-
-  private final Capability myCanGetInstanceInfo = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      if (!myVersionHigher_15) {
-        return false;
-      }
-      try {
-        final Method method = VirtualMachine.class.getMethod("canGetInstanceInfo");
-        return (Boolean)method.invoke(myVirtualMachine);
-      }
-      catch (NoSuchMethodException ignored) {
-      }
-      catch (IllegalAccessException | InvocationTargetException e) {
-        LOG.error(e);
-      }
-      return false;
-    }
-  };
-  public boolean canGetInstanceInfo() {
-    return myCanGetInstanceInfo.isAvailable();
+    return myVirtualMachine.canForceEarlyReturn();
   }
 
   public boolean canBeModified() {
@@ -529,48 +395,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.version().compareTo(version) >= 0;
   }
 
-  private final Capability myGetSourceDebugExtension = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canGetSourceDebugExtension();
-    }
-  };
-  public boolean canGetSourceDebugExtension() {
-    return myGetSourceDebugExtension.isAvailable();
-  }
-
-  private final Capability myRequestVMDeathEvent = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canRequestVMDeathEvent();
-    }
-  };
-  public boolean canRequestVMDeathEvent() {
-    return myRequestVMDeathEvent.isAvailable();
-  }
-
-  private final Capability myGetMethodReturnValues = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      if (myVersionHigher_15) {
-        //return myVirtualMachine.canGetMethodReturnValues();
-        try {
-          final Method method = VirtualMachine.class.getDeclaredMethod("canGetMethodReturnValues");
-          final Boolean rv = (Boolean)method.invoke(myVirtualMachine);
-          return rv.booleanValue();
-        }
-        catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {
-        }
-      }
-      return false;
-    }
-  };
   public boolean canGetMethodReturnValues() {
-    return myGetMethodReturnValues.isAvailable();
-  }
-
-  public String getDefaultStratum() {
-    return myVersionHigher_14 ? myVirtualMachine.getDefaultStratum() : null;
+    return myVersionHigher_15 && myVirtualMachine.canGetMethodReturnValues();
   }
 
   public String description() {
@@ -583,10 +409,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public String name() {
     return myVirtualMachine.name();
-  }
-
-  public void setDebugTraceMode(int i) {
-    myVirtualMachine.setDebugTraceMode(i);
   }
 
   @Nullable
@@ -621,7 +443,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
     ThreadGroupReferenceProxyImpl proxy = myThreadGroups.get(group);
     if(proxy == null) {
-      if(!myIsJ2ME.isAvailable()) {
+      if(!isJ2ME()) {
         proxy = new ThreadGroupReferenceProxyImpl(this, group);
         myThreadGroups.put(group, proxy);
       }
@@ -671,16 +493,12 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return false;
   }
 
-  public String getResumeStack() {
-    return StringUtil.getThrowableText(mySuspendLogger);
-  }
-
   public boolean isPausePressed() {
     return myPausePressedCount > 0;
   }
 
   public boolean isSuspended() {
-    return allThreads().stream().anyMatch(thread -> thread.getSuspendCount() != 0);
+    return ContainerUtil.exists(allThreads(), thread -> thread.getSuspendCount() != 0);
   }
 
   public void logThreads() {
@@ -691,24 +509,5 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
         }
       }
     }
-  }
-
-  private abstract static class Capability {
-    private ThreeState myValue = ThreeState.UNSURE;
-
-    public final boolean isAvailable() {
-      if (myValue == ThreeState.UNSURE) {
-        try {
-          myValue = ThreeState.fromBoolean(calcValue());
-        }
-        catch (VMDisconnectedException e) {
-          LOG.info(e);
-          myValue = ThreeState.NO;
-        }
-      }
-      return myValue.toBoolean();
-    }
-
-    protected abstract boolean calcValue();
   }
 }
