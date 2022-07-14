@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeLegacyImporter
-import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectImporterToWorkspace
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporter
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenLog
 
@@ -56,8 +56,8 @@ interface MavenProjectImporter {
                                importingSettings: MavenImportingSettings,
                                dummyModule: Module?): MavenProjectImporter {
       if (isImportToWorkspaceModelEnabled()) {
-        return MavenProjectImporterToWorkspace(projectsTree, projectsToImportWithChanges,
-                                               importingSettings, modelsProvider, project)
+        return WorkspaceProjectImporter(projectsTree, projectsToImportWithChanges,
+                                        importingSettings, modelsProvider, project)
       }
 
       if (isLegacyImportToTreeStructureEnabled(project)) {
@@ -72,7 +72,7 @@ interface MavenProjectImporter {
     @JvmStatic
     fun tryUpdateTargetFolders(project: Project) {
       if (isImportToWorkspaceModelEnabled()) {
-        MavenProjectImporterToWorkspace.tryUpdateTargetFolders(project)
+        WorkspaceProjectImporter.tryUpdateTargetFolders(project)
       }
       else {
         MavenLegacyFoldersImporter.updateProjectFolders(/* project = */ project, /* updateTargetFoldersOnly = */ true)
