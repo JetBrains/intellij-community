@@ -23,7 +23,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.importing.MavenLegacyFoldersImporter;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterLegacyImpl;
 import org.jetbrains.idea.maven.importing.ModifiableModelsProviderProxyWrapper;
@@ -45,7 +45,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
 
     new File(myProjectRoot.getPath(), "target/foo").mkdirs();
     new File(myProjectRoot.getPath(), "target/generated-sources/xxx/z").mkdirs();
-    updateProjectFolders();
+    updateTargetFolders();
 
     assertExcludes("project", "target");
     assertGeneratedSources("project", "target/generated-sources/xxx");
@@ -60,7 +60,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
                   "<version>1</version>");
 
     new File(myProjectRoot.getPath(), "target/classes").mkdirs();
-    updateProjectFolders();
+    updateTargetFolders();
 
     assertExcludes("project", "target");
     myProjectRoot.refresh(false, true);
@@ -103,7 +103,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     new File(myProjectRoot.getPath(), "m2/target/bar").mkdirs();
     new File(myProjectRoot.getPath(), "m2/target/generated-sources/yyy/z").mkdirs();
 
-    updateProjectFolders();
+    updateTargetFolders();
 
     assertExcludes("m1", "target");
     assertGeneratedSources("m1", "target/generated-sources/xxx");
@@ -124,7 +124,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     assertTestSources("project", "src/test/java");
     assertTestResources("project", "src/test/resources");
 
-    updateProjectFolders();
+    updateTargetFolders();
 
     assertSources("project", "src/main/java");
     assertResources("project", "src/main/resources");
@@ -152,9 +152,14 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     });
 
 
-    updateProjectFolders();
+    updateTargetFolders();
 
-    assertSources("project", "target/src");
+    if (supportsKeepingManualChanges()) {
+      assertSources("project", "target/src");
+    }
+    else {
+      assertSources("project");
+    }
     assertExcludes("project", "target");
   }
 
@@ -165,7 +170,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
                   "<version>1</version>");
 
     createModule("userModule");
-    updateProjectFolders(); // shouldn't throw exceptions
+    updateTargetFolders(); // shouldn't throw exceptions
   }
 
   @Test 
@@ -185,7 +190,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     });
 
 
-    MavenLegacyFoldersImporter.updateProjectFolders(myProject, true);
+    updateTargetFolders();
 
     ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule("project"));
     CompilerModuleExtension compiler = rootManager.getModuleExtension(CompilerModuleExtension.class);
@@ -207,9 +212,8 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
       }
     });
 
-    updateProjectFolders();
-
-    assertEquals(0, count[0]);
+    updateTargetFolders();
+    assertEquals(supportsZeroEventsOnNoProjectChange() ? 0 : 1, count[0]);
   }
 
   @Test 
@@ -248,7 +252,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     new File(m1.getPath(), "target/generated-sources/bar/z").mkdirs();
     new File(m2.getPath(), "target/generated-sources/baz/z").mkdirs();
 
-    updateProjectFolders();
+    updateTargetFolders();
 
     assertEquals(1, count[0]);
   }
@@ -259,7 +263,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
     new File(myProjectRoot.getPath(), "target/generated-sources/xxx/z").mkdirs();
-    updateProjectFolders();
+    updateTargetFolders();
 
     assertGeneratedSources("project", "target/generated-sources/xxx");
 
@@ -276,7 +280,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     assertGeneratedSources("project", "target/generated-sources/xxx");
   }
 
-  private void updateProjectFolders() {
-    MavenLegacyFoldersImporter.updateProjectFolders(myProject, false);
+  private void updateTargetFolders() {
+    MavenProjectImporter.tryUpdateTargetFolders(myProject);
   }
 }

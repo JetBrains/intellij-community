@@ -40,13 +40,12 @@ import java.io.File;
 import java.net.URL;
 import java.util.*;
 
-public class
-MavenLegacyFoldersImporter {
+class MavenLegacyFoldersImporter {
   private final MavenProject myMavenProject;
   private final MavenImportingSettings myImportingSettings;
   private final MavenRootModelAdapter myModel;
 
-  public static void updateProjectFolders(final Project project, final boolean updateTargetFoldersOnly) {
+  static void updateProjectFolders(final Project project, final boolean updateTargetFoldersOnly) {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     final MavenImportingSettings settings = manager.getImportingSettings();
 

@@ -5,13 +5,16 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.containers.CollectionFactory
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.containers.FileCollectionFactory
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
@@ -25,7 +28,9 @@ import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.nio.file.Path
 
 class MavenProjectImporterToWorkspace(
   projectsTree: MavenProjectsTree,
@@ -62,26 +67,21 @@ class MavenProjectImporterToWorkspace(
   }
 
   private fun collectProjectsAndChanges(originalProjectsChanges: Map<MavenProject, MavenProjectChanges>): Pair<Boolean, Map<MavenProject, MavenProjectChanges>> {
-    val projectFilesFromPreviousImport = WorkspaceModel.getInstance(myProject).entityStorage.current
-      .entities(ExternalSystemModuleOptionsEntity::class.java)
-      .filter { it.externalSystem == WorkspaceModuleImporter.EXTERNAL_SOURCE_ID }
-      .mapNotNullTo(CollectionFactory.createFilePathSet()) { it.linkedProjectPath }
+    val projectFilesFromPreviousImport = readMavenExternalSystemData(WorkspaceModel.getInstance(myProject).entityStorage.current)
+      .mapTo(FileCollectionFactory.createCanonicalFilePathSet()) { it.mavenProjectFilePath }
 
     val allProjectToImport = myProjectsTree.projects
       .filter { !MavenProjectsManager.getInstance(myProject).isIgnored(it) }
       .associateWith {
-        val newProjectToImport = WorkspaceModuleImporter.linkedProjectPath(it) !in projectFilesFromPreviousImport
-
+        val newProjectToImport = it.file.path !in projectFilesFromPreviousImport
         if (newProjectToImport) MavenProjectChanges.ALL else originalProjectsChanges.getOrDefault(it, MavenProjectChanges.NONE)
       }
 
     if (allProjectToImport.values.any { it.hasChanges() }) return true to allProjectToImport
 
     // check for a situation, when we have a newly ignored project, but no other changes
-    val projectFilesToImport = allProjectToImport.keys.mapTo(CollectionFactory.createFilePathSet()) {
-      WorkspaceModuleImporter.linkedProjectPath(it)
-    }
-    return (projectFilesToImport != projectFilesFromPreviousImport) to allProjectToImport
+    val listOfProjectChanged = allProjectToImport.size != projectFilesFromPreviousImport.size
+    return listOfProjectChanged to allProjectToImport
   }
 
   private fun buildModuleNameMap(projectToImport: Map<MavenProject, MavenProjectChanges>): HashMap<MavenProject, String> {
@@ -165,9 +165,6 @@ class MavenProjectImporterToWorkspace(
     return importModuleData
   }
 
-  private fun isMavenEntity(it: EntitySource) =
-    (it as? JpsImportedEntitySource)?.externalSystemId == WorkspaceModuleImporter.EXTERNAL_SOURCE_ID
-
   private fun configLegacyFacets(modules: List<AppliedModuleData>,
                                  projectChanges: Map<MavenProject, MavenProjectChanges>,
                                  moduleNameByProject: Map<MavenProject, String>,
@@ -196,6 +193,58 @@ class MavenProjectImporterToWorkspace(
     return createdModulesList
   }
 
-  protected data class ImportedModuleData(val moduleId: ModuleId, val mavenProject: MavenProject, val moduleType: MavenModuleType?)
+  private data class ImportedModuleData(val moduleId: ModuleId, val mavenProject: MavenProject, val moduleType: MavenModuleType?)
   private data class AppliedModuleData(val module: Module, val mavenProject: MavenProject, val moduleType: MavenModuleType?)
+
+  companion object {
+    private fun isMavenEntity(it: EntitySource) =
+      (it as? JpsImportedEntitySource)?.externalSystemId == WorkspaceModuleImporter.EXTERNAL_SOURCE_ID
+
+    private fun readMavenExternalSystemData(storage: EntityStorage) = storage
+      .entities(ExternalSystemModuleOptionsEntity::class.java)
+      .filter { isMavenEntity(it.entitySource) }
+      .mapNotNull { WorkspaceModuleImporter.ExternalSystemData.tryRead(it) }
+
+    @JvmStatic
+    fun tryUpdateTargetFolders(project: Project) {
+      val snapshot = WorkspaceModel.getInstance(project).getBuilderSnapshot()
+      val builder = snapshot.builder
+
+      repeat(2) {
+        updateTargetFoldersInSnapshot(project, builder)
+
+        var replaced = false
+        MavenUtil.invokeAndWaitWriteAction(project) {
+          replaced = WorkspaceModel.getInstance(project).replaceProjectModel(snapshot.getStorageReplacement())
+        }
+        if (replaced) return
+      }
+      MavenLog.LOG.info("Cannot update project folders: workspace is already modified")
+    }
+
+    private fun updateTargetFoldersInSnapshot(project: Project, builder: MutableEntityStorage) {
+      val folderImportingContext = WorkspaceFolderImporter.FolderImportingContext()
+
+      val mavenManager = MavenProjectsManager.getInstance(project)
+      val projectsTree = mavenManager.projectsTree
+      val importer = WorkspaceFolderImporter(builder,
+                                             VirtualFileUrlManager.getInstance(project),
+                                             mavenManager.importingSettings,
+                                             folderImportingContext)
+
+      readMavenExternalSystemData(builder).forEach { data ->
+        val pomVirtualFile = VfsUtil.findFile(Path.of(data.mavenProjectFilePath), false) ?: return@forEach
+        val mavenProject = projectsTree.findProject(pomVirtualFile) ?: return@forEach
+
+        // remove previously imported content roots
+        builder
+          .entities(ContentRootEntity::class.java)
+          .filter { isMavenEntity(it.entitySource) && it.module == data.moduleEntity }
+          .forEach { contentRoot -> builder.removeEntity(contentRoot) }
+
+        // and re-create them with up-to-date data
+        importer.createContentRoots(mavenProject, data.mavenModuleType, data.moduleEntity)
+      }
+    }
+  }
 }

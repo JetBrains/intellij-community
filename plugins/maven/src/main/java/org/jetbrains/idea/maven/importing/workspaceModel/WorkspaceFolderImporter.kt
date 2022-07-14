@@ -14,7 +14,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.BuildHelperMavenPluginUtil
 import org.jetbrains.idea.maven.importing.MavenImporter
-import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.*
@@ -33,15 +32,15 @@ class WorkspaceFolderImporter(
   private val importingSettings: MavenImportingSettings,
   private val importingContext: FolderImportingContext) {
 
-  fun createContentRoots(module: ModuleEntity, importData: MavenModuleImportData): CachedProjectFolders {
+  fun createContentRoots(mavenProject: MavenProject, moduleType: MavenModuleType, module: ModuleEntity): CachedProjectFolders {
     val allFolders = mutableListOf<ContentRootCollector.ImportedFolder>()
 
-    val cachedFolders = importingContext.projectIdToCachedFolders.getOrPut(importData.mavenProject.mavenId.key) {
-      collectMavenFolders(importData)
+    val cachedFolders = importingContext.projectIdToCachedFolders.getOrPut(mavenProject.mavenId.key) {
+      collectMavenFolders(mavenProject)
     }
 
     addContentRoot(cachedFolders, allFolders)
-    addCachedFolders(importData, cachedFolders, allFolders)
+    addCachedFolders(moduleType, cachedFolders, allFolders)
 
     for (root in ContentRootCollector.collect(allFolders)) {
       if (!File(root.path).exists()) continue
@@ -71,7 +70,7 @@ class WorkspaceFolderImporter(
     importingContext.alreadyRegisteredContentRoots.add(contentRoot)
   }
 
-  private fun addCachedFolders(importData: MavenModuleImportData,
+  private fun addCachedFolders(moduleType: MavenModuleType,
                                cachedFolders: CachedProjectFolders,
                                allFolders: MutableList<ContentRootCollector.ImportedFolder>) {
     fun includeIf(it: ContentRootCollector.ImportedFolder, forTests: Boolean) =
@@ -82,7 +81,7 @@ class WorkspaceFolderImporter(
 
     fun exceptSources(it: ContentRootCollector.ImportedFolder) = it !is ContentRootCollector.UserOrGeneratedSourceFolder
 
-    allFolders.addAll(when (importData.moduleData.type) {
+    allFolders.addAll(when (moduleType) {
                         MavenModuleType.MAIN -> cachedFolders.folders.filter { includeIf(it, forTests = false) }
                         MavenModuleType.TEST -> cachedFolders.folders.filter { includeIf(it, forTests = true) }
                         MavenModuleType.AGGREGATOR_MAIN_TEST -> cachedFolders.folders.filter { exceptSources(it) }
@@ -117,8 +116,7 @@ class WorkspaceFolderImporter(
     }
   }
 
-  private fun collectMavenFolders(importData: MavenModuleImportData): CachedProjectFolders {
-    val mavenProject = importData.mavenProject
+  private fun collectMavenFolders(mavenProject: MavenProject): CachedProjectFolders {
     fun toAbsolutePath(path: String) = MavenUtil.toPath(mavenProject, path).path
 
     val outputPath = toAbsolutePath(mavenProject.outputDirectory)
@@ -139,9 +137,9 @@ class WorkspaceFolderImporter(
       folders.add(ContentRootCollector.ExcludedFolder(testOutputPath))
     }
 
-    for (each in importData.mavenProject.suitableImporters) {
+    for (each in mavenProject.suitableImporters) {
       val excludes = mutableListOf<String>()
-      each.collectExcludedFolders(importData.mavenProject, excludes)
+      each.collectExcludedFolders(mavenProject, excludes)
       excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(toAbsolutePath(it))) }
     }
 
@@ -159,7 +157,7 @@ class WorkspaceFolderImporter(
       addTargetFolders(File(toAbsolutePath(generatedDirTest)), generatedTestSourceFolders)
     }
 
-    return CachedProjectFolders(importData.mavenProject.directory, outputPath, testOutputPath, folders)
+    return CachedProjectFolders(mavenProject.directory, outputPath, testOutputPath, folders)
   }
 
 

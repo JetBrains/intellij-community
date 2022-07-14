@@ -54,7 +54,10 @@ import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.CacheForCompilerErrorMessages;
-import org.jetbrains.idea.maven.importing.*;
+import org.jetbrains.idea.maven.importing.MavenImportStats;
+import org.jetbrains.idea.maven.importing.MavenImportUtil;
+import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
@@ -1341,7 +1344,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
 
-      MavenLegacyFoldersImporter.updateProjectFolders(myProject, true);
+      MavenProjectImporter.tryUpdateTargetFolders(myProject);
       VirtualFileManager.getInstance().asyncRefresh(null);
     });
   }

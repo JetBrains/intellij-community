@@ -70,6 +70,16 @@ interface MavenProjectImporter {
     }
 
     @JvmStatic
+    fun tryUpdateTargetFolders(project: Project) {
+      if (isImportToWorkspaceModelEnabled()) {
+        MavenProjectImporterToWorkspace.tryUpdateTargetFolders(project)
+      }
+      else {
+        MavenLegacyFoldersImporter.updateProjectFolders(/* project = */ project, /* updateTargetFoldersOnly = */ true)
+      }
+    }
+
+    @JvmStatic
     fun isImportToWorkspaceModelEnabled(): Boolean = Registry.`is`("maven.import.to.workspace.model")
 
     @JvmStatic

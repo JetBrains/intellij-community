@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.utils.MavenLog
 
 class WorkspaceModuleImporter(
   private val project: Project,
@@ -45,20 +46,19 @@ class WorkspaceModuleImporter(
     val moduleName = importData.moduleData.moduleName
 
     val dependencies = collectDependencies(moduleName, importData.dependencies, entitySource)
-    val moduleEntity = createModuleEntity(moduleName, importData.mavenProject, dependencies, entitySource)
+    val moduleEntity = createModuleEntity(moduleName, importData.mavenProject, importData.moduleData.type, dependencies, entitySource)
     configureModuleEntity(importData, moduleEntity, folderImportingContext)
     return moduleEntity
   }
 
   private fun createModuleEntity(moduleName: String,
                                  mavenProject: MavenProject,
+                                 mavenModuleType: MavenModuleType,
                                  dependencies: List<ModuleDependencyItem>,
                                  entitySource: EntitySource): ModuleEntity {
     val moduleEntity = builder.addModuleEntity(moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
     val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity(entitySource) {
-      module = moduleEntity
-      externalSystem = EXTERNAL_SOURCE_ID
-      linkedProjectPath = linkedProjectPath(mavenProject)
+      ExternalSystemData(moduleEntity, mavenProject.file.path, mavenModuleType).write(this)
     }
     builder.addEntity(externalSystemModuleOptionsEntity)
     return moduleEntity
@@ -69,8 +69,8 @@ class WorkspaceModuleImporter(
                                     moduleEntity: ModuleEntity,
                                     folderImportingContext: WorkspaceFolderImporter.FolderImportingContext) {
     val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings, folderImportingContext)
+    val importFolderHolder = folderImporter.createContentRoots(importData.mavenProject, importData.moduleData.type, moduleEntity)
 
-    val importFolderHolder = folderImporter.createContentRoots(moduleEntity, importData)
     when (importData.moduleData.type) {
       MavenModuleType.MAIN -> importJavaSettingsMain(moduleEntity, importData, importFolderHolder)
       MavenModuleType.TEST -> importJavaSettingsTest(moduleEntity, importData, importFolderHolder)
@@ -261,15 +261,50 @@ class WorkspaceModuleImporter(
                                         languageLevel.name, moduleEntity, moduleEntity.entitySource)
   }
 
-
-
   companion object {
     internal val JAVADOC_TYPE: LibraryRootTypeId = LibraryRootTypeId("JAVADOC")
 
     val EXTERNAL_SOURCE_ID get() = ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID
+  }
 
-    fun linkedProjectPath(mavenProject: MavenProject): String {
-      return FileUtil.toSystemIndependentName(mavenProject.directory)
+  class ExternalSystemData(val moduleEntity: ModuleEntity, val mavenProjectFilePath: String, val mavenModuleType: MavenModuleType) {
+    fun write(entity: ExternalSystemModuleOptionsEntity.Builder) {
+      entity.externalSystemModuleVersion = VERSION
+      entity.module = moduleEntity
+      entity.externalSystem = EXTERNAL_SOURCE_ID
+      // Can't use 'entity.linkedProjectPath' since it implies directory (and used to set working dir for Run Configurations).
+      entity.linkedProjectId = FileUtil.toSystemIndependentName(mavenProjectFilePath)
+      entity.externalSystemModuleType = mavenModuleType.name
+    }
+
+    companion object {
+      const val VERSION = "1"
+
+      fun tryRead(entity: ExternalSystemModuleOptionsEntity): ExternalSystemData? {
+        if (entity.externalSystem != EXTERNAL_SOURCE_ID || entity.externalSystemModuleVersion != VERSION) return null
+
+        val id = entity.linkedProjectId
+        if (id == null) {
+          MavenLog.LOG.error("ExternalSystemModuleOptionsEntity.linkedProjectId must not be null")
+          return null
+        }
+        val mavenProjectFilePath = FileUtil.toSystemIndependentName(id)
+
+        val typeName = entity.externalSystemModuleType
+        if (typeName == null) {
+          MavenLog.LOG.error("ExternalSystemModuleOptionsEntity.externalSystemModuleType must not be null")
+          return null
+        }
+
+        val moduleType = try {
+          MavenModuleType.valueOf(typeName)
+        }
+        catch (e: Exception) {
+          MavenLog.LOG.error(e)
+          return null
+        }
+        return ExternalSystemData(entity.module, mavenProjectFilePath, moduleType)
+      }
     }
   }
 }

@@ -148,6 +148,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
+  public boolean supportsZeroEventsOnNoProjectChange() {
+    // IDEA-297902 WorkspaceModel#updateProjectModel should not trigger VersionedStorageChange events, if nothing actually changes
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled();
+  }
+
   protected void stopMavenImportManager() {
     if (!isNewImportingProcess) return;
     MavenImportingManager manager = MavenImportingManager.getInstance(myProject);
