@@ -58,7 +58,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
         val document = PsiDocumentManager.getInstance(project).getDocument(fixture.file)
         disableSlowCompletionElements(fixture.testRootDisposable)
         val repeatSize = 10
-        PlatformTestUtil.startPerformanceTest("GradleHighlightingPerformanceTest.testCompletion", 400 * repeatSize) {
+        PlatformTestUtil.startPerformanceTest("GradleHighlightingPerformanceTest.testCompletion", 450 * repeatSize) {
           fixture.psiManager.dropResolveCaches()
           repeat(repeatSize) {
             val lookupElements = fixture.completeBasic()
