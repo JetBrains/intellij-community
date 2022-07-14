@@ -5,12 +5,18 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 
 public class JavaReferenceImporter implements ReferenceImporter {
@@ -30,18 +36,36 @@ public class JavaReferenceImporter implements ReferenceImporter {
     int startOffset = document.getLineStartOffset(lineNumber);
     int endOffset = document.getLineEndOffset(lineNumber);
 
+    Future<ImportClassFix> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> {
+      if (editor.isDisposed() || file.getProject().isDisposed()) return null;
+      return autoImportInBackground(file, startOffset, endOffset);
+    }));
+    try {
+      ImportClassFix fix = future.get();
+      if (fix != null) {
+        fix.doFix(editor, false, allowCaretNearRef, true);
+        return true;
+      }
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+    return false;
+  }
+
+  private static ImportClassFix autoImportInBackground(@NotNull PsiElement file, int startOffset, int endOffset) {
     List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
     for (PsiElement element : elements) {
       if (element instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
-        if (ref.multiResolve(true).length == 0) {
-          new ImportClassFix(ref).doFix(editor, false, allowCaretNearRef, true);
-          return true;
+        ImportClassFix fix = new ImportClassFix(ref);
+        if (!fix.getClassesToImport().isEmpty()) {
+          return fix;
         }
       }
     }
 
-    return false;
+    return null;
   }
 
   @Override
