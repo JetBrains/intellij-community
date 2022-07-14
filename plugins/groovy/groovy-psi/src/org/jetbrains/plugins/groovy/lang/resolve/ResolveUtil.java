@@ -473,7 +473,7 @@ public final class ResolveUtil {
 
       boolean isDominated = false;
 
-      List<GroovyResolveResult> existingCandidates = cache.computeIfAbsent(currentMethod.getName(), (__) -> new SmartList<>());
+      List<GroovyResolveResult> existingCandidates = cache.computeIfAbsent(getKey(currentMethod), (__) -> new SmartList<>());
       for (Iterator<GroovyResolveResult> iterator = existingCandidates.listIterator(); iterator.hasNext();) {
         GroovyResolveResult candidateResult = iterator.next();
         final PsiMethod otherMethod;
@@ -511,6 +511,12 @@ public final class ResolveUtil {
     }
 
     return result.toArray(GroovyResolveResult.EMPTY_ARRAY);
+  }
+
+  private static String getKey(PsiMethod method) {
+    int parameters = method.getParameters().length;
+    String name = method.getName();
+    return parameters + "_" + name;
   }
 
   public static boolean dominated(PsiMethod method1,
