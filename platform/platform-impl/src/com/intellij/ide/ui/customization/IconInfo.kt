@@ -2,12 +2,14 @@
 package com.intellij.ide.ui.customization
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.util.IconLoader
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-internal val NONE = IconInfo(null, "<None>", "", null)
+internal val NONE = IconInfo(null, IdeBundle.message("default.icons.none.text"), "", null)
 internal val SEPARATOR = IconInfo(null, "", "", null)
 
 /**
@@ -16,7 +18,7 @@ internal val SEPARATOR = IconInfo(null, "", "", null)
  * @param text template presentation text of the action or file name.
  */
 internal class IconInfo(val icon: Icon?,
-                        val text: String,
+                        @Nls val text: String,
                         val actionId: String?,
                         val iconPath: String?) {
   val iconReference: String
@@ -29,21 +31,21 @@ internal class IconInfo(val icon: Icon?,
 
 internal fun getDefaultIcons(): List<IconInfo> {
   val icons = listOf(
-    getIconInfo(AllIcons.Toolbar.Unknown, "Default icon"),
-    getIconInfo(AllIcons.General.Add, "Add"),
-    getIconInfo(AllIcons.General.Remove, "Remove"),
-    getIconInfo(AllIcons.Actions.Edit, "Edit"),
-    getIconInfo(AllIcons.General.Filter, "Filter"),
-    getIconInfo(AllIcons.Actions.Find, "Find"),
-    getIconInfo(AllIcons.General.GearPlain, "Gear plain"),
-    getIconInfo(AllIcons.Actions.ListFiles, "List files"),
-    getIconInfo(AllIcons.ToolbarDecorator.Export, "Export"),
-    getIconInfo(AllIcons.ToolbarDecorator.Import, "Import")
+    getIconInfo(AllIcons.Toolbar.Unknown, IdeBundle.message("default.icons.unknown.text")),
+    getIconInfo(AllIcons.General.Add, IdeBundle.message("default.icons.add.text")),
+    getIconInfo(AllIcons.General.Remove, IdeBundle.message("default.icons.remove.text")),
+    getIconInfo(AllIcons.Actions.Edit, IdeBundle.message("default.icons.edit.text")),
+    getIconInfo(AllIcons.General.Filter, IdeBundle.message("default.icons.filter.text")),
+    getIconInfo(AllIcons.Actions.Find, IdeBundle.message("default.icons.find.text")),
+    getIconInfo(AllIcons.General.GearPlain, IdeBundle.message("default.icons.gear.plain.text")),
+    getIconInfo(AllIcons.Actions.ListFiles, IdeBundle.message("default.icons.list.files.text")),
+    getIconInfo(AllIcons.ToolbarDecorator.Export, IdeBundle.message("default.icons.export.text")),
+    getIconInfo(AllIcons.ToolbarDecorator.Import, IdeBundle.message("default.icons.import.text"))
   )
   return icons.filterNotNull()
 }
 
-private fun getIconInfo(icon: Icon, text: String): IconInfo? {
+private fun getIconInfo(icon: Icon, @Nls text: String): IconInfo? {
   val iconUrl = (icon as? IconLoader.CachedImageIcon)?.url
   return iconUrl?.let { IconInfo(icon, text, null, it.toString()) }
 }
