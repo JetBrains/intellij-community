@@ -180,7 +180,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
 
     private fun registerKeyboardShortcuts(rootPane: JRootPane) {
       val helpAction = ActionListener {
-        getUiEventLogger().logClickOnHelpDialog(WelcomeFrame::class.java.name, WelcomeFrame::class.java)
+        getUiEventLogger().logClickOnHelpDialog(WelcomeFrame::class.java)
         HelpManager.getInstance().invokeHelp("welcome")
       }
       ActionUtil.registerForEveryKeyboardShortcut(rootPane, helpAction, CommonShortcuts.getContextHelp())

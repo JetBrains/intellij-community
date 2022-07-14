@@ -1762,29 +1762,20 @@ public abstract class DialogWrapper {
   private void logCloseDialogEvent(int exitCode) {
     boolean canRecord = canRecordDialogId();
     if (canRecord) {
-      String dialogId = getClass().getName();
-      if (Strings.isNotEmpty(dialogId)) {
-        FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(dialogId, exitCode, getClass());
-      }
+      FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(getClass(), exitCode);
     }
   }
 
   private void logShowDialogEvent() {
     boolean canRecord = canRecordDialogId();
     if (canRecord) {
-      String dialogId = getClass().getName();
-      if (Strings.isNotEmpty(dialogId)) {
-        FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(dialogId, getClass());
-      }
+      FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(getClass());
     }
   }
 
   private void logClickOnHelpDialogEvent() {
     if (!canRecordDialogId()) return;
-    String dialogId = getClass().getName();
-    if (Strings.isNotEmpty(dialogId)) {
-      FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(dialogId, getClass());
-    }
+    FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(getClass());
   }
 
   /**

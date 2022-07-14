@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
-import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator
 import com.intellij.internal.statistic.collectors.fus.TerminalFusAwareHandler
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -19,12 +18,10 @@ class TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup(GROUP_ID, 7)
+    private val GROUP = EventLogGroup(GROUP_ID, 8)
 
-    private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.StringValidatedByCustomRule("terminalCommandHandler",
-                                                                                         ClassNameRuleValidator::class.java)
-    private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.StringValidatedByCustomRule("runAnythingProvider",
-                                                                                      ClassNameRuleValidator::class.java)
+    private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
+    private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
 
     private val sshExecEvent = GROUP.registerEvent("ssh.exec")
     private val terminalSmartCommandExecutedEvent = GROUP.registerVarargEvent("terminal.smart.command.executed",
@@ -56,7 +53,7 @@ class TerminalUsageTriggerCollector : CounterUsagesCollector() {
                             command: String,
                             handler: TerminalShellCommandHandler,
                             executed: Boolean) {
-      val data: MutableList<EventPair<*>> = mutableListOf(TERMINAL_COMMAND_HANDLER_FIELD.with(handler::class.java.name))
+      val data: MutableList<EventPair<*>> = mutableListOf(TERMINAL_COMMAND_HANDLER_FIELD.with(handler::class.java))
 
       if (handler is TerminalFusAwareHandler) {
         handler.fillData(project, workingDirectory, localSession, command, data)
