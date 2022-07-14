@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.Unsafe
 import com.intellij.util.io.ByteBufferUtil
 import com.intellij.util.io.DirectByteBufferAllocator
@@ -190,7 +189,7 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   override fun isDirty(): Boolean = file.isDirty
 
   @Throws(IOException::class)
-  override fun processAllNames(operator: PersistentFSRecordsStorage.NameFlagsProcessor) = this.metadataReadLock.withLock {
+  override fun processAllNames(operator: NameFlagsProcessor) = this.metadataReadLock.withLock {
     // skip header
     file.force()
     // skip header
@@ -236,7 +235,7 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
 
       val buffer = storagePage.buffer
       val recordBuffer = buffer.duplicate().order(buffer.order()).limit(inPageOffset + RECORD_SIZE).position(inPageOffset).mark().slice()
-      return action(LockFreeRecord(recordBuffer, id))
+      return action(LockFreeRecord(recordBuffer))
     }
     finally {
       if (access != AccessType.READ) {
@@ -273,8 +272,8 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
     private val ZEROES = ByteArray(RECORD_SIZE)
   }
 
-  /*@JvmInline*/
-  private /*value*/ class LockFreeRecord(val data: ByteBuffer, val id: Int) {
+  @JvmInline
+  private value class LockFreeRecord(val data: ByteBuffer) {
     init {
       val bufferSize = data.limit() - data.position()
       assert(bufferSize == RECORD_SIZE) {
@@ -356,22 +355,14 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
     }
 
     private inline fun <V> read(eval: ByteBuffer.() -> V): V {
-      var count = 0
       while (true) {
         val modCountPre = modCountPre()
 
         val result = eval(data)
 
         val modCountAfter = modCountAfter()
-        if (count > 10) {
-          count = -1
-          Logger.getInstance(PersistentFSLockFreeRecordsStorage::class.java).info("modCountAfter $modCountAfter, modCountPre $modCountPre, id $id")
-        }
         if (modCountAfter == modCountPre) {
           return result
-        }
-        if (count != -1) {
-          count++
         }
       }
     }
@@ -381,7 +372,6 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
       if (data.compareAndSwapInt(MOD_COUNT_PRE_OFFSET, expectedModCounter, newModCounter)) {
         data.duplicate().order(data.order()).put(buffer.duplicate().order(data.order()).limit(RECORD_SIZE - 2 * MOD_COUNT_SIZE))
         data.putInt(MOD_COUNT_AFTER_OFFSET, newModCounter)
-        Logger.getInstance(PersistentFSLockFreeRecordsStorage::class.java).info("write $expectedModCounter, id $id")
         return true
       }
       return false
