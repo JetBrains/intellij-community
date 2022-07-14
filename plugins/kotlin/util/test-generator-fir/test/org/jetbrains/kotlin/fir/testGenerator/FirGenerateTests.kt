@@ -225,6 +225,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/inspectionsLocal/forEachParameterNotUsed", pattern = pattern)
             model("testData/inspectionsLocal/covariantEquals", pattern = pattern)
             model("testData/inspectionsLocal/lateinitVarOverridesLateinitVar", pattern = pattern)
+            model("testData/inspectionsLocal/foldInitializerAndIfToElvis", pattern = pattern)
         }
     }
 
