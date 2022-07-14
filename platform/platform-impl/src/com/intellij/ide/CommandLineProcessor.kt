@@ -1,395 +1,356 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide;
+package com.intellij.ide
 
-import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
-import com.intellij.ide.actions.ShowLogAction;
-import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.impl.OpenResult;
-import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.impl.ProjectUtilCore;
-import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
-import com.intellij.ide.lightEdit.LightEditService;
-import com.intellij.ide.lightEdit.LightEditUtil;
-import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.idea.CommandLineArgs;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.platform.CommandLineProjectOpenProcessor;
-import com.intellij.platform.PlatformProjectOpenProcessor;
-import com.intellij.pom.Navigatable;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
-import io.netty.handler.codec.http.QueryStringDecoder;
-import kotlin.Unit;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.BuildersKt;
-import kotlinx.coroutines.CoroutineStart;
-import kotlinx.coroutines.GlobalScope;
-import kotlinx.coroutines.future.FutureKt;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.ide.CommandLineProcessorResult.Companion.createError
+import com.intellij.ide.RecentProjectsManager.Companion.getInstance
+import com.intellij.ide.actions.ShowLogAction
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.OpenProjectTaskBuilder
+import com.intellij.ide.impl.OpenResult
+import com.intellij.ide.impl.ProjectUtil.tryOpenOrImport
+import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil
+import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
+import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.ide.lightEdit.LightEditUtil
+import com.intellij.ide.util.PsiNavigationSupport
+import com.intellij.idea.CommandLineArgs
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
+import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationStarter.Companion.EP_NAME
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task.Backgroundable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.CommandLineProjectOpenProcessor
+import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.PlatformProjectOpenProcessor.Companion.configureToOpenDotIdeaOrCreateNewIfNotExists
+import com.intellij.util.PlatformUtils
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.URLUtil
+import io.netty.handler.codec.http.QueryStringDecoder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.EmptyCoroutineContext
 
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static com.intellij.ide.impl.OpenProjectTaskKt.OpenProjectTask;
-import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
-import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
-
-public final class CommandLineProcessor {
-  private static final Logger LOG = Logger.getInstance(CommandLineProcessor.class);
-  private static final String OPTION_WAIT = "--wait";
-
-  public static final Future<CliResult> OK_FUTURE = CompletableFuture.completedFuture(CliResult.OK);
+object CommandLineProcessor {
+  private val LOG = Logger.getInstance(CommandLineProcessor::class.java)
+  private const val OPTION_WAIT = "--wait"
+  val OK_FUTURE: Future<CliResult> = CompletableFuture.completedFuture(CliResult.OK)
 
   @ApiStatus.Internal
-  public static final String SCHEME_INTERNAL = "!!!internal!!!";
-
-  private CommandLineProcessor() { }
+  val SCHEME_INTERNAL = "!!!internal!!!"
 
   // public for testing
   @ApiStatus.Internal
-  public static @NotNull CommandLineProcessorResult doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
-    Project project = null;
+  fun doOpenFileOrProject(file: Path, shouldWait: Boolean): CommandLineProcessorResult {
+    var project: Project? = null
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
-      OpenProjectTask options = OpenProjectTask(builder -> {
+      val options = OpenProjectTask { builder: OpenProjectTaskBuilder ->
         // do not check for .ipr files in the specified directory
         // (@develar: it is existing behaviour, I am not fully sure that it is correct)
-        builder.setPreventIprLookup(true);
-        PlatformProjectOpenProcessor.configureToOpenDotIdeaOrCreateNewIfNotExists(builder, file, null);
-        return Unit.INSTANCE;
-      });
-      OpenResult openResult = ProjectUtil.tryOpenOrImport(file, options);
-      if (openResult instanceof OpenResult.Success) {
-        project = ((OpenResult.Success)openResult).getProject();
+        builder.preventIprLookup = true
+        PlatformProjectOpenProcessor.Companion.configureToOpenDotIdeaOrCreateNewIfNotExists(file, null)
+        Unit
       }
-      else if (openResult instanceof OpenResult.Cancel) {
-        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.open.cancelled"));
+      val openResult = tryOpenOrImport(file, options)
+      if (openResult is OpenResult.Success) {
+        project = openResult.project
+      }
+      else if (openResult is OpenResult.Cancel) {
+        return createError(IdeBundle.message("dialog.message.open.cancelled"))
       }
     }
-    if (project == null) {
-      return doOpenFile(file, -1, -1, false, shouldWait);
+    return if (project == null) {
+      doOpenFile(file, -1, -1, false, shouldWait)
     }
     else {
-      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project) : OK_FUTURE);
+      CommandLineProcessorResult(project, if (shouldWait) CommandLineWaitingManager.getInstance().addHookForProject(project) else OK_FUTURE)
     }
   }
 
-  private static CommandLineProcessorResult doOpenFile(Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
-    Project[] projects = tempProject ? new Project[0] : ProjectUtilCore.getOpenProjects();
-    if (!tempProject && projects.length == 0 && PlatformUtils.isDataGrip()) {
-      RecentProjectsManager recentProjectManager = RecentProjectsManager.getInstance();
-      if (recentProjectManager.willReopenProjectOnStart() && FutureKt.<Boolean>asCompletableFuture(
-        BuildersKt.async(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
-          return recentProjectManager.reopenLastProjectsOnStart(continuation);
-        })).join()) {
-        projects = ProjectUtilCore.getOpenProjects();
+  private fun doOpenFile(ioFile: Path, line: Int, column: Int, tempProject: Boolean, shouldWait: Boolean): CommandLineProcessorResult {
+    var projects: Array<Project?> = if (tempProject) arrayOfNulls(0) else ProjectUtilCore.getOpenProjects()
+    if (!tempProject && projects.size == 0 && PlatformUtils.isDataGrip()) {
+      val recentProjectManager = getInstance()
+      if (recentProjectManager.willReopenProjectOnStart() && GlobalScope.async(EmptyCoroutineContext,
+                                                                               CoroutineStart.DEFAULT) { scope: CoroutineScope?, continuation: Continuation<Boolean?>? ->
+          recentProjectManager.reopenLastProjectsOnStart(continuation)
+        }.asCompletableFuture().join()) {
+        projects = ProjectUtilCore.getOpenProjects()
       }
     }
-
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile);
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)
     if (file == null) {
       if (LightEditUtil.isLightEditEnabled()) {
-        Project lightEditProject = LightEditUtil.openFile(ioFile, true);
+        val lightEditProject = LightEditUtil.openFile(ioFile, true)
         if (lightEditProject != null) {
-          Future<CliResult> future = shouldWait ? CommandLineWaitingManager.getInstance().addHookForPath(ioFile) : OK_FUTURE;
-          return new CommandLineProcessorResult(lightEditProject, future);
+          val future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForPath(ioFile) else OK_FUTURE
+          return CommandLineProcessorResult(lightEditProject, future)
         }
       }
-      return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()));
+      return createError(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()))
     }
-
-    if (projects.length == 0) {
-      Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(ioFile, line, column, tempProject);
-      if (project == null) {
-        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"));
-      }
-
-      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : OK_FUTURE);
+    return if (projects.size == 0) {
+      val project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(ioFile, line, column, tempProject)
+                    ?: return createError(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"))
+      CommandLineProcessorResult(project, if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file) else OK_FUTURE)
     }
     else {
-      NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
-      Project project;
+      NonProjectFileWritingAccessProvider.allowWriting(listOf(file))
+      val project: Project?
       if (LightEditUtil.isForceOpenInLightEditMode()) {
-        project = LightEditService.getInstance().openFile(file);
-        LightEditFeatureUsagesUtil.logFileOpen(project, CommandLine);
+        project = LightEditService.getInstance().openFile(file)
+        LightEditFeatureUsagesUtil.logFileOpen(project, OpenPlace.CommandLine)
       }
       else {
-        project = findBestProject(file, projects);
-        Navigatable navigatable = line > 0
-                                  ? new OpenFileDescriptor(project, file, line - 1, Math.max(column, 0))
-                                  : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1);
-        AppUIExecutor.onUiThread().expireWith(project).execute(() -> {
-          navigatable.navigate(true);
-        });
+        project = findBestProject(file, projects)
+        val navigatable = if (line > 0) OpenFileDescriptor(project!!, file, line - 1, Math.max(column, 0))
+        else PsiNavigationSupport.getInstance().createNavigatable(
+          project!!, file, -1)
+        AppUIExecutor.onUiThread().expireWith(project).execute { navigatable.navigate(true) }
       }
-
-      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : OK_FUTURE);
+      CommandLineProcessorResult(project, if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file) else OK_FUTURE)
     }
   }
 
-  private static Project findBestProject(VirtualFile file, Project[] projects) {
-    for (Project project : projects) {
-      ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
-      if (ReadAction.compute(() -> fileIndex.isInContent(file))) {
-        return project;
+  private fun findBestProject(file: VirtualFile, projects: Array<Project?>): Project? {
+    for (project in projects) {
+      val fileIndex = ProjectFileIndex.getInstance(project!!)
+      if (ReadAction.compute<Boolean, RuntimeException> { fileIndex.isInContent(file) }) {
+        return project
       }
     }
-
-    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+    val frame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
     if (frame != null) {
-      Project project = frame.getProject();
+      val project = frame.project
       if (project != null && !LightEdit.owns(project)) {
-        return project;
+        return project
       }
     }
-
-    return projects[0];
+    return projects[0]
   }
 
   @ApiStatus.Internal
-  public static @NotNull CompletableFuture<CliResult> processProtocolCommand(@NotNull @NlsSafe String rawUri) {
-    LOG.info("external URI request:\n" + rawUri);
-
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      throw new IllegalStateException("cannot process URI requests in headless state");
-    }
-
-    boolean internal = rawUri.startsWith(SCHEME_INTERNAL);
-    String uri = internal ? rawUri.substring(SCHEME_INTERNAL.length()) : rawUri;
-    int separatorStart = uri.indexOf(SCHEME_SEPARATOR);
-    if (separatorStart < 0) throw new IllegalArgumentException(uri);
-
-    String scheme = uri.substring(0, separatorStart), query = uri.substring(separatorStart + SCHEME_SEPARATOR.length());
-    CompletableFuture<CliResult> result = new CompletableFuture<>();
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("ide.protocol.progress.title"), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        indicator.setText(uri);
-        (internal ? processInternalProtocol(query) : ProtocolHandler.process(scheme, query, indicator))
-          .exceptionally(t -> {
-            LOG.error(t);
-            return new CliResult(0, IdeBundle.message("ide.protocol.exception", t.getClass().getSimpleName(), t.getMessage()));
-          })
-          .thenAccept(cliResult -> {
-            result.complete(cliResult);
+  fun processProtocolCommand(rawUri: @NlsSafe String): CompletableFuture<CliResult> {
+    LOG.info("external URI request:\n$rawUri")
+    check(!ApplicationManager.getApplication().isHeadlessEnvironment) { "cannot process URI requests in headless state" }
+    val internal = rawUri.startsWith(SCHEME_INTERNAL)
+    val uri = if (internal) rawUri.substring(SCHEME_INTERNAL.length) else rawUri
+    val separatorStart = uri.indexOf(URLUtil.SCHEME_SEPARATOR)
+    require(separatorStart >= 0) { uri }
+    val scheme = uri.substring(0, separatorStart)
+    val query = uri.substring(separatorStart + URLUtil.SCHEME_SEPARATOR.length)
+    val result = CompletableFuture<CliResult>()
+    ProgressManager.getInstance().run(object : Backgroundable(null, IdeBundle.message("ide.protocol.progress.title"), true) {
+      override fun run(indicator: ProgressIndicator) {
+        indicator.isIndeterminate = true
+        indicator.text = uri
+        (if (internal) processInternalProtocol(query) else ProtocolHandler.process(scheme, query, indicator))
+          .exceptionally { t: Throwable ->
+            LOG.error(t)
+            CliResult(0, IdeBundle.message("ide.protocol.exception", t.javaClass.simpleName, t.message))
+          }
+          .thenAccept { cliResult: CliResult ->
+            result.complete(cliResult)
             if (cliResult.message != null) {
-              String title = IdeBundle.message("ide.protocol.cannot.title");
-              new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, cliResult.message, NotificationType.WARNING)
+              val title = IdeBundle.message("ide.protocol.cannot.title")
+              Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, cliResult.message!!, NotificationType.WARNING)
                 .addAction(ShowLogAction.notificationAction())
-                .notify(null);
+                .notify(null)
             }
-          });
+          }
       }
-    });
-    return result;
+    })
+    return result
   }
 
-  private static CompletableFuture<CliResult> processInternalProtocol(String query) {
-    try {
-      QueryStringDecoder decoder = new QueryStringDecoder(query);
-      if ("open".equals(StringUtil.trimEnd(decoder.path(), '/'))) {
-        Map<String, List<String>> parameters = decoder.parameters();
-        String fileStr = ContainerUtil.getLastItem(parameters.get("file"));
+  private fun processInternalProtocol(query: String): CompletableFuture<CliResult> {
+    return try {
+      val decoder = QueryStringDecoder(query)
+      if ("open" == StringUtil.trimEnd(decoder.path(), '/')) {
+        val parameters = decoder.parameters()
+        val fileStr = ContainerUtil.getLastItem(parameters["file"])
         if (fileStr != null && !fileStr.isBlank()) {
-          Path file = parseFilePath(fileStr, null);
+          val file = parseFilePath(fileStr, null)
           if (file != null) {
-            int line = StringUtil.parseInt(ContainerUtil.getLastItem(parameters.get("line")), -1);
-            int column = StringUtil.parseInt(ContainerUtil.getLastItem(parameters.get("column")), -1);
-            CommandLineProcessorResult result = openFileOrProject(file, line, column, false, false, false);
-            LifecycleUsageTriggerCollector.onProtocolOpenCommandHandled(result.getProject());
-            return CompletableFuture.completedFuture(CliResult.OK);
+            val line = StringUtil.parseInt(ContainerUtil.getLastItem(
+              parameters["line"]), -1)
+            val column = StringUtil.parseInt(ContainerUtil.getLastItem(
+              parameters["column"]), -1)
+            val (project) = openFileOrProject(file, line, column, false, false, false)
+            LifecycleUsageTriggerCollector.onProtocolOpenCommandHandled(project)
+            return CompletableFuture.completedFuture(CliResult.OK)
           }
         }
       }
-
-      return CompletableFuture.completedFuture(new CliResult(0, IdeBundle.message("ide.protocol.internal.bad.query", query)));
+      CompletableFuture.completedFuture(CliResult(0, IdeBundle.message("ide.protocol.internal.bad.query", query)))
     }
-    catch (Throwable t) {
-      return CompletableFuture.failedFuture(t);
+    catch (t: Throwable) {
+      CompletableFuture.failedFuture(t)
     }
   }
 
-  public static @NotNull CommandLineProcessorResult processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
-    StringBuilder logMessage = new StringBuilder();
-    logMessage.append("External command line:").append('\n');
-    logMessage.append("Dir: ").append(currentDirectory).append('\n');
-    for (String arg : args) {
-      logMessage.append(arg).append('\n');
+  fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
+    val logMessage = StringBuilder()
+    logMessage.append("External command line:").append('\n')
+    logMessage.append("Dir: ").append(currentDirectory).append('\n')
+    for (arg in args) {
+      logMessage.append(arg).append('\n')
     }
-    logMessage.append("-----");
-    LOG.info(logMessage.toString());
-
+    logMessage.append("-----")
+    LOG.info(logMessage.toString())
     if (args.isEmpty()) {
-      return new CommandLineProcessorResult(null, OK_FUTURE);
+      return CommandLineProcessorResult(null, OK_FUTURE)
     }
-
-    CommandLineProcessorResult result = processApplicationStarters(args, currentDirectory);
-    if (result != null) return result;
-
-    return processOpenFile(args, currentDirectory);
+    val result = processApplicationStarters(args, currentDirectory)
+    return result ?: processOpenFile(args, currentDirectory)
   }
 
-  private static @Nullable CommandLineProcessorResult processApplicationStarters(List<String> args, @Nullable String currentDirectory) {
-    String command = args.get(0);
-    return ApplicationStarter.Companion.getEP_NAME().computeSafeIfAny(starter -> {
-      if (!command.equals(starter.getCommandName())) {
-        return null;
+  private fun processApplicationStarters(args: List<String>, currentDirectory: String?): CommandLineProcessorResult? {
+    val command = args[0]
+    return EP_NAME.computeSafeIfAny { starter: ApplicationStarter ->
+      if (command != starter.commandName) {
+        return@computeSafeIfAny null
       }
-
       if (!starter.canProcessExternalCommandLine()) {
-        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
-                                                                        ApplicationNamesInfo.getInstance().getProductName()));
+        return@computeSafeIfAny createError(IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
+                                                              ApplicationNamesInfo.getInstance().productName))
       }
-
-      LOG.info("Processing command with " + starter);
-      int requiredModality = starter.getRequiredModality();
+      LOG.info("Processing command with $starter")
+      val requiredModality = starter.requiredModality
       if (requiredModality == ApplicationStarter.NOT_IN_EDT) {
-        return new CommandLineProcessorResult(null, starter.processExternalCommandLineAsync(args, currentDirectory));
+        return@computeSafeIfAny CommandLineProcessorResult(null, starter.processExternalCommandLineAsync(args, currentDirectory))
       }
       else {
-        ModalityState modalityState = requiredModality == ApplicationStarter.ANY_MODALITY
-                                      ? ModalityState.any() : ModalityState.defaultModalityState();
-        AtomicReference<CommandLineProcessorResult> ref = new AtomicReference<>();
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          ref.set(new CommandLineProcessorResult(null, starter.processExternalCommandLineAsync(args, currentDirectory)));
-        }, modalityState);
-        return ref.get();
+        val modalityState = if (requiredModality == ApplicationStarter.ANY_MODALITY) ModalityState.any() else ModalityState.defaultModalityState()
+        val ref = AtomicReference<CommandLineProcessorResult>()
+        ApplicationManager.getApplication().invokeAndWait(
+          { ref.set(CommandLineProcessorResult(null, starter.processExternalCommandLineAsync(args, currentDirectory))) }, modalityState)
+        return@computeSafeIfAny ref.get()
       }
-    });
+    }
   }
 
-  private static CommandLineProcessorResult processOpenFile(List<String> args, @Nullable String currentDirectory) {
-    CommandLineProcessorResult projectAndCallback = null;
-    int line = -1;
-    int column = -1;
-    boolean tempProject = false;
-    boolean shouldWait = args.contains(OPTION_WAIT);
-    boolean lightEditMode = false;
-
-    for (int i = 0; i < args.size(); i++) {
-      String arg = args.get(i);
-      if (CommandLineArgs.isKnownArgument(arg) || OPTION_WAIT.equals(arg)) {
-        continue;
+  private fun processOpenFile(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
+    var projectAndCallback: CommandLineProcessorResult? = null
+    var line = -1
+    var column = -1
+    var tempProject = false
+    val shouldWait = args.contains(OPTION_WAIT)
+    var lightEditMode = false
+    var i = 0
+    while (i < args.size) {
+      var arg = args[i]
+      if (CommandLineArgs.isKnownArgument(arg) || OPTION_WAIT == arg) {
+        i++
+        continue
       }
-
-      if (arg.equals("-l") || arg.equals("--line")) {
-        //noinspection AssignmentToForLoopParameter
-        i++;
-        if (i == args.size()) break;
-        line = StringUtil.parseInt(args.get(i), -1);
-        continue;
+      if (arg == "-l" || arg == "--line") {
+        i++
+        if (i == args.size) break
+        line = StringUtil.parseInt(args[i], -1)
+        i++
+        continue
       }
-
-      if (arg.equals("-c") || arg.equals("--column")) {
-        //noinspection AssignmentToForLoopParameter
-        i++;
-        if (i == args.size()) break;
-        column = StringUtil.parseInt(args.get(i), -1);
-        continue;
+      if (arg == "-c" || arg == "--column") {
+        i++
+        if (i == args.size) break
+        column = StringUtil.parseInt(args[i], -1)
+        i++
+        continue
       }
-
-      if (arg.equals("--temp-project")) {
-        tempProject = true;
-        continue;
+      if (arg == "--temp-project") {
+        tempProject = true
+        i++
+        continue
       }
-
-      if (arg.equals("-e") || arg.equals("--edit")) {
-        lightEditMode = true;
-        continue;
+      if (arg == "-e" || arg == "--edit") {
+        lightEditMode = true
+        i++
+        continue
       }
-
-      if (arg.equals("-p") || arg.equals("--project")) {
+      if (arg == "-p" || arg == "--project") {
         // Skip, replaced with the opposite option above
         // TODO<rv>: Remove in future versions
-        continue;
+        i++
+        continue
       }
-
       if (StringUtil.isQuotedString(arg)) {
-        arg = StringUtil.unquoteString(arg);
+        arg = StringUtil.unquoteString(arg)
       }
-
-      Path file = parseFilePath(arg, currentDirectory);
-      if (file == null) {
-        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.invalid.path", arg));
-      }
-
-      projectAndCallback = openFileOrProject(file, line, column, tempProject, shouldWait, lightEditMode);
-
+      val file = parseFilePath(arg, currentDirectory)
+                 ?: return createError(IdeBundle.message("dialog.message.invalid.path", arg))
+      projectAndCallback = openFileOrProject(file, line, column, tempProject, shouldWait, lightEditMode)
       if (shouldWait) {
-        break;
+        break
       }
-
-      line = column = -1;
-      tempProject = false;
+      column = -1
+      line = column
+      tempProject = false
+      i++
     }
-
-    if (projectAndCallback != null) {
-      return projectAndCallback;
+    return if (projectAndCallback != null) {
+      projectAndCallback
     }
     else {
       if (shouldWait) {
-        return new CommandLineProcessorResult(
+        return CommandLineProcessorResult(
           null,
           CliResult.error(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
-        );
+        )
       }
-
       if (lightEditMode) {
-        LightEditService.getInstance().showEditorWindow();
-        return new CommandLineProcessorResult(LightEditService.getInstance().getProject(), OK_FUTURE);
+        LightEditService.getInstance().showEditorWindow()
+        return CommandLineProcessorResult(LightEditService.getInstance().project, OK_FUTURE)
       }
-
-      return new CommandLineProcessorResult(null, OK_FUTURE);
+      CommandLineProcessorResult(null, OK_FUTURE)
     }
   }
 
-  private static @Nullable Path parseFilePath(String path, @Nullable String currentDirectory) {
-    try {
-      Path file = Path.of(FileUtilRt.toSystemDependentName(path));  // handle paths like '/file/foo\qwe'
-      if (!file.isAbsolute()) {
-        file = currentDirectory == null ? file.toAbsolutePath() : Path.of(currentDirectory).resolve(file);
+  private fun parseFilePath(path: String, currentDirectory: String?): Path? {
+    return try {
+      var file = Path.of(FileUtilRt.toSystemDependentName(path)) // handle paths like '/file/foo\qwe'
+      if (!file.isAbsolute) {
+        file = if (currentDirectory == null) file.toAbsolutePath() else Path.of(currentDirectory).resolve(file)
       }
-      return file.normalize();
+      file.normalize()
     }
-    catch (InvalidPathException e) {
-      LOG.warn(e);
-      return null;
+    catch (e: InvalidPathException) {
+      LOG.warn(e)
+      null
     }
   }
 
-
-  private static CommandLineProcessorResult openFileOrProject(Path file, int line, int column,
-                                                              boolean tempProject, boolean shouldWait, boolean lightEditMode) {
-    return LightEditUtil.computeWithCommandLineOptions(shouldWait, lightEditMode, () -> {
-      boolean asFile = line != -1 || tempProject;
-      return asFile ? doOpenFile(file, line, column, tempProject, shouldWait) : doOpenFileOrProject(file, shouldWait);
-    });
+  private fun openFileOrProject(file: Path, line: Int, column: Int,
+                                tempProject: Boolean, shouldWait: Boolean, lightEditMode: Boolean): CommandLineProcessorResult {
+    return LightEditUtil.computeWithCommandLineOptions(shouldWait, lightEditMode) {
+      val asFile = line != -1 || tempProject
+      if (asFile) doOpenFile(file, line, column, tempProject, shouldWait) else doOpenFileOrProject(file, shouldWait)
+    }
   }
 }

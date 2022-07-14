@@ -204,13 +204,13 @@ open class IdeStarter : ModernApplicationStarter() {
   }
 }
 
-private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
+private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
   val currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
   @Suppress("SSBasedInspection")
   Logger.getInstance("#com.intellij.idea.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)
   if (result.hasError) {
-    ApplicationManager.getApplication().invokeAndWait {
+    withContext(Dispatchers.EDT) {
       result.showErrorIfFailed()
       ApplicationManager.getApplication().exit(true, true, false)
     }
