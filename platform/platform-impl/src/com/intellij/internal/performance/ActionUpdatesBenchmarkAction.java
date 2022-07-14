@@ -237,6 +237,7 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
       LOG.info(result.first + " ms - " + result.second);
     }
 
+    List<String> oldEdtExtensions = new ArrayList<>();
     ExtensionsAreaImpl extensionArea = (ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea();
     //noinspection TestOnlyProblems
     extensionArea.processExtensionPoints(ep -> {
@@ -247,7 +248,7 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
           for (ActionUpdateThreadAware extension : extensions) {
             ActionUpdateThread updateThread = extension.getActionUpdateThread();
             if (updateThread == ActionUpdateThread.OLD_EDT) {
-              oldEdtActionNames.add(String.format("Extension %s (EP: %s)", extension.getClass().getName(), ep.getName()));
+              oldEdtExtensions.add(extension.getClass().getName());
             }
           }
         }
@@ -260,10 +261,21 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     StringBuilder sb = new StringBuilder();
     sb.append("---- action-update-thread stats ----\n");
     sb.append(StringUtil.join(ActionUpdateThread.values(), t -> actionUpdateThreadCounts[t.ordinal()] + ":" + t.name(), ", "));
-    sb.append("... see the list of registered OLD_EDT actions below:");
-    oldEdtActionNames.sort(String::compareTo);
-    for (String name : oldEdtActionNames) {
-      sb.append("\n").append(name);
+    if (!oldEdtActionNames.isEmpty()) {
+      sb.append("... see the list of registered OLD_EDT actions below:");
+      oldEdtActionNames.sort(String::compareTo);
+      for (String name : oldEdtActionNames) {
+        sb.append("\n").append(name);
+      }
+      sb.append("\n");
+    }
+    if (!oldEdtExtensions.isEmpty()) {
+      sb.append("\n... and ").append(oldEdtExtensions.size()).append(" OLD_EDT extensions:");
+      oldEdtExtensions.sort(String::compareTo);
+      for (String name : oldEdtExtensions) {
+        sb.append("\n").append(name);
+      }
+      sb.append("\n");
     }
     LOG.info(sb.toString());
   }
