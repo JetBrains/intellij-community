@@ -86,7 +86,7 @@ enum class LibraryJarDescriptor(val mavenArtifactId: String) {
 )
 fun bundledRuntimeVersion(): String = KotlinPluginLayout.instance.standaloneCompilerVersion
 
-private val KOTLIN_COMPILER_VERSION_SEPARATOR = "-(?:dev|release)".toRegex()
+private val KOTLIN_COMPILER_VERSION_SEPARATOR = "-release".toRegex()
 
 /**
  * Bundled compiler version usually looks like: `1.5.0-release-759`.
