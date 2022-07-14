@@ -82,29 +82,6 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> implements PossiblyDumbAware {
-
-  private static final String[] DISABLED_ANNO = {"org.junit.jupiter.api.Disabled"};
-
-  private static final String[] DISABLED_COND_ANNO = {
-    "org.junit.jupiter.api.condition.DisabledOnJre",
-    "org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable",
-    "org.junit.jupiter.api.condition.DisabledIfSystemProperty",
-    "org.junit.jupiter.api.condition.DisabledOnOs"
-  };
-
-  private static final String[] SCRIPT_COND_ANNO =
-    {
-      "org.junit.jupiter.api.condition.DisabledIf",
-      "org.junit.jupiter.api.condition.EnabledIf"
-    };
-
-  private static final String[] ENABLED_COND_ANNO = {
-    "org.junit.jupiter.api.condition.EnabledOnJre",
-    "org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable",
-    "org.junit.jupiter.api.condition.EnabledIfSystemProperty",
-    "org.junit.jupiter.api.condition.EnabledOnOs"
-  };
-
   private static final String LAUNCHER_MODULE_NAME = "org.junit.platform.launcher";
   private static final String JUPITER_ENGINE_NAME  = "org.junit.jupiter.engine";
   private static final String VINTAGE_ENGINE_NAME  = "org.junit.vintage.engine";
@@ -322,66 +299,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
 
     return javaParameters;
-  }
-
-  @Nullable
-  private String getDisabledConditionValue() {
-    String disabledCondition = null;
-    JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    final PsiClass psiClass = myConfiguration.myClass.getPsiElement();
-    if (psiClass != null && data != null) {
-      disabledCondition = getDisabledCondition(psiClass);
-      String methodName = data.getMethodName();
-      if (disabledCondition == null && methodName != null) {
-        final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(psiClass);
-        List<PsiMethod> foundMethod = new ArrayList<>();
-        //noinspection ResultOfMethodCallIgnored
-        ContainerUtil.exists(psiClass.findMethodsByName(methodName, true), method ->
-        {
-          boolean found = filter.value(method) &&
-                          Objects.equals(data.getMethodNameWithSignature(),
-                                         JUnitConfiguration.Data.getMethodPresentation(method));
-          if (found) foundMethod.add(method);
-          return found;
-        });
-        //noinspection ConstantConditions
-        if (!foundMethod.isEmpty()) {
-          PsiMethod psiMethod = foundMethod.get(0);
-          disabledCondition = getDisabledCondition(psiMethod);
-        }
-      }
-    }
-    return disabledCondition;
-  }
-
-  private static String getDisabledCondition(PsiElement element) {
-    if (isDisabledCondition(DISABLED_COND_ANNO, element)) {
-      return "org.junit.*Disabled*Condition";
-    }
-
-    if (isDisabledCondition(ENABLED_COND_ANNO, element)) {
-      return "org.junit.*Enabled*Condition";
-    }
-
-    if (isDisabledCondition(SCRIPT_COND_ANNO, element)) {
-      return "org.junit.*DisabledIfCondition";
-    }
-
-    if (isDisabledCondition(DISABLED_ANNO, element)) {
-      return "org.junit.*DisabledCondition";
-    }
-    return null;
-  }
-
-  private static boolean isDisabledCondition(String[] anno, PsiElement psiElement) {
-    ArrayList<PsiModifierListOwner> listOwners = new ArrayList<>();
-    if (psiElement instanceof PsiMethod) {
-      listOwners.add((PsiMethod)psiElement);
-    }
-    if (psiElement instanceof PsiClass) {
-      listOwners.add((PsiClass)psiElement);
-    }
-    return ContainerUtil.exists(anno, an -> MetaAnnotationUtil.isMetaAnnotated(listOwners.get(0), Collections.singleton(an)));
   }
 
   @TestOnly
@@ -645,7 +562,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       else {
         downloader.compute();
       }
-      String disabledCondition = getDisabledConditionValue();
+      String disabledCondition = DisabledConditionUtil.getDisabledConditionValue(myConfiguration);
       if (disabledCondition != null) {
         javaParameters.getProgramParametersList().add("-Djunit.jupiter.conditions.deactivate=" + disabledCondition);
       }
