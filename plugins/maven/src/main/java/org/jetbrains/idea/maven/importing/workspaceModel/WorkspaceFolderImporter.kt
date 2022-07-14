@@ -35,7 +35,7 @@ class WorkspaceFolderImporter(
   fun createContentRoots(mavenProject: MavenProject, moduleType: MavenModuleType, module: ModuleEntity): CachedProjectFolders {
     val allFolders = mutableListOf<ContentRootCollector.ImportedFolder>()
 
-    val cachedFolders = importingContext.projectIdToCachedFolders.getOrPut(mavenProject.mavenId.key) {
+    val cachedFolders = importingContext.projectToCachedFolders.getOrPut(mavenProject) {
       collectMavenFolders(mavenProject)
     }
 
@@ -223,7 +223,7 @@ class WorkspaceFolderImporter(
   }
 
   class FolderImportingContext {
-    internal val projectIdToCachedFolders = mutableMapOf<String, CachedProjectFolders>()
+    internal val projectToCachedFolders = mutableMapOf<MavenProject, CachedProjectFolders>()
     internal val alreadyRegisteredContentRoots = FileCollectionFactory.createCanonicalFilePathSet()
   }
 
