@@ -5,15 +5,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import kotlin.Pair;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -35,6 +35,9 @@ import static com.intellij.util.indexing.roots.IndexableEntityProvider.Indexable
 @ApiStatus.Experimental
 public class DependenciesIndexedStatusService {
   private static final Logger LOG = Logger.getInstance(DependenciesIndexedStatusService.class);
+  @VisibleForTesting
+  static final Key<Boolean> ENFORCEMENT_USAGE_TEST_MODE_FLAG = new Key<>("enforce.DependenciesIndexedStatusService.usage");
+
 
   @NotNull
   public static DependenciesIndexedStatusService getInstance(@NotNull Project project) {
@@ -42,7 +45,7 @@ public class DependenciesIndexedStatusService {
   }
 
   public static boolean shouldBeUsed() {
-    return Registry.is("use.dependencies.cache.service", false);
+    return Registry.is("use.dependencies.cache.service", false) || TestModeFlags.is(ENFORCEMENT_USAGE_TEST_MODE_FLAG);
   }
 
 
