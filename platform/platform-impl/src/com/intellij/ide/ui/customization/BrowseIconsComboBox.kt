@@ -5,11 +5,9 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
@@ -25,15 +23,15 @@ import java.awt.event.ActionListener
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.NoSuchFileException
+import java.util.*
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.plaf.basic.BasicComboBoxEditor
-import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.TreePath
 
-internal class BrowseIconsComboBox(private val parentDisposable: Disposable) : ComboBox<IconInfo>() {
+internal class BrowseIconsComboBox(private val parentDisposable: Disposable,
+                                   withNoneItem: Boolean) : ComboBox<IconInfo>() {
   init {
-    model = DefaultComboBoxModel(createIconsList().toTypedArray())
+    model = DefaultComboBoxModel(createIconsList(withNoneItem).toTypedArray())
     isSwingPopup = false  // in this case speed search will filter the list of items
     setEditable(true)
     setEditor(createEditor())
@@ -42,12 +40,14 @@ internal class BrowseIconsComboBox(private val parentDisposable: Disposable) : C
     ComboboxSpeedSearch.installSpeedSearch(this) { info: IconInfo -> info.text }
   }
 
-  private fun createIconsList(): List<IconInfo> {
+  private fun createIconsList(withNoneItem: Boolean): List<IconInfo> {
     val defaultIcons = getDefaultIcons().toMutableList()
     val availableIcons = getAvailableIcons()
       .filter { info -> defaultIcons.find { it.icon === info.icon } == null }
       .sortedWith(Comparator { a, b -> a.text.compareTo(b.text, ignoreCase = true) })
-    val icons: MutableList<IconInfo> = ArrayList(defaultIcons)
+    val icons: MutableList<IconInfo> = LinkedList()
+    if (withNoneItem) icons.add(NONE)
+    icons.addAll(defaultIcons)
     icons.add(SEPARATOR)
     icons.addAll(availableIcons)
     return icons
@@ -153,21 +153,6 @@ internal class BrowseIconsComboBox(private val parentDisposable: Disposable) : C
         model.insertElementAt(info, separatorInd + 1)
         selectedIndex = separatorInd + 1
       }
-    }
-  }
-
-  /**
-   * Insert [NONE] item if menu action is selected, remove it otherwise
-   */
-  fun editModelForPath(path: TreePath) {
-    val groupNode = path.getPathComponent(1) as DefaultMutableTreeNode
-    val group = groupNode.userObject as? Group
-    val firstInfo = model.getElementAt(0)
-    if (group?.id == IdeActions.GROUP_MAIN_MENU && firstInfo !== NONE) {
-      model.insertElementAt(NONE, 0)
-    }
-    else if (group?.id != IdeActions.GROUP_MAIN_MENU && firstInfo === NONE) {
-      model.removeElementAt(0)
     }
   }
 

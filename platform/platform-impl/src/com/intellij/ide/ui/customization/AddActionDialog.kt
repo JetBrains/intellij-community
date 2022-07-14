@@ -23,7 +23,8 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
-internal class AddActionDialog(private val customActionsSchema: CustomActionsSchema) : DialogWrapper(false) {
+internal class AddActionDialog(private val customActionsSchema: CustomActionsSchema,
+                               withNoneItem: Boolean) : DialogWrapper(false) {
   private val actionsTree: JTree = Tree().apply {
     val rootGroup = ActionsTreeUtil.createMainGroup(null, null, QuickListsManager.getInstance().allQuickLists,
                                                     null, true) { action -> action !is Separator }
@@ -32,7 +33,6 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
     isRootVisible = false
     cellRenderer = CustomizableActionsPanel.createDefaultRenderer()
     addTreeSelectionListener { e ->
-      browseComboBox.editModelForPath(e.path)
       val selectedNode = e.path.lastPathComponent as DefaultMutableTreeNode
       val pair = CustomizableActionsPanel.getActionIdAndIcon(selectedNode)
       val (actionId, icon) = pair.first to pair.second
@@ -47,7 +47,7 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
     }
   }
 
-  private val browseComboBox = BrowseIconsComboBox(disposable)
+  private val browseComboBox = BrowseIconsComboBox(disposable, withNoneItem)
 
   private val selectedIcon: IconInfo?
     get() = browseComboBox.selectedItem as? IconInfo

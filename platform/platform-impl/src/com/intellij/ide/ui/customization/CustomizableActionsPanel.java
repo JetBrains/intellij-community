@@ -418,14 +418,15 @@ public class CustomizableActionsPanel {
 
   private class EditIconDialog extends DialogWrapper {
     private final DefaultMutableTreeNode myNode;
+    private final boolean isNodeInsideMenu;
     private BrowseIconsComboBox myComboBox;
 
     protected EditIconDialog(TreePath path) {
       super(false);
       setTitle(IdeBundle.message("title.choose.action.icon"));
+      isNodeInsideMenu = isInsideMenu(path);
       init();
       myNode = (DefaultMutableTreeNode)path.getLastPathComponent();
-      myComboBox.editModelForPath(path);
 
       final String actionId = getActionId(myNode);
       if (actionId != null) {
@@ -454,7 +455,7 @@ public class CustomizableActionsPanel {
 
     @Override
     protected JComponent createCenterPanel() {
-      myComboBox = new BrowseIconsComboBox(getDisposable());
+      myComboBox = new BrowseIconsComboBox(getDisposable(), isNodeInsideMenu);
       JPanel northPanel = new JPanel(new BorderLayout());
       northPanel.add(myComboBox, BorderLayout.NORTH);
       return northPanel;
@@ -518,7 +519,7 @@ public class CustomizableActionsPanel {
       int row = myActionsTree.getRowForPath(selectionPath);
       if (selectionPath != null) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-        AddActionDialog dlg = new AddActionDialog(mySelectedSchema);
+        AddActionDialog dlg = new AddActionDialog(mySelectedSchema, isInsideMenu(selectionPath));
         if (dlg.showAndGet()) {
           Object actionInfo = dlg.getAddedActionInfo();
           if (actionInfo != null) {
@@ -545,6 +546,17 @@ public class CustomizableActionsPanel {
         e.getPresentation().setEnabled(isSingleSelection());
       }
     }
+  }
+
+  private static boolean isInsideMenu(TreePath path) {
+    if (path.getPathCount() < 2) return false;
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getPathComponent(1);
+    Object userObj = node.getUserObject();
+    if (userObj instanceof Group) {
+      String groupId = ((Group)userObj).getId();
+      return groupId != null && groupId.contains("Menu");
+    }
+    return false;
   }
 
   private final class AddSeparatorAction extends TreeSelectionAction {
