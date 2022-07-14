@@ -162,6 +162,8 @@ class WorkspaceFolderImporter(
 
 
   private fun collectSourceFolders(mavenProject: MavenProject, result: MutableList<ContentRootCollector.ImportedFolder>) {
+    fun toAbsolutePath(path: String) = MavenUtil.toPath(mavenProject, path).path
+
     mavenProject.sources.forEach { result.add(ContentRootCollector.SourceFolder(it, JavaSourceRootType.SOURCE)) }
     mavenProject.resources.forEach { result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.RESOURCE)) }
 
@@ -170,22 +172,22 @@ class WorkspaceFolderImporter(
 
     for (each in MavenImporter.getSuitableImporters(mavenProject)) {
       each.collectSourceRoots(mavenProject) { path: String, type: JpsModuleSourceRootType<*> ->
-        result.add(ContentRootCollector.SourceFolder(path, type))
+        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), type))
       }
     }
 
     BuildHelperMavenPluginUtil.addBuilderHelperPaths(mavenProject, "add-source") { path ->
-      result.add(ContentRootCollector.SourceFolder(path, JavaSourceRootType.SOURCE))
+      result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaSourceRootType.SOURCE))
     }
     BuildHelperMavenPluginUtil.addBuilderHelperResourcesPaths(mavenProject, "add-resource") { path ->
-      result.add(ContentRootCollector.SourceFolder(path, JavaResourceRootType.RESOURCE))
+      result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaResourceRootType.RESOURCE))
     }
 
     BuildHelperMavenPluginUtil.addBuilderHelperPaths(mavenProject, "add-test-source") { path ->
-      result.add(ContentRootCollector.SourceFolder(path, JavaSourceRootType.TEST_SOURCE))
+      result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaSourceRootType.TEST_SOURCE))
     }
     BuildHelperMavenPluginUtil.addBuilderHelperResourcesPaths(mavenProject, "add-test-resource") { path ->
-      result.add(ContentRootCollector.SourceFolder(path, JavaResourceRootType.TEST_RESOURCE))
+      result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaResourceRootType.TEST_RESOURCE))
     }
   }
 
