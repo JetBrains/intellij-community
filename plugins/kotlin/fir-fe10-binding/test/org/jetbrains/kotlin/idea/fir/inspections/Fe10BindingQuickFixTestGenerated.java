@@ -73,4 +73,22 @@ public abstract class Fe10BindingQuickFixTestGenerated extends AbstractFe10Bindi
             runTest("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty/vararg.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/kdocMissingDocumentation")
+    public static class KdocMissingDocumentation extends AbstractFe10BindingQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/quickfix/kdocMissingDocumentation/simple.kt");
+        }
+
+        @TestMetadata("withIndentation.kt")
+        public void testWithIndentation() throws Exception {
+            runTest("../idea/tests/testData/quickfix/kdocMissingDocumentation/withIndentation.kt");
+        }
+    }
 }

@@ -983,4 +983,234 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/copyWithoutNamedArguments/this.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject")
+    public static class IntroduceWhenSubject extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("lineBreaksAndComments.kt")
+        public void testLineBreaksAndComments() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/lineBreaksAndComments.kt");
+        }
+
+        @TestMetadata("qualified.kt")
+        public void testQualified() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/qualified.kt");
+        }
+
+        @TestMetadata("qualified2.kt")
+        public void testQualified2() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/qualified2.kt");
+        }
+
+        @TestMetadata("qualified3.kt")
+        public void testQualified3() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/qualified3.kt");
+        }
+
+        @TestMetadata("qualified4.kt")
+        public void testQualified4() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/qualified4.kt");
+        }
+
+        @TestMetadata("this.kt")
+        public void testThis() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/this.kt");
+        }
+
+        @TestMetadata("whenWithEqualityTests.kt")
+        public void testWhenWithEqualityTests() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithEqualityTests.kt");
+        }
+
+        @TestMetadata("whenWithMultipleConditionTypes.kt")
+        public void testWhenWithMultipleConditionTypes() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithMultipleConditionTypes.kt");
+        }
+
+        @TestMetadata("whenWithNegativePatterns.kt")
+        public void testWhenWithNegativePatterns() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithNegativePatterns.kt");
+        }
+
+        @TestMetadata("whenWithNegativeRangeTests.kt")
+        public void testWhenWithNegativeRangeTests() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithNegativeRangeTests.kt");
+        }
+
+        @TestMetadata("whenWithNondivisibleConditions.kt")
+        public void testWhenWithNondivisibleConditions() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithNondivisibleConditions.kt");
+        }
+
+        @TestMetadata("whenWithPatterns.kt")
+        public void testWhenWithPatterns() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithPatterns.kt");
+        }
+
+        @TestMetadata("whenWithRangeTests.kt")
+        public void testWhenWithRangeTests() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithRangeTests.kt");
+        }
+
+        @TestMetadata("whenWithSubject.kt")
+        public void testWhenWithSubject() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithSubject.kt");
+        }
+
+        @TestMetadata("whenWithSwappedEqualityTests.kt")
+        public void testWhenWithSwappedEqualityTests() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithSwappedEqualityTests.kt");
+        }
+
+        @TestMetadata("whenWithUnmatchedCandidateSubjects.kt")
+        public void testWhenWithUnmatchedCandidateSubjects() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithUnmatchedCandidateSubjects.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/kdocMissingDocumentation")
+    public static class KdocMissingDocumentation extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("primaryConstructorProperty.kt")
+        public void testPrimaryConstructorProperty() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/kdocMissingDocumentation/primaryConstructorProperty.kt");
+        }
+
+        @TestMetadata("primaryConstructorPropertyAsParam.kt")
+        public void testPrimaryConstructorPropertyAsParam() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/kdocMissingDocumentation/primaryConstructorPropertyAsParam.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/kdocMissingDocumentation/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/forEachParameterNotUsed")
+    public static class ForEachParameterNotUsed extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("invoke.kt")
+        public void testInvoke() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/forEachParameterNotUsed/invoke.kt");
+        }
+
+        @TestMetadata("normal.kt")
+        public void testNormal() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/forEachParameterNotUsed/normal.kt");
+        }
+
+        @TestMetadata("repeat.kt")
+        public void testRepeat() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/forEachParameterNotUsed/repeat.kt");
+        }
+
+        @TestMetadata("safe.kt")
+        public void testSafe() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/forEachParameterNotUsed/safe.kt");
+        }
+
+        @TestMetadata("sequence.kt")
+        public void testSequence() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/forEachParameterNotUsed/sequence.kt");
+        }
+
+        @TestMetadata("string.kt")
+        public void testString() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/forEachParameterNotUsed/string.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/covariantEquals")
+    public static class CovariantEquals extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/covariantEquals/basic.kt");
+        }
+
+        @TestMetadata("hasOverriddenAnyEquals.kt")
+        public void testHasOverriddenAnyEquals() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/covariantEquals/hasOverriddenAnyEquals.kt");
+        }
+
+        @TestMetadata("inCompanion.kt")
+        public void testInCompanion() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/covariantEquals/inCompanion.kt");
+        }
+
+        @TestMetadata("inObject.kt")
+        public void testInObject() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/covariantEquals/inObject.kt");
+        }
+
+        @TestMetadata("inObjectLiteral.kt")
+        public void testInObjectLiteral() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/covariantEquals/inObjectLiteral.kt");
+        }
+
+        @TestMetadata("local.kt")
+        public void testLocal() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/covariantEquals/local.kt");
+        }
+
+        @TestMetadata("override.kt")
+        public void testOverride() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/covariantEquals/override.kt");
+        }
+
+        @TestMetadata("overrideAnyEquals.kt")
+        public void testOverrideAnyEquals() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/covariantEquals/overrideAnyEquals.kt");
+        }
+
+        @TestMetadata("topLevel.kt")
+        public void testTopLevel() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/covariantEquals/topLevel.kt");
+        }
+
+        @TestMetadata("twoParameters.kt")
+        public void testTwoParameters() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/covariantEquals/twoParameters.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/lateinitVarOverridesLateinitVar")
+    public static class LateinitVarOverridesLateinitVar extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/lateinitVarOverridesLateinitVar/basic.kt");
+        }
+
+        @TestMetadata("notLateinit.kt")
+        public void testNotLateinit() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/lateinitVarOverridesLateinitVar/notLateinit.kt");
+        }
+
+        @TestMetadata("notLateinit2.kt")
+        public void testNotLateinit2() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/lateinitVarOverridesLateinitVar/notLateinit2.kt");
+        }
+    }
 }

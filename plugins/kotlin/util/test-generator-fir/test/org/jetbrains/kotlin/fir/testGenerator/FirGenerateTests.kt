@@ -220,6 +220,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/inspectionsLocal/convertNaNEquality", pattern = pattern)
             model("testData/inspectionsLocal/convertPairConstructorToToFunction", pattern = pattern)
             model("testData/inspectionsLocal/copyWithoutNamedArguments", pattern = pattern)
+            model("testData/inspectionsLocal/branched/introduceWhenSubject", pattern = pattern)
+            model("testData/inspectionsLocal/kdocMissingDocumentation", pattern = pattern)
+            model("testData/inspectionsLocal/forEachParameterNotUsed", pattern = pattern)
+            model("testData/inspectionsLocal/covariantEquals", pattern = pattern)
+            model("testData/inspectionsLocal/lateinitVarOverridesLateinitVar", pattern = pattern)
         }
     }
 
@@ -228,6 +233,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
             model("testData/quickfix/addVarianceModifier", pattern = pattern)
             model("testData/quickfix/canBePrimaryConstructorProperty", pattern = pattern)
+            model("testData/quickfix/kdocMissingDocumentation", pattern = pattern)
         }
     }
 
