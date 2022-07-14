@@ -596,7 +596,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     catch (e: CancellationException) {
       withContext(NonCancellable) {
-        frameAllocator.projectNotLoaded(cannotConvertException = null)
+        failedToOpenProject(frameAllocator = frameAllocator, exception = null, options = options)
       }
       throw e
     }
@@ -606,16 +606,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
 
       LOG.error(e)
-      frameAllocator.projectNotLoaded(cannotConvertException = e as? CannotConvertException)
-      try {
-        ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
-      }
-      catch (secondException: Throwable) {
-        LOG.error(secondException)
-      }
-      if (options.showWelcomeScreen) {
-        WelcomeFrame.showIfNoProjectOpened()
-      }
+      failedToOpenProject(frameAllocator = frameAllocator, exception = e, options = options)
       return null
     }
     finally {
@@ -624,6 +615,19 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     options.callback?.projectOpened(project, module ?: ModuleManager.getInstance(project).modules[0])
     return project
+  }
+
+  private suspend fun failedToOpenProject(frameAllocator: ProjectFrameAllocator, exception: Throwable?, options: OpenProjectTask) {
+    frameAllocator.projectNotLoaded(cannotConvertException = exception as? CannotConvertException)
+    try {
+      ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
+    }
+    catch (secondException: Throwable) {
+      LOG.error(secondException)
+    }
+    if (options.showWelcomeScreen) {
+      WelcomeFrame.showIfNoProjectOpened()
+    }
   }
 
   /**
