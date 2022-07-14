@@ -23,7 +23,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
@@ -54,8 +53,9 @@ fun getModuleInfosFromIdeaModel(project: Project, platform: TargetPlatform? = nu
         ideaModelInfosCache.allModules()
 }
 
+@Suppress("DEPRECATION")
 fun getIdeaModelInfosCache(project: Project): IdeaModelInfosCache =
-    if (false && FineGrainedEntityCache.isFineGrainedCacheInvalidationEnabled) {
+    if (FineGrainedEntityCache.isFineGrainedCacheInvalidationEnabled) {
         project.service()
     } else {
         project.cacheInvalidatingOnRootModifications {
@@ -158,7 +158,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
     private val modificationTracker = SimpleModificationTracker()
 
     init {
-        val ideaModules = ModuleManager.getInstance(project).modules.toList()
+        val ideaModules = ideaModules()
         moduleCache  = ModuleCache(ideaModules)
         libraryCache = LibraryCache(ideaModules)
         sdkCache = SdkCache()
@@ -177,9 +177,12 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
         Disposer.register(this, libraryCache)
         Disposer.register(this, sdkCache)
     }
+
+    private fun ideaModules(): Array<out Module> = ModuleManager.getInstance(project).modules
+
     override fun dispose() = Unit
 
-    inner class ModuleCache(modules: List<Module>) :
+    inner class ModuleCache(modules: Array<out Module>) :
         SynchronizedFineGrainedEntityCache<Module, List<ModuleSourceInfo>>(project, cleanOnLowMemory = false),
         WorkspaceModelChangeListener {
 
@@ -224,7 +227,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
         }
     }
 
-    inner class LibraryCache(modules: List<Module>) :
+    inner class LibraryCache(modules: Array<out Module>) :
         SynchronizedFineGrainedEntityCache<Library, List<LibraryInfo>>(project, cleanOnLowMemory = false),
         WorkspaceModelChangeListener {
 
@@ -245,11 +248,9 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
         override fun changed(event: VersionedStorageChange) {
             val storageBefore = event.storageBefore
-            val storageAfter = event.storageAfter
             val libraryChanges = event.getChanges(LibraryEntity::class.java)
-            val moduleChanges = event.getChanges(ModuleEntity::class.java)
 
-            if (libraryChanges.isEmpty() && moduleChanges.isEmpty()) return
+            if (libraryChanges.isEmpty()) return
 
             val outdatedLibraries: List<Library> = libraryChanges.asSequence()
                 .mapNotNull { it.oldEntity }
@@ -261,14 +262,10 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             }
 
             // force calculations
-            moduleChanges.asSequence()
-                .mapNotNull { it.newEntity }
-                .mapNotNull { it.findModule(storageAfter) }
-                .forEach(::calculateLibrariesForModule)
+            ideaModules().forEach(::calculateLibrariesForModule)
 
             modificationTracker.incModificationCount()
         }
-
 
         private fun calculateLibrariesForModule(module: Module) {
             val orderEntries = ModuleRootManager.getInstance(module).orderEntries
@@ -338,7 +335,10 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             allModules.value
         } else {
             resultByPlatform.value.getOrPut(platform) {
-                mergePlatformModules(moduleCache.values().flatten(), platform) + libraryCache.values().flatten() + sdkCache.values()
+                val platformModules = mergePlatformModules(moduleCache.values().flatten(), platform)
+                val libraryInfos = libraryCache.values().flatten()
+                val sdkInfos = sdkCache.values()
+                platformModules + libraryInfos + sdkInfos
             }
         }
 
