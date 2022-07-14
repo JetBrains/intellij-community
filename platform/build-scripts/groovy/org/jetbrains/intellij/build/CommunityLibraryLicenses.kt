@@ -511,8 +511,6 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/Kotlin/kotlinx.coroutines").apache(),
     LibraryLicense(name = "Kotlin Coroutines for Slf4j", libraryName = "kotlinx-coroutines-slf4j",
                    url = "https://github.com/Kotlin/kotlinx.coroutines").apache(),
-    LibraryLicense(name = "Kotlin Gradle Plugin Model", libraryName = "kotlin-gradle-plugin-model",
-                   url = "https://github.com/JetBrains/kotlin/tree/master/libraries/tools/kotlin-gradle-plugin-model").apache(),
     LibraryLicense(name = "Kotlin multiplatform / multi-format serialization",
                    libraryName = "kotlinx-serialization-core",
                    url = "https://github.com/Kotlin/kotlinx.serialization").apache(),

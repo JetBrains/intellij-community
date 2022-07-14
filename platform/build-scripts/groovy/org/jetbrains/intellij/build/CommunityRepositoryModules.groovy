@@ -359,7 +359,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.kotlin.extensions", "android-extensions-ide.jar")
 
       // android-kotlin.jar
-      withModule("intellij.android.kotlin.idea.common", "android-kotlin.jar") // <= ADDED
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
       withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
 
@@ -631,7 +630,6 @@ final class CommunityRepositoryModules {
       // here go some differences from original Android Studio layout
 
       //these project-level libraries are used from Android plugin only, so it's better to include them into its lib directory
-      withProjectLibrary("kotlin-gradle-plugin-model")
       withProjectLibrary("HdrHistogram")
 
       for (Map.Entry<String, String> entry in additionalModulesToJars.entrySet()) {
