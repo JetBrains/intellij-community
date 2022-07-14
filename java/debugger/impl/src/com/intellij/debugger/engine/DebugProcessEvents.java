@@ -144,7 +144,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     @Override
     public void run() {
       try {
-        EventQueue eventQueue = myVmProxy.eventQueue();
+        EventQueue eventQueue = myVmProxy.getVirtualMachine().eventQueue();
         while (!isStopped()) {
           try {
             final EventSet eventSet = eventQueue.remove();

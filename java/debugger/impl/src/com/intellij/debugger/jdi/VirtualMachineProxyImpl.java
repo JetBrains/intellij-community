@@ -58,9 +58,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     myVersionHigher_14 = myVersionHigher_15 || versionHigher("1.4");
 
     // avoid lazy-init for some properties: the following will pre-calculate values
-    canRedefineClasses();
-    canWatchFieldModification();
-    canPopFrames();
+    canRedefineClasses(); // fetch capabilitiesNew
+    canWatchFieldModification(); // fetch capabilities
 
     if (canBeModified()) { // no need to spend time here for read only sessions
         // this will cache classes inside JDI and enable faster search of classes later
@@ -241,7 +240,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
   }
 
-  public boolean isJ2ME() {
+  private boolean isJ2ME() {
     return isJ2ME(getVirtualMachine());
   }
 
@@ -252,10 +251,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   public void threadGroupRemoved(ThreadGroupReference threadGroupReference){
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myThreadGroups.remove(threadGroupReference);
-  }
-
-  public EventQueue eventQueue() {
-    return myVirtualMachine.eventQueue();
   }
 
   public EventRequestManager eventRequestManager() {
@@ -311,10 +306,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     reference = generator.compute();
     myStringLiteralCache.put(s, reference);
     return reference;
-  }
-
-  public Process process() {
-    return myVirtualMachine.process();
   }
 
   public void dispose() {
