@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
@@ -47,7 +47,7 @@ internal class IntentionPreviewComputable(private val project: Project,
   private fun tryCreateFallbackDescriptionContent(): IntentionPreviewInfo {
     val originalAction = IntentionActionDelegate.unwrap(action)
     val actionMetaData = IntentionManagerSettings.getInstance().getMetaData().singleOrNull {
-      md -> IntentionActionDelegate.unwrap(md.action) === originalAction
+      md -> IntentionActionDelegate.unwrap(md.action).javaClass === originalAction.javaClass
     } ?: return IntentionPreviewInfo.EMPTY
     return try {
       IntentionPreviewInfo.Html(actionMetaData.description.text.replace(HTML_COMMENT_REGEX, ""))
