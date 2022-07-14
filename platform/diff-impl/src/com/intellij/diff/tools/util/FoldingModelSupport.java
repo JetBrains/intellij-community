@@ -3,10 +3,7 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
-import com.intellij.diff.util.DiffDividerDrawUtil;
-import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.LineRange;
+import com.intellij.diff.util.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -14,19 +11,22 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -54,7 +54,7 @@ import static com.intellij.openapi.diagnostic.Logger.getInstance;
 /**
  * This class allows to add custom foldings to hide unchanged regions in diff.
  * EditorSettings#isAutoCodeFoldingEnabled() should be true, to avoid collisions with language-specific foldings
- *    (as it's impossible to create partially overlapped folding regions)
+ * (as it's impossible to create partially overlapped folding regions)
  *
  * @see DiffUtil#setFoldingModelSupport(EditorEx)
  */
@@ -70,6 +70,7 @@ public class FoldingModelSupport {
   protected final EditorEx @NotNull [] myEditors;
 
   @NotNull protected final List<FoldedGroup> myFoldings = new ArrayList<>();
+  private FoldedBlock myHoveredBlock = null;
 
   private boolean myDuringSynchronize;
   private final boolean[] myShouldUpdateLineNumbers;
@@ -91,11 +92,21 @@ public class FoldingModelSupport {
       if (myCount > 1) {
         myEditors[i].getFoldingModel().addListener(new MyFoldingListener(i), disposable);
       }
+
+      HoveredBlockEditorMouseMotionListener listener = new HoveredBlockEditorMouseMotionListener(i);
+      myEditors[i].addEditorMouseListener(listener, disposable);
+      myEditors[i].addEditorMouseMotionListener(listener, disposable);
     }
   }
 
   public int getCount() {
     return myCount;
+  }
+
+  protected void repaintSeparators() {
+    for (EditorEx editor : myEditors) {
+      editor.getComponent().repaint();
+    }
   }
 
   //
@@ -139,6 +150,7 @@ public class FoldingModelSupport {
         folding.destroyFolding();
       }
       myFoldings.clear();
+      myHoveredBlock = null;
 
 
       if (data != null) {
@@ -440,6 +452,7 @@ public class FoldingModelSupport {
         folding.destroyFolding();
       }
       myFoldings.clear();
+      myHoveredBlock = null;
     });
   }
 
@@ -555,6 +568,67 @@ public class FoldingModelSupport {
     }
   }
 
+  private class HoveredBlockEditorMouseMotionListener implements EditorMouseMotionListener, EditorMouseListener {
+    private final int myIndex;
+
+    HoveredBlockEditorMouseMotionListener(int index) {
+      myIndex = index;
+    }
+
+    @Override
+    public void mouseMoved(@NotNull EditorMouseEvent event) {
+      FoldedBlock block = getSelectedBlock(event);
+      updateHoveredBlock(block);
+    }
+
+    @Override
+    public void mouseExited(@NotNull EditorMouseEvent event) {
+      updateHoveredBlock(null);
+    }
+
+    @Override
+    public void mouseClicked(@NotNull EditorMouseEvent event) {
+      FoldedBlock block = getSelectedBlock(event);
+      if (block == null) return;
+
+      runBatchOperation(() -> {
+        for (int i = 0; i < myCount; i++) {
+          FoldRegion region = block.getRegion(i);
+          if (region != null) region.setExpanded(true);
+        }
+      });
+    }
+
+    @Nullable
+    private FoldedBlock getSelectedBlock(@NotNull EditorMouseEvent e) {
+      int hoverLine = EditorUtil.yPositionToLogicalLine(myEditors[myIndex], e.getMouseEvent().getY());
+
+      updateLineNumbers(false);
+      for (FoldedBlock folding : getFoldedBlocks()) {
+        int line = folding.getLine(myIndex);
+        if (line == -1) continue;
+        if (line > hoverLine) break;
+        FoldRegion region = folding.getRegion(myIndex);
+        if (line == hoverLine && region != null) {
+          return folding;
+        }
+      }
+      return null;
+    }
+
+    private void updateHoveredBlock(@Nullable FoldedBlock newBlock) {
+      if (myHoveredBlock == newBlock) return;
+      myHoveredBlock = newBlock;
+
+      Cursor cursor = newBlock != null ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null;
+      for (int i = 0; i < myCount; i++) {
+        myEditors[i].setCustomCursor(FoldingModelSupport.class, cursor);
+      }
+
+      repaintSeparators();
+    }
+  }
+
   //
   // Highlighting
   //
@@ -578,7 +652,7 @@ public class FoldingModelSupport {
           if (region2 == null || !region2.isValid() || region2.isExpanded()) continue;
           int line1 = myEditors[myLeft].getDocument().getLineNumber(region1.getStartOffset());
           int line2 = myEditors[myRight].getDocument().getLineNumber(region2.getStartOffset());
-          if (!handler.process(line1, line2)) return;
+          if (!handler.process(line1, line2, folding.isHovered())) return;
           break;
         }
       }
@@ -894,8 +968,7 @@ public class FoldingModelSupport {
         if (region == null || !region.isValid()) continue;
         myHighlighters.addAll(DiffDrawUtil.createLineSeparatorHighlighter(myEditors[i],
                                                                           region.getStartOffset(), region.getEndOffset(),
-                                                                          getHighlighterCondition(group, i),
-                                                                          myDescriptions[i]));
+                                                                          new MySeparatorPresentation(group, i)));
       }
     }
 
@@ -933,6 +1006,10 @@ public class FoldingModelSupport {
       return myLines[index];
     }
 
+    public boolean isHovered() {
+      return myHoveredBlock == this;
+    }
+
     @NotNull
     private BooleanGetter getHighlighterCondition(@NotNull FoldedGroup group, final int index) {
       return () -> {
@@ -948,7 +1025,7 @@ public class FoldingModelSupport {
       };
     }
 
-    private class LazyDescription implements Computable<String> {
+    private class LazyDescription {
       @NotNull private final Project myProject;
       private final int myIndex;
       @NotNull private final DescriptionComputer myDescriptionComputer;
@@ -963,7 +1040,6 @@ public class FoldingModelSupport {
         myDescription = new RangeDescription(cachedValue);
       }
 
-      @Override
       @RequiresEdt
       public String compute() {
         if (!myLoadingStarted) {
@@ -1020,6 +1096,32 @@ public class FoldingModelSupport {
       @RequiresEdt
       public String getCachedDescription() {
         return myDescription.description;
+      }
+    }
+
+    private class MySeparatorPresentation implements DiffLineSeparatorRenderer.SeparatorPresentation {
+      private final FoldedGroup myGroup;
+      private final int myIndex;
+
+      private MySeparatorPresentation(@NotNull FoldedGroup group, int index) {
+        myGroup = group;
+        myIndex = index;
+      }
+
+      @Override
+      public boolean isVisible() {
+        return getHighlighterCondition(myGroup, myIndex).get();
+      }
+
+      @Override
+      public boolean isHovered() {
+        return FoldedBlock.this.isHovered();
+      }
+
+      @Override
+      public @Nullable String getDescription() {
+        LazyDescription description = myDescriptions[myIndex];
+        return description != null ? description.compute() : null;
       }
     }
   }

@@ -14,8 +14,6 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
-import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.scale.JBUIScale;
@@ -37,13 +35,11 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
   private static BufferedImage outCachedImage = null;
 
   @NotNull private final Editor myEditor;
-  @NotNull private final BooleanGetter myCondition;
-  @Nullable private final Computable<String> myDescription;
+  @NotNull private final SeparatorPresentation myPresentation;
 
-  public DiffLineSeparatorRenderer(@NotNull Editor editor, @NotNull BooleanGetter condition, @Nullable Computable<String> description) {
+  public DiffLineSeparatorRenderer(@NotNull Editor editor, @NotNull SeparatorPresentation presentation) {
     myEditor = editor;
-    myCondition = condition;
-    myDescription = description;
+    myPresentation = presentation;
   }
 
   /*
@@ -53,6 +49,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                                        int x1, int x2,
                                        int y1, int y2,
                                        int lineHeight,
+                                       boolean isHovered,
                                        @Nullable EditorColorsScheme scheme) {
     if (x1 == x2) return;
 
@@ -111,8 +108,8 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                    x2, y2);
     }
 
-    Color color = getWaveColor(scheme);
-    g.setColor(color);
+    g.setColor(getWaveColor(scheme));
+    g.setStroke(getStroke(isHovered));
     g.draw(path);
   }
 
@@ -121,7 +118,8 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
    */
   @Override
   public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-    if (!myCondition.get()) return;
+    if (!myPresentation.isVisible()) return;
+    boolean isHovered = myPresentation.isHovered();
 
     int y = r.y;
     int lineHeight = myEditor.getLineHeight();
@@ -136,7 +134,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
 
     boolean isMirrored = DiffUtil.isMirrored(myEditor);
     int shiftX = getStartPhase(lineHeight, isMirrored);
-    draw(g, shiftX, y, lineHeight, myEditor.getColorsScheme());
+    draw(g, shiftX, y, lineHeight, isHovered, myEditor.getColorsScheme());
   }
 
   /*
@@ -144,7 +142,8 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
    */
   @Override
   public void drawLine(Graphics g, int x1, int x2, int y) {
-    if (!myCondition.get()) return;
+    if (!myPresentation.isVisible()) return;
+    boolean isHovered = myPresentation.isHovered();
 
     y++; // we want y to be line's top position
 
@@ -168,12 +167,12 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     }
     shiftX += pane.getHorizontalScrollBar().getValue(); // do not move wave with scrolling
 
-    String description = myDescription != null && myEditor instanceof EditorImpl ? myDescription.compute() : null;
+    String description = myEditor instanceof EditorImpl ? myPresentation.getDescription() : null;
     if (description != null) {
-      drawWithDescription((Graphics2D)g, x1, y, shiftX, lineHeight, (EditorImpl)myEditor, description);
+      drawWithDescription((Graphics2D)g, x1, y, shiftX, lineHeight, isHovered, (EditorImpl)myEditor, description);
     }
     else {
-      draw(g, shiftX, y, lineHeight, myEditor.getColorsScheme());
+      draw(g, shiftX, y, lineHeight, isHovered, myEditor.getColorsScheme());
     }
   }
 
@@ -183,6 +182,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                                           int y,
                                           int shiftX,
                                           int lineHeight,
+                                          boolean isHovered,
                                           @NotNull EditorImpl editor,
                                           @NotNull String description) {
     EditorColorsScheme scheme = editor.getColorsScheme();
@@ -191,11 +191,11 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
 
     Shape oldClip = g.getClip();
     g.clip(new Rectangle(0, 0, rectX, Integer.MAX_VALUE));
-    draw(g, shiftX, y, lineHeight, editor.getColorsScheme());
+    draw(g, shiftX, y, lineHeight, isHovered, editor.getColorsScheme());
     g.setClip(oldClip);
 
     g.clip(new Rectangle(rectX + rectWidth, 0, Integer.MAX_VALUE, Integer.MAX_VALUE));
-    draw(g, shiftX, y, lineHeight, editor.getColorsScheme());
+    draw(g, shiftX, y, lineHeight, isHovered, editor.getColorsScheme());
     g.setClip(oldClip);
 
     HintRenderer.paintHint(g, editor,
@@ -215,6 +215,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                            int shiftX,
                            int shiftY,
                            int lineHeight,
+                           boolean isHovered,
                            @NotNull EditorColorsScheme scheme) {
     int step = getStepSize(lineHeight);
     int height = getHeight(lineHeight);
@@ -232,7 +233,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     Graphics2D gg = (Graphics2D)g.create();
     gg.translate(shiftX, shiftY + getVerticalOffset(lineHeight));
 
-    BufferedImage image = createImage(gg, color, step, height);
+    BufferedImage image = createImage(gg, color, isHovered, step, height);
     gg.setComposite(AlphaComposite.SrcOver);
 
     for (int index = startIndex; index < endIndex; index++) {
@@ -245,8 +246,8 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
 
   @SuppressWarnings("UnnecessaryLocalVariable")
   @NotNull
-  private static BufferedImage createImage(@NotNull Graphics2D g, @NotNull Color color, int step, int height) {
-    Object[] key = new Object[]{color.getRGB(), JBUIScale.sysScale(g), step, height};
+  private static BufferedImage createImage(@NotNull Graphics2D g, @NotNull Color color, boolean isHovered, int step, int height) {
+    Object[] key = new Object[]{color.getRGB(), JBUIScale.sysScale(g), isHovered, step, height};
     if (Arrays.equals(ourCachedImageKey, key) && outCachedImage != null) return outCachedImage;
 
     int extraGap = getAAGap();
@@ -273,6 +274,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                 step * 4.0, upper);
 
     GraphicsUtil.setupAAPainting(gg);
+    gg.setStroke(getStroke(isHovered));
     gg.setColor(color);
     gg.draw(path);
 
@@ -329,5 +331,23 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     color = scheme.getColor(BACKGROUND);
     if (color != null) return color;
     return Gray._128;
+  }
+
+  private static Stroke getStroke(boolean isHovered) {
+    if (isHovered) {
+      return new BasicStroke(2.0f);
+    }
+    else {
+      return new BasicStroke(1.0f);
+    }
+  }
+
+  public interface SeparatorPresentation {
+    boolean isVisible();
+
+    boolean isHovered();
+
+    @Nullable
+    String getDescription();
   }
 }
