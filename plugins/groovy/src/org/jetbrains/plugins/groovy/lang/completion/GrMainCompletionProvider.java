@@ -41,8 +41,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileBaseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 import org.jetbrains.plugins.groovy.lang.typing.TypeUtils;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
@@ -205,7 +208,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     PsiClass qualifierClass = com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly(qualifierType);
     final boolean honorExcludes = qualifierClass == null || !JavaCompletionUtil.isInExcludedPackage(qualifierClass, false);
 
-    GroovyCompletionUtil.processVariants(reference, matcher, parameters, lookupElement -> {
+    Consumer<LookupElement> elementConsumer = lookupElement -> {
       Object object = lookupElement.getObject();
       if (object instanceof GroovyResolveResult) {
         object = ((GroovyResolveResult)object).getElement();
@@ -245,18 +248,31 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       else {
         consumer.consume(lookupElement);
       }
-    });
+    };
+
+    GroovyCompletionUtil.processVariants(reference, matcher, parameters, elementConsumer);
 
     for (LookupElement element : zeroPriority) {
       consumer.consume(element);
     }
+    zeroPriority.clear();
 
     if (qualifierType != null) {
       processImplicitSpread(qualifierType, consumer, matcher, addedElements);
     }
 
     if (qualifier == null) {
-      return addStaticMembers(parameters, matcher, staticMembers, consumer);
+      return () -> {
+        PsiFile file = reference.getContainingFile();
+        if (!(file instanceof GroovyFileBaseImpl) || !(reference instanceof GrReferenceExpressionImpl)) {
+          return;
+        }
+        CompleteReferenceExpression.processSpecificPlace(matcher, (GrReferenceExpressionImpl)reference, parameters, (processor) -> ((GroovyFileBaseImpl)file).processImports(processor, ResolveUtilKt.initialState(true), reference), elementConsumer);
+        for (LookupElement element : zeroPriority) {
+          consumer.consume(element);
+        }
+        addStaticMembers(parameters, matcher, staticMembers, consumer).run();
+      };
     }
     return EmptyRunnable.INSTANCE;
   }
@@ -503,7 +519,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
 
       if (isClassNamePossible(position) && JavaCompletionContributor.mayStartClassName(consumer.getCompletionResultSet())) {
-        consumer.interrupt();
+        //consumer.interrupt();
         if (parameters.getInvocationCount() >= 2) {
           addAllClasses(parameters, consumer, inheritors);
         } else {

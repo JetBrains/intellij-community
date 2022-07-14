@@ -268,10 +268,21 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   private boolean processDeclarationsNoCache(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
     if (!processClassesInFile(this, processor, state)) return false;
     final GroovyFileImports imports = getImports();
-    if (!imports.processAllNamedImports(processor, state, place)) return false;
+    if (!areImportsIgnored(state)) {
+      if (!imports.processAllNamedImports(processor, state, place)) return false;
+    }
     if (!processClassesInPackage(this, processor, state, place)) return false;
-    if (!imports.processAllStarImports(processor, state, place)) return false;
-    if (!imports.processDefaultImports(processor, state, place)) return false;
+    if (!areImportsIgnored(state)) {
+      if (!imports.processAllStarImports(processor, state, place)) return false;
+      if (!imports.processDefaultImports(processor, state, place)) return false;
+    }
     return true;
+  }
+
+  public void processImports(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
+    final GroovyFileImports imports = getImports();
+    if (!imports.processAllNamedImports(processor, state, place)) return;
+    if (!imports.processAllStarImports(processor, state, place)) return;
+    imports.processDefaultImports(processor, state, place);
   }
 }
