@@ -14,5 +14,6 @@
   <content>
     <module name="intellij.searchEverywhereMl.core"/>
     <module name="intellij.searchEverywhereMl.yaml"/>
+    <module name="intellij.searchEverywhereMl.vcs"/>
   </content>
 </idea-plugin>

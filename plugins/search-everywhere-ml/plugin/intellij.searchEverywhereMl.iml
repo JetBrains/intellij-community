@@ -9,5 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.yaml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.vcs" scope="RUNTIME" />
   </component>
 </module>

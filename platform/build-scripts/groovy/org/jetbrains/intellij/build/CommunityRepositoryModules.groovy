@@ -263,6 +263,7 @@ final class CommunityRepositoryModules {
     plugin("intellij.searchEverywhereMl") {
       withModule("intellij.searchEverywhereMl.core")
       withModule("intellij.searchEverywhereMl.yaml")
+      withModule("intellij.searchEverywhereMl.vcs")
     },
     simplePlugin("intellij.keymap.eclipse"),
     simplePlugin("intellij.keymap.visualStudio"),

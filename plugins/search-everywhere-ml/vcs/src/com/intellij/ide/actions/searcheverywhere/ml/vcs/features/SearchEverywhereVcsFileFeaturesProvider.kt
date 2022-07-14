@@ -1,15 +1,16 @@
-package com.intellij.ide.actions.searcheverywhere.ml.features
+package com.intellij.ide.actions.searcheverywhere.ml.vcs.features
 
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
+import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCache
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.psi.PsiFileSystemItem
 
-internal class SearchEverywhereVcsFileFeaturesProvider
-  : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java) {
+internal class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java) {
   companion object {
     internal val IS_IGNORED_DATA_KEY = EventFields.Boolean("isIgnored")
     internal val IS_CHANGED_DATA_KEY = EventFields.Boolean("isChanged")
