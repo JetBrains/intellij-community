@@ -18,9 +18,9 @@ package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.DigestUtil
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
@@ -42,7 +42,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.await
@@ -132,7 +131,7 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
         }
     }
 
-    val sha256Deferred: Deferred<String> = async(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
+    val sha256Deferred: Deferred<String> = ApplicationManager.getApplication().coroutineScope.async {
         StringUtil.toHexString(DigestUtil.sha256().digest(buildFile.contentsToByteArray()))
     }
 

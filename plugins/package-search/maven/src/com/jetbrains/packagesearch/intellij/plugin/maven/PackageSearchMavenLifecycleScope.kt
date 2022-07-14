@@ -27,7 +27,6 @@ import kotlinx.coroutines.cancel
 
 @Service(Service.Level.PROJECT)
 internal class PackageSearchMavenLifecycleScope : CoroutineScope, Disposable {
-
     private val coroutineDispatcher =
         AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
 

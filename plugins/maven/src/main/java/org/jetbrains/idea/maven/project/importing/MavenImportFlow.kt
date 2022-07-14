@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -15,10 +15,8 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.MavenDisposable
@@ -42,9 +40,6 @@ import java.util.*
 @ApiStatus.Internal
 @ApiStatus.Experimental
 class MavenImportFlow {
-
-  val dispatcher = AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
-
   fun prepareNewImport(project: Project,
                        importPaths: ImportPaths,
                        generalSettings: MavenGeneralSettings,
@@ -98,7 +93,7 @@ class MavenImportFlow {
       is FilesList -> context.paths.poms
       is RootPath -> searchForMavenFiles(context.paths.path, context.indicator)
     }
-    pomFiles.addAll(newPomFiles.filterNotNull())
+    pomFiles.addAll(newPomFiles)
 
     projectsTree.addManagedFilesWithProfiles(pomFiles.filter { it.exists() }.toList(), context.profiles)
     val toResolve = LinkedHashSet<MavenProject>()
@@ -151,7 +146,7 @@ class MavenImportFlow {
     projectsTree.updateAll(true, context.generalSettings, indicator)
   }
 
-  fun setupMavenWrapper(readContext: MavenReadContext, indicator: MavenProgressIndicator): MavenReadContext {
+  fun setupMavenWrapper(readContext: MavenReadContext): MavenReadContext {
     if (readContext.wrapperData == null) return readContext
     if (!MavenUtil.isWrapper(readContext.initialContext.generalSettings)) return readContext
     MavenWrapperDownloader.checkOrInstallForSync(readContext.project, readContext.wrapperData.baseDir.path)
@@ -160,17 +155,17 @@ class MavenImportFlow {
 
 
   private fun getWorkingBaseDir(context: MavenInitialImportContext): VirtualFile? {
-    val guessedDir = context.project.guessProjectDir();
+    val guessedDir = context.project.guessProjectDir()
     if (guessedDir != null) return guessedDir
     when (context.paths) {
-      is FilesList -> return context.paths.poms[0]?.parent
+      is FilesList -> return context.paths.poms[0].parent
       is RootPath -> return context.paths.path
     }
   }
 
   private fun searchForMavenFiles(path: VirtualFile, indicator: MavenProgressIndicator): MutableList<VirtualFile> {
     indicator.setText(MavenProjectBundle.message("maven.locating.files"))
-    return FileFinder.findPomFiles(path.getChildren(), LookForNestedToggleAction.isSelected(), indicator)
+    return FileFinder.findPomFiles(path.children, LookForNestedToggleAction.isSelected(), indicator)
   }
 
   private fun loadOrCreateProjectTree(projectManager: MavenProjectsManager): MavenProjectsTree {
@@ -282,7 +277,7 @@ class MavenImportFlow {
     }
 
     Disposer.dispose(d)
-    return projectsFoldersResolved;
+    return projectsFoldersResolved
   }
 
   fun commitToWorkspaceModel(context: MavenResolvedContext, importingActivity: StructuredIdeActivity): MavenImportedContext {
@@ -300,7 +295,7 @@ class MavenImportFlow {
 
   fun updateProjectManager(context: MavenReadContext) {
     val projectManager = MavenProjectsManager.getInstance(context.project)
-    projectManager.setProjectsTree(context.projectsTree)
+    projectManager.projectsTree = context.projectsTree
     runLegacyListeners(context) { projectImportCompleted() }
   }
 
@@ -320,14 +315,16 @@ class MavenImportFlow {
     return !project.hasReadingProblems() && changes.hasChanges()
   }
 
-  fun <A> Collection<A>.foreachParallel(f: suspend (A) -> Unit) = runBlocking {
-    map { async(dispatcher) { f(it) } }.forEach { it.await() }
+  private fun <A> Collection<A>.foreachParallel(f: suspend (A) -> Unit) {
+    runBlocking {
+      forEach { launch { f(it) } }
+    }
   }
 }
 
 internal fun assertNonDispatchThread() {
   val app = ApplicationManager.getApplication()
-  if (app.isUnitTestMode() && app.isDispatchThread()) {
+  if (app.isUnitTestMode && app.isDispatchThread) {
     throw RuntimeException("Access from event dispatch thread is not allowed")
   }
   ApplicationManager.getApplication().assertIsNonDispatchThread()
