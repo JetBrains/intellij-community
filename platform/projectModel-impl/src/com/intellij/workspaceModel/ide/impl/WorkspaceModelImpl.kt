@@ -107,17 +107,32 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     /**
      * Order of events: initialize project libraries, initialize module bridge + module friends, all other listeners
      */
-    WorkspaceModelTopics.getInstance(project).syncProjectLibs(project.messageBus).beforeChanged(change)
-    WorkspaceModelTopics.getInstance(project).syncModuleBridge(project.messageBus).beforeChanged(change)
-    WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).beforeChanged(change)
+
+    val workspaceModelTopics = WorkspaceModelTopics.getInstance(project)
+    logErrorOnEventHandling {
+      workspaceModelTopics.syncProjectLibs(project.messageBus).beforeChanged(change)
+    }
+    logErrorOnEventHandling {
+      workspaceModelTopics.syncModuleBridge(project.messageBus).beforeChanged(change)
+    }
+    logErrorOnEventHandling {
+      workspaceModelTopics.syncPublisher(project.messageBus).beforeChanged(change)
+    }
   }
 
   private fun onChanged(change: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
-    WorkspaceModelTopics.getInstance(project).syncProjectLibs(project.messageBus).changed(change)
-    WorkspaceModelTopics.getInstance(project).syncModuleBridge(project.messageBus).changed(change)
-    WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).changed(change)
+    val workspaceModelTopics = WorkspaceModelTopics.getInstance(project)
+    logErrorOnEventHandling {
+      workspaceModelTopics.syncProjectLibs(project.messageBus).changed(change)
+    }
+    logErrorOnEventHandling {
+      workspaceModelTopics.syncModuleBridge(project.messageBus).changed(change)
+    }
+    logErrorOnEventHandling {
+      workspaceModelTopics.syncPublisher(project.messageBus).changed(change)
+    }
   }
 
   private fun startPreUpdateHandlers(before: EntityStorage, builder: MutableEntityStorage) {
@@ -132,6 +147,14 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     }
     if (updatesStarted >= PRE_UPDATE_LOOP_BLOCK) {
       log.error("Loop workspace model updating")
+    }
+  }
+
+  private fun logErrorOnEventHandling(action: () -> Unit) {
+    try {
+      action.invoke()
+    } catch (e: Throwable) {
+      log.warn("Exception at Workspace Model event handling", e)
     }
   }
 
