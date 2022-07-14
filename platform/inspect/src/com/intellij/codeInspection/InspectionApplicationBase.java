@@ -762,18 +762,13 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   public @Nullable InspectionProfileImpl loadProfileByName(@NotNull Project project, @NotNull String profileName) {
-    InspectionProfileManager.getInstance().getProfiles(); //force init provided profiles
+    InspectionProfileManager.getInstance().getProfiles(); //  force init provided profiles
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
-    if (inspectionProfile != null) {
-      reportMessage(1, "Loaded the '" + profileName + "' shared project profile");
-    }
-    else {
-      //check if ide profile is used for project
+    if (inspectionProfile == null) {  // check if the IDE profile is used for the project
       for (InspectionProfileImpl profile : profileManager.getProfiles()) {
         if (Comparing.strEqual(profile.getName(), profileName)) {
           inspectionProfile = profile;
-          reportMessage(1, "Loaded the '" + profileName + "' local profile");
           break;
         }
       }
