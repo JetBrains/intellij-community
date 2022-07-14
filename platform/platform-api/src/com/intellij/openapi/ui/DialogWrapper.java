@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
@@ -1626,7 +1627,9 @@ public abstract class DialogWrapper {
    * @see #showAndGet()
    */
   public void show() {
-    logShowDialogEvent();
+    if (LoadingState.APP_STARTED.isOccurred()) {
+      logShowDialogEvent();
+    }
     doShow();
   }
 
