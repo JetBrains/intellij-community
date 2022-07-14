@@ -15,7 +15,7 @@ import java.util.*
     (that depend on common libraries) leads to unpredictable results. Also, JVM backend initialization is quite expensive
     as it calculates a lot more information than the debugger needs.
 
-    `ClassNameOracle` aims to fix breakpoints in common modules. It's somehow similar to Ultra Light Classes – it also doesn't depend
+    `ClassNameCalculator` aims to fix breakpoints in common modules. It's somehow similar to Ultra Light Classes – it also doesn't depend
      on the backend. In case if all goes wrong, there's a registry key available that turns off the new behavior.
  */
 object ClassNameCalculator {
