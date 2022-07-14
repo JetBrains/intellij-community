@@ -58,28 +58,14 @@ class ClassNameProvider(
 
     private val inlineUsagesSearcher = InlineCallableUsagesSearcher(project, searchScope)
 
-    /**
-     * Returns classes in which the given line number *is* present.
-     */
-    fun getClassesForPosition(position: SourcePosition): Set<String> {
-        return doGetClassesForPosition(position)
-    }
-
-    /**
-     * Returns classes names in JDI format (my.app.App$Nested) in which the given line number *may be* present.
-     */
-    fun getOuterClassNamesForPosition(position: SourcePosition): List<String> {
-        return doGetClassesForPosition(position).toList()
-    }
-
-    private fun doGetClassesForPosition(position: SourcePosition): Set<String> {
+    fun getCandidates(position: SourcePosition): List<String> {
         val relevantElement = runReadAction {
             position.elementAt?.let { getRelevantElement(it) }
         }
 
         val result = getOrComputeClassNames(relevantElement) { element ->
             getOuterClassNamesForElement(element, emptySet())
-        }.toMutableSet()
+        }.toMutableList()
 
         for (lambda in runReadAction { getLambdasAtLineIfAny(position) }) {
             result += getOrComputeClassNames(lambda) { element ->
@@ -87,7 +73,7 @@ class ClassNameProvider(
             }
         }
 
-        return result
+        return result.distinct()
     }
 
     @PublishedApi

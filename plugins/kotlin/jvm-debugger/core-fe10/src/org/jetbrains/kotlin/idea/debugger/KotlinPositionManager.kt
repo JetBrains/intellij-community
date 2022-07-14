@@ -406,7 +406,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private fun getReferenceTypesForPositionInKtFile(sourcePosition: SourcePosition): List<ReferenceType> {
         val classNameProvider = ClassNameProvider(debugProcess.project, debugProcess.searchScope)
         val lineNumber = runReadAction { sourcePosition.line }
-        val classes = classNameProvider.getClassesForPosition(sourcePosition)
+        val classes = classNameProvider.getCandidates(sourcePosition)
             .flatMap { className -> debugProcess.virtualMachineProxy.classesByName(className) }
         return classes
             .flatMap { referenceType -> debugProcess.findTargetClasses(referenceType, lineNumber) }
@@ -415,7 +415,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     fun originalClassNamesForPosition(position: SourcePosition): List<String> {
         val classNameProvider = ClassNameProvider(debugProcess.project, debugProcess.searchScope, findInlineUseSites = false)
-        return classNameProvider.getOuterClassNamesForPosition(position)
+        return classNameProvider.getCandidates(position)
     }
 
     override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
@@ -478,9 +478,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                 requestor.refineSourcePosition(position)
             else
                 position
-        val classNames =
-            ClassNameProvider(debugProcess.project, debugProcess.searchScope)
-                .getOuterClassNamesForPosition(actualPosition)
+
+        val classNames = ClassNameProvider(debugProcess.project, debugProcess.searchScope).getCandidates(actualPosition)
 
         return classNames.flatMap { name ->
             listOfNotNull(
