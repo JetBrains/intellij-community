@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -37,7 +38,7 @@ abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value : A
         val changes = event.getChanges(entityClass).ifEmpty { return }
 
         val outdatedEntities: List<Value> = changes.asSequence()
-            .mapNotNull { it.oldEntity }
+            .mapNotNull(EntityChange<Entity>::oldEntity)
             .mapNotNull { map(storageBefore, it) }
             .toList()
 

@@ -4,13 +4,23 @@ package org.jetbrains.kotlin.idea.base.facet
 
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetTypeRegistry
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
@@ -19,12 +29,15 @@ import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
+import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
+import org.jetbrains.kotlin.idea.base.util.caching.StorageProvider
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 fun Module.hasKotlinFacet(): Boolean {
     return FacetManager.getInstance(this).getFacetByType(KotlinFacetType.TYPE_ID) != null
@@ -66,19 +79,84 @@ val KotlinFacetSettings.isMultiPlatformModule: Boolean
 private val Module.facetSettings: KotlinFacetSettings?
     get() = KotlinFacet.get(this)?.configuration?.settings
 
-private val Project.modulesByLinkedKey: Map<String, Module>
-    get() = cacheInvalidatingOnRootModifications {
-        val moduleManager = ModuleManager.getInstance(this)
-        val stableNameProvider = StableModuleNameProvider.getInstance(this)
+@Service(Service.Level.PROJECT)
+class ModulesByLinkedKeyCache(private val project: Project): Disposable, WorkspaceModelChangeListener {
 
-        moduleManager.modules.associateBy { stableNameProvider.getStableModuleName(it) }
+    private val cache: MutableMap<String, Module> by StorageProvider(project, javaClass) { ConcurrentHashMap() }
+        @Deprecated("Do not use directly", level = DeprecationLevel.ERROR) get
+
+    init {
+        LowMemoryWatcher.register(this::invalidate, this)
+
+        if (isFineGrainedCacheInvalidationEnabled) {
+            val busConnection = project.messageBus.connect(this)
+            WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, this)
+        }
+
+        // force calculations
+        get("")
     }
+
+    operator fun get(key: String): Module? =
+        useCache { cache ->
+            if (cache.isEmpty()) {
+                val moduleManager = ModuleManager.getInstance(project)
+                val stableNameProvider = StableModuleNameProvider.getInstance(project)
+
+                val map = moduleManager.modules.associateBy { stableNameProvider.getStableModuleName(it) }
+                cache.putAll(map)
+            }
+            cache[key]
+        }
+
+    private fun <T> useCache(block: (MutableMap<String, Module>) -> T?): T? =
+        @Suppress("DEPRECATION_ERROR")
+        cache.run(block)
+
+    override fun beforeChanged(event: VersionedStorageChange) {
+        val storageBefore = event.storageBefore
+        val storageAfter = event.storageAfter
+        val changes = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+
+        val stableNameProvider = StableModuleNameProvider.getInstance(project)
+
+        val outdatedModuleNames = changes.asSequence()
+            .mapNotNull(EntityChange<ModuleEntity>::oldEntity)
+            .mapNotNull { storageBefore.findModuleByEntity(it) }
+            .map(stableNameProvider::getStableModuleName)
+            .toList()
+
+        val newModuleNames = changes.asSequence()
+            .mapNotNull(EntityChange<ModuleEntity>::newEntity)
+            .mapNotNull { storageAfter.findModuleByEntity(it) }
+            .associateBy(stableNameProvider::getStableModuleName)
+
+        useCache { cache ->
+            outdatedModuleNames.forEach { cache.remove(it) }
+            cache.putAll(newModuleNames)
+        }
+    }
+
+    private fun invalidate() {
+        useCache {
+            it.clear()
+        }
+    }
+
+    override fun dispose() {
+        invalidate()
+    }
+
+}
 
 val Module.additionalVisibleModules: List<Module>
     get() = cacheInvalidatingOnRootModifications cache@ {
         val facetSettings = facetSettings ?: return@cache emptyList()
+
+        val modulesByLinkedKey = project.service<ModulesByLinkedKeyCache>()
+
         facetSettings.additionalVisibleModuleNames.mapNotNull { moduleName ->
-            project.modulesByLinkedKey[moduleName]
+            modulesByLinkedKey[moduleName]
         }
     }
 
@@ -94,8 +172,9 @@ val Module.implementedModules: List<Module>
             }
         }
 
+        val modulesByLinkedKey = project.service<ModulesByLinkedKeyCache>()
         if (isKpmModule) {
-            refinesFragmentIds.mapNotNull { project.modulesByLinkedKey[it] }
+            refinesFragmentIds.mapNotNull { modulesByLinkedKey[it] }
         } else {
             val facetSettings = facetSettings
             when (facetSettings?.mppVersion) {
@@ -103,7 +182,7 @@ val Module.implementedModules: List<Module>
 
                 KotlinMultiplatformVersion.M3 -> {
                     facetSettings.dependsOnModuleNames
-                        .mapNotNull { project.modulesByLinkedKey[it] }
+                        .mapNotNull { modulesByLinkedKey[it] }
                         // HACK: we do not import proper dependsOn for android source-sets in M3, so fallback to M2-impl
                         // to at least not make things worse.
                         // See KT-33809 for details

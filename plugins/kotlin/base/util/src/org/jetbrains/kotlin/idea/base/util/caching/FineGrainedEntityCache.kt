@@ -248,7 +248,7 @@ abstract class LockFreeFineGrainedEntityCache<Key: Any, Value: Any>(project: Pro
 }
 
 
-private class StorageProvider<Storage: Any>(
+class StorageProvider<Storage: Any>(
     private val project: Project,
     private val key: Class<*>,
     private val factory: () -> Storage
