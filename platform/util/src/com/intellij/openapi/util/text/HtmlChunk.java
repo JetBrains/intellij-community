@@ -528,13 +528,16 @@ public abstract class HtmlChunk {
   public static @NotNull HtmlChunk template(@NotNull @Nls String template,
                                             Map.Entry<@NotNull @NonNls String, @NotNull HtmlChunk>... substitutions) {
     String[] parts = template.split("\\$");
+    if (parts.length % 2 != 1) {
+      throw new IllegalArgumentException("Invalid template (must have even number of '$' characters): " + template);
+    }
     HtmlBuilder builder = new HtmlBuilder();
     Map<String, HtmlChunk> chunkMap = Stream.of(substitutions).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     for (int i = 0; i < parts.length; i++) {
       if (i % 2 == 0) {
         builder.append(parts[i]);
       } else {
-        builder.append(Objects.requireNonNull(chunkMap.get(parts[i])));
+        builder.append(parts[i].isEmpty() ? text("$") : Objects.requireNonNull(chunkMap.get(parts[i]), parts[i]));
       }
     }
     return builder.toFragment();
