@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.debugger.DebuggerClassNameProvider.Companion.getRelevantElement
+import org.jetbrains.kotlin.idea.debugger.ClassNameProvider.Companion.getRelevantElement
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope

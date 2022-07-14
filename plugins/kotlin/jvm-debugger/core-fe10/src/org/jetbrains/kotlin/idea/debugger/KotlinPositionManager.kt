@@ -312,7 +312,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String): Boolean {
-        val internalClassNames = DebuggerClassNameProvider(
+        val internalClassNames = ClassNameProvider(
             debugProcess.project,
             debugProcess.searchScope,
             alwaysReturnLambdaParentClass = false
@@ -404,9 +404,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun getReferenceTypesForPositionInKtFile(sourcePosition: SourcePosition): List<ReferenceType> {
-        val debuggerClassNameProvider = DebuggerClassNameProvider(debugProcess.project, debugProcess.searchScope)
+        val classNameProvider = ClassNameProvider(debugProcess.project, debugProcess.searchScope)
         val lineNumber = runReadAction { sourcePosition.line }
-        val classes = debuggerClassNameProvider.getClassesForPosition(sourcePosition)
+        val classes = classNameProvider.getClassesForPosition(sourcePosition)
             .flatMap { className -> debugProcess.virtualMachineProxy.classesByName(className) }
         return classes
             .flatMap { referenceType -> debugProcess.findTargetClasses(referenceType, lineNumber) }
@@ -414,8 +414,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     fun originalClassNamesForPosition(position: SourcePosition): List<String> {
-        val debuggerClassNameProvider = DebuggerClassNameProvider(debugProcess.project, debugProcess.searchScope, findInlineUseSites = false)
-        return debuggerClassNameProvider.getOuterClassNamesForPosition(position)
+        val classNameProvider = ClassNameProvider(debugProcess.project, debugProcess.searchScope, findInlineUseSites = false)
+        return classNameProvider.getOuterClassNamesForPosition(position)
     }
 
     override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
@@ -479,7 +479,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             else
                 position
         val classNames =
-            DebuggerClassNameProvider(debugProcess.project, debugProcess.searchScope)
+            ClassNameProvider(debugProcess.project, debugProcess.searchScope)
                 .getOuterClassNamesForPosition(actualPosition)
 
         return classNames.flatMap { name ->

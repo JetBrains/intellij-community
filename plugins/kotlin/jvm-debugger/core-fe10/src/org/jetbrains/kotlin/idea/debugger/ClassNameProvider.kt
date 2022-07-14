@@ -23,8 +23,9 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
 
-class DebuggerClassNameProvider(
-    val project: Project, val searchScope: GlobalSearchScope,
+class ClassNameProvider(
+    val project: Project,
+    val searchScope: GlobalSearchScope,
     val findInlineUseSites: Boolean = true,
     val alwaysReturnLambdaParentClass: Boolean = true
 ) {
