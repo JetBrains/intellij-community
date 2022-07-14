@@ -161,7 +161,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals(firstArgument, firstParameter)
     }
 
-
     fun checkResolveFromBaseJava(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """public class X {
@@ -219,7 +218,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             """
         )
 
-
         val functionCall =
             file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
                 .findElementByText<UElement>("foo").uastParent as KotlinUFunctionCallExpression
@@ -257,7 +255,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                 }
         """.trimIndent()
         )
-
 
         for (i in 1..3) {
             myFixture.addFileToProject(
@@ -316,7 +313,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                 }
             """
         )
-
 
         val functionCall =
             file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
@@ -562,6 +558,50 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             "PsiType:List<?>",
             uFile.findElementByTextFromPsi<UExpression>("lst[0]").getExpressionType().toString()
         )
+    }
+
+    fun checkMapFunctions(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+            fun foo(map: MutableMap<String, String>) {
+              map.getOrDefault("a", "b")
+              map.remove("a", "b")
+            }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+
+        val getOrDefault = uFile.findElementByTextFromPsi<UCallExpression>("getOrDefault", strict = false)
+            .orFail("cant convert to UCallExpression")
+        val getOrDefaultResolved = getOrDefault.resolve()
+            .orFail("cant resolve from $getOrDefault")
+        TestCase.assertEquals("getOrDefault", getOrDefaultResolved.name)
+        TestCase.assertEquals("Map", getOrDefaultResolved.containingClass?.name)
+
+        val remove = uFile.findElementByTextFromPsi<UCallExpression>("remove", strict = false)
+            .orFail("cant convert to UCallExpression")
+        val removeResolved = remove.resolve()
+            .orFail("cant resolve from $remove")
+        TestCase.assertEquals("remove", removeResolved.name)
+        TestCase.assertEquals("Map", removeResolved.containingClass?.name)
+    }
+
+    fun checkListIterator(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+            fun foo() {
+              val li = ArrayList<String>().listIterator()
+              li.<caret>add("test")
+            }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+        TestCase.assertEquals("add", resolved.name)
+        TestCase.assertEquals("ListIterator", resolved.containingClass?.name)
     }
 
     fun checkArgumentMappingDefaultValue(myFixture: JavaCodeInsightTestFixture) {
@@ -818,6 +858,30 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             return qualifiedName?.endsWith("NotNull") == true || qualifiedName?.endsWith("Nullable") == true
         }
 
+    fun checkImplicitReceiverType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+            public class MyBundle {
+              public void putString(String key, String value) { }
+            }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                fun foo() {
+                  MyBundle().apply {
+                    <caret>putString("k", "v")
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("putString", uCallExpression.methodName)
+        TestCase.assertEquals("PsiType:MyBundle", uCallExpression.receiverType?.toString())
+    }
+
     fun checkSubstitutedReceiverType(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
@@ -836,6 +900,141 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             .orFail("cant convert to UCallExpression")
         TestCase.assertEquals("use", uCallExpression.methodName)
         TestCase.assertEquals("PsiType:String", uCallExpression.receiverType?.toString())
+    }
+
+    fun checkCallKindOfSamConstructor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                val r = java.lang.Runnable { }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val uCallExpression = uFile.findElementByTextFromPsi<UCallExpression>("Runnable", strict = false)
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("Runnable", uCallExpression.methodName)
+        TestCase.assertEquals(UastCallKind.CONSTRUCTOR_CALL, uCallExpression.kind)
+    }
+
+    fun checkArrayAccessOverloads(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+            public class SparseArray<E> {
+              private Map<Long, E> map = new HashMap<Long, E>();
+              public void set(int key, E value) { map.put(key, value); }
+              public void set(long key, E value) { map.put(key, value); }
+              public E get(int key) { return map.get(key); }
+              public E get(long key) { return map.get(key); }
+            }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                fun foo(array: SparseArray<String>) {
+                  array[42L] = "forty two"
+                  val y = array[42]
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+
+        val set = uFile.findElementByTextFromPsi<UArrayAccessExpression>("array[42L]", strict = false)
+            .orFail("cant convert to UArrayAccessExpression")
+        val setResolved = (set.resolve() as? PsiMethod)
+            .orFail("cant resolve from $set")
+        TestCase.assertEquals("set", setResolved.name)
+        TestCase.assertEquals(2, setResolved.parameters.size)
+        TestCase.assertEquals("PsiType:long", setResolved.parameters[0].type.toString())
+        TestCase.assertEquals("PsiType:E", setResolved.parameters[1].type.toString())
+        TestCase.assertEquals("PsiType:void", setResolved.returnType?.toString())
+
+        val get = uFile.findElementByTextFromPsi<UArrayAccessExpression>("array[42]", strict = false)
+            .orFail("cant convert to UArrayAccessExpression")
+        val getResolved = (get.resolve() as? PsiMethod)
+            .orFail("cant resolve from $get")
+        TestCase.assertEquals("get", getResolved.name)
+        TestCase.assertEquals(1, getResolved.parameters.size)
+        TestCase.assertEquals("PsiType:int", getResolved.parameters[0].type.toString())
+        TestCase.assertEquals("PsiType:E", getResolved.returnType?.toString())
+    }
+
+    fun checkOperatorOverloads(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                data class Point(val x: Int, val y: Int) {
+                  operator fun unaryMinus() = Point(-x, -y)
+                  operator fun inc() = Point(x + 1, y + 1)
+                  
+                  operator fun plus(increment: Int) = Point(x + increment, y + increment)
+                  operator fun plus(other: Point) = Point(x + other.x, y + other.y)
+                }
+                operator fun Point.unaryPlus() = Point(+x, +y)
+                operator fun Point.dec() = Point(x - 1, y - 1)
+                
+                fun foo(u: Point, v: Point) {
+                  -u
+                  +u
+                  --u
+                  ++u
+                  u--
+                  u++
+                  u + 1
+                  u + v
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val minusU = uFile.findElementByTextFromPsi<UPrefixExpression>("-u", strict = false)
+            .orFail("cant convert to UPrefixExpression")
+        val unaryMinus = minusU.resolveOperator()
+        TestCase.assertEquals("unaryMinus", unaryMinus?.name)
+        TestCase.assertEquals("Point", unaryMinus?.containingClass?.name)
+
+        val plusU = uFile.findElementByTextFromPsi<UPrefixExpression>("+u", strict = false)
+            .orFail("cant convert to UPrefixExpression")
+        val unaryPlus = plusU.resolveOperator()
+        TestCase.assertEquals("unaryPlus", unaryPlus?.name)
+        TestCase.assertEquals("MainKt", unaryPlus?.containingClass?.name)
+
+        val minusMinusU = uFile.findElementByTextFromPsi<UPrefixExpression>("--u", strict = false)
+            .orFail("cant convert to UPrefixExpression")
+        val dec1 = minusMinusU.resolveOperator()
+        TestCase.assertEquals("dec", dec1?.name)
+        TestCase.assertEquals("MainKt", dec1?.containingClass?.name)
+
+        val plusPlusU = uFile.findElementByTextFromPsi<UPrefixExpression>("++u", strict = false)
+            .orFail("cant convert to UPrefixExpression")
+        val inc1 = plusPlusU.resolveOperator()
+        TestCase.assertEquals("inc", inc1?.name)
+        TestCase.assertEquals("Point", inc1?.containingClass?.name)
+
+        val uMinusMinus = uFile.findElementByTextFromPsi<UPostfixExpression>("u--", strict = false)
+            .orFail("cant convert to UPostfixExpression")
+        val dec2 = uMinusMinus.resolveOperator()
+        TestCase.assertEquals("dec", dec2?.name)
+        TestCase.assertEquals("MainKt", dec2?.containingClass?.name)
+
+        val uPlusPlus = uFile.findElementByTextFromPsi<UPostfixExpression>("u++", strict = false)
+            .orFail("cant convert to UPostfixExpression")
+        val inc2 = uPlusPlus.resolveOperator()
+        TestCase.assertEquals("inc", inc2?.name)
+        TestCase.assertEquals("Point", inc2?.containingClass?.name)
+
+        val uPlusOne = uFile.findElementByTextFromPsi<UBinaryExpression>("u + 1", strict = false)
+            .orFail("cant convert to UBinaryExpression")
+        val plusOne = uPlusOne.resolveOperator()
+        TestCase.assertEquals("plus", plusOne?.name)
+        TestCase.assertEquals("increment", plusOne?.parameters?.get(0)?.name)
+        TestCase.assertEquals("Point", plusOne?.containingClass?.name)
+
+        val uPlusV = uFile.findElementByTextFromPsi<UBinaryExpression>("u + v", strict = false)
+            .orFail("cant convert to UBinaryExpression")
+        val plusPoint = uPlusV.resolveOperator()
+        TestCase.assertEquals("plus", plusPoint?.name)
+        TestCase.assertEquals("other", plusPoint?.parameters?.get(0)?.name)
+        TestCase.assertEquals("Point", plusPoint?.containingClass?.name)
     }
 
 }

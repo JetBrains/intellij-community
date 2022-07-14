@@ -96,12 +96,15 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
 
     protected open val prefixForResults = ""
 
+    protected open val ignoreLog = false
+
     protected open fun <T : PsiElement> doTest(path: String): Unit = doFindUsageTest<T>(
         path,
         this::extraConfig,
         KotlinFindUsageConfigurator.fromFixture(myFixture),
         if (isFirPlugin) FindUsageTestType.FIR else FindUsageTestType.DEFAULT,
         prefixForResults,
+        ignoreLog,
     )
 
     companion object {
@@ -115,6 +118,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
             configurator: KotlinFindUsageConfigurator,
             testType: FindUsageTestType = FindUsageTestType.DEFAULT,
             prefixForResults: String = "",
+            ignoreLog: Boolean,
             executionWrapper: (findUsageTest: (FindUsageTestType) -> Unit) -> Unit = { it(testType) }
         ) {
             val mainFile = File(path)
@@ -128,8 +132,6 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                 println("test $mainFileName is ignored")
                 return
             }
-
-            val ignoreLog = testType == FindUsageTestType.FIR && InTextDirectivesUtils.isDirectiveDefined(mainFileText, IGNORE_FIR_LOG)
 
             if (testType == FindUsageTestType.CRI) {
                 if (InTextDirectivesUtils.isDirectiveDefined(mainFileText, "// CRI_IGNORE")) {

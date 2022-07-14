@@ -31,6 +31,7 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
         bindingContext.registerDeclarationToDescriptorByKey(BindingContext.FUNCTION, this::getFunction)
         bindingContext.registerDeclarationToDescriptorByKey(BindingContext.CONSTRUCTOR, this::getConstructor)
         bindingContext.registerDeclarationToDescriptorByKey(BindingContext.VARIABLE, this::getVariable)
+        bindingContext.registerDeclarationToDescriptorByKey(BindingContext.VALUE_PARAMETER, this::getValueParameter)
         bindingContext.registerDeclarationToDescriptorByKey(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, this::getPrimaryConstructorParameter)
 
 
@@ -78,6 +79,11 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
         } else {
             context.implementationPostponed("Destruction declaration is not supported yet: $key")
         }
+    }
+
+    private fun getValueParameter(key: KtParameter): VariableDescriptor? {
+        val symbol = context.withAnalysisSession { key.getParameterSymbol() }.safeAs<KtValueParameterSymbol>() ?: return null
+        return symbol.toDeclarationDescriptor(context)
     }
 
     private fun getPrimaryConstructorParameter(key: PsiElement): PropertyDescriptor? {

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.ResolverForProject
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.caches.resolve.PlatformAnalysisSettings
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink
@@ -52,6 +53,9 @@ class KtSymbolBasedResolutionFacade(
 
     @FrontendInternals
     override fun <T : Any> getFrontendService(serviceClass: Class<T>): T {
+        if (serviceClass == LanguageVersionSettings::class.java) {
+            return context.languageVersionSettings as T
+        }
         TODO("Not yet implemented")
     }
 

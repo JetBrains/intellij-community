@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.fir.fe10.binding
 import com.intellij.lang.ASTNode
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.fir.fe10.Fe10WrapperContext
+import org.jetbrains.kotlin.idea.fir.fe10.KtSymbolBasedConstructorDescriptor
 import org.jetbrains.kotlin.idea.fir.fe10.toDeclarationDescriptor
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -27,6 +29,7 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
     init {
         bindingContext.registerGetterByKey(BindingContext.CALL, this::getCall)
         bindingContext.registerGetterByKey(BindingContext.RESOLVED_CALL, this::getResolvedCall)
+        bindingContext.registerGetterByKey(BindingContext.CONSTRUCTOR_RESOLVED_DELEGATION_CALL, this::getConstructorResolvedDelegationCall)
         bindingContext.registerGetterByKey(BindingContext.REFERENCE_TARGET, this::getReferenceTarget)
     }
 
@@ -134,6 +137,26 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
             }
 
             else -> context.implementationPostponed(ktCall.javaClass.canonicalName)
+        }
+    }
+
+    private fun getConstructorResolvedDelegationCall(constructor: ConstructorDescriptor): ResolvedCall<ConstructorDescriptor>? {
+        val constructorPSI = constructor.safeAs<KtSymbolBasedConstructorDescriptor>()?.ktSymbol?.psi
+        when (constructorPSI) {
+            is KtSecondaryConstructor -> {
+                val delegationCall = constructorPSI.getDelegationCall()
+                val ktCallInfo = context.withAnalysisSession { delegationCall.resolveCall() }
+                val diagnostic = ktCallInfo.safeAs<KtErrorCallInfo>()?.diagnostic
+                val constructorCall = ktCallInfo.calls.singleOrNull() ?: return null
+
+                if (constructorCall !is KtFunctionCall<*>) context.errorHandling(constructorCall::class.toString())
+                val psiCall = CallMaker.makeCall(null, null, delegationCall)
+
+                @Suppress("UNCHECKED_CAST")
+                return FunctionFe10WrapperResolvedCall(psiCall, constructorCall, diagnostic, context) as ResolvedCall<ConstructorDescriptor>
+            }
+            null -> return null
+            else -> context.implementationPlanned() // todo: Primary Constructor delegated call
         }
     }
 

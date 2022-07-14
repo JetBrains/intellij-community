@@ -109,17 +109,30 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
         return when (psiElement) {
             is KtCallableDeclaration -> {
                 analyzeWithReadAction(psiElement) {
+                    fun getPsiClassOfKtType(ktType: KtType): PsiClass? {
+                        val psi = ktType.asPsiType(psiElement, KtTypeMappingMode.DEFAULT, isAnnotationMethod = false)
+                        return (psi as? PsiClassReferenceType)?.resolve()
+                    }
                     when (val elementSymbol = psiElement.getSymbol()) {
-                        is KtValueParameterSymbol ->
-                            null // TODO: Look for uses of component functions cf [isDestructionDeclarationSearch]
+                        is KtValueParameterSymbol -> {
+                            // TODO: The following code handles only constructors. Handle other cases e.g.,
+                            //       look for uses of component functions cf [isDestructionDeclarationSearch]
+                            val constructorSymbol =
+                                elementSymbol.getContainingSymbol() as? KtConstructorSymbol ?: return@analyzeWithReadAction null
+                            val containingClassType = getContainingClassType(constructorSymbol) ?: return@analyzeWithReadAction null
+                            val psiClass = getPsiClassOfKtType(containingClassType) ?: return@analyzeWithReadAction null
+
+                            ReceiverTypeSearcherInfo(psiClass) {
+                                // TODO: stubbed - not exercised by FindUsagesFir Test Suite
+                                it.getNonStrictParentOfType<PsiClass>() == psiClass
+                            }
+                        }
                         is KtCallableSymbol -> {
                             val receiverType =
                                 elementSymbol.receiverType
                                     ?: getContainingClassType(elementSymbol)
                                     ?: return@analyzeWithReadAction null
-
-                            val psi = receiverType.asPsiType(psiElement, KtTypeMappingMode.DEFAULT, false)
-                            val psiClass = (psi as? PsiClassReferenceType)?.resolve() ?: return@analyzeWithReadAction null
+                            val psiClass = getPsiClassOfKtType(receiverType) ?: return@analyzeWithReadAction null
 
                             ReceiverTypeSearcherInfo(psiClass) {
                                 // TODO: stubbed - not exercised by FindUsagesFir Test Suite

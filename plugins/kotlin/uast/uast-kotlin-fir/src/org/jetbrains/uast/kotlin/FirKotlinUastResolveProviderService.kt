@@ -176,8 +176,23 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
-        return analyzeForUast(ktElement) {
-            ktElement.resolveCall()?.singleFunctionCallOrNull()?.symbol?.let { toPsiMethod(it, ktElement) }
+        analyzeForUast(ktElement) {
+            val ktCallInfo = ktElement.resolveCall() ?: return null
+            ktCallInfo.singleFunctionCallOrNull()
+                ?.symbol
+                ?.let { return toPsiMethod(it, ktElement) }
+            return when (ktElement) {
+                is KtPrefixExpression,
+                is KtPostfixExpression -> {
+                    ktCallInfo.singleCallOrNull<KtCompoundVariableAccessCall>()
+                        ?.compoundAccess
+                        ?.operationPartiallyAppliedSymbol
+                        ?.signature
+                        ?.symbol
+                        ?.let { toPsiMethod(it, ktElement) }
+                }
+                else -> null
+            }
         }
     }
 
@@ -196,8 +211,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean {
         analyzeForUast(ktCallElement) {
-            val resolvedFunctionLikeSymbol = ktCallElement.resolveCall().singleFunctionCallOrNull()?.symbol ?: return false
-            return resolvedFunctionLikeSymbol.isExtension
+            val ktCall = ktCallElement.resolveCall().singleFunctionCallOrNull() ?: return false
+            return isExtension(ktCall)
         }
     }
 
@@ -225,6 +240,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 ktCallElement.resolveCall().singleFunctionCallOrNull()?.symbol ?: return UastCallKind.METHOD_CALL
             val fqName = resolvedFunctionLikeSymbol.callableIdIfNonLocal?.asSingleFqName()
             return when {
+                resolvedFunctionLikeSymbol is KtSamConstructorSymbol ||
                 resolvedFunctionLikeSymbol is KtConstructorSymbol -> UastCallKind.CONSTRUCTOR_CALL
                 fqName != null && isAnnotationArgumentArrayInitializer(ktCallElement, fqName) -> UastCallKind.NESTED_ARRAY_INITIALIZER
                 else -> UastCallKind.METHOD_CALL
@@ -391,18 +407,14 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
         analyzeForUast(ktCallElement) {
             val ktCall = ktCallElement.resolveCall().singleFunctionCallOrNull() ?: return null
-            val ktType = ktCall.partiallyAppliedSymbol.signature.receiverType ?: return null
-            if (ktType is KtClassErrorType) return null
-            return toPsiType(ktType, source, ktCallElement, ktCallElement.typeOwnerKind, boxed = true)
+            return receiverType(ktCall, source, ktCallElement)
         }
     }
 
     override fun getAccessorReceiverType(ktSimpleNameExpression: KtSimpleNameExpression, source: UElement): PsiType? {
         analyzeForUast(ktSimpleNameExpression) {
             val ktCall = ktSimpleNameExpression.resolveCall()?.singleCallOrNull<KtVariableAccessCall>() ?: return null
-            val ktType = ktCall.partiallyAppliedSymbol.signature.receiverType ?: return null
-            if (ktType is KtClassErrorType) return null
-            return toPsiType(ktType, source, ktSimpleNameExpression, ktSimpleNameExpression.typeOwnerKind, boxed = true)
+            return receiverType(ktCall, source, ktSimpleNameExpression)
         }
     }
 

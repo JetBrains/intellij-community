@@ -143,6 +143,14 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("AssigningArrayElementType", ::checkAssigningArrayElementType)
     }
 
+    fun testMapFunctions() {
+        doCheck("MapFunctions", ::checkMapFunctions)
+    }
+
+    fun testListIterator() {
+        doCheck("ListIterator", ::checkListIterator)
+    }
+
     fun testDivByZero() {
         doCheck("DivByZero", ::checkDivByZero)
     }
@@ -171,7 +179,23 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("SyntheticEnumMethods", ::checkSyntheticEnumMethods)
     }
 
+    fun testImplicitReceiverType() {
+        doCheck("ImplicitReceiverType", ::checkImplicitReceiverType)
+    }
+
     fun testSubstitutedReceiverType() {
         doCheck("SubstitutedReceiverType", ::checkSubstitutedReceiverType)
+    }
+
+    fun testCallKindOfSamConstructor() {
+        doCheck("CallKindOfSamConstructor", ::checkCallKindOfSamConstructor)
+    }
+
+    fun testArrayAccessOverloads() {
+        doCheck("ArrayAccessOverloads", ::checkArrayAccessOverloads)
+    }
+
+    fun testOperatorOverloads() {
+        doCheck("OperatorOverloads", ::checkOperatorOverloads)
     }
 }

@@ -87,6 +87,14 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkAssigningArrayElementType(myFixture)
     }
 
+    fun testMapFunctions() {
+        checkMapFunctions(myFixture)
+    }
+
+    fun testListIterator() {
+        checkListIterator(myFixture)
+    }
+
     fun testArgumentMappingDefaultValue() {
         checkArgumentMappingDefaultValue(myFixture)
     }
@@ -115,7 +123,23 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkSyntheticEnumMethods(myFixture)
     }
 
+    fun testImplicitReceiverType() {
+        checkImplicitReceiverType(myFixture)
+    }
+
     fun testSubstitutedReceiverType() {
         checkSubstitutedReceiverType(myFixture)
+    }
+
+    fun testCallKindOfSamConstructor() {
+        checkCallKindOfSamConstructor(myFixture)
+    }
+
+    fun testArrayAccessOverloads() {
+        checkArrayAccessOverloads(myFixture)
+    }
+
+    fun testOperatorOverloads() {
+        checkOperatorOverloads(myFixture)
     }
 }

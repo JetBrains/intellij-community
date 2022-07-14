@@ -9,9 +9,11 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
@@ -27,6 +29,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 interface Fe10WrapperContext {
     val builtIns: KotlinBuiltIns
     val moduleDescriptor: ModuleDescriptor
+    val languageVersionSettings: LanguageVersionSettings
     val bindingContext: BindingContext
     val fe10BindingSpecialConstructionFunctions: Fe10BindingSpecialConstructionsWrappers
 
@@ -54,11 +57,17 @@ interface Fe10WrapperContext {
 
 fun KtSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDescriptor =
     when (this) {
-        is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(this, context)
+        is KtNamedClassOrObjectSymbol -> toDeclarationDescriptor(context)
         is KtFunctionLikeSymbol -> toDeclarationDescriptor(context)
         is KtVariableLikeSymbol -> toDeclarationDescriptor(context)
 
         else -> context.implementationPlanned(this::class.qualifiedName ?: "")
+    }
+
+fun KtClassOrObjectSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): ClassDescriptor =
+    when (this) {
+        is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(this, context)
+        is KtAnonymousObjectSymbol -> context.implementationPlanned("KtAnonymousObjectSymbol")
     }
 
 fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedFunctionLikeDescriptor =
@@ -73,17 +82,21 @@ fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): K
         else -> error("Unexpected kind of KtFunctionLikeSymbol: ${this.javaClass}")
     }
 
+fun KtValueParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedValueParameterDescriptor {
+    val containingSymbol = context.withAnalysisSession { this@toDeclarationDescriptor.getContainingSymbol() }
+    check(containingSymbol is KtFunctionLikeSymbol) {
+        "Unexpected containing symbol = $containingSymbol"
+    }
+    return KtSymbolBasedValueParameterDescriptor(this, context, containingSymbol.toDeclarationDescriptor(context))
+}
+
+
 fun KtVariableLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedDeclarationDescriptor =
     when (this) {
-        is KtValueParameterSymbol -> {
-            val containingSymbol = context.withAnalysisSession { this@toDeclarationDescriptor.getContainingSymbol() }
-            check(containingSymbol is KtFunctionLikeSymbol) {
-                "Unexpected containing symbol = $containingSymbol"
-            }
-            KtSymbolBasedValueParameterDescriptor(this, context, containingSymbol.toDeclarationDescriptor(context))
-        }
+        is KtValueParameterSymbol -> toDeclarationDescriptor(context)
         is KtPropertySymbol -> KtSymbolBasedPropertyDescriptor(this, context)
         is KtJavaFieldSymbol -> KtSymbolBasedJavaPropertyDescriptor(this, context)
+        is KtLocalVariableSymbol ->  KtSymbolBasedLocalVariableDescriptor(this, context)
         else -> context.implementationPlanned(this::class.toString())
     }
 
@@ -103,6 +116,9 @@ class Fe10WrapperContextImpl(
 
     override val builtIns: KotlinBuiltIns
         get() = incorrectImplementation { DefaultBuiltIns.Instance }
+
+    override val languageVersionSettings: LanguageVersionSettings
+        get() = withAnalysisSession { (useSiteModule as KtSourceModule).languageVersionSettings  }
 
     override val bindingContext: BindingContext = KtSymbolBasedBindingContext(this)
 

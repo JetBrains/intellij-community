@@ -203,6 +203,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFe10BindingIntentionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/intentions/conventionNameCalls", pattern = pattern)
+            model("testData/intentions/convertSecondaryConstructorToPrimary", pattern = pattern)
+            model("testData/intentions/convertToStringTemplate", pattern = pattern)
+            model("testData/intentions/convertTryFinallyToUseCall", pattern = pattern)
         }
     }
 
@@ -216,6 +219,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/inspectionsLocal/collections/convertCallChainIntoSequence", pattern = pattern)
             model("testData/inspectionsLocal/convertNaNEquality", pattern = pattern)
             model("testData/inspectionsLocal/convertPairConstructorToToFunction", pattern = pattern)
+            model("testData/inspectionsLocal/copyWithoutNamedArguments", pattern = pattern)
         }
     }
 

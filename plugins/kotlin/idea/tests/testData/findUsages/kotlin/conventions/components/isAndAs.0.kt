@@ -14,5 +14,6 @@ fun y(o: Any) {
     val list = o as List<A>
     val (x, y) = list[0]
 }
-// FIR_IGNORE
+// FIR_COMPARISON
 // FIR_COMPARISON_WITH_DISABLED_COMPONENTS
+// IGNORE_FIR_LOG

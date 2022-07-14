@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
@@ -46,9 +47,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 internal fun Fe10WrapperContext.containerDeclarationImplementationPostponed(): Nothing =
     implementationPostponed("It isn't clear what we really need and how to implement it")
 
-internal fun Fe10WrapperContext.typeAliasImplementationPlanned(): Nothing =
-    implementationPlanned("It is easy to implement, but it isn't first priority")
-
 interface KtSymbolBasedNamed : Named {
     val ktSymbol: KtNamedSymbol
     override fun getName(): Name = ktSymbol.name
@@ -74,6 +72,13 @@ private fun KtClassKind.toDescriptorKlassKind(): ClassKind =
         KtClassKind.INTERFACE -> ClassKind.INTERFACE
     }
 
+private fun KtSymbolOrigin.toCallableDescriptorKind(): CallableMemberDescriptor.Kind = when(this) {
+    DELEGATED -> CallableMemberDescriptor.Kind.DELEGATION
+    SUBSTITUTION_OVERRIDE, INTERSECTION_OVERRIDE -> CallableMemberDescriptor.Kind.FAKE_OVERRIDE
+    SOURCE_MEMBER_GENERATED -> CallableMemberDescriptor.Kind.SYNTHESIZED
+    else -> CallableMemberDescriptor.Kind.DECLARATION
+}
+
 private fun KtAnnotationValue.toConstantValue(): ConstantValue<*> {
     return when (this) {
         KtUnsupportedAnnotationValue -> ErrorValue.create("Unsupported annotation value")
@@ -91,7 +96,7 @@ private fun KtAnnotationValue.toConstantValue(): ConstantValue<*> {
     }
 }
 
-private fun KtConstantValue.toConstantValue(): ConstantValue<*> =
+internal fun KtConstantValue.toConstantValue(): ConstantValue<*> =
     when (this) {
         is KtConstantValue.KtErrorConstantValue -> ErrorValue.create(errorMessage)
         else -> when (constantValueKind) {
@@ -138,8 +143,6 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: Fe10WrapperContex
 
     protected abstract fun getPackageFqNameIfTopLevel(): FqName
 
-    private fun KtSymbol.toSignature(): IdSignature = context.withAnalysisSession { this@toSignature.toSignature() }
-
     override fun equals(other: Any?): Boolean {
         if (other === this) return true
         if (other !is KtSymbolBasedDeclarationDescriptor) return false
@@ -148,12 +151,12 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: Fe10WrapperContex
             return other.ktSymbol.psi == it
         }
 
-        return ktSymbol.toSignature() == other.ktSymbol.toSignature()
+        return ktSymbol == other.ktSymbol
     }
 
     override fun hashCode(): Int {
         ktSymbol.psi?.let { return it.hashCode() }
-        return ktSymbol.toSignature().hashCode()
+        return ktSymbol.hashCode()
     }
 
     override fun <R : Any?, D : Any?> accept(visitor: DeclarationDescriptorVisitor<R, D>?, data: D): R = noImplementation()
@@ -296,7 +299,8 @@ abstract class KtSymbolBasedFunctionLikeDescriptor(context: Fe10WrapperContext) 
 
     override fun hasStableParameterNames(): Boolean = ktSymbol.hasStableParameterNames
     override fun hasSynthesizedParameterNames(): Boolean = implementationPostponed()
-    override fun getKind(): CallableMemberDescriptor.Kind = implementationPostponed()
+
+    override fun getKind(): CallableMemberDescriptor.Kind = ktSymbol.origin.toCallableDescriptorKind()
 
     override fun <V : Any?> getUserData(key: CallableDescriptor.UserDataKey<V>?): V? = null
 
@@ -627,7 +631,7 @@ abstract class AbstractKtSymbolBasedPropertyDescriptor(
     override fun setOverriddenDescriptors(overriddenDescriptors: MutableCollection<out CallableMemberDescriptor>) =
         noImplementation()
 
-    override fun getKind(): CallableMemberDescriptor.Kind = implementationPlanned()
+    override fun getKind() = ktSymbol.origin.toCallableDescriptorKind()
 
     override fun copy(
         newOwner: DeclarationDescriptor?,
@@ -682,6 +686,24 @@ class KtSymbolBasedPropertyDescriptor(
 
     override val setter: PropertySetterDescriptor?
         get() = ktSymbol.setter?.let { KtSymbolBasedPropertySetterDescriptor(it, this) }
+}
+
+class KtSymbolBasedLocalVariableDescriptor(
+    override val ktSymbol: KtLocalVariableSymbol,
+    context: Fe10WrapperContext
+) : AbstractKtSymbolBasedPropertyDescriptor(context), VariableDescriptorWithAccessors {
+
+    override fun getVisibility(): DescriptorVisibility = DescriptorVisibilities.LOCAL
+
+    override fun getCompileTimeInitializer(): ConstantValue<*>? = context.incorrectImplementation { null }
+
+    override fun isConst(): Boolean = false
+
+    override val getter: PropertyGetterDescriptor?
+        get() = context.incorrectImplementation { null } // todo: add implementation for delegates
+
+    override val setter: PropertySetterDescriptor?
+        get() = context.incorrectImplementation { null } // todo: add implementation for delegates
 }
 
 abstract class KtSymbolBasedVariableAccessorDescriptor(

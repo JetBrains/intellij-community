@@ -31,6 +31,7 @@ abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompiler
             rebuildProject()
             findUsageTest(FindUsageTestType.CRI)
         },
+        ignoreLog = false,
         testType = FindUsageTestType.CRI,
     )
 }
