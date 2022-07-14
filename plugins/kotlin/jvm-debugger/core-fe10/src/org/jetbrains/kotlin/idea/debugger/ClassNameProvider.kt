@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.Computed
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames.Companion.Cached
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames.Companion.EMPTY
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames.Companion.NonCached
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
@@ -53,7 +52,7 @@ class ClassNameProvider(
             }
 
             // Do not copy the array (*elementTypes) if the element is one we look for
-            return runReadAction { PsiTreeUtil.getNonStrictParentOfType(element, *CLASS_ELEMENT_TYPES) }
+            return PsiTreeUtil.getNonStrictParentOfType(element, *CLASS_ELEMENT_TYPES)
         }
     }
 
@@ -61,21 +60,20 @@ class ClassNameProvider(
 
     @RequiresReadLock
     fun getCandidates(position: SourcePosition): List<String> {
-        val relevantElement = runReadAction {
-            position.elementAt?.let { getRelevantElement(it) }
-        }
+        val relevantElement = position.elementAt?.let { getRelevantElement(it) }
 
-        val result = getOrComputeClassNames(relevantElement) { element ->
+        val regularClassNames = getOrComputeClassNames(relevantElement) { element ->
             getOuterClassNamesForElement(element, emptySet())
-        }.toMutableList()
-
-        for (lambda in runReadAction { getLambdasAtLineIfAny(position) }) {
-            result += getOrComputeClassNames(lambda) { element ->
-                getOuterClassNamesForElement(element, emptySet())
-            }
         }
 
-        return result.distinct()
+        val lambdaClassNames = getLambdasAtLineIfAny(position)
+            .flatMap { lambda ->
+                getOrComputeClassNames(lambda) {
+                    getOuterClassNamesForElement(it, emptySet())
+                }
+            }
+
+        return (regularClassNames + lambdaClassNames).distinct()
     }
 
     @PublishedApi
@@ -92,63 +90,57 @@ class ClassNameProvider(
                 return EMPTY
             }
             is KtFile -> {
-                val fileClassName = runReadAction { JvmFileClassUtil.getFileClassInternalName(element) }.toJdiName()
+                val fileClassName = JvmFileClassUtil.getFileClassInternalName(element).toJdiName()
                 Cached(fileClassName)
             }
             is KtClassOrObject -> {
-                val enclosingElementForLocal = runReadAction { KtPsiUtil.getEnclosingElementForLocalDeclaration(element) }
+                val enclosingElementForLocal = KtPsiUtil.getEnclosingElementForLocalDeclaration(element)
                 when {
                     enclosingElementForLocal != null ->
                         // A local class
                         getOuterClassNamesForElement(enclosingElementForLocal, alreadyVisited)
-                    runReadAction { element.isObjectLiteral() } ->
-                        getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
-                    else ->
+                    element.isObjectLiteral() ->
+                        getOuterClassNamesForElement(element.relevantParent, alreadyVisited)
+                    else -> {
                         // Guaranteed to be non-local class or object
-                        runReadAction {
-                            if (element is KtClass && element.isInterface()) {
-                                val name = ClassNameCalculator.getClassName(element)
+                        if (element is KtClass && element.isInterface()) {
+                            val name = ClassNameCalculator.getClassName(element)
 
-                                if (name != null)
-                                    Cached(listOf(name, name + JvmAbi.DEFAULT_IMPLS_SUFFIX))
-                                else
-                                    EMPTY
-                            } else {
-                                ClassNameCalculator.getClassName(element)?.let { Cached(it) } ?: EMPTY
-                            }
+                            if (name != null)
+                                Cached(listOf(name, name + JvmAbi.DEFAULT_IMPLS_SUFFIX))
+                            else
+                                EMPTY
+                        } else {
+                            ClassNameCalculator.getClassName(element)?.let { Cached(it) } ?: EMPTY
                         }
+                    }
                 }
             }
             is KtProperty -> {
-                val nonInlineClasses = if (runReadAction { isTopLevelInFileOrScript(element) }) {
+                val nonInlineClasses = if (isTopLevelInFileOrScript(element)) {
                     // Top level property
-                    getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
+                    getOuterClassNamesForElement(element.relevantParent, alreadyVisited)
                 } else {
-                    val enclosingElementForLocal = runReadAction { KtPsiUtil.getEnclosingElementForLocalDeclaration(element) }
+                    val enclosingElementForLocal = KtPsiUtil.getEnclosingElementForLocalDeclaration(element)
                     if (enclosingElementForLocal != null) {
                         // Local class
                         getOuterClassNamesForElement(enclosingElementForLocal, alreadyVisited)
                     } else {
-                        val containingClassOrFile = runReadAction {
-                            PsiTreeUtil.getParentOfType(element, KtFile::class.java, KtClassOrObject::class.java)
-                        }
+                        val containingClassOrFile = PsiTreeUtil.getParentOfType(element, KtFile::class.java, KtClassOrObject::class.java)
 
-                        if (containingClassOrFile is KtObjectDeclaration && containingClassOrFile.isCompanionInReadAction) {
+                        if (containingClassOrFile is KtObjectDeclaration && containingClassOrFile.isCompanion()) {
                             // Properties from the companion object can be placed in the companion object's containing class
-                            (getOuterClassNamesForElement(containingClassOrFile.relevantParentInReadAction, alreadyVisited) +
+                            (getOuterClassNamesForElement(containingClassOrFile.relevantParent, alreadyVisited) +
                                     getOuterClassNamesForElement(containingClassOrFile, alreadyVisited)).distinct()
                         } else if (containingClassOrFile != null) {
                             getOuterClassNamesForElement(containingClassOrFile, alreadyVisited)
                         } else {
-                            getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
+                            getOuterClassNamesForElement(element.relevantParent, alreadyVisited)
                         }
                     }
                 }
 
-                if (findInlineUseSites && (
-                            element.isInlineInReadAction ||
-                                    runReadAction { element.accessors.any { it.hasModifier(KtTokens.INLINE_KEYWORD) } })
-                ) {
+                if (findInlineUseSites && element.hasInlineAccessors) {
                     val inlinedCalls = inlineUsagesSearcher.findInlinedCalls(element, alreadyVisited) { el, newAlreadyVisited ->
                         this.getOuterClassNamesForElement(el, newAlreadyVisited)
                     }
@@ -158,18 +150,18 @@ class ClassNameProvider(
                 }
             }
             is KtNamedFunction -> {
-                val classNamesOfContainingDeclaration = getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
+                val classNamesOfContainingDeclaration = getOuterClassNamesForElement(element.relevantParent, alreadyVisited)
 
                 var nonInlineClasses: ComputedClassNames = classNamesOfContainingDeclaration
 
-                if (runReadAction { element.name == null || element.isLocal }) {
-                    val nameOfAnonymousClass = runReadAction { ClassNameCalculator.getClassName(element) }
+                if (element.name == null || element.isLocal) {
+                    val nameOfAnonymousClass = ClassNameCalculator.getClassName(element)
                     if (nameOfAnonymousClass != null) {
                         nonInlineClasses += Cached(nameOfAnonymousClass)
                     }
                 }
 
-                if (!findInlineUseSites || !element.isInlineInReadAction) {
+                if (!findInlineUseSites || !element.hasModifier(KtTokens.INLINE_KEYWORD)) {
                     return NonCached(nonInlineClasses.classNames)
                 }
 
@@ -180,10 +172,10 @@ class ClassNameProvider(
                 nonInlineClasses + inlineCallSiteClasses
             }
             is KtAnonymousInitializer -> {
-                val initializerOwner = runReadAction { element.containingDeclaration }
+                val initializerOwner = element.containingDeclaration
 
-                if (initializerOwner is KtObjectDeclaration && initializerOwner.isCompanionInReadAction) {
-                    val containingClass = runReadAction { initializerOwner.containingClassOrObject }
+                if (initializerOwner is KtObjectDeclaration && initializerOwner.isCompanion()) {
+                    val containingClass = initializerOwner.containingClassOrObject
                     return getOuterClassNamesForElement(containingClass, alreadyVisited)
                 }
 
@@ -194,35 +186,28 @@ class ClassNameProvider(
             is KtFunctionLiteral ->
                 getNamesForLambda(element, alreadyVisited)
             else ->
-                getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
+                getOuterClassNamesForElement(element.relevantParent, alreadyVisited)
         }
     }
 
     private fun getNamesForLambda(element: KtElement, alreadyVisited: Set<PsiElement>): ComputedClassNames {
-        val names = element.getNamesInReadAction()
+        val name = ClassNameCalculator.getClassName(element) ?: return EMPTY
+        val names = Cached(name)
+
         if (!names.isEmpty() && !alwaysReturnLambdaParentClass) {
             if (element !is KtFunctionLiteral || !AnalysisApiBasedInlineUtil.isInlinedArgument(element, true)) {
                 return names
             }
         }
 
-        return names + getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
+        return names + getOuterClassNamesForElement(element.relevantParent, alreadyVisited)
     }
 
-    private fun KtElement.getNamesInReadAction() =
-        runReadAction {
-            val name = ClassNameCalculator.getClassName(this)
-            if (name != null) Cached(name) else EMPTY
-        }
+    private val KtProperty.hasInlineAccessors: Boolean
+        get() = hasModifier(KtTokens.INLINE_KEYWORD) || accessors.any { it.hasModifier(KtTokens.INLINE_KEYWORD) }
 
-    private val KtDeclaration.isInlineInReadAction: Boolean
-        get() = runReadAction { hasModifier(KtTokens.INLINE_KEYWORD) }
-
-    private val KtObjectDeclaration.isCompanionInReadAction: Boolean
-        get() = runReadAction { isCompanion() }
-
-    private val PsiElement.relevantParentInReadAction
-        get() = runReadAction { getRelevantElement(this.parent) }
+    private inline val PsiElement.relevantParent
+        get() = getRelevantElement(this.parent)
 }
 
 private fun String.toJdiName() = replace('/', '.')
