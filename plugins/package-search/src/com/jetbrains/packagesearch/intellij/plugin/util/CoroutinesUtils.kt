@@ -56,7 +56,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
@@ -89,8 +88,8 @@ internal fun <T> Flow<T>.replayOnSignals(vararg signals: Flow<Any>) = channelFlo
         .onEach { lastValue = it }
         .launchIn(this)
 
-    merge(*signals).mapNotNull { lastValue }
-        .onEach { send(it) }
+    merge(*signals)
+        .onEach { lastValue?.let { send(it) } }
         .launchIn(this)
 }
 
@@ -178,7 +177,7 @@ internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
             result
         }
     }.map {
-        logTrace(loggingContext) { "Took ${it.duration.absoluteValue} to process" }
+        logDebug(loggingContext) { "Took ${it.duration.absoluteValue} to process" }
         it.value
     }
 

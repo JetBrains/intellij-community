@@ -24,6 +24,7 @@ import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.writeAction
@@ -42,6 +43,10 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
                 operationMetadata.artifactId,
                 operationMetadata.newVersion,
                 operationMetadata.newScope
+            )
+
+            module.buildFile ?: return listOf(
+                OperationFailure(OperationType.ADD, dependency, InvalidVirtualFileAccessException("Build file does not exist"))
             )
 
             val failures = mutableListOf<OperationFailure<out OperationItem>>()
@@ -72,6 +77,10 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
                 operationMetadata.currentScope
             )
 
+            module.buildFile ?: return listOf(
+                OperationFailure(OperationType.REMOVE, dependency, InvalidVirtualFileAccessException("Build file does not exist"))
+            )
+
             val failures = mutableListOf<OperationFailure<out OperationItem>>()
             val modifierService = DependencyModifierService.getInstance(module.nativeModule.project)
 
@@ -98,6 +107,10 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
                 operationMetadata.newScope ?: operationMetadata.currentScope
             )
 
+            module.buildFile ?: return listOf(
+                OperationFailure(OperationType.REMOVE, oldDependency, InvalidVirtualFileAccessException("Build file does not exist"))
+            )
+
             val failures = mutableListOf<OperationFailure<out OperationItem>>()
             val modifierService = DependencyModifierService.getInstance(module.nativeModule.project)
 
@@ -108,14 +121,16 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
         }
 
         suspend fun declaredDependenciesInModule(module: ProjectModule) =
-            catchingReadAction { DependencyModifierService.getInstance(module.nativeModule.project).declaredDependencies(module.nativeModule) }
-                .onFailure {
-                    logWarn(this::class.qualifiedName!! + "#declaredDependenciesInModule", it){
-                        "Error while listing declared dependencies in module ${module.name}"
+            module.buildFile?.let {
+                catchingReadAction { DependencyModifierService.getInstance(module.nativeModule.project).declaredDependencies(module.nativeModule) }
+                    .onFailure {
+                        logWarn(this::class.qualifiedName!! + "#declaredDependenciesInModule", it) {
+                            "Error while listing declared dependencies in module ${module.name}"
+                        }
                     }
-                }
-                .map { it.map { it.unifiedDependency } }
-                .getOrElse { emptyList() }
+                    .map { it.map { it.unifiedDependency } }
+                    .getOrElse { emptyList() }
+            } ?: emptyList()
 
         suspend fun addRepositoryToModule(
             repository: UnifiedDependencyRepository,
@@ -123,6 +138,10 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
         ): List<OperationFailure<out OperationItem>> {
             val failures = mutableListOf<OperationFailure<out OperationItem>>()
             val modifierService = DependencyModifierService.getInstance(module.nativeModule.project)
+
+            module.buildFile ?: return listOf(
+                OperationFailure(OperationType.ADD, repository, InvalidVirtualFileAccessException("Build file does not exist"))
+            )
 
             catchingWriteAction { modifierService.addRepository(module.nativeModule, repository) }
                 .onFailure { failures.add(OperationFailure(OperationType.ADD, repository, it)) }
@@ -136,15 +155,28 @@ abstract class AbstractCoroutineProjectModuleOperationProvider : CoroutineProjec
         ): List<OperationFailure<out OperationItem>> {
             val failures = mutableListOf<OperationFailure<out OperationItem>>()
             val modifierService = DependencyModifierService.getInstance(module.nativeModule.project)
+
+            module.buildFile ?: return listOf(
+                OperationFailure(OperationType.ADD, repository, InvalidVirtualFileAccessException("Build file does not exist"))
+            )
+
             catchingWriteAction { modifierService.deleteRepository(module.nativeModule, repository) }
                 .onFailure { failures.add(OperationFailure(OperationType.ADD, repository, it)) }
+
             return failures
         }
 
         suspend fun listRepositoriesInModule(module: ProjectModule) =
-            catchingReadAction { DependencyModifierService.getInstance(module.nativeModule.project).declaredRepositories(module.nativeModule) }
-                .onFailure { logWarn(this::class.qualifiedName!! + "#listRepositoriesInModule", it){ "Error while listing repositories in module ${module.name}" } }
-                .getOrElse { emptyList() }
+            module.buildFile?.let {
+                catchingReadAction {
+                    DependencyModifierService.getInstance(module.nativeModule.project)
+                        .declaredRepositories(module.nativeModule)
+                }.onFailure {
+                    logWarn(this::class.qualifiedName!! + "#listRepositoriesInModule", it) {
+                        "Error while listing repositories in module ${module.name}"
+                    }
+                }.getOrElse { emptyList() }
+            } ?: emptyList()
     }
 
     override fun hasSupportFor(project: Project, psiFile: PsiFile?) = false

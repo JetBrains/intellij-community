@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import java.io.File
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -35,7 +36,7 @@ import java.util.concurrent.CompletableFuture
  * @param nativeModule the native [Module] it refers to.
  * @param parent the parent [ProjectModule] of this object.
  * @param buildFile The build file used by this module (e.g. `pom.xml` for Maven, `build.gradle` for Gradle).
- * @param projectDir The corresponding directory in the virtual filesystem for this module.
+ * @param projectDir The corresponding directory instance for this module (a File could also be nonexistent).
  * @param buildSystemType The type of the build system file used in this module (e.g., 'gradle-kotlin', 'gradle-groovy', etc.)
  * @param moduleType The additional Package Search related data such as project icons, additional localizations and so on.
  * listed in the Dependency Analyzer tool. At the moment the DA only supports Gradle and Maven.
@@ -49,7 +50,7 @@ data class ProjectModule @JvmOverloads constructor(
     val nativeModule: Module,
     val parent: ProjectModule?,
     val buildFile: VirtualFile?,
-    val projectDir: VirtualFile,
+    val projectDir: File,
     val buildSystemType: BuildSystemType,
     val moduleType: ProjectModuleType,
     val availableScopes: List<String> = emptyList(),
@@ -70,7 +71,7 @@ data class ProjectModule @JvmOverloads constructor(
         buildSystemType: BuildSystemType,
         moduleType: ProjectModuleType,
         navigatableDependency: (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable?
-    ) : this(name, nativeModule, parent, buildFile, buildFile.parent, buildSystemType, moduleType)
+    ) : this(name, nativeModule, parent, buildFile, buildFile.parent.toNioPath().toFile(), buildSystemType, moduleType)
 
     @Suppress("UNUSED_PARAMETER")
     @Deprecated(
@@ -87,7 +88,7 @@ data class ProjectModule @JvmOverloads constructor(
         moduleType: ProjectModuleType,
         navigatableDependency: (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable?,
         availableScopes: List<String>
-    ) : this(name, nativeModule, parent, buildFile, buildFile.parent, buildSystemType, moduleType, availableScopes)
+    ) : this(name, nativeModule, parent, buildFile, buildFile.parent.toNioPath().toFile(), buildSystemType, moduleType, availableScopes)
 
     fun getBuildFileNavigatableAtOffset(offset: Int): Navigatable? =
         buildFile?.let {

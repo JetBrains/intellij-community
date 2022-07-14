@@ -106,11 +106,7 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
         parent: ProjectModule? = null
     ) {
         val nativeModule = checkNotNull(nativeModulesByExternalProjectId[id]) { "Couldn't find native module for '$id'" }
-
         val buildVirtualFile = buildFile?.absolutePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
-        val projectVirtualDir = checkNotNull(LocalFileSystem.getInstance().findFileByPath(projectDir.absolutePath)) {
-            "Couldn't find virtual file for build directory $projectDir in module $name"
-        }
 
         val buildSystemType = when {
             buildVirtualFile == null -> BuildSystemType.GRADLE_CONTAINER
@@ -125,7 +121,7 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
             nativeModule = nativeModule,
             parent = parent,
             buildFile = buildVirtualFile,
-            projectDir = projectVirtualDir,
+            projectDir = projectDir,
             buildSystemType = buildSystemType,
             moduleType = GradleProjectModuleType,
             availableScopes = scopes,
