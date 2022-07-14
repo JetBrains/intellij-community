@@ -153,8 +153,8 @@ class WorkspaceFolderImporter(
       val generatedDir = mavenProject.getGeneratedSourcesDirectory(false)
       val generatedDirTest = mavenProject.getGeneratedSourcesDirectory(true)
 
-      addTargetFolders(File(toAbsolutePath(generatedDir)), generatedSourceFolders)
-      addTargetFolders(File(toAbsolutePath(generatedDirTest)), generatedTestSourceFolders)
+      collectTargetFolders(File(toAbsolutePath(generatedDir)), generatedSourceFolders)
+      collectTargetFolders(File(toAbsolutePath(generatedDirTest)), generatedTestSourceFolders)
     }
 
     return CachedProjectFolders(mavenProject.directory, outputPath, testOutputPath, folders)
@@ -204,7 +204,7 @@ class WorkspaceFolderImporter(
     }
   }
 
-  private fun addTargetFolders(targetDir: File, result: GeneratedFoldersCollector) {
+  private fun collectTargetFolders(targetDir: File, result: GeneratedFoldersCollector) {
     fun addAllSubDirs(dir: File) = dir.listFiles()?.forEach { result.addGeneratedSources(it) }
 
     when (importingSettings.generatedSourcesFolder) {
