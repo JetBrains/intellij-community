@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
+import org.jetbrains.kotlin.idea.debugger.safeGetSourcePosition
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
@@ -27,7 +28,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
     @RequiresReadLock
     fun findVisibleVariableNames(location: Location): List<String> {
-        val sourcePosition = location.safeSourcePosition(debugProcess) ?: return emptyList()
+        val sourcePosition = KotlinPositionManager(debugProcess).safeGetSourcePosition(location) ?: return emptyList()
         ProgressManager.checkCanceled()
         return sourcePosition.elementAt.findVisibleVariableNames()
     }
@@ -151,11 +152,4 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         val parentFunction = parentOfType<KtFunction>() ?: return false
         return InlineUtil.isInlinedArgument(parentFunction, bindingContext, false)
     }
-
-    private fun Location.safeSourcePosition(debugProcess: DebugProcessImpl) =
-        try {
-            KotlinPositionManager(debugProcess).getSourcePosition(this)
-        } catch (ex: NoDataException) {
-            null
-        }
 }

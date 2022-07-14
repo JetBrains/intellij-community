@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil
@@ -58,6 +59,7 @@ class ClassNameProvider(
 
     private val inlineUsagesSearcher = InlineCallableUsagesSearcher(project, searchScope)
 
+    @RequiresReadLock
     fun getCandidates(position: SourcePosition): List<String> {
         val relevantElement = runReadAction {
             position.elementAt?.let { getRelevantElement(it) }
