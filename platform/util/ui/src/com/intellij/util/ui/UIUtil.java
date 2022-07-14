@@ -2146,7 +2146,7 @@ public final class UIUtil {
    * @param runnable a runnable to invoke
    */
   public static void invokeAndWaitIfNeeded(final @NotNull ThrowableRunnable<?> runnable) throws Throwable {
-    if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       runnable.run();
     }
     else {

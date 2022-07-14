@@ -28,6 +28,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.jcef.HwFacadeJPanel;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -258,7 +259,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
 
   @Override
   public ActionCallback show() {
-    LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
+    LOG.assertTrue(EDT.isCurrentThreadEdt(), "Access is allowed from event dispatch thread only");
 
     hidePopupsIfNeeded();
 
