@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.load.java.structure.JavaClass
 import org.jetbrains.kotlin.load.java.structure.impl.JavaClassImpl
+import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -152,7 +153,12 @@ class IdeaResolverForProject(
         )
 
         val commonPlatformParameters = CommonAnalysisParameters(
-            metadataPartProviderFactory = { IDEPackagePartProvider(it.moduleContentScope) }
+            metadataPartProviderFactory = { IDEPackagePartProvider(it.moduleContentScope) },
+            klibMetadataPackageFragmentProviderFactory = { context ->
+                CommonPlatforms.defaultCommonPlatform.idePlatformKind.resolution.createKlibPackageFragmentProvider(
+                    context.moduleInfo, context.storageManager, context.languageVersionSettings, context.moduleDescriptor
+                )
+            },
         )
 
         return if (settings !is CompositeAnalysisSettings) {
