@@ -71,6 +71,8 @@ public class HtmlChunkTest {
     String userName = "Super<User>";
     HtmlChunk greeting = HtmlChunk.template("Hello, $user$!", Map.entry("user", HtmlChunk.text(userName).wrapWith("b")));
     assertEquals("Hello, <b>Super&lt;User&gt;</b>!", greeting.toString());
+    HtmlChunk greeting2 = HtmlChunk.template("$user$$$$user$", Map.entry("user", HtmlChunk.text(userName).wrapWith("b")));
+    assertEquals("<b>Super&lt;User&gt;</b>$<b>Super&lt;User&gt;</b>", greeting2.toString());
   }
   
   @Test

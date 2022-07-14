@@ -527,7 +527,7 @@ public abstract class HtmlChunk {
   @Contract(pure = true)
   public static @NotNull HtmlChunk template(@NotNull @Nls String template,
                                             Map.Entry<@NotNull @NonNls String, @NotNull HtmlChunk>... substitutions) {
-    String[] parts = template.split("\\$");
+    String[] parts = template.split("\\$", -1);
     if (parts.length % 2 != 1) {
       throw new IllegalArgumentException("Invalid template (must have even number of '$' characters): " + template);
     }
