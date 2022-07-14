@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -45,6 +46,7 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
     }
 
     private fun createHtmlPanel(htmlInfo: IntentionPreviewInfo.Html): JPanel {
+      val targetSize = IntentionPreviewPopupUpdateProcessor.MIN_WIDTH * UIUtil.getLabelFont().size.coerceAtMost(24) / 12
       val editor = object : JEditorPane() {
         var prefHeight: Int? = null
 
@@ -55,7 +57,7 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
               prefHeight = pos.maxY.toInt() + 5
             }
           }
-          return Dimension(IntentionPreviewPopupUpdateProcessor.MIN_WIDTH, prefHeight ?: Integer.MAX_VALUE)
+          return Dimension(targetSize, prefHeight ?: Integer.MAX_VALUE)
         }
       }
 
@@ -64,7 +66,7 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
         .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.icons(content))
         .build()
       editor.text = content.toString()
-      editor.size = Dimension(IntentionPreviewPopupUpdateProcessor.MIN_WIDTH, Integer.MAX_VALUE)
+      editor.size = Dimension(targetSize, Integer.MAX_VALUE)
       return wrapToPanel(editor)
     }
   }
