@@ -48,7 +48,6 @@ internal class GitCheckoutActionGroup : GitSingleCommitActionGroup(GitBundle.mes
     val localBranches = refs.filterTo(mutableListOf()) { it.type == LOCAL_BRANCH }
     e.getData(VcsLogInternalDataKeys.LOG_DATA)?.logProviders?.get(repository.root)?.let { provider ->
       ContainerUtil.sort(localBranches, provider.referenceManager.labelsOrderComparator)
-
     }
     val refNames = localBranches.map { it.name }
     val currentBranchName = repository.currentBranchName ?: return refNames
