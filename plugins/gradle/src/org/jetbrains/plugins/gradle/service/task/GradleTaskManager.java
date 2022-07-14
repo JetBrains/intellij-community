@@ -27,7 +27,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.RunConfigurationTaskState;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.Task;
@@ -39,8 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
-import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
+import org.jetbrains.plugins.gradle.service.execution.*;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
@@ -133,7 +131,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         .orElse(null);
       setupGradleScriptDebugging(settings);
       setupDebuggerDispatchPort(settings);
-      appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion);
+
+      var isApplicableTestLauncher = isApplicableTestLauncher(settings);
+      appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion, isApplicableTestLauncher);
+
       for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
         settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
       }
@@ -145,14 +146,13 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
           .notifyConnectionAboutChangedPaths(connection);
       }
 
-      if (testLauncherIsApplicable(tasks, settings)) {
-        TestLauncher launcher = myHelper.getTestLauncher(id, connection, tasks, settings, listener);
+      if (isApplicableTestLauncher) {
+        TestLauncher launcher = myHelper.getTestLauncher(connection, id, tasks, settings, listener);
         launcher.withCancellationToken(cancellationTokenSource.token());
         launcher.run();
       }
       else {
-        BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener);
-        launcher.forTasks(ArrayUtil.toStringArray(tasks));
+        BuildLauncher launcher = myHelper.getBuildLauncher(connection, id, tasks, settings, listener);
         launcher.withCancellationToken(cancellationTokenSource.token());
         launcher.run();
       }
@@ -165,19 +165,23 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
   }
 
-  private static boolean testLauncherIsApplicable(@NotNull List<String> taskNames,
-                                                  @NotNull GradleExecutionSettings effectiveSettings) {
+  private static boolean isApplicableTestLauncher(
+    @NotNull List<String> tasks,
+    @NotNull GradleExecutionSettings settings
+  ) {
     boolean allowedByRegistry = Registry.is("gradle.testLauncherAPI.enabled", false);
-    boolean allowedByGradleVersion = isSupportedByGradleVersion(effectiveSettings);
-    boolean allowedByTasksList = taskNames.size() < 2;
-    return Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST)
+    boolean allowedByGradleVersion = isSupportedByGradleVersion(settings);
+    boolean allowedByTasksList = tasks.size() < 2;
+    return Boolean.TRUE == settings.getUserData(GradleConstants.RUN_TASK_AS_TEST)
       && allowedByGradleVersion
       && allowedByTasksList
       && allowedByRegistry;
   }
 
-  private static boolean isSupportedByGradleVersion(GradleExecutionSettings effectiveSettings) {
-    return Optional.ofNullable(effectiveSettings.getGradleHome())
+  private static boolean isSupportedByGradleVersion(
+    @NotNull GradleExecutionSettings settings
+  ) {
+    return Optional.ofNullable(settings.getGradleHome())
       .map(GradleInstallationManager::getGradleVersion)
       .map(GradleInstallationManager::getGradleVersionSafe)
       .map(v -> GradleVersion.version("6.1").compareTo(v) <= 0)
@@ -239,16 +243,21 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     return false;
   }
 
-  public static void appendInitScriptArgument(@NotNull List<String> taskNames,
-                                              @Nullable String jvmParametersSetup,
-                                              @NotNull GradleExecutionSettings effectiveSettings) {
-    appendInitScriptArgument(taskNames, jvmParametersSetup, effectiveSettings, null);
+  public static void appendInitScriptArgument(
+    @NotNull List<String> taskNames,
+    @Nullable String jvmParametersSetup,
+    @NotNull GradleExecutionSettings effectiveSettings
+  ) {
+    appendInitScriptArgument(taskNames, jvmParametersSetup, effectiveSettings, null, false);
   }
 
-  public static void appendInitScriptArgument(@NotNull List<String> taskNames,
-                                              @Nullable String jvmParametersSetup,
-                                              @NotNull GradleExecutionSettings effectiveSettings,
-                                              @Nullable String gradleVersion) {
+  private static void appendInitScriptArgument(
+    @NotNull List<String> taskNames,
+    @Nullable String jvmParametersSetup,
+    @NotNull GradleExecutionSettings effectiveSettings,
+    @Nullable String gradleVersion,
+    boolean isApplicableTestLauncher
+  ) {
     final List<String> initScripts = new ArrayList<>();
     List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).toList();
     for (GradleProjectResolverExtension resolverExtension : extensions) {
@@ -281,8 +290,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         enhancementParameters.put(GradleProjectResolverExtension.DEBUG_DISPATCH_ADDR_KEY, debugDispatchAddr);
       }
 
-      enhancementParameters.put(GradleProjectResolverExtension.TEST_LAUNCHER_WILL_BE_USED_KEY,
-                                String.valueOf(testLauncherIsApplicable(taskNames, effectiveSettings)));
+      enhancementParameters.put(GradleProjectResolverExtension.TEST_LAUNCHER_WILL_BE_USED_KEY, String.valueOf(isApplicableTestLauncher));
 
       enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion);
 

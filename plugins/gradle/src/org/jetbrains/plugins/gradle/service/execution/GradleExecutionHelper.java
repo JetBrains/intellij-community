@@ -72,29 +72,40 @@ public class GradleExecutionHelper {
 
   private static final Logger LOG = Logger.getInstance(GradleExecutionHelper.class);
 
-  @NotNull
-  public <T> ModelBuilder<T> getModelBuilder(@NotNull Class<T> modelType,
-                                             @NotNull final ExternalSystemTaskId id,
-                                             @Nullable GradleExecutionSettings settings,
-                                             @NotNull ProjectConnection connection,
-                                             @NotNull ExternalSystemTaskNotificationListener listener) {
-    ModelBuilder<T> result = connection.model(modelType);
-    if (settings != null) {
-      prepare(result, id, settings, listener, connection);
-    }
-    return result;
+  public <T> @NotNull ModelBuilder<T> getModelBuilder(
+    @NotNull Class<T> modelType,
+    @NotNull ProjectConnection connection,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) {
+    ModelBuilder<T> operation = connection.model(modelType);
+    prepare(connection, operation, id, settings, listener);
+    return operation;
   }
 
-  @NotNull
-  public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
-                                        @NotNull ProjectConnection connection,
-                                        @Nullable GradleExecutionSettings settings,
-                                        @NotNull ExternalSystemTaskNotificationListener listener) {
-    BuildLauncher result = connection.newBuild();
-    if (settings != null) {
-      prepare(result, id, settings, listener, connection);
-    }
-    return result;
+  public @NotNull BuildLauncher getBuildLauncher(
+    @NotNull ProjectConnection connection,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull List<String> tasksAndArguments,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) {
+    BuildLauncher operation = connection.newBuild();
+    prepare(connection, operation, id, tasksAndArguments, settings, listener);
+    return operation;
+  }
+
+  public @NotNull TestLauncher getTestLauncher(
+    @NotNull ProjectConnection connection,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull List<String> tasksAndArguments,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) {
+    var operation = connection.newTestLauncher();
+    prepare(connection, operation, id, tasksAndArguments, settings, listener);
+    return operation;
   }
 
   public <T> T execute(@NotNull String projectPath,
@@ -273,11 +284,11 @@ public class GradleExecutionHelper {
     @NotNull String projectPath,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @NotNull ProjectConnection connection,
-    @NotNull CancellationToken cancellationToken) {
+    @NotNull CancellationToken cancellationToken
+  ) {
     maybeFixSystemProperties(() -> {
-      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
+      BuildLauncher launcher = getBuildLauncher(connection, id, List.of("wrapper"), settings, listener);
       launcher.withCancellationToken(cancellationToken);
-      launcher.forTasks("wrapper");
       launcher.run();
       return null;
     }, projectPath);
@@ -318,19 +329,6 @@ public class GradleExecutionHelper {
     return () -> FileUtil.loadFileOrNull(fileWithPathToProperties);
   }
 
-  @NotNull
-  public TestLauncher getTestLauncher(@NotNull final ExternalSystemTaskId id,
-                                      @NotNull ProjectConnection connection,
-                                      @NotNull List<String> tasks,
-                                      @Nullable GradleExecutionSettings settings,
-                                      @NotNull ExternalSystemTaskNotificationListener listener) {
-    TestLauncher result = connection.newTestLauncher();
-    if (settings != null) {
-      prepareForTestLauncher(result, id, settings, listener, connection, tasks);
-    }
-    return result;
-  }
-
   @Nullable
   public static BuildEnvironment getBuildEnvironment(ProjectResolverContext projectResolverContext) {
     CancellationTokenSource cancellationTokenSource = projectResolverContext.getCancellationTokenSource();
@@ -342,40 +340,87 @@ public class GradleExecutionHelper {
                                projectResolverContext.getSettings());
   }
 
-  public static void prepare(@NotNull LongRunningOperation operation,
-                             @NotNull final ExternalSystemTaskId id,
-                             @NotNull GradleExecutionSettings settings,
-                             @NotNull final ExternalSystemTaskNotificationListener listener,
-                             @NotNull ProjectConnection connection) {
-    prepare(operation, id, settings, listener, connection,
-            new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false),
-            false, Collections.emptyList());
+  public static void prepare(
+    @NotNull ProjectConnection connection,
+    @NotNull LongRunningOperation operation,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) {
+    prepare(connection, operation, id, Collections.emptyList(), settings, listener);
   }
 
-  public static void prepareForTestLauncher(@NotNull LongRunningOperation operation,
-                                            @NotNull final ExternalSystemTaskId id,
-                                            @NotNull GradleExecutionSettings settings,
-                                            @NotNull final ExternalSystemTaskNotificationListener listener,
-                                            @NotNull ProjectConnection connection,
-                                            @NotNull List<String> tasks) {
-    prepare(operation, id, settings, listener, connection,
-            new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false),
-            true, tasks);
+  private static void prepare(
+    @NotNull ProjectConnection connection,
+    @NotNull LongRunningOperation operation,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull List<String> tasksAndArguments,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) {
+    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, settings);
+
+    setupJvmArguments(operation, settings, buildEnvironment);
+
+    setupLogging(settings, buildEnvironment);
+
+    setupArguments(operation, tasksAndArguments, settings);
+
+    setupEnvironment(operation, settings, id, listener, buildEnvironment);
+
+    setupJavaHome(operation, settings);
+
+    setupProgressListeners(operation, id, listener, buildEnvironment);
+
+    setupStandardIO(operation, settings, id, listener);
+
+    GradleOperationHelperExtension.EP_NAME
+      .forEachExtensionSafe(proc -> proc.prepareForExecution(id, operation, settings));
   }
 
-  public static void prepare(@NotNull LongRunningOperation operation,
-                             @NotNull final ExternalSystemTaskId id,
-                             @NotNull GradleExecutionSettings settings,
-                             @NotNull final ExternalSystemTaskNotificationListener listener,
-                             @NotNull ProjectConnection connection,
-                             @NotNull final OutputStream standardOutput,
-                             @NotNull final OutputStream standardError,
-                             boolean forTestLauncher,
-                             @NotNull List<String> tasks) {
+  private static void addIdeaParameters(@NotNull ArrayList<String> arguments, @NotNull GradleExecutionSettings settings) {
+    if (settings.isOfflineWork()) {
+      arguments.add(GradleConstants.OFFLINE_MODE_CMD_OPTION);
+    }
+    arguments.add("-Didea.active=true");
+    arguments.add("-Didea.version=" + getIdeaVersion());
+  }
+
+  private static void setupProgressListeners(
+    @NotNull LongRunningOperation operation,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @Nullable BuildEnvironment buildEnvironment
+  ) {
+    String buildRootDir = getBuildRoot(buildEnvironment);
+    GradleProgressListener progressListener = new GradleProgressListener(listener, id, buildRootDir);
+    operation.addProgressListener((ProgressListener)progressListener);
+    operation.addProgressListener(progressListener, OperationType.TASK, OperationType.FILE_DOWNLOAD);
+    if (operation instanceof TestLauncher) {
+      operation.addProgressListener(progressListener, OperationType.TEST, OperationType.TEST_OUTPUT);
+    }
+  }
+
+  private static void setupStandardIO(
+    @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) {
+    operation.setStandardOutput(new OutputWrapper(listener, id, true));
+    operation.setStandardError(new OutputWrapper(listener, id, false));
+    InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
+    if (inputStream != null) {
+      operation.setStandardInput(inputStream);
+    }
+  }
+
+  private static void setupJvmArguments(
+    @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionSettings settings,
+    @Nullable BuildEnvironment buildEnvironment
+  ) {
     List<String> jvmArgs = settings.getJvmArguments();
-    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, (CancellationToken)null, settings);
-
-    String gradleVersion = buildEnvironment != null ? buildEnvironment.getGradle().getGradleVersion() : null;
     if (!jvmArgs.isEmpty()) {
       // merge gradle args e.g. defined in gradle.properties
       Collection<String> merged;
@@ -397,93 +442,41 @@ public class GradleExecutionHelper {
 
       operation.setJvmArguments(ArrayUtilRt.toStringArray(filteredArgs));
     }
+  }
 
-    if (settings.isOfflineWork()) {
-      settings.withArgument(GradleConstants.OFFLINE_MODE_CMD_OPTION);
-    }
-
-    setupLogging(settings, buildEnvironment);
-
-    if (forTestLauncher) {
-      setupTestLauncherArguments(operation, settings, tasks);
-    }
-    else {
-      setupOperationArguments(operation, settings);
-    }
-
-    setupEnvironment(operation, settings, gradleVersion, id, listener);
-
+  private static void setupJavaHome(
+    @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionSettings settings
+  ) {
     final String javaHome = settings.getJavaHome();
     if (javaHome != null && new File(javaHome).isDirectory()) {
       LOG.debug("Java home to set for Gradle operation: " + javaHome);
       operation.setJavaHome(new File(javaHome));
     }
-
-    String buildRootDir;
-    if (buildEnvironment == null) {
-      buildRootDir = null;
-    }
-    else {
-      BuildIdentifier buildIdentifier = getBuildIdentifier(buildEnvironment);
-      buildRootDir = buildIdentifier == null ? null : buildIdentifier.getRootDir().getPath();
-    }
-    GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id, buildRootDir);
-    operation.addProgressListener((ProgressListener)gradleProgressListener);
-    if (forTestLauncher) {
-      operation.addProgressListener(gradleProgressListener,
-                                    OperationType.FILE_DOWNLOAD,
-                                    OperationType.TASK,
-                                    OperationType.TEST,
-                                    OperationType.TEST_OUTPUT);
-    } else {
-      operation.addProgressListener(gradleProgressListener,
-                                    OperationType.TASK,
-                                    OperationType.FILE_DOWNLOAD);
-    }
-    operation.setStandardOutput(standardOutput);
-    operation.setStandardError(standardError);
-    InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
-    if (inputStream != null) {
-      operation.setStandardInput(inputStream);
-    }
-
-    GradleOperationHelperExtension.EP_NAME
-      .forEachExtensionSafe(proc -> proc.prepareForExecution(id, operation, settings));
   }
 
-  private static void setupTestLauncherArguments(
+  private static void setupArguments(
     @NotNull LongRunningOperation operation,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull List<String> tasks
-  ) {
-    var arguments = new ArrayList<String>();
-    if (!settings.getArguments().isEmpty()) {
-      arguments.addAll(tasks);
-      addSettingsArguments(arguments, settings);
-      var testTasksConfiguration = extractTestCommandOptions(arguments);
-      if (operation instanceof TestLauncher) {
-        for (var entry : testTasksConfiguration.entrySet()) {
-          // TODO we need better point of call to pass this info
-          ((TestLauncher)operation).withTaskAndTestClasses(entry.getKey(), entry.getValue());
-        }
-      }
-    }
-    addIdeaParameters(arguments);
-    operation.withArguments(arguments);
-  }
-
-  private static void setupOperationArguments(
-    @NotNull LongRunningOperation operation,
+    @NotNull List<String> tasksAndArguments,
     @NotNull GradleExecutionSettings settings
   ) {
-    var arguments = new ArrayList<String>();
+    var arguments = new ArrayList<>(tasksAndArguments);
     addSettingsArguments(arguments, settings);
-    var testTaskPatterns = extractTestTaskPatterns(arguments);
-    var path = renderTestFilterInitScript(testTaskPatterns, isTestExecForced(settings));
-    if (path != null) {
-      ContainerUtil.addAll(arguments, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
+    if (operation instanceof TestLauncher) {
+      var testTasksConfiguration = extractTestCommandOptions(arguments);
+      for (var entry : testTasksConfiguration.entrySet()) {
+        // TODO we need better point of call to pass this info
+        ((TestLauncher)operation).withTaskAndTestClasses(entry.getKey(), entry.getValue());
+      }
     }
-    addIdeaParameters(arguments);
+    else {
+      var testTaskPatterns = extractTestTaskPatterns(arguments);
+      var path = renderTestFilterInitScript(testTaskPatterns, isTestExecForced(settings));
+      if (path != null) {
+        ContainerUtil.addAll(arguments, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
+      }
+    }
+    addIdeaParameters(arguments, settings);
     operation.withArguments(arguments);
   }
 
@@ -498,11 +491,6 @@ public class GradleExecutionHelper {
              StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " "));
 
     arguments.addAll(ContainerUtil.filter(settings.getArguments(), it -> StringUtil.isNotEmpty(it)));
-  }
-
-  private static void addIdeaParameters(@NotNull ArrayList<String> arguments) {
-    arguments.add("-Didea.active=true");
-    arguments.add("-Didea.version=" + getIdeaVersion());
   }
 
   private static void setupLogging(@NotNull GradleExecutionSettings settings,
@@ -556,11 +544,22 @@ public class GradleExecutionHelper {
     return null;
   }
 
-  private static void setupEnvironment(@NotNull LongRunningOperation operation,
-                                       @NotNull GradleExecutionSettings settings,
-                                       @Nullable String gradleVersion,
-                                       ExternalSystemTaskId taskId,
-                                       ExternalSystemTaskNotificationListener listener) {
+  private static @Nullable String getBuildRoot(@Nullable BuildEnvironment buildEnvironment) {
+    if (buildEnvironment == null) {
+      return null;
+    }
+    BuildIdentifier buildIdentifier = getBuildIdentifier(buildEnvironment);
+    return buildIdentifier == null ? null : buildIdentifier.getRootDir().getPath();
+  }
+
+  private static void setupEnvironment(
+    @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskId taskId,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @Nullable BuildEnvironment buildEnvironment
+  ) {
+    String gradleVersion = buildEnvironment != null ? buildEnvironment.getGradle().getGradleVersion() : null;
     boolean isEnvironmentCustomizationSupported =
       gradleVersion != null && GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("3.5")) >= 0;
     if (!isEnvironmentCustomizationSupported) {
@@ -773,6 +772,15 @@ public class GradleExecutionHelper {
                                                      @Nullable GradleExecutionSettings settings) {
     CancellationToken cancellationToken = cancellationTokenSource != null ? cancellationTokenSource.token() : null;
     return getBuildEnvironment(connection, taskId, listener, cancellationToken, settings);
+  }
+
+  private static @Nullable BuildEnvironment getBuildEnvironment(
+    @NotNull ProjectConnection connection,
+    @NotNull ExternalSystemTaskId taskId,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @Nullable GradleExecutionSettings settings
+  ) {
+    return getBuildEnvironment(connection, taskId, listener, (CancellationToken)null, settings);
   }
 
   @Nullable
