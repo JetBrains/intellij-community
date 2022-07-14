@@ -63,7 +63,8 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
 
       val content = htmlInfo.content()
       editor.editorKit = HTMLEditorKitBuilder()
-        .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.icons(content))
+        .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.icons(content),
+                                   ExtendableHTMLViewFactory.Extensions.WORD_WRAP)
         .build()
       editor.text = content.toString()
       editor.size = Dimension(targetSize, Integer.MAX_VALUE)
