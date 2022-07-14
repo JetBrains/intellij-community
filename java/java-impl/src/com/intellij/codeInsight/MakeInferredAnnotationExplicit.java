@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -93,6 +94,16 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     } else {
       doMakeAnnotationExplicit(project, owner, getAnnotationsToAdd(owner));
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
+    if (leaf == null) return IntentionPreviewInfo.EMPTY;
+    PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
+    if (owner == null) return IntentionPreviewInfo.EMPTY;
+    doMakeAnnotationExplicit(project, owner, getAnnotationsToAdd(owner));
+    return IntentionPreviewInfo.DIFF;
   }
 
   /**
