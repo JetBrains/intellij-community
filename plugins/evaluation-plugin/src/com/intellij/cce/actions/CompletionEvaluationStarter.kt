@@ -27,7 +27,7 @@ import kotlin.system.exitProcess
 
 internal class CompletionEvaluationStarter : ApplicationStarter {
   override val commandName: String
-    get() = "evaluate-completion"
+    get() = "ml-evaluate"
 
   override fun main(args: List<String>) {
     MainEvaluationCommand()

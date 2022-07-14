@@ -16,7 +16,7 @@
     ]]></description>
 
   <extensions defaultExtensionNs="com.intellij">
-    <appStarter id="evaluate-completion" implementation="com.intellij.cce.actions.CompletionEvaluationStarter"/>
+    <appStarter id="ml-evaluate" implementation="com.intellij.cce.actions.CompletionEvaluationStarter"/>
 
     <registryKey key="evaluation.plugin.disable.sdk.check" defaultValue="false"
                  description="Disables check that project sdk configured properly" restartRequired="false"/>

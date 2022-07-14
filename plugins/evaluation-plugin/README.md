@@ -214,25 +214,25 @@ Example of `config.json` to evaluate code completion on several modules from int
 
 There are several options for the plugin to work in headless mode:
 - Full. Use the config to execute the plugin on a set of files / directories. As a result of execution, HTML report will be created.
-  - Usage: `evaluate-completion full [PATH_TO_CONFIG]`
+  - Usage: `ml-evaluate full [PATH_TO_CONFIG]`
   - If `PATH_TO_CONFIG` missing, default config will be created.
   - If config missing, default config will be created. Fill settings in default config before restarting evaluation.
 - Generating actions. Allow only to find suitable locations to complete without evaluation.
   Generated actions can be reused later in `custom` mode.
-  - Usage: `evaluate-completion actions [PATH_TO_CONFIG]`
+  - Usage: `ml-evaluate actions [PATH_TO_CONFIG]`
 - Custom. Allows you to interpret actions and/or generate reports on an existing workspace.
-  - Usage: `evaluate-completion custom [--interpret-actions | -i] [--generate-report | -r] PATH_TO_WORKSPACE`
+  - Usage: `ml-evaluate custom [--interpret-actions | -i] [--generate-report | -r] PATH_TO_WORKSPACE`
 - Multiple Evaluations. Create a report based on multiple evaluations.
-  - Usage: `evaluate-completion multiple-evaluations PATH_TO_WORKSPACE...`
+  - Usage: `ml-evaluate multiple-evaluations PATH_TO_WORKSPACE...`
 - Multiple Evaluations in Directory. Works as the previous option to all workspaces in the directory.
-  - Usage: `evaluate-completion compare-in PATH_TO_DIRECTORY`
+  - Usage: `ml-evaluate compare-in PATH_TO_DIRECTORY`
 
 There are many ways to start the evaluation in headless mode. Some of them are listed below.
 
 #### Run from command line:
 1. Add `-Djava.awt.headless=true` to jvm-options. [Instruction](https://www.jetbrains.com/help/idea/tuning-the-ide.html).
 2. Create command line launcher for Intellij IDEA. [Instruction](https://www.jetbrains.com/help/idea/working-with-the-ide-features-from-command-line.html).
-3. Run command `<Intellij IDEA> evaluate-completion OPTION OPTION_ARGS` with corresponding option.
+3. Run command `<Intellij IDEA> ml-evaluate OPTION OPTION_ARGS` with corresponding option.
 
 #### Run with intellij from sources:
 1. Create debug-configuration (copy from `IDEA` and add required options):
