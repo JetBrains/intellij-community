@@ -91,7 +91,7 @@ private fun createBufferPool(): DirectFixedSizeByteBufferPool {
   return DirectFixedSizeByteBufferPool(size = MAX_BUFFER_SIZE, maxPoolSize = ForkJoinPool.getCommonPoolParallelism() * 2)
 }
 
-private fun packCompilationResult(context: CompilationContext, zipDir: Path): List<PackAndUploadItem> {
+fun packCompilationResult(context: CompilationContext, zipDir: Path): List<PackAndUploadItem> {
   val incremental = context.options.incrementalCompilation
   if (!incremental) {
     try {
@@ -484,7 +484,7 @@ private fun computeHash(file: Path): String {
 // we cannot change file extension or prefix, so, add suffix
 internal fun digestToString(digest: MessageDigest): String = BigInteger(1, digest.digest()).toString(36) + "-z"
 
-internal data class PackAndUploadItem(
+data class PackAndUploadItem(
   val output: Path,
   val name: String,
   val archive: Path,
