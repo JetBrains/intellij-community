@@ -99,7 +99,7 @@ fun KtValueParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContext):
 }
 
 
-fun KtVariableLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedDeclarationDescriptor =
+fun KtVariableLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): VariableDescriptor =
     when (this) {
         is KtValueParameterSymbol -> toDeclarationDescriptor(context)
         is KtPropertySymbol -> KtSymbolBasedPropertyDescriptor(this, context)

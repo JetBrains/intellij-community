@@ -74,8 +74,7 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
 
         if (key is KtProperty) {
             val symbol = context.withAnalysisSession { key.getVariableSymbol() }
-            if (symbol !is KtPropertySymbol) context.implementationPlanned("Local property not supported: $symbol")
-            return KtSymbolBasedPropertyDescriptor(symbol, context)
+            return symbol.toDeclarationDescriptor(context)
         } else {
             context.implementationPostponed("Destruction declaration is not supported yet: $key")
         }
