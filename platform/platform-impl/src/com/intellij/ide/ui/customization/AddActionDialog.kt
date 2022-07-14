@@ -2,15 +2,11 @@
 package com.intellij.ide.ui.customization
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.customization.CustomizableActionsPanel.IconInfo
-import com.intellij.ide.ui.customization.CustomizableActionsPanel.NONE
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.QuickListsManager
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.keymap.impl.ui.Group
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
@@ -25,7 +21,6 @@ import com.intellij.util.ui.UIUtil
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JTree
-import javax.swing.MutableComboBoxModel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
@@ -39,7 +34,7 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
     isRootVisible = false
     cellRenderer = CustomizableActionsPanel.createDefaultRenderer()
     addTreeSelectionListener { e ->
-      editComboboxModelForPath(e.path)
+      browseComboBox.editModelForPath(e.path)
       val selectedNode = e.path.lastPathComponent as DefaultMutableTreeNode
       val (actionId, icon) = getActionIdAndIcon(selectedNode)
       if (actionId != null && icon != null) {
@@ -53,7 +48,7 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
     }
   }
 
-  private val browseComboBox: ComboBox<IconInfo> = CustomizableActionsPanel.createBrowseIconsComboBox(disposable)
+  private val browseComboBox = BrowseIconsComboBox(disposable)
 
   private val selectedIcon: IconInfo?
     get() = browseComboBox.selectedItem as? IconInfo
@@ -130,32 +125,12 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
     return selectedNode?.userObject?.takeIf { iconInfo != null }
   }
 
-  private fun editComboboxModelForPath(path: TreePath) {
-    val groupNode = path.getPathComponent(1) as DefaultMutableTreeNode
-    val group = groupNode.userObject as? Group
-    val model = browseComboBox.model as MutableComboBoxModel
-    val firstInfo = model.getElementAt(0)
-    if (group?.id == IdeActions.GROUP_MAIN_MENU && firstInfo != NONE) {
-      model.insertElementAt(NONE, 0)
-    }
-    else if (group?.id != IdeActions.GROUP_MAIN_MENU && firstInfo == NONE) {
-      model.removeElementAt(0)
-    }
-  }
-
   private fun getActionIdAndIcon(node: DefaultMutableTreeNode): kotlin.Pair<String?, Icon?> {
     return when (val obj = node.userObject) {
       is String -> obj to ActionManager.getInstance().getAction(obj)?.templatePresentation?.icon
       is Group -> obj.id to obj.icon
       is Pair<*, *> -> obj.first as? String to obj.second as? Icon
       else -> null to null
-    }
-  }
-
-  private fun ComboBox<IconInfo>.selectByCondition(predicate: (IconInfo) -> Boolean): Boolean {
-    val ind = (0 until model.size).find { predicate(model.getElementAt(it)) }
-    return (ind != null).also {
-      if (it) browseComboBox.selectedIndex = ind!!
     }
   }
 

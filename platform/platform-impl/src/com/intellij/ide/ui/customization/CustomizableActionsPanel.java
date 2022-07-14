@@ -4,23 +4,18 @@ package com.intellij.ide.ui.customization;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
@@ -30,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
-import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ImageLoader;
@@ -39,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -47,17 +40,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.NoSuchFileException;
 import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
@@ -390,278 +378,12 @@ public class CustomizableActionsPanel {
     return true;
   }
 
-  private static @Nullable Icon loadCustomIcon(@NotNull String path) throws IOException {
+  static @Nullable Icon loadCustomIcon(@NotNull String path) throws IOException {
     String independentPath = path.replace(File.separatorChar, '/');
     String urlString = independentPath.contains(":") ? independentPath : "file:" + independentPath;
     URL url = new URL(null, urlString);
     Image image = ImageLoader.loadCustomIcon(url);
     return image != null ? new JBImageIcon(image) : null;
-  }
-
-  static class IconInfo {
-    final @Nullable Icon icon;
-    final @NotNull String text;
-    private final @Nullable String actionId;
-    private final @Nullable String iconPath;
-
-    IconInfo(@Nullable Icon icon, @NotNull String text, @Nullable String actionId, @Nullable String iconPath) {
-      this.icon = icon;
-      this.text = text;
-      this.actionId = actionId;
-      this.iconPath = iconPath;
-    }
-
-    public @NotNull String getIconReference() {
-      return actionId != null ? actionId : Objects.requireNonNull(iconPath);
-    }
-
-    @Override
-    public String toString() {
-      return text;
-    }
-  }
-
-  static final IconInfo NONE = new IconInfo(null, "<None>", "", null);
-  private static final IconInfo SEPARATOR = new IconInfo(null, "", "", null);
-
-  private static List<IconInfo> getDefaultIcons() {
-    List<IconInfo> icons = new ArrayList<>();
-    icons.add(getIconInfo(AllIcons.Toolbar.Unknown, "Default icon"));
-    icons.add(getIconInfo(AllIcons.General.Add, "Add"));
-    icons.add(getIconInfo(AllIcons.General.Remove, "Remove"));
-    icons.add(getIconInfo(AllIcons.Actions.Edit, "Edit"));
-    icons.add(getIconInfo(AllIcons.General.Filter, "Filter"));
-    icons.add(getIconInfo(AllIcons.Actions.Find, "Find"));
-    icons.add(getIconInfo(AllIcons.General.GearPlain, "Gear plain"));
-    icons.add(getIconInfo(AllIcons.Actions.ListFiles, "List files"));
-    icons.add(getIconInfo(AllIcons.ToolbarDecorator.Export, "Export"));
-    icons.add(getIconInfo(AllIcons.ToolbarDecorator.Import, "Import"));
-    return ContainerUtil.skipNulls(icons);
-  }
-
-  private static @Nullable IconInfo getIconInfo(Icon icon, String text) {
-    URL iconUrl = ((IconLoader.CachedImageIcon)icon).getURL();
-    if (iconUrl != null) {
-      return new IconInfo(icon, text, null, iconUrl.toString());
-    }
-    return null;
-  }
-
-  private static List<IconInfo> getAvailableIcons() {
-    ActionManager actionManager = ActionManager.getInstance();
-    return ContainerUtil.mapNotNull(actionManager.getActionIdList(""), actionId -> {
-      AnAction action = Objects.requireNonNull(actionManager.getActionOrStub(actionId));
-      Icon icon = action.getTemplatePresentation().getIcon();
-      if (icon == null) return null;
-      return new IconInfo(icon, Objects.requireNonNullElse(StringUtil.nullize(action.getTemplateText()), actionId), actionId, null);
-    });
-  }
-
-  private static List<IconInfo> getAllIcons() {
-    List<IconInfo> defaultIcons = getDefaultIcons();
-    List<IconInfo> icons = new ArrayList<>(defaultIcons);
-    icons.add(SEPARATOR);
-    List<IconInfo> availableIcons = getAvailableIcons();
-    availableIcons.sort((a, b) -> a.text.compareToIgnoreCase(b.text));
-    for (IconInfo info : availableIcons) {
-      if (!ContainerUtil.exists(defaultIcons, it -> it.icon == info.icon)) {
-        icons.add(info);
-      }
-    }
-    return icons;
-  }
-
-  static ComboBox<IconInfo> createBrowseIconsComboBox(@NotNull Disposable parentDisposable) {
-    List<IconInfo> icons = getAllIcons();
-    // Overriding of selecting items required to prohibit selecting of SEPARATOR items
-    ComboBox<IconInfo> comboBox = new ComboBox<>(icons.toArray(new IconInfo[0])) {
-      @Override
-      public void setSelectedIndex(int anIndex) {
-        if (anIndex == -1) {
-          setSelectedItem(null);
-        }
-        else if (anIndex < -1 || anIndex >= dataModel.getSize()) {
-          throw new IllegalArgumentException("setSelectedIndex: " + anIndex + " out of bounds");
-        }
-        else {
-          Object item = dataModel.getElementAt(anIndex);
-          if (item != SEPARATOR) {
-            setSelectedItem(item);
-          }
-        }
-      }
-
-      @Override
-      public void updateUI() {
-        setUI(new DarculaComboBoxUI() {
-          @Override
-          protected void selectNextPossibleValue() {
-            int curInd = comboBox.isPopupVisible() ? listBox.getSelectedIndex() : comboBox.getSelectedIndex();
-            selectPossibleValue(curInd, true);
-          }
-
-          @Override
-          protected void selectPreviousPossibleValue() {
-            int curInd = comboBox.isPopupVisible() ? listBox.getSelectedIndex() : comboBox.getSelectedIndex();
-            selectPossibleValue(curInd, false);
-          }
-
-          private void selectPossibleValue(int curInd, boolean next) {
-            if (next && curInd < comboBox.getModel().getSize() - 1) {
-              trySelectValue(curInd + 1, true);
-            }
-            else if (!next && curInd > 0) {
-              trySelectValue(curInd - 1, false);
-            }
-          }
-
-          private void trySelectValue(int ind, boolean next) {
-            Object item = comboBox.getItemAt(ind);
-            if (item != SEPARATOR) {
-              listBox.setSelectedIndex(ind);
-              listBox.ensureIndexIsVisible(ind);
-              if (comboBox.isPopupVisible()) {
-                comboBox.setSelectedIndex(ind);
-              }
-              comboBox.repaint();
-            }
-            else {
-              selectPossibleValue(ind, next);
-            }
-          }
-        });
-      }
-    };
-    comboBox.setSwingPopup(false); // in this case speed search will filter the list of items
-    comboBox.setEditable(true);
-
-    comboBox.setEditor(new BasicComboBoxEditor() {
-      @Override
-      protected JTextField createEditorComponent() {
-        ExtendableTextField textField = new ExtendableTextField() {
-          @Override
-          public void requestFocus() {
-            // it is required to move focus back to comboBox because otherwise speed search will not work
-            comboBox.requestFocus();
-          }
-        };
-        textField.setBorder(null);
-        textField.setEditable(false);
-        textField.addBrowseExtension(() -> {
-          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-            .withFileFilter(file -> StringUtil.equalsIgnoreCase(file.getExtension(), "svg")
-                                    || StringUtil.equalsIgnoreCase(file.getExtension(), "png"));
-          descriptor.setTitle(IdeBundle.message("title.browse.icon"));
-          descriptor.setDescription(IdeBundle.message("prompt.browse.icon.for.selected.action"));
-          VirtualFile iconFile = FileChooser.chooseFile(descriptor, null, null);
-          if (iconFile != null) {
-            Icon icon = null;
-            try {
-              icon = loadCustomIcon(iconFile.getPath());
-            }
-            catch (IOException ex) {
-              Logger.getInstance(CustomizableActionsPanel.class).warn("Failed to load icon from disk, path: " + iconFile.getPath(), ex);
-            }
-            if (icon == null) {
-              icon = IconManager.getInstance().getStubIcon();
-            }
-            IconInfo info = new IconInfo(icon, iconFile.getName(), null, iconFile.getPath());
-            DefaultComboBoxModel<IconInfo> model = (DefaultComboBoxModel<IconInfo>)comboBox.getModel();
-            int separatorInd = model.getIndexOf(SEPARATOR);
-            model.insertElementAt(info, separatorInd + 1);
-            comboBox.setSelectedIndex(separatorInd + 1);
-          }
-        }, null);
-        textField.addExtension(new ExtendableTextComponent.Extension() {
-          @Override
-          public Icon getIcon(boolean hovered) {
-            Object selectedItem = comboBox.getSelectedItem();
-            if (selectedItem instanceof IconInfo) {
-              return ((IconInfo)selectedItem).icon;
-            }
-            return null;
-          }
-
-          @Override
-          public boolean isIconBeforeText() {
-            return true;
-          }
-        });
-        return textField;
-      }
-    });
-
-    comboBox.setRenderer(new ColoredListCellRenderer<IconInfo>() {
-      @Override
-      public Component getListCellRendererComponent(JList<? extends IconInfo> list,
-                                                    IconInfo value,
-                                                    int index,
-                                                    boolean selected,
-                                                    boolean hasFocus) {
-        if (value == SEPARATOR) {
-          return new JSeparator(SwingConstants.HORIZONTAL) {
-            @Override
-            public void updateUI() {
-              setUI(new DarculaSeparatorUI() {
-                @Override
-                protected int getStripeIndent() {
-                  return 0;
-                }
-
-                @Override
-                public Dimension getPreferredSize(JComponent c) {
-                  return JBUI.size(0, 1);
-                }
-              });
-            }
-          };
-        }
-        else {
-          return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-        }
-      }
-
-      @Override
-      protected void customizeCellRenderer(@NotNull JList<? extends IconInfo> list,
-                                           IconInfo value,
-                                           int index,
-                                           boolean selected,
-                                           boolean hasFocus) {
-        if (value != null) {
-          setIcon(value.icon);
-          append(value.text);
-        }
-      }
-    });
-
-    ComboboxSpeedSearch.installSpeedSearch(comboBox, actionInfo -> actionInfo.text);
-
-    new ComponentValidator(parentDisposable).withValidator(() -> {
-      IconInfo selected = (IconInfo)comboBox.getSelectedItem();
-      if (selected == null) return null;
-      String path = selected.iconPath;
-      if (path == null) return null;
-      try {
-        loadCustomIcon(path);
-      }
-      catch (FileNotFoundException | NoSuchFileException ex) {
-        return new ValidationInfo(IdeBundle.message("icon.validation.message.not.found"), comboBox);
-      }
-      catch (IOException ex) {
-        return new ValidationInfo(IdeBundle.message("icon.validation.message.format"), comboBox);
-      }
-      return null;
-    }).installOn(comboBox);
-
-    comboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        // reset validation info if some item selected
-        ComponentValidator.getInstance(comboBox).ifPresent(validator -> validator.updateInfo(null));
-      }
-    });
-
-    return comboBox;
   }
 
   private static TextFieldWithBrowseButton createBrowseField() {
