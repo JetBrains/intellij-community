@@ -4,6 +4,8 @@ package org.intellij.plugins.markdown.ui.preview.jcef
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JBCefApp
@@ -27,7 +29,7 @@ import java.nio.file.Path
 class MarkdownJCEFHtmlPanel(
   private val _project: Project?,
   private val _virtualFile: VirtualFile?
-): JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanelEx {
+): JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase() {
   constructor(): this(null, null)
 
   private val pageBaseName = "markdown-preview-index-${hashCode()}.html"
