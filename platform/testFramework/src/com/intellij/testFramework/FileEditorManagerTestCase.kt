@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.io.write
-import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.EDT
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
@@ -84,7 +84,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
         return
       }
       catch (e: TimeoutException) {
-        EdtInvocationManager.dispatchAllInvocationEvents()
+        EDT.dispatchAllInvocationEvents()
       }
     }
   }

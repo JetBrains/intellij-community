@@ -63,7 +63,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.io.PathKt;
-import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -246,7 +246,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      EdtInvocationManager.dispatchAllInvocationEvents();
+      EDT.dispatchAllInvocationEvents();
     }
     myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     myLibraryTableTracker = new LibraryTableTracker();

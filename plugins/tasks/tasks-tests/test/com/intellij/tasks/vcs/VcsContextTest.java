@@ -15,7 +15,7 @@ import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.RunAll;
-import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRepository;
 
@@ -62,12 +62,12 @@ public class VcsContextTest extends FileEditorManagerTestCase {
       manager.openFile(secondFile, true);
 
       myTaskManager.activateTask(first, true);
-      EdtInvocationManager.dispatchAllInvocationEvents();
+      EDT.dispatchAllInvocationEvents();
       assertEquals(1, manager.getOpenFiles().length);
       assertEquals("first.txt", manager.getOpenFiles()[0].getName());
 
       myTaskManager.activateTask(second, true);
-      EdtInvocationManager.dispatchAllInvocationEvents();
+      EDT.dispatchAllInvocationEvents();
       assertEquals(1, manager.getOpenFiles().length);
       assertEquals("second.txt", manager.getOpenFiles()[0].getName());
     }

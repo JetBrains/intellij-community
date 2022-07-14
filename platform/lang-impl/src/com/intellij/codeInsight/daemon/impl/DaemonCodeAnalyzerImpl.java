@@ -62,7 +62,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.EDT;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -347,7 +347,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     DaemonProgressIndicator.setDebug(!ApplicationManagerEx.isInStressTest());
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     do {
-      EdtInvocationManager.dispatchAllInvocationEvents();
+      EDT.dispatchAllInvocationEvents();
       // refresh will fire write actions interfering with highlighting
       // heavy ops are bad, but VFS refresh is ok
     }
@@ -357,10 +357,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       if (System.currentTimeMillis() > dStart + 100_000) {
         throw new IllegalStateException("Timeout waiting for smart mode. If you absolutely want to be dumb, please use DaemonCodeAnalyzerImpl.mustWaitForSmartMode(false).");
       }
-      EdtInvocationManager.dispatchAllInvocationEvents();
+      EDT.dispatchAllInvocationEvents();
     }
     ((GistManagerImpl)GistManager.getInstance()).clearQueueInTests();
-    EdtInvocationManager.dispatchAllInvocationEvents();
+    EDT.dispatchAllInvocationEvents();
 
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // wait for async editor loading
 
@@ -390,7 +390,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           callbackWhileWaiting.run();
         }
         waitInOtherThread(50, canChangeDocument);
-        EdtInvocationManager.dispatchAllInvocationEvents();
+        EDT.dispatchAllInvocationEvents();
         Throwable savedException = PassExecutorService.getSavedException(progress);
         if (savedException != null) throw savedException;
       }
@@ -407,8 +407,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         throw new TimeoutException("Unable to complete in 60s. Thread dump:\n"+ThreadDumper.dumpThreadsToString());
       }
       ((HighlightingSessionImpl)session).waitForHighlightInfosApplied();
-      EdtInvocationManager.dispatchAllInvocationEvents();
-      EdtInvocationManager.dispatchAllInvocationEvents();
+      EDT.dispatchAllInvocationEvents();
+      EDT.dispatchAllInvocationEvents();
       assert progress.isCanceled() && progress.isDisposed();
     }
     catch (Throwable e) {
