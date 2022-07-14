@@ -88,7 +88,8 @@ object CodeWithMeClientDownloader {
     Done
   }
 
-  val buildNumberRegex = Regex("""[0-9]{3}\.(([0-9]+(\.[0-9]+)?)|SNAPSHOT)""")
+  const val buildNumberPattern = """[0-9]{3}\.(([0-9]+(\.[0-9]+)?)|SNAPSHOT)"""
+  val buildNumberRegex = Regex(buildNumberPattern)
 
   private fun getClientDistributionName(clientBuildVersion: String) = when {
     VersionComparatorUtil.compare(clientBuildVersion, "211.6167") < 0 -> "IntelliJClient"
