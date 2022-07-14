@@ -3,7 +3,9 @@
 set -o errexit
 
 ROOT=$PWD
-PATCHES="$ROOT/patches"
+PATCHES="$ROOT/../src/resources/patches"
+
+cd ../src/resources
 
 rm -rf temp
 rm -rf result
