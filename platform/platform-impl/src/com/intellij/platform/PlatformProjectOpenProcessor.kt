@@ -339,7 +339,6 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
 
     @ApiStatus.Internal
-    @JvmStatic
     fun OpenProjectTaskBuilder.configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?) {
       runConfigurators = true
       isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir)

@@ -3,17 +3,12 @@ package com.intellij.openapi.application
 
 import com.intellij.ide.CliResult
 import com.intellij.ide.ProtocolHandler
-import com.intellij.openapi.progress.ProgressIndicator
-import kotlinx.coroutines.async
-import kotlinx.coroutines.future.asCompletableFuture
-import java.util.concurrent.CompletableFuture
 
 internal class JBProtocolHandler : ProtocolHandler {
-  override fun getScheme() = JBProtocolCommand.SCHEME
+  override val scheme: String
+    get() = JBProtocolCommand.SCHEME
 
-  override fun process(query: String, indicator: ProgressIndicator): CompletableFuture<CliResult> {
-    return ApplicationManager.getApplication().coroutineScope.async {
-      CliResult(0, JBProtocolCommand.execute(query))
-    }.asCompletableFuture()
+  override suspend fun process(query: String): CliResult {
+    return CliResult(0, JBProtocolCommand.execute(query))
   }
 }

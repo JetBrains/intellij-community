@@ -38,7 +38,7 @@ internal class OpenProjectTest(private val opener: Opener) {
     fun params(): Iterable<Opener> {
       return listOf(
         Opener("OpenFileAction") { runBlocking { ProjectUtil.openExistingDir(it, null) } },
-        Opener("CLI") { CommandLineProcessor.doOpenFileOrProject(it, false).project!! }
+        Opener("CLI") { runBlocking { CommandLineProcessor.doOpenFileOrProject(it, false) }.project!! }
       )
     }
   }

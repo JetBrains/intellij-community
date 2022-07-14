@@ -91,7 +91,7 @@ public final class MacOSApplicationProvider {
           return;
         }
 
-        List<Path> list = ContainerUtil.map(files, file -> file.toPath());
+        List<Path> list = ContainerUtil.map(files, File::toPath);
         if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
           Project project = getProject(false);
           submit("OpenFile", () -> ProjectUtil.tryOpenFiles(project, list, "MacMenu"));
@@ -205,7 +205,7 @@ public final class MacOSApplicationProvider {
           }
 
           if (LoadingState.APP_STARTED.isOccurred()) {
-            CommandLineProcessor.processProtocolCommand(uriString);
+            CommandLineProcessor.INSTANCE.scheduleProcessProtocolCommand(uriString);
           }
           else {
             IdeStarter.openUriOnLoading(uriString);

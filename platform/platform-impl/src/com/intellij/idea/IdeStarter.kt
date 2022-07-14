@@ -41,7 +41,6 @@ import kotlinx.coroutines.withContext
 import java.beans.PropertyChangeListener
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.ForkJoinPool
 import javax.swing.JOptionPane
 
 open class IdeStarter : ModernApplicationStarter() {
@@ -109,17 +108,19 @@ open class IdeStarter : ModernApplicationStarter() {
       return
     }
 
-    if (ApplicationManager.getApplication().isInternal) {
-      UiInspectorAction.initGlobalInspector()
+    if (app.isInternal) {
+      app.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        UiInspectorAction.initGlobalInspector()
+      }
     }
 
-    ForkJoinPool.commonPool().execute {
+    app.coroutineScope.launch {
       LifecycleUsageTriggerCollector.onIdeStart()
     }
 
-    if (uriToOpen != null || args.isNotEmpty() && args[0].contains(SCHEME_SEPARATOR)) {
+    if (uriToOpen != null || args.isNotEmpty() && args.first().contains(SCHEME_SEPARATOR)) {
       frameInitActivity.end()
-      processUriParameter(uriToOpen ?: args[0], lifecyclePublisher)
+      processUriParameter(uriToOpen ?: args.first(), lifecyclePublisher)
       return
     }
 
@@ -134,7 +135,7 @@ open class IdeStarter : ModernApplicationStarter() {
     }
 
     val project = when {
-      filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
+      filesToLoad.isNotEmpty() -> ProjectUtil.openOrImportFilesAsync(filesToLoad, "IdeStarter")
       args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
       else -> null
     }
@@ -163,19 +164,15 @@ open class IdeStarter : ModernApplicationStarter() {
     return false
   }
 
-  private fun processUriParameter(uri: String, lifecyclePublisher: AppLifecycleListener) {
-    ApplicationManager.getApplication().invokeLater {
-      CommandLineProcessor.processProtocolCommand(uri)
-        .thenAccept {
-          if (it.exitCode == ProtocolHandler.PLEASE_QUIT) {
-            ApplicationManager.getApplication().invokeLater {
-              ApplicationManagerEx.getApplicationEx().exit(false, true)
-            }
-          }
-          else if (it.exitCode != ProtocolHandler.PLEASE_NO_UI) {
-            WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
-          }
-        }
+  private suspend fun processUriParameter(uri: String, lifecyclePublisher: AppLifecycleListener) {
+    val result = CommandLineProcessor.processProtocolCommand(uri)
+    if (result.exitCode == ProtocolHandler.PLEASE_QUIT) {
+      withContext(Dispatchers.EDT) {
+        ApplicationManagerEx.getApplicationEx().exit(false, true)
+      }
+    }
+    else if (result.exitCode != ProtocolHandler.PLEASE_NO_UI) {
+      WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
     }
   }
 

@@ -349,7 +349,7 @@ private fun addActivateAndWindowsCliListeners() {
   addExternalInstanceListener { rawArgs ->
     LOG.info("External instance command received")
     val (args, currentDirectory) = if (rawArgs.isEmpty()) emptyList<String>() to null else rawArgs.subList(1, rawArgs.size) to rawArgs[0]
-    val result = handleExternalCommand(args, currentDirectory)
+    val result = runBlocking { handleExternalCommand(args, currentDirectory) }
     result.future
   }
 
@@ -358,7 +358,7 @@ private fun addActivateAndWindowsCliListeners() {
     if (args.isEmpty()) {
       return@BiFunction 0
     }
-    val result = handleExternalCommand(args.toList(), currentDirectory)
+    val result = runBlocking { handleExternalCommand (args.toList(), currentDirectory) }
     CliResult.unmap(result.future, Main.ACTIVATE_ERROR).exitCode
   }
 
@@ -370,7 +370,7 @@ private fun addActivateAndWindowsCliListeners() {
   })
 }
 
-private fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
+private suspend fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
   val result = if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
     CommandLineProcessor.processProtocolCommand(args[0])
     CommandLineProcessorResult(null, CommandLineProcessor.OK_FUTURE)
@@ -378,7 +378,7 @@ private fun handleExternalCommand(args: List<String>, currentDirectory: String?)
   else {
     CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
   }
-  ApplicationManager.getApplication().invokeLater {
+  ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT) {
     if (result.hasError) {
       result.showErrorIfFailed()
     }

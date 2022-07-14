@@ -14,8 +14,8 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
   public static synchronized void initGlobalInspector() {
     if (!ourGlobalInstanceInitialized) {
       ourGlobalInstanceInitialized = true;
-      EdtInvocationManager.invokeLaterIfNeeded(() -> {
+      AppUIUtil.invokeOnEdt(() -> {
         new UiInspector(null);
       });
     }

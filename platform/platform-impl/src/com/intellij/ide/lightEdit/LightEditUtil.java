@@ -18,7 +18,10 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -238,16 +241,9 @@ public final class LightEditUtil {
     return requireLightEditProject(LightEditService.getInstance().getProject());
   }
 
-  public static <T> @NotNull T computeWithCommandLineOptions(boolean shouldWait,
-                                                             boolean lightEditMode,
-                                                             @NotNull Computable<T> computable) {
+  public static @NotNull AutoCloseable computeWithCommandLineOptions(boolean shouldWait, boolean lightEditMode) {
     ourCommandLineOptions.set(new LightEditCommandLineOptions(shouldWait, lightEditMode));
-    try {
-      return computable.compute();
-    }
-    finally {
-      ourCommandLineOptions.set(null);
-    }
+    return () -> ourCommandLineOptions.set(null);
   }
 
   public static void useCommandLineOptions(boolean shouldWait,
