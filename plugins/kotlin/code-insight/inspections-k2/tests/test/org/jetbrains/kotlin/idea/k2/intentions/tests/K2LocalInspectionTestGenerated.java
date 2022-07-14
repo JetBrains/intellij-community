@@ -251,6 +251,139 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet")
+    public static class ReplaceGetOrSet extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("acceptableVararg.kt")
+        public void testAcceptableVararg() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/acceptableVararg.kt");
+        }
+
+        @TestMetadata("argumentAndFunction.kt")
+        public void testArgumentAndFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/argumentAndFunction.kt");
+        }
+
+        @TestMetadata("duplicateArguments.kt")
+        public void testDuplicateArguments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/duplicateArguments.kt");
+        }
+
+        @TestMetadata("extensionFunction.kt")
+        public void testExtensionFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/extensionFunction.kt");
+        }
+
+        @TestMetadata("functionalArgument.kt")
+        public void testFunctionalArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/functionalArgument.kt");
+        }
+
+        @TestMetadata("getWithSpread.kt")
+        public void testGetWithSpread() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/getWithSpread.kt");
+        }
+
+        @TestMetadata("getWithSpread2.kt")
+        public void testGetWithSpread2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/getWithSpread2.kt");
+        }
+
+        @TestMetadata("invalidArgument.kt")
+        public void testInvalidArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/invalidArgument.kt");
+        }
+
+        @TestMetadata("missingDefaultArgument.kt")
+        public void testMissingDefaultArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/missingDefaultArgument.kt");
+        }
+
+        @TestMetadata("multiArgument.kt")
+        public void testMultiArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/multiArgument.kt");
+        }
+
+        @TestMetadata("noArgument.kt")
+        public void testNoArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/noArgument.kt");
+        }
+
+        @TestMetadata("notOperator.kt")
+        public void testNotOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/notOperator.kt");
+        }
+
+        @TestMetadata("qualifier.kt")
+        public void testQualifier() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/qualifier.kt");
+        }
+
+        @TestMetadata("sanityCheck.kt")
+        public void testSanityCheck() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/sanityCheck.kt");
+        }
+
+        @TestMetadata("set.kt")
+        public void testSet() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/set.kt");
+        }
+
+        @TestMetadata("set2.kt")
+        public void testSet2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/set2.kt");
+        }
+
+        @TestMetadata("setValueUsed.kt")
+        public void testSetValueUsed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/setValueUsed.kt");
+        }
+
+        @TestMetadata("setWithNoParameters.kt")
+        public void testSetWithNoParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/setWithNoParameters.kt");
+        }
+
+        @TestMetadata("setWithVararg.kt")
+        public void testSetWithVararg() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/setWithVararg.kt");
+        }
+
+        @TestMetadata("singleArgument.kt")
+        public void testSingleArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/singleArgument.kt");
+        }
+
+        @TestMetadata("staticMethod.kt")
+        public void testStaticMethod() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/staticMethod.kt");
+        }
+
+        @TestMetadata("super.kt")
+        public void testSuper() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/super.kt");
+        }
+
+        @TestMetadata("topLevelFun.kt")
+        public void testTopLevelFun() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/topLevelFun.kt");
+        }
+
+        @TestMetadata("unacceptableVararg.kt")
+        public void testUnacceptableVararg() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/unacceptableVararg.kt");
+        }
+
+        @TestMetadata("unnamedAndNamed.kt")
+        public void testUnnamedAndNamed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/unnamedAndNamed.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis")
     public static class NullableBooleanElvis extends AbstractK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
