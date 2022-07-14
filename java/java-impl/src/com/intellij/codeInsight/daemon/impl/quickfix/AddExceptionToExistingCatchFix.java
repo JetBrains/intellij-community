@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.IncorrectOperationException;
@@ -29,6 +31,21 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
   private final PsiElement myErrorElement;
 
   public AddExceptionToExistingCatchFix(PsiElement errorElement) {myErrorElement = errorElement;}
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement copy = PsiTreeUtil.findSameElementInCopy(myErrorElement, file);
+    if (copy == null) return IntentionPreviewInfo.EMPTY;
+    Context context = Context.from(copy);
+    if (context == null) return IntentionPreviewInfo.EMPTY;
+
+    List<? extends PsiCatchSection> catches = context.myCatches;
+    if (!catches.isEmpty()) {
+      addTypeToCatch(context.myExceptions, catches.get(0), project);
+      return IntentionPreviewInfo.DIFF;
+    }
+    return IntentionPreviewInfo.EMPTY;
+  }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
@@ -83,17 +100,23 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
   private static void addTypeToCatch(@NotNull List<? extends PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
     Project project = catchSection.getProject();
     WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.exception.to.existing.catch.family"), null, () -> {
-      if (!catchSection.isValid() || !ContainerUtil.and(exceptionsToAdd, type -> type.isValid())) return;
-      PsiParameter parameter = catchSection.getParameter();
-      if (parameter == null) return;
-      PsiTypeElement typeElement = parameter.getTypeElement();
-      if (typeElement == null) return;
-      PsiType parameterType = parameter.getType();
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      String flattenText = getTypeText(exceptionsToAdd, parameterType);
-      PsiElement newTypeElement = typeElement.replace(factory.createTypeElementFromText(flattenText, parameter));
-      CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(newTypeElement));
+      addTypeToCatch(exceptionsToAdd, catchSection, project);
     });
+  }
+
+  private static void addTypeToCatch(@NotNull List<? extends PsiClassType> exceptionsToAdd, 
+                                     @NotNull PsiCatchSection catchSection, 
+                                     Project project) {
+    if (!catchSection.isValid() || !ContainerUtil.and(exceptionsToAdd, type -> type.isValid())) return;
+    PsiParameter parameter = catchSection.getParameter();
+    if (parameter == null) return;
+    PsiTypeElement typeElement = parameter.getTypeElement();
+    if (typeElement == null) return;
+    PsiType parameterType = parameter.getType();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    String flattenText = getTypeText(exceptionsToAdd, parameterType);
+    PsiElement newTypeElement = typeElement.replace(factory.createTypeElementFromText(flattenText, parameter));
+    CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(newTypeElement));
   }
 
   private static String getTypeText(@NotNull List<? extends PsiClassType> exceptionsToAdd,
