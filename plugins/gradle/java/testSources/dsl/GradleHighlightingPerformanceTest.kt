@@ -13,7 +13,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.disableSlowCompletionElements
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -56,8 +56,8 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
         fixture.type('i')
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         val document = PsiDocumentManager.getInstance(project).getDocument(fixture.file)
-        GroovyCompletionUtil.disableSlowCompletionElements(fixture.testRootDisposable)
-        val repeatSize = 6
+        disableSlowCompletionElements(fixture.testRootDisposable)
+        val repeatSize = 10
         PlatformTestUtil.startPerformanceTest("GradleHighlightingPerformanceTest.testCompletion", 400 * repeatSize) {
           fixture.psiManager.dropResolveCaches()
           repeat(repeatSize) {
