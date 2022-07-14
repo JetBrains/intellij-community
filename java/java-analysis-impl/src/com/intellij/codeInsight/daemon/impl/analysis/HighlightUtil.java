@@ -1143,7 +1143,8 @@ public final class HighlightUtil {
 
     boolean isInt = ElementType.INTEGER_LITERALS.contains(type);
     boolean isFP = ElementType.REAL_LITERALS.contains(type);
-    String text = isInt || isFP ? StringUtil.toLowerCase(literal.getText()) : literal.getText();
+    String rawText = isInt || isFP ? StringUtil.toLowerCase(literal.getText()) : literal.getText();
+    String text = parseUnicodeEscapes(rawText, null);
     Object value = expression.getValue();
 
     if (file != null) {
@@ -1217,6 +1218,11 @@ public final class HighlightUtil {
       }
     }
     else if (type == JavaTokenType.CHARACTER_LITERAL) {
+      int newLineEscape = text.indexOf("\\\n");
+      if (newLineEscape >= 0) {
+        String message = JavaErrorBundle.message("illegal.escape.character.in.character.literal");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+      }
       if (value == null) {
         if (!StringUtil.startsWithChar(text, '\'')) {
           return null;
@@ -1225,22 +1231,21 @@ public final class HighlightUtil {
           String message = JavaErrorBundle.message("unclosed.char.literal");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        text = text.substring(1, text.length() - 1);
 
-        CharSequence chars = CodeInsightUtilCore.parseStringCharacters(text, null);
+        CharSequence chars = CodeInsightUtilCore.parseStringCharacters(rawText, null);
         if (chars == null) {
           String message = JavaErrorBundle.message("illegal.escape.character.in.character.literal");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
         int length = chars.length();
-        if (length > 1) {
+        if (length > 3) {
           String message = JavaErrorBundle.message("too.many.characters.in.character.literal");
           HighlightInfo info =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
           QuickFixAction.registerQuickFixAction(info, getFixFactory().createConvertToStringLiteralAction());
           return info;
         }
-        else if (length == 0) {
+        else if (length == 2) {
           String message = JavaErrorBundle.message("empty.character.literal");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
@@ -1261,17 +1266,25 @@ public final class HighlightUtil {
               String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
               return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
             }
-            text = text.substring(1, text.length() - 1);
           }
           else {
             String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
           }
-
-          if (CodeInsightUtilCore.parseStringCharacters(text, null) == null) {
-            String message = JavaErrorBundle.message("illegal.escape.character.in.string.literal");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          int length = rawText.length();
+          StringBuilder chars = new StringBuilder(length);
+          int[] offsets = new int[length + 1];
+          boolean success = CodeInsightUtilCore.parseStringCharacters(rawText, chars, offsets);
+          if (!success) {
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
+              .descriptionAndTooltip(JavaErrorBundle.message("illegal.escape.character.in.string.literal"))
+              .create();
           }
+        }
+        else if (text.contains("\\\n")) {
+          String message = JavaErrorBundle.message("illegal.escape.character.in.string.literal");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
       }
       else {
@@ -1282,16 +1295,14 @@ public final class HighlightUtil {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(p, p).endOfLine().descriptionAndTooltip(message).create();
           }
           else {
-            StringBuilder chars = new StringBuilder(text.length());
-            int[] offsets = new int[text.length() + 1];
-            boolean success = CodeInsightUtilCore.parseStringCharacters(text, chars, offsets);
+            StringBuilder chars = new StringBuilder(rawText.length());
+            int[] offsets = new int[rawText.length() + 1];
+            boolean success = CodeInsightUtilCore.parseStringCharacters(rawText, chars, offsets);
             if (!success) {
-              String message = JavaErrorBundle.message("illegal.escape.character.in.string.literal");
-              TextRange textRange = chars.length() < text.length() - 1 ? new TextRange(offsets[chars.length()], offsets[chars.length() + 1])
-                                                                       : expression.getTextRange();
               return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                .range(expression, textRange)
-                .descriptionAndTooltip(message).create();
+                .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
+                .descriptionAndTooltip(JavaErrorBundle.message("illegal.escape.character.in.string.literal"))
+                .create();
             }
             else {
               String message = JavaErrorBundle.message("text.block.new.line");
@@ -1336,6 +1347,17 @@ public final class HighlightUtil {
     }
 
     return null;
+  }
+
+  private static TextRange calculateErrorRange(String rawText, int start) {
+    int end;
+    if (rawText.charAt(start + 1) == 'u') {
+      end = start + 2;
+      while (rawText.charAt(end) == 'u') end++;
+      end += 4;
+    }
+    else end = start + 2;
+    return new TextRange(start, end);
   }
 
   private static boolean containsUnescaped(@NotNull String text, @NotNull String subText) {

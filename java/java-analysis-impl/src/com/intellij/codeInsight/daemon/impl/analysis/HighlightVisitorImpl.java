@@ -867,6 +867,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(checkFeature(expression, HighlightingFeature.PATTERNS_IN_SWITCH));
     }
 
+    if (!myHolder.hasErrorResults()) HighlightUtil.checkIllegalUnicodeEscapes(expression, myHolder);
     if (!myHolder.hasErrorResults()) {
       myHolder.add(HighlightUtil.checkLiteralExpressionParsingError(expression, myLanguageLevel,myFile));
     }
