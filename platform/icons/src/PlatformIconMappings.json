@@ -444,6 +444,32 @@
     "plugins/space": {
       "spaceToolWindow.svg": "icons/spaceToolWindow.svg"
     },
+    "progress": {
+      "pause.svg": [
+        "process/progressPause.svg",
+        "process/progressPauseSmall.svg"
+      ],
+      "pauseHovered.svg": [
+        "process/progressPauseHover.svg",
+        "process/progressPauseSmallHover.svg"
+      ],
+      "resume.svg": [
+        "process/progressResume.svg",
+        "process/progressResumeSmall.svg"
+      ],
+      "resumeHovered.svg": [
+        "process/progressResumeHover.svg",
+        "process/progressResumeSmallHover.svg"
+      ],
+      "stop.svg": [
+        "process/stop.svg",
+        "process/stopSmall.svg"
+      ],
+      "stopHovered.svg": [
+        "process/stopHovered.svg",
+        "process/stopSmallHovered.svg"
+      ]
+    },
     "run": {
       "attachToProcess.svg": "debugger/attachToProcess.svg",
       "debug.svg": "actions/startDebugger.svg",
