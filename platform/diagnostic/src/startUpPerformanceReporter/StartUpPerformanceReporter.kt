@@ -31,6 +31,7 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 class StartUpPerformanceReporter : InitProjectActivity, StartUpPerformanceService {
@@ -216,6 +217,12 @@ private fun doLogStats(projectName: String): StartUpPerformanceReporterValues {
   if (!classReport.isNullOrBlank()) {
     generateJarAccessLog(Path.of(FileUtil.expandUserHome(classReport)))
   }
+
+  for (instantEvent in instantEvents.filter { setOf("splash shown", "splash hidden").contains(it.name) }) {
+    w.publicStatMetrics.put("event:${instantEvent.name}",
+                            TimeUnit.NANOSECONDS.toMillis(instantEvent.start - StartUpMeasurer.getStartTime()).toInt())
+  }
+
   return StartUpPerformanceReporterValues(pluginCostMap, currentReport, w.publicStatMetrics)
 }
 

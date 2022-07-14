@@ -120,7 +120,6 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
       when (val itemName = item.name) {
         "splash initialization" -> {
           publicStatMetrics["splash"] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()
-          publicStatMetrics["splashShown"] = TimeUnit.NANOSECONDS.toMillis(item.end - StartUpMeasurer.getStartTime()).toInt()
         }
         "bootstrap", "app initialization" -> {
           publicStatMetrics[itemName] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()

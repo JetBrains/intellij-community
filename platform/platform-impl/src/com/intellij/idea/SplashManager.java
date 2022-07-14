@@ -182,6 +182,7 @@ public final class SplashManager {
       SPLASH_WINDOW = null;
     }
 
+    StartUpMeasurer.addInstantEvent("splash hidden");
     window.setVisible(false);
     window.dispose();
   }
