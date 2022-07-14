@@ -3,7 +3,6 @@ package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
@@ -169,6 +168,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
   private AnAction myResetFiltersAction;
   private boolean mySuggestRegexHintForEmptyResults = true;
   private OnePixelSplitter myPreviewSplitter;
+  private final BadgeIconSupplier filterIcon = new BadgeIconSupplier(AllIcons.General.Filter);
 
   FindPopupPanel(@NotNull FindUIHelper helper) {
     myHelper = helper;
@@ -422,10 +422,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
                        ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
         @Override
         public Icon getIcon() {
-          Icon icon = myShowFilterPopupAction.getTemplatePresentation().getIcon();
-          return mySelectedContextName.equals(FindInProjectUtil.getPresentableName(FindModel.SearchContext.ANY))
-                 ? icon
-                 : ExecutionUtil.getLiveIndicator(icon);
+          return filterIcon.getLiveIndicatorIcon(!mySelectedContextName.equals(FindInProjectUtil.getPresentableName(FindModel.SearchContext.ANY)));
         }
       };
     myShowFilterPopupAction.registerCustomShortcutSet(myShowFilterPopupAction.getShortcutSet(), this);
