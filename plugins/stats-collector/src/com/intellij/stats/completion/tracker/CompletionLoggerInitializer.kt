@@ -2,7 +2,6 @@
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.common.CurrentProjectInfo
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.storage.MutableLookupStorage
@@ -78,17 +77,13 @@ class CompletionLoggerInitializer : LookupTracker() {
     return LoggerPerformanceTracker(actionsTracker, storage.performanceTracker)
   }
 
-  private fun shouldLogElementFeatures(language: Language, project: Project): Boolean {
-    val experimentInfo = ExperimentStatus.getInstance().forLanguage(language)
-    return !experimentInfo.inExperiment ||
-           (experimentInfo.shouldCalculateFeatures && (experimentInfo.shouldLogElementFeatures ||
-                                                       CurrentProjectInfo.getInstance(project).isIdeaProject))
-  }
+  private fun shouldLogElementFeatures(language: Language, project: Project): Boolean =
+    ExperimentStatus.getInstance().forLanguage(language).shouldLogElementFeatures(project)
 
   private fun sessionShouldBeLogged(experimentInfo: ExperimentInfo, language: Language, project: Project): Boolean {
     if (CompletionStatsPolicy.isStatsLogDisabled(language) || !getPluginInfo(language::class.java).isSafeToReport()) return false
     val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode || experimentInfo.inExperiment || CurrentProjectInfo.getInstance(project).isIdeaProject) return true
+    if (application.isUnitTestMode || experimentInfo.shouldLogSessions(project)) return true
 
     if (!isCompletionLogsSendAllowed()) {
       return false
