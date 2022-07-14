@@ -149,6 +149,7 @@ data class IDETestContext(
       addSystemProperty("snapshots.path", paths.snapshotsDir)
     }
 
+  @Suppress("unused")
   fun collectMemorySnapshotOnFailedPluginUnload(): IDETestContext =
     addVMOptionsPatch {
       addSystemProperty("ide.plugins.snapshot.on.unload.fail", true)
@@ -333,22 +334,23 @@ data class IDETestContext(
     runTimeout: Duration = 10.minutes,
     storeClassReport: Boolean = false
   ): IDEStartResult {
-
-    return runIDE(
-      patchVMOptions = {
-        val warmupReports = IDEStartupReports(paths.reportsDir / "warmUp")
-        if (storeClassReport) {
-          this.enableStartupPerformanceLog(warmupReports).enableClassLoadingReport(
-            paths.reportsDir / "warmUp" / "class-report.txt").patchVMOptions()
-        }
-        else {
-          this
-        }
-      },
-      commands = testCase.commands.plus(commands),
-      runTimeout = runTimeout,
-      launchName = "warmUp"
-    )
+    val updatedContext = this.copy(testName = "${this.testName}/warmup")
+    val result = updatedContext.runIDE(
+        patchVMOptions = {
+          val warmupReports = IDEStartupReports(paths.reportsDir)
+          if (storeClassReport) {
+            this.enableStartupPerformanceLog(warmupReports).enableClassLoadingReport(
+              paths.reportsDir / "class-report.txt").patchVMOptions()
+          }
+          else {
+            this
+          }
+        },
+        commands = testCase.commands.plus(commands),
+        runTimeout = runTimeout
+      )
+    updatedContext.publishArtifact(this.paths.reportsDir)
+    return result
   }
 
   fun removeAndUnpackProject(): IDETestContext {
@@ -519,7 +521,7 @@ data class IDETestContext(
       IdeProductProvider.RM.productCode -> "rubymine.key"
       IdeProductProvider.WS.productCode -> "webstorm.key"
       IdeProductProvider.PS.productCode -> "phpstorm.key"
-      IdeProductProvider.GO.productCode-> "goland.key"
+      IdeProductProvider.GO.productCode -> "goland.key"
       IdeProductProvider.PY.productCode -> "pycharm.key"
       IdeProductProvider.DB.productCode -> "datagrip.key"
       else -> error("Setting license to the product ${this.ide.productCode} is not supported")
@@ -535,6 +537,7 @@ data class IDETestContext(
                       artifactPath: String = testName,
                       artifactName: String = source.fileName.toString()) = ciServer.publishArtifact(source, artifactPath, artifactName)
 
+  @Suppress("unused")
   fun withReportPublishing(isEnabled: Boolean): IDETestContext {
     isReportPublishingEnabled = isEnabled
     return this

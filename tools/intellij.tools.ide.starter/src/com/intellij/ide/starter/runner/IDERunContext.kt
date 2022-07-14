@@ -29,7 +29,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.concurrent.thread
 import kotlin.io.path.*
-import kotlin.streams.toList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -284,10 +283,6 @@ data class IDERunContext(
         ErrorReporter.reportErrorsAsFailedTests(logsDir / "script-errors", contextName)
         val (artifactPath, artifactName) = if (successfulRun) contextName to "logs" else "run/$contextName" to "crash"
         testContext.publishArtifact(logsDir, artifactPath, formatArtifactName(artifactName, testContext.testName))
-        val snapshotFiles = Files.list(testContext.paths.snapshotsDir).use { it.filter { it.isRegularFile() }.toList() }
-        if (snapshotFiles.isNotEmpty()) {
-          testContext.publishArtifact(testContext.paths.snapshotsDir, contextName, formatArtifactName("snapshots", testContext.testName))
-        }
         if (codeBuilder != null) {
           host.tearDown(testContext)
         }
