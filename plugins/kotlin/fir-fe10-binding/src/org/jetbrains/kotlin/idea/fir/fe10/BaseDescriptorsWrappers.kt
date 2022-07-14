@@ -190,6 +190,27 @@ class KtSymbolBasedAnnotationDescriptor(
 
 }
 
+/**
+ * Should be created only for this class receiver and extension receiver
+ *
+ * We are using custom equals/hashCode because in Fe10Binding all the descriptors are created multiple times,
+ * so identityEquals for ReceiverParameters as in ReceiverParameterDescriptorImpl works incorrectly
+ */
+class Fe10BindingReceiverParameterDescriptorImpl(
+    containingDeclaration: DeclarationDescriptor,
+    receiverValue: ReceiverValue,
+    annotations: Annotations
+): ReceiverParameterDescriptorImpl(containingDeclaration, receiverValue, annotations) {
+    override fun equals(other: Any?): Boolean {
+        if (other !is Fe10BindingReceiverParameterDescriptorImpl) return false
+        if (other.containingDeclaration != containingDeclaration) return false
+
+        return other.value.type == value.type
+    }
+
+    override fun hashCode(): Int = 31 * containingDeclaration.hashCode() + value.type.hashCode()
+}
+
 class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSymbol, context: Fe10WrapperContext) :
     KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, ClassDescriptor {
 
@@ -226,7 +247,7 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSy
     }
 
     override fun getThisAsReceiverParameter(): ReceiverParameterDescriptor =
-        ReceiverParameterDescriptorImpl(this, ImplicitClassReceiver(this), Annotations.EMPTY)
+        Fe10BindingReceiverParameterDescriptorImpl(this, ImplicitClassReceiver(this), Annotations.EMPTY)
 
     override fun getContextReceivers(): List<ReceiverParameterDescriptor> = implementationPlanned()
 
@@ -469,7 +490,7 @@ private fun <T> T.getExtensionReceiverParameter(
 ): ReceiverParameterDescriptor? where T : KtSymbolBasedDeclarationDescriptor, T : CallableDescriptor {
     val receiverType = ktSymbol.receiverType ?: return null
     val receiverValue = ExtensionReceiver(this, receiverType.toKotlinType(context), null)
-    return ReceiverParameterDescriptorImpl(this, receiverValue, receiverType.getDescriptorsAnnotations(context))
+    return Fe10BindingReceiverParameterDescriptorImpl(this, receiverValue, receiverType.getDescriptorsAnnotations(context))
 }
 
 private fun KtSymbolBasedDeclarationDescriptor.getTypeParameters(ktSymbol: KtSymbolWithTypeParameters) =

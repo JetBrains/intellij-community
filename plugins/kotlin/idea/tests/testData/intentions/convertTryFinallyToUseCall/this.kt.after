@@ -1,4 +1,3 @@
-// IGNORE_FE10_BINDING_BY_FIR
 // WITH_STDLIB
 import java.io.File
 import java.io.BufferedReader
