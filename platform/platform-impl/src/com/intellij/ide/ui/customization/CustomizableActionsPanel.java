@@ -548,7 +548,9 @@ public class CustomizableActionsPanel {
         textField.setBorder(null);
         textField.setEditable(false);
         textField.addBrowseExtension(() -> {
-          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("svg");
+          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+            .withFileFilter(file -> StringUtil.equalsIgnoreCase(file.getExtension(), "svg")
+                                    || StringUtil.equalsIgnoreCase(file.getExtension(), "png"));
           descriptor.setTitle(IdeBundle.message("title.browse.icon"));
           descriptor.setDescription(IdeBundle.message("prompt.browse.icon.for.selected.action"));
           VirtualFile iconFile = FileChooser.chooseFile(descriptor, null, null);
