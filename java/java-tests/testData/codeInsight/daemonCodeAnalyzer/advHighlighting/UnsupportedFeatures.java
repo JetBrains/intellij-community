@@ -23,6 +23,6 @@ class UnsupportedFeatures {
 
     String raw = <error descr="Text block literals are not supported at language level '1.4'">"""hi there"""</error>;
 
-    String spaceEscapeSeq = <error descr="'\s' and '\' escape sequences are not supported at language level '1.4'">"\s"</error>;
+    String spaceEscapeSeq = <error descr="'\s' escape sequences are not supported at language level '1.4'">"\s"</error>;
   }
 }
