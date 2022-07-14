@@ -79,12 +79,12 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       val deferredWindow = async {
         val frameManager = createFrameManager()
         deferredProjectFrameHelper.complete(frameManager.init(this@ProjectUiFrameAllocator))
-        val window = frameManager.getWindow()
-        // hide splash, otherwise ProgressDialogUI will be shown on top of splash
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          SplashManager.hide()
+        // executed in EDT only
+        lazy(LazyThreadSafetyMode.NONE) {
+          val window = frameManager.getWindow()
+          window.isVisible = true
+          window
         }
-        window
       }
 
       withModalProgressIndicator(owner = service<TaskSupport>().modalTaskOwner(deferredWindow), title = getProgressTitle()) {

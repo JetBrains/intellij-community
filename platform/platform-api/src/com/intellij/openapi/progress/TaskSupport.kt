@@ -20,7 +20,7 @@ interface TaskSupport {
 
   fun modalTaskOwner(component: Component): ModalTaskOwner
 
-  fun modalTaskOwner(window: Deferred<Window>): ModalTaskOwner
+  fun modalTaskOwner(window: Deferred<Lazy<Window>>): ModalTaskOwner
 
   suspend fun <T> withBackgroundProgressIndicatorInternal(
     project: Project,

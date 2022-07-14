@@ -34,7 +34,7 @@ internal class PlatformTaskSupport : TaskSupport {
 
   override fun modalTaskOwner(component: Component): ModalTaskOwner = ComponentModalTaskOwner(component)
 
-  override fun modalTaskOwner(window: Deferred<Window>): ModalTaskOwner = WindowModalTaskOwner(window)
+  override fun modalTaskOwner(window: Deferred<Lazy<Window>>): ModalTaskOwner = WindowModalTaskOwner(window)
 
   override fun modalTaskOwner(project: Project): ModalTaskOwner = ProjectModalTaskOwner(project)
 

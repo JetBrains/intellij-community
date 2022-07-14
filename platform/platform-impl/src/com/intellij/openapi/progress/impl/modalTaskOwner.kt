@@ -10,14 +10,14 @@ import java.awt.Window
 
 internal class ComponentModalTaskOwner(val component: Component) : ModalTaskOwner
 
-internal class WindowModalTaskOwner(val window: Deferred<Window>) : ModalTaskOwner
+internal class WindowModalTaskOwner(val window: Deferred<Lazy<Window>>) : ModalTaskOwner
 
 internal class ProjectModalTaskOwner(val project: Project) : ModalTaskOwner
 
 internal suspend fun ownerWindow(owner: ModalTaskOwner): Window? {
   return when (owner) {
     is ComponentModalTaskOwner -> ProgressWindow.calcParentWindow(owner.component, null)
-    is WindowModalTaskOwner -> owner.window.await()
+    is WindowModalTaskOwner -> owner.window.await().value
     is ProjectModalTaskOwner -> ProgressWindow.calcParentWindow(null, owner.project)
     else -> ProgressWindow.calcParentWindow(null, null) // guess
   }
