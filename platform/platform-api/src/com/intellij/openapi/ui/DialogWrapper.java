@@ -24,7 +24,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.*;
@@ -1754,7 +1754,7 @@ public abstract class DialogWrapper {
     boolean canRecord = canRecordDialogId();
     if (canRecord) {
       String dialogId = getClass().getName();
-      if (StringUtil.isNotEmpty(dialogId)) {
+      if (Strings.isNotEmpty(dialogId)) {
         FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(dialogId, exitCode, getClass());
       }
     }
@@ -1764,7 +1764,7 @@ public abstract class DialogWrapper {
     boolean canRecord = canRecordDialogId();
     if (canRecord) {
       String dialogId = getClass().getName();
-      if (StringUtil.isNotEmpty(dialogId)) {
+      if (Strings.isNotEmpty(dialogId)) {
         FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(dialogId, getClass());
       }
     }
@@ -1773,7 +1773,7 @@ public abstract class DialogWrapper {
   private void logClickOnHelpDialogEvent() {
     if (!canRecordDialogId()) return;
     String dialogId = getClass().getName();
-    if (StringUtil.isNotEmpty(dialogId)) {
+    if (Strings.isNotEmpty(dialogId)) {
       FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(dialogId, getClass());
     }
   }
@@ -1986,7 +1986,9 @@ public abstract class DialogWrapper {
   private void doUpdateErrorText(@NotNull ErrorText errorText, @NotNull List<ValidationInfo> infos) {
     HtmlBuilder htmlBuilder = new HtmlBuilder();
     for (ValidationInfo info : infos) {
-      if (info.component != null || StringUtil.isEmptyOrSpaces(info.message)) continue;
+      if (info.component != null || Strings.isEmptyOrSpaces(info.message)) {
+        continue;
+      }
 
       Color color = info.warning ? MessageType.WARNING.getTitleForeground() : UIUtil.getErrorForeground();
       htmlBuilder

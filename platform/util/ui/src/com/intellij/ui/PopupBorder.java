@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.ui.JBInsets;
@@ -26,14 +26,12 @@ public interface PopupBorder extends Border {
   final class Factory {
     private Factory() { }
 
-    @NotNull
-    public static PopupBorder createEmpty() {
+    public static @NotNull PopupBorder createEmpty() {
       return new BaseBorder();
     }
 
-    @NotNull
-    public static PopupBorder create(boolean active, boolean windowWithShadow) {
-      boolean visible = !(SystemInfo.isMac && windowWithShadow) || UIManager.getBoolean("Popup.paintBorder") == Boolean.TRUE;
+    public static @NotNull PopupBorder create(boolean active, boolean windowWithShadow) {
+      boolean visible = !(SystemInfoRt.isMac && windowWithShadow) || UIManager.getBoolean("Popup.paintBorder") == Boolean.TRUE;
       PopupBorder border = new BaseBorder(visible, JBUI.CurrentTheme.Popup.borderColor(true), JBUI.CurrentTheme.Popup.borderColor(false));
       border.setActive(active);
       return border;
