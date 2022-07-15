@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.DescriptionEditorPane;
 import com.intellij.profile.codeInspection.ui.DescriptionEditorPaneKt;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SettingsUtil;
@@ -48,22 +49,22 @@ public class IntentionDescriptionPanel {
   private final List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<>();
   @NonNls private static final String BEFORE_TEMPLATE = "before.java.template";
   @NonNls private static final String AFTER_TEMPLATE = "after.java.template";
+  private static final float DIVIDER_PROPORTION_DEFAULT = .25f;
 
   public IntentionDescriptionPanel() {
-    myPanel = new JPanel(new GridBagLayout());
+    myDescriptionBrowser = new DescriptionEditorPane();
+    final var descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser);
+    descriptionScrollPane.setBorder(null);
+
+    final JPanel examplePanel = new JPanel(new GridBagLayout());
     final var constraint = new GridBag()
       .setDefaultInsets(UIUtil.LARGE_VGAP, 0, 0, 0)
       .setDefaultFill(GridBagConstraints.BOTH)
       .setDefaultWeightY(0.5)
       .setDefaultWeightX(1.0);
 
-    myDescriptionBrowser = new DescriptionEditorPane();
-    final var descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser);
-    descriptionScrollPane.setBorder(null);
-    myPanel.add(descriptionScrollPane, constraint.nextLine().weighty(1.0).insetTop(0));
-
     myBeforePanel = new JPanel();
-    myPanel.add(PanelFactory.panel(myBeforePanel)
+    examplePanel.add(PanelFactory.panel(myBeforePanel)
                   .withLabel(CodeInsightBundle.message("border.title.before"))
                   .moveLabelOnTop()
                   .resizeX(true)
@@ -73,7 +74,7 @@ public class IntentionDescriptionPanel {
     );
 
     myAfterPanel = new JPanel();
-    myPanel.add(PanelFactory.panel(myAfterPanel)
+    examplePanel.add(PanelFactory.panel(myAfterPanel)
                   .withLabel(CodeInsightBundle.message("border.title.after"))
                   .moveLabelOnTop()
                   .resizeX(true)
@@ -81,6 +82,13 @@ public class IntentionDescriptionPanel {
                   .createPanel(),
                 constraint.nextLine()
     );
+
+    final OnePixelSplitter mySplitter = new OnePixelSplitter(true,
+                                                             "IntentionDescriptionPanel.VERTICAL_DIVIDER_PROPORTION",
+                                                             DIVIDER_PROPORTION_DEFAULT);
+    mySplitter.setFirstComponent(descriptionScrollPane);
+    mySplitter.setSecondComponent(examplePanel);
+    myPanel = mySplitter;
 
     myDescriptionBrowser.addHyperlinkListener(e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
