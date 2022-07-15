@@ -10,6 +10,7 @@ import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
@@ -24,6 +25,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.IOException
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.function.Supplier
@@ -130,6 +132,7 @@ internal class StorageJpsConfigurationReader(private val project: Project,
                                              private val configLocation: JpsProjectConfigLocation) : JpsFileContentReaderWithCache {
   @Volatile
   private var fileContentCachingReader: CachingJpsFileContentReader? = null
+  private val externalConfigurationDir = lazy { project.getExternalConfigurationDir() }
 
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
@@ -140,6 +143,11 @@ internal class StorageJpsConfigurationReader(private val project: Project,
       //this is currently used for loading Eclipse project configuration from .classpath file
       val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl)
       return file?.inputStream?.use { JDOMUtil.load(it) }
+    }
+    if (isExternalMiscFile(filePath)) {
+      // this is a workaround to make working scenario when the whole .idea is moved to external configuration dir
+      // see com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.isExternalStorageEnabled
+      return getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
     }
     if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
       //todo fetch data from ModuleStore (https://jetbrains.team/p/wm/issues/51)
@@ -161,6 +169,11 @@ internal class StorageJpsConfigurationReader(private val project: Project,
         stateMap.getElement(componentName)
       }
     }
+  }
+
+  private fun isExternalMiscFile(filePath: String): Boolean {
+    return PathUtil.getFileName(filePath) == "misc.xml" &&
+           FileUtil.isAncestor(externalConfigurationDir.value, Path.of(filePath), false)
   }
 
   private fun getCachingReader(): CachingJpsFileContentReader {
