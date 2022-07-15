@@ -2,6 +2,7 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,6 +36,12 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
   @Override
   public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("create.null.branch.fix.family.name");
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiSwitchBlock block = myBlock.getElement();
+    return block == null ? null : new CreateNullBranchFix(PsiTreeUtil.findSameElementInCopy(block, target));
   }
 
   @Override
