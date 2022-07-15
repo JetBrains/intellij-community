@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -10,12 +10,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.junit.Assert;
 
 import java.util.Set;
 
 @TestOnly
 public final class SdkLeakTracker {
+
   private final Sdk @NotNull [] oldSdks;
 
   public SdkLeakTracker() {
@@ -48,7 +48,7 @@ public final class SdkLeakTracker {
                                    withTrace.second);
         }
         else {
-          Assert.fail(message);
+          throw new AssertionError(message);
         }
       }
     }
@@ -59,7 +59,7 @@ public final class SdkLeakTracker {
     }
   }
 
-  private Pair<Sdk, Throwable> findSdkWithRegistrationTrace(Set<Sdk> sdks) {
+  private static Pair<Sdk, Throwable> findSdkWithRegistrationTrace(Set<Sdk> sdks) {
     for (Sdk sdk : sdks) {
       if (sdk instanceof Disposable) {
         Throwable trace = Disposer.getRegistrationTrace((Disposable)sdk);
