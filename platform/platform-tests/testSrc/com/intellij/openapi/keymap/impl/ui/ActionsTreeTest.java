@@ -13,16 +13,15 @@ import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.ApplicationExtension;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.junit5.DynamicTests;
 import com.intellij.testFramework.junit5.NamedFailure;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.TestDisposable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -32,6 +31,7 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@TestApplication
 public class ActionsTreeTest {
   private static final Logger LOG = Logger.getInstance(ActionsTreeTest.class);
   private static final String ACTION_WITHOUT_TEXT_AND_DESCRIPTION = "DummyWithoutTextAndDescription";
@@ -60,9 +60,6 @@ public class ActionsTreeTest {
   private AnAction myActionWithFixedShortcuts;
 
   private ActionsTree myActionsTree;
-
-  @RegisterExtension
-  static ApplicationExtension ourApplicationExtension = new ApplicationExtension();
 
   @BeforeEach
   void setUp(@TestDisposable Disposable testDisposable) {

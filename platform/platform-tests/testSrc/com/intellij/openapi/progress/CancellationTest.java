@@ -2,17 +2,14 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.testFramework.ApplicationExtension;
+import com.intellij.testFramework.junit5.TestApplication;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.swing.*;
 
+@TestApplication
 public abstract class CancellationTest {
-
-  @RegisterExtension
-  public static final ApplicationExtension applicationExtension = new ApplicationExtension();
 
   @BeforeAll
   public static void initProgressManager() {

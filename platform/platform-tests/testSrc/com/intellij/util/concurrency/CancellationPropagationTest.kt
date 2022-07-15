@@ -13,8 +13,8 @@ import com.intellij.openapi.application.impl.withModality
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
-import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
@@ -37,13 +37,10 @@ import kotlin.coroutines.coroutineContext
 /**
  * Rough cancellation equivalents with respect to structured concurrency are provided in comments.
  */
+@TestApplication
 class CancellationPropagationTest {
 
   companion object {
-
-    @RegisterExtension
-    @JvmField
-    val applicationExtension = ApplicationExtension()
 
     @RegisterExtension
     @JvmField

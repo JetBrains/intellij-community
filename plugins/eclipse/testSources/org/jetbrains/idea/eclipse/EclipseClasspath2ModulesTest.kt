@@ -2,13 +2,14 @@
 package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.rules.TestNameExtension
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.io.path.div
 
+@TestApplication
 class EclipseClasspath2ModulesTest {
   @JvmField
   @RegisterExtension
@@ -51,12 +52,5 @@ class EclipseClasspath2ModulesTest {
       "test" to "$workspacePath/$projectName/$projectName",
       "ws-internals" to "$workspacePath/ws-internals/ws-internals"
     ))
-  }
-
-
-  companion object {
-    @JvmField
-    @RegisterExtension
-    val appRule = ApplicationExtension()
   }
 }

@@ -6,8 +6,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.progress.timeoutRunBlocking
-import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.AfterEach
@@ -15,16 +15,9 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.RegisterExtension
 
+@TestApplication
 class EdtCoroutineDispatcherTest {
-
-  companion object {
-
-    @RegisterExtension
-    @JvmField
-    val applicationExtension = ApplicationExtension()
-  }
 
   @AfterEach
   fun cleanEDTQueue() {

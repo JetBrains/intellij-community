@@ -5,25 +5,18 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.progress.timeoutRunBlocking
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.extension.RegisterExtension
 import javax.swing.SwingUtilities
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.resume
 
+@TestApplication
 class CoroutineLaterInvocatorTest {
-
-  companion object {
-
-    @RegisterExtension
-    @JvmField
-    val applicationExtension = ApplicationExtension()
-  }
 
   @BeforeEach
   @AfterEach

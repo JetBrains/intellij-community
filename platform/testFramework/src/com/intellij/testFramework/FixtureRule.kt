@@ -78,6 +78,10 @@ open class ApplicationRule : TestRule {
   }
 }
 
+@ScheduledForRemoval
+@Deprecated(
+  message = "Use com.intellij.testFramework.junit5.TestApplication annotation",
+)
 open class ApplicationExtension : BeforeAllCallback, AfterAllCallback {
   companion object {
     init {

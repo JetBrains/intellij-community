@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.openapi.progress.timeoutWaitUp
 import com.intellij.openapi.util.Conditions
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertSame
@@ -23,13 +23,10 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
+@TestApplication
 class ThreadContextPropagationTest {
 
   companion object {
-
-    @RegisterExtension
-    @JvmField
-    val applicationExtension = ApplicationExtension()
 
     @RegisterExtension
     @JvmField

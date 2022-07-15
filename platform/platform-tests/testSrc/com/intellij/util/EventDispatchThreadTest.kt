@@ -3,7 +3,7 @@ package com.intellij.util
 
 import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.openapi.progress.timeoutWaitUp
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineStart
@@ -11,17 +11,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 import javax.swing.SwingUtilities
 
+@TestApplication
 class EventDispatchThreadTest {
-
-  companion object {
-
-    @RegisterExtension
-    @JvmField
-    val applicationExtension = ApplicationExtension()
-  }
 
   @Test
   fun `EDT thread interrupted flag is cleared`(): Unit = timeoutRunBlocking {
