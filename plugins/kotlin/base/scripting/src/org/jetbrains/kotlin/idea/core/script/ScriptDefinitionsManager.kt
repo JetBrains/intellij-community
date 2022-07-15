@@ -467,14 +467,13 @@ class BundledKotlinScriptDependenciesResolver(private val project: Project) : De
 
         val javaHome = getScriptSDK(project, virtualFile)
 
-        var classpath = listOf(
-            KotlinArtifacts.kotlinReflect,
-            KotlinArtifacts.kotlinStdlib,
-            KotlinArtifacts.kotlinScriptRuntime
-        )
-
-        if (ScratchFileService.getInstance().getRootType(virtualFile) is IdeConsoleRootType) {
-            classpath = scriptCompilationClasspathFromContextOrStdlib(wholeClasspath = true) + classpath
+        val classpath = buildList {
+            if (ScratchFileService.getInstance().getRootType(virtualFile) is IdeConsoleRootType) {
+                addAll(scriptCompilationClasspathFromContextOrStdlib(wholeClasspath = true))
+            }
+            add(KotlinArtifacts.kotlinReflect)
+            add(KotlinArtifacts.kotlinStdlib)
+            add(KotlinArtifacts.kotlinScriptRuntime)
         }
 
         return ScriptDependencies(javaHome = javaHome?.let(::File), classpath = classpath).asSuccess()
