@@ -267,7 +267,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
         if (!(file instanceof GroovyFileBaseImpl) || !(reference instanceof GrReferenceExpressionImpl)) {
           return;
         }
-        CompleteReferenceExpression.processSpecificPlace(matcher, (GrReferenceExpressionImpl)reference, parameters, (processor) -> ((GroovyFileBaseImpl)file).processImports(processor, ResolveUtilKt.initialState(true), reference), elementConsumer);
+        CompleteReferenceExpression.processSpecificPlace(matcher, (GrReferenceExpressionImpl)reference, parameters, (processor) -> ((GroovyFileBaseImpl)file).processComplexImports(processor, ResolveUtilKt.initialState(true), reference), elementConsumer);
         for (LookupElement element : zeroPriority) {
           consumer.consume(element);
         }
