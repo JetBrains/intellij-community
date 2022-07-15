@@ -24,8 +24,6 @@
       <option name="SOFT_WRAP_SIGN_COLOR" value="c0c0c0"/>
       <option name="TEARLINE_COLOR" value="D0D0D0"/>
       <option name="SELECTED_TEARLINE_COLOR" value="9C9C9C"/>
-      <option name="SEPARATOR_ABOVE_COLOR" value=""/>
-      <option name="SEPARATOR_BELOW_COLOR" value="e4e4e4"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
       <option name="VISUAL_INDENT_GUIDE" value="eeeeee"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="add9c7"/>
@@ -1324,8 +1322,6 @@
       <option name="RIGHT_MARGIN_COLOR" value="4d4d4d" />
       <option name="SELECTED_INDENT_GUIDE" value="505050" />
       <option name="SELECTED_TEARLINE_COLOR" value="787878" />
-      <option name="SEPARATOR_ABOVE_COLOR" value=""/>
-      <option name="SEPARATOR_BELOW_COLOR" value="393a3c"/>
       <option name="SELECTION_BACKGROUND" value="214283" />
       <option name="SELECTION_FOREGROUND" value="" />
       <option name="TEARLINE_COLOR" value="555555" />
