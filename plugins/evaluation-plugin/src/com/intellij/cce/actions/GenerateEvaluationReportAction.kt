@@ -5,10 +5,7 @@ import com.intellij.cce.evaluation.EvaluationProcess
 import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -24,8 +21,11 @@ class GenerateEvaluationReportAction : AnAction() {
     process.startAsync(outputWorkspace)
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
-    if (e.place != ActionPlaces.ACTION_SEARCH && ApplicationInfo.getInstance().build.isSnapshot) {
+    if (e.project == null
+        || e.place != ActionPlaces.ACTION_SEARCH && ApplicationInfo.getInstance().build.isSnapshot) {
       e.presentation.isEnabledAndVisible = false
       return
     }
