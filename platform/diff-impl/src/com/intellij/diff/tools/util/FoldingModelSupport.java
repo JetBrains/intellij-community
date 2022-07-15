@@ -608,12 +608,7 @@ public class FoldingModelSupport {
       FoldedBlock block = getSelectedBlock(event);
       if (block == null) return;
 
-      runBatchOperation(() -> {
-        for (int i = 0; i < myCount; i++) {
-          FoldRegion region = block.getRegion(i);
-          if (region != null) region.setExpanded(true);
-        }
-      });
+      block.setExpanded(true);
     }
 
     @Nullable
@@ -1016,6 +1011,15 @@ public class FoldingModelSupport {
       return myHoveredBlock == this;
     }
 
+    public void setExpanded(boolean value) {
+      runBatchOperation(() -> {
+        for (int i = 0; i < myCount; i++) {
+          FoldRegion region = getRegion(i);
+          if (region != null) region.setExpanded(value);
+        }
+      });
+    }
+
     @NotNull
     private BooleanGetter getHighlighterCondition(@NotNull FoldedGroup group, final int index) {
       return () -> {
@@ -1128,6 +1132,11 @@ public class FoldingModelSupport {
       public @Nullable String getDescription() {
         LazyDescription description = myDescriptions[myIndex];
         return description != null ? description.compute() : null;
+      }
+
+      @Override
+      public void setExpanded(boolean value) {
+        FoldedBlock.this.setExpanded(value);
       }
     }
   }

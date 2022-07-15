@@ -2,6 +2,7 @@
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -12,6 +13,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
 import com.intellij.openapi.util.registry.Registry;
@@ -26,11 +28,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
-public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSeparatorRenderer {
+public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSeparatorRenderer, ActiveGutterRenderer {
   private static Object[] ourCachedImageKey = null;
   private static BufferedImage outCachedImage = null;
 
@@ -135,6 +138,21 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     boolean isMirrored = DiffUtil.isMirrored(myEditor);
     int shiftX = getStartPhase(lineHeight, isMirrored);
     draw(g, shiftX, y, lineHeight, isHovered, myEditor.getColorsScheme());
+  }
+
+  @Override
+  public boolean canDoAction(@NotNull Editor editor, @NotNull MouseEvent e) {
+    return myPresentation.isVisible() && myPresentation.isHovered();
+  }
+
+  @Override
+  public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
+    myPresentation.setExpanded(true);
+  }
+
+  @Override
+  public @NotNull String getAccessibleName() {
+    return DiffBundle.message("diff.unchanged.lines.folding.marker.renderer");
   }
 
   /*
@@ -349,5 +367,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
 
     @Nullable
     String getDescription();
+
+    void setExpanded(boolean value);
   }
 }

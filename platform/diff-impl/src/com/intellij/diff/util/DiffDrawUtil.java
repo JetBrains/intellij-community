@@ -868,5 +868,9 @@ public final class DiffDrawUtil {
     public @Nullable String getDescription() {
       return null;
     }
+
+    @Override
+    public void setExpanded(boolean value) {
+    }
   }
 }
