@@ -10,12 +10,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 import org.jetbrains.annotations.NotNull;
 
@@ -95,10 +94,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
       () -> {
         Application app = ApplicationManager.getApplication();
         if (app != null) {
-          ManagingFS managingFS = app.getServiceIfCreated(ManagingFS.class);
-          if (managingFS != null) {
-            ((PersistentFS)managingFS).clearIdCache();
-          }
+          TestApplicationKt.clearIdCache(app);
         }
       },
       () -> HeavyPlatformTestCase.cleanupApplicationCaches(project)

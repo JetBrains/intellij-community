@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean.Companion.addKeysFromPlugins
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.psi.impl.DocumentCommitProcessor
@@ -130,6 +131,13 @@ private inline fun <reified T : Any> Application.serviceIfCreated(): T? = this.g
 @Internal
 fun Application.clearEncodingManagerDocumentQueue() {
   (serviceIfCreated<EncodingManager>() as? EncodingManagerImpl)?.clearDocumentQueue()
+}
+
+@TestOnly
+@Internal
+fun Application.clearIdCache() {
+  val managingFS = serviceIfCreated<ManagingFS>() ?: return
+  (managingFS as PersistentFS).clearIdCache()
 }
 
 @TestOnly
