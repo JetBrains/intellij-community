@@ -259,8 +259,7 @@ public final class Main {
     stream.println(title);
     stream.println(message);
 
-    boolean headless = !hasGraphics || isCommandLine() || GraphicsEnvironment.isHeadless() || isRemoteDevHost;
-    if (headless) return;
+    if (!hasGraphics || isCommandLine() || GraphicsEnvironment.isHeadless() || isRemoteDevHost) return;
 
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
