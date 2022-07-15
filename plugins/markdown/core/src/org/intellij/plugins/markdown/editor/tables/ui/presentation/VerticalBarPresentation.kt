@@ -51,8 +51,8 @@ internal class VerticalBarPresentation(
   private var boundsState = initialState
 
   init {
-    invokeLater(ModalityState.stateForComponent(editor.contentComponent)) {
-      PsiDocumentManager.getInstance(row.project).performForCommittedDocument(editor.document) {
+    PsiDocumentManager.getInstance(row.project).performForCommittedDocument(editor.document) {
+      invokeLater(ModalityState.stateForComponent(editor.contentComponent)) {
         if (shouldShowInlay()) {
           val calculated = BoundsState(barWidth, editor.lineHeight)
           boundsState = calculated
