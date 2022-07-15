@@ -8,30 +8,16 @@ import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.SimpleModificationTracker
 import kotlinx.serialization.Serializable
-import java.util.concurrent.atomic.AtomicReference
 
 @Service(Service.Level.APP)
 @State(name = "PluginFeatureService", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-class PluginFeatureService : PersistentStateComponentWithModificationTracker<PluginFeatureService.State> {
+class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureService.State>(State()) {
 
   companion object {
     @JvmStatic
     val instance: PluginFeatureService
       get() = ApplicationManager.getApplication().getService(PluginFeatureService::class.java)
-  }
-
-  private val tracker = SimpleModificationTracker()
-  private var state = AtomicReference(State())
-
-  override fun getState(): State = state.get()
-
-  override fun loadState(newState: State) {
-    this.state.updateAndGet { oldState ->
-      tracker.incModificationCount()
-      State(oldState.features + newState.features)
-    }
   }
 
   @Serializable
@@ -43,8 +29,6 @@ class PluginFeatureService : PersistentStateComponentWithModificationTracker<Plu
   data class State(
     val features: Map<String, FeaturePluginList> = emptyMap(),
   )
-
-  override fun getStateModificationCount() = tracker.modificationCount
 
   fun <T> collectFeatureMapping(
     featureType: String,
@@ -64,7 +48,9 @@ class PluginFeatureService : PersistentStateComponentWithModificationTracker<Plu
       featureMap.put(idMapping(ext), pluginData)
     }
 
-    loadState(State(mapOf(featureType to FeaturePluginList(featureMap))))
+    updateState { oldState ->
+      State(oldState.features + (featureType to FeaturePluginList(featureMap)))
+    }
   }
 
   fun getPluginForFeature(
@@ -72,5 +58,5 @@ class PluginFeatureService : PersistentStateComponentWithModificationTracker<Plu
     implementationName: String,
   ): FeaturePluginData? = featureMap(featureType).get(implementationName)
 
-  private fun featureMap(featureType: String) = getState().features.get(featureType)?.featureMap ?: emptyMap()
+  private fun featureMap(featureType: String) = state.features.get(featureType)?.featureMap ?: emptyMap()
 }

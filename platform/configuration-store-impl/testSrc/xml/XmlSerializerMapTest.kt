@@ -5,10 +5,7 @@ package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.deserialize
 import com.intellij.ide.plugins.PluginFeatureService
-import com.intellij.ide.plugins.advertiser.FeaturePluginData
-import com.intellij.ide.plugins.advertiser.PluginData
-import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
-import com.intellij.ide.plugins.advertiser.PluginFeatureMap
+import com.intellij.ide.plugins.advertiser.*
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.xmlb.annotations.Property
@@ -293,7 +290,7 @@ internal class XmlSerializerMapTest {
   @Test
   fun `knownExtensions serialization`() {
     val pluginData = PluginData("foo", "Foo")
-    val extensions = PluginFeatureMap(mapOf("foo" to hashSetOf(pluginData)))
+    val extensions = PluginFeatureMap(mapOf("foo" to PluginDataSet(setOf(pluginData))))
 
     testSerializer(
       """
