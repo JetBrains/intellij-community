@@ -97,24 +97,4 @@ class KotlinDebuggerCaches(project: Project) {
     }
 
     data class Parameter(val callText: String, val type: KotlinType, val value: Value? = null, val error: EvaluateException? = null)
-
-    class ComputedClassNames(val classNames: List<String>, val shouldBeCached: Boolean) {
-        @Suppress("FunctionName")
-        companion object {
-            val EMPTY = Cached(emptyList())
-
-            fun Cached(classNames: List<String>) = ComputedClassNames(classNames, true)
-            fun Cached(className: String) = ComputedClassNames(Collections.singletonList(className), true)
-
-            fun NonCached(classNames: List<String>) = ComputedClassNames(classNames, false)
-        }
-
-        fun isEmpty() = classNames.isEmpty()
-
-        fun distinct() = ComputedClassNames(classNames.distinct(), shouldBeCached)
-
-        operator fun plus(other: ComputedClassNames) = ComputedClassNames(
-            classNames + other.classNames, shouldBeCached && other.shouldBeCached
-        )
-    }
 }

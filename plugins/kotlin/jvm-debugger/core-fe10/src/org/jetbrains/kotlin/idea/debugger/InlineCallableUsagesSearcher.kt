@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.debugger.ClassNameProvider.Companion.getRelevantElement
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -35,10 +34,10 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
     fun findInlinedCalls(
         declaration: KtDeclaration,
         alreadyVisited: Set<PsiElement>,
-        transformer: (PsiElement, Set<PsiElement>) -> ComputedClassNames
-    ): ComputedClassNames {
+        transformer: (PsiElement, Set<PsiElement>) -> List<String>
+    ): List<String> {
         if (!checkIfInline(declaration)) {
-            return ComputedClassNames.EMPTY
+            return emptyList()
         } else {
             val searchResult = hashSetOf<PsiElement>()
             val declarationName = runReadAction { declaration.name ?: "<error>" }
@@ -80,8 +79,7 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
                 add(declaration)
             }
 
-            val results = searchResult.map { transformer(it, newAlreadyVisited) }
-            return ComputedClassNames(results.flatMap { it.classNames }, shouldBeCached = results.all { it.shouldBeCached })
+            return searchResult.map { transformer(it, newAlreadyVisited) }.flatten()
         }
     }
 

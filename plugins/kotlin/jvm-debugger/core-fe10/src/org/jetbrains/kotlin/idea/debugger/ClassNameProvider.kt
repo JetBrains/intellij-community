@@ -11,20 +11,14 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
-import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames.Companion.Cached
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames.Companion.EMPTY
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames.Companion.NonCached
+import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
-import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 class ClassNameProvider(val project: Project, val searchScope: GlobalSearchScope, val configuration: Configuration) {
@@ -65,149 +59,102 @@ class ClassNameProvider(val project: Project, val searchScope: GlobalSearchScope
 
     @RequiresReadLock
     fun getCandidates(position: SourcePosition): List<String> {
-        val relevantElement = position.elementAt?.let { getRelevantElement(it) }
-
-        val regularClassNames = if (relevantElement != null) getCandidatesForElementCached(relevantElement) else emptyList()
-        val lambdaClassNames = getLambdasAtLineIfAny(position).flatMap { getCandidatesForElementCached(it) }
+        val regularClassNames = position.elementAt?.let(::getCandidatesForElement) ?: emptyList()
+        val lambdaClassNames = getLambdasAtLineIfAny(position).flatMap { getCandidatesForElement(it) }
         return (regularClassNames + lambdaClassNames).distinct()
     }
 
-    private fun getCandidatesForElementCached(element: PsiElement): List<String> {
+    fun getCandidatesForElement(element: PsiElement): List<String> {
         val cache = CachedValuesManager.getCachedValue(element) {
             val value = Collections.synchronizedMap(HashMap<Configuration, List<String>>())
             CachedValueProvider.Result(value, PsiModificationTracker.MODIFICATION_COUNT)
         }
 
         return cache.computeIfAbsent(configuration) {
-            getOuterClassNamesForElement(element, emptySet()).classNames
+            computeCandidatesForElement(element, emptySet())
         }
     }
 
-    @PublishedApi
-    @Suppress("NON_TAIL_RECURSIVE_CALL")
-    internal tailrec fun getOuterClassNamesForElement(element: PsiElement?, alreadyVisited: Set<PsiElement>): ComputedClassNames {
+    private fun computeCandidatesForElement(element: PsiElement, alreadyVisited: Set<PsiElement>): List<String> {
         // 'alreadyVisited' is used in inline callable searcher to prevent infinite recursion.
         // In normal cases we only go from leaves to topmost parents upwards.
 
-        if (element == null) return EMPTY
+        val result = ArrayList<String>()
 
-        return when (element) {
-            is KtScript -> {
-                ClassNameCalculator.getClassName(element)?.let { return Cached(it) }
-                return EMPTY
-            }
-            is KtFile -> {
-                val fileClassName = JvmFileClassUtil.getFileClassInternalName(element).toJdiName()
-                Cached(fileClassName)
-            }
-            is KtClassOrObject -> {
-                val enclosingElementForLocal = KtPsiUtil.getEnclosingElementForLocalDeclaration(element)
-                when {
-                    enclosingElementForLocal != null ->
-                        // A local class
-                        getOuterClassNamesForElement(enclosingElementForLocal, alreadyVisited)
-                    element.isObjectLiteral() ->
-                        getOuterClassNamesForElement(element.relevantParent, alreadyVisited)
-                    else -> {
-                        // Guaranteed to be non-local class or object
-                        if (element is KtClass && element.isInterface()) {
-                            val name = ClassNameCalculator.getClassName(element)
-
-                            if (name != null)
-                                Cached(listOf(name, name + JvmAbi.DEFAULT_IMPLS_SUFFIX))
-                            else
-                                EMPTY
-                        } else {
-                            ClassNameCalculator.getClassName(element)?.let { Cached(it) } ?: EMPTY
-                        }
-                    }
-                }
-            }
-            is KtProperty -> {
-                val nonInlineClasses = if (isTopLevelInFileOrScript(element)) {
-                    // Top level property
-                    getOuterClassNamesForElement(element.relevantParent, alreadyVisited)
-                } else {
-                    val enclosingElementForLocal = KtPsiUtil.getEnclosingElementForLocalDeclaration(element)
-                    if (enclosingElementForLocal != null) {
-                        // Local class
-                        getOuterClassNamesForElement(enclosingElementForLocal, alreadyVisited)
-                    } else {
-                        val containingClassOrFile = PsiTreeUtil.getParentOfType(element, KtFile::class.java, KtClassOrObject::class.java)
-
-                        if (containingClassOrFile is KtObjectDeclaration && containingClassOrFile.isCompanion()) {
-                            // Properties from the companion object can be placed in the companion object's containing class
-                            (getOuterClassNamesForElement(containingClassOrFile.relevantParent, alreadyVisited) +
-                                    getOuterClassNamesForElement(containingClassOrFile, alreadyVisited)).distinct()
-                        } else if (containingClassOrFile != null) {
-                            getOuterClassNamesForElement(containingClassOrFile, alreadyVisited)
-                        } else {
-                            getOuterClassNamesForElement(element.relevantParent, alreadyVisited)
-                        }
-                    }
-                }
-
-                if (configuration.findInlineUseSites && element.hasInlineAccessors) {
-                    val inlinedCalls = inlineUsagesSearcher.findInlinedCalls(element, alreadyVisited) { el, newAlreadyVisited ->
-                        this.getOuterClassNamesForElement(el, newAlreadyVisited)
-                    }
-                    nonInlineClasses + inlinedCalls
-                } else {
-                    return NonCached(nonInlineClasses.classNames)
-                }
-            }
-            is KtNamedFunction -> {
-                val classNamesOfContainingDeclaration = getOuterClassNamesForElement(element.relevantParent, alreadyVisited)
-
-                var nonInlineClasses: ComputedClassNames = classNamesOfContainingDeclaration
-
-                if (element.name == null || element.isLocal) {
-                    val nameOfAnonymousClass = ClassNameCalculator.getClassName(element)
-                    if (nameOfAnonymousClass != null) {
-                        nonInlineClasses += Cached(nameOfAnonymousClass)
-                    }
-                }
-
-                if (!configuration.findInlineUseSites || !element.hasModifier(KtTokens.INLINE_KEYWORD)) {
-                    return NonCached(nonInlineClasses.classNames)
-                }
-
-                val inlineCallSiteClasses = inlineUsagesSearcher.findInlinedCalls(element, alreadyVisited) { el, newAlreadyVisited ->
-                    this.getOuterClassNamesForElement(el, newAlreadyVisited)
-                }
-
-                nonInlineClasses + inlineCallSiteClasses
-            }
-            is KtAnonymousInitializer -> {
-                val initializerOwner = element.containingDeclaration
-
-                if (initializerOwner is KtObjectDeclaration && initializerOwner.isCompanion()) {
-                    val containingClass = initializerOwner.containingClassOrObject
-                    return getOuterClassNamesForElement(containingClass, alreadyVisited)
-                }
-
-                getOuterClassNamesForElement(initializerOwner, alreadyVisited)
-            }
-            is KtCallableReferenceExpression ->
-                getNamesForLambda(element, alreadyVisited)
-            is KtFunctionLiteral ->
-                getNamesForLambda(element, alreadyVisited)
-            else ->
-                getOuterClassNamesForElement(element.relevantParent, alreadyVisited)
-        }
-    }
-
-    private fun getNamesForLambda(element: KtElement, alreadyVisited: Set<PsiElement>): ComputedClassNames {
-        val name = ClassNameCalculator.getClassName(element) ?: return EMPTY
-        val names = Cached(name)
-
-        if (!names.isEmpty() && !configuration.alwaysReturnLambdaParentClass) {
-            if (element !is KtFunctionLiteral || !AnalysisApiBasedInlineUtil.isInlinedArgument(element, true)) {
-                return names
-            }
+        fun registerClassName(element: KtElement): String? {
+            return ClassNameCalculator.getClassName(element)?.also { result += it }
         }
 
-        return names + getOuterClassNamesForElement(element.relevantParent, alreadyVisited)
+        var current = element
+
+        while (true) {
+            when (current) {
+                is KtScript, is KtFile -> {
+                    registerClassName(current as KtElement)
+                    break
+                }
+                is KtClassOrObject -> {
+                    val className = registerClassName(current)
+                    if (className != null) {
+                        if (current.isInterfaceClass()) {
+                            result.add(className + JvmAbi.DEFAULT_IMPLS_SUFFIX)
+                        }
+
+                        // Continue searching if inside an object literal
+                        break
+                    }
+                }
+                is KtProperty -> {
+                    if (configuration.findInlineUseSites && current.hasInlineAccessors) {
+                        result += inlineUsagesSearcher.findInlinedCalls(current, alreadyVisited, ::computeCandidatesForElement)
+                    }
+
+                    val propertyOwner = current.containingClassOrObject
+                    if (propertyOwner is KtObjectDeclaration && propertyOwner.isCompanion()) {
+                        // Companion object properties are stored as static properties of an enclosing class
+                        current = propertyOwner.containingClassOrObject ?: break
+                        continue
+                    }
+                }
+                is KtNamedFunction -> {
+                    if (configuration.findInlineUseSites && current.hasModifier(KtTokens.INLINE_KEYWORD)) {
+                        result += inlineUsagesSearcher.findInlinedCalls(current, alreadyVisited, ::computeCandidatesForElement)
+                    }
+
+                    if (current.isLocal) {
+                        // In old JVM backend, local functions were generated as separate classes
+                        registerClassName(current)
+                    }
+                }
+                is KtAnonymousInitializer -> {
+                    val initializerOwner = current.containingDeclaration
+                    if (initializerOwner is KtObjectDeclaration && initializerOwner.isCompanion()) {
+                        // Companion initializers are put into the '<clinit>' of a containing class
+                        current = initializerOwner.containingClassOrObject ?: break
+                        continue
+                    }
+                }
+                is KtCallableReferenceExpression, is KtLambdaExpression -> {
+                    val className = registerClassName(current as KtElement)
+                    if (className != null && !configuration.alwaysReturnLambdaParentClass) {
+                        break
+                    }
+                }
+                is KtObjectLiteralExpression -> {
+                    registerClassName(current)
+                    /*
+                        Here should be a 'break'.
+                        However, in the old JVM BE, literals have prefix with '$$inlined' and '$$special' with complex rules.
+                        As it's considerably hard to support these mangling rules, and outer class is returned instead,
+                        so 'KotlinPositionManager' can create a '<outer>$*' request.
+                    */
+                }
+            }
+
+            current = current.parent ?: break
+        }
+
+        return result
     }
 
     private val KtProperty.hasInlineAccessors: Boolean
@@ -216,5 +163,3 @@ class ClassNameProvider(val project: Project, val searchScope: GlobalSearchScope
     private inline val PsiElement.relevantParent
         get() = getRelevantElement(this.parent)
 }
-
-private fun String.toJdiName() = replace('/', '.')

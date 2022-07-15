@@ -313,13 +313,13 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String): Boolean {
-        val internalClassNames = ClassNameProvider(
+        val classNameProvider = ClassNameProvider(
             debugProcess.project,
             debugProcess.searchScope,
             ClassNameProvider.Configuration.DEFAULT.copy(alwaysReturnLambdaParentClass = false)
-        ).getOuterClassNamesForElement(this, emptySet()).classNames
+        )
 
-        return internalClassNames.any { it == currentLocationClassName }
+        return classNameProvider.getCandidatesForElement(this).any { it == currentLocationClassName }
     }
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
