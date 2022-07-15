@@ -328,9 +328,7 @@
         "general/expandComponent.svg",
         "general/expandComponentHover.svg"
       ],
-      "filterHistory.svg": "icons/filterHistory.svg",
       "searchHistory.svg": "actions/searchWithHistory.svg",
-      "sortHistory.svg": "icons/sortHistory.svg",
       "inlineAdd.svg": [
         "general/inlineAdd.svg",
         "general/inlineAddHover.svg"
