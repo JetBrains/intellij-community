@@ -628,8 +628,8 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
         if (ExperimentalUI.isNewUI()) {
           return scheme.getDefaultBackground();
         }
-        Color result = scheme.getColor(top ? EditorColors.SEPARATOR_ABOVE_COLOR : EditorColors.SEPARATOR_BELOW_COLOR);
-        if (result == null) result = scheme.getColor(EditorColors.TEARLINE_COLOR);
+
+        Color result = scheme.getColor(EditorColors.TEARLINE_COLOR);
         return result == null ? JBColor.BLACK : result;
       }
     };
