@@ -115,14 +115,14 @@ class BuildOptions {
     const val REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
 
     /**
-     * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
+     * Pass 'true' to this system property to produce an additional .dmg and .sit archives for macOS without Runtime.
      */
-    const val BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"
+    const val BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME = "intellij.build.dmg.without.bundled.jre"
 
     /**
-     * Pass 'false' to this system property to skip building .dmg with bundled JRE.
+     * Pass 'false' to this system property to skip building .dmg and .sit with bundled Runtime.
      */
-    const val BUILD_DMG_WITH_BUNDLED_JRE = "intellij.build.dmg.with.bundled.jre"
+    const val BUILD_MAC_ARTIFACTS_WITH_RUNTIME = "intellij.build.dmg.with.bundled.jre"
 
     /**
      * By default, build cleanup output folder before compilation, use this property to change this behaviour.
@@ -187,9 +187,9 @@ class BuildOptions {
     .filter { s: String -> !s.isBlank() }
     .toHashSet()
 
-  var buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE,
-                                                                      SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
-  var buildDmgWithBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITH_BUNDLED_JRE, true)
+  var buildMacArtifactsWithoutRuntime = SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME,
+                                                                            SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
+  var buildMacArtifactsWithRuntime = SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITH_RUNTIME, true)
 
   /**
    * Pass 'true' to this system property to produce .snap packages.

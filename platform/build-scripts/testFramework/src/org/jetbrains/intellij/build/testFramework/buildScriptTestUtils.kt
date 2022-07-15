@@ -41,8 +41,8 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
     BuildOptions.WIN_SIGN_STEP,
     BuildOptions.MAC_SIGN_STEP,
   ))
-  options.buildDmgWithBundledJre = false
-  options.buildDmgWithoutBundledJre = false
+  options.buildMacArtifactsWithRuntime = false
+  options.buildMacArtifactsWithoutRuntime = false
   options.buildUnixSnaps = false
   options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).absolutePath
   options.useCompiledClassesFromProjectOutput = true
