@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -38,6 +39,6 @@ public class InsertThisFix extends InsertConstructorCallFix {
   private boolean hasConstructorToDelegate() {
     PsiClass containingClass = myConstructor.getContainingClass();
     if (containingClass == null) return false;
-    return Arrays.stream(containingClass.getConstructors()).anyMatch(constructor -> constructor != myConstructor);
+    return ContainerUtil.exists(containingClass.getConstructors(), constructor -> constructor != myConstructor);
   }
 }

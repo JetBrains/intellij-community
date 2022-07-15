@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -54,7 +55,7 @@ public abstract class MethodThrowsFix extends LocalQuickFixOnPsiElement {
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       final PsiMethod myMethod = (PsiMethod)startElement;
       PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
-      boolean alreadyThrows = Arrays.stream(referenceElements).anyMatch(referenceElement -> referenceElement.getCanonicalText().equals(myThrowsCanonicalText));
+      boolean alreadyThrows = ContainerUtil.exists(referenceElements, referenceElement -> referenceElement.getCanonicalText().equals(myThrowsCanonicalText));
       if (!alreadyThrows) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
         final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, myMethod);
