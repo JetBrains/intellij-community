@@ -128,6 +128,56 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
                  "}\n", text);
   }
 
+  public void testAddRemoveException() {
+    configureFromFileText("Test.java",
+                          "import java.io.IOException;\n" +
+                          "\n" +
+                          "public class A {\n" +
+                          "  String test() {\n" +
+                          "    return \"\";\n" +
+                          "  }\n" +
+                          "}\n" +
+                          "\n" +
+                          "class B extends A {\n" +
+                          "  String test() throws <caret>IOException {\n" +
+                          "    return \"\";\n" +
+                          "  }\n" +
+                          "\n" +
+                          "}");
+    IntentionAction action = findActionWithText("Remove 'IOException' from 'test' throws list");
+    assertNotNull(action);
+    assertEquals("import java.io.IOException;\n" +
+                 "\n" +
+                 "public class A {\n" +
+                 "  String test() {\n" +
+                 "    return \"\";\n" +
+                 "  }\n" +
+                 "}\n" +
+                 "\n" +
+                 "class B extends A {\n" +
+                 "  String test()  {\n" +
+                 "    return \"\";\n" +
+                 "  }\n" +
+                 "\n" +
+                 "}", getPreviewText(action));
+    action = findActionWithText("Add 'IOException' to 'A.test' throws list");
+    assertNotNull(action);
+    assertEquals("import java.io.IOException;\n" +
+                 "\n" +
+                 "public class A {\n" +
+                 "  String test() throws IOException {\n" +
+                 "    return \"\";\n" +
+                 "  }\n" +
+                 "}\n" +
+                 "\n" +
+                 "class B extends A {\n" +
+                 "  String test() throws IOException {\n" +
+                 "    return \"\";\n" +
+                 "  }\n" +
+                 "\n" +
+                 "}", getPreviewText(action));
+  }
+
   public void testDefineDefaultValues() {
     configureFromFileText("Test.java",
                           "public class Test {\n" +

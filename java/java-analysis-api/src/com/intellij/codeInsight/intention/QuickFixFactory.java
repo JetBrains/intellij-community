@@ -89,7 +89,7 @@ public abstract class QuickFixFactory {
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiClass psiElement);
 
   @NotNull
-  public abstract LocalQuickFixOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method,
+  public abstract LocalQuickFixAndIntentionActionOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method,
                                                                   @NotNull PsiClassType exceptionClass,
                                                                   boolean shouldThrow,
                                                                   boolean showContainingClass);

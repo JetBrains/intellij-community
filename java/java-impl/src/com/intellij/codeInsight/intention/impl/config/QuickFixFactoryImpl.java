@@ -142,7 +142,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method,
+  public LocalQuickFixAndIntentionActionOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method,
                                                          @NotNull PsiClassType exceptionClass,
                                                          boolean shouldThrow,
                                                          boolean showContainingClass) {
