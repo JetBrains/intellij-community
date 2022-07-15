@@ -13,10 +13,7 @@ import org.jetbrains.plugins.textmate.regex.RegexUtil;
 import org.jetbrains.plugins.textmate.regex.StringWithId;
 import org.jetbrains.plugins.textmate.regex.TextMateRange;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class TextMateLexer {
@@ -128,6 +125,7 @@ public final class TextMateLexer {
       break;
     }
 
+    Set<TextMateLexerState> localStates = new HashSet<>();
     while (true) {
       TextMateLexerState lastState = myStates.getHead();
       SyntaxNodeDescriptor lastRule = lastState.syntaxRule;
@@ -164,10 +162,11 @@ public final class TextMateLexer {
         }
         closeScopeSelector(output, endPosition + startLinePosition); // closing basic scope
 
-        if (linePosition == endPosition && poppedState.enterByteOffset == linePosition) {
+        if (linePosition == endPosition && containsLexerState(localStates, poppedState) && poppedState.enterByteOffset == lineByteOffset) {
           addToken(output, line.length() + startLinePosition);
           break;
         }
+        localStates.remove(poppedState);
       }
       else if (currentMatch.matched()) {
         anchorByteOffset = currentMatch.byteOffset().end;
@@ -176,7 +175,6 @@ public final class TextMateLexer {
         int startPosition = currentRange.start;
         endPosition = currentRange.end;
 
-        FList<TextMateLexerState> localStates = myStates;
         if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
           myStates = myStates.prepend(currentState);
 
@@ -200,6 +198,7 @@ public final class TextMateLexer {
           addToken(output, line.length() + startLinePosition);
           break;
         }
+        localStates.add(currentState);
       }
       else {
         addToken(output, line.length() + startLinePosition);
@@ -229,14 +228,11 @@ public final class TextMateLexer {
     }
   }
 
-  private static boolean containsLexerState(FList<TextMateLexerState> states, TextMateLexerState state) {
-    TextMateLexerState cursor = states.getHead();
-    while (cursor != null && cursor.enterByteOffset == state.enterByteOffset) {
-      if (cursor.syntaxRule.equals(state.syntaxRule)) {
+  private static boolean containsLexerState(Set<TextMateLexerState> states, TextMateLexerState state) {
+    for (TextMateLexerState s : states) {
+      if (s.enterByteOffset == state.enterByteOffset && s.syntaxRule.equals(state.syntaxRule)) {
         return true;
       }
-      states = states.getTail();
-      cursor = states.getHead();
     }
     return false;
   }
