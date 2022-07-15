@@ -6,7 +6,6 @@ import com.intellij.diagnostic.telemetry.use
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
@@ -356,7 +355,7 @@ private fun buildForArch(builtinModule: BuiltinModulesFileData?,
                       customizer = customizer,
                       macHostProperties = context.proprietaryBuildTools.macHostProperties,
                       macZip = macZipWithRuntime,
-                      jreArchivePath = runtimeDir,
+                      isRuntimeBundled = true,
                       suffix = suffix,
                       notarize = notarize)
     })
@@ -373,7 +372,7 @@ private fun buildForArch(builtinModule: BuiltinModulesFileData?,
                       customizer = customizer,
                       macHostProperties = context.proprietaryBuildTools.macHostProperties,
                       macZip = macZipWithoutRuntime,
-                      jreArchivePath = null,
+                      isRuntimeBundled = false,
                       suffix = "-no-jdk$suffix",
                       notarize = notarize)
     })

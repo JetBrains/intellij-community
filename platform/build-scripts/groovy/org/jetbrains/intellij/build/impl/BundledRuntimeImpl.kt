@@ -219,15 +219,6 @@ private fun getArchSuffix(arch: JvmArchitecture): String {
   }
 }
 
-/**
- * @return JBR top directory, see JBR-1295
- */
-fun getJbrTopDir(archive: Path): String {
-  return createTarGzInputStream(archive).use {
-    it.nextTarEntry?.name ?: throw IllegalStateException("Unable to read $archive")
-  }
-}
-
 private fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
   TraceManager.spanBuilder("extract JBR")
     .setAttribute("archive", archive.toString())

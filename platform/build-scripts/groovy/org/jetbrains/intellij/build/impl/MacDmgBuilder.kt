@@ -22,12 +22,12 @@ internal fun signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
                              customizer: MacDistributionCustomizer,
                              macHostProperties: MacHostProperties?,
                              macZip: Path,
-                             jreArchivePath: Path?,
+                             isRuntimeBundled: Boolean,
                              suffix: String,
                              notarize: Boolean) {
   var javaExePath: String? = null
-  if (jreArchivePath != null) {
-    javaExePath = "../${getJbrTopDir(jreArchivePath)}/Contents/Home/bin/java"
+  if (isRuntimeBundled) {
+    javaExePath = "../jbr/Contents/Home/bin/java"
   }
 
   val productJson = generateMacProductJson(builtinModule, context, javaExePath)
@@ -35,9 +35,6 @@ internal fun signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
   val installationDirectories = ArrayList<Path>()
   val installationArchives = ArrayList<Pair<Path, String>>(2)
   installationArchives.add(Pair(macZip, zipRoot))
-  if (jreArchivePath != null) {
-    installationArchives.add(Pair(jreArchivePath, ""))
-  }
   validateProductJson(productJson, "Resources/", installationDirectories, installationArchives, context)
 
   val targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
@@ -66,7 +63,7 @@ internal fun signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
   require(Files.exists(sitFile)) {
     "$sitFile wasn't created"
   }
-  if (jreArchivePath != null) {
+  if (isRuntimeBundled) {
     context.bundledRuntime.checkExecutablePermissions(sitFile, zipRoot, OsFamily.MACOS)
   }
 }
