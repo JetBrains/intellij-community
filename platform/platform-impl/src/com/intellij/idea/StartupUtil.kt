@@ -44,8 +44,6 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.io.BuiltInServer
 import sun.awt.AWTAutoShutdown
@@ -84,6 +82,7 @@ private const val IDE_SHUTDOWN = "----------------------------------------------
 
 @JvmField
 internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunction { _, _ -> Main.ACTIVATE_NOT_INITIALIZED }
+
 @JvmField
 internal var startupStart: Activity? = null
 private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app"
@@ -118,76 +117,81 @@ fun start(mainClass: String,
     Logger.getInstance(LoadingState::class.java).error(message, throwable)
   }
 
-  var activity = StartUpMeasurer.startActivity("ForkJoin CommonPool configuration")
-  IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(isHeadless)
-  val forkJoinPool = ForkJoinPool.commonPool()
-  activity = activity.endAndStart("main class loading scheduling")
-  val appStarterFuture = CompletableFuture.supplyAsync(
-    {
-      val subActivity = StartUpMeasurer.startActivity("main class loading")
-      val aClass = AppStarter::class.java.classLoader.loadClass(mainClass)
-      subActivity.end()
-      MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
-    },
-    forkJoinPool
-  )
-  val euaDocumentFuture = if (isHeadless) null else scheduleEuaDocumentLoading()
-  if (args.isNotEmpty() && (Main.CWM_HOST_COMMAND == args[0] || Main.CWM_HOST_NO_LOBBY_COMMAND == args[0])) {
-    activity = activity.endAndStart("cwm host init")
-    val projectorMainClass = AppStarter::class.java.classLoader.loadClass(PROJECTOR_LAUNCHER_CLASS_NAME)
-    MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup())
-      .findStatic(projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)).invoke()
-  }
-  activity = activity.endAndStart("graphics environment checking")
-
-  if (!isHeadless && !checkGraphics()) {
-    exitProcess(Main.NO_GRAPHICS)
-  }
-
-  activity = activity.endAndStart("config path computing")
-  val configPath = canonicalPath(PathManager.getConfigPath())
-  val systemPath = canonicalPath(PathManager.getSystemPath())
-  activity = activity.endAndStart("system dirs locking")
-  // This needs to happen before UI initialization - if we're not going to show UI (in case another IDE instance is already running),
-  // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
-  val configImportNeeded = lockSystemDirs(!isHeadless, configPath, systemPath, args)
-  activity = activity.endAndStart("LaF init scheduling")
-  val busyThread = Thread.currentThread()
-  // LookAndFeel type is not specified to avoid class loading
-  val initUiFuture = scheduleInitUi(busyThread, isHeadless)
-
-  // A splash instance must not be created before base LaF is created.
-  // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
-  // https://youtrack.jetbrains.com/issue/IDEA-286544
-  val splashTaskFuture = if (isHeadless || Main.isLightEdit()) {
-    null
-  }
-  else {
-    initUiFuture.thenApplyAsync({ prepareSplash(args) }, forkJoinPool)
-  }
-
-  activity = activity.endAndStart("java.util.logging configuration")
-  configureJavaUtilLogging()
-
   // runBlocking must be used - coroutine's thread is a daemon and doesn't stop application to exit,
   // see ApplicationImpl.preventAwtAutoShutdown
   runBlocking(CoroutineExceptionHandler { _, error ->
     StartupAbortedException.processException(error)
   }) {
+    launch {
+      val activity = StartUpMeasurer.startActivity("ForkJoin CommonPool configuration")
+      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(isHeadless)
+      activity.end()
+    }
+
+    var activity = StartUpMeasurer.startActivity("main class loading scheduling")
+    val appStarterFuture = async {
+      val subActivity = StartUpMeasurer.startActivity("main class loading")
+      val aClass = AppStarter::class.java.classLoader.loadClass(mainClass)
+      subActivity.end()
+      MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
+    }
+
+    val euaDocumentFuture = if (isHeadless) null else loadEuaDocumentAsync()
+
+    if (args.isNotEmpty() && (Main.CWM_HOST_COMMAND == args[0] || Main.CWM_HOST_NO_LOBBY_COMMAND == args[0])) {
+      activity = activity.endAndStart("cwm host init")
+      val projectorMainClass = AppStarter::class.java.classLoader.loadClass(PROJECTOR_LAUNCHER_CLASS_NAME)
+      MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup())
+        .findStatic(projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)).invoke()
+    }
+    activity = activity.endAndStart("graphics environment checking")
+
+    if (!isHeadless && !checkGraphics()) {
+      exitProcess(Main.NO_GRAPHICS)
+    }
+
+    activity = activity.endAndStart("config path computing")
+    val configPath = canonicalPath(PathManager.getConfigPath())
+    val systemPath = canonicalPath(PathManager.getSystemPath())
+    activity = activity.endAndStart("system dirs locking")
+    // This needs to happen before UI initialization - if we're not going to show UI (in case another IDE instance is already running),
+    // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
+    val configImportNeeded = lockSystemDirs(!isHeadless, configPath, systemPath, args)
+    activity = activity.endAndStart("LaF init scheduling")
+    val busyThread = Thread.currentThread()
+    // LookAndFeel type is not specified to avoid class loading
+    val initUiFuture = async { initUi(busyThread = busyThread, isHeadless = isHeadless, mainScope = this) }
+
+    // A splash instance must not be created before base LaF is created.
+    // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
+    // https://youtrack.jetbrains.com/issue/IDEA-286544
+    val splashTaskFuture = if (isHeadless || Main.isLightEdit()) {
+      null
+    }
+    else {
+      async {
+        initUiFuture.join()
+        prepareSplash(args)
+      }
+    }
+
+    activity = activity.endAndStart("java.util.logging configuration")
+    configureJavaUtilLogging()
+
     Main.mainScope = this
 
     activity = activity.endAndStart("eua and splash scheduling")
     val showEuaIfNeededFuture: Deferred<Boolean> = async {
-      val baseLaF = initUiFuture.asDeferred().await()
+      val baseLaF = initUiFuture.await()
       if (euaDocumentFuture == null) {
         return@async true
       }
 
-      val result = showEuaIfNeeded(euaDocumentFuture.asDeferred().await(), baseLaF)
+      val result = showEuaIfNeeded(euaDocumentFuture.await(), baseLaF)
       if (splashTaskFuture != null) {
         launch {
           val runnable = splashTaskFuture.await()
-          EventQueue.invokeLater {
+          withContext(SwingDispatcher) {
             runnable?.run()
           }
         }
@@ -219,7 +223,7 @@ fun start(mainClass: String,
       // JNA and Swing are used - invoke only after both are loaded
       if (!isHeadless && SystemInfoRt.isMac) {
         launch {
-          initUiFuture.asDeferred().join()
+          initUiFuture.join()
 
           val subActivity = StartUpMeasurer.startActivity("mac app init")
           MacOSApplicationProvider.initApplication(log)
@@ -243,7 +247,7 @@ fun start(mainClass: String,
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
     val argsAsList = java.util.List.of(*args)
 
-    val appStarter = appStarterFuture.asDeferred().await()
+    val appStarter = appStarterFuture.await()
     mainClassLoadingWaitingActivity.end()
 
     if (!isHeadless && configImportNeeded) {
@@ -258,7 +262,7 @@ fun start(mainClass: String,
     withContext(Dispatchers.IO) {
       appStarter.start(argsAsList, async {
         showEuaIfNeededFuture.join()
-        initUiFuture.asDeferred().await()
+        initUiFuture.await()
       })
     }
 
@@ -337,25 +341,22 @@ fun getServer(): BuiltInServer? = socketLock?.server
 @Synchronized
 fun getServerFutureAsync(): Deferred<BuiltInServer?> = socketLock?.serverFuture ?: CompletableDeferred(value = null)
 
-private fun scheduleEuaDocumentLoading(): CompletableFuture<Any?> {
-  return CompletableFuture.supplyAsync(
-    {
-      val vendorAsProperty = System.getProperty("idea.vendor.name", "")
-      if (if (vendorAsProperty.isEmpty()) !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains else "JetBrains" != vendorAsProperty) {
-        return@supplyAsync null
-      }
+private fun CoroutineScope.loadEuaDocumentAsync(): Deferred<Any?> {
+  return async {
+    val vendorAsProperty = System.getProperty("idea.vendor.name", "")
+    if (if (vendorAsProperty.isEmpty()) !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains else "JetBrains" != vendorAsProperty) {
+      return@async null
+    }
 
-      var activity = StartUpMeasurer.startActivity("eua getting")
-      var document: EndUserAgreement.Document? = EndUserAgreement.getLatestDocument()
-      activity = activity.endAndStart("eua is accepted checking")
-      if (document!!.isAccepted) {
-        document = null
-      }
-      activity.end()
-      document
-    },
-    ForkJoinPool.commonPool()
-  )
+    var activity = StartUpMeasurer.startActivity("eua getting")
+    var document: EndUserAgreement.Document? = EndUserAgreement.getLatestDocument()
+    activity = activity.endAndStart("eua is accepted checking")
+    if (document!!.isAccepted) {
+      document = null
+    }
+    activity.end()
+    document
+  }
 }
 
 private fun runPreAppClass(log: Logger, args: Array<String>) {
@@ -379,7 +380,7 @@ private suspend fun importConfig(args: List<String>,
                                  log: Logger,
                                  appStarter: AppStarter,
                                  agreementShown: Deferred<Boolean>,
-                                 initUiFuture: CompletableFuture<Any>) {
+                                 initUiFuture: Deferred<Any>) {
   var activity = StartUpMeasurer.startActivity("screen reader checking")
   try {
     withContext(SwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
@@ -392,7 +393,7 @@ private suspend fun importConfig(args: List<String>,
   appStarter.beforeImportConfigs()
   val newConfigDir = PathManager.getConfigDir()
   val veryFirstStartOnThisComputer = agreementShown.await()
-  val baseLaf = initUiFuture.asDeferred().await()
+  val baseLaf = initUiFuture.await()
   withContext(SwingDispatcher) {
     setLafToShowPreAppStartUpDialogIfNeeded(baseLaf)
     ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log)
@@ -410,91 +411,82 @@ fun setLafToShowPreAppStartUpDialogIfNeeded(baseLaF: Any) {
   }
 }
 
-private fun scheduleInitUi(busyThread: Thread, isHeadless: Boolean): CompletableFuture<Any> {
+private suspend fun initUi(busyThread: Thread, isHeadless: Boolean, mainScope: CoroutineScope): Any {
   // calls `sun.util.logging.PlatformLogger#getLogger` - it takes enormous time (up to 500 ms)
   // only non-logging tasks can be executed before `setupLogger`
   val activityQueue = StartUpMeasurer.startActivity("LaF initialization (schedule)")
-  val initUiFuture = CompletableFuture.runAsync(
-    {
-      checkHiDPISettings()
-      blockATKWrapper()
-      @Suppress("SpellCheckingInspection")
-      System.setProperty("sun.awt.noerasebackground", "true")
-      val activity = activityQueue.startChild("awt toolkit creating")
-      Toolkit.getDefaultToolkit()
-      activity.end()
-      activityQueue.updateThreadName()
-    },
-    ForkJoinPool.commonPool()
-  )
-    .thenApplyAsync<Any>(
-      {
-        activityQueue.end()
-        var activity: Activity? = null
-        // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
-        if (!isHeadless) {
-          // IdeaLaF uses AllIcons - icon manager must be activated
-          activity = StartUpMeasurer.startActivity("icon manager activation")
-          IconManager.activate(CoreIconManager())
-        }
-        activity = activity?.endAndStart("base LaF creation") ?: StartUpMeasurer.startActivity("base LaF creation")
-        val baseLaF = DarculaLaf.createBaseLaF()
-        activity = activity.endAndStart("base LaF initialization")
-        // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
-        baseLaF.initialize()
 
-        // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
-        // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
-        activity = activity.endAndStart("system font data initialization")
-        if (!isHeadless) {
-          JBUIScale.getSystemFontData {
-            val subActivity = StartUpMeasurer.startActivity("base LaF defaults getting")
-            val result = baseLaF.defaults
-            subActivity.end()
-            result
-          }
-          activity = activity.endAndStart("scale initialization")
-          JBUIScale.scale(1f)
-        }
-        StartUpMeasurer.setCurrentState(LoadingState.BASE_LAF_INITIALIZED)
-        activity = activity.endAndStart("awt thread busy notification")
-        /*
+  checkHiDPISettings()
+  blockATKWrapper()
+
+  @Suppress("SpellCheckingInspection")
+  System.setProperty("sun.awt.noerasebackground", "true")
+  activityQueue.startChild("awt toolkit creating").let { activity ->
+    Toolkit.getDefaultToolkit()
+    activity.end()
+  }
+  activityQueue.updateThreadName()
+
+  val baseLaF = withContext(SwingDispatcher) {
+    activityQueue.end()
+    var activity: Activity? = null
+    // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
+    if (!isHeadless) {
+      // IdeaLaF uses AllIcons - icon manager must be activated
+      activity = StartUpMeasurer.startActivity("icon manager activation")
+      IconManager.activate(CoreIconManager())
+    }
+    activity = activity?.endAndStart("base LaF creation") ?: StartUpMeasurer.startActivity("base LaF creation")
+    val baseLaF = DarculaLaf.createBaseLaF()
+    activity = activity.endAndStart("base LaF initialization")
+    // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
+    baseLaF.initialize()
+
+    // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
+    // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
+    activity = activity.endAndStart("system font data initialization")
+    if (!isHeadless) {
+      JBUIScale.getSystemFontData {
+        val subActivity = StartUpMeasurer.startActivity("base LaF defaults getting")
+        val result = baseLaF.defaults
+        subActivity.end()
+        result
+      }
+      activity = activity.endAndStart("scale initialization")
+      JBUIScale.scale(1f)
+    }
+    StartUpMeasurer.setCurrentState(LoadingState.BASE_LAF_INITIALIZED)
+    activity = activity.endAndStart("awt thread busy notification")
+    /*
 Make EDT to always persist while the main thread is alive. Otherwise, it's possible to have EDT being
 terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
 [AWTAutoShutdown.notifyThreadBusy(Thread)] will put the main thread into the thread map,
 and thus will effectively disable auto shutdown behavior for this application.
 */
-        AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
-        activity.end()
-        patchSystem(isHeadless)
-        if (!isHeadless) {
-          ForkJoinPool.commonPool().execute {
-            // as one FJ task - execute one by one to make room for more important tasks
-            updateFrameClassAndWindowIcon()
-            loadSystemFontsAndDnDCursors()
-          }
-        }
-        baseLaF
+    AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
+    activity.end()
+    patchSystem(isHeadless)
+    if (!isHeadless) {
+      mainScope.launch {
+        updateFrameClassAndWindowIcon()
       }
-    ) { EventQueue.invokeLater(it) } /* do not use a method-reference here (`EventQueue` class must be loaded on demand) */
+      mainScope.launch(Dispatchers.IO) {
+        loadSystemFontsAndDnDCursors()
+      }
+    }
+    baseLaF
+  }
+
   if (isUsingSeparateWriteThread) {
-    return CompletableFuture.allOf(initUiFuture, CompletableFuture.runAsync(
-      {
-        val activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading")
-        try {
-          WriteIntentLockInstrumenter.instrument()
-        }
-        finally {
-          activity.end()
-        }
-      },
-      ForkJoinPool.commonPool())
-    )
-      .thenApply { initUiFuture.join() }
+    val activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading")
+    try {
+      WriteIntentLockInstrumenter.instrument()
+    }
+    finally {
+      activity.end()
+    }
   }
-  else {
-    return initUiFuture
-  }
+  return baseLaF
 }
 
 /*
