@@ -5,11 +5,14 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
@@ -18,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +43,20 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
   protected boolean shouldBeAvailableAfterExecution() {
     return false;
+  }
+
+  /**
+   * Asserts that the action with a given name exists and generates preview in the form of HTML with a specified expected text
+   * @param actionName name of the action to text
+   * @param expectedText expected HTML
+   */
+  protected void assertActionPreviewHtml(@NotNull String actionName, @Language("HTML") @NotNull String expectedText) {
+    IntentionAction action = findActionWithText(actionName);
+    assertNotNull(action);
+    IntentionPreviewInfo info = IntentionPreviewPopupUpdateProcessor.getPreviewInfo(getProject(), action, getFile(), getEditor());
+    assertTrue(info instanceof IntentionPreviewInfo.Html);
+    HtmlChunk content = ((IntentionPreviewInfo.Html)info).content();
+    assertEquals(expectedText, content.toString());
   }
 
   private static void doTestFor(@NotNull String testName, @NotNull QuickFixTestCase quickFixTestCase) {

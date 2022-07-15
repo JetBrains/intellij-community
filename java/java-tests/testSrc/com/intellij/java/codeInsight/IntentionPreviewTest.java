@@ -4,13 +4,10 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.intellij.lang.regexp.inspection.DuplicateCharacterInClassInspection;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ExecutionException;
 
@@ -154,38 +151,23 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
 
   public void testRenameFile() {
     configureFromFileText("Test.java", "public class <caret>Best {}");
-    HtmlChunk info = getPreviewHtml("Rename File");
-    assertEquals("<p><icon src=\"file\"/>&nbsp;Test.java &rarr; <icon src=\"file\"/>&nbsp;Best.java</p>",
-                 info.toString());
-    assertNotNull(info.findIcon("file"));
+    assertActionPreviewHtml("Rename File", "<p><icon src=\"file\"/>&nbsp;Test.java &rarr; <icon src=\"file\"/>&nbsp;Best.java</p>");
   }
 
   public void testMoveMemberIntoClass() {
     configureFromFileText("Test.java", "public class Test {} void <caret>method() {}");
-    HtmlChunk info = getPreviewHtml("Move member into class");
-    assertEquals("<p><icon src=\"source\"/>&nbsp;method &rarr; <icon src=\"target\"/>&nbsp;Test</p>", info.toString());
-    assertNotNull(info.findIcon("source"));
-    assertNotNull(info.findIcon("target"));
+    assertActionPreviewHtml("Move member into class",
+                            "<p><icon src=\"source\"/>&nbsp;method &rarr; <icon src=\"target\"/>&nbsp;Test</p>");
   }
 
   public void testNavigate() {
     configureFromFileText("Test.java", "public class Test {} class <caret>Test {}");
-    HtmlChunk info = getPreviewHtml("Navigate to duplicate class");
-    assertEquals("<p>&rarr; <icon src=\"icon\"/>&nbsp;Test.java, line #1</p>", info.toString());
-    assertNotNull(info.findIcon("icon"));
+    assertActionPreviewHtml("Navigate to duplicate class", "<p>&rarr; <icon src=\"icon\"/>&nbsp;Test.java, line #1</p>");
   }
 
   @Override
   protected void setupEditorForInjectedLanguage() {
     // we want to stay at host editor
-  }
-
-  private @NotNull HtmlChunk getPreviewHtml(String actionName) {
-    IntentionAction action = findActionWithText(actionName);
-    assertNotNull(action);
-    IntentionPreviewInfo info = IntentionPreviewPopupUpdateProcessor.getPreviewInfo(getProject(), action, getFile(), getEditor());
-    assertTrue(info instanceof IntentionPreviewInfo.Html);
-    return ((IntentionPreviewInfo.Html)info).content();
   }
 
   private String getPreviewText(IntentionAction action) {
