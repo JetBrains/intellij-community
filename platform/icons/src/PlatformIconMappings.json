@@ -439,9 +439,6 @@
       ],
       "phpWeb.svg": "icons/run_web_app.svg"
     },
-    "plugins/space": {
-      "spaceToolWindow.svg": "icons/spaceToolWindow.svg"
-    },
     "progress": {
       "pause.svg": [
         "process/progressPause.svg",
