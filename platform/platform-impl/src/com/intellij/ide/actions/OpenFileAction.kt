@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.ide.impl.OpenProjectTask.Companion.build
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.ide.lightEdit.*
@@ -146,6 +146,7 @@ private class ProjectOrFileChooserDescriptor : OpenProjectFileChooserDescriptor(
 private suspend fun doOpenFile(project: Project?, file: VirtualFile) {
   val filePath = file.toNioPath()
   if (Files.isDirectory(filePath)) {
+    @Suppress("TestOnlyProblems")
     ProjectUtil.openExistingDir(filePath, project)
     return
   }
@@ -157,7 +158,7 @@ private suspend fun doOpenFile(project: Project?, file: VirtualFile) {
       return
     }
     else if (answer == Messages.YES) {
-      val openedProject = ProjectUtil.openOrImportAsync(filePath, build().withProjectToClose(project))
+      val openedProject = ProjectUtil.openOrImportAsync(filePath, OpenProjectTask { projectToClose = project })
       openedProject?.let {
         FileChooserUtil.setLastOpenedFile(it, filePath)
       }
@@ -168,10 +169,20 @@ private suspend fun doOpenFile(project: Project?, file: VirtualFile) {
   LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, file)
   FileTypeChooser.getKnownFileTypeOrAssociate(file, project) ?: return
   if (project != null && !project.isDefault) {
-    OpenFileAction.openFile(file, project)
+    NonProjectFileWritingAccessProvider.allowWriting(listOf(file))
+    if (LightEdit.owns(project)) {
+      LightEditService.getInstance().openFile(file)
+      LightEditFeatureUsagesUtil.logFileOpen(project, LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction)
+    }
+    else {
+      val navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)
+      withContext(Dispatchers.EDT) {
+        navigatable.navigate(true)
+      }
+    }
   }
   else {
-    PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(filePath, build().withProjectToClose(project))
+    PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(filePath, OpenProjectTask { projectToClose = project })
   }
 }
 

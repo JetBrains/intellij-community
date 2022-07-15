@@ -27,6 +27,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
@@ -254,7 +255,9 @@ object ProjectUtil {
 
     if (!options.preventIprLookup && Files.isDirectory(file)) {
       try {
-        Files.newDirectoryStream(file).use { directoryStream ->
+        withContext(Dispatchers.IO) {
+          Files.newDirectoryStream(file)
+        }.use { directoryStream ->
           for (child in directoryStream) {
             val childPath = child.toString()
             if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
@@ -836,7 +839,7 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend () -> T): T {
 
 @Internal
 @RequiresEdt
-inline fun <T> runBlockingUnderModalProgress(title: String = "", project: Project? = null, crossinline task: suspend () -> T): T {
+inline fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "", project: Project? = null, crossinline task: suspend () -> T): T {
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
     runBlocking(modalityState.asContextElement()) {
