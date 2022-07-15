@@ -1879,6 +1879,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @SuppressWarnings("SuspiciousNameCombination")
   private Rectangle rectangleByFoldOffset(int foldStart, int anchorWidth, int anchorX) {
+    if (ExperimentalUI.isNewUI()) {
+      //in new ui folding anchor click area has full line height, see IDEA-296393
+      return new Rectangle(anchorX, myEditor.visualLineToY(foldStart), anchorWidth, myEditor.getLineHeight());
+    }
     return new Rectangle(anchorX, (int)getFoldAnchorY(foldStart, anchorWidth), anchorWidth, anchorWidth);
   }
 
