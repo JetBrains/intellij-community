@@ -6,12 +6,14 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.Companion.getOrComputeClassNames
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames.Companion.Cached
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames.Companion.EMPTY
@@ -22,13 +24,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
+import java.util.*
+import kotlin.collections.HashMap
 
-class ClassNameProvider(
-    val project: Project,
-    val searchScope: GlobalSearchScope,
-    val findInlineUseSites: Boolean = true,
-    val alwaysReturnLambdaParentClass: Boolean = true
-) {
+class ClassNameProvider(val project: Project, val searchScope: GlobalSearchScope, val configuration: Configuration) {
     companion object {
         private val CLASS_ELEMENT_TYPES = arrayOf<Class<out PsiElement>>(
             KtScript::class.java,
@@ -56,24 +55,32 @@ class ClassNameProvider(
         }
     }
 
+    data class Configuration(val findInlineUseSites: Boolean, val alwaysReturnLambdaParentClass: Boolean) {
+        companion object {
+            val DEFAULT = Configuration(findInlineUseSites = true, alwaysReturnLambdaParentClass = true)
+        }
+    }
+
     private val inlineUsagesSearcher = InlineCallableUsagesSearcher(project, searchScope)
 
     @RequiresReadLock
     fun getCandidates(position: SourcePosition): List<String> {
         val relevantElement = position.elementAt?.let { getRelevantElement(it) }
 
-        val regularClassNames = getOrComputeClassNames(relevantElement) { element ->
-            getOuterClassNamesForElement(element, emptySet())
+        val regularClassNames = if (relevantElement != null) getCandidatesForElementCached(relevantElement) else emptyList()
+        val lambdaClassNames = getLambdasAtLineIfAny(position).flatMap { getCandidatesForElementCached(it) }
+        return (regularClassNames + lambdaClassNames).distinct()
+    }
+
+    private fun getCandidatesForElementCached(element: PsiElement): List<String> {
+        val cache = CachedValuesManager.getCachedValue(element) {
+            val value = Collections.synchronizedMap(HashMap<Configuration, List<String>>())
+            CachedValueProvider.Result(value, PsiModificationTracker.MODIFICATION_COUNT)
         }
 
-        val lambdaClassNames = getLambdasAtLineIfAny(position)
-            .flatMap { lambda ->
-                getOrComputeClassNames(lambda) {
-                    getOuterClassNamesForElement(it, emptySet())
-                }
-            }
-
-        return (regularClassNames + lambdaClassNames).distinct()
+        return cache.computeIfAbsent(configuration) {
+            getOuterClassNamesForElement(element, emptySet()).classNames
+        }
     }
 
     @PublishedApi
@@ -140,7 +147,7 @@ class ClassNameProvider(
                     }
                 }
 
-                if (findInlineUseSites && element.hasInlineAccessors) {
+                if (configuration.findInlineUseSites && element.hasInlineAccessors) {
                     val inlinedCalls = inlineUsagesSearcher.findInlinedCalls(element, alreadyVisited) { el, newAlreadyVisited ->
                         this.getOuterClassNamesForElement(el, newAlreadyVisited)
                     }
@@ -161,7 +168,7 @@ class ClassNameProvider(
                     }
                 }
 
-                if (!findInlineUseSites || !element.hasModifier(KtTokens.INLINE_KEYWORD)) {
+                if (!configuration.findInlineUseSites || !element.hasModifier(KtTokens.INLINE_KEYWORD)) {
                     return NonCached(nonInlineClasses.classNames)
                 }
 
@@ -194,7 +201,7 @@ class ClassNameProvider(
         val name = ClassNameCalculator.getClassName(element) ?: return EMPTY
         val names = Cached(name)
 
-        if (!names.isEmpty() && !alwaysReturnLambdaParentClass) {
+        if (!names.isEmpty() && !configuration.alwaysReturnLambdaParentClass) {
             if (element !is KtFunctionLiteral || !AnalysisApiBasedInlineUtil.isInlinedArgument(element, true)) {
                 return names
             }

@@ -29,7 +29,13 @@ class KotlinExtraSteppingFilter : ExtraSteppingFilter {
 
             val settings = DebuggerSettings.getInstance()
             if (settings.TRACING_FILTERS_ENABLED) {
-                val classNames = ClassNameProvider(debugProcess.project, debugProcess.searchScope, findInlineUseSites = false)
+                val classNameProvider = ClassNameProvider(
+                    debugProcess.project,
+                    debugProcess.searchScope,
+                    ClassNameProvider.Configuration.DEFAULT.copy(findInlineUseSites = false)
+                )
+
+                val classNames = classNameProvider
                     .getCandidates(sourcePosition)
                     .map { it.replace('/', '.') }
 

@@ -316,7 +316,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val internalClassNames = ClassNameProvider(
             debugProcess.project,
             debugProcess.searchScope,
-            alwaysReturnLambdaParentClass = false
+            ClassNameProvider.Configuration.DEFAULT.copy(alwaysReturnLambdaParentClass = false)
         ).getOuterClassNamesForElement(this, emptySet()).classNames
 
         return internalClassNames.any { it == currentLocationClassName }
@@ -407,7 +407,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     @RequiresReadLock
     private fun getReferenceTypesForPositionInKotlinFile(sourcePosition: SourcePosition): List<ReferenceType> {
-        val classNameProvider = ClassNameProvider(debugProcess.project, debugProcess.searchScope)
+        val classNameProvider = ClassNameProvider(debugProcess.project, debugProcess.searchScope, ClassNameProvider.Configuration.DEFAULT)
         val lineNumber = sourcePosition.line
 
         try {
@@ -428,7 +428,11 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     @Deprecated("Use 'ClassNameProvider' directly")
     fun originalClassNamesForPosition(position: SourcePosition): List<String> {
         return runReadAction {
-            val classNameProvider = ClassNameProvider(debugProcess.project, debugProcess.searchScope, findInlineUseSites = false)
+            val classNameProvider = ClassNameProvider(
+                debugProcess.project,
+                debugProcess.searchScope,
+                ClassNameProvider.Configuration.DEFAULT.copy(findInlineUseSites = false)
+            )
             classNameProvider.getCandidates(position)
         }
     }
@@ -494,7 +498,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             else -> position
         }
 
-        return ClassNameProvider(debugProcess.project, debugProcess.searchScope)
+        return ClassNameProvider(debugProcess.project, debugProcess.searchScope, ClassNameProvider.Configuration.DEFAULT)
             .getCandidates(refinedPosition)
             .flatMap { name ->
                 listOfNotNull(

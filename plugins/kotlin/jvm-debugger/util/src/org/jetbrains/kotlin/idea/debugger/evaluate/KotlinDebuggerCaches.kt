@@ -8,7 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
@@ -19,27 +18,16 @@ import org.jetbrains.kotlin.codegen.inline.SMAP
 import org.jetbrains.kotlin.idea.debugger.BinaryCacheKey
 import org.jetbrains.kotlin.idea.debugger.createWeakBytecodeDebugInfoStorage
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompiledDataDescriptor
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.types.KotlinType
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
 class KotlinDebuggerCaches(project: Project) {
     private val cachedCompiledData = CachedValuesManager.getManager(project).createCachedValue(
         {
             CachedValueProvider.Result<MultiMap<String, CompiledDataDescriptor>>(
                 MultiMap.create(), PsiModificationTracker.MODIFICATION_COUNT
-            )
-        }, false
-    )
-
-    private val cachedClassNames = CachedValuesManager.getManager(project).createCachedValue(
-        {
-            CachedValueProvider.Result<MutableMap<PsiElement, List<String>>>(
-                ConcurrentHashMap(),
-                PsiModificationTracker.MODIFICATION_COUNT
             )
         }, false
     )
@@ -101,25 +89,6 @@ class KotlinDebuggerCaches(project: Project) {
             }
 
             return Pair(newCompiledData, false)
-        }
-
-        fun <T : PsiElement> getOrComputeClassNames(psiElement: T?, create: (T) -> ComputedClassNames): List<String> {
-            if (psiElement == null) return Collections.emptyList()
-
-            val cache = getInstance(runReadAction { psiElement.project })
-
-            val classNamesCache = cache.cachedClassNames.value
-
-            val cachedValue = classNamesCache[psiElement]
-            if (cachedValue != null) return cachedValue
-
-            val computedClassNames = create(psiElement)
-
-            if (computedClassNames.shouldBeCached) {
-                classNamesCache[psiElement] = computedClassNames.classNames
-            }
-
-            return computedClassNames.classNames
         }
 
         fun getSmapCached(project: Project, jvmName: JvmClassName, file: VirtualFile): SMAP? {
