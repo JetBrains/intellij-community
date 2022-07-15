@@ -645,7 +645,7 @@ abstract class AbstractKtSymbolBasedPropertyDescriptor(
 
     override fun cleanCompileTimeInitializerCache() = noImplementation()
 
-    override fun isLateInit(): Boolean = implementationPostponed()
+    override fun isLateInit(): Boolean = ktSymbol is KtKotlinPropertySymbol && (ktSymbol as KtKotlinPropertySymbol).isLateInit
 
     override fun getModality(): Modality = implementationPlanned()
 
