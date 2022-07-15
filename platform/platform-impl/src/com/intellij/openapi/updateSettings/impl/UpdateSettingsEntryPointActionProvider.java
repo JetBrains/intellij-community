@@ -152,7 +152,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     }
     else {
       BuildInfo build = platformUpdateInfo.getNewBuild();
-      properties.setValue(NEXT_RUN_KEY_BUILD, build.toString());
+      properties.setValue(NEXT_RUN_KEY_BUILD, build.getNumber().toString());
       properties.setValue(NEXT_RUN_KEY_VERSION, build.getVersion());
     }
   }
