@@ -8,21 +8,25 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException
 import com.intellij.openapi.editor.ReadOnlyModificationException
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.refactoring.RefactoringBundle
+import org.intellij.images.fileTypes.ImageFileTypeManager
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.util.MarkdownFileUtil
 import java.awt.datatransfer.Transferable
-import java.io.File
+import kotlin.io.path.extension
 
-internal class MarkdownImageFileDropHandler : CustomFileDropHandler() {
+internal class MarkdownImageFileDropHandler: CustomFileDropHandler() {
   override fun canHandle(transferable: Transferable, editor: Editor?): Boolean {
     if (editor?.document?.isWritable != true) {
       return false
     }
-    val droppedFiles = FileCopyPasteUtil.getFileList(transferable) ?: return false
-    return droppedFiles.all(::isImage)
+    val files = FileCopyPasteUtil.getFiles(transferable) ?: return false
+    val imageFileType = ImageFileTypeManager.getInstance().imageFileType
+    val registry = FileTypeRegistry.getInstance()
+    return files.map { it.extension }.all { registry.getFileTypeByExtension(it) == imageFileType }
   }
 
   override fun handleDrop(transferable: Transferable, editor: Editor?, project: Project?): Boolean {
@@ -30,9 +34,6 @@ internal class MarkdownImageFileDropHandler : CustomFileDropHandler() {
       return false
     }
     val droppedFiles = FileCopyPasteUtil.getFileList(transferable) ?: return false
-    if (!droppedFiles.all(::isImage)) {
-      return false
-    }
     val document = editor.document
     val currentDirectory = MarkdownFileUtil.getDirectory(project, document)
     val caret = editor.caretModel.currentCaret
@@ -53,13 +54,5 @@ internal class MarkdownImageFileDropHandler : CustomFileDropHandler() {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(exception)
     }
     return true
-  }
-
-  companion object {
-    private val IMAGE_EXTENSIONS = setOf("bmp", "gif", "jpeg", "jpg", "png", "webp")
-
-    private fun isImage(file: File): Boolean {
-      return file.extension in IMAGE_EXTENSIONS
-    }
   }
 }
