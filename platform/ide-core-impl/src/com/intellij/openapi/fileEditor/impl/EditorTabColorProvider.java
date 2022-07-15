@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +35,7 @@ public interface EditorTabColorProvider {
    */
   @Nullable
   @ApiStatus.Experimental
-  default Color getEditorTabForegroundColor(@NotNull Project project, @NotNull VirtualFile file) { return null; }
+  default ColorKey getEditorTabForegroundColor(@NotNull Project project, @NotNull VirtualFile file) { return null; }
 
   /**
    *
