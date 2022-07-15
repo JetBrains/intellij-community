@@ -9,9 +9,11 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.RefactoringBundle
 import org.intellij.images.fileTypes.ImageFileTypeManager
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import org.intellij.plugins.markdown.util.MarkdownFileUtil
 import java.awt.datatransfer.Transferable
 import kotlin.io.path.extension
@@ -28,11 +30,15 @@ internal class MarkdownImageFileDropHandler: CustomFileDropHandler() {
   }
 
   override fun handleDrop(transferable: Transferable, editor: Editor?, project: Project?): Boolean {
-    if (editor == null || !editor.document.isWritable) {
+    if (editor == null || !editor.document.isWritable || project == null) {
       return false
     }
     val files = FileCopyPasteUtil.getFileList(transferable) ?: return false
     val document = editor.document
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return false
+    if (!file.language.isMarkdownLanguage()) {
+      return false
+    }
     val currentDirectory = MarkdownFileUtil.getDirectory(project, document)
     val content = files.joinToString(separator = "\n") {
       ImageUtils.createMarkdownImageText(path = MarkdownFileUtil.getPathForMarkdownImage(it.toString(), currentDirectory))
