@@ -126,10 +126,14 @@ public class JpsOutputLoaderManager {
     }
   }
 
-  public void saveLatestBuiltCommitId(@NotNull CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status) {
+  public static void saveLatestBuiltCommitId(@NotNull CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status,
+                                             @NotNull Channel channel,
+                                             @NotNull UUID sessionId) {
     if (status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED ||
-        status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.ERRORS ) return;
-    myNettyClient.saveLatestBuiltCommit();
+        status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.ERRORS   ||
+        status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.UP_TO_DATE) return;
+    LOG.info("Saving latest project built commit");
+    JpsNettyClient.saveLatestBuiltCommit(channel, sessionId);
   }
 
   private boolean isDownloadQuickerThanLocalBuild(BuildRunner buildRunner, int commitsCountBetweenCompilation,

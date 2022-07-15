@@ -652,7 +652,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         else if (!doneSomething){
           status = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.UP_TO_DATE;
         }
-        if (myCacheLoadManager != null) myCacheLoadManager.saveLatestBuiltCommitId(status);
+        if (ProjectStamps.PORTABLE_CACHES) {
+          JpsOutputLoaderManager.saveLatestBuiltCommitId(status, myChannel, mySessionId);
+        }
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createBuildCompletedEvent("build completed", status));
       }
     }
