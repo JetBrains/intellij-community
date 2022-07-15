@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.IntConsumer
 
-val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
+private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val libsThatUsedInJps = java.util.Set.of(
@@ -75,6 +75,7 @@ class JarPackager private constructor(private val context: BuildContext) {
     init {
       extraMergeRules.put("groovy.jar") { it.startsWith("org.codehaus.groovy:") }
       extraMergeRules.put("jsch-agent.jar") { it.startsWith("jsch-agent") }
+      extraMergeRules.put("rd.jar") { it.startsWith("rd-") }
       // see ClassPathUtil.getUtilClassPath
       extraMergeRules.put("3rd-party-rt.jar") {
         libsThatUsedInJps.contains(it) || it.startsWith("kotlinx-") || it == "kotlin-reflect"
