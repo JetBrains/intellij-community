@@ -39,6 +39,8 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +75,7 @@ public class FoldingModelSupport {
   private FoldedBlock myHoveredBlock = null;
 
   private boolean myDuringSynchronize;
+  private final Int2ObjectMap<FoldedBlock>[] myLineMappings;
   private final boolean[] myShouldUpdateLineNumbers;
 
   private boolean myEnabled;
@@ -83,6 +86,12 @@ public class FoldingModelSupport {
     myCount = myEditors.length;
     myShouldUpdateLineNumbers = new boolean[myCount];
     myEnabled = true;
+
+    //noinspection unchecked
+    myLineMappings = new Int2ObjectMap[myCount];
+    for (int i = 0; i < myCount; i++) {
+      myLineMappings[i] = new Int2ObjectOpenHashMap<>();
+    }
 
     MyDocumentListener documentListener = new MyDocumentListener();
     List<Document> documents = ContainerUtil.map(myEditors, EditorEx::getDocument);
@@ -477,13 +486,10 @@ public class FoldingModelSupport {
   @NotNull
   public IntUnaryOperator getLineConvertor(final int index) {
     return value -> {
-      updateLineNumbers(false);
-      for (FoldedBlock folding : getFoldedBlocks()) { // TODO: avoid full scan - it could slowdown painting
-        int line = folding.getLine(index);
-        if (line == -1) continue;
-        if (line > value) break;
-        FoldRegion region = folding.getRegion(index);
-        if (line == value && region != null && !region.isExpanded()) return -1;
+      FoldedBlock foldedBlock = getBlockForLine(index, value);
+      if (foldedBlock != null) {
+        FoldRegion region = foldedBlock.getRegion(index);
+        if (region != null && !region.isExpanded()) return -1;
       }
       return value;
     };
@@ -495,10 +501,21 @@ public class FoldingModelSupport {
       myShouldUpdateLineNumbers[i] = false;
 
       ApplicationManager.getApplication().assertReadAccessAllowed();
+
+      Int2ObjectMap<FoldedBlock> mapping = myLineMappings[i];
+      mapping.clear();
+
       for (FoldedBlock folding : getFoldedBlocks()) {
-        folding.updateLineNumber(i);
+        int lineNumber = folding.computeLineNumber(i);
+        mapping.putIfAbsent(lineNumber, folding);
       }
     }
+  }
+
+  @Nullable
+  private FoldedBlock getBlockForLine(int index, int hoverLine) {
+    updateLineNumbers(false);
+    return myLineMappings[index].get(hoverLine);
   }
 
   //
@@ -603,15 +620,10 @@ public class FoldingModelSupport {
     private FoldedBlock getSelectedBlock(@NotNull EditorMouseEvent e) {
       int hoverLine = EditorUtil.yPositionToLogicalLine(myEditors[myIndex], e.getMouseEvent().getY());
 
-      updateLineNumbers(false);
-      for (FoldedBlock folding : getFoldedBlocks()) {
-        int line = folding.getLine(myIndex);
-        if (line == -1) continue;
-        if (line > hoverLine) break;
-        FoldRegion region = folding.getRegion(myIndex);
-        if (line == hoverLine && region != null) {
-          return folding;
-        }
+      FoldedBlock foldedBlock = getBlockForLine(myIndex, hoverLine);
+      if (foldedBlock != null) {
+        FoldRegion region = foldedBlock.getRegion(myIndex);
+        if (region != null) return foldedBlock;
       }
       return null;
     }
@@ -936,7 +948,6 @@ public class FoldingModelSupport {
    */
   protected class FoldedBlock {
     private final FoldRegion @NotNull [] myRegions;
-    private final int @NotNull [] myLines;
 
     @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>(myCount);
 
@@ -949,7 +960,6 @@ public class FoldingModelSupport {
       assert regions.length == myCount;
       assert cachedDescriptions == null || cachedDescriptions.length == myCount;
       myRegions = regions;
-      myLines = new int[myCount];
 
       myDescriptions = new LazyDescription[myCount];
       if (myProject != null) {
@@ -987,23 +997,19 @@ public class FoldingModelSupport {
       myHighlighters.clear();
     }
 
-    public void updateLineNumber(int index) {
+    public int computeLineNumber(int index) {
       FoldRegion region = myRegions[index];
       if (region == null || !region.isValid()) {
-        myLines[index] = -1;
+        return -1;
       }
       else {
-        myLines[index] = myEditors[index].getDocument().getLineNumber(region.getStartOffset());
+        return myEditors[index].getDocument().getLineNumber(region.getStartOffset());
       }
     }
 
     @Nullable
     public FoldRegion getRegion(int index) {
       return myRegions[index];
-    }
-
-    public int getLine(int index) {
-      return myLines[index];
     }
 
     public boolean isHovered() {
