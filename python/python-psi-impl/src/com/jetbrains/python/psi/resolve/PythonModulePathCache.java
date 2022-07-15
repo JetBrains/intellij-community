@@ -1,9 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
@@ -27,6 +30,14 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
   @SuppressWarnings({"UnusedDeclaration"})
   public PythonModulePathCache(Module module) {
     MessageBusConnection connection = module.getProject().getMessageBus().connect(this);
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
+        if (event.isCausedByWorkspaceModelChangesOnly()) return;
+        updateCacheForSdk(module);
+        clearCache();
+      }
+    });
     WorkspaceModelTopics.getInstance(module.getProject()).subscribeImmediately(connection, new WorkspaceListener(module));
 
     connection.subscribe(PyPackageManager.PACKAGE_MANAGER_TOPIC, sdk -> {
