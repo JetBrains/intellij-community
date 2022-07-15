@@ -562,7 +562,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       else {
         downloader.compute();
       }
-      String disabledCondition = DisabledConditionUtil.getDisabledConditionValue(myConfiguration);
+      String disabledCondition = ReadAction.nonBlocking(() -> {
+        if (DumbService.isDumb(project)) {
+          return null;
+        }
+        return DisabledConditionUtil.getDisabledConditionValue(myConfiguration);
+      }).executeSynchronously();
       if (disabledCondition != null) {
         javaParameters.getProgramParametersList().add("-Djunit.jupiter.conditions.deactivate=" + disabledCondition);
       }
