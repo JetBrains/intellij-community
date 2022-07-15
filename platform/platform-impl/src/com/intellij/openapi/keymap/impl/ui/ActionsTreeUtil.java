@@ -780,9 +780,4 @@ public final class ActionsTreeUtil {
   public static String getProjectViewPopup() {
     return KeyMapBundle.message("project.view.popup.menu.title");
   }
-
-  @Nls
-  public static String getJ2EEPopup() {
-    return KeyMapBundle.message("j2ee.view.popup.menu.title");
-  }
 }
