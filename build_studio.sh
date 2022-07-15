@@ -35,6 +35,8 @@ declare -ar BUILD_PROPERTIES=(
   "-Dintellij.build.dev.mode=false"
   "-Dintellij.build.run.steps.in.parallel=false"
   "-Dcompile.parallel=true"
+  "-Dintellij.build.dmg.with.bundled.jre=false"
+  "-Dintellij.build.dmg.without.bundled.jre=true"
   "-Dintellij.build.skip.build.steps=mac_dmg,mac_sign,windows_exe_installer,cross_platform_dist"
   "-Dintellij.build.incremental.compilation=${INCREMENTAL}"
 )
