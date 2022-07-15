@@ -23,9 +23,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
@@ -85,10 +82,11 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.testFramework.common.TestApplicationKt.checkEditorsReleasedCatching;
+import static com.intellij.util.ErrorKt.throwIfNotEmpty;
 
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
   private static Project ourProject;
@@ -486,15 +484,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         // getAllEditors() should be called only after dispatchAllInvocationEvents(), that's why separate RunAll is used
         Application app = ApplicationManager.getApplication();
         if (app != null) {
-          EditorFactory editorFactory = app.getServiceIfCreated(EditorFactory.class);
-          if (editorFactory != null) {
-            List<ThrowableRunnable<?>> actions = new ArrayList<>();
-            for (Editor editor : editorFactory.getAllEditors()) {
-              actions.add(() -> EditorFactoryImpl.throwNotReleasedError(editor));
-              actions.add(() -> editorFactory.releaseEditor(editor));
-            }
-            new RunAll(actions).run();
-          }
+          throwIfNotEmpty(checkEditorsReleasedCatching(app));
         }
       });
   }

@@ -12,6 +12,8 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
@@ -137,6 +139,22 @@ private inline fun <reified T : Any> Application.serviceIfCreated(): T? = this.g
 @Internal
 fun Application.clearEncodingManagerDocumentQueue() {
   (serviceIfCreated<EncodingManager>() as? EncodingManagerImpl)?.clearDocumentQueue()
+}
+
+@TestOnly
+@Internal
+fun Application.checkEditorsReleasedCatching(): List<Throwable> {
+  val editorFactory = serviceIfCreated<EditorFactory>() ?: return emptyList()
+  val actions: MutableList<() -> Unit> = ArrayList()
+  for (editor in editorFactory.allEditors) {
+    actions.add {
+      EditorFactoryImpl.throwNotReleasedError(editor)
+    }
+    actions.add {
+      editorFactory.releaseEditor(editor)
+    }
+  }
+  return runAllCatching(actions)
 }
 
 @TestOnly

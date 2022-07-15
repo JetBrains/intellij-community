@@ -30,6 +30,11 @@ fun runAllCatching(vararg actions: () -> Unit): List<Throwable> {
 }
 
 @TestOnly
+fun runAllCatching(actions: Iterable<() -> Unit>): List<Throwable> {
+  return actions.asSequence().runAllCatching()
+}
+
+@TestOnly
 fun <X> runAllCatching(items: Collection<X>, action: (X) -> Unit): List<Throwable> {
   return items.asSequence().map {
     {
