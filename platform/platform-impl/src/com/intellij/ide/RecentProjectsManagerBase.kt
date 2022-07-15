@@ -127,21 +127,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     }
   }
 
-  final override fun noStateLoaded() {
-    val old = service<OldRecentDirectoryProjectsManager>().loadedState ?: return
-    val newState = RecentProjectManagerState()
-    newState.copyFrom(old)
-    newState.intIncrementModificationCount()
-    loadState(newState)
-  }
-
   final override fun loadState(state: RecentProjectManagerState) {
     synchronized(stateLock) {
       this.state = state
       state.pid = null
-
-      @Suppress("DEPRECATION")
-      migrateOpenPaths(state.openPaths)
 
       // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete
       @Suppress("DEPRECATION")
@@ -175,30 +164,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
         state.recentPaths.clear()
       }
     }
-  }
-
-  // reorder according to openPaths order and mark as opened
-  private fun migrateOpenPaths(openPaths: MutableList<String>) {
-    if (openPaths.isEmpty()) {
-      return
-    }
-
-    convertToSystemIndependentPaths(openPaths)
-
-    val oldInfoMap = mutableMapOf<String, RecentProjectMetaInfo>()
-    for (path in openPaths) {
-      state.additionalInfo.remove(path)?.let { info ->
-        oldInfoMap.put(path, info)
-      }
-    }
-
-    for (path in openPaths.asReversed()) {
-      val info = oldInfoMap.get(path) ?: RecentProjectMetaInfo()
-      info.opened = true
-      state.additionalInfo.put(path, info)
-    }
-    openPaths.clear()
-    modCounter.incrementAndGet()
   }
 
   override fun removePath(path: String) {
@@ -865,24 +830,6 @@ private fun convertToSystemIndependentPaths(list: MutableList<String>) {
   list.replaceAll {
     FileUtilRt.toSystemIndependentName(it)
   }
-}
-
-@Service
-@State(name = "RecentDirectoryProjectsManager",
-       storages = [Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED, deprecated = true)],
-       reportStatistic = false)
-private class OldRecentDirectoryProjectsManager : PersistentStateComponent<RecentProjectManagerState> {
-  var loadedState: RecentProjectManagerState? = null
-
-  companion object {
-    private val emptyState = RecentProjectManagerState()
-  }
-
-  override fun loadState(state: RecentProjectManagerState) {
-    loadedState = state
-  }
-
-  override fun getState() = emptyState
 }
 
 private open class MyProjectUiFrameManager(val frame: IdeFrameImpl, private val frameHelper: ProjectFrameHelper) : ProjectUiFrameManager {
