@@ -26,11 +26,11 @@ import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -133,7 +133,7 @@ class StartUpPerformanceReporter : InitProjectActivity, StartUpPerformanceServic
   }
 
   override fun reportStatistics(project: Project) {
-    ForkJoinPool.commonPool().execute {
+    project.coroutineScope.launch {
       keepAndLogStats(project.name)
     }
   }
