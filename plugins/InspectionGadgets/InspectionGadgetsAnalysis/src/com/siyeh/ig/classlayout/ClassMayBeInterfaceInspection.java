@@ -17,6 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.application.WriteAction;
@@ -103,6 +104,15 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
         changeClassToInterface(interfaceClass);
         moveImplementsToExtends(interfaceClass);
       });
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiIdentifier classNameIdentifier = (PsiIdentifier)previewDescriptor.getPsiElement();
+      final PsiClass interfaceClass = (PsiClass)classNameIdentifier.getParent();
+      changeClassToInterface(interfaceClass);
+      moveImplementsToExtends(interfaceClass);
+      return IntentionPreviewInfo.DIFF;
     }
 
     private static void changeClassToInterface(PsiClass aClass) {
