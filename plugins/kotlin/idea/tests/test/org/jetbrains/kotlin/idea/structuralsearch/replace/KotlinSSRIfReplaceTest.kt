@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.replace
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSRReplaceTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralReplaceTest
 
-class KotlinSSRIfReplaceTest : KotlinSSRReplaceTest() {
+class KotlinSSRIfReplaceTest : KotlinStructuralReplaceTest() {
     fun testIfThenMultiLineFormat() {
         doTest(
             searchPattern = "if('_VAR) { '_STATEMENT }",

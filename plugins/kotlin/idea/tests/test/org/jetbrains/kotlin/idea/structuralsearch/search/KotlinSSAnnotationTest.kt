@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSAnnotationTest : KotlinSSResourceInspectionTest() {
+class KotlinSSAnnotationTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "annotation"
 
     fun testAnnotation() { doTest("@Foo") }

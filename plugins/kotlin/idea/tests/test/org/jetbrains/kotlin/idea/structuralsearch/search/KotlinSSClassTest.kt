@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSClassTest : KotlinSSResourceInspectionTest() {
+class KotlinSSClassTest : KotlinStructuralSearchTest() {
     fun testClass() { doTest("class A", """
         <warning descr="SSR">class A</warning>
         class B

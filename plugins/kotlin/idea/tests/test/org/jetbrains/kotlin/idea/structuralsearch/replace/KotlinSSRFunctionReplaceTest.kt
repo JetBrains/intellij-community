@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.replace
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSRReplaceTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralReplaceTest
 
-class KotlinSSRFunctionReplaceTest : KotlinSSRReplaceTest() {
+class KotlinSSRFunctionReplaceTest : KotlinStructuralReplaceTest() {
     fun testVisibilityModifierCopy() {
         doTest(
             searchPattern = "fun '_ID('_PARAM*)",

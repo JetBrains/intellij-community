@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.structuralsearch.replace
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSRReplaceTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralReplaceTest
 
-class KotlinSSRTryCatchReplaceTest : KotlinSSRReplaceTest() {
+class KotlinSSRTryCatchReplaceTest : KotlinStructuralReplaceTest() {
     fun `test try catch replacement empty before after multi line`() {
         doTest(searchPattern = """
             try {

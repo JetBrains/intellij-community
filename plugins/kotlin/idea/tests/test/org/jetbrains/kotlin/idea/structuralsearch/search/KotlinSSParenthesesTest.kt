@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSParenthesesTest : KotlinSSResourceInspectionTest() {
+class KotlinSSParenthesesTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "parentheses"
 
     fun testPostIncr() { doTest("++(('_))") }

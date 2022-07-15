@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.structuralsearch.MatchOptions
 import com.intellij.structuralsearch.Matcher
@@ -23,7 +22,7 @@ import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 
-abstract class KotlinSSResourceInspectionTest : BasePlatformTestCase() {
+abstract class KotlinStructuralSearchTest : BasePlatformTestCase() {
     private var myInspection: SSBasedInspection? = null
     private val myConfiguration = SearchConfiguration().apply {
         name = "SSR"

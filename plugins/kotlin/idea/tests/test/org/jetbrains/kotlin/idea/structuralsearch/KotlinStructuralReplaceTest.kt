@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
-abstract class KotlinSSRReplaceTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class KotlinStructuralReplaceTest : KotlinLightCodeInsightFixtureTestCase() {
     private val searchConfiguration = SearchConfiguration().apply {
         name = "SSR"
         matchOptions.setFileType(KotlinFileType.INSTANCE)
