@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -64,7 +65,7 @@ object IndexableIteratorBuilders {
 internal data class LibraryIdIteratorBuilder(val libraryId: LibraryId,
                                              val dependencyChecked: Boolean) : IndexableIteratorBuilder
 
-internal data class SdkIteratorBuilder(val sdkName: String, val sdkType: String) : IndexableIteratorBuilder
+internal data class SdkIteratorBuilder(val sdkName: String, val sdkType: String, val file: VirtualFile? = null) : IndexableIteratorBuilder
 
 internal object InheritedSdkIteratorBuilder : IndexableIteratorBuilder
 

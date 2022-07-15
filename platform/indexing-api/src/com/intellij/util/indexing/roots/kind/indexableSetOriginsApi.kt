@@ -30,6 +30,7 @@ interface SyntheticLibraryOrigin : IndexableSetOrigin {
 
 interface SdkOrigin : IndexableSetOrigin {
   val sdk: Sdk
+  val rootsToIndex: Collection<VirtualFile>
 }
 
 interface IndexableSetContributorOrigin : IndexableSetOrigin {

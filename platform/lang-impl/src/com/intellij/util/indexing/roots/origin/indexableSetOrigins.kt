@@ -18,7 +18,8 @@ internal data class LibraryOriginImpl(override val classRootUrls: List<VirtualFi
 internal data class SyntheticLibraryOriginImpl(override val syntheticLibrary: SyntheticLibrary,
                                                override val rootsToIndex: Collection<VirtualFile>) : SyntheticLibraryOrigin
 
-internal data class SdkOriginImpl(override val sdk: Sdk) : SdkOrigin
+internal data class SdkOriginImpl(override val sdk: Sdk,
+                                  override val rootsToIndex: Collection<VirtualFile>) : SdkOrigin
 
 internal data class IndexableSetContributorOriginImpl(override val indexableSetContributor: IndexableSetContributor,
                                                       override val rootsToIndex: Set<VirtualFile>) : IndexableSetContributorOrigin
