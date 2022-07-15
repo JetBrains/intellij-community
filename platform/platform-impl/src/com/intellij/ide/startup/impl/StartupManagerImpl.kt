@@ -15,7 +15,6 @@ import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.idea.processExtensions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -34,7 +33,6 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.ModalityUiUtil
-import com.intellij.util.TimeoutUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -391,17 +389,13 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
   private fun scheduleBackgroundPostStartupActivities() {
     project.coroutineScope.launch {
-      delay(Registry.intValue("ide.background.post.startup.activity.delay").toLong())
-
-      val startTimeNano = System.nanoTime()
+      delay(Registry.intValue("ide.background.post.startup.activity.delay", 5_000).toLong())
       // read action - dynamic plugin loading executed as a write action
       val activities = readAction {
         BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(
           object : ExtensionPointListener<StartupActivity> {
             override fun extensionAdded(extension: StartupActivity, pluginDescriptor: PluginDescriptor) {
-              project.coroutineScope.launch {
-                runBackgroundPostStartupActivities(listOf(extension))
-              }
+              project.coroutineScope.runBackgroundPostStartupActivities(listOf(extension))
             }
           }, project)
         BACKGROUND_POST_STARTUP_ACTIVITY.extensionList
@@ -412,20 +406,17 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       }
 
       runBackgroundPostStartupActivities(activities)
-      LOG.debug {
-        "Background post-startup activities done in ${TimeoutUtil.getDurationMillis(startTimeNano)}ms"
-      }
     }
   }
 
-  private suspend fun runBackgroundPostStartupActivities(activities: List<StartupActivity>) {
+  private fun CoroutineScope.runBackgroundPostStartupActivities(activities: List<StartupActivity>) {
     for (activity in activities) {
-      yield()
-
       try {
         if (project !is LightEditCompatible || activity is LightEditCompatible) {
           if (activity is ProjectPostStartupActivity) {
-            activity.execute(project)
+            launch {
+              activity.execute(project)
+            }
           }
           else {
             activity.runActivity(project)
