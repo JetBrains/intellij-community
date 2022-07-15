@@ -14,7 +14,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.BuildHelperMavenPluginUtil
 import org.jetbrains.idea.maven.importing.MavenImporter
-import org.jetbrains.idea.maven.importing.tree.MavenModuleType
+import org.jetbrains.idea.maven.importing.MavenModuleType
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.*
 import org.jetbrains.idea.maven.project.MavenProject
@@ -82,9 +82,9 @@ class WorkspaceFolderImporter(
     fun exceptSources(it: ContentRootCollector.ImportedFolder) = it !is ContentRootCollector.UserOrGeneratedSourceFolder
 
     allFolders.addAll(when (moduleType) {
-                        MavenModuleType.MAIN -> cachedFolders.folders.filter { includeIf(it, forTests = false) }
-                        MavenModuleType.TEST -> cachedFolders.folders.filter { includeIf(it, forTests = true) }
-                        MavenModuleType.AGGREGATOR_MAIN_TEST -> cachedFolders.folders.filter { exceptSources(it) }
+                        MavenModuleType.MAIN_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = false) }
+                        MavenModuleType.TEST_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = true) }
+                        MavenModuleType.COMPOUND_MODULE -> cachedFolders.folders.filter { exceptSources(it) }
                         MavenModuleType.AGGREGATOR -> emptyList()
                         else -> cachedFolders.folders
                       })

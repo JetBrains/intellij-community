@@ -18,10 +18,10 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.tree.MavenModuleType;
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData;
 import org.jetbrains.idea.maven.importing.tree.dependency.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -60,6 +60,7 @@ public final class MavenLegacyModuleImporter {
   private MavenRootModelAdapter myRootModelAdapter;
 
   private IdeModifiableModelsProvider myProviderForExtensions;
+  private List<MavenImporter> mySuitableImporters;
 
   public MavenLegacyModuleImporter(Module module,
                                    MavenProjectsTree mavenTree,
@@ -119,7 +120,7 @@ public final class MavenLegacyModuleImporter {
   }
 
   public void configMainAndTestAggregator(MavenRootModelAdapter mavenRootModelAdapter, MavenTreeModuleImportData importData) {
-    assert importData.getModuleData().getType() == MavenModuleType.AGGREGATOR_MAIN_TEST;
+    assert importData.getModuleData().getType() == MavenModuleType.COMPOUND_MODULE;
     myRootModelAdapter = mavenRootModelAdapter;
 
     new MavenLegacyFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).configMainAndTestAggregator();
@@ -130,7 +131,7 @@ public final class MavenLegacyModuleImporter {
 
   public void configMainAndTest(MavenRootModelAdapter mavenRootModelAdapter, MavenTreeModuleImportData importData) {
     MavenModuleType type = importData.getModuleData().getType();
-    assert type == MavenModuleType.MAIN || type == MavenModuleType.TEST;
+    assert type == MavenModuleType.MAIN_ONLY || type == MavenModuleType.TEST_ONLY;
     myRootModelAdapter = mavenRootModelAdapter;
     new MavenLegacyFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).configMainAndTest(type);
     configDependencies(importData.getDependencies());
@@ -144,7 +145,7 @@ public final class MavenLegacyModuleImporter {
 
       final ModuleType moduleType = ModuleType.get(myModule);
 
-      for (final MavenImporter importer : getSuitableImporters()) {
+      for (final MavenImporter importer : mySuitableImporters) {
         try {
           final MavenProjectChanges changes;
           if (myMavenProjectChanges == null) {
@@ -175,7 +176,7 @@ public final class MavenLegacyModuleImporter {
       final ModuleType moduleType = ModuleType.get(myModule);
 
       ApplicationManager.getApplication().runWriteAction(() -> {
-        for (final MavenImporter importer : getSuitableImporters()) {
+        for (final MavenImporter importer : mySuitableImporters) {
           final MavenProjectChanges changes;
           if (myMavenProjectChanges == null) {
             if (importer.processChangedModulesOnly()) continue;
@@ -213,7 +214,7 @@ public final class MavenLegacyModuleImporter {
 
       final ModuleType moduleType = ModuleType.get(myModule);
 
-      for (final MavenImporter importer : getSuitableImporters()) {
+      for (final MavenImporter importer : mySuitableImporters) {
         try {
           final MavenProjectChanges changes;
           if (myMavenProjectChanges == null) {
@@ -257,10 +258,6 @@ public final class MavenLegacyModuleImporter {
     long timeNano = 0;
   }
 
-  private List<MavenImporter> getSuitableImporters() {
-    return myMavenProject.getSuitableImporters();
-  }
-
   private void configFolders() {
     new MavenLegacyFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).config();
   }
@@ -268,12 +265,15 @@ public final class MavenLegacyModuleImporter {
   private void configDependencies() {
     Set<String> dependencyTypesFromSettings = new HashSet<>();
 
-    if (!ReadAction.compute(()->{
+    if (!ReadAction.compute(() -> {
       if (myModule.getProject().isDisposed()) return false;
 
-      dependencyTypesFromSettings.addAll(MavenProjectsManager.getInstance(myModule.getProject()).getImportingSettings().getDependencyTypesAsSet());
+      dependencyTypesFromSettings.addAll(
+        MavenProjectsManager.getInstance(myModule.getProject()).getImportingSettings().getDependencyTypesAsSet());
       return true;
-    })) return;
+    })) {
+      return;
+    }
 
 
     for (MavenArtifact artifact : myMavenProject.getDependencies()) {
@@ -455,11 +455,14 @@ public final class MavenLegacyModuleImporter {
     return myProviderForExtensions;
   }
 
-  public void setModifiableModelsProvider(IdeModifiableModelsProvider providerForExtensions) {
+  public void prepareForImporters(IdeModifiableModelsProvider providerForExtensions, boolean isLegacyImport) {
     myProviderForExtensions = providerForExtensions;
     MavenRootModelAdapter mavenRootModelAdapter = new MavenRootModelAdapter(
       new MavenRootModelAdapterLegacyImpl(myMavenProject, myModule, new ModifiableModelsProviderProxyWrapper(myProviderForExtensions)));
     setRootModelAdapter(mavenRootModelAdapter);
+
+    mySuitableImporters = ContainerUtil.filter(myMavenProject.getSuitableImporters(),
+                                               importer -> isLegacyImport || !importer.isMigratedToConfigurator());
   }
 
   @NotNull
@@ -512,6 +515,6 @@ public final class MavenLegacyModuleImporter {
   }
 
   public boolean isAggregatorMainTestModule() {
-    return myModuleType == MavenModuleType.AGGREGATOR_MAIN_TEST;
+    return myModuleType == MavenModuleType.COMPOUND_MODULE;
   }
 }

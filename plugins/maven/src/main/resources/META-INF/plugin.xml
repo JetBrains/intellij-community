@@ -22,6 +22,7 @@
 
   <extensionPoints>
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter" dynamic="true"/>
+    <extensionPoint name="configurator" interface="org.jetbrains.idea.maven.importing.MavenConfigurator" dynamic="true"/>
     <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension" dynamic="true"/>
     <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter" dynamic="true"/>
     <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"
@@ -474,10 +475,13 @@
     <remotePathTransformerFactory implementation="org.jetbrains.idea.maven.server.wsl.WslRemotePathTransformFactory"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
+    <configurator implementation="org.jetbrains.idea.maven.importing.MavenCompilerSettingsConfigurator"/>
     <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
+    <configurator implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
 
     <importer implementation="org.jetbrains.idea.maven.importing.MavenEncodingImporter"/>
+    <configurator implementation="org.jetbrains.idea.maven.importing.MavenEncodingImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenIdeaPluginImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenWslTargetImporter"/>
 

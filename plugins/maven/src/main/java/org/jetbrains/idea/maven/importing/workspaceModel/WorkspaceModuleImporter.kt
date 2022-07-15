@@ -18,8 +18,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenImportUtil
+import org.jetbrains.idea.maven.importing.MavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
-import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.importing.tree.dependency.*
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -77,9 +77,9 @@ class WorkspaceModuleImporter(
     val importFolderHolder = folderImporter.createContentRoots(importData.mavenProject, importData.moduleData.type, moduleEntity)
 
     when (importData.moduleData.type) {
-      MavenModuleType.MAIN -> importJavaSettingsMain(moduleEntity, importData, importFolderHolder)
-      MavenModuleType.TEST -> importJavaSettingsTest(moduleEntity, importData, importFolderHolder)
-      MavenModuleType.AGGREGATOR_MAIN_TEST -> importJavaSettingsMainAndTestAggregator(moduleEntity, importData)
+      MavenModuleType.MAIN_ONLY -> importJavaSettingsMain(moduleEntity, importData, importFolderHolder)
+      MavenModuleType.TEST_ONLY -> importJavaSettingsTest(moduleEntity, importData, importFolderHolder)
+      MavenModuleType.COMPOUND_MODULE -> importJavaSettingsMainAndTestAggregator(moduleEntity, importData)
       MavenModuleType.AGGREGATOR -> importJavaSettingsAggregator(moduleEntity, importData)
       else -> importJavaSettings(moduleEntity, importData, importFolderHolder)
     }
@@ -295,21 +295,21 @@ class WorkspaceModuleImporter(
     }
 
     companion object {
-      const val VERSION = "1"
+      const val VERSION = "223-2"
 
       fun tryRead(entity: ExternalSystemModuleOptionsEntity): ExternalSystemData? {
         if (entity.externalSystem != EXTERNAL_SOURCE_ID || entity.externalSystemModuleVersion != VERSION) return null
 
         val id = entity.linkedProjectId
         if (id == null) {
-          MavenLog.LOG.error("ExternalSystemModuleOptionsEntity.linkedProjectId must not be null")
+          MavenLog.LOG.debug("ExternalSystemModuleOptionsEntity.linkedProjectId must not be null")
           return null
         }
         val mavenProjectFilePath = FileUtil.toSystemIndependentName(id)
 
         val typeName = entity.externalSystemModuleType
         if (typeName == null) {
-          MavenLog.LOG.error("ExternalSystemModuleOptionsEntity.externalSystemModuleType must not be null")
+          MavenLog.LOG.debug("ExternalSystemModuleOptionsEntity.externalSystemModuleType must not be null")
           return null
         }
 
@@ -317,7 +317,7 @@ class WorkspaceModuleImporter(
           MavenModuleType.valueOf(typeName)
         }
         catch (e: Exception) {
-          MavenLog.LOG.error(e)
+          MavenLog.LOG.debug(e)
           return null
         }
         return ExternalSystemData(entity.module, mavenProjectFilePath, moduleType)

@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.*;
 
-import static org.jetbrains.idea.maven.importing.tree.MavenModuleType.*;
+import static org.jetbrains.idea.maven.importing.MavenModuleType.*;
 
 public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBase {
   private static final Logger LOG = Logger.getInstance(MavenProjectTreeLegacyImporter.class);
@@ -84,13 +84,13 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
           myModelsProvider.commit();
 
           if (myContext.hasChanges) {
-            removeOutdatedCompilerConfigSettings();
+            removeOutdatedCompilerConfigSettings(myProject);
             setMavenizedModules(ContainerUtil.map(myContext.changedModules, e -> e.getLegacyModuleData().getModule()), true);
           }
         });
       });
 
-      configFacets(importers, postTasks);
+      configFacets(importers, postTasks, true);
     }
     else {
       finalizeImport(obsoleteModules);
@@ -155,10 +155,10 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
                                      @NotNull MavenRootModelAdapter rootModelAdapter) {
       MavenModuleType type = importData.getModuleData().getType();
       rootModelAdapter.init(importData.getLegacyModuleData().isNewModule());
-      if (type == AGGREGATOR || type == MAIN_TEST) {
+      if (type == AGGREGATOR || type == SINGLE_MODULE) {
         moduleImporter.config(rootModelAdapter, importData);
       }
-      else if (type == AGGREGATOR_MAIN_TEST) {
+      else if (type == COMPOUND_MODULE) {
         moduleImporter.configMainAndTestAggregator(rootModelAdapter, importData);
       }
       else {

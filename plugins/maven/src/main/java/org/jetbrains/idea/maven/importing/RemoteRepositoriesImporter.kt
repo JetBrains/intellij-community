@@ -3,21 +3,40 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.io.File
 
-class RemoteRepositoriesImporter : MavenImporter("", "") {
-
+class RemoteRepositoriesImporter : MavenImporter("", ""),
+                                   MavenConfigurator {
+  private val COLLECTED_REPOSITORIES = Key.create<MutableSet<RemoteRepositoryDescription>>("COLLECTED_REPOSITORIES")
 
   override fun processChangedModulesOnly(): Boolean = false
 
   override fun isApplicable(mavenProject: MavenProject?): Boolean {
     return true
+  }
+
+  override fun isMigratedToConfigurator(): Boolean {
+    return true
+  }
+
+  override fun beforeModelApplied(context: MavenConfigurator.MutableContext) {
+    val mavenProjects = context.mavenProjectsWithModules.asSequence().map { it.mavenProject }
+    val repositories = collectRepositoriesForMavenProjects(context.project, mavenProjects)
+    COLLECTED_REPOSITORIES.set(context, repositories)
+  }
+
+  override fun afterModelApplied(context: MavenConfigurator.AppliedContext) {
+    COLLECTED_REPOSITORIES.get(context)?.let { applyRepositories(context.project, it) }
   }
 
   override fun preProcess(module: Module?,
@@ -27,24 +46,32 @@ class RemoteRepositoriesImporter : MavenImporter("", "") {
     if (module == null || mavenProject == null) {
       return
     }
-
-    val repoConfig = RemoteRepositoriesConfiguration.getInstance(module.project)
-    val repositories: MutableCollection<RemoteRepositoryDescription> =
-      hashSetOf<RemoteRepositoryDescription>().apply { addAll(repoConfig.repositories) }
-
-    mavenProject.remoteRepositories.mapTo(repositories) {
-      RemoteRepositoryDescription(it.id, it.name ?: it.id, mirror(it.id, it.url, module)).also {
-        LOG.debug("Imported remote repository ${it.id}/${it.name} at ${it.url}")
-      }
-    }
-
-    repoConfig.repositories = repositories.toMutableList()
+    val repostories = collectRepositoriesForMavenProjects(module.project, sequenceOf(mavenProject))
+    applyRepositories(module.project, repostories)
   }
 
-  private fun mirror(id: String, url: String, module: Module): String {
-    val settingsFile = MavenWorkspaceSettingsComponent.getInstance(
-      module.project).settings.generalSettings.effectiveUserSettingsIoFile
+  private fun collectRepositoriesForMavenProjects(project: Project,
+                                                  mavenProjects: Sequence<MavenProject>): MutableSet<RemoteRepositoryDescription> {
+    val settingsFile = runReadAction {
+      MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.effectiveUserSettingsIoFile
+    }
 
+    return mavenProjects.flatMap { mavenProject ->
+      mavenProject.remoteRepositories.asSequence().map { repo ->
+        RemoteRepositoryDescription(repo.id, repo.name ?: repo.id, mirror(repo.id, repo.url, settingsFile)).also {
+          LOG.debug("Imported remote repository from ${mavenProject.mavenId}: ${it.id}/${it.name} at ${it.url}")
+        }
+      }
+    }.toHashSet()
+  }
+
+  private fun applyRepositories(project: Project, mavenRepositories: MutableSet<RemoteRepositoryDescription>) {
+    val repoConfig = RemoteRepositoriesConfiguration.getInstance(project)
+    mavenRepositories.addAll(repoConfig.repositories)
+    repoConfig.repositories = mavenRepositories.toList()
+  }
+
+  private fun mirror(id: String, url: String, settingsFile: File?): String {
     return MavenUtil.getMirroredUrl(settingsFile, url, id)
   }
 

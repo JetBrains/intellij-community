@@ -23,7 +23,6 @@ import com.intellij.util.containers.NotNullList;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.tree.MavenModuleType;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -117,7 +116,7 @@ class MavenLegacyFoldersImporter {
     if (!myImportingSettings.isKeepSourceFolders()) {
       myModel.clearSourceFolders();
     }
-    boolean isTest = type == MavenModuleType.TEST;
+    boolean isTest = type == MavenModuleType.TEST_ONLY;
     Map<String, JpsModuleSourceRootType<?>> sourceFolders = isTest
                                                             ? getTestSourceFolders(myMavenProject)
                                                             : getMainSourceFolders(myMavenProject);

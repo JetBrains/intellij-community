@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing.tree
 
 import com.intellij.openapi.module.Module
 import com.intellij.pom.java.LanguageLevel
+import org.jetbrains.idea.maven.importing.MavenModuleType
 import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
@@ -11,9 +12,9 @@ open class ModuleData(val moduleName: String,
                       val type: MavenModuleType,
                       val javaVersionHolder: MavenJavaVersionHolder) {
   val sourceLanguageLevel: LanguageLevel?
-    get() = if (type == MavenModuleType.TEST) javaVersionHolder.testSourceLevel else javaVersionHolder.sourceLevel
+    get() = if (type == MavenModuleType.TEST_ONLY) javaVersionHolder.testSourceLevel else javaVersionHolder.sourceLevel
   val targetLanguageLevel: LanguageLevel?
-    get() = if (type == MavenModuleType.TEST) javaVersionHolder.testTargetLevel else javaVersionHolder.targetLevel
+    get() = if (type == MavenModuleType.TEST_ONLY) javaVersionHolder.testTargetLevel else javaVersionHolder.targetLevel
 
   override fun toString(): String {
     return moduleName

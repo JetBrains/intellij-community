@@ -1,20 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore.fileToUrl
-import com.intellij.openapi.vfs.VfsUtilCore.urlToPath
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.util.io.URLUtil.urlToPath
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -25,34 +25,51 @@ import java.nio.charset.UnsupportedCharsetException
 /**
  * @author Sergey Evdokimov
  */
-class MavenEncodingImporter : MavenImporter("", "") {
+class MavenEncodingImporter : MavenImporter("", ""), MavenConfigurator {
+  private val PREPARED_MAPPER = Key.create<EncodingMapper>("ENCODING_MAPPER")
 
   override fun isApplicable(mavenProject: MavenProject): Boolean {
     return true
+  }
+
+  override fun isMigratedToConfigurator(): Boolean {
+    return true
+  }
+
+  override fun beforeModelApplied(context: MavenConfigurator.MutableContext) {
+    val allMavenProjects = context.mavenProjectsWithModules.asSequence().map { (mavenProject, _) -> mavenProject }
+    val mapper = mapEncodings(allMavenProjects, context.project)
+    PREPARED_MAPPER.set(context, mapper)
+  }
+
+  override fun afterModelApplied(context: MavenConfigurator.AppliedContext) {
+    PREPARED_MAPPER.get(context)?.applyCollectedInfo()
   }
 
   override fun postProcess(module: Module,
                            mavenProject: MavenProject,
                            changes: MavenProjectChanges,
                            modifiableModelsProvider: IdeModifiableModelsProvider) {
-    configure(mavenProject, module.project)
+    mapEncodings(sequenceOf(mavenProject), module.project).applyCollectedInfo()
   }
 
-  private fun configure(mavenProject: MavenProject, project: Project) {
-    val encodingCollector = EncodingCollector(project)
+  private fun mapEncodings(mavenProjects: Sequence<MavenProject>, project: Project): EncodingMapper {
+    val encodingMapper = EncodingMapper(project)
 
-    ReadAction.compute<Unit, Throwable> {
-      fillSourceEncoding(mavenProject, encodingCollector)
+    mavenProjects.forEach { mavenProject ->
+      ReadAction.compute<Unit, Throwable> {
+        fillSourceEncoding(mavenProject, encodingMapper)
+      }
+
+      ReadAction.compute<Unit, Throwable> {
+        fillResourceEncoding(project, mavenProject, encodingMapper)
+      }
     }
 
-    ReadAction.compute<Unit, Throwable> {
-      fillResourceEncoding(project, mavenProject, encodingCollector)
-    }
-
-    encodingCollector.applyCollectedInfo()
+    return encodingMapper
   }
 
-  class EncodingCollector(project: Project) {
+  private class EncodingMapper(project: Project) {
     private val newPointerMappings = LinkedHashMap<VirtualFilePointer, Charset>()
     private val oldPointerMappings = LinkedHashMap<VirtualFilePointer, Charset>()
     private val encodingManager = (EncodingProjectManager.getInstance(project) as EncodingProjectManagerImpl)
@@ -85,25 +102,22 @@ class MavenEncodingImporter : MavenImporter("", "") {
       }
 
       val pointerMapping = newPointerMappings + oldPointerMappings
-
-      ApplicationManager.getApplication().invokeAndWait {
-        encodingManager.setPointerMapping(pointerMapping)
-      }
+      encodingManager.setPointerMapping(pointerMapping)
     }
   }
 
   private fun fillResourceEncoding(project: Project,
                                    mavenProject: MavenProject,
-                                   encodingCollector: EncodingCollector) {
+                                   encodingMapper: EncodingMapper) {
     mavenProject.getResourceEncoding(project)?.let(this::getCharset)?.let { charset ->
-      mavenProject.resources.map { it.directory }.forEach { encodingCollector.processDir(it, charset) }
+      mavenProject.resources.map { it.directory }.forEach { encodingMapper.processDir(it, charset) }
     }
   }
 
   private fun fillSourceEncoding(mavenProject: MavenProject,
-                                 encodingCollector: EncodingCollector) {
+                                 encodingMapper: EncodingMapper) {
     mavenProject.sourceEncoding?.let(this::getCharset)?.let { charset ->
-      mavenProject.sources.forEach { encodingCollector.processDir(it, charset) }
+      mavenProject.sources.forEach { encodingMapper.processDir(it, charset) }
     }
   }
 

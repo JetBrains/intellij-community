@@ -121,7 +121,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
           myModelsProvider.commit();
 
           if (projectsHaveChanges) {
-            removeOutdatedCompilerConfigSettings();
+            removeOutdatedCompilerConfigSettings(myProject);
           }
 
           if (projectsHaveChanges) {
@@ -130,7 +130,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
         });
       });
 
-      configFacets(importers, postTasks);
+      configFacets(importers, postTasks, true);
     }
     else {
       finalizeImport(obsoleteModules);

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,6 +120,9 @@ public abstract class MavenImporter {
     throws MavenProcessCanceledException {
     resolve(project, mavenProject, nativeMavenProject, embedder);
   }
+
+  @ApiStatus.Experimental
+  public boolean isMigratedToConfigurator() { return false; }
 
   /**
    * Import pre process callback.
