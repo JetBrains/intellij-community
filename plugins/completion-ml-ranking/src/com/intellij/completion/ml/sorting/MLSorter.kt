@@ -9,7 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.features.RankingFeaturesOverrides
-import com.intellij.completion.ml.performance.CompletionPerformanceTracker
+import com.intellij.completion.ml.performance.MLCompletionPerformanceTracker
 import com.intellij.completion.ml.personalization.session.SessionFactorsUtils
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.completion.ml.storage.MutableLookupStorage
@@ -335,7 +335,7 @@ class MLSorter : CompletionFinalSorter() {
       return result
     }
 
-    fun finished(performanceTracker: CompletionPerformanceTracker) {
+    fun finished(performanceTracker: MLCompletionPerformanceTracker) {
       if (itemsScored != 0) {
         performanceTracker.itemsScored(itemsScored, TimeUnit.NANOSECONDS.toMillis(timeSpent))
       }
