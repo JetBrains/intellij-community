@@ -2,23 +2,21 @@
 package org.jetbrains.plugins.gradle.codeInspection
 
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getDelegatesToInfo
 
 class JCenterRepositoryInspection : GradleBaseInspection() {
-  override fun buildVisitor(): BaseInspectionVisitor {
-    return MyVisitor()
-  }
+  override fun buildGroovyVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): GroovyElementVisitor = object : GroovyElementVisitor() {
 
-  class MyVisitor : BaseInspectionVisitor() {
     override fun visitLiteralExpression(literal: GrLiteral) {
       val file: PsiFile = literal.containingFile
       if (!FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)) return
@@ -29,7 +27,7 @@ class JCenterRepositoryInspection : GradleBaseInspection() {
         val closure = literal.parentOfType<GrClosableBlock>() ?: return
         val typeToDelegate = getDelegatesToInfo(closure)?.typeToDelegate ?: return
         if (typeToDelegate.canonicalText == GradleCommonClassNames.GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY) {
-          registerError(literal, GradleInspectionBundle.message("jcenter.repository"), emptyArray(), ProblemHighlightType.WARNING)
+          holder.registerProblem(literal, GradleInspectionBundle.message("jcenter.repository"), ProblemHighlightType.WARNING)
         }
       }
     }
@@ -42,7 +40,7 @@ class JCenterRepositoryInspection : GradleBaseInspection() {
       val closure = call.parentOfType<GrClosableBlock>() ?: return
       val typeToDelegate = getDelegatesToInfo(closure)?.typeToDelegate ?: return
       if (typeToDelegate.canonicalText == GradleCommonClassNames.GRADLE_API_REPOSITORY_HANDLER) {
-        registerError(call, GradleInspectionBundle.message("jcenter.repository"), emptyArray(), ProblemHighlightType.WARNING)
+        holder.registerProblem(call, GradleInspectionBundle.message("jcenter.repository"), ProblemHighlightType.WARNING)
       }
     }
   }

@@ -2,19 +2,17 @@
 package org.jetbrains.plugins.gradle.codeInspection
 
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 
 class BintrayPublishingPluginInspection: GradleBaseInspection() {
-  override fun buildVisitor(): BaseInspectionVisitor {
-    return MyVisitor()
-  }
 
-  class MyVisitor: BaseInspectionVisitor() {
+    override fun buildGroovyVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): GroovyElementVisitor = object : GroovyElementVisitor() {
 
     override fun visitLiteralExpression(literal: GrLiteral) {
       val file: PsiFile = literal.containingFile
@@ -23,7 +21,7 @@ class BintrayPublishingPluginInspection: GradleBaseInspection() {
       if (!literal.isString) return
       if ("com.jfrog.bintray" == literal.value) {
         if (isPluginDSL(literal) || isApplyPlugin(literal)) {
-          registerError(literal, GradleInspectionBundle.message("bintray.publishing.plugin"), emptyArray(), ProblemHighlightType.WARNING)
+          holder.registerProblem(literal, GradleInspectionBundle.message("bintray.publishing.plugin"), ProblemHighlightType.WARNING)
         }
       }
     }
@@ -41,7 +39,5 @@ class BintrayPublishingPluginInspection: GradleBaseInspection() {
         && "id" == it.name
       } ?: false
     }
-
-
   }
 }
