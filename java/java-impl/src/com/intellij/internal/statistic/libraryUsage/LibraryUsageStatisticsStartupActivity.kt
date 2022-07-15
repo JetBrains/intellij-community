@@ -4,10 +4,10 @@ package com.intellij.internal.statistic.libraryUsage
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 
-private class LibraryUsageStatisticsStartupActivity : StartupActivity.Background {
-  override fun runActivity(project: Project) {
+private class LibraryUsageStatisticsStartupActivity : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
     if (!LibraryUsageStatisticsProvider.isEnabled) {
       return
     }

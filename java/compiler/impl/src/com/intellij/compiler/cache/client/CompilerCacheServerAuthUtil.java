@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.cache.client;
 
 import com.intellij.notification.NotificationType;
@@ -17,7 +18,7 @@ public final class CompilerCacheServerAuthUtil {
   }
 
   public static @NotNull Map<String, String> getRequestHeaders(@NotNull Project project, boolean force) {
-    JpsServerAuthExtension authExtension = JpsServerAuthExtension.getInstance();
+    JpsServerAuthExtension authExtension = JpsServerAuthExtension.Companion.getInstance();
     if (authExtension == null) {
       String message = JavaCompilerBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work");
       ApplicationManager.getApplication().invokeLater(() -> {

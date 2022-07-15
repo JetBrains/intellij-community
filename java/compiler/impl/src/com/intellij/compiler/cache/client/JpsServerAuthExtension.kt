@@ -1,41 +1,34 @@
-package com.intellij.compiler.cache.client;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.compiler.cache.client
 
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.JavaCompilerBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
-
-import static com.intellij.compiler.cache.ui.CompilerCacheNotifications.ATTENTION;
-import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
+import com.intellij.compiler.cache.ui.CompilerCacheNotifications
+import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.compiler.JavaCompilerBundle
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Extension point which provides authentication data for requests to the JPS cache server
  */
-public interface JpsServerAuthExtension {
-  Logger LOG = Logger.getInstance(JpsServerAuthExtension.class);
-  Key<Boolean> NOTIFICATION_SHOWN_KEY = Key.create("AUTH_NOTIFICATION_SHOWN");
-  ExtensionPointName<JpsServerAuthExtension> EP_NAME = ExtensionPointName.create("com.intellij.jpsServerAuthExtension");
-
+interface JpsServerAuthExtension {
   /**
    * This method should check if the user was authenticated, if not it should do any needed actions to provide
-   * auth token for further requests. This method will be called outside of the EDT and should be asynchronous.
+   * auth token for further requests. This method will be called outside the EDT and should be asynchronous.
    * If the user was authenticated the callback should be invoked.
    *
    * @param presentableReason reason for the token request
    * @param parentDisposable controls the lifetime of the authentication
    * @param onAuthCompleted callback on authentication complete, if token already exists it also should be invoked
    */
-   void checkAuthenticated(@NotNull String presentableReason, @NotNull Disposable parentDisposable, @NotNull Runnable onAuthCompleted);
+  fun checkAuthenticated(presentableReason: String, parentDisposable: Disposable, onAuthCompleted: Runnable)
 
   /**
    * The method provides HTTP authentication headers for the requests to the server.
@@ -44,38 +37,41 @@ public interface JpsServerAuthExtension {
    * @return Map with header name as key and token. If it's not possible to get the authentication
    * headers, `null` will be returned.
    */
-  @Nullable Map<String, String> getAuthHeader(boolean force);
+  fun getAuthHeader(force: Boolean): Map<String, String>?
 
-  @Nullable
-  static JpsServerAuthExtension getInstance() {
-    return EP_NAME.extensions().findFirst().orElse(null);
-  }
+  companion object {
+    private val NOTIFICATION_SHOWN_KEY = Key.create<Boolean>("AUTH_NOTIFICATION_SHOWN")
+    val EP_NAME = ExtensionPointName<JpsServerAuthExtension>("com.intellij.jpsServerAuthExtension")
 
-  static void checkAuthenticatedInBackgroundThread(@NotNull Disposable parentDisposable, @NotNull Project project, @NotNull Runnable onAuthCompleted) {
-    Disposable disposable = Disposer.newDisposable();
-    Disposer.register(parentDisposable, disposable);
-    JpsServerAuthExtension authExtension = getInstance();
-    if (authExtension == null) {
-      Boolean userData = project.getUserData(NOTIFICATION_SHOWN_KEY);
-      if (userData == null) {
-        project.putUserData(NOTIFICATION_SHOWN_KEY, Boolean.TRUE);
-        ApplicationManager.getApplication().invokeLater(() -> {
-          ATTENTION
-            .createNotification(JavaCompilerBundle.message("notification.title.jps.caches.downloader"),
-                                JavaCompilerBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work"),
-                                NotificationType.WARNING)
-            .setListener(NotificationListener.URL_OPENING_LISTENER)
-            .notify(project);
-        });
+    fun getInstance(): JpsServerAuthExtension? = EP_NAME.extensionList.firstOrNull()
+
+    suspend fun checkAuthenticated(parentDisposable: Disposable, project: Project, onAuthCompleted: Runnable) {
+      val disposable = Disposer.newDisposable()
+      Disposer.register(parentDisposable, disposable)
+      val authExtension = getInstance()
+      if (authExtension == null) {
+        val userData = project.getUserData(NOTIFICATION_SHOWN_KEY)
+        if (userData == null) {
+          project.putUserData(NOTIFICATION_SHOWN_KEY, java.lang.Boolean.TRUE)
+          withContext(Dispatchers.EDT) {
+            CompilerCacheNotifications.ATTENTION
+              .createNotification(JavaCompilerBundle.message("notification.title.jps.caches.downloader"),
+                                  JavaCompilerBundle.message(
+                                    "notification.content.internal.authentication.plugin.required.for.correct.work"),
+                                  NotificationType.WARNING)
+              .setListener(NotificationListener.URL_OPENING_LISTENER)
+              .notify(project)
+          }
+        }
+        thisLogger().warn("JetBrains Internal Authentication plugin is required for the correct work. Please enable it.")
+        return
       }
-      LOG.warn("JetBrains Internal Authentication plugin is required for the correct work. Please enable it.");
-      return;
+      withContext(Dispatchers.IO) {
+        authExtension.checkAuthenticated("Jps Caches Downloader", disposable, Runnable {
+          Disposer.dispose(disposable)
+          onAuthCompleted.run()
+        })
+      }
     }
-    INSTANCE.execute(() -> {
-      authExtension.checkAuthenticated("Jps Caches Downloader", disposable, () -> {
-        Disposer.dispose(disposable);
-        onAuthCompleted.run();
-      });
-    });
   }
 }
