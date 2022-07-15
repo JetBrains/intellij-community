@@ -28,6 +28,7 @@ class BuildArtifactsReproducibilityTest {
     // FIXME IJI-823 workaround
     options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
     options.buildStepsToSkip.remove(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)
+    options.buildMacArtifactsWithRuntime = true
   }
 
   fun compare(context1: BuildContext, context2: BuildContext) {
