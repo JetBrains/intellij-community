@@ -9,7 +9,7 @@ data class ExperimentInfo(val inExperiment: Boolean,
                           val shouldRank: Boolean = false,
                           val shouldShowArrows: Boolean = false,
                           val shouldCalculateFeatures: Boolean = false,
-                          val shouldLogElementFeatures: Boolean = false) {
+                          private val shouldLogElementFeatures: Boolean = false) {
 
   fun shouldLogSessions(project: Project): Boolean = inExperiment || CurrentProjectInfo.getInstance(project).isIdeaProject
 
