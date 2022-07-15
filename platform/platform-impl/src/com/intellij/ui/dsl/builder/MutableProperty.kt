@@ -44,3 +44,7 @@ fun <T> MutableProperty<T>.toNullableProperty(): MutableProperty<T?> {
 fun <T> MutableProperty<T>.toNullableProperty(defaultValue: T): MutableProperty<T?> {
   return MutableProperty({ get() }, { set(it ?: defaultValue) })
 }
+
+fun <T> KMutableProperty0<T?>.toNonNullableProperty(defaultValue: T): MutableProperty<T> {
+  return MutableProperty({ get() ?: defaultValue }, { set(it) })
+}

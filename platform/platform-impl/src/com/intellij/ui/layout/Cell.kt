@@ -673,6 +673,7 @@ abstract class Cell : BaseBuilder {
     return component(JBScrollPane(component))
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun comment(@DetailedDescription text: String, maxLineLength: Int = -1): CellBuilder<JLabel> {
     return component(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
   }
