@@ -93,8 +93,8 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   }
 
   TemplateImpl(@NotNull @NlsSafe String key, @NlsSafe String string, @NotNull @NonNls String group, boolean storeBuildingStacktrace) {
+    super(StringUtil.convertLineSeparators(StringUtil.notNullize(string)));
     myKey = key;
-    setString(StringUtil.convertLineSeparators(StringUtil.notNullize(string)));
     myGroupName = group;
     setBuildingTemplateTrace(storeBuildingStacktrace ? new Throwable() : null);
   }

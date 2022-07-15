@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class TemplateBase extends Template {
 
@@ -22,14 +21,17 @@ public abstract class TemplateBase extends Template {
 
   private final List<Segment> mySegments;
   private boolean toParseSegments = true;
-  private final AtomicBoolean myParsed = new AtomicBoolean(false);
+  private boolean myParsed = false;
 
-  protected TemplateBase() {
+  protected TemplateBase(@NotNull String string) {
     mySegments = Collections.synchronizedList(new SmartList<>());
+    myString = string;
   }
 
   public boolean isParsed() {
-    return myParsed.get();
+    synchronized (mySegments) {
+      return myParsed;
+    }
   }
   
   public void parseSegments() {
@@ -37,32 +39,37 @@ public abstract class TemplateBase extends Template {
       return;
     }
 
-    if (myParsed.getAndSet(true)) {
-      return;
-    }
+    String templateRawText = myString;
+    StringBuilder buffer;
+    synchronized (mySegments) {
+      if (myParsed) {
+        return;
+      }
 
-    StringBuilder buffer = new StringBuilder(myString.length());
-    TemplateTextLexer lexer = new TemplateTextLexer();
-    lexer.start(myString);
+      buffer = new StringBuilder(templateRawText.length());
+      TemplateTextLexer lexer = new TemplateTextLexer();
+      lexer.start(templateRawText);
 
-    while(true){
-      IElementType tokenType = lexer.getTokenType();
-      if (tokenType == null) break;
-      int start = lexer.getTokenStart();
-      int end = lexer.getTokenEnd();
-      String token = myString.substring(start, end);
-      if (tokenType == TemplateTokenType.VARIABLE){
-        String name = token.substring(1, token.length() - 1);
-        Segment segment = new Segment(name, buffer.length());
-        mySegments.add(segment);
+      while (true) {
+        IElementType tokenType = lexer.getTokenType();
+        if (tokenType == null) break;
+        int start = lexer.getTokenStart();
+        int end = lexer.getTokenEnd();
+        String token = templateRawText.substring(start, end);
+        if (tokenType == TemplateTokenType.VARIABLE){
+          String name = token.substring(1, token.length() - 1);
+          Segment segment = new Segment(name, buffer.length());
+          mySegments.add(segment);
+        }
+        else if (tokenType == TemplateTokenType.ESCAPE_DOLLAR){
+          buffer.append("$");
+        }
+        else{
+          buffer.append(token);
+        }
+        lexer.advance();
       }
-      else if (tokenType == TemplateTokenType.ESCAPE_DOLLAR){
-        buffer.append("$");
-      }
-      else{
-        buffer.append(token);
-      }
-      lexer.advance();
+      myParsed = true;
     }
     myTemplateText = buffer.toString();
   }
@@ -72,8 +79,10 @@ public abstract class TemplateBase extends Template {
   }
 
   protected void clearSegments() {
-    mySegments.clear();
-    myParsed.set(false);
+    synchronized (mySegments) {
+      mySegments.clear();
+      myParsed = false;
+    }
   }
 
   protected boolean isToParseSegments() {
@@ -122,7 +131,7 @@ public abstract class TemplateBase extends Template {
     myTemplateText = templateText;
   }
 
-  protected void setBuildingTemplateTrace(Throwable buildingTemplateTrace) {
+  protected void setBuildingTemplateTrace(@Nullable Throwable buildingTemplateTrace) {
     myBuildingTemplateTrace = buildingTemplateTrace;
   }
 
