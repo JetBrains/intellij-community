@@ -12,6 +12,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTrack
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.NonUrgentExecutor
 import java.util.concurrent.atomic.AtomicReference
 
 internal class SearchEverywhereMLSearchSession(project: Project?,
@@ -113,6 +114,29 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
   fun getCurrentSearchState() = currentSearchState.get()
 }
 
-internal class SearchEverywhereMLContextInfo(project: Project?) {
-  val features: List<EventPair<*>> = SearchEverywhereContextFeaturesProvider().getContextFeatures(project)
+internal class SearchEverywhereMLContextInfo(private val project: Project?) {
+  @Volatile
+  private var _features: List<EventPair<*>>? = null
+
+  val features: List<EventPair<*>>
+    get() {
+      if (_features == null) {
+        // features may not yet been initialized by the NonUrgentExecutor, however the features are requested,
+        // possibly when computing ML weights, so it is important to compute them immediately
+        _features = computeContextFeatures()
+      }
+
+      return _features!!
+    }
+
+  init {
+    NonUrgentExecutor.getInstance().execute {
+      // In case we have actually computed the features before the NonUrgentExecutor had a chance to do it
+      if (_features == null) {
+        _features = computeContextFeatures()
+      }
+    }
+  }
+
+  private fun computeContextFeatures() = SearchEverywhereContextFeaturesProvider().getContextFeatures(project)
 }
