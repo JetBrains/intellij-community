@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common
 
+import com.intellij.codeInsight.completion.CompletionProgressIndicator
+import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
@@ -11,9 +14,16 @@ import com.intellij.idea.initConfigurationStore
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl
+import com.intellij.openapi.command.impl.UndoManagerImpl
+import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
@@ -32,6 +42,7 @@ import com.intellij.psi.impl.DocumentCommitThread
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.UITestUtil
+import com.intellij.ui.UiInterceptors
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
@@ -134,6 +145,21 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 }
 
 private inline fun <reified T : Any> Application.serviceIfCreated(): T? = this.getServiceIfCreated(T::class.java)
+
+@TestOnly
+@Internal
+fun Application.cleanApplicationStateCatching(): List<Throwable> {
+  return runAllCatching(
+    { (serviceIfCreated<FileTypeManager>() as? FileTypeManagerImpl)?.drainReDetectQueue() },
+    { clearEncodingManagerDocumentQueue() },
+    { (serviceIfCreated<HintManager>() as? HintManagerImpl)?.cleanup() },
+    { (serviceIfCreated<UndoManager>() as? UndoManagerImpl)?.dropHistoryInTests() },
+    { (serviceIfCreated<DocumentReferenceManager>() as? DocumentReferenceManagerImpl)?.cleanupForNextTest() },
+    { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() },
+    { UiInterceptors.clear() },
+    { CompletionProgressIndicator.cleanupForNextTest() },
+  )
+}
 
 @TestOnly
 @Internal

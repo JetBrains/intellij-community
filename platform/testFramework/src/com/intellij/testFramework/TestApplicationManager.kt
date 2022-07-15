@@ -3,9 +3,6 @@ package com.intellij.testFramework
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.completion.CompletionProgressIndicator
-import com.intellij.codeInsight.hint.HintManager
-import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.*
@@ -19,18 +16,13 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl
 import com.intellij.openapi.command.impl.UndoManagerImpl
-import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
-import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -42,7 +34,6 @@ import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.common.*
-import com.intellij.ui.UiInterceptors
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.ref.GCUtil
@@ -94,14 +85,12 @@ class TestApplicationManager private constructor() {
       val app = ApplicationManager.getApplication()
 
       val l = runAllCatching(
-        { app.serviceIfCreated<FileTypeManager, FileTypeManagerImpl>()?.drainReDetectQueue() },
         {
           if (isLightProject) {
             project.serviceIfCreated<AutoPopupController>()?.cancelAllRequests()
           }
         },
         { CodeStyle.dropTemporarySettings(project) },
-        { checkJavaSwingTimersAreDisposed() },
         { UsefulTestCase.doPostponedFormatting(project) },
         { LookupManager.hideActiveLookup(project) },
         {
@@ -125,13 +114,9 @@ class TestApplicationManager private constructor() {
             throw IllegalStateException("PsiManager must be not disposed")
           }
         },
-        { app.clearEncodingManagerDocumentQueue() },
         { LightPlatformTestCase.checkAssertions() },
         { LightPlatformTestCase.clearUncommittedDocuments(project) },
-        { app.serviceIfCreated<HintManager, HintManagerImpl>()?.cleanup() },
-        { (UndoManager.getGlobalInstance() as UndoManagerImpl).dropHistoryInTests() },
         { (UndoManager.getInstance(project) as UndoManagerImpl).dropHistoryInTests() },
-        { app.serviceIfCreated<DocumentReferenceManager, DocumentReferenceManagerImpl>()?.cleanupForNextTest() },
         { project.serviceIfCreated<TemplateDataLanguageMappings>()?.cleanupForNextTest() },
         { (project.serviceIfCreated<PsiManager>() as PsiManagerImpl?)?.cleanupForNextTest() },
         { (project.serviceIfCreated<StructureViewFactory>() as StructureViewFactoryImpl?)?.cleanupForNextTest() },
@@ -142,9 +127,6 @@ class TestApplicationManager private constructor() {
           getInstanceIfCreated()?.setDataProvider(null)
         },
         { ProjectManagerEx.getInstanceEx().forceCloseProject(project) },
-        { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() },
-        { UiInterceptors.clear() },
-        { CompletionProgressIndicator.cleanupForNextTest() },
         {
           if (testCounter++ % 100 == 0) {
             // Some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean data,
@@ -152,7 +134,7 @@ class TestApplicationManager private constructor() {
             GCUtil.clearBeanInfoCache()
           }
         },
-      )
+      ) + app.cleanApplicationStateCatching()
 
       throwIfNotEmpty(l)
     }
