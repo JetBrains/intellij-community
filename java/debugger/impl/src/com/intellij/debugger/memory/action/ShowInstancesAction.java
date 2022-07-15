@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.memory.action;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.xdebugger.memory.ui.TypeInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -31,6 +32,11 @@ abstract class ShowInstancesAction extends ClassesActionBase {
     if (enabled) {
       presentation.setText(getPresentation(e));
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private @NlsSafe String getPresentation(@NotNull AnActionEvent e) {

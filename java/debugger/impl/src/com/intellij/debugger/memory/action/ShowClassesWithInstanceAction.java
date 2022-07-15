@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.memory.action;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
@@ -33,5 +34,10 @@ public class ShowClassesWithInstanceAction extends ToggleAction {
     if (project != null) {
       MemoryViewManager.getInstance().setShowWithInstancesOnly(state);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }
