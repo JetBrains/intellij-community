@@ -1,27 +1,16 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -46,6 +35,26 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
   public GroovyAddImportAction(@NotNull GrReferenceElement<?> ref) {
     super(ref, ref);
     this.ref = ref;
+  }
+
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiFile containingFile = ref.getContainingFile();
+    if (!(containingFile instanceof GroovyFile)) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    String fileName = containingFile.getName();
+    GrImportStatement[] imports = ((GroovyFile)containingFile).getImportStatements();
+    StringBuilder builder = new StringBuilder();
+    for (GrImportStatement importStmt : imports) {
+      builder.append(importStmt.getText());
+      builder.append("\n");
+    }
+    String before = builder.toString();
+    builder.append("import package1.package2.").append(ref.getReferenceName());
+    String after = builder.toString();
+    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, fileName, before, after);
   }
 
   @Override
