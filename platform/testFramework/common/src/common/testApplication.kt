@@ -122,6 +122,8 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
 }
 
+private inline fun <reified T : Any> Application.serviceIfCreated(): T? = this.getServiceIfCreated(T::class.java)
+
 @TestOnly
 @Internal
 fun assertNonDefaultProjectsAreNotLeaked() {
@@ -142,10 +144,10 @@ fun assertNonDefaultProjectsAreNotLeaked() {
 fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: TimeUnit) {
   require(!application.isDisposed)
 
-  val index = application.getServiceIfCreated(FileBasedIndex::class.java) as? FileBasedIndexImpl
+  val index = application.serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl
   index?.changedFilesCollector?.waitForVfsEventsExecuted(timeout, timeUnit)
 
-  val commitThread = application.getServiceIfCreated(DocumentCommitProcessor::class.java) as? DocumentCommitThread
+  val commitThread = application.serviceIfCreated<DocumentCommitProcessor>() as? DocumentCommitThread
   commitThread?.waitForAllCommits(timeout, timeUnit)
 }
 
