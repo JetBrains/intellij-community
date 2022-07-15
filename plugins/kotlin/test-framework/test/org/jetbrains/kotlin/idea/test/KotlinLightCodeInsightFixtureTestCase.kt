@@ -38,6 +38,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -132,7 +133,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     }
 
     override fun tearDown() {
-        com.intellij.testFramework.runAll(
+        runAll(
             { runCatching { project }.getOrNull()?.let { disableKotlinOfficialCodeStyle(it) } },
             { super.tearDown() },
         )

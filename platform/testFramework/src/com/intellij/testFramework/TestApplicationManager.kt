@@ -92,72 +92,68 @@ class TestApplicationManager private constructor() {
       }
 
       val isLightProject = ProjectManagerImpl.isLight(project)
-      val l = mutableListOf<Throwable>()
       val app = ApplicationManager.getApplication()
 
-      l.catchAndStoreExceptions { app.serviceIfCreated<FileTypeManager, FileTypeManagerImpl>()?.drainReDetectQueue() }
-      l.catchAndStoreExceptions {
-        if (isLightProject) {
-          project.serviceIfCreated<AutoPopupController>()?.cancelAllRequests()
-        }
-      }
-      l.catchAndStoreExceptions { CodeStyle.dropTemporarySettings(project) }
-      l.catchAndStoreExceptions { checkJavaSwingTimersAreDisposed() }
-      l.catchAndStoreExceptions { UsefulTestCase.doPostponedFormatting(project) }
-      l.catchAndStoreExceptions { LookupManager.hideActiveLookup(project) }
-      l.catchAndStoreExceptions {
-        if (isLightProject) {
-          (project.serviceIfCreated<StartupManager>() as StartupManagerImpl?)?.prepareForNextTest()
-        }
-      }
-      l.catchAndStoreExceptions {
-        if (isLightProject) {
-          LightPlatformTestCase.tearDownSourceRoot(project)
-        }
-      }
-      l.catchAndStoreExceptions {
-        WriteCommandAction.runWriteCommandAction(project) {
-          app.serviceIfCreated<FileDocumentManager, FileDocumentManagerImpl>()?.dropAllUnsavedDocuments()
-        }
-      }
-      l.catchAndStoreExceptions { project.serviceIfCreated<EditorHistoryManager>()?.removeAllFiles() }
-      l.catchAndStoreExceptions {
-        if (project.serviceIfCreated<PsiManager>()?.isDisposed == true) {
-          throw IllegalStateException("PsiManager must be not disposed")
-        }
-      }
-      l.catchAndStoreExceptions { LightPlatformTestCase.clearEncodingManagerDocumentQueue() }
-      l.catchAndStoreExceptions { LightPlatformTestCase.checkAssertions() }
-      l.catchAndStoreExceptions { LightPlatformTestCase.clearUncommittedDocuments(project) }
-
-      l.catchAndStoreExceptions { app.serviceIfCreated<HintManager, HintManagerImpl>()?.cleanup() }
-
-      l.catchAndStoreExceptions { (UndoManager.getGlobalInstance() as UndoManagerImpl).dropHistoryInTests() }
-      l.catchAndStoreExceptions { (UndoManager.getInstance(project) as UndoManagerImpl).dropHistoryInTests() }
-
-      l.catchAndStoreExceptions { app.serviceIfCreated<DocumentReferenceManager, DocumentReferenceManagerImpl>()?.cleanupForNextTest() }
-
-      l.catchAndStoreExceptions { project.serviceIfCreated<TemplateDataLanguageMappings>()?.cleanupForNextTest() }
-      l.catchAndStoreExceptions { (project.serviceIfCreated<PsiManager>() as PsiManagerImpl?)?.cleanupForNextTest() }
-      l.catchAndStoreExceptions { (project.serviceIfCreated<StructureViewFactory>() as StructureViewFactoryImpl?)?.cleanupForNextTest() }
-
-      l.catchAndStoreExceptions { waitForProjectLeakingThreads(project) }
-      l.catchAndStoreExceptions { dropModuleRootCaches(project) }
-
-      // reset data provider before disposing the project to ensure that the disposed project is not accessed
-      l.catchAndStoreExceptions { getInstanceIfCreated()?.setDataProvider(null) }
-      l.catchAndStoreExceptions { ProjectManagerEx.getInstanceEx().forceCloseProject(project) }
-      l.catchAndStoreExceptions { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
-
-      l.catchAndStoreExceptions { UiInterceptors.clear() }
-      l.catchAndStoreExceptions { CompletionProgressIndicator.cleanupForNextTest() }
-      l.catchAndStoreExceptions {
-        if (testCounter++ % 100 == 0) {
-          // Some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean data,
-          // so let's clear the cache occasionally to ensure it doesn't grow too big.
-          GCUtil.clearBeanInfoCache()
-        }
-      }
+      val l = runAllCatching(
+        { app.serviceIfCreated<FileTypeManager, FileTypeManagerImpl>()?.drainReDetectQueue() },
+        {
+          if (isLightProject) {
+            project.serviceIfCreated<AutoPopupController>()?.cancelAllRequests()
+          }
+        },
+        { CodeStyle.dropTemporarySettings(project) },
+        { checkJavaSwingTimersAreDisposed() },
+        { UsefulTestCase.doPostponedFormatting(project) },
+        { LookupManager.hideActiveLookup(project) },
+        {
+          if (isLightProject) {
+            (project.serviceIfCreated<StartupManager>() as StartupManagerImpl?)?.prepareForNextTest()
+          }
+        },
+        {
+          if (isLightProject) {
+            LightPlatformTestCase.tearDownSourceRoot(project)
+          }
+        },
+        {
+          WriteCommandAction.runWriteCommandAction(project) {
+            app.serviceIfCreated<FileDocumentManager, FileDocumentManagerImpl>()?.dropAllUnsavedDocuments()
+          }
+        },
+        { project.serviceIfCreated<EditorHistoryManager>()?.removeAllFiles() },
+        {
+          if (project.serviceIfCreated<PsiManager>()?.isDisposed == true) {
+            throw IllegalStateException("PsiManager must be not disposed")
+          }
+        },
+        { LightPlatformTestCase.clearEncodingManagerDocumentQueue() },
+        { LightPlatformTestCase.checkAssertions() },
+        { LightPlatformTestCase.clearUncommittedDocuments(project) },
+        { app.serviceIfCreated<HintManager, HintManagerImpl>()?.cleanup() },
+        { (UndoManager.getGlobalInstance() as UndoManagerImpl).dropHistoryInTests() },
+        { (UndoManager.getInstance(project) as UndoManagerImpl).dropHistoryInTests() },
+        { app.serviceIfCreated<DocumentReferenceManager, DocumentReferenceManagerImpl>()?.cleanupForNextTest() },
+        { project.serviceIfCreated<TemplateDataLanguageMappings>()?.cleanupForNextTest() },
+        { (project.serviceIfCreated<PsiManager>() as PsiManagerImpl?)?.cleanupForNextTest() },
+        { (project.serviceIfCreated<StructureViewFactory>() as StructureViewFactoryImpl?)?.cleanupForNextTest() },
+        { waitForProjectLeakingThreads(project) },
+        { dropModuleRootCaches(project) },
+        {
+          // reset data provider before disposing the project to ensure that the disposed project is not accessed
+          getInstanceIfCreated()?.setDataProvider(null)
+        },
+        { ProjectManagerEx.getInstanceEx().forceCloseProject(project) },
+        { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() },
+        { UiInterceptors.clear() },
+        { CompletionProgressIndicator.cleanupForNextTest() },
+        {
+          if (testCounter++ % 100 == 0) {
+            // Some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean data,
+            // so let's clear the cache occasionally to ensure it doesn't grow too big.
+            GCUtil.clearBeanInfoCache()
+          }
+        },
+      )
 
       throwIfNotEmpty(l)
     }
@@ -178,51 +174,47 @@ class TestApplicationManager private constructor() {
      */
     @JvmStatic
     fun disposeApplicationAndCheckForLeaks() {
-      val l = mutableListOf<Throwable>()
+      val edtThrowables = runInEdtAndGet {
+        runAllCatching(
+          { PlatformTestUtil.cleanupAllProjects() },
+          { UIUtil.dispatchAllInvocationEvents() },
+          {
+            println((AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService).statistics())
+            println("ProcessIOExecutorService threads created: ${(ProcessIOExecutorService.INSTANCE as ProcessIOExecutorService).threadCounter}")
+          },
+          {
+            val app = ApplicationManager.getApplication() as? ApplicationImpl
+            app?.messageBus?.syncPublisher(AppLifecycleListener.TOPIC)?.appWillBeClosed(false)
+          },
+          { UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS) },
+          {
+            if (ApplicationManager.getApplication() != null) {
+              assertNonDefaultProjectsAreNotLeaked()
+            }
+          },
+          {
+            @Suppress("SSBasedInspection")
+            getInstanceIfCreated()?.dispose()
+          },
+          { UIUtil.dispatchAllInvocationEvents() },
+        )
+      }
 
-      runInEdtAndWait {
-        l.catchAndStoreExceptions { PlatformTestUtil.cleanupAllProjects() }
-        l.catchAndStoreExceptions { UIUtil.dispatchAllInvocationEvents() }
-
-        l.catchAndStoreExceptions {
-          println((AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService).statistics())
-          println("ProcessIOExecutorService threads created: ${(ProcessIOExecutorService.INSTANCE as ProcessIOExecutorService).threadCounter}")
-        }
-
-        l.catchAndStoreExceptions {
-          val app = ApplicationManager.getApplication() as? ApplicationImpl
-          app?.messageBus?.syncPublisher(AppLifecycleListener.TOPIC)?.appWillBeClosed(false)
-        }
-
-        l.catchAndStoreExceptions { UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS) }
-
-        l.catchAndStoreExceptions {
-          if (ApplicationManager.getApplication() != null) {
-            assertNonDefaultProjectsAreNotLeaked()
+      val l = edtThrowables + runAllCatching(
+        {
+          try {
+            Disposer.assertIsEmpty(true)
+          }
+          catch (e: AssertionError) {
+            publishHeapDump("disposerNonEmpty")
+            throw e
+          }
+          catch (e: Exception) {
+            publishHeapDump("disposerNonEmpty")
+            throw e
           }
         }
-
-        l.catchAndStoreExceptions {
-          @Suppress("SSBasedInspection")
-          getInstanceIfCreated()?.dispose()
-        }
-
-        l.catchAndStoreExceptions { UIUtil.dispatchAllInvocationEvents() }
-      }
-
-      l.catchAndStoreExceptions {
-        try {
-          Disposer.assertIsEmpty(true)
-        }
-        catch (e: AssertionError) {
-          publishHeapDump("disposerNonEmpty")
-          throw e
-        }
-        catch (e: Exception) {
-          publishHeapDump("disposerNonEmpty")
-          throw e
-        }
-      }
+      )
 
       throwIfNotEmpty(l)
     }

@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
+import com.intellij.testFramework.common.runAllCatching
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.sanitizeFileName
@@ -124,15 +125,18 @@ class ProjectObject(private val runPostStartUpActivities: Boolean = false,
     return project
   }
 
-  internal fun catchAndRethrow(l: MutableList<Throwable>) {
-    l.catchAndStoreExceptions { sharedProject?.let { PlatformTestUtil.forceCloseProjectWithoutSaving(it) } }
-    l.catchAndStoreExceptions { projectTracker?.finish() }
-    l.catchAndStoreExceptions { virtualFilePointerTracker?.assertPointersAreDisposed() }
-    l.catchAndStoreExceptions { libraryTracker?.assertDisposed() }
-    l.catchAndStoreExceptions {
-      sharedProject = null
-      sharedModule = null
-    }
+  internal fun catchAndRethrow(action: () -> Unit) {
+    val l = runAllCatching(
+      action,
+      { sharedProject?.let { PlatformTestUtil.forceCloseProjectWithoutSaving(it) } },
+      { projectTracker?.finish() },
+      { virtualFilePointerTracker?.assertPointersAreDisposed() },
+      { libraryTracker?.assertDisposed() },
+      {
+        sharedProject = null
+        sharedModule = null
+      },
+    )
     throwIfNotEmpty(l)
   }
 
@@ -199,9 +203,9 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
   }
 
   override fun after() {
-    val l = mutableListOf<Throwable>()
-    l.catchAndStoreExceptions { super.after() }
-    projectObject.catchAndRethrow(l)
+    projectObject.catchAndRethrow {
+      super.after()
+    }
   }
 
   /**
@@ -236,9 +240,9 @@ class ProjectExtension(runPostStartUpActivities: Boolean = false,
   }
 
   override fun afterAll(context: ExtensionContext) {
-    val l = mutableListOf<Throwable>()
-    l.catchAndStoreExceptions { super.afterAll(context) }
-    projectObject.catchAndRethrow(l)
+    projectObject.catchAndRethrow {
+      super.afterAll(context)
+    }
   }
 
   val project: ProjectEx

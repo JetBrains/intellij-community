@@ -3,11 +3,11 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import com.intellij.testFramework.runAll
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 
