@@ -1,17 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.system.measureTimeMillis
 
 /**
@@ -20,17 +18,10 @@ import kotlin.system.measureTimeMillis
  * Initially IJ loads the state of workspace model from the cache. In this startup activity it synchronizes the state
  * of workspace model with project model files (iml/xml).
  */
-class DelayedProjectSynchronizer : StartupActivity.Background {
-  @OptIn(DelicateCoroutinesApi::class)
-  override fun runActivity(project: Project) {
-    // todo remove GlobalScope usage, platform should support suspend activities
-    GlobalScope.launch {
-      if (project.isDisposed) {
-        return@launch
-      }
-
-      doSync(project)
-    }
+@VisibleForTesting
+class DelayedProjectSynchronizer : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
+    doSync(project)
   }
 
   companion object {
@@ -44,7 +35,7 @@ class DelayedProjectSynchronizer : StartupActivity.Background {
         projectModelSynchronizer.loadProject(project)
         project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
       }
-      logger<DelayedProjectSynchronizer>().info(
+      thisLogger().info(
         "Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}"
       )
     }

@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.KotlinPluginUpdater
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -20,8 +20,8 @@ import org.jetbrains.kotlin.idea.util.application.isHeadlessEnvironment
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 
-class KotlinPluginUpdateCheckerStartActivity : StartupActivity.Background {
-    override fun runActivity(project: Project) {
+class KotlinPluginUpdateCheckerStartActivity : ProjectPostStartupActivity {
+    override suspend fun execute(project: Project) {
         if (isUnitTestMode() || isHeadlessEnvironment()) {
             return
         }
