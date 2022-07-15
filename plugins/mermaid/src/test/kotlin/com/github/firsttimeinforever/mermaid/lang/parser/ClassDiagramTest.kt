@@ -791,6 +791,9 @@ class ClassDiagramTest : MermaidParserTestCase() {
     classDiagram
       class Shape
       <<interface>> Shape
+      
+      <<abstract>> Shape2
+      class Shape2
     """.trimIndent()
     val expectedTree = """
     Element(FILE)
@@ -813,6 +816,28 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>PsiElement(ANNOTATION_START)
     >>>>>PsiElement(ANNOTATION_VALUE)
     >>>>>PsiElement(ANNOTATION_END)
+    >>>>PsiWhiteSpace
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(CLASS_LINE)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(CLASS_LINE)
+    >>>Element(ANNOTATION_STATEMENT)
+    >>>>Element(ANNOTATION)
+    >>>>>PsiElement(ANNOTATION_START)
+    >>>>>PsiElement(ANNOTATION_VALUE)
+    >>>>>PsiElement(ANNOTATION_END)
+    >>>>PsiWhiteSpace
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(CLASS_LINE)
+    >>>Element(CLASS_STATEMENT)
+    >>>>PsiElement(CLASS)
     >>>>PsiWhiteSpace
     >>>>Element(IDENTIFIER)
     >>>>>PsiElement(ID)

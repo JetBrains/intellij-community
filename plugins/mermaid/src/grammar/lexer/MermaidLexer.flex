@@ -445,7 +445,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   "{" { yybegin(struct); return OPEN_CURLY; }
   ":::" { return STYLE_SEPARATOR; }
 }
-<class_diagram> {
+<class_diagram, class_name> {
 	"class" { yypushstate(class_name); return CLASS; }
   "direction" { yypushstate(direction_value); return DIRECTION; }
   [\w_]+ { yypushstate(class_name); return ID; }
@@ -480,8 +480,6 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 	">>" { yypopstate(); return ANNOTATION_END; }
 }
 <class_name> {
-  [\w]+ { return ID; }
-
   "<|" { return ClassDiagram.EXTENSION_START; }
   "<" { return ClassDiagram.DEPENDENCY_START; }
   [\*]/[\-\.] { return ClassDiagram.COMPOSITION; }

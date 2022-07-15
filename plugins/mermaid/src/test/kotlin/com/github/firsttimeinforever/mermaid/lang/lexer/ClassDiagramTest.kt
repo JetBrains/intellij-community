@@ -535,6 +535,9 @@ class ClassDiagramTest : MermaidLexerTestCase() {
     classDiagram
       class Shape
       <<interface>> Shape
+      
+      <<abstract>> Shape2
+      class Shape2
     """.trimIndent()
     val expected = listOf(
       Token(CLASS_DIAGRAM, 0, 12, "classDiagram"),
@@ -549,7 +552,21 @@ class ClassDiagramTest : MermaidLexerTestCase() {
       Token(ANNOTATION_VALUE, 31, 40, "interface"),
       Token(ANNOTATION_END, 40, 42, ">>"),
       Token(WHITE_SPACE, 42, 43, " "),
-      Token(ID, 43, 48, "Shape")
+      Token(ID, 43, 48, "Shape"),
+      Token(EOL, 48, 49, "\n"),
+      Token(WHITE_SPACE, 49, 51, "  "),
+      Token(EOL, 51, 52, "\n"),
+      Token(WHITE_SPACE, 52, 54, "  "),
+      Token(ANNOTATION_START, 54, 56, "<<"),
+      Token(ANNOTATION_VALUE, 56, 64, "abstract"),
+      Token(ANNOTATION_END, 64, 66, ">>"),
+      Token(WHITE_SPACE, 66, 67, " "),
+      Token(ID, 67, 73, "Shape2"),
+      Token(EOL, 73, 74, "\n"),
+      Token(WHITE_SPACE, 74, 76, "  "),
+      Token(CLASS, 76, 81, "class"),
+      Token(WHITE_SPACE, 81, 82, " "),
+      Token(ID, 82, 88, "Shape2"),
     )
     doTest(content, expected)
   }
