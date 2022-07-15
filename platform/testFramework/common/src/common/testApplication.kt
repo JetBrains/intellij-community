@@ -15,6 +15,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean.Companion.addKeysFromPlugins
+import com.intellij.openapi.vfs.encoding.EncodingManager
+import com.intellij.openapi.vfs.encoding.EncodingManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.psi.impl.DocumentCommitProcessor
@@ -123,6 +125,12 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 }
 
 private inline fun <reified T : Any> Application.serviceIfCreated(): T? = this.getServiceIfCreated(T::class.java)
+
+@TestOnly
+@Internal
+fun Application.clearEncodingManagerDocumentQueue() {
+  (serviceIfCreated<EncodingManager>() as? EncodingManagerImpl)?.clearDocumentQueue()
+}
 
 @TestOnly
 @Internal

@@ -126,7 +126,7 @@ class TestApplicationManager private constructor() {
             throw IllegalStateException("PsiManager must be not disposed")
           }
         },
-        { LightPlatformTestCase.clearEncodingManagerDocumentQueue() },
+        { app.clearEncodingManagerDocumentQueue() },
         { LightPlatformTestCase.checkAssertions() },
         { LightPlatformTestCase.clearUncommittedDocuments(project) },
         { app.serviceIfCreated<HintManager, HintManagerImpl>()?.cleanup() },

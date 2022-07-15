@@ -52,8 +52,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
@@ -68,6 +66,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ThrowableRunnable;
@@ -459,11 +458,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     });
   }
 
+  /**
+   * @deprecated moved to {@link TestApplicationKt#clearEncodingManagerDocumentQueue(Application)}
+   */
+  @Deprecated
   public static void clearEncodingManagerDocumentQueue() {
-    EncodingManager encodingManager = ApplicationManager.getApplication().getServiceIfCreated(EncodingManager.class);
-    if (encodingManager instanceof EncodingManagerImpl) {
-      ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
-    }
+    TestApplicationKt.clearEncodingManagerDocumentQueue(ApplicationManager.getApplication());
   }
 
   public static void clearUncommittedDocuments(@NotNull Project project) {
