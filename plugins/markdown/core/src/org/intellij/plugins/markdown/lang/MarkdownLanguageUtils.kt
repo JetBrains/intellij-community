@@ -2,6 +2,7 @@ package org.intellij.plugins.markdown.lang
 
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.VirtualFile
 
 internal object MarkdownLanguageUtils {
@@ -14,6 +15,6 @@ internal object MarkdownLanguageUtils {
   }
 
   fun VirtualFile.hasMarkdownType(): Boolean {
-    return fileType.isMarkdownType()
+    return FileTypeRegistry.getInstance().isFileOfType(this, MarkdownFileType.INSTANCE)
   }
 }
