@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
@@ -101,7 +102,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     }
   }
 
-  protected void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks, Set<MavenProject> projectsToRefresh) {
+  protected void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks, Iterable<MavenProject> projectsToRefresh) {
     // We have to refresh all the resolved artifacts manually in order to
     // update all the VirtualFilePointers. It is not enough to call
     // VirtualFileManager.refresh() since the newly created files will be only
@@ -110,14 +111,11 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     // I couldn't manage to write a test for this since behaviour of VirtualFileManager
     // and FileWatcher differs from real-life execution.
 
-    List<MavenArtifact> artifacts = new ArrayList<>();
-    for (MavenProject each : projectsToRefresh) {
-      artifacts.addAll(each.getDependencies());
-    }
-
-    final Set<File> files = new HashSet<>();
-    for (MavenArtifact each : artifacts) {
-      if (MavenArtifactUtilKt.resolved(each)) files.add(each.getFile());
+    Set<File> files = FileCollectionFactory.createCanonicalFileSet();
+    for (MavenProject project : projectsToRefresh) {
+      for (MavenArtifact dependency : project.getDependencies()) {
+        if (MavenArtifactUtilKt.resolved(dependency)) files.add(dependency.getFile());
+      }
     }
 
     if (MavenUtil.isMavenUnitTestModeEnabled()) {

@@ -191,7 +191,12 @@ class WorkspaceProjectImporter(
   private fun finalizeImport(projectChanges: Map<MavenProject, MavenProjectChanges>,
                              postTasks: List<MavenProjectsProcessorTask>) {
     MavenUtil.invokeAndWaitWriteAction(myProject) { removeOutdatedCompilerConfigSettings() }
-    scheduleRefreshResolvedArtifacts(postTasks, projectChanges.filterValues { it.hasChanges() }.keys)
+
+    val changedProjectsOnly = projectChanges
+      .asSequence()
+      .filter { (_, changes) -> changes.hasChanges() }
+      .map { (mavenProject, _) -> mavenProject }
+    scheduleRefreshResolvedArtifacts(postTasks, changedProjectsOnly.asIterable())
   }
 
   override fun createdModules(): List<Module> {
