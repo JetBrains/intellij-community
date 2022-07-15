@@ -11,6 +11,7 @@
     <toolWindow id="Commander" anchor="right" icon="AllIcons.Toolwindows.ToolWindowCommander"
                 factoryClass="com.intellij.ide.commander.CommanderToolWindowFactory"/>
     <projectService serviceImplementation="com.intellij.ide.commander.Commander"/>
+    <customizableActionGroupProvider implementation="com.intellij.ide.actions.CommanderCustomizableActionGroupProvider"/>
   </extensions>
 
   <actions>

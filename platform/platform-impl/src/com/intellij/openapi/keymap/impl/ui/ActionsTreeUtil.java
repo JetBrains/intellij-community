@@ -782,11 +782,6 @@ public final class ActionsTreeUtil {
   }
 
   @Nls
-  public static String getCommanderPopup() {
-    return KeyMapBundle.message("commender.view.popup.menu.title");
-  }
-
-  @Nls
   public static String getJ2EEPopup() {
     return KeyMapBundle.message("j2ee.view.popup.menu.title");
   }
