@@ -17,7 +17,5 @@ interface BundledRuntime {
 
   fun archiveName(prefix: String, arch: JvmArchitecture, os: OsFamily, forceVersionWithUnderscores: Boolean = false): String
 
-  fun checkExecutablePermissions(distribution: Path, root: String, os: OsFamily)
-
   fun executableFilesPatterns(os: OsFamily): List<String>
 }

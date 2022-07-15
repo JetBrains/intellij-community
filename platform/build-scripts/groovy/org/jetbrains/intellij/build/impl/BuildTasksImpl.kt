@@ -153,7 +153,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
                                        destinationDir = targetDirectory.resolve("jbr"),
                                        arch = arch)
       updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesPatterns(true))
-      context.bundledRuntime.checkExecutablePermissions(distribution = targetDirectory, root = "", os = currentOs)
+      builder.checkExecutablePermissions(targetDirectory, root = "")
     }
     else {
       copyDistFiles(context, targetDirectory)

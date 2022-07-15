@@ -17,14 +17,14 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
 
-internal fun signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
-                             context: BuildContext,
-                             customizer: MacDistributionCustomizer,
-                             macHostProperties: MacHostProperties?,
-                             macZip: Path,
-                             isRuntimeBundled: Boolean,
-                             suffix: String,
-                             notarize: Boolean) {
+internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
+                                                    context: BuildContext,
+                                                    customizer: MacDistributionCustomizer,
+                                                    macHostProperties: MacHostProperties?,
+                                                    macZip: Path,
+                                                    isRuntimeBundled: Boolean,
+                                                    suffix: String,
+                                                    notarize: Boolean) {
   var javaExePath: String? = null
   if (isRuntimeBundled) {
     javaExePath = "../jbr/Contents/Home/bin/java"
@@ -63,9 +63,7 @@ internal fun signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
   require(Files.exists(sitFile)) {
     "$sitFile wasn't created"
   }
-  if (isRuntimeBundled) {
-    context.bundledRuntime.checkExecutablePermissions(sitFile, zipRoot, OsFamily.MACOS)
-  }
+  checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled)
 }
 
 private fun buildAndSignWithMacBuilderHost(sitFile: Path,

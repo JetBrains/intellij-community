@@ -36,7 +36,7 @@ import java.util.zip.Deflater
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 
-class MacDistributionBuilder(private val context: BuildContext,
+class MacDistributionBuilder(override val context: BuildContext,
                              private val customizer: MacDistributionCustomizer,
                              private val ideaProperties: Path?) : OsSpecificDistributionBuilder {
   private val targetIcnsFileName: String = "${context.productProperties.baseFileName}.icns"
@@ -145,7 +145,7 @@ class MacDistributionBuilder(private val context: BuildContext,
         macDist = osAndArchSpecificDistPath,
         runtimeDist = runtimeDist,
         extraFiles = context.getDistFiles(),
-        executableFilePatterns = getExecutableFilePatterns(customizer),
+        executableFilePatterns = generateExecutableFilesPatterns(true),
         compressionLevel = if (publishArchive) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED,
         errorsConsumer = context.messages::warning
       )
@@ -309,8 +309,21 @@ class MacDistributionBuilder(private val context: BuildContext,
     }
   }
 
-  override fun generateExecutableFilesPatterns(includeJre: Boolean): List<String> = getExecutableFilePatterns(customizer)
-}
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> {
+    val executableFilePatterns = mutableListOf(
+      "bin/*.sh",
+      "bin/*.py",
+      "bin/fsnotifier",
+      "bin/printenv",
+      "bin/restarter",
+      "bin/repair",
+      "MacOS/*"
+    )
+    if (includeRuntime) {
+      executableFilePatterns += context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS)
+    }
+    return executableFilePatterns + customizer.extraExecutables
+  }
 
   private fun createBuildForArchTask(builtinModule: BuiltinModulesFileData?,
                                      arch: JvmArchitecture,
@@ -405,17 +418,6 @@ private fun propertiesToXml(properties: List<String>, moreProperties: Map<String
   }
   return buff.toString().trim()
 }
-
-private fun getExecutableFilePatterns(customizer: MacDistributionCustomizer): List<String> =
-  listOf(
-    "bin/*.sh",
-    "bin/*.py",
-    "bin/fsnotifier",
-    "bin/printenv",
-    "bin/restarter",
-    "bin/repair",
-    "MacOS/*"
-  ) + customizer.extraExecutables
 
 internal fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String =
   "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"

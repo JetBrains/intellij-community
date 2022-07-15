@@ -4,15 +4,10 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.util.io.PosixFilePermissionsUtil
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
-import org.apache.commons.compress.archivers.zip.ZipFile
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
-import java.io.BufferedInputStream
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
@@ -20,7 +15,6 @@ import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission.*
 import java.util.*
 import java.util.zip.GZIPInputStream
-import kotlin.streams.toList
 
 class BundledRuntimeImpl(private val context: CompilationContext) : BundledRuntime {
   companion object {
@@ -115,85 +109,6 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
     }
     context.messages.info("Fastdebug runtime build is requested")
     return "fastdebug-"
-  }
-
-  override fun checkExecutablePermissions(distribution: Path, root: String, os: OsFamily) {
-    if (os == OsFamily.WINDOWS) {
-      return
-    }
-
-    val patterns = executableFilesPatterns(os).map {
-      FileSystems.getDefault().getPathMatcher("glob:$it")
-    }
-    val entries: List<String>
-    if (Files.isDirectory(distribution)) {
-      @Suppress("NAME_SHADOWING") val distribution = distribution.resolve(root)
-      entries = Files.walk(distribution).use { files ->
-        val expectedExecutables = files.filter { file ->
-          val relativePath = distribution.relativize(file)
-          !Files.isDirectory(file) && patterns.any {
-            it.matches(relativePath)
-          }
-        }.toList()
-        if (expectedExecutables.size < patterns.size) {
-          context.messages.error("Executable files patterns:\n" +
-                                 executableFilesPatterns(os).joinToString(separator = "\n") +
-                                 "\nFound files:\n" +
-                                 expectedExecutables.joinToString(separator = "\n"))
-        }
-        expectedExecutables.stream()
-          .filter { OWNER_EXECUTE !in Files.getPosixFilePermissions(it) }
-          .map { distribution.relativize(it).toString() }
-          .toList()
-      }
-    }
-    else if ("$distribution".endsWith(".tar.gz")) {
-      entries = TarArchiveInputStream(GzipCompressorInputStream(BufferedInputStream(Files.newInputStream(distribution)))).use { stream ->
-        val expectedExecutables = mutableListOf<TarArchiveEntry>()
-          while (true) {
-            val entry = (stream.nextEntry ?: break) as TarArchiveEntry
-            var entryPath = Path.of(entry.name)
-            if (!root.isEmpty()) {
-              entryPath = Path.of(root).relativize(entryPath)
-            }
-            if (!entry.isDirectory && patterns.any { it.matches(entryPath) }) {
-              expectedExecutables.add(entry)
-            }
-          }
-          if (expectedExecutables.size < patterns.size) {
-            context.messages.error("Executable files patterns:\n" +
-                                   executableFilesPatterns(os).joinToString(separator = "\n") +
-                                   "\nFound files:\n" +
-                                   expectedExecutables.joinToString(separator = "\n"))
-          }
-          expectedExecutables
-            .filter { OWNER_EXECUTE !in PosixFilePermissionsUtil.fromUnixMode(it.mode) }
-            .map { "${it.name}: mode is 0${Integer.toOctalString(it.mode)}" }
-        }
-    }
-    else {
-      entries = ZipFile(Files.newByteChannel(distribution)).use { zipFile ->
-        val expectedExecutables = zipFile.entries.asSequence().filter { entry ->
-          var entryPath = Path.of(entry.name)
-          if (!root.isEmpty()) {
-            entryPath = Path.of(root).relativize(entryPath)
-          }
-          !entry.isDirectory && patterns.any { it.matches(entryPath) }
-        }.toList()
-        if (expectedExecutables.size < patterns.size) {
-          context.messages.error("Executable files patterns:\n" +
-                                 executableFilesPatterns(os).joinToString(separator = "\n") +
-                                 "\nFound files:\n" +
-                                 expectedExecutables.joinToString(separator = "\n"))
-        }
-        expectedExecutables
-          .filter { entry -> OWNER_EXECUTE !in PosixFilePermissionsUtil.fromUnixMode(entry.unixMode) }
-          .map { "${it.name}: mode is 0${Integer.toOctalString(it.unixMode)}" }
-      }
-    }
-    if (entries.isNotEmpty()) {
-      context.messages.error("Missing executable permissions in $distribution for:\n" + entries.joinToString(separator = "\n"))
-    }
   }
 
   /**

@@ -25,7 +25,7 @@ import java.util.concurrent.ForkJoinTask
 import java.util.function.BiPredicate
 
 internal class WindowsDistributionBuilder(
-  private val context: BuildContext,
+  override val context: BuildContext,
   private val customizer: WindowsDistributionCustomizer,
   private val ideaProperties: Path?,
   private val patchedApplicationInfo: String,

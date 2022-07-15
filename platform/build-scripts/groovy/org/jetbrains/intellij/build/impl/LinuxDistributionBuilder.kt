@@ -16,7 +16,7 @@ import java.nio.file.*
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
 
-class LinuxDistributionBuilder(private val context: BuildContext,
+class LinuxDistributionBuilder(override val context: BuildContext,
                                private val customizer: LinuxDistributionCustomizer,
                                private val ideaProperties: Path?) : OsSpecificDistributionBuilder {
   private val iconPngPath: Path?
@@ -76,7 +76,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
 
       val jreDirectoryPath = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
       val tarGzPath = buildTarGz(jreDirectoryPath, osAndArchSpecificDistPath, suffix)
-      context.bundledRuntime.checkExecutablePermissions(tarGzPath, rootDirectoryName, OsFamily.LINUX)
+      checkExecutablePermissions(tarGzPath, rootDirectoryName)
 
       if (arch == JvmArchitecture.x64) {
         buildSnapPackage(jreDirectoryPath, osAndArchSpecificDistPath)
@@ -119,11 +119,11 @@ class LinuxDistributionBuilder(private val context: BuildContext,
     ), convertToUnixLineEndings = true)
   }
 
-  override fun generateExecutableFilesPatterns(includeJre: Boolean): List<String> {
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> {
     val patterns = ArrayList<String>()
     patterns.addAll(listOf("bin/*.sh", "bin/*.py", "bin/fsnotifier*", "bin/remote-dev-server.sh"))
     patterns.addAll(customizer.extraExecutables)
-    if (includeJre) {
+    if (includeRuntime) {
       patterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX))
     }
     return patterns
