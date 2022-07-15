@@ -496,7 +496,7 @@ private val excludedFromMergeLibs = java.util.Set.of(
 
 private fun isLibraryMergeable(libName: String): Boolean {
   return !excludedFromMergeLibs.contains(libName) &&
-         !libName.startsWith("kotlin-") &&
+         !(libName.startsWith("kotlin-") && !libName.startsWith("kotlin-test-")) &&
          !libName.startsWith("kotlinc.") &&
          !libName.startsWith("projector-") &&
          !libName.contains("-agent-") &&
