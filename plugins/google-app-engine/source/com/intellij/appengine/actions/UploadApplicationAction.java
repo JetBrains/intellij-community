@@ -24,6 +24,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -41,10 +42,15 @@ public class UploadApplicationAction extends AnAction {
   public static final String LAST_RUN_CONFIGURATION_PROPERTY = "JAVA_APP_ENGINE_LAST_RUN_CONFIGURATION";
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
-    e.getPresentation().setEnabledAndVisible(
-      project != null && ProjectFacetManager.getInstance(project).hasFacets(AppEngineFacet.ID));
+    e.getPresentation().setEnabledAndVisible(project != null &&
+                                             ProjectFacetManager.getInstance(project).hasFacets(AppEngineFacet.ID));
 
     if (project != null) {
       String text;
