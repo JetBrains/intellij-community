@@ -44,10 +44,8 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.project.ProjectKt;
 import com.intellij.project.TestProjectManager;
@@ -57,10 +55,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.EDT;
@@ -364,23 +361,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
 
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceExIfCreated();
-    if (projectManager != null && projectManager.isDefaultProjectInitialized()) {
-      Project defaultProject = projectManager.getDefaultProject();
-      ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
-    }
-
-    FileBasedIndex fileBasedIndex = app.getServiceIfCreated(FileBasedIndex.class);
-    if (fileBasedIndex instanceof FileBasedIndexImpl) {
-      ((FileBasedIndexImpl)fileBasedIndex).cleanupForNextTest();
-    }
-
-    if (app.getServiceIfCreated(VirtualFileManager.class) != null) {
-      LocalFileSystemBase localFileSystem = (LocalFileSystemBase)LocalFileSystem.getInstance();
-      if (localFileSystem != null) {
-        localFileSystem.cleanupForNextTest();
-      }
-    }
+    TestApplicationKt.cleanupApplicationCaches(app);
   }
 
   private static @NotNull Set<VirtualFile> eternallyLivingFiles() {

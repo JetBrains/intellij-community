@@ -12,16 +12,22 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean.Companion.addKeysFromPlugins
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
+import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread
+import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.UITestUtil
 import com.intellij.util.SystemProperties
@@ -138,6 +144,23 @@ fun Application.clearEncodingManagerDocumentQueue() {
 fun Application.clearIdCache() {
   val managingFS = serviceIfCreated<ManagingFS>() ?: return
   (managingFS as PersistentFS).clearIdCache()
+}
+
+@TestOnly
+@Internal
+fun Application.cleanupApplicationCaches() {
+  val projectManager = ProjectManagerEx.getInstanceExIfCreated()
+  if (projectManager != null && projectManager.isDefaultProjectInitialized) {
+    val defaultProject = projectManager.defaultProject
+    (PsiManager.getInstance(defaultProject) as PsiManagerImpl).cleanupForNextTest()
+  }
+  (serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl)?.cleanupForNextTest()
+  if (serviceIfCreated<VirtualFileManager>() != null) {
+    val localFileSystem = LocalFileSystem.getInstance()
+    if (localFileSystem != null) {
+      (localFileSystem as LocalFileSystemBase).cleanupForNextTest()
+    }
+  }
 }
 
 @TestOnly
