@@ -627,7 +627,13 @@ abstract class AbstractKtSymbolBasedPropertyDescriptor(
     override fun hasStableParameterNames(): Boolean = false
     override fun hasSynthesizedParameterNames(): Boolean = false
 
-    override fun getOverriddenDescriptors(): Collection<PropertyDescriptor> = implementationPostponed()
+    override fun getOverriddenDescriptors(): Collection<PropertyDescriptor> {
+        val overriddenKtSymbols = context.withAnalysisSession {
+            ktSymbol.getAllOverriddenSymbols()
+        }
+
+        return overriddenKtSymbols.map { it.toDeclarationDescriptor(context) as PropertyDescriptor }
+    }
 
     override fun <V : Any?> getUserData(key: CallableDescriptor.UserDataKey<V>?): V? = null
 
