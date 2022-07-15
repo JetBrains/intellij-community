@@ -19,6 +19,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/doubleNegation")
             model("${idea}/inspectionsLocal/conventionNameCalls/replaceGetOrSet")
             model("${idea}/inspectionsLocal/nullableBooleanElvis")
+            model("${idea}/inspectionsLocal/redundantElvisReturnNull")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
 
