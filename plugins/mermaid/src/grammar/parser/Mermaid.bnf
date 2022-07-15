@@ -246,6 +246,7 @@ private ganttStatement ::= DATE_FORMAT
   | EXCLUDES
   | INCLUDES
   | AXIS_FORMAT
+  | TODAY_MARKER
   | SECTION SECTION_TITLE
   | ganttTaskName COLON TASK_DATA (COMMA TASK_DATA)*
 	| directive

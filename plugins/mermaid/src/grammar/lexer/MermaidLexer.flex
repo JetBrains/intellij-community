@@ -578,6 +578,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 	"axisFormat"\s[^#\n;]+ { return Gantt.AXIS_FORMAT; }
 	"includes"\s[^#\n;]+ { return Gantt.INCLUDES; }
 	"excludes"\s[^#\n;]+ { return Gantt.EXCLUDES; }
+	"todayMarker"\s[^\n;]+ { return Gantt.TODAY_MARKER; }
   "section" { yypushstate(section); return SECTION; }
   [^\s#:;]+ { return TASK_NAME; }
   ":" { yybegin(gantt_task_data); return COLON; }

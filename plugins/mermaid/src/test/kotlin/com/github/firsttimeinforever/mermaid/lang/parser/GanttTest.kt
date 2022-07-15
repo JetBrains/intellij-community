@@ -596,4 +596,27 @@ class GanttTest : MermaidParserTestCase() {
     """.trimIndent()
     doTest(content, expectedTree)
   }
+
+  fun `test today marker`() {
+    val content = """
+    gantt
+      todayMarker off
+      todayMarker stroke-width:5px,stroke:#0f0,opacity:0.5
+    """.trimIndent()
+    val expectedTree = """
+    Element(FILE)
+    >PsiElement(GANTT)
+    >Element(GANTT_DOCUMENT)
+    >>Element(GANTT_LINE)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(GANTT_LINE)
+    >>>PsiElement(TODAY_MARKER)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(GANTT_LINE)
+    >>>PsiElement(TODAY_MARKER)
+    """.trimIndent()
+    doTest(content, expectedTree)
+  }
 }

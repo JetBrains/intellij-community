@@ -460,6 +460,9 @@ object MermaidTokens {
 
     @JvmField
     val AXIS_FORMAT = MermaidToken("AXIS_FORMAT")
+
+    @JvmField
+    val TODAY_MARKER = MermaidToken("TODAY_MARKER")
   }
 
   object Requirement {

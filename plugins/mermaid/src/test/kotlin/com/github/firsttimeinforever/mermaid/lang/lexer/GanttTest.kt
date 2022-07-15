@@ -11,6 +11,7 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EOL
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Gantt.DATE_FORMAT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Gantt.EXCLUDES
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Gantt.GANTT
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Gantt.TODAY_MARKER
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.HREF
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.LINE_COMMENT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.OPEN_ROUND
@@ -536,6 +537,24 @@ class GanttTest : MermaidLexerTestCase() {
       Token(CLICK_DATA, 247, 256, "printTask"),
       Token(OPEN_ROUND, 256, 257, "("),
       Token(CLOSE_ROUND, 257, 258, ")")
+    )
+    doTest(content, expected)
+  }
+
+  fun `test today marker`() {
+    val content = """
+    gantt
+      todayMarker off
+      todayMarker stroke-width:5px,stroke:#0f0,opacity:0.5
+    """.trimIndent()
+    val expected = listOf(
+      Token(GANTT, 0, 5, "gantt"),
+      Token(EOL, 5, 6, "\n"),
+      Token(WHITE_SPACE, 6, 8, "  "),
+      Token(TODAY_MARKER, 8, 23, "todayMarker off"),
+      Token(EOL, 23, 24, "\n"),
+      Token(WHITE_SPACE, 24, 26, "  "),
+      Token(TODAY_MARKER, 26, 78, "todayMarker stroke-width:5px,stroke:#0f0,opacity:0.5")
     )
     doTest(content, expected)
   }
