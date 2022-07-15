@@ -62,7 +62,6 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       MermaidTokens.Sequence.AND,
       MermaidTokens.Sequence.RECT,
       MermaidTokens.Sequence.AUTONUMBER,
-      MermaidTokens.Sequence.LINK,
       MermaidTokens.Sequence.LINKS -> arrayOf(MermaidTextAttributes.keyword)
 
       MermaidTokens.Sequence.SOLID_ARROW,
@@ -203,7 +202,8 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.NOTE,
         MermaidTokens.RIGHT_OF,
         MermaidTokens.LEFT_OF,
-        MermaidTokens.SECTION -> arrayOf(MermaidTextAttributes.keyword)
+        MermaidTokens.SECTION,
+        MermaidTokens.LINK -> arrayOf(MermaidTextAttributes.keyword)
 
         MermaidTokens.TITLE_VALUE,
         MermaidTokens.DOUBLE_QUOTE,
@@ -211,7 +211,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.ALIAS,
         MermaidTokens.LABEL,
         MermaidTokens.SECTION_TITLE,
-        MermaidTokens.TASK_NAME-> arrayOf(MermaidTextAttributes.string)
+        MermaidTokens.TASK_NAME -> arrayOf(MermaidTextAttributes.string)
 
         MermaidTokens.LINE_COMMENT,
         MermaidTokens.IGNORED -> arrayOf(MermaidTextAttributes.comment)

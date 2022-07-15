@@ -3,7 +3,11 @@ package com.github.firsttimeinforever.mermaid.lang.lexer
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ANNOTATION_END
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ANNOTATION_START
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ANNOTATION_VALUE
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CALL
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CALLBACK
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLASS
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLICK
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLICK_DATA
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_CURLY
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_ROUND
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
@@ -22,8 +26,10 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DIRECTION
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DOLLAR
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DOUBLE_QUOTE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EOL
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.HREF
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ID
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.LABEL
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.LINK
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.MINUS
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.OPEN_CURLY
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.OPEN_ROUND
@@ -656,6 +662,107 @@ class ClassDiagramTest : MermaidLexerTestCase() {
       Token(WHITE_SPACE, 75, 77, "  "),
       Token(CLOSE_CURLY, 77, 78, "}")
     )
+    doTest(content, expected)
+  }
+
+  fun `test click statements`() {
+    val content = """
+    classDiagram
+      class Shape
+      click Shape href "https://www.github.com" "This is a tooltip for a link"
+      click Shape call callbackFunction() "This is a tooltip for a callback"
+      click Shape href "https://www.github.com" 
+      click Shape call callbackFunction()
+      link Shape "https://www.github.com" "This is a tooltip for a link"
+      callback Shape "callbackFunction" "This is a tooltip for a callback"
+    """.trimIndent()
+    val expected = listOf(
+      Token(CLASS_DIAGRAM, 0, 12, "classDiagram"),
+      Token(EOL, 12, 13, "\n"),
+      Token(WHITE_SPACE, 13, 15, "  "),
+      Token(CLASS, 15, 20, "class"),
+      Token(WHITE_SPACE, 20, 21, " "),
+      Token(ID, 21, 26, "Shape"),
+      Token(EOL, 26, 27, "\n"),
+      Token(WHITE_SPACE, 27, 29, "  "),
+      Token(CLICK, 29, 34, "click"),
+      Token(WHITE_SPACE, 34, 35, " "),
+      Token(CLICK_DATA, 35, 40, "Shape"),
+      Token(WHITE_SPACE, 40, 41, " "),
+      Token(HREF, 41, 45, "href"),
+      Token(WHITE_SPACE, 45, 46, " "),
+      Token(DOUBLE_QUOTE, 46, 47, "\""),
+      Token(STRING_VALUE, 47, 69, "https://www.github.com"),
+      Token(DOUBLE_QUOTE, 69, 70, "\""),
+      Token(WHITE_SPACE, 70, 71, " "),
+      Token(DOUBLE_QUOTE, 71, 72, "\""),
+      Token(STRING_VALUE, 72, 100, "This is a tooltip for a link"),
+      Token(DOUBLE_QUOTE, 100, 101, "\""),
+      Token(EOL, 101, 102, "\n"),
+      Token(WHITE_SPACE, 102, 104, "  "),
+      Token(CLICK, 104, 109, "click"),
+      Token(WHITE_SPACE, 109, 110, " "),
+      Token(CLICK_DATA, 110, 115, "Shape"),
+      Token(WHITE_SPACE, 115, 116, " "),
+      Token(CALL, 116, 120, "call"),
+      Token(WHITE_SPACE, 120, 121, " "),
+      Token(CLICK_DATA, 121, 137, "callbackFunction"),
+      Token(OPEN_ROUND, 137, 138, "("),
+      Token(CLOSE_ROUND, 138, 139, ")"),
+      Token(WHITE_SPACE, 139, 140, " "),
+      Token(DOUBLE_QUOTE, 140, 141, "\""),
+      Token(STRING_VALUE, 141, 173, "This is a tooltip for a callback"),
+      Token(DOUBLE_QUOTE, 173, 174, "\""),
+      Token(EOL, 174, 175, "\n"),
+      Token(WHITE_SPACE, 175, 177, "  "),
+      Token(CLICK, 177, 182, "click"),
+      Token(WHITE_SPACE, 182, 183, " "),
+      Token(CLICK_DATA, 183, 188, "Shape"),
+      Token(WHITE_SPACE, 188, 189, " "),
+      Token(HREF, 189, 193, "href"),
+      Token(WHITE_SPACE, 193, 194, " "),
+      Token(DOUBLE_QUOTE, 194, 195, "\""),
+      Token(STRING_VALUE, 195, 217, "https://www.github.com"),
+      Token(DOUBLE_QUOTE, 217, 218, "\""),
+      Token(WHITE_SPACE, 218, 219, " "),
+      Token(EOL, 219, 220, "\n"),
+      Token(WHITE_SPACE, 220, 222, "  "),
+      Token(CLICK, 222, 227, "click"),
+      Token(WHITE_SPACE, 227, 228, " "),
+      Token(CLICK_DATA, 228, 233, "Shape"),
+      Token(WHITE_SPACE, 233, 234, " "),
+      Token(CALL, 234, 238, "call"),
+      Token(WHITE_SPACE, 238, 239, " "),
+      Token(CLICK_DATA, 239, 255, "callbackFunction"),
+      Token(OPEN_ROUND, 255, 256, "("),
+      Token(CLOSE_ROUND, 256, 257, ")"),
+      Token(EOL, 257, 258, "\n"),
+      Token(WHITE_SPACE, 258, 260, "  "),
+      Token(LINK, 260, 264, "link"),
+      Token(WHITE_SPACE, 264, 265, " "),
+      Token(CLICK_DATA, 265, 270, "Shape"),
+      Token(WHITE_SPACE, 270, 271, " "),
+      Token(DOUBLE_QUOTE, 271, 272, "\""),
+      Token(STRING_VALUE, 272, 294, "https://www.github.com"),
+      Token(DOUBLE_QUOTE, 294, 295, "\""),
+      Token(WHITE_SPACE, 295, 296, " "),
+      Token(DOUBLE_QUOTE, 296, 297, "\""),
+      Token(STRING_VALUE, 297, 325, "This is a tooltip for a link"),
+      Token(DOUBLE_QUOTE, 325, 326, "\""),
+      Token(EOL, 326, 327, "\n"),
+      Token(WHITE_SPACE, 327, 329, "  "),
+      Token(CALLBACK, 329, 337, "callback"),
+      Token(WHITE_SPACE, 337, 338, " "),
+      Token(CLICK_DATA, 338, 343, "Shape"),
+      Token(WHITE_SPACE, 343, 344, " "),
+      Token(DOUBLE_QUOTE, 344, 345, "\""),
+      Token(STRING_VALUE, 345, 361, "callbackFunction"),
+      Token(DOUBLE_QUOTE, 361, 362, "\""),
+      Token(WHITE_SPACE, 362, 363, " "),
+      Token(DOUBLE_QUOTE, 363, 364, "\""),
+      Token(STRING_VALUE, 364, 396, "This is a tooltip for a callback"),
+      Token(DOUBLE_QUOTE, 396, 397, "\"")
+      )
     doTest(content, expected)
   }
 }

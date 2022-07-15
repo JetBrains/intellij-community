@@ -160,6 +160,27 @@ object MermaidTokens {
   @JvmField
   val TASK_DATA = MermaidToken("TASK_DATA")
 
+  @JvmField
+  val CLICK = MermaidToken("CLICK")
+
+  @JvmField
+  val CALLBACK = MermaidToken("CALLBACK")
+
+  @JvmField
+  val LINK = MermaidToken("LINK")
+
+  @JvmField
+  val HREF = MermaidToken("HREF")
+
+  @JvmField
+  val CALL = MermaidToken("CALL")
+
+  @JvmField
+  val CLICK_DATA = MermaidToken("CLICK_DATA")
+
+  @JvmField
+  val LINK_TARGET = MermaidToken("LINK_TARGET")
+
   object Pie {
     @JvmField
     val PIE = MermaidToken("Pie.PIE")
@@ -343,9 +364,6 @@ object MermaidTokens {
 
     @JvmField
     val AUTONUMBER = MermaidToken("Sequence.AUTONUMBER")
-
-    @JvmField
-    val LINK = MermaidToken("Sequence.LINK")
 
     @JvmField
     val LINKS = MermaidToken("Sequence.LINKS")

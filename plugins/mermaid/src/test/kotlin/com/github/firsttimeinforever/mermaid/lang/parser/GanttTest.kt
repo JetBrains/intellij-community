@@ -37,7 +37,11 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -47,7 +51,11 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -61,7 +69,13 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -69,7 +83,11 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     """.trimIndent()
@@ -143,7 +161,11 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -155,7 +177,11 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -167,7 +193,11 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -177,7 +207,11 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -195,7 +229,19 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -207,7 +253,15 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -219,7 +273,15 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -229,7 +291,17 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -237,19 +309,37 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -267,7 +357,13 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -279,7 +375,19 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -287,7 +395,19 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -305,7 +425,13 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(COMMA)
@@ -313,15 +439,160 @@ class GanttTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(GANTT_LINE)
-    >>>PsiElement(TASK_NAME)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(TASK_DATA)
+    """.trimIndent()
+    doTest(content, expectedTree)
+  }
+
+  fun `test click statements`() {
+    val content = """
+    gantt
+      Visit mermaidjs :active, cl1, 2014-01-07, 3d
+      Print arguments :cl2, after cl1, 3d
+      Print task :cl3, after cl2, 3d
+
+      click cl1 href "https://mermaidjs.github.io/"
+      click cl2 call printArguments("test1", "test2", test3)
+      click cl3 call printTask()
+    """.trimIndent()
+    val expectedTree = """
+    Element(FILE)
+    >PsiElement(GANTT)
+    >Element(GANTT_DOCUMENT)
+    >>Element(GANTT_LINE)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(GANTT_LINE)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
+    >>>PsiElement(COLON)
+    >>>PsiElement(TASK_DATA)
+    >>>PsiElement(COMMA)
+    >>>PsiElement(TASK_DATA)
+    >>>PsiElement(COMMA)
+    >>>PsiElement(TASK_DATA)
+    >>>PsiElement(COMMA)
+    >>>PsiElement(TASK_DATA)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(GANTT_LINE)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
+    >>>PsiElement(COLON)
+    >>>PsiElement(TASK_DATA)
+    >>>PsiElement(COMMA)
+    >>>PsiElement(TASK_DATA)
+    >>>PsiElement(COMMA)
+    >>>PsiElement(TASK_DATA)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(GANTT_LINE)
+    >>>Element(GANTT_TASK_NAME)
+    >>>>PsiElement(TASK_NAME)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(TASK_NAME)
+    >>>PsiWhiteSpace
+    >>>PsiElement(COLON)
+    >>>PsiElement(TASK_DATA)
+    >>>PsiElement(COMMA)
+    >>>PsiElement(TASK_DATA)
+    >>>PsiElement(COMMA)
+    >>>PsiElement(TASK_DATA)
+    >>>PsiElement(EOL)
+    >>Element(GANTT_LINE)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(GANTT_LINE)
+    >>>Element(GANTT_CLICK_STATEMENT)
+    >>>>PsiElement(CLICK)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(HREF)
+    >>>>PsiWhiteSpace
+    >>>>Element(STRING)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>PsiElement(STRING_VALUE)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(GANTT_LINE)
+    >>>Element(GANTT_CLICK_STATEMENT)
+    >>>>PsiElement(CLICK)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CALL)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>Element(CALLBACK_ARGS)
+    >>>>>PsiElement(OPEN_ROUND)
+    >>>>>Element(STRING)
+    >>>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>>PsiElement(STRING_VALUE)
+    >>>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>PsiElement(COMMA)
+    >>>>>PsiWhiteSpace
+    >>>>>Element(STRING)
+    >>>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>>PsiElement(STRING_VALUE)
+    >>>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>PsiElement(COMMA)
+    >>>>>PsiWhiteSpace
+    >>>>>PsiElement(CLICK_DATA)
+    >>>>>PsiElement(CLOSE_ROUND)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(GANTT_LINE)
+    >>>Element(GANTT_CLICK_STATEMENT)
+    >>>>PsiElement(CLICK)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CALL)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>Element(CALLBACK_ARGS)
+    >>>>>PsiElement(OPEN_ROUND)
+    >>>>>PsiElement(CLOSE_ROUND)
     """.trimIndent()
     doTest(content, expectedTree)
   }

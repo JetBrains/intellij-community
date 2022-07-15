@@ -68,6 +68,7 @@ private flowchartStatement ::= vertexStatement (separator vertexStatement)*
 	| linkStyleStatement
 	| classDefStatement
 	| flowchartClassStatement
+	| flowchartClickStatement
 //	| directive
 
 private separator ::= EOL | SEMICOLON
@@ -156,6 +157,7 @@ private classDiagramStatement ::= DIRECTION DIR
   | memberStatement
   | annotationStatement
 	| directive
+	| classDiagramClickStatement
 
 classStatement ::= CLASS identifier [TILDA GENERIC_TYPE TILDA] [STYLE_SEPARATOR identifier] [OPEN_CURLY members CLOSE_CURLY]
 
@@ -245,9 +247,11 @@ private ganttStatement ::= DATE_FORMAT
   | INCLUDES
   | AXIS_FORMAT
   | SECTION SECTION_TITLE
-  | TASK_NAME COLON TASK_DATA (COMMA TASK_DATA)*
+  | ganttTaskName COLON TASK_DATA (COMMA TASK_DATA)*
 	| directive
+	| ganttClickStatement
 
+ganttTaskName ::= TASK_NAME+
 
 requirementDocument ::= requirementLines
 private requirementLines ::= requirementLine [requirementLines]
@@ -296,6 +300,20 @@ property ::= directiveKey COLON directiveValue
 directiveKey ::= string | DIRECTIVE_TEXT
 directiveValue ::= string | DIRECTIVE_TEXT | object
 object ::= OPEN_CURLY directiveContent CLOSE_CURLY
+
+flowchartClickStatement ::= CLICK [CLICK_DATA] [HREF] string [string] [LINK_TARGET]
+	| CLICK [CALL] CLICK_DATA [callbackArgs] string
+	| CLICK CLICK_DATA [CALL? CLICK_DATA callbackArgs?] [string]
+
+ganttClickStatement ::= CLICK CLICK_DATA (CALL CLICK_DATA callbackArgs | HREF string)
+
+classDiagramClickStatement ::= CLICK CLICK_DATA CALL CLICK_DATA callbackArgs [string]
+	| CLICK CLICK_DATA HREF string [string] [LINK_TARGET]
+	| CALLBACK CLICK_DATA string [string]
+	| LINK CLICK_DATA string [string] [LINK_TARGET]
+
+callbackArgs ::= OPEN_ROUND [callbackArg] (COMMA callbackArg)* CLOSE_ROUND
+private callbackArg ::= CLICK_DATA | string
 
 string ::= DOUBLE_QUOTE STRING_VALUE? DOUBLE_QUOTE
 complexIdentifier ::= ID+ {

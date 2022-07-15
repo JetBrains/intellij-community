@@ -980,4 +980,133 @@ class ClassDiagramTest : MermaidParserTestCase() {
     """.trimIndent()
     doTest(content, expectedTree)
   }
+
+  fun `test click statements`() {
+    val content = """
+    classDiagram
+      class Shape
+      click Shape href "https://www.github.com" "This is a tooltip for a link"
+      click Shape call callbackFunction() "This is a tooltip for a callback"
+      click Shape href "https://www.github.com" 
+      click Shape call callbackFunction()
+      link Shape "https://www.github.com" "This is a tooltip for a link"
+      callback Shape "callbackFunction" "This is a tooltip for a callback"
+    """.trimIndent()
+    val expectedTree = """
+    Element(FILE)
+    >PsiElement(CLASS_DIAGRAM)
+    >Element(CLASS_DOCUMENT)
+    >>Element(CLASS_LINE)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(CLASS_LINE)
+    >>>Element(CLASS_STATEMENT)
+    >>>>PsiElement(CLASS)
+    >>>>PsiWhiteSpace
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(CLASS_LINE)
+    >>>Element(CLASS_DIAGRAM_CLICK_STATEMENT)
+    >>>>PsiElement(CLICK)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(HREF)
+    >>>>PsiWhiteSpace
+    >>>>Element(STRING)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>PsiElement(STRING_VALUE)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>PsiWhiteSpace
+    >>>>Element(STRING)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>PsiElement(STRING_VALUE)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(CLASS_LINE)
+    >>>Element(CLASS_DIAGRAM_CLICK_STATEMENT)
+    >>>>PsiElement(CLICK)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CALL)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>Element(CALLBACK_ARGS)
+    >>>>>PsiElement(OPEN_ROUND)
+    >>>>>PsiElement(CLOSE_ROUND)
+    >>>>PsiWhiteSpace
+    >>>>Element(STRING)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>PsiElement(STRING_VALUE)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(CLASS_LINE)
+    >>>Element(CLASS_DIAGRAM_CLICK_STATEMENT)
+    >>>>PsiElement(CLICK)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(HREF)
+    >>>>PsiWhiteSpace
+    >>>>Element(STRING)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>PsiElement(STRING_VALUE)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>PsiWhiteSpace
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(CLASS_LINE)
+    >>>Element(CLASS_DIAGRAM_CLICK_STATEMENT)
+    >>>>PsiElement(CLICK)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CALL)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>Element(CALLBACK_ARGS)
+    >>>>>PsiElement(OPEN_ROUND)
+    >>>>>PsiElement(CLOSE_ROUND)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(CLASS_LINE)
+    >>>Element(CLASS_DIAGRAM_CLICK_STATEMENT)
+    >>>>PsiElement(LINK)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>PsiWhiteSpace
+    >>>>Element(STRING)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>PsiElement(STRING_VALUE)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>PsiWhiteSpace
+    >>>>Element(STRING)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>PsiElement(STRING_VALUE)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>PsiElement(EOL)
+    >>PsiWhiteSpace
+    >>Element(CLASS_LINE)
+    >>>Element(CLASS_DIAGRAM_CLICK_STATEMENT)
+    >>>>PsiElement(CALLBACK)
+    >>>>PsiWhiteSpace
+    >>>>PsiElement(CLICK_DATA)
+    >>>>PsiWhiteSpace
+    >>>>Element(STRING)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>PsiElement(STRING_VALUE)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>PsiWhiteSpace
+    >>>>Element(STRING)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    >>>>>PsiElement(STRING_VALUE)
+    >>>>>PsiElement(DOUBLE_QUOTE)
+    """.trimIndent()
+    doTest(content, expectedTree)
+  }
 }
